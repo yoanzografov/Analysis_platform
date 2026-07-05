@@ -1,0 +1,1 @@
+{"name":"Bulgarian Stock Tracking Platform","description":"Платформа за следене на акции със синхронизиране на данни от Google Таблици в реално време, известия, ценови сигнали и пазарни графики.","requestFramePermissions":[],"majorCapabilities":["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]}

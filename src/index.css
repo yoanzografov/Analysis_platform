@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #E4E3E0;
+  --color-ink: #141414;
+  --color-line: #141414;
+  
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "Inter", sans-serif;
+  --font-display: "Inter", sans-serif;
+  --font-serif: "Inter", sans-serif;
+}
+
+/* Base high-density styling */
+body {
+  background-color: #E4E3E0;
+  color: #141414;
+  font-family: var(--font-sans);
+}
+
+/* Scrollbars matching the High Density mechanical theme */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #D9D8D5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #141414;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
+
+/* High density button transitions and states */
+button, select, input {
+  transition: all 0.1s ease-in-out;
+}
