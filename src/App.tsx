@@ -18,6 +18,24 @@ import {
   RefreshCw
 } from 'lucide-react';
 
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.warn('localStorage is not accessible:', e);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.warn('localStorage is not writable:', e);
+    }
+  }
+};
+
 export default function App() {
   // Primary datasets
   const [stocks, setStocks] = useState<Stock[]>([]);
@@ -166,9 +184,9 @@ export default function App() {
 
   // Load default CSV data or localStorage on rise and trigger instantaneous live update
   useEffect(() => {
-    const savedStocks = localStorage.getItem('bulgarian_stock_tracker_stocks');
-    const savedIndices = localStorage.getItem('bulgarian_stock_tracker_indices');
-    const savedAlerts = localStorage.getItem('bulgarian_stock_tracker_alerts');
+    const savedStocks = safeLocalStorage.getItem('bulgarian_stock_tracker_stocks');
+    const savedIndices = safeLocalStorage.getItem('bulgarian_stock_tracker_indices');
+    const savedAlerts = safeLocalStorage.getItem('bulgarian_stock_tracker_alerts');
 
     let initialStocks: Stock[] = [];
     let initialIndices: MarketIndex[] = [];
@@ -230,18 +248,18 @@ export default function App() {
   // Persistence save hooks
   useEffect(() => {
     if (stocks.length > 0) {
-      localStorage.setItem('bulgarian_stock_tracker_stocks', JSON.stringify(stocks));
+      safeLocalStorage.setItem('bulgarian_stock_tracker_stocks', JSON.stringify(stocks));
     }
   }, [stocks]);
 
   useEffect(() => {
     if (indices.length > 0) {
-      localStorage.setItem('bulgarian_stock_tracker_indices', JSON.stringify(indices));
+      safeLocalStorage.setItem('bulgarian_stock_tracker_indices', JSON.stringify(indices));
     }
   }, [indices]);
 
   useEffect(() => {
-    localStorage.setItem('bulgarian_stock_tracker_alerts', JSON.stringify(alerts));
+    safeLocalStorage.setItem('bulgarian_stock_tracker_alerts', JSON.stringify(alerts));
   }, [alerts]);
 
   // Smooth scroll to AI Analysis container when a stock is selected

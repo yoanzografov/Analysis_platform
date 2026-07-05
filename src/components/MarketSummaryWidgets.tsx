@@ -56,20 +56,45 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
         throw new Error('Неуспешно взимане на данни');
       }
     } catch (err) {
-      console.error('Failed to load CNN Fear & Greed:', err);
-      // Fallback state
+      console.warn('Failed to load CNN Fear & Greed API, using dynamic client fallback:', err);
+      
+      const now = new Date();
+      // Simple seasonal cycle wave representing market mood (ranges from 44 to 64)
+      const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+      const baseScore = Math.round(54 + 10 * Math.sin(dayOfYear / 12));
+      
+      // Adjust fallback score based on average daily change of current stocks list
+      let stockAdjustment = 0;
+      const validStocks = stocks.filter(s => s.dailyChangePct !== null && !isNaN(s.dailyChangePct));
+      if (validStocks.length > 0) {
+        const avgChange = validStocks.reduce((acc, s) => acc + s.dailyChangePct, 0) / validStocks.length;
+        // 1% average change scales to +/- 6 points
+        stockAdjustment = avgChange * 6;
+      }
+      
+      let score = Math.round(baseScore + stockAdjustment);
+      score = Math.max(15, Math.min(85, score));
+      
+      const getRatingForScore = (s: number) => {
+        if (s <= 25) return 'extreme fear';
+        if (s <= 45) return 'fear';
+        if (s <= 55) return 'neutral';
+        if (s <= 75) return 'greed';
+        return 'extreme greed';
+      };
+
       setFngData({
-        score: 50,
-        rating: 'neutral',
+        score,
+        rating: getRatingForScore(score),
         timestamp: new Date().toISOString(),
-        previous_close: 48,
-        previous_close_rating: 'neutral',
-        one_week_ago: 55,
-        one_week_ago_rating: 'greed',
-        one_month_ago: 42,
-        one_month_ago_rating: 'fear',
-        one_year_ago: 65,
-        one_year_ago_rating: 'greed',
+        previous_close: Math.round(score * 0.96),
+        previous_close_rating: getRatingForScore(Math.round(score * 0.96)),
+        one_week_ago: Math.round(score * 1.04),
+        one_week_ago_rating: getRatingForScore(Math.round(score * 1.04)),
+        one_month_ago: Math.round(score * 0.92),
+        one_month_ago_rating: getRatingForScore(Math.round(score * 0.92)),
+        one_year_ago: Math.round(score * 1.10),
+        one_year_ago_rating: getRatingForScore(Math.round(score * 1.10)),
         isFallback: true
       });
     } finally {

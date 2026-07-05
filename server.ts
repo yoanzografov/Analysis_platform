@@ -707,7 +707,7 @@ app.get("/api/fear-greed", async (req, res) => {
   };
 
   try {
-    const url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
+    const url = "https://feargreedchart.com/api/";
     // Set a short timeout (e.g. 3 seconds) so we don't wait forever if the network is slow
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -716,30 +716,31 @@ app.get("/api/fear-greed", async (req, res) => {
       signal: controller.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Referer": "https://www.cnn.com/",
-        "Origin": "https://www.cnn.com"
+        "Accept": "application/json"
       }
     });
     clearTimeout(timeoutId);
 
     if (response.ok) {
       const data = await response.json() as any;
-      const fng = data?.fear_and_greed;
-      if (fng && fng.score !== undefined) {
-        const score = Math.round(fng.score);
-        const rating = fng.rating || getRatingForScore(score);
+      const scoreVal = data?.score?.score;
+      if (scoreVal !== undefined) {
+        const score = Math.round(scoreVal);
+        const rating = getRatingForScore(score);
         
-        const previous_close = fng.previous_close !== undefined ? Math.round(fng.previous_close) : null;
-        const one_week_ago = fng.previous_1_week !== undefined ? Math.round(fng.previous_1_week) : null;
-        const one_month_ago = fng.previous_1_month !== undefined ? Math.round(fng.previous_1_month) : null;
-        const one_year_ago = fng.previous_1_year !== undefined ? Math.round(fng.previous_1_year) : null;
+        // Fetch historical scores from the 'recent' array
+        const recent = data?.recent || [];
+        const len = recent.length;
+        
+        const previous_close = len >= 2 ? Math.round(recent[len - 2].score) : null;
+        const one_week_ago = len >= 6 ? Math.round(recent[len - 6].score) : null;
+        const one_month_ago = len >= 22 ? Math.round(recent[len - 22].score) : null;
+        const one_year_ago = len >= 253 ? Math.round(recent[len - 253].score) : null;
 
         return res.json({
           score,
           rating,
-          timestamp: fng.timestamp || new Date().toISOString(),
+          timestamp: new Date().toISOString(),
           previous_close,
           previous_close_rating: previous_close !== null ? getRatingForScore(previous_close) : null,
           one_week_ago,

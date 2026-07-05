@@ -100,6 +100,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
   // Inline pricing edits state for all editable cells
   const [editingRow, setEditingRow] = useState<string | null>(null);
+  const [showConfirmFair, setShowConfirmFair] = useState<string | null>(null);
   const [editWatch, setEditWatch] = useState('');
   const [editCompanyName, setEditCompanyName] = useState('');
   const [editDate, setEditDate] = useState('');
@@ -144,15 +145,37 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
     setEditHigh52(stock.high52 !== null ? stock.high52.toString() : '');
   };
 
-  const saveInlineEdit = (ticker: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, ticker: string) => {
+    if (e.key === 'Enter') {
+      handleSaveClick(ticker);
+    } else if (e.key === 'Escape') {
+      cancelInlineEdit();
+    }
+  };
+
+  const handleSaveClick = (ticker: string) => {
     const original = stocks.find(s => s.ticker === ticker);
     if (!original) return;
 
-    const parsedFair = editFair === '' ? null : parseFloat(editFair);
-    const parsedPriceOfCalc = editPriceOfCalc === '' ? null : parseFloat(editPriceOfCalc);
-    const parsedLow52 = editLow52 === '' ? null : parseFloat(editLow52);
-    const parsedHigh52 = editHigh52 === '' ? null : parseFloat(editHigh52);
-    const parsedCurrentPrice = editCurrentPrice === '' ? original.currentPrice : parseFloat(editCurrentPrice);
+    const cleanFair = editFair === '' ? null : parseFloat(editFair.replace(',', '.'));
+    
+    // Show visual inline confirmation if Fair Price was actually modified
+    if (original.fairPrice !== cleanFair) {
+      setShowConfirmFair(ticker);
+    } else {
+      executeSave(ticker, false);
+    }
+  };
+
+  const executeSave = (ticker: string, confirmUpdate: boolean) => {
+    const original = stocks.find(s => s.ticker === ticker);
+    if (!original) return;
+
+    const parsedFair = editFair === '' ? null : parseFloat(editFair.replace(',', '.'));
+    const parsedPriceOfCalc = editPriceOfCalc === '' ? null : parseFloat(editPriceOfCalc.replace(',', '.'));
+    const parsedLow52 = editLow52 === '' ? null : parseFloat(editLow52.replace(',', '.'));
+    const parsedHigh52 = editHigh52 === '' ? null : parseFloat(editHigh52.replace(',', '.'));
+    const parsedCurrentPrice = editCurrentPrice === '' ? original.currentPrice : parseFloat(editCurrentPrice.replace(',', '.'));
 
     if (parsedFair !== null && isNaN(parsedFair)) {
       alert('Моля, въведете валидна справедлива цена.');
@@ -180,11 +203,8 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
     }
 
     let finalFair = parsedFair;
-    if (original.fairPrice !== parsedFair) {
-      const confirmUpdate = window.confirm('Искате ли да актуализирате справедливата цена?');
-      if (!confirmUpdate) {
-        finalFair = original.fairPrice;
-      }
+    if (original.fairPrice !== parsedFair && !confirmUpdate) {
+      finalFair = original.fairPrice;
     }
 
     // Recalculate based on spreadsheet logic:
@@ -227,10 +247,12 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
     });
 
     setEditingRow(null);
+    setShowConfirmFair(null);
   };
 
   const cancelInlineEdit = () => {
     setEditingRow(null);
+    setShowConfirmFair(null);
   };
 
   const handleAddNewStockSubmit = (e: React.FormEvent) => {
@@ -544,7 +566,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
                   }`}
                   onKeyDown={isEditing ? (e) => {
                     if (e.key === 'Enter') {
-                      saveInlineEdit(stock.ticker);
+                      handleSaveClick(stock.ticker);
                     } else if (e.key === 'Escape') {
                       cancelInlineEdit();
                     }
@@ -661,8 +683,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
                   <td className="py-2 px-3 text-right text-gray-600">
                     {isEditing ? (
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={editPriceOfCalc}
                         onChange={e => setEditPriceOfCalc(e.target.value)}
                         className="w-full bg-white text-right font-mono text-xs text-[#141414] border border-[#141414] p-0.5 rounded-none focus:outline-none"
@@ -716,8 +737,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
                   <td className="py-2 px-3 text-right font-extrabold text-emerald-800 bg-emerald-50/20">
                     {isEditing ? (
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={editFair}
                         onChange={e => setEditFair(e.target.value)}
                         className="w-full bg-white text-right font-bold text-[#141414] border border-[#141414] p-0.5 rounded-none font-mono text-[11px] focus:outline-none"
@@ -845,8 +865,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
                   <td className="py-2 px-3 text-right text-gray-650">
                     {isEditing ? (
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={editLow52}
                         onChange={e => setEditLow52(e.target.value)}
                         className="w-full bg-white text-right font-mono text-xs text-[#141414] border border-[#141414] p-0.5 rounded-none focus:outline-none"
@@ -870,8 +889,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
                   <td className="py-2 px-3 text-right text-gray-650">
                     {isEditing ? (
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={editHigh52}
                         onChange={e => setEditHigh52(e.target.value)}
                         className="w-full bg-white text-right font-mono text-xs text-[#141414] border border-[#141414] p-0.5 rounded-none focus:outline-none"
@@ -894,22 +912,44 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
                   {/* 20. AI ANALIS */}
                   <td className="py-2 px-3 text-center">
                     {isEditing ? (
-                      <div className="flex items-center justify-center gap-1 shrink-0">
-                        <button
-                          onClick={() => saveInlineEdit(stock.ticker)}
-                          className="p-1 rounded-none bg-emerald-700 text-white hover:bg-emerald-800 duration-100 border border-emerald-800"
-                          title="Запази"
-                        >
-                          <Check className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={cancelInlineEdit}
-                          className="p-1 rounded-none bg-red-700 text-white hover:bg-red-800 duration-100 border border-red-850"
-                          title="Отказ"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
+                      showConfirmFair === stock.ticker ? (
+                        <div className="flex flex-col items-center gap-1 bg-amber-50 border border-amber-200 p-1.5 rounded-none z-10 shrink-0 min-w-[130px]">
+                          <span className="text-[9px] font-bold text-amber-800 uppercase tracking-tight block text-center leading-none">
+                            Актуализиране на Fair Price?
+                          </span>
+                          <div className="flex items-center gap-1.5 justify-center mt-1">
+                            <button
+                              onClick={() => executeSave(stock.ticker, true)}
+                              className="px-2 py-0.5 text-[9px] font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-none border border-amber-750 cursor-pointer"
+                            >
+                              Да
+                            </button>
+                            <button
+                              onClick={() => executeSave(stock.ticker, false)}
+                              className="px-2 py-0.5 text-[9px] font-bold bg-stone-500 hover:bg-stone-600 text-white rounded-none border border-stone-600 cursor-pointer"
+                            >
+                              Не
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1 shrink-0">
+                          <button
+                            onClick={() => handleSaveClick(stock.ticker)}
+                            className="p-1 rounded-none bg-emerald-700 text-white hover:bg-emerald-800 duration-100 border border-emerald-800 cursor-pointer"
+                            title="Запази"
+                          >
+                            <Check className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={cancelInlineEdit}
+                            className="p-1 rounded-none bg-red-700 text-white hover:bg-red-800 duration-100 border border-red-850 cursor-pointer"
+                            title="Отказ"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )
                     ) : (
                       <div className="flex items-center justify-center gap-1.5 shrink-0">
                         <button
