@@ -117,6 +117,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const [data, setData] = useState<{ timestamps: number[]; prices: number[] } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [chartType, setChartType] = useState<'custom' | 'live'>('custom');
 
   // Interval selection options requested by the user
   const intervals = ['1D', '1W', '1M', '3M', '6M', 'YTD', '1Y', '3Y', '5Y', '10Y', 'MAX'];
@@ -472,6 +473,33 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     return `${currencySymbol}${formatted}`;
   };
 
+  const getTradingViewSymbol = () => {
+    const t = stock.ticker.trim().toUpperCase();
+    if (t.startsWith("EPA:")) {
+      return `EURONEXT:${t.replace("EPA:", "")}`;
+    }
+    if (t.startsWith("ETR:")) {
+      return `XETRA:${t.replace("ETR:", "")}`;
+    }
+    if (t.startsWith("STO:")) {
+      return `OMXSTO:${t.replace("STO:", "")}`;
+    }
+    if (t.startsWith("SWX:")) {
+      return `SIX:${t.replace("SWX:", "")}`;
+    }
+    // Default indices or US
+    if (t.startsWith("^")) {
+      if (t === "^GSPC") return "SPY";
+      if (t === "^NDX") return "QQQ";
+      if (t === "^DJI") return "DIA";
+      return t.replace("^", "");
+    }
+    return t;
+  };
+
+  const tvSymbol = getTradingViewSymbol();
+  const tvWidgetUrl = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(tvSymbol)}&theme=dark&style=1&timezone=Etc%2FUTC&locale=bg&utm_source=localhost&utm_medium=widget&utm_campaign=chart`;
+
   return (
     <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 backdrop-blur-xs transition-all animate-fade-in">
       <div className="bg-[#0c0c0c] border-2 border-[#141414] rounded-none shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] w-full max-w-2xl overflow-hidden font-mono text-xs text-white">
@@ -493,19 +521,43 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           </button>
         </div>
 
-        {/* Apple Stock interactive dashboard title row */}
         <div className="p-5 border-b border-neutral-900 bg-[#0f0f0f] flex items-end justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-3xl font-black tracking-tight text-white leading-none">
-                {stock.ticker}
-              </span>
-              <span className="text-stone-400 font-sans text-xs pt-1.5 font-medium truncate max-w-[180px]">
-                {stock.companyName}
-              </span>
+          <div className="flex items-center gap-5">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-3xl font-black tracking-tight text-white leading-none">
+                  {stock.ticker}
+                </span>
+                <span className="text-stone-400 font-sans text-xs pt-1.5 font-medium truncate max-w-[120px]">
+                  {stock.companyName}
+                </span>
+              </div>
+              <div className="text-[9px] text-stone-500 font-bold uppercase mt-1 tracking-wider font-mono">
+                {exchangeName} · {currencyCode} · Yahoo Finance данни
+              </div>
             </div>
-            <div className="text-[9px] text-stone-500 font-bold uppercase mt-1 tracking-wider font-mono">
-              {exchangeName} · {currencyCode} · Yahoo Finance данни
+
+            <div className="flex items-center bg-[#141414] p-0.5 border border-neutral-800 rounded-none self-center">
+              <button
+                onClick={() => setChartType('custom')}
+                className={`text-[9px] font-bold px-2 py-0.5 transition-all cursor-pointer rounded-none uppercase ${
+                  chartType === 'custom'
+                    ? 'bg-neutral-200 text-black font-extrabold'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                Анализ
+              </button>
+              <button
+                onClick={() => setChartType('live')}
+                className={`text-[9px] font-bold px-2 py-0.5 transition-all cursor-pointer rounded-none uppercase ${
+                  chartType === 'live'
+                    ? 'bg-neutral-200 text-black font-extrabold'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                На живо
+              </button>
             </div>
           </div>
 
@@ -527,16 +579,35 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         </div>
 
         {/* Drag selection help banner */}
-        <div className="bg-[#121212] border-b border-neutral-900 px-4 py-2 flex items-center gap-2 text-[10px] text-neutral-400">
-          <HelpCircle className="w-3.5 h-3.5 text-[#10b981]" />
-          <span>
-            Кликнете и <b>плъзнете мишката (или пръста)</b> по графиката за да измерите процента промяна между две точки. Кликнете веднъж за отмяна.
-          </span>
-        </div>
+        {chartType === 'custom' && (
+          <div className="bg-[#121212] border-b border-neutral-900 px-4 py-2 flex items-center gap-2 text-[10px] text-neutral-400">
+            <HelpCircle className="w-3.5 h-3.5 text-[#10b981]" />
+            <span>
+              Кликнете и <b>плъзнете мишката (или пръста)</b> по графиката за да измерите процента промяна между две точки. Кликнете веднъж за отмяна.
+            </span>
+          </div>
+        )}
+
+        {/* Live chart helpful tip */}
+        {chartType === 'live' && (
+          <div className="bg-[#121212] border-b border-neutral-900 px-4 py-2 flex items-center gap-2 text-[10px] text-neutral-400">
+            <HelpCircle className="w-3.5 h-3.5 text-[#10b981]" />
+            <span>
+              Интерактивна графика в реално време, предоставена от TradingView. Можете да променяте стилове, технически индикатори и инструменти за чертане.
+            </span>
+          </div>
+        )}
 
         {/* Interactivity Area / Custom SVG canvas */}
         <div className="p-4 bg-[#0a0a0a] relative select-none">
-          {loading ? (
+          {chartType === 'live' ? (
+            <iframe
+              src={tvWidgetUrl}
+              className="w-full h-[240px] border-0"
+              title={`TradingView Live Chart for ${stock.ticker}`}
+              allowFullScreen
+            />
+          ) : loading ? (
             <div className="h-[240px] flex flex-col items-center justify-center text-center text-stone-500 font-mono gap-2">
               <div className="w-6 h-6 border-2 border-[#10b981] border-t-transparent rounded-full animate-spin" />
               <span>Зареждане на исторически данни от Yahoo Finance...</span>
@@ -702,26 +773,28 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         </div>
 
         {/* Timeline selection row pills exactly styled like Apple Stock */}
-        <div className="bg-[#0c0c0c] px-5 py-3 flex items-center justify-between border-b border-neutral-900">
-          <div className="flex items-center gap-1.5 w-full justify-between">
-            {intervals.map((item) => {
-              const active = range === item;
-              return (
-                <button
-                  key={item}
-                  onClick={() => setRange(item)}
-                  className={`text-[10px] font-mono transition-all cursor-pointer select-none text-center ${
-                    active 
-                      ? 'bg-white text-black font-extrabold px-3 py-1 rounded-full' 
-                      : 'text-neutral-400 hover:text-white px-2 py-1'
-                  }`}
-                >
-                  {item}
-                </button>
-              );
-            })}
+        {chartType === 'custom' && (
+          <div className="bg-[#0c0c0c] px-5 py-3 flex items-center justify-between border-b border-neutral-900">
+            <div className="flex items-center gap-1.5 w-full justify-between">
+              {intervals.map((item) => {
+                const active = range === item;
+                return (
+                  <button
+                    key={item}
+                    onClick={() => setRange(item)}
+                    className={`text-[10px] font-mono transition-all cursor-pointer select-none text-center ${
+                      active 
+                        ? 'bg-white text-black font-extrabold px-3 py-1 rounded-full' 
+                        : 'text-neutral-400 hover:text-white px-2 py-1'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Beautiful Apple Stock styled financial stats grid panel */}
         <div className="bg-[#0f0f0f] border-t border-neutral-900 p-5 grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-3 font-mono text-[10px]">
