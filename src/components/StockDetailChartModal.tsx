@@ -117,7 +117,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const [data, setData] = useState<{ timestamps: number[]; prices: number[] } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [chartType, setChartType] = useState<'custom' | 'live'>('live');
+  const [chartType, setChartType] = useState<'custom' | 'live'>('custom');
 
   // Interval selection options requested by the user
   const intervals = ['1D', '5D', '1M', 'YTD', '1Y', '3Y', '5Y', '10Y', 'Max'];
@@ -740,6 +740,29 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
                       stroke={currentIntervalColor} 
                       strokeWidth={2} 
                     />
+
+                    {/* Floating percentage change label directly inside the chart */}
+                    <g>
+                      <rect
+                        x={((points[rangeStartIdx].x + points[rangeEndIdx].x) / 2) - 30}
+                        y={10}
+                        width={60}
+                        height={16}
+                        rx={3}
+                        fill={priceChange >= 0 ? '#15803d' : '#b91c1c'}
+                      />
+                      <text
+                        x={(points[rangeStartIdx].x + points[rangeEndIdx].x) / 2}
+                        y={21}
+                        fill="#ffffff"
+                        fontSize={9}
+                        fontWeight="bold"
+                        textAnchor="middle"
+                        fontFamily="monospace"
+                      >
+                        {priceChange >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
+                      </text>
+                    </g>
                   </>
                 )}
 
