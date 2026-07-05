@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Stock } from '../types';
 import { X, TrendingUp, TrendingDown, Landmark, HelpCircle } from 'lucide-react';
+import { formatDividend } from '../utils/sectorHelper';
 
 interface Props {
   stock: Stock;
@@ -435,6 +436,42 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const mockAvgVolume = mockVolume * 1.12;
   const mockBeta = ((stock.ticker.charCodeAt(0) % 4) * 0.22 + 0.78).toFixed(2);
 
+  // Determine exchange, currency and country based on ticker prefix
+  let exchangeName = 'NASDAQ';
+  let currencyCode = 'USD';
+  if (stock.ticker.startsWith("EPA:")) {
+    exchangeName = 'Euronext Paris';
+    currencyCode = 'EUR';
+  } else if (stock.ticker.startsWith("ETR:")) {
+    exchangeName = 'XETRA Frankfurt';
+    currencyCode = 'EUR';
+  } else if (stock.ticker.startsWith("STO:")) {
+    exchangeName = 'Nasdaq Stockholm';
+    currencyCode = 'SEK';
+  } else if (stock.ticker.startsWith("SWX:")) {
+    exchangeName = 'SIX Swiss Exchange';
+    currencyCode = 'CHF';
+  } else if (stock.ticker.includes("-USD") || stock.ticker.includes("BTC")) {
+    exchangeName = 'Cryptocurrency';
+    currencyCode = 'USD';
+  } else if (stock.ticker.startsWith("^")) {
+    exchangeName = 'Index';
+    currencyCode = 'Points';
+  }
+
+  const currencySymbol = currencyCode === 'EUR' ? '€' : currencyCode === 'SEK' ? ' kr' : currencyCode === 'CHF' ? ' CHF' : currencyCode === 'Points' ? '' : '$';
+  
+  const formatCurrency = (val: number | string | undefined | null) => {
+    if (val === undefined || val === null) return '—';
+    const formatted = formatNumber(val);
+    if (formatted === '—') return '—';
+    
+    if (currencyCode === 'SEK' || currencyCode === 'CHF') {
+      return `${formatted}${currencySymbol}`;
+    }
+    return `${currencySymbol}${formatted}`;
+  };
+
   return (
     <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 backdrop-blur-xs transition-all animate-fade-in">
       <div className="bg-[#0c0c0c] border-2 border-[#141414] rounded-none shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] w-full max-w-2xl overflow-hidden font-mono text-xs text-white">
@@ -468,7 +505,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
               </span>
             </div>
             <div className="text-[9px] text-stone-500 font-bold uppercase mt-1 tracking-wider font-mono">
-              NASDAQ · USD · Yahoo Finance данни
+              {exchangeName} · {currencyCode} · Yahoo Finance данни
             </div>
           </div>
 
@@ -557,7 +594,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
                       textAnchor="end"
                       fontFamily="monospace"
                     >
-                      ${line.price.toFixed(2)}
+                      {formatCurrency(line.price)}
                     </text>
                   </g>
                 ))}
@@ -691,7 +728,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           
           <div className="flex justify-between border-b border-neutral-900 pb-1">
             <span className="text-neutral-500 uppercase font-black tracking-wider">Отворен (Open)</span>
-            <span className="text-neutral-200 font-extrabold">${formatNumber(mockOpenPrice)}</span>
+            <span className="text-neutral-200 font-extrabold">{formatCurrency(mockOpenPrice)}</span>
           </div>
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
@@ -701,27 +738,27 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
             <span className="text-neutral-500 uppercase font-black tracking-wider">52С Връх (High52)</span>
-            <span className="text-neutral-200 font-extrabold">${formatNumber(stock.high52 || mockHighPrice)}</span>
+            <span className="text-neutral-200 font-extrabold">{formatCurrency(stock.high52 || mockHighPrice)}</span>
           </div>
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
             <span className="text-neutral-500 uppercase font-black tracking-wider">Дивидент %</span>
-            <span className="text-neutral-200 font-extrabold">{stock.dividend || '0.00%'}</span>
+            <span className="text-neutral-200 font-extrabold">{formatDividend(stock.dividend, stock.currentPrice)}</span>
           </div>
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
             <span className="text-neutral-500 uppercase font-black tracking-wider">Дневен Връх (High)</span>
-            <span className="text-neutral-200 font-extrabold">${formatNumber(mockHighPrice)}</span>
+            <span className="text-neutral-200 font-extrabold">{formatCurrency(mockHighPrice)}</span>
           </div>
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
             <span className="text-neutral-500 uppercase font-black tracking-wider">Коеф. P/E</span>
-            <span className="text-neutral-200 font-extrabold">{stock.peRatio ? stock.peRatio.toFixed(2) : '31.42'}</span>
+            <span className="text-neutral-200 font-extrabold">{stock.peRatio ? stock.peRatio.toFixed(2) : '—'}</span>
           </div>
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
             <span className="text-neutral-500 uppercase font-black tracking-wider">52С Дъно (Low52)</span>
-            <span className="text-neutral-200 font-extrabold">${formatNumber(stock.low52 || mockLowPrice)}</span>
+            <span className="text-neutral-200 font-extrabold">{formatCurrency(stock.low52 || mockLowPrice)}</span>
           </div>
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
@@ -731,12 +768,12 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
             <span className="text-neutral-500 uppercase font-black tracking-wider">Дневно Дъно (Low)</span>
-            <span className="text-neutral-200 font-extrabold">${formatNumber(mockLowPrice)}</span>
+            <span className="text-neutral-200 font-extrabold">{formatCurrency(mockLowPrice)}</span>
           </div>
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
             <span className="text-neutral-500 uppercase font-black tracking-wider">Пазарна Кап.</span>
-            <span className="text-neutral-200 font-extrabold">{formatMarketCap(stock.marketCap)}</span>
+            <span className="text-neutral-200 font-extrabold">{stock.marketCap ? (currencyCode === 'SEK' || currencyCode === 'CHF' ? `${formatMarketCap(stock.marketCap)}${currencySymbol}` : `${currencySymbol}${formatMarketCap(stock.marketCap)}`) : '—'}</span>
           </div>
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
@@ -746,7 +783,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
 
           <div className="flex justify-between border-b border-neutral-900 pb-1">
             <span className="text-neutral-500 uppercase font-black tracking-wider">Коеф. EPS</span>
-            <span className="text-neutral-200 font-extrabold">${formatNumber(stock.eps)}</span>
+            <span className="text-neutral-200 font-extrabold">{stock.eps !== null && stock.eps !== undefined ? formatCurrency(stock.eps) : '—'}</span>
           </div>
 
         </div>
