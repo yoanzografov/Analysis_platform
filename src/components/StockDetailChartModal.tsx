@@ -117,7 +117,6 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const [data, setData] = useState<{ timestamps: number[]; prices: number[] } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [chartType, setChartType] = useState<'custom' | 'live'>('custom');
 
   // Interval selection options requested by the user
   const intervals = ['1D', '5D', '1M', 'YTD', '1Y', '3Y', '5Y', '10Y', 'Max'];
@@ -557,29 +556,6 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
                 {exchangeName} · {currencyCode} · Yahoo Finance данни
               </div>
             </div>
-
-            <div className="flex items-center bg-[#141414] p-0.5 border border-neutral-800 rounded-none self-center">
-              <button
-                onClick={() => setChartType('custom')}
-                className={`text-[9px] font-bold px-2 py-0.5 transition-all cursor-pointer rounded-none uppercase ${
-                  chartType === 'custom'
-                    ? 'bg-neutral-200 text-black font-extrabold'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                Анализ
-              </button>
-              <button
-                onClick={() => setChartType('live')}
-                className={`text-[9px] font-bold px-2 py-0.5 transition-all cursor-pointer rounded-none uppercase ${
-                  chartType === 'live'
-                    ? 'bg-neutral-200 text-black font-extrabold'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                На живо
-              </button>
-            </div>
           </div>
 
           {/* Interactive Live statistics details block */}
@@ -607,226 +583,89 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           </span>
         </div>
 
-        {/* Interactivity Area / Custom SVG canvas */}
+        {/* Interactivity Area / TradingView Chart with Custom Drag-to-Measure Overlay */}
         <div className="p-4 bg-[#0a0a0a] relative select-none">
-          {chartType === 'live' ? (
+          <div className="relative w-full h-[240px]">
+            {/* The TradingView Iframe */}
             <iframe
               src={tvWidgetUrl}
-              className="w-full h-[240px] border-0"
+              className="w-full h-full border-0"
               title={`TradingView Live Chart for ${stock.ticker}`}
               allowFullScreen
             />
-          ) : loading ? (
-            <div className="h-[240px] flex flex-col items-center justify-center text-center text-stone-500 font-mono gap-2">
-              <div className="w-6 h-6 border-2 border-[#10b981] border-t-transparent rounded-full animate-spin" />
-              <span>Зареждане на исторически данни от Yahoo Finance...</span>
-            </div>
-          ) : error ? (
-            <div className="h-[240px] flex flex-col items-center justify-center text-center text-red-500 font-mono p-4">
-              <span>Грешка: {error}</span>
-            </div>
-          ) : points.length === 0 ? (
-            <div className="h-[240px] flex items-center justify-center text-stone-500">
-              Няма данни за изобразяване
-            </div>
-          ) : (
-            <div 
-              className="relative cursor-crosshair w-full"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseLeave}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onClick={handleSvgClick}
-            >
-              <svg 
-                ref={svgRef}
-                viewBox={`0 0 ${width} ${height}`} 
-                className="w-full h-[240px] overflow-visible"
+
+            {/* Transparent Overlay for capturing drag and selection mouse events */}
+            {points && points.length > 0 && (
+              <div
+                className="absolute inset-0 cursor-crosshair"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onClick={handleSvgClick}
               >
-                <defs>
-                  {/* Dynamic Color Area Gradients */}
-                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={currentIntervalColor} stopOpacity={0.4} />
-                    <stop offset="100%" stopColor={currentIntervalColor} stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-
-                {/* Gridlines */}
-                {gridLines.map((line, i) => (
-                  <g key={i}>
-                    <line 
-                      x1={0} 
-                      y1={line.y} 
-                      x2={width} 
-                      y2={line.y} 
-                      stroke="rgba(255, 255, 255, 0.05)" 
-                      strokeWidth={1} 
-                      strokeDasharray="2, 4"
-                    />
-                    <text 
-                      x={width - 5} 
-                      y={line.y - 4} 
-                      fill="rgba(255, 255, 255, 0.35)" 
-                      fontSize={8} 
-                      textAnchor="end"
-                      fontFamily="monospace"
-                    >
-                      {formatCurrency(line.price)}
-                    </text>
-                  </g>
-                ))}
-
-                {/* Range Selection Highlight Background Backdrop */}
+                {/* Visual Selection Area Overlay on top of the iframe */}
                 {hasRangeSelection && points[rangeStartIdx] && points[rangeEndIdx] && (
-                  <rect 
-                    x={points[rangeStartIdx].x}
-                    y={0}
-                    width={points[rangeEndIdx].x - points[rangeStartIdx].x}
-                    height={height}
-                    fill={isUp ? 'rgba(16, 185, 129, 0.07)' : 'rgba(239, 68, 68, 0.07)'}
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none"
+                    style={{
+                      left: `${(points[rangeStartIdx].x / width) * 100}%`,
+                      width: `${((points[rangeEndIdx].x - points[rangeStartIdx].x) / width) * 100}%`,
+                      backgroundColor: priceChange >= 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                      borderLeft: `1px dashed ${currentIntervalColor}`,
+                      borderRight: `1px dashed ${currentIntervalColor}`,
+                    }}
+                  >
+                    {/* Floating Percentage Change Pill directly over the chart */}
+                    <div
+                      className="absolute top-4 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-xs text-[9px] font-bold text-white font-mono"
+                      style={{
+                        backgroundColor: priceChange >= 0 ? '#15803d' : '#b91c1c',
+                      }}
+                    >
+                      {priceChange >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
+                    </div>
+                  </div>
+                )}
+
+                {/* Hover vertical timeline marker overlay */}
+                {hoverIdx !== null && points[hoverIdx] && !hasRangeSelection && (
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none border-l border-dashed border-neutral-500/40"
+                    style={{
+                      left: `${(points[hoverIdx].x / width) * 100}%`,
+                    }}
                   />
                 )}
-
-                {/* Chart Area Fill */}
-                <path d={areaPath} fill="url(#areaGrad)" />
-
-                {/* Main Stroke Line */}
-                <path 
-                  d={linePath} 
-                  fill="none" 
-                  stroke={currentIntervalColor} 
-                  strokeWidth={2.2} 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                />
-
-                {/* Range Selection Borders and Pins */}
-                {hasRangeSelection && points[rangeStartIdx] && points[rangeEndIdx] && (
-                  <>
-                    <line 
-                      x1={points[rangeStartIdx].x} 
-                      y1={0} 
-                      x2={points[rangeStartIdx].x} 
-                      y2={height} 
-                      stroke={currentIntervalColor} 
-                      strokeWidth={1.5} 
-                      strokeDasharray="3, 3"
-                    />
-                    <line 
-                      x1={points[rangeEndIdx].x} 
-                      y1={0} 
-                      x2={points[rangeEndIdx].x} 
-                      y2={height} 
-                      stroke={currentIntervalColor} 
-                      strokeWidth={1.5} 
-                      strokeDasharray="3, 3"
-                    />
-                    <circle 
-                      cx={points[rangeStartIdx].x} 
-                      cy={points[rangeStartIdx].y} 
-                      r={4.5} 
-                      fill="#0a0a0a" 
-                      stroke={currentIntervalColor} 
-                      strokeWidth={2} 
-                    />
-                    <circle 
-                      cx={points[rangeEndIdx].x} 
-                      cy={points[rangeEndIdx].y} 
-                      r={4.5} 
-                      fill="#0a0a0a" 
-                      stroke={currentIntervalColor} 
-                      strokeWidth={2} 
-                    />
-
-                    {/* Floating percentage change label directly inside the chart */}
-                    <g>
-                      <rect
-                        x={((points[rangeStartIdx].x + points[rangeEndIdx].x) / 2) - 30}
-                        y={10}
-                        width={60}
-                        height={16}
-                        rx={3}
-                        fill={priceChange >= 0 ? '#15803d' : '#b91c1c'}
-                      />
-                      <text
-                        x={(points[rangeStartIdx].x + points[rangeEndIdx].x) / 2}
-                        y={21}
-                        fill="#ffffff"
-                        fontSize={9}
-                        fontWeight="bold"
-                        textAnchor="middle"
-                        fontFamily="monospace"
-                      >
-                        {priceChange >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
-                      </text>
-                    </g>
-                  </>
-                )}
-
-                {/* Single Hover Tracker Pin */}
-                {hoverIdx !== null && points[hoverIdx] && !hasRangeSelection && (
-                  <>
-                    <line 
-                      x1={points[hoverIdx].x} 
-                      y1={0} 
-                      x2={points[hoverIdx].x} 
-                      y2={height} 
-                      stroke="rgba(255,255,255,0.4)" 
-                      strokeWidth={1.2} 
-                      strokeDasharray="2, 3"
-                    />
-                    <circle 
-                      cx={points[hoverIdx].x} 
-                      cy={points[hoverIdx].y} 
-                      r={5} 
-                      fill="#fff" 
-                      stroke={currentIntervalColor} 
-                      strokeWidth={2} 
-                    />
-                  </>
-                )}
-
-                {/* Horizontal dotted ticks line at the bottom like Apple Stock */}
-                <line 
-                  x1={0} 
-                  y1={height} 
-                  x2={width} 
-                  y2={height} 
-                  stroke="rgba(255,255,255,0.15)" 
-                  strokeWidth={1} 
-                  strokeDasharray="1, 4"
-                />
-              </svg>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Timeline selection row pills exactly styled like Apple Stock */}
-        {chartType === 'custom' && (
-          <div className="bg-[#0c0c0c] px-5 py-3 flex items-center justify-between border-b border-neutral-900">
-            <div className="flex items-center gap-1.5 w-full justify-between">
-              {intervals.map((item) => {
-                const active = range === item;
-                return (
-                  <button
-                    key={item}
-                    onClick={() => setRange(item)}
-                    className={`text-[10px] font-mono transition-all cursor-pointer select-none text-center ${
-                      active 
-                        ? 'bg-white text-black font-extrabold px-3 py-1 rounded-full' 
-                        : 'text-neutral-400 hover:text-white px-2 py-1'
-                    }`}
-                  >
-                    {item}
-                  </button>
-                );
-              })}
-            </div>
+        <div className="bg-[#0c0c0c] px-5 py-3 flex items-center justify-between border-b border-neutral-900">
+          <div className="flex items-center gap-1.5 w-full justify-between">
+            {intervals.map((item) => {
+              const active = range === item;
+              return (
+                <button
+                  key={item}
+                  onClick={() => setRange(item)}
+                  className={`text-[10px] font-mono transition-all cursor-pointer select-none text-center ${
+                    active 
+                      ? 'bg-white text-black font-extrabold px-3 py-1 rounded-full' 
+                      : 'text-neutral-400 hover:text-white px-2 py-1'
+                  }`}
+                >
+                  {item}
+                </button>
+              );
+            })}
           </div>
-        )}
+        </div>
 
         {/* Beautiful Apple Stock styled financial stats grid panel */}
         <div className="bg-[#0f0f0f] border-t border-neutral-900 p-5 grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-3 font-mono text-[10px]">
