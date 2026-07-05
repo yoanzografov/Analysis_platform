@@ -603,7 +603,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         <div className="bg-[#121212] border-b border-neutral-900 px-4 py-2 flex items-center gap-2 text-[10px] text-neutral-400">
           <HelpCircle className="w-3.5 h-3.5 text-[#10b981]" />
           <span>
-            Кликнете и <b>плъзнете мишката (или пръста)</b> по графиката за да измерите процента промяна между две точки. Кликнете веднъж за отмяна. {chartType === 'live' && <span className="text-stone-500">(за измерване изберете бутон "Анализ")</span>}
+            Кликнете и <b>плъзнете мишката (или пръста)</b> по графиката за да измерите процента промяна между две точки. Кликнете веднъж за отмяна. {chartType === 'live' && '(за измерване изберете бутон "Анализ")'}
           </span>
         </div>
 
