@@ -507,7 +507,18 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     locale: "bg",
     chartType: "area",
     autosize: true,
-    fontFamily: "monospace"
+    fontFamily: "monospace",
+    dateRanges: [
+      "1d|5",
+      "5d|15",
+      "1m|30",
+      "ytd|1D",
+      "12m|1D",
+      "36m|1D",
+      "60m|1D",
+      "120m|1W",
+      "all|1M"
+    ]
   }))}`;
 
   return (
