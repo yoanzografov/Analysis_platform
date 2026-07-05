@@ -117,7 +117,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const [data, setData] = useState<{ timestamps: number[]; prices: number[] } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [chartType, setChartType] = useState<'custom' | 'live'>('custom');
+  const [chartType, setChartType] = useState<'custom' | 'live'>('live');
 
   // Interval selection options requested by the user
   const intervals = ['1D', '1W', '1M', '3M', '6M', 'YTD', '1Y', '3Y', '5Y', '10Y', 'MAX'];
@@ -498,7 +498,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   };
 
   const tvSymbol = getTradingViewSymbol();
-  const tvWidgetUrl = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(tvSymbol)}&theme=dark&style=1&timezone=Etc%2FUTC&locale=bg&utm_source=localhost&utm_medium=widget&utm_campaign=chart`;
+  const tvWidgetUrl = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(tvSymbol)}&theme=dark&style=3&hide_top_toolbar=true&hide_legend=true&hidesidetoolbar=1&timezone=Etc%2FUTC&locale=bg&utm_source=localhost&utm_medium=widget&utm_campaign=chart`;
 
   return (
     <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 backdrop-blur-xs transition-all animate-fade-in">
@@ -578,25 +578,13 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           </div>
         </div>
 
-        {/* Drag selection help banner */}
-        {chartType === 'custom' && (
-          <div className="bg-[#121212] border-b border-neutral-900 px-4 py-2 flex items-center gap-2 text-[10px] text-neutral-400">
-            <HelpCircle className="w-3.5 h-3.5 text-[#10b981]" />
-            <span>
-              Кликнете и <b>плъзнете мишката (или пръста)</b> по графиката за да измерите процента промяна между две точки. Кликнете веднъж за отмяна.
-            </span>
-          </div>
-        )}
-
-        {/* Live chart helpful tip */}
-        {chartType === 'live' && (
-          <div className="bg-[#121212] border-b border-neutral-900 px-4 py-2 flex items-center gap-2 text-[10px] text-neutral-400">
-            <HelpCircle className="w-3.5 h-3.5 text-[#10b981]" />
-            <span>
-              Интерактивна графика в реално време, предоставена от TradingView. Можете да променяте стилове, технически индикатори и инструменти за чертане.
-            </span>
-          </div>
-        )}
+        {/* Help banner exactly requested by the user */}
+        <div className="bg-[#121212] border-b border-neutral-900 px-4 py-2 flex items-center gap-2 text-[10px] text-neutral-400">
+          <HelpCircle className="w-3.5 h-3.5 text-[#10b981]" />
+          <span>
+            Кликнете и <b>плъзнете мишката (или пръста)</b> по графиката за да измерите процента промяна между две точки. Кликнете веднъж за отмяна. {chartType === 'live' && <span className="text-stone-500">(за измерване изберете бутон "Анализ")</span>}
+          </span>
+        </div>
 
         {/* Interactivity Area / Custom SVG canvas */}
         <div className="p-4 bg-[#0a0a0a] relative select-none">
