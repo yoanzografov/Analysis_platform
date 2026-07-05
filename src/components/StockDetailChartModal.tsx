@@ -497,8 +497,24 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   };
 
   const tvSymbol = getTradingViewSymbol();
+  const getSymbolWithRange = () => {
+    const r = range.toUpperCase();
+    let rangeSuffix = '12M'; // Default 1Y
+    if (r === '1D') rangeSuffix = '1D';
+    else if (r === '5D') rangeSuffix = '5D';
+    else if (r === '1M') rangeSuffix = '1M';
+    else if (r === 'YTD') rangeSuffix = 'YTD';
+    else if (r === '1Y') rangeSuffix = '12M';
+    else if (r === '3Y') rangeSuffix = '36M';
+    else if (r === '5Y') rangeSuffix = '60M';
+    else if (r === '10Y') rangeSuffix = '120M';
+    else if (r === 'MAX') rangeSuffix = 'ALL';
+    
+    return `${tvSymbol}|${rangeSuffix}`;
+  };
+
   const tvWidgetUrl = `https://s.tradingview.com/embed-widget/symbol-overview/?locale=bg#${encodeURIComponent(JSON.stringify({
-    symbols: [[stock.companyName, tvSymbol]],
+    symbols: [[stock.companyName, getSymbolWithRange()]],
     chartOnly: true,
     width: "100%",
     height: "100%",
