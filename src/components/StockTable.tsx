@@ -20,27 +20,51 @@ type SortOrder = 'asc' | 'desc';
 // Helper to render a miniature beautiful sparkline for the '365 Chart' column
 function StockSparkline({ changePct, ticker }: { changePct: number; ticker: string }) {
   const isUp = changePct >= 0;
-  // Generate a custom deterministic path based on ticker name and daily change to keep charts unique and consistent
-  const tickerCodeSum = ticker.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const amplitude = 3 + (tickerCodeSum % 6);
-  const steps = 6;
-  const points: string[] = [];
   
-  for (let i = 0; i <= steps; i++) {
-    const x = (i * 24) / steps;
-    // Base a curvy line going up or down with a deterministic wave
-    const wave = Math.sin((i / steps) * Math.PI * 1.5 + tickerCodeSum) * amplitude;
-    const slope = isUp ? -(i / steps) * 4 : (i / steps) * 4;
-    const y = 8 + wave + slope;
-    points.push(`${x.toFixed(1)},${Math.max(1, Math.min(15, y)).toFixed(1)}`);
+  // Clean deterministic seed from ticker name
+  let seed = ticker.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  
+  const steps = 12;
+  const prices: number[] = new Array(steps + 1);
+  
+  // Starting price is arbitrary, say 100
+  let currentVal = 100;
+  prices[0] = currentVal;
+  
+  // Run a deterministic random walk to generate 12 historical points
+  for (let i = 1; i <= steps; i++) {
+    // Deterministic pseudo-random number generator (LCG)
+    seed = (seed * 9301 + 49297) % 233280;
+    const rnd = (seed / 233280) - 0.5; // range -0.5 to 0.5
+    
+    // Trend towards changePct at the end
+    const trend = (changePct / 100) / steps;
+    currentVal = currentVal * (1 + rnd * 0.04 + trend);
+    prices[i] = currentVal;
   }
+  
+  // Scale the prices to fit in the sparkline box (width: 50, height: 16)
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const range = maxPrice - minPrice || 1;
+  
+  // Leave 1.5px padding at the top and bottom to avoid clipping
+  const height = 16;
+  const padding = 1.5;
+  const scaleHeight = height - padding * 2;
+  
+  const points = prices.map((price, i) => {
+    const x = (i / steps) * 46 + 2; // leave 2px padding on left/right
+    const y = height - padding - ((price - minPrice) / range) * scaleHeight;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
 
   return (
-    <svg className="w-14 h-4 overflow-visible inline-block opacity-85 hover:opacity-100 transition-opacity" viewBox="0 0 25 16">
+    <svg className="w-14 h-4 overflow-visible inline-block opacity-85 hover:opacity-100 transition-opacity" viewBox="0 0 50 16">
       <polyline
         fill="none"
         stroke={isUp ? "#15803d" : "#b91c1c"}
-        strokeWidth="1.6"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         points={points.join(' ')}
