@@ -120,7 +120,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const [chartType, setChartType] = useState<'custom' | 'live'>('live');
 
   // Interval selection options requested by the user
-  const intervals = ['1D', '1W', '1M', '3M', '6M', 'YTD', '1Y', '3Y', '5Y', '10Y', 'MAX'];
+  const intervals = ['1D', '5D', '1M', 'YTD', '1Y', '3Y', '5Y', '10Y', 'Max'];
 
   // Fetch stock history from server endpoint
   useEffect(() => {
@@ -497,8 +497,20 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     return t;
   };
 
+  const getTradingViewRange = (r: string) => {
+    const upper = r.toUpperCase();
+    if (upper === '1D') return '1D';
+    if (upper === '5D') return '5D';
+    if (upper === '1M') return '1M';
+    if (upper === 'YTD') return 'YTD';
+    if (upper === '1Y') return '1Y';
+    if (upper === '3Y') return '3Y';
+    if (upper === '5Y') return '5Y';
+    return 'ALL'; // Fallback for 10Y and Max
+  };
+
   const tvSymbol = getTradingViewSymbol();
-  const tvWidgetUrl = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(tvSymbol)}&theme=dark&style=3&hide_top_toolbar=true&hide_legend=true&hidesidetoolbar=1&timezone=Etc%2FUTC&locale=bg&utm_source=localhost&utm_medium=widget&utm_campaign=chart`;
+  const tvWidgetUrl = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(tvSymbol)}&theme=dark&style=3&hide_top_toolbar=true&hide_legend=true&hidesidetoolbar=1&range=${getTradingViewRange(range)}&timezone=Etc%2FUTC&locale=bg&utm_source=localhost&utm_medium=widget&utm_campaign=chart`;
 
   return (
     <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 backdrop-blur-xs transition-all animate-fade-in">
@@ -761,28 +773,26 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         </div>
 
         {/* Timeline selection row pills exactly styled like Apple Stock */}
-        {chartType === 'custom' && (
-          <div className="bg-[#0c0c0c] px-5 py-3 flex items-center justify-between border-b border-neutral-900">
-            <div className="flex items-center gap-1.5 w-full justify-between">
-              {intervals.map((item) => {
-                const active = range === item;
-                return (
-                  <button
-                    key={item}
-                    onClick={() => setRange(item)}
-                    className={`text-[10px] font-mono transition-all cursor-pointer select-none text-center ${
-                      active 
-                        ? 'bg-white text-black font-extrabold px-3 py-1 rounded-full' 
-                        : 'text-neutral-400 hover:text-white px-2 py-1'
-                    }`}
-                  >
-                    {item}
-                  </button>
-                );
-              })}
-            </div>
+        <div className="bg-[#0c0c0c] px-5 py-3 flex items-center justify-between border-b border-neutral-900">
+          <div className="flex items-center gap-1.5 w-full justify-between">
+            {intervals.map((item) => {
+              const active = range === item;
+              return (
+                <button
+                  key={item}
+                  onClick={() => setRange(item)}
+                  className={`text-[10px] font-mono transition-all cursor-pointer select-none text-center ${
+                    active 
+                      ? 'bg-white text-black font-extrabold px-3 py-1 rounded-full' 
+                      : 'text-neutral-400 hover:text-white px-2 py-1'
+                  }`}
+                >
+                  {item}
+                </button>
+              );
+            })}
           </div>
-        )}
+        </div>
 
         {/* Beautiful Apple Stock styled financial stats grid panel */}
         <div className="bg-[#0f0f0f] border-t border-neutral-900 p-5 grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-3 font-mono text-[10px]">

@@ -852,6 +852,7 @@ app.get("/api/stock-history", async (req, res) => {
       yahooRange = "1d";
       yahooInterval = "5m";
       break;
+    case "5d":
     case "1w":
       yahooRange = "5d";
       yahooInterval = "15m";
