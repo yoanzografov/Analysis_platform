@@ -729,9 +729,9 @@ app.get("/api/fear-greed", async (req, res) => {
         const timestamp = fnG.timestamp || new Date().toISOString();
         
         const previous_close = fnG.previous_close !== undefined ? Math.round(fnG.previous_close) : null;
-        const one_week_ago = fnG.one_week_ago !== undefined ? Math.round(fnG.one_week_ago) : null;
-        const one_month_ago = fnG.one_month_ago !== undefined ? Math.round(fnG.one_month_ago) : null;
-        const one_year_ago = fnG.one_year_ago !== undefined ? Math.round(fnG.one_year_ago) : null;
+        const one_week_ago = fnG.previous_1_week !== undefined ? Math.round(fnG.previous_1_week) : null;
+        const one_month_ago = fnG.previous_1_month !== undefined ? Math.round(fnG.previous_1_month) : null;
+        const one_year_ago = fnG.previous_1_year !== undefined ? Math.round(fnG.previous_1_year) : null;
 
         return res.json({
           score,

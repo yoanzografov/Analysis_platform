@@ -563,6 +563,11 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                       <span style={{ color: getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).colorHex }}>
                         {fngData?.previous_close ?? '—'}
                       </span>
+                      {fngData?.previous_close_rating && (
+                        <span className="text-stone-400 font-normal text-[8px]">
+                          ({getRatingInfo(fngData.previous_close_rating, fngData.previous_close).eng})
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -572,6 +577,11 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                       <span style={{ color: getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).colorHex }}>
                         {fngData?.one_week_ago ?? '—'}
                       </span>
+                      {fngData?.one_week_ago_rating && (
+                        <span className="text-stone-400 font-normal text-[8px]">
+                          ({getRatingInfo(fngData.one_week_ago_rating, fngData.one_week_ago).eng})
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -581,6 +591,11 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                       <span style={{ color: getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).colorHex }}>
                         {fngData?.one_month_ago ?? '—'}
                       </span>
+                      {fngData?.one_month_ago_rating && (
+                        <span className="text-stone-400 font-normal text-[8px]">
+                          ({getRatingInfo(fngData.one_month_ago_rating, fngData.one_month_ago).eng})
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -590,6 +605,11 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                       <span style={{ color: getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).colorHex }}>
                         {fngData?.one_year_ago ?? '—'}
                       </span>
+                      {fngData?.one_year_ago_rating && (
+                        <span className="text-stone-400 font-normal text-[8px]">
+                          ({getRatingInfo(fngData.one_year_ago_rating, fngData.one_year_ago).eng})
+                        </span>
+                      )}
                     </div>
                   </div>
 
