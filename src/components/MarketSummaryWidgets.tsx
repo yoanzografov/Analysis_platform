@@ -47,41 +47,82 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     if (isManual) setRefreshing(true);
     else setLoading(true);
     
+    // Helper to format ratings
+    const getRatingForScore = (s: number) => {
+      if (s <= 25) return 'extreme fear';
+      if (s <= 45) return 'fear';
+      if (s <= 55) return 'neutral';
+      if (s <= 75) return 'greed';
+      return 'extreme greed';
+    };
+
     try {
-      const res = await fetch('/api/fear-greed');
-      if (res.ok) {
-        const data = await res.json();
-        setFngData(data);
-      } else {
-        throw new Error('Неуспешно взимане на данни');
+      let dataLoaded = false;
+
+      // Try fetching directly from the public feargreedchart API first (useful for static pages like GitHub Pages)
+      try {
+        const publicRes = await fetch('https://feargreedchart.com/api/', {
+          mode: 'cors'
+        });
+        if (publicRes.ok) {
+          const publicData = await publicRes.json();
+          const recent = publicData?.recent || [];
+          const len = recent.length;
+          if (len > 0) {
+            const score = Math.round(recent[len - 1].score);
+            
+            const previous_close = len >= 2 ? Math.round(recent[len - 2].score) : null;
+            const one_week_ago = len >= 6 ? Math.round(recent[len - 6].score) : null;
+            const one_month_ago = len >= 22 ? Math.round(recent[len - 22].score) : null;
+            const one_year_ago = len >= 253 ? Math.round(recent[len - 253].score) : null;
+
+            setFngData({
+              score,
+              rating: getRatingForScore(score),
+              timestamp: new Date().toISOString(),
+              previous_close,
+              previous_close_rating: previous_close !== null ? getRatingForScore(previous_close) : null,
+              one_week_ago,
+              one_week_ago_rating: one_week_ago !== null ? getRatingForScore(one_week_ago) : null,
+              one_month_ago,
+              one_month_ago_rating: one_month_ago !== null ? getRatingForScore(one_month_ago) : null,
+              one_year_ago,
+              one_year_ago_rating: one_year_ago !== null ? getRatingForScore(one_year_ago) : null,
+              isFallback: false
+            });
+            dataLoaded = true;
+          }
+        }
+      } catch (e) {
+        console.log("Direct public Fear & Greed fetch failed, using backend proxy fallback:", e);
+      }
+
+      if (!dataLoaded) {
+        // Fallback to Express backend proxy
+        const res = await fetch('/api/fear-greed');
+        if (res.ok) {
+          const data = await res.json();
+          setFngData(data);
+        } else {
+          throw new Error('Неуспешно взимане на данни');
+        }
       }
     } catch (err) {
       console.warn('Failed to load CNN Fear & Greed API, using dynamic client fallback:', err);
       
       const now = new Date();
-      // Simple seasonal cycle wave representing market mood (ranges from 44 to 64)
       const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
       const baseScore = Math.round(54 + 10 * Math.sin(dayOfYear / 12));
       
-      // Adjust fallback score based on average daily change of current stocks list
       let stockAdjustment = 0;
       const validStocks = stocks.filter(s => s.dailyChangePct !== null && !isNaN(s.dailyChangePct));
       if (validStocks.length > 0) {
         const avgChange = validStocks.reduce((acc, s) => acc + s.dailyChangePct, 0) / validStocks.length;
-        // 1% average change scales to +/- 6 points
         stockAdjustment = avgChange * 6;
       }
       
       let score = Math.round(baseScore + stockAdjustment);
       score = Math.max(15, Math.min(85, score));
-      
-      const getRatingForScore = (s: number) => {
-        if (s <= 25) return 'extreme fear';
-        if (s <= 45) return 'fear';
-        if (s <= 55) return 'neutral';
-        if (s <= 75) return 'greed';
-        return 'extreme greed';
-      };
 
       setFngData({
         score,
@@ -432,155 +473,127 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           const needleRotation = (currentScore - 50) * 1.8;
 
           return (
-            <div className="flex flex-col flex-1 justify-center space-y-1">
-              {/* Speedometer Gauge SVG */}
-              <div className="relative w-full flex items-center justify-center">
-                <svg viewBox="0 0 200 120" className="w-full max-w-[275px] h-auto select-none">
-                  <defs>
-                    <filter id="hubShadow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.12" floodColor="#000000" />
-                    </filter>
-                  </defs>
+            <div className="flex flex-col flex-1 justify-between h-[215px] pt-1">
+              <div className="flex items-center justify-between gap-4 flex-1">
+                {/* Speedometer Gauge SVG */}
+                <div className="relative w-[50%] flex items-center justify-center select-none">
+                  <svg viewBox="0 0 200 120" className="w-full max-w-[130px] h-auto">
+                    <defs>
+                      <filter id="hubShadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="1" stdDeviation="1" floodOpacity="0.1" floodColor="#000000" />
+                      </filter>
+                    </defs>
 
-                  {/* 5 Semicircular segments/wedges */}
-                  {[0, 1, 2, 3, 4].map((idx) => {
-                    const state = getSegmentState(idx);
-                    return (
-                      <path
-                        key={idx}
-                        d={getSegmentPath(idx * 20, (idx + 1) * 20, 65, 90)}
-                        fill={state.fill}
-                        stroke={state.stroke}
-                        strokeWidth={state.active ? 1.2 : 0.6}
-                        className="transition-all duration-300"
-                      />
-                    );
-                  })}
+                    {/* 5 Semicircular segments/wedges */}
+                    {[0, 1, 2, 3, 4].map((idx) => {
+                      const state = getSegmentState(idx);
+                      return (
+                        <path
+                          key={idx}
+                          d={getSegmentPath(idx * 20, (idx + 1) * 20, 65, 90)}
+                          fill={state.fill}
+                          stroke={state.stroke}
+                          strokeWidth={state.active ? 1.2 : 0.6}
+                          className="transition-all duration-300"
+                        />
+                      );
+                    })}
 
-                  {/* Segment labels */}
-                  {/* Extreme Fear */}
-                  <g className="transition-all duration-300">
+                    {/* Inner dotted arc for scale */}
+                    <path
+                      d="M 44 92 A 56 56 0 0 1 156 92"
+                      fill="none"
+                      stroke="#cccccc"
+                      strokeWidth="0.8"
+                      strokeDasharray="0.5 3"
+                      strokeLinecap="round"
+                    />
+
+                    {/* Scale Numeric Ticks */}
+                    <text x="54" y="100" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">0</text>
+                    <text x="100" y="52" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">50</text>
+                    <text x="146" y="100" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">100</text>
+
+                    {/* Sleek needle pointing to the current score */}
+                    <line
+                      x1="100"
+                      y1="92"
+                      x2="100"
+                      y2="36"
+                      stroke="#1c1917"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      transform={`rotate(${needleRotation} 100 92)`}
+                      className="transition-transform duration-500 ease-out"
+                    />
+
+                    {/* Center circular hub with drop shadow */}
+                    <circle
+                      cx="100"
+                      cy="92"
+                      r="18"
+                      fill="#ffffff"
+                      filter="url(#hubShadow)"
+                    />
+
+                    {/* Score text inside the center hub */}
                     <text
+                      x="100"
+                      y="98"
                       textAnchor="middle"
-                      transform={`translate(${getPoint(80, 10).x.toFixed(2)}, ${getPoint(80, 10).y.toFixed(2)}) rotate(-72)`}
-                      className="text-[4.8px] font-sans font-black tracking-tight"
-                      fill={getSegmentState(0).text}
+                      className="text-[15px] font-sans font-black fill-[#1c1917] tracking-tighter"
                     >
-                      EXTREME
+                      {currentScore}
                     </text>
-                    <text
-                      textAnchor="middle"
-                      transform={`translate(${getPoint(71, 10).x.toFixed(2)}, ${getPoint(71, 10).y.toFixed(2)}) rotate(-72)`}
-                      className="text-[4.8px] font-sans font-black tracking-tight"
-                      fill={getSegmentState(0).text}
-                    >
-                      FEAR
-                    </text>
-                  </g>
+                  </svg>
+                </div>
 
-                  {/* Fear */}
-                  <text
-                    textAnchor="middle"
-                    transform={`translate(${getPoint(75.5, 30).x.toFixed(2)}, ${getPoint(75.5, 30).y.toFixed(2)}) rotate(-36)`}
-                    className="text-[5.5px] font-sans font-black tracking-tight"
-                    fill={getSegmentState(1).text}
-                  >
-                    FEAR
-                  </text>
+                {/* Historical Scores List */}
+                <div className="w-[50%] flex flex-col gap-1.5 font-mono text-[9px] pr-1">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-1">
+                    <span className="text-stone-400 font-bold tracking-tight">ПРЕД. ЗАТВОР</span>
+                    <div className="flex items-center gap-1 font-extrabold text-[10px]">
+                      <span style={{ color: getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).colorHex }}>
+                        {fngData?.previous_close ?? '—'}
+                      </span>
+                    </div>
+                  </div>
 
-                  {/* Neutral */}
-                  <text
-                    textAnchor="middle"
-                    transform={`translate(${getPoint(75.5, 50).x.toFixed(2)}, ${getPoint(75.5, 50).y.toFixed(2)}) rotate(0)`}
-                    className="text-[5.5px] font-sans font-black tracking-tight"
-                    fill={getSegmentState(2).text}
-                  >
-                    NEUTRAL
-                  </text>
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-1">
+                    <span className="text-stone-400 font-bold tracking-tight">ПРЕДИ 1 СЕД.</span>
+                    <div className="flex items-center gap-1 font-extrabold text-[10px]">
+                      <span style={{ color: getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).colorHex }}>
+                        {fngData?.one_week_ago ?? '—'}
+                      </span>
+                    </div>
+                  </div>
 
-                  {/* Greed */}
-                  <text
-                    textAnchor="middle"
-                    transform={`translate(${getPoint(75.5, 70).x.toFixed(2)}, ${getPoint(75.5, 70).y.toFixed(2)}) rotate(36)`}
-                    className="text-[5.5px] font-sans font-black tracking-tight"
-                    fill={getSegmentState(3).text}
-                  >
-                    GREED
-                  </text>
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-1">
+                    <span className="text-stone-400 font-bold tracking-tight">ПРЕДИ 1 МЕС.</span>
+                    <div className="flex items-center gap-1 font-extrabold text-[10px]">
+                      <span style={{ color: getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).colorHex }}>
+                        {fngData?.one_month_ago ?? '—'}
+                      </span>
+                    </div>
+                  </div>
 
-                  {/* Extreme Greed */}
-                  <g className="transition-all duration-300">
-                    <text
-                      textAnchor="middle"
-                      transform={`translate(${getPoint(80, 90).x.toFixed(2)}, ${getPoint(80, 90).y.toFixed(2)}) rotate(72)`}
-                      className="text-[4.8px] font-sans font-black tracking-tight"
-                      fill={getSegmentState(4).text}
-                    >
-                      EXTREME
-                    </text>
-                    <text
-                      textAnchor="middle"
-                      transform={`translate(${getPoint(71, 90).x.toFixed(2)}, ${getPoint(71, 90).y.toFixed(2)}) rotate(72)`}
-                      className="text-[4.8px] font-sans font-black tracking-tight"
-                      fill={getSegmentState(4).text}
-                    >
-                      GREED
-                    </text>
-                  </g>
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-1">
+                    <span className="text-stone-400 font-bold tracking-tight">ПРЕДИ 1 ГОД.</span>
+                    <div className="flex items-center gap-1 font-extrabold text-[10px]">
+                      <span style={{ color: getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).colorHex }}>
+                        {fngData?.one_year_ago ?? '—'}
+                      </span>
+                    </div>
+                  </div>
 
-                  {/* Inner dotted arc for scale */}
-                  <path
-                    d="M 44 92 A 56 56 0 0 1 156 92"
-                    fill="none"
-                    stroke="#cccccc"
-                    strokeWidth="1"
-                    strokeDasharray="0.5 3"
-                    strokeLinecap="round"
-                  />
-
-                  {/* Scale Numeric Ticks */}
-                  <text x="54" y="100" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">0</text>
-                  <text x="67.5" y="63" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">25</text>
-                  <text x="100" y="52" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">50</text>
-                  <text x="132.5" y="63" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">75</text>
-                  <text x="146" y="100" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">100</text>
-
-                  {/* Sleek needle pointing to the current score */}
-                  <line
-                    x1="100"
-                    y1="92"
-                    x2="100"
-                    y2="36"
-                    stroke="#1c1917"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    transform={`rotate(${needleRotation} 100 92)`}
-                    className="transition-transform duration-500 ease-out"
-                  />
-
-                  {/* Center circular hub with drop shadow */}
-                  <circle
-                    cx="100"
-                    cy="92"
-                    r="20"
-                    fill="#ffffff"
-                    filter="url(#hubShadow)"
-                  />
-
-                  {/* Score text inside the center hub */}
-                  <text
-                    x="100"
-                    y="98"
-                    textAnchor="middle"
-                    className="text-[16px] font-sans font-black fill-[#1c1917] tracking-tighter"
-                  >
-                    {currentScore}
-                  </text>
-                </svg>
+                  <div className="mt-1 text-center py-0.5 px-1 bg-stone-50 border border-stone-100 text-stone-700 font-extrabold text-[8px] uppercase tracking-wide">
+                    Текущо: <span style={{ color: currentInfo.colorHex }} className="font-black">{currentInfo.label}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Timestamp status footer */}
-              <div className="border-t border-[#141414]/10 pt-1.5 text-[8px] font-mono text-gray-500 uppercase tracking-tight flex items-center justify-between">
+              <div className="border-t border-[#141414]/10 pt-1.5 text-[8px] font-mono text-gray-500 uppercase tracking-tight flex items-center justify-between shrink-0">
                 <span>Обновено: {fngData ? new Date(fngData.timestamp).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' }) : 'N/A'} ч.</span>
                 <span className="font-extrabold text-stone-700 underline">CNN Business Live</span>
               </div>

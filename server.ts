@@ -723,14 +723,11 @@ app.get("/api/fear-greed", async (req, res) => {
 
     if (response.ok) {
       const data = await response.json() as any;
-      const scoreVal = data?.score?.score;
-      if (scoreVal !== undefined) {
-        const score = Math.round(scoreVal);
+      const recent = data?.recent || [];
+      const len = recent.length;
+      if (len > 0) {
+        const score = Math.round(recent[len - 1].score);
         const rating = getRatingForScore(score);
-        
-        // Fetch historical scores from the 'recent' array
-        const recent = data?.recent || [];
-        const len = recent.length;
         
         const previous_close = len >= 2 ? Math.round(recent[len - 2].score) : null;
         const one_week_ago = len >= 6 ? Math.round(recent[len - 6].score) : null;
