@@ -340,6 +340,16 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const priceChangePct = startPrice > 0 ? (priceChange / startPrice) * 100 : 0;
   const isUp = priceChange >= 0;
 
+  // overall performance color of the active timeframe
+  const timeframeIsUp = useMemo(() => {
+    if (points.length < 2) return true;
+    return points[points.length - 1].price >= points[0].price;
+  }, [points]);
+
+  const themeColor = timeframeIsUp ? '#10b981' : '#ef4444';
+
+
+
   // Overall stock status
   const currentIntervalColor = isUp ? '#10b981' : '#ef4444';
   const currentIntervalTextClass = isUp ? 'text-[#10b981]' : 'text-[#ef4444]';
@@ -472,69 +482,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     return `${currencySymbol}${formatted}`;
   };
 
-  const getTradingViewSymbol = () => {
-    const t = stock.ticker.trim().toUpperCase();
-    if (t.startsWith("EPA:")) {
-      return `EURONEXT:${t.replace("EPA:", "")}`;
-    }
-    if (t.startsWith("ETR:")) {
-      return `XETRA:${t.replace("ETR:", "")}`;
-    }
-    if (t.startsWith("STO:")) {
-      return `OMXSTO:${t.replace("STO:", "")}`;
-    }
-    if (t.startsWith("SWX:")) {
-      return `SIX:${t.replace("SWX:", "")}`;
-    }
-    // Default indices or US
-    if (t.startsWith("^")) {
-      if (t === "^GSPC") return "SPY";
-      if (t === "^NDX") return "QQQ";
-      if (t === "^DJI") return "DIA";
-      return t.replace("^", "");
-    }
-    return t;
-  };
 
-  const tvSymbol = getTradingViewSymbol();
-  const getSymbolWithRange = () => {
-    const r = range.toUpperCase();
-    let rangeSuffix = '12M'; // Default 1Y
-    if (r === '1D') rangeSuffix = '1D';
-    else if (r === '5D') rangeSuffix = '5D';
-    else if (r === '1M') rangeSuffix = '1M';
-    else if (r === 'YTD') rangeSuffix = 'YTD';
-    else if (r === '1Y') rangeSuffix = '12M';
-    else if (r === '3Y') rangeSuffix = '36M';
-    else if (r === '5Y') rangeSuffix = '60M';
-    else if (r === '10Y') rangeSuffix = '120M';
-    else if (r === 'MAX') rangeSuffix = 'ALL';
-    
-    return `${tvSymbol}|${rangeSuffix}`;
-  };
-
-  const tvWidgetUrl = `https://s.tradingview.com/embed-widget/symbol-overview/?locale=bg#${encodeURIComponent(JSON.stringify({
-    symbols: [[stock.companyName, getSymbolWithRange()]],
-    chartOnly: true,
-    width: "100%",
-    height: "100%",
-    colorTheme: "dark",
-    locale: "bg",
-    chartType: "area",
-    autosize: true,
-    fontFamily: "monospace",
-    dateRanges: [
-      "1d|5",
-      "5d|15",
-      "1m|30",
-      "ytd|1D",
-      "12m|1D",
-      "36m|1D",
-      "60m|1D",
-      "120m|1W",
-      "all|1M"
-    ]
-  }))}`;
 
   return (
     <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 backdrop-blur-xs transition-all animate-fade-in">
@@ -599,66 +547,180 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           </span>
         </div>
 
-        {/* Interactivity Area / TradingView Chart with Custom Drag-to-Measure Overlay */}
+        {/* Interactivity Area / Custom Vector SVG Chart (Apple Stock Style) */}
         <div className="p-4 bg-[#0a0a0a] relative select-none">
-          <div className="relative w-full h-[240px]">
-            {/* The TradingView Iframe */}
-            <iframe
-              src={tvWidgetUrl}
-              className="w-full h-full border-0"
-              title={`TradingView Live Chart for ${stock.ticker}`}
-              allowFullScreen
-            />
-
-            {/* Transparent Overlay for capturing drag and selection mouse events */}
-            {points && points.length > 0 && (
-              <div
-                className="absolute inset-0 cursor-crosshair"
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseLeave}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                onClick={handleSvgClick}
+          {loading ? (
+            <div className="h-[240px] flex flex-col items-center justify-center text-center text-stone-500 font-mono gap-2">
+              <div className="w-6 h-6 border-2 border-[#10b981] border-t-transparent rounded-full animate-spin" />
+              <span>Зареждане на исторически данни от Yahoo Finance...</span>
+            </div>
+          ) : error ? (
+            <div className="h-[240px] flex flex-col items-center justify-center text-center text-red-500 font-mono p-4">
+              <span>Грешка: {error}</span>
+            </div>
+          ) : points.length === 0 ? (
+            <div className="h-[240px] flex items-center justify-center text-stone-500">
+              Няма данни за изобразяване
+            </div>
+          ) : (
+            <div 
+              className="relative cursor-crosshair w-full"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onClick={handleSvgClick}
+            >
+              <svg 
+                ref={svgRef}
+                viewBox={`0 0 ${width} ${height}`} 
+                className="w-full h-[240px] overflow-visible"
               >
-                {/* Visual Selection Area Overlay on top of the iframe */}
-                {hasRangeSelection && points[rangeStartIdx] && points[rangeEndIdx] && (
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none"
-                    style={{
-                      left: `${(points[rangeStartIdx].x / width) * 100}%`,
-                      width: `${((points[rangeEndIdx].x - points[rangeStartIdx].x) / width) * 100}%`,
-                      backgroundColor: priceChange >= 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
-                      borderLeft: `1px dashed ${currentIntervalColor}`,
-                      borderRight: `1px dashed ${currentIntervalColor}`,
-                    }}
-                  >
-                    {/* Floating Percentage Change Pill directly over the chart */}
-                    <div
-                      className="absolute top-4 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-xs text-[9px] font-bold text-white font-mono"
-                      style={{
-                        backgroundColor: priceChange >= 0 ? '#15803d' : '#b91c1c',
-                      }}
-                    >
-                      {priceChange >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
-                    </div>
-                  </div>
-                )}
+                <defs>
+                  {/* Dynamic Color Area Gradients */}
+                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={themeColor} stopOpacity={0.25} />
+                    <stop offset="100%" stopColor={themeColor} stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
 
-                {/* Hover vertical timeline marker overlay */}
-                {hoverIdx !== null && points[hoverIdx] && !hasRangeSelection && (
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none border-l border-dashed border-neutral-500/40"
-                    style={{
-                      left: `${(points[hoverIdx].x / width) * 100}%`,
-                    }}
+                {/* Baseline representing start price of the timeframe */}
+                <line 
+                  x1={0} 
+                  y1={points[0].y} 
+                  x2={width} 
+                  y2={points[0].y} 
+                  stroke="rgba(255, 255, 255, 0.08)" 
+                  strokeWidth={1} 
+                  strokeDasharray="2, 4"
+                />
+
+                {/* Range Selection Highlight Background Backdrop */}
+                {hasRangeSelection && points[rangeStartIdx] && points[rangeEndIdx] && (
+                  <rect 
+                    x={points[rangeStartIdx].x}
+                    y={0}
+                    width={points[rangeEndIdx].x - points[rangeStartIdx].x}
+                    height={height}
+                    fill={isUp ? 'rgba(16, 185, 129, 0.06)' : 'rgba(239, 68, 68, 0.06)'}
                   />
                 )}
-              </div>
-            )}
-          </div>
+
+                {/* Chart Area Fill */}
+                <path d={areaPath} fill="url(#areaGrad)" />
+
+                {/* Main Stroke Line */}
+                <path 
+                  d={linePath} 
+                  fill="none" 
+                  stroke={themeColor} 
+                  strokeWidth={2.0} 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                />
+
+                {/* Range Selection Borders and Pins */}
+                {hasRangeSelection && points[rangeStartIdx] && points[rangeEndIdx] && (
+                  <>
+                    <line 
+                      x1={points[rangeStartIdx].x} 
+                      y1={0} 
+                      x2={points[rangeStartIdx].x} 
+                      y2={height} 
+                      stroke={themeColor} 
+                      strokeWidth={1.2} 
+                      strokeDasharray="3, 3"
+                    />
+                    <line 
+                      x1={points[rangeEndIdx].x} 
+                      y1={0} 
+                      x2={points[rangeEndIdx].x} 
+                      y2={height} 
+                      stroke={themeColor} 
+                      strokeWidth={1.2} 
+                      strokeDasharray="3, 3"
+                    />
+                    <circle 
+                      cx={points[rangeStartIdx].x} 
+                      cy={points[rangeStartIdx].y} 
+                      r={4.0} 
+                      fill="#0a0a0a" 
+                      stroke={themeColor} 
+                      strokeWidth={2} 
+                    />
+                    <circle 
+                      cx={points[rangeEndIdx].x} 
+                      cy={points[rangeEndIdx].y} 
+                      r={4.0} 
+                      fill="#0a0a0a" 
+                      stroke={themeColor} 
+                      strokeWidth={2} 
+                    />
+
+                    {/* Floating percentage change label directly inside the chart */}
+                    <g>
+                      <rect
+                        x={((points[rangeStartIdx].x + points[rangeEndIdx].x) / 2) - 26}
+                        y={10}
+                        width={52}
+                        height={15}
+                        rx={2}
+                        fill={priceChange >= 0 ? '#15803d' : '#b91c1c'}
+                      />
+                      <text
+                        x={(points[rangeStartIdx].x + points[rangeEndIdx].x) / 2}
+                        y={21}
+                        fill="#ffffff"
+                        fontSize={8.5}
+                        fontWeight="bold"
+                        textAnchor="middle"
+                        fontFamily="monospace"
+                      >
+                        {priceChange >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
+                      </text>
+                    </g>
+                  </>
+                )}
+
+                {/* Single Hover Tracker Pin and Line */}
+                {hoverIdx !== null && points[hoverIdx] && !hasRangeSelection && (
+                  <>
+                    <line 
+                      x1={points[hoverIdx].x} 
+                      y1={0} 
+                      x2={points[hoverIdx].x} 
+                      y2={height} 
+                      stroke="rgba(255,255,255,0.25)" 
+                      strokeWidth={1.0} 
+                      strokeDasharray="2, 2"
+                    />
+                    <circle 
+                      cx={points[hoverIdx].x} 
+                      cy={points[hoverIdx].y} 
+                      r={4.5} 
+                      fill="#fff" 
+                      stroke={themeColor} 
+                      strokeWidth={1.8} 
+                    />
+                  </>
+                )}
+
+                {/* Horizontal dotted ticks line at the bottom */}
+                <line 
+                  x1={0} 
+                  y1={height} 
+                  x2={width} 
+                  y2={height} 
+                  stroke="rgba(255,255,255,0.1)" 
+                  strokeWidth={1} 
+                  strokeDasharray="1, 4"
+                />
+              </svg>
+            </div>
+          )}
         </div>
 
         {/* Timeline selection row pills exactly styled like Apple Stock */}
