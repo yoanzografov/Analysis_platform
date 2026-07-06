@@ -26,7 +26,14 @@ function formatMarketCap(val: number | string | undefined | null): string {
 }
 
 // Generate simulated history when backend is not reachable (e.g. static hosting on GitHub Pages)
-function generateClientSimulatedHistory(ticker: string, range: string, currentPrice: number) {
+function generateClientSimulatedHistory(
+  ticker: string, 
+  range: string, 
+  currentPrice: number,
+  dailyChangePct = 0,
+  low52: number | null = null,
+  high52: number | null = null
+) {
   let numPoints = 100;
   let intervalMs = 24 * 60 * 60 * 1000;
   const now = new Date();
@@ -36,7 +43,7 @@ function generateClientSimulatedHistory(ticker: string, range: string, currentPr
       numPoints = 78;
       intervalMs = 5 * 60 * 1000;
       break;
-    case "1w":
+    case "5d":
       numPoints = 130;
       intervalMs = 15 * 60 * 1000;
       break;
@@ -83,21 +90,64 @@ function generateClientSimulatedHistory(ticker: string, range: string, currentPr
   const prices: number[] = new Array(numPoints);
   const timestamps: number[] = new Array(numPoints);
   
+  // Seed based on ticker to keep shape consistent per symbol
   let seed = ticker.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  let tempPrice = currentPrice;
-
-  for (let i = numPoints - 1; i >= 0; i--) {
-    prices[i] = parseFloat(tempPrice.toFixed(2));
+  
+  // Trend is based on dailyChangePct or ticker seed
+  const trendDirection = dailyChangePct !== 0 
+    ? (dailyChangePct > 0 ? 1 : -1) 
+    : ((seed % 3) - 1); // fallback: -1, 0, 1
+  
+  let rawPrices: number[] = [];
+  
+  for (let i = 0; i < numPoints; i++) {
     timestamps[i] = Math.round((now.getTime() - (numPoints - 1 - i) * intervalMs) / 1000);
-
+    
+    // Wave parameters (yearly, quarterly, monthly cycles)
+    const angleYear = (i / numPoints) * 2 * Math.PI;
+    const angleQuarter = (i / numPoints) * 8 * Math.PI;
+    const angleMonth = (i / numPoints) * 24 * Math.PI;
+    
+    // Deterministic waves
+    const w1 = Math.sin(angleYear + (seed % 5)) * 0.12;
+    const w2 = Math.cos(angleQuarter + (seed % 3)) * 0.05;
+    const w3 = Math.sin(angleMonth + (seed % 7)) * 0.02;
+    
+    // Bounded progress trend
+    const progress = i / (numPoints - 1 || 1);
+    const trend = progress * trendDirection * 0.10;
+    
+    // Random noise
     seed = (seed * 9301 + 49297) % 233280;
-    const rnd = (seed / 233280) - 0.5;
+    const noise = (seed / 233280 - 0.5) * 0.015;
+    
+    const multiplier = 1 + w1 + w2 + w3 + trend + noise;
+    rawPrices.push(currentPrice * multiplier);
+  }
+  
+  // Adjust and scale raw prices so the final price matches currentPrice,
+  // and clamp between low52 and high52
+  const finalRawPrice = rawPrices[rawPrices.length - 1] || currentPrice;
+  const ratio = currentPrice / finalRawPrice;
+  
+  for (let i = 0; i < numPoints; i++) {
+    let p = rawPrices[i] * ratio;
+    
+    // Bounding check using 52 week low/high limits if defined
+    if (low52 !== null && p < low52) {
+      p = low52 + (Math.random() * 0.02 * low52);
+    }
+    if (high52 !== null && p > high52) {
+      p = high52 - (Math.random() * 0.02 * high52);
+    }
+    if (p < 0.01) p = 0.01;
+    
+    prices[i] = parseFloat(p.toFixed(2));
+  }
 
-    const variance = currentPrice * 0.015;
-    const drift = currentPrice * 0.0008;
-
-    tempPrice = tempPrice - (rnd * variance + drift);
-    if (tempPrice < 1) tempPrice = 1;
+  // Ensure last point is exactly currentPrice
+  if (prices.length > 0) {
+    prices[prices.length - 1] = currentPrice;
   }
 
   return { timestamps, prices };
@@ -128,7 +178,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/stock-history?ticker=${stock.ticker}&range=${range}&currentPrice=${stock.currentPrice}`);
+        const res = await fetch(`/api/stock-history?ticker=${stock.ticker}&range=${range}&currentPrice=${stock.currentPrice}&dailyChange=${stock.dailyChangePct}&low52=${stock.low52 || ''}&high52=${stock.high52 || ''}`);
         if (!res.ok) {
           throw new Error('Неуспешно извличане на пазарните данни');
         }
@@ -138,7 +188,14 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         }
       } catch (err: any) {
         console.warn(`Failed to fetch history for ${stock.ticker}, falling back to client simulation:`, err);
-        const fallbackData = generateClientSimulatedHistory(stock.ticker, range, stock.currentPrice);
+        const fallbackData = generateClientSimulatedHistory(
+          stock.ticker, 
+          range, 
+          stock.currentPrice, 
+          stock.dailyChangePct, 
+          stock.low52, 
+          stock.high52
+        );
         if (active) {
           setData(fallbackData);
           setError(null); // Clear error because we loaded fallback data

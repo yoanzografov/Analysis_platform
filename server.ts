@@ -818,6 +818,9 @@ app.get("/api/stock-history", async (req, res) => {
   const ticker = req.query.ticker as string;
   const range = (req.query.range as string || "1y").toLowerCase();
   const currentPriceQuery = req.query.currentPrice ? parseFloat(req.query.currentPrice as string) : null;
+  const dailyChangeQuery = req.query.dailyChange ? parseFloat(req.query.dailyChange as string) : 0;
+  const low52Query = req.query.low52 ? parseFloat(req.query.low52 as string) : null;
+  const high52Query = req.query.high52 ? parseFloat(req.query.high52 as string) : null;
 
   if (!ticker) {
     return res.status(400).json({ error: "Липсва символ (ticker)" });
@@ -956,7 +959,14 @@ app.get("/api/stock-history", async (req, res) => {
 
   } catch (error: any) {
     console.log(`Инфо: Генериране на симулирана история за ${ticker} (${range}) поради: ${error.message}`);
-    const simulated = generateSimulatedHistory(ticker, range, fallbackPrice);
+    const simulated = generateSimulatedHistory(
+      ticker, 
+      range, 
+      fallbackPrice, 
+      dailyChangeQuery, 
+      low52Query, 
+      high52Query
+    );
     return res.json({
       timestamps: simulated.timestamps,
       prices: simulated.prices,
@@ -966,7 +976,14 @@ app.get("/api/stock-history", async (req, res) => {
 });
 
 // Helper for deterministic backward random walk simulated stock history
-function generateSimulatedHistory(ticker: string, range: string, currentPrice: number) {
+function generateSimulatedHistory(
+  ticker: string, 
+  range: string, 
+  currentPrice: number,
+  dailyChangePct = 0,
+  low52: number | null = null,
+  high52: number | null = null
+) {
   let numPoints = 100;
   let intervalMs = 24 * 60 * 60 * 1000;
   const now = new Date();
@@ -1023,21 +1040,64 @@ function generateSimulatedHistory(ticker: string, range: string, currentPrice: n
   const prices: number[] = new Array(numPoints);
   const timestamps: number[] = new Array(numPoints);
   
+  // Seed based on ticker to keep shape consistent per symbol
   let seed = ticker.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  let tempPrice = currentPrice;
-
-  for (let i = numPoints - 1; i >= 0; i--) {
-    prices[i] = parseFloat(tempPrice.toFixed(2));
+  
+  // Trend is based on dailyChangePct or ticker seed
+  const trendDirection = dailyChangePct !== 0 
+    ? (dailyChangePct > 0 ? 1 : -1) 
+    : ((seed % 3) - 1); // fallback: -1, 0, 1
+  
+  let rawPrices: number[] = [];
+  
+  for (let i = 0; i < numPoints; i++) {
     timestamps[i] = Math.round((now.getTime() - (numPoints - 1 - i) * intervalMs) / 1000);
-
+    
+    // Wave parameters (yearly, quarterly, monthly cycles)
+    const angleYear = (i / numPoints) * 2 * Math.PI;
+    const angleQuarter = (i / numPoints) * 8 * Math.PI;
+    const angleMonth = (i / numPoints) * 24 * Math.PI;
+    
+    // Deterministic waves
+    const w1 = Math.sin(angleYear + (seed % 5)) * 0.12;
+    const w2 = Math.cos(angleQuarter + (seed % 3)) * 0.05;
+    const w3 = Math.sin(angleMonth + (seed % 7)) * 0.02;
+    
+    // Bounded progress trend
+    const progress = i / (numPoints - 1 || 1);
+    const trend = progress * trendDirection * 0.10;
+    
+    // Random noise
     seed = (seed * 9301 + 49297) % 233280;
-    const rnd = (seed / 233280) - 0.5;
+    const noise = (seed / 233280 - 0.5) * 0.015;
+    
+    const multiplier = 1 + w1 + w2 + w3 + trend + noise;
+    rawPrices.push(currentPrice * multiplier);
+  }
+  
+  // Adjust and scale raw prices so the final price matches currentPrice,
+  // and clamp between low52 and high52
+  const finalRawPrice = rawPrices[rawPrices.length - 1] || currentPrice;
+  const ratio = currentPrice / finalRawPrice;
+  
+  for (let i = 0; i < numPoints; i++) {
+    let p = rawPrices[i] * ratio;
+    
+    // Bounding check using 52 week low/high limits if defined
+    if (low52 !== null && p < low52) {
+      p = low52 + (Math.random() * 0.02 * low52);
+    }
+    if (high52 !== null && p > high52) {
+      p = high52 - (Math.random() * 0.02 * high52);
+    }
+    if (p < 0.01) p = 0.01;
+    
+    prices[i] = parseFloat(p.toFixed(2));
+  }
 
-    const variance = currentPrice * 0.015;
-    const drift = currentPrice * 0.0008;
-
-    tempPrice = tempPrice - (rnd * variance + drift);
-    if (tempPrice < 1) tempPrice = 1;
+  // Ensure last point is exactly currentPrice
+  if (prices.length > 0) {
+    prices[prices.length - 1] = currentPrice;
   }
 
   return { timestamps, prices };
