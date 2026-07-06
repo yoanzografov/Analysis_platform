@@ -421,10 +421,10 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
         <div className="flex items-center justify-between mb-1">
           <div>
             <span className="text-[10px] text-red-600 font-sans tracking-widest block font-extrabold uppercase">
-              {fngSource === 'cnn' ? 'CNN BUSINESS REAL-TIME FEED' : 'TRADINGVIEW TECHNICAL FEED'}
+              CNN BUSINESS REAL-TIME FEED
             </span>
             <h3 className="text-sm uppercase font-extrabold text-[#141414] font-mono tracking-tight">
-              {fngSource === 'cnn' ? 'Fear & Greed Index' : 'S&P 500 Sentiment'}
+              Fear & Greed Index
             </h3>
           </div>
 
