@@ -695,9 +695,7 @@ function generateFallbackQuotes(tickers: string[]): Record<string, StockQuoteDat
   return results;
 }
 
-// Endpoint for fetching real-time CNN Fear & Greed index
 app.get("/api/fear-greed", async (req, res) => {
-  // Ratings helper for stock market Fear & Greed scores
   const getRatingForScore = (s: number) => {
     if (s <= 25) return "extreme fear";
     if (s <= 45) return "fear";
@@ -707,45 +705,46 @@ app.get("/api/fear-greed", async (req, res) => {
   };
 
   try {
-    const url = "https://feargreedchart.com/api/";
-    // Set a short timeout (e.g. 3 seconds) so we don't wait forever if the network is slow
+    const url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-        "Accept": "application/json"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://edition.cnn.com/"
       }
     });
     clearTimeout(timeoutId);
 
     if (response.ok) {
       const data = await response.json() as any;
-      const recent = data?.recent || [];
-      const len = recent.length;
-      if (len > 0) {
-        const score = Math.round(recent[len - 1].score);
-        const rating = getRatingForScore(score);
+      const fnG = data?.fear_and_greed;
+      if (fnG && fnG.score !== undefined) {
+        const score = Math.round(fnG.score);
+        const rating = fnG.rating || getRatingForScore(score);
+        const timestamp = fnG.timestamp || new Date().toISOString();
         
-        const previous_close = len >= 2 ? Math.round(recent[len - 2].score) : null;
-        const one_week_ago = len >= 6 ? Math.round(recent[len - 6].score) : null;
-        const one_month_ago = len >= 22 ? Math.round(recent[len - 22].score) : null;
-        const one_year_ago = len >= 253 ? Math.round(recent[len - 253].score) : null;
+        const previous_close = fnG.previous_close !== undefined ? Math.round(fnG.previous_close) : null;
+        const one_week_ago = fnG.one_week_ago !== undefined ? Math.round(fnG.one_week_ago) : null;
+        const one_month_ago = fnG.one_month_ago !== undefined ? Math.round(fnG.one_month_ago) : null;
+        const one_year_ago = fnG.one_year_ago !== undefined ? Math.round(fnG.one_year_ago) : null;
 
         return res.json({
           score,
           rating,
-          timestamp: new Date().toISOString(),
+          timestamp,
           previous_close,
-          previous_close_rating: previous_close !== null ? getRatingForScore(previous_close) : null,
+          previous_close_rating: fnG.previous_close_rating || (previous_close !== null ? getRatingForScore(previous_close) : null),
           one_week_ago,
-          one_week_ago_rating: one_week_ago !== null ? getRatingForScore(one_week_ago) : null,
+          one_week_ago_rating: fnG.one_week_ago_rating || (one_week_ago !== null ? getRatingForScore(one_week_ago) : null),
           one_month_ago,
-          one_month_ago_rating: one_month_ago !== null ? getRatingForScore(one_month_ago) : null,
+          one_month_ago_rating: fnG.one_month_ago_rating || (one_month_ago !== null ? getRatingForScore(one_month_ago) : null),
           one_year_ago,
-          one_year_ago_rating: one_year_ago !== null ? getRatingForScore(one_year_ago) : null,
+          one_year_ago_rating: fnG.one_year_ago_rating || (one_year_ago !== null ? getRatingForScore(one_year_ago) : null),
           isFallback: false
         });
       }

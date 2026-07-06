@@ -59,53 +59,60 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     try {
       let dataLoaded = false;
 
-      // Try fetching directly from the public feargreedchart API first (useful for static pages like GitHub Pages)
+      // 1. Try fetching from our Express backend proxy first (which now queries the official CNN dataviz API)
       try {
-        const publicRes = await fetch('https://feargreedchart.com/api/', {
-          mode: 'cors'
-        });
-        if (publicRes.ok) {
-          const publicData = await publicRes.json();
-          const recent = publicData?.recent || [];
-          const len = recent.length;
-          if (len > 0) {
-            const score = Math.round(recent[len - 1].score);
-            
-            const previous_close = len >= 2 ? Math.round(recent[len - 2].score) : null;
-            const one_week_ago = len >= 6 ? Math.round(recent[len - 6].score) : null;
-            const one_month_ago = len >= 22 ? Math.round(recent[len - 22].score) : null;
-            const one_year_ago = len >= 253 ? Math.round(recent[len - 253].score) : null;
-
-            setFngData({
-              score,
-              rating: getRatingForScore(score),
-              timestamp: new Date().toISOString(),
-              previous_close,
-              previous_close_rating: previous_close !== null ? getRatingForScore(previous_close) : null,
-              one_week_ago,
-              one_week_ago_rating: one_week_ago !== null ? getRatingForScore(one_week_ago) : null,
-              one_month_ago,
-              one_month_ago_rating: one_month_ago !== null ? getRatingForScore(one_month_ago) : null,
-              one_year_ago,
-              one_year_ago_rating: one_year_ago !== null ? getRatingForScore(one_year_ago) : null,
-              isFallback: false
-            });
-            dataLoaded = true;
-          }
-        }
-      } catch (e) {
-        console.log("Direct public Fear & Greed fetch failed, using backend proxy fallback:", e);
-      }
-
-      if (!dataLoaded) {
-        // Fallback to Express backend proxy
         const res = await fetch('/api/fear-greed');
         if (res.ok) {
           const data = await res.json();
           setFngData(data);
-        } else {
-          throw new Error('Неуспешно взимане на данни');
+          dataLoaded = true;
         }
+      } catch (e) {
+        console.log("Backend proxy fetch failed, trying direct public API:", e);
+      }
+
+      // 2. Fallback to direct public feargreedchart API (useful for static pages like GitHub Pages)
+      if (!dataLoaded) {
+        try {
+          const publicRes = await fetch('https://feargreedchart.com/api/', {
+            mode: 'cors'
+          });
+          if (publicRes.ok) {
+            const publicData = await publicRes.json();
+            const recent = publicData?.recent || [];
+            const len = recent.length;
+            if (len > 0) {
+              const score = Math.round(recent[len - 1].score);
+              
+              const previous_close = len >= 2 ? Math.round(recent[len - 2].score) : null;
+              const one_week_ago = len >= 6 ? Math.round(recent[len - 6].score) : null;
+              const one_month_ago = len >= 22 ? Math.round(recent[len - 22].score) : null;
+              const one_year_ago = len >= 253 ? Math.round(recent[len - 253].score) : null;
+
+              setFngData({
+                score,
+                rating: getRatingForScore(score),
+                timestamp: new Date().toISOString(),
+                previous_close,
+                previous_close_rating: previous_close !== null ? getRatingForScore(previous_close) : null,
+                one_week_ago,
+                one_week_ago_rating: one_week_ago !== null ? getRatingForScore(one_week_ago) : null,
+                one_month_ago,
+                one_month_ago_rating: one_month_ago !== null ? getRatingForScore(one_month_ago) : null,
+                one_year_ago,
+                one_year_ago_rating: one_year_ago !== null ? getRatingForScore(one_year_ago) : null,
+                isFallback: false
+              });
+              dataLoaded = true;
+            }
+          }
+        } catch (e) {
+          console.log("Direct public Fear & Greed fetch failed too:", e);
+        }
+      }
+
+      if (!dataLoaded) {
+        throw new Error('Неуспешно извличане на данни от всички източници');
       }
     } catch (err) {
       console.warn('Failed to load CNN Fear & Greed API, using dynamic client fallback:', err);
