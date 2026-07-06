@@ -167,7 +167,41 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const [data, setData] = useState<{ timestamps: number[]; prices: number[] } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // Determine exchange, currency and country based on ticker prefix
+  let exchangeName = 'NASDAQ';
+  let currencyCode = 'USD';
+  if (stock.ticker.startsWith("EPA:")) {
+    exchangeName = 'Euronext Paris';
+    currencyCode = 'EUR';
+  } else if (stock.ticker.startsWith("ETR:")) {
+    exchangeName = 'XETRA Frankfurt';
+    currencyCode = 'EUR';
+  } else if (stock.ticker.startsWith("STO:")) {
+    exchangeName = 'Nasdaq Stockholm';
+    currencyCode = 'SEK';
+  } else if (stock.ticker.startsWith("SWX:")) {
+    exchangeName = 'SIX Swiss Exchange';
+    currencyCode = 'CHF';
+  } else if (stock.ticker.includes("-USD") || stock.ticker.includes("BTC")) {
+    exchangeName = 'Cryptocurrency';
+    currencyCode = 'USD';
+  } else if (stock.ticker.startsWith("^")) {
+    exchangeName = 'Index';
+    currencyCode = 'Points';
+  }
 
+  const currencySymbol = currencyCode === 'EUR' ? '€' : currencyCode === 'SEK' ? ' kr' : currencyCode === 'CHF' ? ' CHF' : currencyCode === 'Points' ? '' : '$';
+  
+  const formatCurrency = (val: number | string | undefined | null) => {
+    if (val === undefined || val === null) return '—';
+    const formatted = formatNumber(val);
+    if (formatted === '—') return '—';
+    
+    if (currencyCode === 'SEK' || currencyCode === 'CHF') {
+      return `${formatted}${currencySymbol}`;
+    }
+    return `${currencySymbol}${formatted}`;
+  };
   // Interval selection options requested by the user
   const intervals = ['1D', '5D', '1M', 'YTD', '1Y', '3Y', '5Y', '10Y', 'Max'];
 
@@ -445,16 +479,27 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     return `${day} ${month} ${year} г.`;
   };
 
+  // Reference baseline price for the start of the timeframe
+  const periodStartPrice = useMemo(() => {
+    if (points.length === 0) return stock.currentPrice;
+    if (range.toLowerCase() === '1d') {
+      // For 1D, baseline is the previous close price
+      return stock.currentPrice / (1 + stock.dailyChangePct / 100);
+    }
+    // For other periods, baseline is the first price in the data array (open price of the period)
+    return points[0].price;
+  }, [points, range, stock.currentPrice, stock.dailyChangePct]);
+
   // Resolve headers data depending on user interactions
   const headerTitle = useMemo(() => {
     if (hasRangeSelection && points[rangeStartIdx] && points[rangeEndIdx]) {
-      return `$${startPrice.toFixed(2)} → $${endPrice.toFixed(2)}`;
+      return `${formatCurrency(points[rangeStartIdx].price)} → ${formatCurrency(points[rangeEndIdx].price)}`;
     }
     if (hoverIdx !== null && points[hoverIdx]) {
-      return `$${points[hoverIdx].price.toFixed(2)}`;
+      return formatCurrency(points[hoverIdx].price);
     }
-    return `$${stock.currentPrice.toFixed(2)}`;
-  }, [hasRangeSelection, hoverIdx, startPrice, endPrice, points, stock.currentPrice, rangeStartIdx, rangeEndIdx]);
+    return formatCurrency(stock.currentPrice);
+  }, [hasRangeSelection, hoverIdx, points, rangeStartIdx, rangeEndIdx, stock.currentPrice]);
 
   const headerSubtitle = useMemo(() => {
     if (hasRangeSelection && points[rangeStartIdx] && points[rangeEndIdx]) {
@@ -468,32 +513,44 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   }, [hasRangeSelection, hoverIdx, rangeStartIdx, rangeEndIdx, points, range]);
 
   const headerStatsRight = useMemo(() => {
-    let diff = priceChange;
-    let pct = priceChangePct;
-    let label = hasRangeSelection ? 'Индекс за селекция' : `Трендов период (${range})`;
+    let diff = 0;
+    let pct = 0;
+    let label = '';
 
-    if (hoverIdx !== null && points[hoverIdx] && !hasRangeSelection) {
-      const initialPrice = points[0]?.price || 0;
+    if (hasRangeSelection && points[rangeStartIdx] && points[rangeEndIdx]) {
+      const startP = points[rangeStartIdx].price;
+      const endP = points[rangeEndIdx].price;
+      diff = endP - startP;
+      pct = startP > 0 ? (diff / startP) * 100 : 0;
+      label = 'Промяна в избрания диапазон';
+    } else if (hoverIdx !== null && points[hoverIdx]) {
       const hoveredPrice = points[hoverIdx].price;
-      diff = hoveredPrice - initialPrice;
-      pct = initialPrice > 0 ? (diff / initialPrice) * 100 : 0;
-      label = 'Промяна от начало на периода';
+      diff = hoveredPrice - periodStartPrice;
+      pct = periodStartPrice > 0 ? (diff / periodStartPrice) * 100 : 0;
+      label = range.toLowerCase() === '1d' ? 'Промяна от затваряне вчера' : 'Промяна от начало на периода';
+    } else {
+      // Default: compare last price against period start price
+      const lastPrice = points.length > 0 ? points[points.length - 1].price : stock.currentPrice;
+      diff = lastPrice - periodStartPrice;
+      pct = periodStartPrice > 0 ? (diff / periodStartPrice) * 100 : 0;
+      label = range.toLowerCase() === '1d' ? 'Дневна промяна' : `Промяна за периода (${range})`;
     }
 
     const valueIsUp = diff >= 0;
     const colorClass = valueIsUp ? 'text-[#10b981]' : 'text-[#ef4444]';
+    const sign = valueIsUp ? '+' : '';
 
     return (
-      <div className="text-right">
+      <div className="text-right font-mono">
         <div className={`text-xl font-extrabold tracking-tight ${colorClass}`}>
-          {valueIsUp ? '▲' : '▼'} {Math.abs(diff).toFixed(2)} ({valueIsUp ? '+' : ''}{pct.toFixed(2)}%)
+          {valueIsUp ? '▲' : '▼'} {formatCurrency(Math.abs(diff))} ({sign}{pct.toFixed(2)}%)
         </div>
-        <div className="text-[9px] text-neutral-500 uppercase font-mono tracking-wider">
+        <div className="text-[9px] text-neutral-500 uppercase tracking-wider">
           {label}
         </div>
       </div>
     );
-  }, [hasRangeSelection, hoverIdx, points, range, priceChange, priceChangePct]);
+  }, [hasRangeSelection, hoverIdx, points, range, periodStartPrice, rangeStartIdx, rangeEndIdx, stock.currentPrice, stock.dailyChangePct]);
 
   // Mock highly accurate financial technical details styled perfectly as a grid
   const mockOpenPrice = stock.currentPrice * (1 - (stock.dailyChangePct || 0.1) / 100 * 0.4);
@@ -503,41 +560,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const mockAvgVolume = mockVolume * 1.12;
   const mockBeta = ((stock.ticker.charCodeAt(0) % 4) * 0.22 + 0.78).toFixed(2);
 
-  // Determine exchange, currency and country based on ticker prefix
-  let exchangeName = 'NASDAQ';
-  let currencyCode = 'USD';
-  if (stock.ticker.startsWith("EPA:")) {
-    exchangeName = 'Euronext Paris';
-    currencyCode = 'EUR';
-  } else if (stock.ticker.startsWith("ETR:")) {
-    exchangeName = 'XETRA Frankfurt';
-    currencyCode = 'EUR';
-  } else if (stock.ticker.startsWith("STO:")) {
-    exchangeName = 'Nasdaq Stockholm';
-    currencyCode = 'SEK';
-  } else if (stock.ticker.startsWith("SWX:")) {
-    exchangeName = 'SIX Swiss Exchange';
-    currencyCode = 'CHF';
-  } else if (stock.ticker.includes("-USD") || stock.ticker.includes("BTC")) {
-    exchangeName = 'Cryptocurrency';
-    currencyCode = 'USD';
-  } else if (stock.ticker.startsWith("^")) {
-    exchangeName = 'Index';
-    currencyCode = 'Points';
-  }
 
-  const currencySymbol = currencyCode === 'EUR' ? '€' : currencyCode === 'SEK' ? ' kr' : currencyCode === 'CHF' ? ' CHF' : currencyCode === 'Points' ? '' : '$';
-  
-  const formatCurrency = (val: number | string | undefined | null) => {
-    if (val === undefined || val === null) return '—';
-    const formatted = formatNumber(val);
-    if (formatted === '—') return '—';
-    
-    if (currencyCode === 'SEK' || currencyCode === 'CHF') {
-      return `${formatted}${currencySymbol}`;
-    }
-    return `${currencySymbol}${formatted}`;
-  };
 
 
 
