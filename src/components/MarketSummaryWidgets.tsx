@@ -25,6 +25,7 @@ interface FearGreedData {
 
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
   const [fngData, setFngData] = useState<FearGreedData | null>(null);
+  const [fngSource, setFngSource] = useState<'cnn' | 'tv'>('cnn');
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
@@ -420,23 +421,61 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
         <div className="flex items-center justify-between mb-1">
           <div>
             <span className="text-[10px] text-red-600 font-sans tracking-widest block font-extrabold uppercase">
-              CNN BUSINESS REAL-TIME FEED
+              {fngSource === 'cnn' ? 'CNN BUSINESS REAL-TIME FEED' : 'TRADINGVIEW TECHNICAL FEED'}
             </span>
             <h3 className="text-sm uppercase font-extrabold text-[#141414] font-mono tracking-tight">
-              Fear & Greed Index
+              {fngSource === 'cnn' ? 'Fear & Greed Index' : 'S&P 500 Sentiment'}
             </h3>
           </div>
-          <button 
-            onClick={() => fetchFearGreed(true)} 
-            disabled={refreshing || loading}
-            className="p-1 hover:bg-stone-100 border border-stone-300 text-stone-600 rounded-none cursor-pointer transition-colors"
-            title="Обнови в реално време"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-stone-100 p-0.5 border border-stone-200 text-[8px] font-mono font-bold">
+              <button
+                onClick={() => setFngSource('cnn')}
+                className={`px-1.5 py-0.5 cursor-pointer uppercase ${fngSource === 'cnn' ? 'bg-[#141414] text-white' : 'text-stone-500'}`}
+              >
+                CNN
+              </button>
+              <button
+                onClick={() => setFngSource('tv')}
+                className={`px-1.5 py-0.5 cursor-pointer uppercase ${fngSource === 'tv' ? 'bg-[#141414] text-white' : 'text-stone-500'}`}
+              >
+                TV
+              </button>
+            </div>
+
+            {fngSource === 'cnn' && (
+              <button 
+                onClick={() => fetchFearGreed(true)} 
+                disabled={refreshing || loading}
+                className="p-1 hover:bg-stone-100 border border-stone-300 text-stone-600 rounded-none cursor-pointer transition-colors"
+                title="Обнови в реално време"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+            )}
+          </div>
         </div>
 
-        {loading ? (
+        {fngSource === 'tv' ? (
+          <div className="h-[215px] w-full mt-1">
+            <iframe
+              src={`https://s.tradingview.com/embed-widget/technical-analysis/?locale=bg#${encodeURIComponent(JSON.stringify({
+                interval: "1D",
+                width: "100%",
+                isTransparent: true,
+                height: "100%",
+                symbol: "SP:SPX",
+                showIntervalTabs: true,
+                displayMode: "single",
+                locale: "bg",
+                colorTheme: "light"
+              }))}`}
+              className="w-full h-full border-0"
+              title="TradingView S&P 500 Technical Analysis Gauge"
+            />
+          </div>
+        ) : loading ? (
           <div className="py-12 flex flex-col items-center justify-center space-y-2 flex-1">
             <RefreshCw className="w-6 h-6 text-[#141414] animate-spin" />
             <span className="text-[10px] font-mono text-gray-500 uppercase">Зареждане на реално време от CNN...</span>
