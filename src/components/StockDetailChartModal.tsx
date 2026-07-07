@@ -302,22 +302,27 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-6"
       style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(12px)' }}
     >
       <div
-        className="relative w-full flex flex-col overflow-hidden"
+        className="relative w-full flex flex-col"
         style={{
           maxWidth: 680,
+          height: '100dvh',
           maxHeight: '96vh',
           background: '#111113',
           borderRadius: 20,
           boxShadow: '0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.07)',
           fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+          overflow: 'hidden',
         }}
       >
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-2">
+        {/* ── Sticky header (always visible, even on small phones) ── */}
+        <div
+          className="flex items-center justify-between px-5 pt-5 pb-2"
+          style={{ flexShrink: 0 }}
+        >
           <div>
             <div className="flex items-center gap-2">
               <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: -0.5 }}>
@@ -346,8 +351,8 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           </button>
         </div>
 
-        {/* ── Price display ── */}
-        <div className="px-5 pb-3">
+        {/* ── Price display (also sticky, no scroll) ── */}
+        <div className="px-5 pb-3" style={{ flexShrink: 0 }}>
           <div style={{ fontSize: 38, fontWeight: 700, color: '#fff', letterSpacing: -1, lineHeight: 1.1 }}>
             {fmtPrice(activePrice)}
           </div>
@@ -363,6 +368,9 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             </span>
           </div>
         </div>
+
+        {/* ── Scrollable body ── */}
+        <div style={{ overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch' }}>
 
         {/* ── Chart ── */}
         <div className="relative select-none" style={{ paddingLeft: 0, paddingRight: 0 }}>
@@ -599,6 +607,9 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           >
             Затвори
           </button>
+        </div>
+
+        {/* ── end scrollable body ── */}
         </div>
 
       </div>
