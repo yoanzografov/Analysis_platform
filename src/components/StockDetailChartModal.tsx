@@ -130,7 +130,7 @@ function TVChart({ symbol, tvRange, tvInterval, accentColor }: TVChartProps) {
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: 360, background: '#111113' }}
+      style={{ width: '100%', height: '55vh', minHeight: 300, background: '#111113' }}
     />
   );
 }
@@ -192,18 +192,17 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-6"
-      style={{ background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(14px)' }}
+      className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-3"
+      style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)' }}
     >
       <div
-        className="relative w-full flex flex-col"
+        className="relative w-full flex flex-col sm:rounded-2xl"
         style={{
-          maxWidth: 720,
+          maxWidth: 860,
           height: '100dvh',
-          maxHeight: '96vh',
+          maxHeight: '98vh',
           background: '#111113',
-          borderRadius: 20,
-          boxShadow: '0 32px 80px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.07)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06)',
           fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
           overflow: 'hidden',
         }}
