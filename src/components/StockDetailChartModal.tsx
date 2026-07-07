@@ -1,17 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Stock } from '../types';
 import { X } from 'lucide-react';
 import { formatDividend } from '../utils/sectorHelper';
+import {
+  createChart,
+  IChartApi,
+  ISeriesApi,
+  ColorType,
+  CrosshairMode,
+  LineStyle,
+  AreaSeries,
+  type AreaSeriesOptions,
+} from 'lightweight-charts';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Props {
   stock: Stock;
   onClose: () => void;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+interface ChartPoint {
+  time: number;
+  value: number;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const RANGES = ['1D', '5D', '1M', '3M', 'YTD', '1Y', '5Y', '10Y', 'Max'] as const;
+type Range = typeof RANGES[number];
+
+// Map range → Yahoo Finance API params
+const RANGE_PARAMS: Record<Range, { range: string; interval: string; points: number; msInterval: number }> = {
+  '1D':  { range: '1d',  interval: '5m',  points: 78,  msInterval: 5 * 60_000 },
+  '5D':  { range: '5d',  interval: '15m', points: 130, msInterval: 15 * 60_000 },
+  '1M':  { range: '1mo', interval: '1d',  points: 22,  msInterval: 86_400_000 },
+  '3M':  { range: '3mo', interval: '1d',  points: 66,  msInterval: 86_400_000 },
+  'YTD': { range: 'ytd', interval: '1d',  points: 180, msInterval: 86_400_000 },
+  '1Y':  { range: '1y',  interval: '1wk', points: 52,  msInterval: 7 * 86_400_000 },
+  '5Y':  { range: '5y',  interval: '1wk', points: 260, msInterval: 7 * 86_400_000 },
+  '10Y': { range: '10y', interval: '1mo', points: 120, msInterval: 30 * 86_400_000 },
+  'Max': { range: 'max', interval: '1mo', points: 200, msInterval: 30 * 86_400_000 },
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatMarketCap(val: number | string | undefined | null): string {
-  if (val === undefined || val === null) return '—';
+  if (val == null) return '—';
   if (typeof val === 'string') return val;
   if (val >= 1e12) return (val / 1e12).toFixed(2) + 'T';
   if (val >= 1e9)  return (val / 1e9).toFixed(2) + 'B';
@@ -19,125 +54,266 @@ function formatMarketCap(val: number | string | undefined | null): string {
   return val.toLocaleString('en-US');
 }
 
-// Map our range buttons → TradingView range + interval params
-const RANGE_MAP: Record<string, { tvRange: string; tvInterval: string }> = {
-  '1D':  { tvRange: '1D',   tvInterval: '5'  },
-  '5D':  { tvRange: '5D',   tvInterval: '15' },
-  '1M':  { tvRange: '1M',   tvInterval: 'D'  },
-  '3M':  { tvRange: '3M',   tvInterval: 'D'  },
-  'YTD': { tvRange: 'YTD',  tvInterval: 'D'  },
-  '1Y':  { tvRange: '12M',  tvInterval: 'W'  },
-  '3Y':  { tvRange: '36M',  tvInterval: 'W'  },
-  '5Y':  { tvRange: '60M',  tvInterval: 'W'  },
-  'Max': { tvRange: 'ALL',  tvInterval: 'M'  },
-};
+// Generate deterministic simulated price history for a given ticker + range
+function simulateHistory(
+  ticker: string,
+  range: Range,
+  currentPrice: number,
+  dailyChangePct: number,
+  low52: number | null,
+  high52: number | null
+): ChartPoint[] {
+  const { points, msInterval } = RANGE_PARAMS[range];
+  const now = Date.now();
+  let seed = ticker.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const lcg = () => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return (seed >>> 0) / 0xffffffff; };
 
-const RANGES = Object.keys(RANGE_MAP);
+  const trendDir = dailyChangePct !== 0 ? Math.sign(dailyChangePct) : (seed % 3) - 1;
+  const rawPrices: number[] = [];
 
-// Map our internal ticker format → TradingView exchange:symbol format
-function toTVSymbol(ticker: string): string {
-  if (ticker.startsWith('EPA:'))  return 'EURONEXT:' + ticker.slice(4);
-  if (ticker.startsWith('ETR:'))  return 'XETR:'     + ticker.slice(4);
-  if (ticker.startsWith('STO:'))  return 'OMX:'      + ticker.slice(4);
-  if (ticker.startsWith('SWX:'))  return 'SIX:'      + ticker.slice(4);
-  if (ticker === '^GSPC')         return 'SP:SPX';
-  if (ticker === '^DJI')          return 'DJ:DJI';
-  if (ticker === '^IXIC')         return 'NASDAQ:IXIC';
-  if (ticker === '^VIX')          return 'CBOE:VIX';
-  if (ticker === '^N225')         return 'INDEX:NKY';
-  if (ticker === '^FTSE')         return 'INDEX:UKX';
-  if (ticker.includes('BTC-USD')) return 'BITSTAMP:BTCUSD';
-  if (ticker.includes('ETH-USD')) return 'BITSTAMP:ETHUSD';
-  // Suffix-based fallback (e.g. AMS:, BRU:, etc.)
-  if (ticker.includes(':')) {
-    const [exch, sym] = ticker.split(':');
-    return `${exch}:${sym}`;
+  for (let i = 0; i < points; i++) {
+    const progress  = i / (points - 1);
+    const angleY    = progress * 2 * Math.PI;
+    const angleQ    = progress * 8 * Math.PI;
+    const angleM    = progress * 20 * Math.PI;
+    const w1 = Math.sin(angleY + seed % 5) * 0.10;
+    const w2 = Math.cos(angleQ + seed % 3) * 0.05;
+    const w3 = Math.sin(angleM + seed % 7) * 0.02;
+    const trend = progress * trendDir * 0.09;
+    const noise = (lcg() - 0.5) * 0.018;
+    rawPrices.push(currentPrice * (1 + w1 + w2 + w3 + trend + noise));
   }
-  return ticker;
+
+  // Scale so last point = currentPrice exactly
+  const scale = currentPrice / (rawPrices[rawPrices.length - 1] || currentPrice);
+  const result: ChartPoint[] = rawPrices.map((p, i) => {
+    let v = p * scale;
+    if (low52  && v < low52)  v = low52  + lcg() * low52  * 0.01;
+    if (high52 && v > high52) v = high52 - lcg() * high52 * 0.01;
+    if (v < 0.01) v = 0.01;
+    const ts = Math.floor((now - (points - 1 - i) * msInterval) / 1000);
+    return { time: ts, value: parseFloat(v.toFixed(2)) };
+  });
+  result[result.length - 1].value = currentPrice;
+  return result;
 }
 
-// ─── TradingView widget sub-component ────────────────────────────────────────
-
-interface TVChartProps {
-  symbol: string;
-  tvRange: string;
-  tvInterval: string;
-  accentColor: string;
-}
-
-function TVChart({ symbol, tvRange, tvInterval, accentColor }: TVChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    el.innerHTML = '';
-
-    const widgetId = `tv_${symbol.replace(/[^a-z0-9]/gi, '_')}_${tvRange}_${Date.now()}`;
-    const widgetDiv = document.createElement('div');
-    widgetDiv.id = widgetId;
-    el.appendChild(widgetDiv);
-
-    function buildWidget() {
-      const w = window as any;
-      if (!w.TradingView) return;
-      new w.TradingView.widget({
-        autosize: true,
-        symbol,
-        interval: tvInterval,
-        range: tvRange,
-        timezone: 'Europe/Sofia',
-        theme: 'dark',
-        style: '1',
-        locale: 'en',
-        backgroundColor: '#111113',
-        gridColor: 'rgba(255,255,255,0.04)',
-        toolbar_bg: '#111113',
-        hide_top_toolbar: false,
-        hide_legend: true,
-        hide_side_toolbar: true,
-        allow_symbol_change: false,
-        save_image: false,
-        container_id: widgetId,
-      });
-    }
-
-    const w = window as any;
-    if (w.TradingView) {
-      buildWidget();
-    } else {
-      const existing = document.getElementById('tv-script');
-      if (!existing) {
-        const s = document.createElement('script');
-        s.id = 'tv-script';
-        s.src = 'https://s3.tradingview.com/tv.js';
-        s.async = true;
-        s.onload = buildWidget;
-        document.head.appendChild(s);
-      } else {
-        // Script already loading — poll briefly
-        let attempts = 0;
-        const poll = setInterval(() => {
-          if ((window as any).TradingView) { clearInterval(poll); buildWidget(); }
-          if (++attempts > 40) clearInterval(poll);
-        }, 150);
-      }
-    }
-
-    return () => { if (el) el.innerHTML = ''; };
-  }, [symbol, tvRange, tvInterval]);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{ width: '100%', height: '55vh', minHeight: 300, background: '#111113' }}
-    />
-  );
-}
-
-// ─── Main Modal ───────────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function StockDetailChartModal({ stock, onClose }: Props) {
+
+  // ── Currency helpers ──
+  let exchangeName = 'NASDAQ';
+  let currencyCode = 'USD';
+  if (stock.ticker.startsWith('EPA:'))       { exchangeName = 'Euronext Paris';     currencyCode = 'EUR'; }
+  else if (stock.ticker.startsWith('ETR:')) { exchangeName = 'XETRA Frankfurt';    currencyCode = 'EUR'; }
+  else if (stock.ticker.startsWith('STO:')) { exchangeName = 'Nasdaq Stockholm';   currencyCode = 'SEK'; }
+  else if (stock.ticker.startsWith('SWX:')) { exchangeName = 'SIX Swiss Exchange'; currencyCode = 'CHF'; }
+  else if (stock.ticker.includes('-USD') || stock.ticker.includes('BTC')) { exchangeName = 'Crypto'; currencyCode = 'USD'; }
+  else if (stock.ticker.startsWith('^'))    { exchangeName = 'Index'; currencyCode = 'pts'; }
+
+  const csym = currencyCode === 'EUR' ? '€' : currencyCode === 'SEK' ? 'kr' : currencyCode === 'CHF' ? 'Fr' : currencyCode === 'pts' ? '' : '$';
+
+  const fmtPrice = (v: number, decimals = 2) => {
+    const s = v.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    if (currencyCode === 'SEK' || currencyCode === 'CHF') return `${s} ${csym}`;
+    return `${csym}${s}`;
+  };
+
+  const fmtCur = (v: number | string | null | undefined) => {
+    if (v == null) return '—';
+    if (typeof v === 'string') return v;
+    return fmtPrice(v);
+  };
+
+  // ── State ──
+  const [range, setRange]               = useState<Range>('1Y');
+  const [seriesData, setSeriesData]     = useState<ChartPoint[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [hoverPrice, setHoverPrice]     = useState<number | null>(null);
+  const [hoverPct, setHoverPct]         = useState<number | null>(null);
+  const [hoverTime, setHoverTime]       = useState<string | null>(null);
+
+  // Derived from series
+  const openPrice  = seriesData.length > 0 ? seriesData[0].value  : stock.currentPrice;
+  const closePrice = seriesData.length > 0 ? seriesData[seriesData.length - 1].value : stock.currentPrice;
+  const periodDiff = closePrice - openPrice;
+  const periodPct  = openPrice > 0 ? (periodDiff / openPrice) * 100 : 0;
+  const isUp       = periodDiff >= 0;
+  const accent     = isUp ? '#30d158' : '#ff453a';    // Apple green / Apple red
+
+  // Display values (change when hovering)
+  const displayPrice = hoverPrice ?? stock.currentPrice;
+  const displayPct   = hoverPct   ?? periodPct;
+  const displayDiff  = hoverPct !== null
+    ? (displayPrice - openPrice)
+    : periodDiff;
+  const displayIsUp  = displayDiff >= 0;
+
+  // ── Fetch / simulate data ──
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setHoverPrice(null);
+    setHoverPct(null);
+    setHoverTime(null);
+
+    const run = async () => {
+      try {
+        const p = RANGE_PARAMS[range];
+        const url = `/api/stock-history?ticker=${encodeURIComponent(stock.ticker)}&range=${p.range}&currentPrice=${stock.currentPrice}&dailyChange=${stock.dailyChangePct}&low52=${stock.low52 || ''}&high52=${stock.high52 || ''}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('api error');
+        const json: { timestamps: number[]; prices: number[] } = await res.json();
+        if (cancelled) return;
+        const pts: ChartPoint[] = json.timestamps.map((ts, i) => ({
+          time: ts,
+          value: json.prices[i],
+        }));
+        setSeriesData(pts);
+      } catch {
+        if (cancelled) return;
+        const pts = simulateHistory(
+          stock.ticker, range, stock.currentPrice,
+          stock.dailyChangePct, stock.low52, stock.high52
+        );
+        setSeriesData(pts);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [stock.ticker, range, stock.currentPrice]);
+
+  // ── Chart ──
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef     = useRef<IChartApi | null>(null);
+  const seriesRef    = useRef<any>(null);
+
+  // Create chart once on mount
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const chart = createChart(containerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: '#555',
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { visible: false },
+        horzLines: { visible: false },
+      },
+      crosshair: {
+        mode: CrosshairMode.Magnet,
+        vertLine: {
+          width: 1,
+          color: 'rgba(255,255,255,0.25)',
+          style: LineStyle.Solid,
+          labelVisible: false,
+        },
+        horzLine: {
+          visible: false,
+          labelVisible: false,
+        },
+      },
+      rightPriceScale: { visible: false },
+      leftPriceScale:  { visible: false },
+      timeScale: {
+        visible: false,
+        borderVisible: false,
+      },
+      handleScroll: false,
+      handleScale:  false,
+    });
+
+    const area = chart.addSeries(AreaSeries, {
+      lineColor: accent,
+      topColor: accent + '55',
+      bottomColor: accent + '00',
+      lineWidth: 2,
+      crosshairMarkerVisible: true,
+      crosshairMarkerRadius: 5,
+      crosshairMarkerBorderColor: '#fff',
+      crosshairMarkerBackgroundColor: accent,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    } as Partial<AreaSeriesOptions>);
+
+    chartRef.current  = chart;
+    seriesRef.current = area;
+
+    // Resize observer
+    const ro = new ResizeObserver(() => {
+      if (containerRef.current) {
+        chart.applyOptions({
+          width:  containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight,
+        });
+      }
+    });
+    if (containerRef.current.parentElement) {
+      ro.observe(containerRef.current);
+    }
+
+    return () => {
+      ro.disconnect();
+      chart.remove();
+      chartRef.current  = null;
+      seriesRef.current = null;
+    };
+  }, []); // create once
+
+  // Update series colors when trend changes
+  useEffect(() => {
+    if (!seriesRef.current) return;
+    seriesRef.current.applyOptions({
+      lineColor: accent,
+      topColor: accent + '44',
+      bottomColor: accent + '00',
+      crosshairMarkerBackgroundColor: accent,
+    });
+  }, [accent]);
+
+  // Feed data into chart when seriesData changes
+  useEffect(() => {
+    if (!seriesRef.current || !chartRef.current || seriesData.length === 0) return;
+    seriesRef.current.setData(seriesData as any[]);
+    chartRef.current.timeScale().fitContent();
+  }, [seriesData]);
+
+  // Crosshair subscription
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const handler = (param: any) => {
+      if (!param || !param.time || !seriesRef.current) {
+        setHoverPrice(null);
+        setHoverPct(null);
+        setHoverTime(null);
+        return;
+      }
+      const price = param.seriesData?.get(seriesRef.current)?.value as number | undefined;
+      if (price === undefined || price === null) return;
+      const open = seriesData[0]?.value ?? stock.currentPrice;
+      const pct  = open > 0 ? ((price - open) / open) * 100 : 0;
+      setHoverPrice(price);
+      setHoverPct(pct);
+
+      // Format time label
+      const ts = typeof param.time === 'number' ? param.time * 1000 : Date.now();
+      const d = new Date(ts);
+      if (range === '1D') {
+        setHoverTime(d.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' }));
+      } else if (range === '5D') {
+        setHoverTime(d.toLocaleDateString('bg-BG', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }));
+      } else {
+        setHoverTime(d.toLocaleDateString('bg-BG', { day: 'numeric', month: 'short', year: range === '1M' || range === '3M' ? undefined : 'numeric' }));
+      }
+    };
+    chartRef.current.subscribeCrosshairMove(handler);
+    return () => { chartRef.current?.unsubscribeCrosshairMove(handler); };
+  }, [seriesData, range, stock.currentPrice]);
 
   // Escape key
   useEffect(() => {
@@ -146,238 +322,220 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     return () => window.removeEventListener('keydown', fn);
   }, [onClose]);
 
-  // ── Currency / exchange ──
-  let exchangeName = 'NASDAQ';
-  let currencyCode = 'USD';
-  if (stock.ticker.startsWith('EPA:'))      { exchangeName = 'Euronext Paris';     currencyCode = 'EUR'; }
-  else if (stock.ticker.startsWith('ETR:')){ exchangeName = 'XETRA Frankfurt';    currencyCode = 'EUR'; }
-  else if (stock.ticker.startsWith('STO:')){ exchangeName = 'Nasdaq Stockholm';   currencyCode = 'SEK'; }
-  else if (stock.ticker.startsWith('SWX:')){ exchangeName = 'SIX Swiss Exchange'; currencyCode = 'CHF'; }
-  else if (stock.ticker.includes('-USD') || stock.ticker.includes('BTC')) { exchangeName = 'Crypto'; currencyCode = 'USD'; }
-  else if (stock.ticker.startsWith('^'))   { exchangeName = 'Index'; currencyCode = 'Points'; }
-
-  const currencySymbol = currencyCode === 'EUR' ? '€' : currencyCode === 'SEK' ? 'kr' : currencyCode === 'CHF' ? 'CHF' : currencyCode === 'Points' ? '' : '$';
-
-  const fmtPrice = (v: number) => {
-    const s = v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    if (currencyCode === 'SEK' || currencyCode === 'CHF') return `${s} ${currencySymbol}`;
-    return `${currencySymbol}${s}`;
-  };
-
-  const fmtCur = (v: number | string | undefined | null) => {
-    if (v == null) return '—';
-    if (typeof v === 'string') return v;
-    return fmtPrice(v);
-  };
-
-  // ── State ──
-  const [range, setRange] = useState('1Y');
-
-  const { tvRange, tvInterval } = RANGE_MAP[range] ?? RANGE_MAP['1Y'];
-  const tvSymbol = toTVSymbol(stock.ticker);
-
-  // Derived numbers
-  const dailyChange = stock.dailyChangePct ?? 0;
-  const openPrice   = stock.currentPrice / (1 + dailyChange / 100);
-  const dailyDiff   = stock.currentPrice - openPrice;
-  const isUp        = dailyDiff >= 0;
-  const accentColor = isUp ? '#34d399' : '#f87171';
-
-  // Mock stats (intraday)
-  const mockOpen = openPrice;
-  const mockHigh = Math.max(stock.currentPrice, openPrice) * 1.007;
-  const mockLow  = Math.min(stock.currentPrice, openPrice) * 0.993;
+  // Mock intraday stats
+  const mockOpen = stock.currentPrice / (1 + (stock.dailyChangePct ?? 0) / 100);
+  const mockHigh = Math.max(stock.currentPrice, mockOpen) * 1.007;
+  const mockLow  = Math.min(stock.currentPrice, mockOpen) * 0.993;
   const mockBeta = ((stock.ticker.charCodeAt(0) % 4) * 0.22 + 0.78).toFixed(2);
   const mockVol  = ((stock.ticker.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 5) + 1) * 8.42e6;
 
+  const displayColor = displayIsUp ? '#30d158' : '#ff453a';
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-3"
-      style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.85)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        padding: '12px',
+      }}
     >
       <div
-        className="relative w-full flex flex-col sm:rounded-2xl"
         style={{
+          position: 'relative',
+          width: '100%',
           maxWidth: 860,
-          height: '100dvh',
-          maxHeight: '98vh',
-          background: '#111113',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06)',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+          height: '100%',
+          maxHeight: 720,
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#1c1c1e',
+          borderRadius: 20,
           overflow: 'hidden',
+          boxShadow: '0 40px 100px rgba(0,0,0,0.9)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
         }}
       >
 
-        {/* ── Sticky header ── */}
-        <div
-          className="flex items-center justify-between px-5 pt-5 pb-2"
-          style={{ flexShrink: 0 }}
-        >
+        {/* ═══ HEADER ═══ */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+          padding: '20px 22px 0',
+          flexShrink: 0,
+        }}>
+          {/* Left: ticker + price */}
           <div>
-            <div className="flex items-center gap-2">
-              <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: -0.5 }}>
-                {stock.ticker.includes(':') ? stock.ticker.split(':')[1] : stock.ticker}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
+                {stock.ticker.includes(':') ? stock.ticker.split(':').pop() : stock.ticker}
               </span>
-              <span style={{ fontSize: 12, color: '#666', fontWeight: 500, marginTop: 4 }}>
-                {exchangeName}
-              </span>
+              <span style={{ fontSize: 12, color: '#636366' }}>{exchangeName}</span>
             </div>
-            <div style={{ fontSize: 12, color: '#555', marginTop: 1 }}>{stock.companyName}</div>
+            <div style={{ fontSize: 11, color: '#48484a', marginTop: 1 }}>{stock.companyName}</div>
+
+            {/* Big price */}
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 40, fontWeight: 700, color: '#fff', letterSpacing: -1.5, lineHeight: 1 }}>
+                {fmtPrice(displayPrice)}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: displayColor }}>
+                  {displayIsUp ? '▲' : '▼'} {fmtPrice(Math.abs(displayDiff))} ({displayIsUp ? '+' : ''}{displayPct.toFixed(2)}%)
+                </span>
+                {hoverTime && (
+                  <span style={{ fontSize: 11, color: '#636366' }}>{hoverTime}</span>
+                )}
+                {!hoverTime && (
+                  <span style={{ fontSize: 11, color: '#636366' }}>за периода {range}</span>
+                )}
+              </div>
+            </div>
           </div>
 
+          {/* Close button */}
           <button
             onClick={onClose}
             aria-label="Затвори"
             style={{
-              width: 34, height: 34, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.10)',
-              border: 'none', cursor: 'pointer', flexShrink: 0,
+              width: 32, height: 32, borderRadius: '50%',
+              background: '#3a3a3c',
+              border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#ccc', transition: 'background .15s',
+              color: '#ebebf5', flexShrink: 0,
+              transition: 'background 0.15s',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.18)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
+            onMouseEnter={e => (e.currentTarget.style.background = '#48484a')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#3a3a3c')}
           >
-            <X size={16} strokeWidth={2.5} />
+            <X size={15} strokeWidth={2.5} />
           </button>
         </div>
 
-        {/* ── Price display ── */}
-        <div className="px-5 pb-2" style={{ flexShrink: 0 }}>
-          <div style={{ fontSize: 38, fontWeight: 700, color: '#fff', letterSpacing: -1, lineHeight: 1.1 }}>
-            {fmtPrice(stock.currentPrice)}
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <span style={{ fontSize: 13, fontWeight: 600, color: accentColor }}>
-              {isUp ? '▲' : '▼'} {fmtPrice(Math.abs(dailyDiff))} ({isUp ? '+' : ''}{dailyChange.toFixed(2)}%)
-            </span>
-            <span style={{ fontSize: 11, color: '#555' }}>Дневна промяна</span>
-          </div>
+        {/* ═══ CHART AREA ═══ */}
+        <div style={{ flex: '1 1 0', position: 'relative', minHeight: 0, marginTop: 14 }}>
+          {loading && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: '#1c1c1e', zIndex: 2,
+            }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%',
+                border: `2.5px solid ${accent}`,
+                borderTopColor: 'transparent',
+                animation: 'spin 0.7s linear infinite',
+              }} />
+            </div>
+          )}
+          <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
         </div>
 
-        {/* ── Scrollable body ── */}
-        <div style={{ overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-
-          {/* TradingView Chart */}
-          <TVChart
-            symbol={tvSymbol}
-            tvRange={tvRange}
-            tvInterval={tvInterval}
-            accentColor={accentColor}
-          />
-
-          {/* ── Range selector ── */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '8px 12px 10px',
-              borderTop: '1px solid rgba(255,255,255,0.05)',
-              borderBottom: '1px solid rgba(255,255,255,0.05)',
-              background: '#0e0e10',
-              flexShrink: 0,
-            }}
-          >
-            {RANGES.map(r => {
-              const active = range === r;
-              return (
-                <button
-                  key={r}
-                  onClick={() => setRange(r)}
-                  style={{
-                    padding: '5px 9px',
-                    borderRadius: 8,
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                    fontWeight: active ? 700 : 500,
-                    color: active ? accentColor : '#555',
-                    background: active ? `${accentColor}1A` : 'transparent',
-                    transition: 'all .15s',
-                    fontFamily: 'inherit',
-                    letterSpacing: -0.1,
-                  }}
-                >
-                  {r}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ── Stats grid ── */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-            }}
-          >
-            {[
-              { label: 'Отворен (Open)',  value: fmtCur(mockOpen) },
-              { label: 'Текуща Цена',     value: fmtCur(stock.currentPrice) },
-              { label: 'Ден Върх',        value: fmtCur(mockHigh) },
-              { label: 'Ден Дъно',        value: fmtCur(mockLow) },
-              { label: '52С Върх',        value: fmtCur(stock.high52 ?? mockHigh * 1.1) },
-              { label: '52С Дъно',        value: fmtCur(stock.low52 ?? mockLow * 0.9) },
-              { label: 'Пазарна Кап.',    value: stock.marketCap ? formatMarketCap(stock.marketCap) : '—' },
-              { label: 'Обем',            value: formatMarketCap(mockVol) },
-              { label: 'P/E Коеф.',       value: stock.peRatio ? stock.peRatio.toFixed(2) : '—' },
-              { label: 'EPS',             value: stock.eps != null ? fmtCur(stock.eps) : '—' },
-              { label: 'Дивидент',        value: formatDividend(stock.dividend, stock.currentPrice) },
-              { label: 'Beta',            value: mockBeta },
-            ].map(({ label, value }, i) => (
-              <div
-                key={i}
+        {/* ═══ RANGE SELECTOR ═══ */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-around',
+          padding: '10px 16px 12px',
+          flexShrink: 0,
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          {RANGES.map(r => {
+            const active = range === r;
+            return (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '11px 20px',
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
-                  borderRight: i % 2 === 0 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  padding: '5px 10px',
+                  borderRadius: 8,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontWeight: active ? 700 : 500,
+                  color: active ? accent : '#636366',
+                  background: active ? accent + '22' : 'transparent',
+                  transition: 'all 0.15s',
+                  fontFamily: 'inherit',
+                  letterSpacing: -0.2,
                 }}
               >
-                <span style={{ fontSize: 12, color: '#555' }}>{label}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#ddd', fontVariantNumeric: 'tabular-nums' }}>{value}</span>
-              </div>
-            ))}
-          </div>
+                {r}
+              </button>
+            );
+          })}
+        </div>
 
-          {/* ── Footer ── */}
-          <div
-            style={{
-              padding: '14px 20px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderTop: '1px solid rgba(255,255,255,0.05)',
-            }}
-          >
-            <span style={{ fontSize: 10, color: '#444' }}>
-              {exchangeName} · {currencyCode} · Данни от TradingView
-            </span>
-            <button
-              onClick={onClose}
+        {/* ═══ STATS GRID ═══ */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          flexShrink: 0,
+          overflowY: 'auto',
+        }}>
+          {[
+            { label: 'Отворен',    value: fmtCur(mockOpen)                                },
+            { label: 'Ден Връх',   value: fmtCur(mockHigh)                                },
+            { label: 'Ден Дъно',   value: fmtCur(mockLow)                                 },
+            { label: '52С Върх',   value: fmtCur(stock.high52 ?? mockHigh * 1.12)         },
+            { label: '52С Дъно',   value: fmtCur(stock.low52  ?? mockLow  * 0.88)         },
+            { label: 'Пазарна Кап', value: stock.marketCap ? formatMarketCap(stock.marketCap) : '—' },
+            { label: 'Обем',       value: formatMarketCap(mockVol)                        },
+            { label: 'P/E',        value: stock.peRatio ? stock.peRatio.toFixed(1) : '—' },
+            { label: 'EPS',        value: stock.eps != null ? fmtCur(stock.eps) : '—'    },
+            { label: 'Дивидент',   value: formatDividend(stock.dividend, stock.currentPrice) },
+            { label: 'Beta',       value: mockBeta                                        },
+            { label: 'Борса',      value: exchangeName                                    },
+          ].map(({ label, value }, i) => (
+            <div
+              key={i}
               style={{
-                padding: '7px 20px',
-                borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.10)',
-                background: 'rgba(255,255,255,0.06)',
-                color: '#aaa',
-                fontSize: 12,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                fontWeight: 600,
-                transition: 'background .15s',
+                padding: '10px 16px',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                borderRight: (i % 3 !== 2) ? '1px solid rgba(255,255,255,0.05)' : 'none',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.11)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
             >
-              Затвори
-            </button>
-          </div>
+              <div style={{ fontSize: 10, color: '#636366', marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>{label}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#e5e5ea', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+            </div>
+          ))}
+        </div>
 
-        </div>{/* end scrollable body */}
+        {/* ═══ FOOTER ═══ */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '10px 20px 14px',
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 10, color: '#3a3a3c' }}>
+            {exchangeName} · {currencyCode} · Yahoo Finance
+          </span>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '6px 18px',
+              borderRadius: 10,
+              border: '1px solid #3a3a3c',
+              background: 'transparent',
+              color: '#8e8e93',
+              fontSize: 12,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontWeight: 600,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#2c2c2e'; e.currentTarget.style.color = '#fff'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8e8e93'; }}
+          >
+            Затвори
+          </button>
+        </div>
+
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
