@@ -527,7 +527,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#131722] text-[#d1d4dc] flex flex-col pb-12 antialiased">
+    <div className="min-h-screen bg-transparent text-white flex flex-col pb-12 antialiased">
       {/* Dynamic indices banner strip */}
       <IndicesStrip indices={indices} isSimulating={isSimulating} />
 
@@ -546,11 +546,11 @@ export default function App() {
         )}
 
         {/* Dashboard Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2a2e39] pb-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
             <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-[#d1d4dc]" />
-              <h1 className="text-xl font-extrabold text-[#d1d4dc] font-mono tracking-tight uppercase">
+              <Building2 className="w-5 h-5 text-white" />
+              <h1 className="text-xl font-extrabold text-white font-mono tracking-tight uppercase">
                 ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
               </h1>
             </div>
@@ -562,8 +562,8 @@ export default function App() {
               onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
               className={`text-[10px] font-mono font-extrabold px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all border cursor-pointer ${
                 isAutoLiveRefresh 
-                  ? 'bg-[#26a69a] text-[#d1d4dc] border-[#26a69a]/50 hover:bg-[#208b81] font-extrabold' 
-                  : 'bg-[#1e222d] text-[#787b86] border-gray-350 hover:bg-gray-50 hover:text-[#b2b5be]'
+                  ? 'bg-[#00E676] text-white border-[#00E676]/50 hover:bg-[#00c853] font-extrabold' 
+                  : 'bg-white/5 backdrop-blur-xl text-slate-400 border-gray-350 hover:bg-gray-50 hover:text-slate-300'
               }`}
               title="Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди"
             >
@@ -581,8 +581,8 @@ export default function App() {
               }}
               className={`text-[10px] font-mono font-extrabold px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all border cursor-pointer ${
                 isSimulating 
-                  ? 'bg-red-700 text-[#d1d4dc] border-red-850 hover:bg-red-800 font-extrabold' 
-                  : 'bg-[#1e222d] text-[#d1d4dc] border-[#2a2e39] hover:bg-[#2a2e39] hover:text-[#d1d4dc]'
+                  ? 'bg-red-700 text-white border-red-850 hover:bg-red-800 font-extrabold' 
+                  : 'bg-white/5 backdrop-blur-xl text-white border-white/10 hover:bg-white/10 hover:text-white'
               }`}
               title="Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити"
             >
@@ -606,18 +606,18 @@ export default function App() {
               className={`text-[10px] font-mono font-extrabold px-3 py-1.5 rounded-none border flex items-center gap-1.5 uppercase transition-all cursor-pointer ${
                 isFetchingLivePrices
                   ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
-                  : 'bg-[#131722] text-[#d1d4dc] border-black hover:bg-[#363a45]'
+                  : 'bg-transparent text-white border-black hover:bg-white/20'
               }`}
               title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
             >
-              <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-[#26a69a]' : ''}`} />
+              <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-[#00E676]' : ''}`} />
               {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
             </button>
 
             {/* Export data back as sheet formatted CSV */}
             <button
               onClick={exportCSVFile}
-              className="text-[10px] font-mono font-extrabold bg-[#1e222d] text-[#d1d4dc] hover:bg-[#2a2e39] hover:text-[#d1d4dc] border border-[#2a2e39] px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
+              className="text-[10px] font-mono font-extrabold bg-white/5 backdrop-blur-xl text-white hover:bg-white/10 hover:text-white border border-white/10 px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
             >
               <Download className="w-3 h-3" />
               Експорт CSV
@@ -643,14 +643,14 @@ export default function App() {
         <div className="space-y-2" id="stock-table-section">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xs uppercase font-extrabold text-[#d1d4dc] font-mono tracking-tight">
+              <h2 className="text-xs uppercase font-extrabold text-white font-mono tracking-tight">
                 Интерактивна таблица за оценка
               </h2>
-              <p className="text-[11px] text-[#b2b5be] mt-0.5">
-                Можете да щракнете върху всяка стойност в колона <span className="font-bold underline">"Текуща"</span> или <span className="font-bold text-[#26a69a] underline">"Справедлива (Fair)"</span> за директно редактиране на показателите.
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                Можете да щракнете върху всяка стойност в колона <span className="font-bold underline">"Текуща"</span> или <span className="font-bold text-[#00E676] underline">"Справедлива (Fair)"</span> за директно редактиране на показателите.
               </p>
             </div>
-            <div className="text-right text-[9px] text-[#787b86] font-mono hidden sm:block">
+            <div className="text-right text-[9px] text-slate-400 font-mono hidden sm:block">
               Двоен клик или клик на химикал за бърза пазарна симулация
             </div>
           </div>
@@ -698,13 +698,13 @@ export default function App() {
           </div>
 
           {/* Real-time alert feed logs */}
-          <div className="bg-[#1e222d] border border-[#2a2e39] p-4 flex flex-col justify-between rounded-none shadow-xs">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-4 flex flex-col justify-between rounded-none shadow-xs">
             <div>
-              <h3 className="text-xs uppercase font-extrabold text-[#d1d4dc] font-mono flex items-center gap-1.5">
+              <h3 className="text-xs uppercase font-extrabold text-white font-mono flex items-center gap-1.5">
                 <Bell className="w-3.5 h-3.5 text-amber-800" />
                 Лог на известията & задействания
               </h3>
-              <p className="text-[10px] text-[#787b86] font-mono mt-0.5">
+              <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                 Хроника на пазарните промени и филтри на заложени аларми.
               </p>
             </div>
@@ -718,12 +718,12 @@ export default function App() {
                       ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
                       : log.type === 'success'
                       ? 'bg-emerald-50 border-emerald-600 text-emerald-950 font-extrabold'
-                      : 'bg-[#131722]/30 border-[#2a2e39]/20 text-[#b2b5be]'
+                      : 'bg-transparent/30 border-white/10/20 text-slate-300'
                   }`}
                 >
-                  <span className="text-[#787b86] block shrink-0">[{log.timestamp}]</span>
+                  <span className="text-slate-400 block shrink-0">[{log.timestamp}]</span>
                   <p>
-                    <span className="font-bold text-[#d1d4dc] mr-1 uppercase">[{log.ticker}]</span>
+                    <span className="font-bold text-white mr-1 uppercase">[{log.ticker}]</span>
                     {log.message}
                   </p>
                 </div>

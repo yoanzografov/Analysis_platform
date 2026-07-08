@@ -64,24 +64,24 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-5">
       {/* 1. Best Deals Bar Chart */}
-      <div className="bg-[#1e222d] rounded-none border border-[#2a2e39] p-4 lg:col-span-2">
+      <div className="bg-white/5 backdrop-blur-xl rounded-none border border-white/10 p-4 lg:col-span-2">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <span className="text-[10px] text-[#d1d4dc]/60 font-serif italic uppercase tracking-wider block">
+            <span className="text-[10px] text-white/60 font-serif italic uppercase tracking-wider block">
               Deal Finder
             </span>
-            <h3 className="text-xs uppercase font-extrabold text-[#d1d4dc] font-mono tracking-tight">
+            <h3 className="text-xs uppercase font-extrabold text-white font-mono tracking-tight">
               Най-подценени акции (% Разлика спрямо Справедлива цена)
             </h3>
           </div>
-          <div className="p-1 px-1.5 bg-[#D9D8D5] border border-[#2a2e39] rounded-none">
-            <Percent className="w-3.5 h-3.5 text-[#d1d4dc]" />
+          <div className="p-1 px-1.5 bg-[#D9D8D5] border border-white/10 rounded-none">
+            <Percent className="w-3.5 h-3.5 text-white" />
           </div>
         </div>
 
         <div className="h-48 mt-2">
           {undervaluedStocks.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-[#d1d4dc]/70 font-mono text-xs">
+            <div className="h-full flex flex-col items-center justify-center text-center text-white/70 font-mono text-xs">
               Няма намерени подценени акции (Fair Price &gt; Current Price)
             </div>
           ) : (
@@ -108,10 +108,10 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-[#1e222d] border border-[#2a2e39] rounded-none px-3 py-2 text-xs font-mono text-[#d1d4dc]">
+                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-none px-3 py-2 text-xs font-mono text-white">
                           <p className="font-extrabold mb-1 tracking-wider">{data.ticker}</p>
-                          <p className="text-[#26a69a]">Справедлива: ${data.fairPrice}</p>
-                          <p className="text-[#787b86]">Текуща цена: ${data.currentPrice}</p>
+                          <p className="text-[#00E676]">Справедлива: ${data.fairPrice}</p>
+                          <p className="text-slate-400">Текуща цена: ${data.currentPrice}</p>
                           <p className="text-[#0d7a3f] font-extrabold mt-1">Подценена с +{data.difference}%</p>
                         </div>
                       );
@@ -127,12 +127,12 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
       </div>
 
       {/* 2. Signals Pie Chart */}
-      <div className="bg-[#1e222d] rounded-none border border-[#2a2e39] p-4 flex flex-col justify-between lg:col-span-1">
+      <div className="bg-white/5 backdrop-blur-xl rounded-none border border-white/10 p-4 flex flex-col justify-between lg:col-span-1">
         <div>
-          <span className="text-[10px] text-[#d1d4dc]/60 font-serif italic uppercase tracking-wider block">
+          <span className="text-[10px] text-white/60 font-serif italic uppercase tracking-wider block">
             Signal Weight Allocation
           </span>
-          <h3 className="text-xs uppercase font-extrabold text-[#d1d4dc] font-mono tracking-tight mb-2">
+          <h3 className="text-xs uppercase font-extrabold text-white font-mono tracking-tight mb-2">
             Съотношение Купувай / Продавай / Изчакай
           </h3>
         </div>
@@ -156,8 +156,8 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute flex flex-col items-center justify-center font-mono">
-            <span className="text-xl font-extrabold text-[#d1d4dc]">{stocks.length}</span>
-            <span className="text-[9px] text-[#d1d4dc]/60 tracking-wider">АКЦИИ ОБЩО</span>
+            <span className="text-xl font-extrabold text-white">{stocks.length}</span>
+            <span className="text-[9px] text-white/60 tracking-wider">АКЦИИ ОБЩО</span>
           </div>
         </div>
 
@@ -167,47 +167,47 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
             className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
               activeFilter.type === 'signal' && activeFilter.value === 'buy'
                 ? 'bg-emerald-50 border-emerald-800 ring-2 ring-emerald-800'
-                : 'bg-[#1e222d] border-[#2a2e39]/30 hover:bg-emerald-50/40 hover:border-emerald-650'
+                : 'bg-white/5 backdrop-blur-xl border-white/10/30 hover:bg-emerald-50/40 hover:border-emerald-650'
             }`}
             title="Филтрирай компании по Сигнал КУПУВАЙ"
           >
-            <div className="text-[8px] text-[#787b86] uppercase font-bold tracking-tight">КУПУВАЙ</div>
-            <div className="text-xs font-extrabold text-[#26a69a]">{signalBuyCount}</div>
+            <div className="text-[8px] text-slate-400 uppercase font-bold tracking-tight">КУПУВАЙ</div>
+            <div className="text-xs font-extrabold text-[#00E676]">{signalBuyCount}</div>
           </button>
           <button
             onClick={() => handleFilterToggle('signal', 'sell')}
             className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
               activeFilter.type === 'signal' && activeFilter.value === 'sell'
                 ? 'bg-red-50 border-red-800 ring-2 ring-red-800'
-                : 'bg-[#1e222d] border-[#2a2e39]/30 hover:bg-red-50/40 hover:border-red-650'
+                : 'bg-white/5 backdrop-blur-xl border-white/10/30 hover:bg-red-50/40 hover:border-red-650'
             }`}
             title="Филтрирай компании по Сигнал ПРОДАВАЙ"
           >
-            <div className="text-[8px] text-[#787b86] uppercase font-bold tracking-tight">ПРОДАВАЙ</div>
-            <div className="text-xs font-extrabold text-[#ef5350]">{signalSellCount}</div>
+            <div className="text-[8px] text-slate-400 uppercase font-bold tracking-tight">ПРОДАВАЙ</div>
+            <div className="text-xs font-extrabold text-[#FF1744]">{signalSellCount}</div>
           </button>
           <button
             onClick={() => handleFilterToggle('signal', 'hold')}
             className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
               activeFilter.type === 'signal' && activeFilter.value === 'hold'
                 ? 'bg-amber-50 border-amber-500/50 ring-2 ring-amber-800'
-                : 'bg-[#1e222d] border-[#2a2e39]/30 hover:bg-amber-50/40 hover:border-amber-650'
+                : 'bg-white/5 backdrop-blur-xl border-white/10/30 hover:bg-amber-50/40 hover:border-amber-650'
             }`}
             title="Филтрирай компании по Сигнал ИЗЧАКАЙ"
           >
-            <div className="text-[8px] text-[#787b86] uppercase font-bold tracking-tight">ИЗЧАКАЙ</div>
+            <div className="text-[8px] text-slate-400 uppercase font-bold tracking-tight">ИЗЧАКАЙ</div>
             <div className="text-xs font-extrabold text-amber-800">{signalHoldCount}</div>
           </button>
         </div>
       </div>
 
       {/* 3. BUY / SELL Ratio Pie Chart */}
-      <div className="bg-[#1e222d] rounded-none border border-[#2a2e39] p-4 flex flex-col justify-between lg:col-span-1">
+      <div className="bg-white/5 backdrop-blur-xl rounded-none border border-white/10 p-4 flex flex-col justify-between lg:col-span-1">
         <div>
-          <span className="text-[10px] text-[#d1d4dc]/60 font-serif italic uppercase tracking-wider block">
+          <span className="text-[10px] text-white/60 font-serif italic uppercase tracking-wider block">
             BUY / SELL Weight Allocation
           </span>
-          <h3 className="text-xs uppercase font-extrabold text-[#d1d4dc] font-mono tracking-tight mb-2">
+          <h3 className="text-xs uppercase font-extrabold text-white font-mono tracking-tight mb-2">
             Съотношение BUY / SELL
           </h3>
         </div>
@@ -231,8 +231,8 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute flex flex-col items-center justify-center font-mono">
-            <span className="text-xl font-extrabold text-[#d1d4dc]">{stocks.length}</span>
-            <span className="text-[9px] text-[#d1d4dc]/60 tracking-wider">АКЦИИ ОБЩО</span>
+            <span className="text-xl font-extrabold text-white">{stocks.length}</span>
+            <span className="text-[9px] text-white/60 tracking-wider">АКЦИИ ОБЩО</span>
           </div>
         </div>
 
@@ -242,36 +242,36 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
             className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
               activeFilter.type === 'buySell' && activeFilter.value === 'BUY'
                 ? 'bg-emerald-50 border-emerald-800 ring-2 ring-emerald-800'
-                : 'bg-[#1e222d] border-[#2a2e39]/30 hover:bg-emerald-50/40 hover:border-emerald-650'
+                : 'bg-white/5 backdrop-blur-xl border-white/10/30 hover:bg-emerald-50/40 hover:border-emerald-650'
             }`}
             title="Филтрирай компании по BUY"
           >
-            <div className="text-[8px] text-[#787b86] uppercase font-bold tracking-tight">BUY</div>
-            <div className="text-xs font-extrabold text-[#26a69a]">{bsBuyCount}</div>
+            <div className="text-[8px] text-slate-400 uppercase font-bold tracking-tight">BUY</div>
+            <div className="text-xs font-extrabold text-[#00E676]">{bsBuyCount}</div>
           </button>
           <button
             onClick={() => handleFilterToggle('buySell', 'SELL')}
             className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
               activeFilter.type === 'buySell' && activeFilter.value === 'SELL'
                 ? 'bg-red-50 border-red-800 ring-2 ring-red-800'
-                : 'bg-[#1e222d] border-[#2a2e39]/30 hover:bg-red-50/40 hover:border-red-650'
+                : 'bg-white/5 backdrop-blur-xl border-white/10/30 hover:bg-red-50/40 hover:border-red-650'
             }`}
             title="Филтрирай компании по SELL"
           >
-            <div className="text-[8px] text-[#787b86] uppercase font-bold tracking-tight">SELL</div>
-            <div className="text-xs font-extrabold text-[#ef5350]">{bsSellCount}</div>
+            <div className="text-[8px] text-slate-400 uppercase font-bold tracking-tight">SELL</div>
+            <div className="text-xs font-extrabold text-[#FF1744]">{bsSellCount}</div>
           </button>
           <button
             onClick={() => handleFilterToggle('buySell', 'ДРУГИ')}
             className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
               activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ'
-                ? 'bg-[#2a2e39] border-gray-600 ring-2 ring-gray-600'
-                : 'bg-[#1e222d] border-[#2a2e39]/30 hover:bg-gray-50/40 hover:border-gray-600'
+                ? 'bg-white/10 border-gray-600 ring-2 ring-gray-600'
+                : 'bg-white/5 backdrop-blur-xl border-white/10/30 hover:bg-gray-50/40 hover:border-gray-600'
             }`}
             title="Филтрирай компании по ДРУГИ"
           >
-            <div className="text-[8px] text-[#787b86] uppercase font-bold tracking-tight">ДРУГИ</div>
-            <div className="text-xs font-extrabold text-[#b2b5be]">{bsOthersCount}</div>
+            <div className="text-[8px] text-slate-400 uppercase font-bold tracking-tight">ДРУГИ</div>
+            <div className="text-xs font-extrabold text-slate-300">{bsOthersCount}</div>
           </button>
         </div>
       </div>

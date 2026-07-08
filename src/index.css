@@ -2,12 +2,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #131722;
-  --color-ink: #d1d4dc;
-  --color-line: #2a2e39;
-  --color-card: #1e222d;
-  --color-apple-green: #26a69a;
-  --color-apple-red: #ef5350;
+  --color-bg: #030712; /* Slate 950 */
+  --color-ink: #f8fafc;
+  --color-line: rgba(255, 255, 255, 0.1);
+  --color-card: rgba(15, 23, 42, 0.4);
+  --color-apple-green: #00E676; /* Neon Green */
+  --color-apple-red: #FF1744; /* Neon Red */
   
   --font-sans: "Inter", sans-serif;
   --font-mono: "Inter", sans-serif;
@@ -15,33 +15,56 @@
   --font-serif: "Inter", sans-serif;
 }
 
-/* Base high-density styling */
+/* Base styling */
 body {
   background-color: var(--color-bg);
   color: var(--color-ink);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-sans);
+  position: relative;
+  min-height: 100vh;
 }
 
-/* Scrollbars matching the High Density mechanical theme */
+/* Aurora Mesh Background */
+body::before, body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  background: radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.12), transparent 40%),
+              radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.15), transparent 40%);
+}
+
+body::after {
+  background: radial-gradient(circle at 50% 80%, rgba(45, 212, 191, 0.1), transparent 50%);
+}
+
+/* Scrollbars matching Glass theme */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #131722;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2e39;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #363a45;
+  background: rgba(255, 255, 255, 0.25);
 }
 
-/* High density button transitions and states */
+/* Button transitions */
 button, select, input {
-  transition: all 0.1s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
