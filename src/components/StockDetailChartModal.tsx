@@ -1,52 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Stock } from '../types';
 import { X, ExternalLink } from 'lucide-react';
 import { formatDividend } from '../utils/sectorHelper';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  ComposedChart
-} from 'recharts';
+import { SymbolOverview } from 'react-ts-tradingview-widgets';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Props { stock: Stock; onClose: () => void; }
 
-interface ChartPoint { 
-  time: number; 
-  value: number; 
-  volume: number;
-}
-
-// ─── Config ───────────────────────────────────────────────────────────────────
-
-const RANGES = ['1D','1W','1M','3M','6M','YTD','1Y','2Y','5Y','10Y','MAX'] as const;
-type Range = typeof RANGES[number];
-
-const RANGE_CFG: Record<Range, { apiRange: string; points: number; ms: number; label: string }> = {
-  '1D':  { apiRange: '1d',  points: 78,  ms: 5*60_000,       label: 'Today' },
-  '1W':  { apiRange: '7d',  points: 100, ms: 15*60_000,      label: 'Past Week' },
-  '1M':  { apiRange: '1mo', points: 22,  ms: 86_400_000,     label: 'Past Month' },
-  '3M':  { apiRange: '3mo', points: 66,  ms: 86_400_000,     label: 'Past 3 Months' },
-  '6M':  { apiRange: '6mo', points: 126, ms: 86_400_000,     label: 'Past 6 Months' },
-  'YTD': { apiRange: 'ytd', points: 180, ms: 86_400_000,     label: 'Year to Date' },
-  '1Y':  { apiRange: '1y',  points: 52,  ms: 7*86_400_000,   label: 'Past Year' },
-  '2Y':  { apiRange: '2y',  points: 104, ms: 7*86_400_000,   label: 'Past 2 Years' },
-  '5Y':  { apiRange: '5y',  points: 260, ms: 7*86_400_000,   label: 'Past 5 Years' },
-  '10Y': { apiRange: '10y', points: 120, ms: 30*86_400_000,  label: 'Past 10 Years' },
-  'MAX': { apiRange: 'max', points: 200, ms: 30*86_400_000,  label: 'All Time' },
-};
-
 // Apple system green/red
 const APPLE_GREEN = '#30d158';
 const APPLE_RED   = '#ff3b30';
-const VOL_GRAY    = 'rgba(255,255,255,0.12)';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -65,88 +29,6 @@ function fmtVol(v: number): string {
   if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
   return v.toFixed(0);
 }
-
-function fmtDate(ts: number, range: Range): string {
-  const d = new Date(ts * 1000);
-  if (range === '1D')
-    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  if (range === '1W')
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  if (range === '1M' || range === '3M' || range === '6M')
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-// Simulated data fallback
-function simulate(
-  ticker: string, range: Range, price: number, chg: number, lo52?: number, hi52?: number
-): ChartPoint[] {
-  const { points, ms } = RANGE_CFG[range];
-  const now = Date.now();
-  let s = ticker.split('').reduce((a, c) => a + c.charCodeAt(0), 0) ^ (range.charCodeAt(0) * 31);
-  const rng = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff; };
-  const dir = chg !== 0 ? Math.sign(chg) : (s % 3) - 1;
-  const raw: number[] = [];
-
-  for (let i = 0; i < points; i++) {
-    const t = i / (points - 1);
-    const v = price * (1
-      + Math.sin(t * 2 * Math.PI + s % 5) * 0.10
-      + Math.cos(t * 8 * Math.PI + s % 3) * 0.05
-      + Math.sin(t * 22 * Math.PI + s % 7) * 0.02
-      + t * dir * 0.10
-      + (rng() - 0.5) * 0.022
-    );
-    raw.push(v);
-  }
-
-  const scale = price / (raw[raw.length - 1] || price);
-  const data: ChartPoint[] = [];
-  const baseV = price * 4e6;
-
-  for (let i = 0; i < points; i++) {
-    let v = raw[i] * scale;
-    if (lo52 && v < lo52) v = lo52 + rng() * lo52 * 0.01;
-    if (hi52 && v > hi52) v = hi52 - rng() * hi52 * 0.01;
-    if (v < 0.01) v = 0.01;
-    const ts = Math.floor((now - (points - 1 - i) * ms) / 1000);
-    data.push({ time: ts, value: +v.toFixed(2), volume: baseV * (0.3 + rng() * 1.4) });
-  }
-  data[data.length - 1].value = price;
-  return data;
-}
-
-// Custom Recharts Tooltip
-const CustomTooltip = ({ active, payload, range, openPrice, setHoverState }: any) => {
-  useEffect(() => {
-    if (active && payload && payload.length > 0) {
-      const { time, value } = payload[0].payload;
-      setHoverState({ price: value, time: time });
-    } else {
-      setHoverState({ price: null, time: null });
-    }
-  }, [active, payload, setHoverState]);
-
-  if (active && payload && payload.length) {
-    return (
-      <div style={{
-        background: 'rgba(28,28,30,0.85)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        padding: '6px 10px',
-        borderRadius: '8px',
-        color: '#fff',
-        fontSize: '12px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-        pointerEvents: 'none'
-      }}>
-        <div style={{ fontWeight: 600 }}>{payload[0].value.toFixed(2)}</div>
-        <div style={{ color: 'rgba(255,255,255,0.5)' }}>{fmtDate(payload[0].payload.time, range)}</div>
-      </div>
-    );
-  }
-  return null;
-};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -169,26 +51,8 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const fc = (v: number | string | null | undefined) => v == null ? '—' : typeof v === 'string' ? v : fp(v);
   const sym = stock.ticker.includes(':') ? stock.ticker.split(':').pop()! : stock.ticker;
 
-  // State
-  const [range, setRange]           = useState<Range>('5Y');
-  const [data, setData]             = useState<ChartPoint[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [hoverState, setHoverState] = useState<{price: number | null, time: number | null}>({ price: null, time: null });
-
-  // Derived
-  const openP    = data.length > 0 ? data[0].value : stock.currentPrice;
-  const closeP   = data.length > 0 ? data[data.length - 1].value : stock.currentPrice;
-  const pDiff    = closeP - openP;
-  const pPct     = openP > 0 ? (pDiff / openP) * 100 : 0;
-  const isUp     = pDiff >= 0;
-  const accent   = isUp ? APPLE_GREEN : APPLE_RED;
-
-  // Display (updates on hover)
-  const dPrice = hoverState.price ?? stock.currentPrice;
-  const dDiff  = dPrice - openP;
-  const dPct   = openP > 0 ? (dDiff / openP) * 100 : 0;
-  const dUp    = dDiff >= 0;
-  const dCol   = dUp ? APPLE_GREEN : APPLE_RED;
+  const isUp   = (stock.dailyChangePct ?? 0) >= 0;
+  const accent = isUp ? APPLE_GREEN : APPLE_RED;
 
   // Escape key
   useEffect(() => {
@@ -197,35 +61,15 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     return () => window.removeEventListener('keydown', fn);
   }, [onClose]);
 
-  // Load data
-  useEffect(() => {
-    let dead = false;
-    setLoading(true); setHoverState({ price: null, time: null });
-
-    (async () => {
-      try {
-        const c = RANGE_CFG[range];
-        const url = `/api/stock-history?ticker=${encodeURIComponent(stock.ticker)}&range=${c.apiRange}&currentPrice=${stock.currentPrice}&dailyChange=${stock.dailyChangePct ?? 0}&low52=${stock.low52 ?? ''}&high52=${stock.high52 ?? ''}`;
-        const res = await fetch(url);
-        if (!res.ok) throw 0;
-        const j: { timestamps: number[]; prices: number[] } = await res.json();
-        if (dead) return;
-        const points = j.timestamps.map((t, i) => ({ 
-          time: t, 
-          value: j.prices[i],
-          volume: stock.currentPrice * 4e6 * (0.3 + Math.random() * 1.4) 
-        }));
-        setData(points);
-      } catch {
-        if (dead) return;
-        const d = simulate(stock.ticker, range, stock.currentPrice, stock.dailyChangePct ?? 0, stock.low52, stock.high52);
-        setData(d);
-      } finally {
-        if (!dead) setLoading(false);
-      }
-    })();
-    return () => { dead = true; };
-  }, [stock.ticker, range, stock.currentPrice]);
+  // Map to TradingView Symbol
+  let tvSymbol = stock.ticker;
+  if (stock.ticker.startsWith('EPA:')) tvSymbol = `EURONEXT:${sym}`;
+  else if (stock.ticker.startsWith('ETR:')) tvSymbol = `XETR:${sym}`;
+  else if (stock.ticker.startsWith('STO:')) tvSymbol = `OMXSTO:${sym}`;
+  else if (stock.ticker.startsWith('SWX:')) tvSymbol = `SIX:${sym}`;
+  else if (stock.ticker === '^GSPC') tvSymbol = 'SP:SPX';
+  else if (stock.ticker === '^NDX') tvSymbol = 'NASDAQ:NDX';
+  else if (!stock.ticker.includes(':')) tvSymbol = `NASDAQ:${sym}`;
 
   return (
     <div
@@ -271,123 +115,42 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 32, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
-              {fp(dPrice)}
+              {fp(stock.currentPrice)}
             </div>
-            <div style={{ fontSize: 18, color: dCol, fontWeight: 600, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, fontVariantNumeric: 'tabular-nums' }}>
-              {dUp ? '+' : ''}{dDiff.toFixed(2)} ({dUp ? '+' : ''}{dPct.toFixed(2)}%)
-            </div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-              {hoverState.time ? fmtDate(hoverState.time, range) : RANGE_CFG[range].label}
+            <div style={{ fontSize: 18, color: accent, fontWeight: 600, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, fontVariantNumeric: 'tabular-nums' }}>
+              {isUp ? '+' : ''}{(stock.dailyChangePct ?? 0).toFixed(2)}%
             </div>
           </div>
         </div>
 
-        {/* TIME TABS */}
-        <div style={{ display: 'flex', gap: 4, padding: '0 20px 12px' }}>
-          {RANGES.map(r => {
-            const active = r === range;
-            return (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                style={{
-                  background: active ? 'rgba(255,255,255,0.15)' : 'transparent',
-                  color: active ? '#fff' : 'rgba(255,255,255,0.4)',
-                  border: 'none',
-                  padding: '6px 12px',
-                  borderRadius: 8,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.1s',
-                }}
-                onMouseEnter={e => !active && (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                onMouseLeave={e => !active && (e.currentTarget.style.background = 'transparent')}
-              >
-                {r}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* CHART (Recharts) */}
+        {/* CHART (TradingView SymbolOverview Widget) */}
         <div style={{ flex: 1, position: 'relative', margin: '0 8px', minHeight: 0 }}>
-          {loading && (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-              <div style={{ width: 24, height: 24, border: '3px solid rgba(255,255,255,0.1)', borderTopColor: accent, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-          )}
-
-          {!loading && data.length > 0 && (
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart 
-                data={data} 
-                margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
-                onMouseLeave={() => setHoverState({ price: null, time: null })}
-              >
-                <defs>
-                  <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={accent} stopOpacity={0.4} />
-                    <stop offset="100%" stopColor={accent} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="time" hide />
-                
-                {/* Price YAxis */}
-                <YAxis 
-                  domain={['auto', 'auto']} 
-                  orientation="right"
-                  tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={40}
-                  tickFormatter={(val) => val.toFixed(1)}
-                  yAxisId="price"
-                />
-                
-                {/* Volume YAxis */}
-                <YAxis 
-                  domain={[0, 'auto']} 
-                  hide 
-                  yAxisId="volume"
-                />
-                
-                <Tooltip 
-                  content={<CustomTooltip range={range} openPrice={openP} setHoverState={setHoverState} />}
-                  cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1, strokeDasharray: '4 4' }}
-                  isAnimationActive={false}
-                  position={{ y: 0 }}
-                />
-                
-                <Bar 
-                  dataKey="volume" 
-                  fill={VOL_GRAY} 
-                  yAxisId="volume"
-                  isAnimationActive={false}
-                />
-                
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke={accent} 
-                  strokeWidth={2}
-                  fillOpacity={1} 
-                  fill="url(#colorPrice)" 
-                  yAxisId="price"
-                  isAnimationActive={false}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          )}
+          <SymbolOverview
+            symbols={[[stock.companyName, tvSymbol]]}
+            colorTheme="dark"
+            autosize
+            chartType="area"
+            downColor={APPLE_RED}
+            borderDownColor={APPLE_RED}
+            upColor={APPLE_GREEN}
+            borderUpColor={APPLE_GREEN}
+            lineColor={accent}
+            topColor={`${accent}40`}
+            bottomColor={`${accent}00`}
+            fontFamily="Arial, sans-serif"
+            gridLineColor="rgba(255, 255, 255, 0.05)"
+            isTransparent
+            showFloatingTooltip
+            dateFormat="yyyy-MM-dd"
+          />
         </div>
 
         {/* STATS GRID */}
         <div style={{ padding: '16px 24px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           {[
-            { l: 'Open',          v: fc(openP) },
-            { l: 'High',          v: fc(Math.max(...(data.length ? data.map(d => d.value) : [stock.currentPrice]))) },
-            { l: 'Low',           v: fc(Math.min(...(data.length ? data.map(d => d.value) : [stock.currentPrice]))) },
+            { l: 'Open',          v: '—' },
+            { l: 'High',          v: fc(stock.high52) },
+            { l: 'Low',           v: fc(stock.low52) },
             { l: 'Vol',           v: (stock as any).volume ? fmtVol((stock as any).volume) : '—' },
             { l: 'P/E Ratio',     v: stock.peRatio ? stock.peRatio.toFixed(2) : '—' },
             { l: 'Mkt Cap',       v: fmtMC(stock.marketCap) },
