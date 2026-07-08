@@ -2,12 +2,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #000000;
-  --color-ink: #ffffff;
-  --color-line: rgba(255, 255, 255, 0.1);
-  --color-card: #1c1c1e;
-  --color-apple-green: #30d158;
-  --color-apple-red: #ff3b30;
+  --color-bg: #131722;
+  --color-ink: #d1d4dc;
+  --color-line: #2a2e39;
+  --color-card: #1e222d;
+  --color-apple-green: #26a69a;
+  --color-apple-red: #ef5350;
   
   --font-sans: "Inter", sans-serif;
   --font-mono: "Inter", sans-serif;
@@ -29,16 +29,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: #131722;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3a3a3c;
+  background: #2a2e39;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #48484a;
+  background: #363a45;
 }
 
 /* High density button transitions and states */

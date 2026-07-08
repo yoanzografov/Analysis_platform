@@ -8,9 +8,9 @@ import { SymbolOverview } from 'react-ts-tradingview-widgets';
 
 interface Props { stock: Stock; onClose: () => void; }
 
-// Apple system green/red
-const APPLE_GREEN = '#30d158';
-const APPLE_RED   = '#ff3b30';
+// TradingView system green/red
+const TV_GREEN = '#26a69a';
+const TV_RED   = '#ef5350';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -52,7 +52,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const sym = stock.ticker.includes(':') ? stock.ticker.split(':').pop()! : stock.ticker;
 
   const isUp   = (stock.dailyChangePct ?? 0) >= 0;
-  const accent = isUp ? APPLE_GREEN : APPLE_RED;
+  const accent = isUp ? TV_GREEN : TV_RED;
 
   // Escape key
   useEffect(() => {
@@ -82,7 +82,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     >
       <div style={{
         width: '100%', maxWidth: 1000, height: '100%', maxHeight: 760, display: 'flex', flexDirection: 'column',
-        background: '#000', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)',
+        background: '#1e222d', borderRadius: 16, overflow: 'hidden', border: '1px solid #2a2e39',
         boxShadow: '0 60px 140px rgba(0,0,0,1)', position: 'relative'
       }}>
         {/* CLOSE BUTTON */}
@@ -91,11 +91,11 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           aria-label="Close"
           style={{
             position: 'absolute', top: 16, right: 16, zIndex: 50, width: 32, height: 32, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', color: 'rgba(255,255,255,0.9)', transition: 'background 0.15s'
+            background: '#2a2e39', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', color: '#d1d4dc', transition: 'background 0.15s'
           }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+          onMouseEnter={e => e.currentTarget.style.background = '#363a45'}
+          onMouseLeave={e => e.currentTarget.style.background = '#2a2e39'}
         >
           <X size={16} strokeWidth={2.5} />
         </button>
@@ -103,18 +103,18 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         {/* HEADER */}
         <div style={{ padding: '24px 24px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: '#d1d4dc', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
               {sym}
             </div>
-            <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', marginTop: 2, fontWeight: 500 }}>
+            <div style={{ fontSize: 16, color: '#787b86', marginTop: 2, fontWeight: 500 }}>
               {stock.companyName}
             </div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
+            <div style={{ fontSize: 13, color: 'rgba(209,212,220,0.5)', marginTop: 4 }}>
               {exch} · {ccy}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: '#d1d4dc', letterSpacing: '-0.02em', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
               {fp(stock.currentPrice)}
             </div>
             <div style={{ fontSize: 18, color: accent, fontWeight: 600, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, fontVariantNumeric: 'tabular-nums' }}>
@@ -130,10 +130,10 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             colorTheme="dark"
             autosize
             chartType="area"
-            downColor={APPLE_RED}
-            borderDownColor={APPLE_RED}
-            upColor={APPLE_GREEN}
-            borderUpColor={APPLE_GREEN}
+            downColor={TV_RED}
+            borderDownColor={TV_RED}
+            upColor={TV_GREEN}
+            borderUpColor={TV_GREEN}
             lineColor={accent}
             topColor={`${accent}40`}
             bottomColor={`${accent}00`}
@@ -148,7 +148,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         </div>
 
         {/* STATS GRID */}
-        <div style={{ padding: '16px 24px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ padding: '16px 24px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px', borderTop: '1px solid #2a2e39' }}>
           {[
             { l: 'Open',          v: '—' },
             { l: 'High',          v: fc(stock.high52) },
@@ -164,21 +164,21 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             { l: 'EPS',           v: stock.eps ? stock.eps.toFixed(2) : '—' },
           ].map((s, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.l}</div>
-              <div style={{ fontSize: 14, fontWeight: 500, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>{s.v}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#787b86', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.l}</div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: '#d1d4dc', fontVariantNumeric: 'tabular-nums' }}>{s.v}</div>
             </div>
           ))}
         </div>
 
         {/* FOOTER */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 4, padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 4, padding: '12px 20px', borderTop: '1px solid #2a2e39' }}>
           <a
             href={`https://finance.yahoo.com/quote/${encodeURIComponent(sym)}`}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', transition: 'color 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.50)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#787b86', textDecoration: 'none', transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#d1d4dc'}
+            onMouseLeave={e => e.currentTarget.style.color = '#787b86'}
           >
             <ExternalLink size={12} />
             See More Data from Yahoo Finance

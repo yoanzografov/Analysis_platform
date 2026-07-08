@@ -370,14 +370,14 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
     switch (impact) {
       case 'Positive':
         return (
-          <span className="inline-flex items-center gap-1 bg-emerald-50 text-[#30d158] border border-emerald-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none font-mono">
+          <span className="inline-flex items-center gap-1 bg-emerald-50 text-[#26a69a] border border-emerald-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none font-mono">
             <TrendingUp className="w-2.5 h-2.5" />
             Положително
           </span>
         );
       case 'Negative':
         return (
-          <span className="inline-flex items-center gap-1 bg-red-50 text-[#ff3b30] border border-red-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none font-mono">
+          <span className="inline-flex items-center gap-1 bg-red-50 text-[#ef5350] border border-red-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none font-mono">
             <TrendingDown className="w-2.5 h-2.5" />
             Отрицателно
           </span>
@@ -393,26 +393,26 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
   };
 
   return (
-    <div id="company-news-container" className="bg-[#1c1c1e] rounded-none border border-white/10 p-4 mt-5 shadow-xs">
+    <div id="company-news-container" className="bg-[#1e222d] rounded-none border border-[#2a2e39] p-4 mt-5 shadow-xs">
       {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10/10 pb-4 mb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2a2e39]/10 pb-4 mb-4">
         <div>
-          <span className="text-[10px] text-[#30d158] font-mono font-bold uppercase tracking-wider block">
+          <span className="text-[10px] text-[#26a69a] font-mono font-bold uppercase tracking-wider block">
             ЕДИНСТВЕН ДОСТОВЕРЕН ИЗТОЧНИК • REAL-TIME
           </span>
-          <h3 className="text-xs uppercase font-extrabold text-white font-mono tracking-tight flex items-center gap-1.5">
-            <Newspaper className="w-3.5 h-3.5 text-[#30d158]" />
+          <h3 className="text-xs uppercase font-extrabold text-[#d1d4dc] font-mono tracking-tight flex items-center gap-1.5">
+            <Newspaper className="w-3.5 h-3.5 text-[#26a69a]" />
             {selectedStock ? `Най-важни новини за ${selectedStock.companyName} (${selectedStock.ticker})` : 'Глобални финансови & пазарни новини'}
           </h3>
-          <p className="text-[11px] text-gray-400 mt-0.5">
+          <p className="text-[11px] text-[#787b86] mt-0.5">
             Актуални и изключително проверени новини от единствен авторитетен източник: Yahoo Finance (https://finance.yahoo.com/).
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Dropdown for quick stock selection */}
-          <div className="flex items-center gap-2 bg-black/40 p-1.5 border border-white/10 text-xs">
-            <label className="text-[10px] font-mono font-bold text-gray-300 uppercase whitespace-nowrap">АКТИВ:</label>
+          <div className="flex items-center gap-2 bg-[#131722]/40 p-1.5 border border-[#2a2e39] text-xs">
+            <label className="text-[10px] font-mono font-bold text-[#b2b5be] uppercase whitespace-nowrap">АКТИВ:</label>
             <select
               value={selectedStock ? selectedStock.ticker : ''}
               onChange={(e) => {
@@ -420,7 +420,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
                 const found = stocks.find((s) => s.ticker === tick);
                 onSelectStock(found || null);
               }}
-              className="bg-[#1c1c1e] border border-white/10 rounded-none px-2 py-0.5 text-xs text-white font-bold focus:outline-none min-w-[120px] max-w-[180px]"
+              className="bg-[#1e222d] border border-[#2a2e39] rounded-none px-2 py-0.5 text-xs text-[#d1d4dc] font-bold focus:outline-none min-w-[120px] max-w-[180px]"
             >
               <option value="">-- Общ Пазар --</option>
               {stocks.map((s, idx) => (
@@ -434,7 +434,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
           <button
             onClick={fetchNews}
             disabled={loading}
-            className="bg-[#1c1c1e] hover:bg-stone-50 border border-white/10 text-white font-extrabold text-[10px] px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer disabled:opacity-50"
+            className="bg-[#1e222d] hover:bg-stone-50 border border-[#2a2e39] text-[#d1d4dc] font-extrabold text-[10px] px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer disabled:opacity-50"
             title="Обновяване на новинарския поток"
           >
             <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
@@ -444,7 +444,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
           {selectedStock && (
             <button
               onClick={() => onSelectStock(null)}
-              className="bg-stone-100 hover:bg-stone-200 border border-gray-350 text-gray-300 font-bold text-[10px] px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
+              className="bg-stone-100 hover:bg-stone-200 border border-gray-350 text-[#b2b5be] font-bold text-[10px] px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
             >
               <X className="w-3 h-3" />
               Общи новини
@@ -454,19 +454,19 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
       </div>
 
       {/* Main Content list */}
-      <div className="bg-stone-50 border border-white/10/15 p-4 min-h-[220px]">
+      <div className="bg-stone-50 border border-[#2a2e39]/15 p-4 min-h-[220px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center text-center py-12">
-            <RefreshCw className="w-8 h-8 text-[#30d158] animate-spin mb-4" />
-            <h4 className="text-xs font-extrabold font-mono uppercase text-white tracking-tight">
+            <RefreshCw className="w-8 h-8 text-[#26a69a] animate-spin mb-4" />
+            <h4 className="text-xs font-extrabold font-mono uppercase text-[#d1d4dc] tracking-tight">
               Извличане на проверени новини...
             </h4>
-            <p className="text-[11px] text-gray-400 max-w-md mt-2 leading-relaxed">
+            <p className="text-[11px] text-[#787b86] max-w-md mt-2 leading-relaxed">
               Google AI сканира надеждни източници в реално време, за да открие най-влиятелните статии и регулаторни събития за {selectedStock ? selectedStock.companyName : 'глобалните пазари'}...
             </p>
           </div>
         ) : error ? (
-          <div className="bg-stone-100 border border-white/10/20 p-4 rounded-none">
+          <div className="bg-stone-100 border border-[#2a2e39]/20 p-4 rounded-none">
             <div className="flex items-center gap-2 text-amber-800 font-mono text-xs font-bold mb-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
@@ -474,25 +474,25 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
             
             {/* Displaying fallbacks inside error screen automatically */}
             <div className="mt-4 space-y-4">
-              <h4 className="text-[10px] uppercase font-bold text-gray-400 font-mono tracking-wider">Резервни актуални новини:</h4>
+              <h4 className="text-[10px] uppercase font-bold text-[#787b86] font-mono tracking-wider">Резервни актуални новини:</h4>
               <div className="flex flex-col gap-3 max-h-[520px] overflow-y-auto pr-1">
                 {news.map((item, idx) => (
-                  <div key={idx} className="bg-[#1c1c1e] border border-white/10/10 p-3">
+                  <div key={idx} className="bg-[#1e222d] border border-[#2a2e39]/10 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-1.5 mb-2 font-mono text-[10px]">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-white uppercase">{item.source}</span>
+                        <span className="font-bold text-[#d1d4dc] uppercase">{item.source}</span>
                         <span className="text-gray-450">•</span>
-                        <span className="text-gray-400">{item.time}</span>
+                        <span className="text-[#787b86]">{item.time}</span>
                       </div>
                       {getImpactBadge(item.impact)}
                     </div>
-                    <h5 className="text-xs font-bold text-white font-sans leading-snug">{item.title}</h5>
-                    <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">{item.summary}</p>
+                    <h5 className="text-xs font-bold text-[#d1d4dc] font-sans leading-snug">{item.title}</h5>
+                    <p className="text-[11px] text-[#787b86] mt-1.5 leading-relaxed">{item.summary}</p>
                     <a
                       href={item.url}
                       target="_blank"
                       referrerPolicy="no-referrer"
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-[#30d158] hover:underline mt-2"
+                      className="inline-flex items-center gap-1 text-[10px] font-bold text-[#26a69a] hover:underline mt-2"
                     >
                       Прочетете цялата статия на {item.source} <ExternalLink className="w-3 h-3" />
                     </a>
@@ -503,11 +503,11 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
           </div>
         ) : news.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center py-10">
-            <HelpCircle className="w-8 h-8 text-gray-400 mb-3" />
-            <h4 className="text-xs font-extrabold font-mono uppercase text-white tracking-tight">
+            <HelpCircle className="w-8 h-8 text-[#787b86] mb-3" />
+            <h4 className="text-xs font-extrabold font-mono uppercase text-[#d1d4dc] tracking-tight">
               Няма налични новини в момента
             </h4>
-            <p className="text-[11px] text-gray-400 max-w-md mt-1">
+            <p className="text-[11px] text-[#787b86] max-w-md mt-1">
               Не бяха открити скорошни събития за този актив. Моля, проверете отново по-късно или изберете друг актив.
             </p>
           </div>
@@ -516,14 +516,14 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
             {news.map((item, idx) => (
               <div 
                 key={idx} 
-                className="bg-[#1c1c1e] border border-white/10/15 p-4 flex flex-col justify-between hover:border-emerald-800 transition-all shadow-xs group"
+                className="bg-[#1e222d] border border-[#2a2e39]/15 p-4 flex flex-col justify-between hover:border-emerald-800 transition-all shadow-xs group"
               >
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-2 mb-3 font-mono text-[10px]">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-extrabold text-[#30d158] uppercase tracking-tight">{item.source}</span>
+                      <span className="font-extrabold text-[#26a69a] uppercase tracking-tight">{item.source}</span>
                       <span className="text-gray-450">•</span>
-                      <div className="flex items-center gap-1 text-gray-400">
+                      <div className="flex items-center gap-1 text-[#787b86]">
                         <Clock className="w-3 h-3" />
                         <span>{item.time}</span>
                       </div>
@@ -531,25 +531,25 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
                     {getImpactBadge(item.impact)}
                   </div>
 
-                  <h4 className="text-xs font-extrabold text-white font-sans leading-snug group-hover:text-[#30d158] transition-colors">
+                  <h4 className="text-xs font-extrabold text-[#d1d4dc] font-sans leading-snug group-hover:text-[#26a69a] transition-colors">
                     {item.title}
                   </h4>
                   
-                  <p className="text-[11px] text-gray-400 mt-2 leading-relaxed font-sans">
+                  <p className="text-[11px] text-[#787b86] mt-2 leading-relaxed font-sans">
                     {item.summary}
                   </p>
                 </div>
 
                 <div className="mt-4 pt-2.5 border-t border-dashed border-gray-150 flex items-center justify-between">
-                  <span className="text-[9px] font-mono text-gray-400 uppercase">Официален източник</span>
+                  <span className="text-[9px] font-mono text-[#787b86] uppercase">Официален източник</span>
                   <a
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     referrerPolicy="no-referrer"
-                    className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#30d158] hover:text-emerald-950 hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#26a69a] hover:text-emerald-950 hover:underline cursor-pointer"
                   >
-                    Линк към статията <ExternalLink className="w-3 h-3 text-[#30d158]" />
+                    Линк към статията <ExternalLink className="w-3 h-3 text-[#26a69a]" />
                   </a>
                 </div>
               </div>
@@ -559,8 +559,8 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
       </div>
 
       {/* Footer disclaimer */}
-      <div className="mt-3 bg-black/25 border border-white/10/10 p-2.5 text-[9px] text-gray-400 leading-normal font-mono flex items-start gap-1.5">
-        <HelpCircle className="w-3.5 h-3.5 text-[#30d158] shrink-0 mt-0.5" />
+      <div className="mt-3 bg-[#131722]/25 border border-[#2a2e39]/10 p-2.5 text-[9px] text-[#787b86] leading-normal font-mono flex items-start gap-1.5">
+        <HelpCircle className="w-3.5 h-3.5 text-[#26a69a] shrink-0 mt-0.5" />
         <span>
           Всички изведени новини се извличат автоматично в реално време чрез Google Search Grounding и са строго ограничени до единствения официален източник Yahoo Finance. Анализът на ценовия импулс („Положително“, „Отрицателно“, „Неутрално“) се определя от изкуствения интелект и е с чисто информационен характер.
         </span>
