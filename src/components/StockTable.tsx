@@ -5,13 +5,13 @@ import StockDetailChartModal from './StockDetailChartModal';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
 interface Props {
-  stocks: Stock[];
-  onUpdateStock: (updatedStock: Stock) => void;
-  onDeleteStock: (ticker: string) => void;
-  onSelectStockForAi: (stock: Stock) => void;
-  onAddStock: (newStock: Stock) => void;
-  activeFilter: TableFilter;
-  onSetActiveFilter: (filter: TableFilter) => void;
+ stocks: Stock[];
+ onUpdateStock: (updatedStock: Stock) => void;
+ onDeleteStock: (ticker: string) => void;
+ onSelectStockForAi: (stock: Stock) => void;
+ onAddStock: (newStock: Stock) => void;
+ activeFilter: TableFilter;
+ onSetActiveFilter: (filter: TableFilter) => void;
 }
 
 type SortField = 'ticker' | 'dailyChangePct' | 'currentPrice' | 'fairPrice' | 'difference' | 'marketCap';
@@ -19,1143 +19,1143 @@ type SortOrder = 'asc' | 'desc';
 
 // Helper to render a miniature beautiful sparkline for the '365 Chart' column
 function StockSparkline({ changePct, ticker }: { changePct: number; ticker: string }) {
-  const isUp = changePct >= 0;
-  
-  // Clean deterministic seed from ticker name
-  let seed = ticker.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  
-  const steps = 12;
-  const prices: number[] = new Array(steps + 1);
-  
-  // Starting price is arbitrary, say 100
-  let currentVal = 100;
-  prices[0] = currentVal;
-  
-  // Run a deterministic random walk to generate 12 historical points
-  for (let i = 1; i <= steps; i++) {
-    // Deterministic pseudo-random number generator (LCG)
-    seed = (seed * 9301 + 49297) % 233280;
-    const rnd = (seed / 233280) - 0.5; // range -0.5 to 0.5
-    
-    // Trend towards changePct at the end
-    const trend = (changePct / 100) / steps;
-    currentVal = currentVal * (1 + rnd * 0.04 + trend);
-    prices[i] = currentVal;
-  }
-  
-  // Scale the prices to fit in the sparkline box (width: 50, height: 16)
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
-  const range = maxPrice - minPrice || 1;
-  
-  // Leave 1.5px padding at the top and bottom to avoid clipping
-  const height = 16;
-  const padding = 1.5;
-  const scaleHeight = height - padding * 2;
-  
-  const points = prices.map((price, i) => {
-    const x = (i / steps) * 46 + 2; // leave 2px padding on left/right
-    const y = height - padding - ((price - minPrice) / range) * scaleHeight;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
+ const isUp = changePct >= 0;
+ 
+ // Clean deterministic seed from ticker name
+ let seed = ticker.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+ 
+ const steps = 12;
+ const prices: number[] = new Array(steps + 1);
+ 
+ // Starting price is arbitrary, say 100
+ let currentVal = 100;
+ prices[0] = currentVal;
+ 
+ // Run a deterministic random walk to generate 12 historical points
+ for (let i = 1; i <= steps; i++) {
+ // Deterministic pseudo-random number generator (LCG)
+ seed = (seed * 9301 + 49297) % 233280;
+ const rnd = (seed / 233280) - 0.5; // range -0.5 to 0.5
+ 
+ // Trend towards changePct at the end
+ const trend = (changePct / 100) / steps;
+ currentVal = currentVal * (1 + rnd * 0.04 + trend);
+ prices[i] = currentVal;
+ }
+ 
+ // Scale the prices to fit in the sparkline box (width: 50, height: 16)
+ const minPrice = Math.min(...prices);
+ const maxPrice = Math.max(...prices);
+ const range = maxPrice - minPrice || 1;
+ 
+ // Leave 1.5px padding at the top and bottom to avoid clipping
+ const height = 16;
+ const padding = 1.5;
+ const scaleHeight = height - padding * 2;
+ 
+ const points = prices.map((price, i) => {
+ const x = (i / steps) * 46 + 2; // leave 2px padding on left/right
+ const y = height - padding - ((price - minPrice) / range) * scaleHeight;
+ return `${x.toFixed(1)},${y.toFixed(1)}`;
+ });
 
-  return (
-    <svg className="w-14 h-4 overflow-visible inline-block opacity-85 hover:opacity-100 transition-opacity" viewBox="0 0 50 16">
-      <polyline
-        fill="none"
-        stroke={isUp ? "#15803d" : "#b91c1c"}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={points.join(' ')}
-      />
-    </svg>
-  );
+ return (
+ <svg className="w-14 h-4 overflow-visible inline-block opacity-85 hover:opacity-100 transition-opacity" viewBox="0 0 50 16">
+ <polyline
+ fill="none"
+ stroke={isUp ? "#15803d" : "#b91c1c"}
+ strokeWidth="1.5"
+ strokeLinecap="round"
+ strokeLinejoin="round"
+ points={points.join(' ')}
+ />
+ </svg>
+ );
 }
 
 // Helpers to parse and format dates between YYYY-MM-DD (RFC3339/ISO for calendar widgets) and Bulgarian spreadsheet standard DD.MM.YYYY г.
 function toIsoDate(dateStr: string): string {
-  if (!dateStr) return '';
-  // Try matching DD.MM.YYYY
-  const match = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
-  if (match) {
-    return `${match[3]}-${match[2]}-${match[1]}`;
-  }
-  // If already standard ISO YYYY-MM-DD
-  const isoMatch = dateStr.match(/^\d{4}-\d{2}-\d{2}$/);
-  if (isoMatch) return dateStr;
-  
-  // Try falling back to a JS Date parsing
-  try {
-    const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) {
-      return d.toISOString().split('T')[0];
-    }
-  } catch (e) {}
-  
-  return '';
+ if (!dateStr) return '';
+ // Try matching DD.MM.YYYY
+ const match = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+ if (match) {
+ return `${match[3]}-${match[2]}-${match[1]}`;
+ }
+ // If already standard ISO YYYY-MM-DD
+ const isoMatch = dateStr.match(/^\d{4}-\d{2}-\d{2}$/);
+ if (isoMatch) return dateStr;
+ 
+ // Try falling back to a JS Date parsing
+ try {
+ const d = new Date(dateStr);
+ if (!isNaN(d.getTime())) {
+ return d.toISOString().split('T')[0];
+ }
+ } catch (e) {}
+ 
+ return '';
 }
 
 function fromIsoDate(isoStr: string): string {
-  if (!isoStr) return '';
-  const parts = isoStr.split('-');
-  if (parts.length === 3) {
-    return `${parts[2]}.${parts[1]}.${parts[0]} г.`;
-  }
-  return isoStr;
+ if (!isoStr) return '';
+ const parts = isoStr.split('-');
+ if (parts.length === 3) {
+ return `${parts[2]}.${parts[1]}.${parts[0]} г.`;
+ }
+ return isoStr;
 }
 
 export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, activeFilter, onSetActiveFilter }: Props) {
-  // Search state
-  const [search, setSearch] = useState('');
-
-  // Sorting state
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-
-  // Add stock modal state
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [activeChartStock, setActiveChartStock] = useState<Stock | null>(null);
-  const [newTicker, setNewTicker] = useState('');
-  const [newCompanyName, setNewCompanyName] = useState('');
-  const [newDate, setNewDate] = useState('');
-  const [newPriceOfCalc, setNewPriceOfCalc] = useState('');
-  const [newFairPrice, setNewFairPrice] = useState('');
-
-  // Inline pricing edits state for all editable cells
-  const [editingRow, setEditingRow] = useState<string | null>(null);
-  const [showConfirmFair, setShowConfirmFair] = useState<string | null>(null);
-  const [editWatch, setEditWatch] = useState('');
-  const [editCompanyName, setEditCompanyName] = useState('');
-  const [editDate, setEditDate] = useState('');
-  const [editPriceOfCalc, setEditPriceOfCalc] = useState('');
-  const [editCurrentPrice, setEditCurrentPrice] = useState('');
-  const [editFair, setEditFair] = useState('');
-  const [editProfileLink, setEditProfileLink] = useState('');
-  const [editDividend, setEditDividend] = useState('');
-  const [editSignal, setEditSignal] = useState('');
-  const [editLow52, setEditLow52] = useState('');
-  const [editHigh52, setEditHigh52] = useState('');
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      if (sortOrder === 'desc') {
-        setSortOrder('asc');
-      } else {
-        setSortField(null);
-      }
-    } else {
-      setSortField(field);
-      setSortOrder('desc');
-    }
-  };
-
-  const startInlineEdit = (stock: Stock) => {
-    setEditingRow(stock.ticker);
-    setEditWatch(stock.watch || '');
-    setEditCompanyName(stock.companyName);
-    setEditDate(toIsoDate(stock.date || ''));
-    setEditPriceOfCalc(stock.priceOfCalc !== null ? stock.priceOfCalc.toString() : '');
-    setEditCurrentPrice(stock.currentPrice.toString());
-    setEditFair(stock.fairPrice !== null ? stock.fairPrice.toString() : '');
-    setEditProfileLink(getSectorForStock(stock.ticker, stock.profileLink, stock.companyName));
-    setEditDividend(stock.dividend || '');
-    setEditSignal(stock.signal || '');
-    setEditLow52(stock.low52 !== null ? stock.low52.toString() : '');
-    setEditHigh52(stock.high52 !== null ? stock.high52.toString() : '');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent, ticker: string) => {
-    if (e.key === 'Enter') {
-      handleSaveClick(ticker);
-    } else if (e.key === 'Escape') {
-      cancelInlineEdit();
-    }
-  };
-
-  const handleSaveClick = (ticker: string) => {
-    const original = stocks.find(s => s.ticker === ticker);
-    if (!original) return;
-
-    const cleanFair = editFair === '' ? null : parseFloat(editFair.replace(',', '.'));
-    
-    // Show visual inline confirmation if Fair Price was actually modified
-    if (original.fairPrice !== cleanFair) {
-      setShowConfirmFair(ticker);
-    } else {
-      executeSave(ticker, false);
-    }
-  };
-
-  const executeSave = (ticker: string, confirmUpdate: boolean) => {
-    const original = stocks.find(s => s.ticker === ticker);
-    if (!original) return;
-
-    const parsedFair = editFair === '' ? null : parseFloat(editFair.replace(',', '.'));
-    const parsedPriceOfCalc = editPriceOfCalc === '' ? null : parseFloat(editPriceOfCalc.replace(',', '.'));
-    const parsedLow52 = editLow52 === '' ? null : parseFloat(editLow52.replace(',', '.'));
-    const parsedHigh52 = editHigh52 === '' ? null : parseFloat(editHigh52.replace(',', '.'));
-    const parsedCurrentPrice = editCurrentPrice === '' ? original.currentPrice : parseFloat(editCurrentPrice.replace(',', '.'));
-
-    if (parsedFair !== null && isNaN(parsedFair)) {
-      alert('Моля, въведете валидна справедлива цена.');
-      return;
-    }
-
-    if (parsedPriceOfCalc !== null && isNaN(parsedPriceOfCalc)) {
-      alert('Моля, въведете валидна цена на изчисление (Calculated Price).');
-      return;
-    }
-
-    if (parsedLow52 !== null && isNaN(parsedLow52)) {
-      alert('Моля, въведете валидна 52 Low стойност.');
-      return;
-    }
-
-    if (parsedHigh52 !== null && isNaN(parsedHigh52)) {
-      alert('Моля, въведете валидна 52 High стойност.');
-      return;
-    }
-
-    if (isNaN(parsedCurrentPrice) || parsedCurrentPrice <= 0) {
-      alert('Моля, въведете валидна текуща цена (по-голяма от 0).');
-      return;
-    }
-
-    let finalFair = parsedFair;
-    if (original.fairPrice !== parsedFair && !confirmUpdate) {
-      finalFair = original.fairPrice;
-    }
-
-    // Recalculate based on spreadsheet logic:
-    // Difference = (Fair Price - Current Price) / Current Price
-    let difference: number | null = null;
-    if (finalFair !== null && parsedCurrentPrice > 0) {
-      difference = parseFloat((((finalFair - parsedCurrentPrice) / parsedCurrentPrice) * 100).toFixed(2));
-    }
-
-    let buySell = 'SELL';
-    if (finalFair !== null && parsedCurrentPrice > 0) {
-      const dev = ((parsedCurrentPrice - finalFair) / finalFair) * 100;
-      if (dev < -10) {
-        buySell = 'BUY';
-      } else if (dev > 10) {
-        buySell = 'SELL';
-      } else {
-        buySell = 'ДРУГИ';
-      }
-    }
-    
-    // Automatically set calculated defaults if no custom signal string is filled, or keep current input
-    const finalSignal = editSignal || (difference !== null ? (difference > 15 ? 'Buy' : difference < -15 ? 'Sell' : 'Hold') : 'Hold');
-
-    onUpdateStock({
-      ...original,
-      watch: editWatch,
-      companyName: editCompanyName,
-      date: fromIsoDate(editDate),
-      priceOfCalc: parsedPriceOfCalc,
-      currentPrice: parsedCurrentPrice,
-      fairPrice: finalFair,
-      difference,
-      buySell,
-      profileLink: editProfileLink,
-      dividend: editDividend,
-      signal: finalSignal,
-      low52: parsedLow52,
-      high52: parsedHigh52
-    });
-
-    setEditingRow(null);
-    setShowConfirmFair(null);
-  };
-
-  const cancelInlineEdit = () => {
-    setEditingRow(null);
-    setShowConfirmFair(null);
-  };
-
-  const handleAddNewStockSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const tickerUpper = newTicker.trim().toUpperCase();
-    if (!tickerUpper) {
-      alert('Моля, въведете валиден тикер.');
-      return;
-    }
-
-    if (stocks.some(s => s.ticker === tickerUpper)) {
-      alert(`Акция с тикер ${tickerUpper} вече съществува в списъка!`);
-      return;
-    }
-
-    const priceOfCalcNum = newPriceOfCalc === '' ? null : parseFloat(newPriceOfCalc);
-    const fairPriceNum = newFairPrice === '' ? null : parseFloat(newFairPrice);
-
-    if (priceOfCalcNum !== null && isNaN(priceOfCalcNum)) {
-      alert('Моля, въведете валидна цена на изчисление.');
-      return;
-    }
-    if (fairPriceNum !== null && isNaN(fairPriceNum)) {
-      alert('Моля, въведете валидна справедлива цена.');
-      return;
-    }
-
-    // Default current price to priceOfCalcNum or 100 if none given
-    const initialPrice = priceOfCalcNum !== null ? priceOfCalcNum : 100.0;
-
-    // Calculate difference
-    let diffPercent: number | null = null;
-    if (fairPriceNum !== null && initialPrice > 0) {
-      diffPercent = parseFloat((((fairPriceNum - initialPrice) / initialPrice) * 100).toFixed(2));
-    }
-
-    let buySellValue = 'SELL';
-    if (fairPriceNum !== null && initialPrice > 0) {
-      const dev = ((initialPrice - fairPriceNum) / fairPriceNum) * 100;
-      if (dev < -10) {
-        buySellValue = 'BUY';
-      } else if (dev > 10) {
-        buySellValue = 'SELL';
-      } else {
-        buySellValue = 'ДРУГИ';
-      }
-    }
-    const autoSignal = diffPercent !== null ? (diffPercent > 15 ? 'Buy' : diffPercent < -15 ? 'Sell' : 'Hold') : 'Hold';
-
-    const newStock: Stock = {
-      watch: '',
-      ticker: tickerUpper,
-      companyName: newCompanyName.trim() || tickerUpper,
-      date: fromIsoDate(newDate),
-      priceOfCalc: priceOfCalcNum,
-      dailyChangePct: 0.0,
-      currentPrice: initialPrice,
-      fairPrice: fairPriceNum,
-      difference: diffPercent,
-      buySell: buySellValue,
-      marketCap: 2500000000, // typical Google Finance synced placeholder or simulation base values
-      peRatio: 16.8,
-      eps: 4.12,
-      profileLink: `https://www.google.com/finance/quote/${tickerUpper}:NASDAQ`,
-      dividend: '1.2% (0.50$)',
-      signal: autoSignal,
-      low52: priceOfCalcNum ? parseFloat((priceOfCalcNum * 0.78).toFixed(2)) : 80.0,
-      high52: priceOfCalcNum ? parseFloat((priceOfCalcNum * 1.25).toFixed(2)) : 125.0,
-    };
-
-    onAddStock(newStock);
-    setIsAddModalOpen(false);
-
-    // Reset states
-    setNewTicker('');
-    setNewCompanyName('');
-    setNewDate('');
-    setNewPriceOfCalc('');
-    setNewFairPrice('');
-  };
-
-  // Filter logic
-  const filteredStocks = stocks.filter(stock => {
-    const matchesSearch =
-      stock.ticker.toLowerCase().includes(search.toLowerCase()) ||
-      stock.companyName.toLowerCase().includes(search.toLowerCase());
-
-    if (!matchesSearch) return false;
-
-    if (activeFilter.type === 'all') return true;
-    
-    if (activeFilter.type === 'signal') {
-      const sig = stock.signal?.trim().toLowerCase();
-      if (activeFilter.value === 'buy') {
-        return sig === 'buy';
-      }
-      if (activeFilter.value === 'sell') {
-        return sig === 'sell';
-      }
-      if (activeFilter.value === 'hold') {
-        return sig === 'hold' || sig === 'изчакай' || !sig || sig === '-';
-      }
-    }
-
-    if (activeFilter.type === 'buySell') {
-      return stock.buySell === activeFilter.value;
-    }
-
-    if (activeFilter.type === 'watch') {
-      return stock.watch === 'Attn' || stock.watch === 'Atten' || stock.watch === 'Watch' || stock.watch === 'Sell' || stock.watch === 'Buy' || stock.watch === 'Interesting';
-    }
-
-    if (activeFilter.type === 'ticker') {
-      return stock.ticker.toLowerCase() === activeFilter.value.toLowerCase();
-    }
-
-    return true;
-  });
-
-  // Sort logic
-  const sortedStocks = !sortField
-    ? [...filteredStocks]
-    : [...filteredStocks].sort((a, b) => {
-        let valA = a[sortField];
-        let valB = b[sortField];
-
-        if (valA === null) return sortOrder === 'asc' ? 1 : -1;
-        if (valB === null) return sortOrder === 'asc' ? -1 : 1;
-
-        if (typeof valA === 'string' && typeof valB === 'string') {
-          return sortOrder === 'asc'
-            ? valA.localeCompare(valB)
-            : valB.localeCompare(valA);
-        }
-
-        return sortOrder === 'asc'
-          ? (valA as number) - (valB as number)
-          : (valB as number) - (valA as number);
-      });
-
-  // Direct non-paginated output to support continuous scrolling
-  const pageStocks = sortedStocks;
-
-  const formatLargeNum = (num: number | null) => {
-    if (num === null) return '-';
-    if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
-    return num.toLocaleString();
-  };
-
-  return (
-    <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-none overflow-hidden shadow-xs">
-      
-      {/* Search & Filters */}
-      <div className="p-3 bg-transparent border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1">
-          <button
-            onClick={() => {
-              // Pre-fill today's ISO date
-              const todayStr = new Date().toISOString().split('T')[0];
-              setNewDate(todayStr);
-              setNewTicker('');
-              setNewCompanyName('');
-              setNewPriceOfCalc('');
-              setNewFairPrice('');
-              setIsAddModalOpen(true);
-            }}
-            className="px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-none border border-cyan-400/50 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white flex items-center gap-1 cursor-pointer shrink-0"
-            title="Добави нова акция в таблицата"
-          >
-            <Plus className="w-3 h-3 text-white" />
-            Добавяне
-          </button>
-          <button
-            onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }}
-            className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-none border ${
-              activeFilter.type === 'all' ? 'bg-transparent text-white border-black' : 'bg-white/5 backdrop-blur-xl text-white border-white/20 hover:text-white hover:bg-white/10/50'
-            }`}
-          >
-            Всички ({stocks.length})
-          </button>
-          <button
-            onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'BUY' }); setCurrentPage(1); }}
-            className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-none border ${
-              activeFilter.type === 'buySell' && activeFilter.value === 'BUY' ? 'bg-[#00E676] text-white border-[#00E676]/50' : 'bg-white/5 backdrop-blur-xl text-[#00E676] border-[#00E676]/30 hover:bg-[#00E676]/10'
-            }`}
-          >
-            BUY / ПОКУПКИ ({stocks.filter(s => s.buySell === 'BUY').length})
-          </button>
-          <button
-            onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'SELL' }); setCurrentPage(1); }}
-            className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-none border ${
-              activeFilter.type === 'buySell' && activeFilter.value === 'SELL' ? 'bg-[#FF1744] text-white border-[#FF1744]/50' : 'bg-white/5 backdrop-blur-xl text-[#FF1744] border-[#FF1744]/30 hover:bg-[#FF1744]/10'
-            }`}
-          >
-            SELL / ПРОДАЖБИ ({stocks.filter(s => s.buySell === 'SELL').length})
-          </button>
-          <button
-            onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'ДРУГИ' }); setCurrentPage(1); }}
-            className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-none border ${
-              activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ' ? 'bg-gray-600 text-white border-gray-700' : 'bg-white/5 backdrop-blur-xl text-slate-300 border-white/20 hover:bg-white/10'
-            }`}
-          >
-            ДРУГИ ({stocks.filter(s => s.buySell === 'ДРУГИ').length})
-          </button>
-          <button
-            onClick={() => { onSetActiveFilter({ type: 'signal', value: 'hold' }); setCurrentPage(1); }}
-            className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-none border ${
-              activeFilter.type === 'signal' && activeFilter.value === 'hold' ? 'bg-amber-700 text-white border-amber-500/50' : 'bg-white/5 backdrop-blur-xl text-amber-400 border-amber-500/40 hover:bg-[#b06000]/10'
-            }`}
-          >
-            ИЗЧАКАЙ ({stocks.filter(s => s.signal?.toLowerCase() === 'hold' || s.signal === '').length})
-          </button>
-          <button
-            onClick={() => { onSetActiveFilter({ type: 'watch', value: 'watch' }); setCurrentPage(1); }}
-            className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-none border ${
-              activeFilter.type === 'watch' ? 'bg-indigo-500 text-white border-indigo-800' : 'bg-white/5 backdrop-blur-xl text-indigo-800 border-indigo-400/40 hover:bg-indigo-500/10'
-            }`}
-          >
-            ВНИМАНИЕ ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten' || s.watch === 'Watch' || s.watch === 'Sell' || s.watch === 'Buy' || s.watch === 'Interesting').length})
-          </button>
-
-          {/* Special badges when filtering by signals from the charts */}
-          {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
-            <span className="px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase rounded-none border bg-[#00E676] text-white border-[#00E676]/50 flex items-center gap-1 shrink-0">
-              Активен Сигнал: BUY ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'buy').length})
-              <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
-            </span>
-          )}
-          {activeFilter.type === 'signal' && activeFilter.value === 'sell' && (
-            <span className="px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase rounded-none border bg-[#FF1744] text-white border-[#FF1744]/50 flex items-center gap-1 shrink-0">
-              Активен Сигнал: SELL ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'sell').length})
-              <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
-            </span>
-          )}
-
-          {activeFilter.type === 'ticker' && (
-            <span className="px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase rounded-none border bg-indigo-600 text-white border-indigo-950 flex items-center gap-1 shrink-0">
-              Активен актив: {activeFilter.value}
-              <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-indigo-200 ml-1 font-bold cursor-pointer">×</button>
-            </span>
-          )}
-        </div>
-
-        <div className="relative w-full md:w-64">
-          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Търсене по тикер или име..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-            className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-none pl-8 pr-3 py-1 text-xs text-white focus:outline-none focus:border-white/10 font-mono"
-          />
-        </div>
-      </div>
-
-      {/* Main Grid Responsive Table with exactly 20 columns and scrollbar view */}
-      <div className="w-full max-h-[520px] overflow-y-auto overflow-x-auto border-b border-white/10/15">
-        <table className="w-full text-left border-collapse min-w-[1900px] table-fixed">
-          
-          <colgroup><col className="w-[100px]" /><col className="w-[85px]" /><col className="w-[185px]" /><col className="w-[95px]" /><col className="w-[120px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[110px]" /><col className="w-[110px]" /><col className="w-[95px]" /><col className="w-[115px]" /><col className="w-[95px]" /><col className="w-[90px]" /><col className="w-[140px]" /><col className="w-[140px]" /><col className="w-[110px]" /><col className="w-[100px]" /><col className="w-[100px]" /><col className="w-[120px]" /></colgroup>
-
-          <thead className="sticky top-0 z-20 bg-white/5 backdrop-blur-xl">
-            <tr className="bg-white/5 backdrop-blur-xl text-white/90 border-b-2 border-white/10 text-[10px] uppercase font-mono tracking-wider select-none">
-              <th className="py-2.5 px-3 whitespace-nowrap">Watch</th>
-              <th className="py-2.5 px-3 cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('ticker')}>
-                Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
-              </th>
-              <th className="py-2.5 px-3 whitespace-nowrap">Company Name</th>
-              <th className="py-2.5 px-3 text-center whitespace-nowrap">365 Chart</th>
-              <th className="py-2.5 px-3 whitespace-nowrap">Date</th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">Price of Calc.</th>
-              <th className="py-2.5 px-3 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('dailyChangePct')}>
-                Daily Change %{sortField === 'dailyChangePct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
-              </th>
-              <th className="py-2.5 px-3 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('currentPrice')}>
-                Current Price{sortField === 'currentPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
-              </th>
-              <th className="py-2.5 px-3 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('fairPrice')}>
-                Fair Price{sortField === 'fairPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
-              </th>
-              <th className="py-2.5 px-3 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('difference')}>
-                Difference{sortField === 'difference' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
-              </th>
-              <th className="py-2.5 px-3 text-center whitespace-nowrap">BUY/SELL</th>
-              <th className="py-2.5 px-3 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('marketCap')}>
-                Market Cap{sortField === 'marketCap' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
-              </th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">P/E Ratio</th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">EPS</th>
-              <th className="py-2.5 px-3 text-center whitespace-nowrap">Sector</th>
-              <th className="py-2.5 px-3 whitespace-nowrap">Dividend</th>
-              <th className="py-2.5 px-3 whitespace-nowrap">Signal</th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">52 Low</th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">52 High</th>
-              <th className="py-2.5 px-3 text-center whitespace-nowrap">Важни Новини</th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-white/10 font-mono text-[11px] text-white">
-            {pageStocks.map(stock => {
-              const isEditing = editingRow === stock.ticker;
-              const isPositiveChange = stock.dailyChangePct >= 0;
-              const isUndervalued = stock.difference !== null && stock.difference > 0;
-
-              return (
-                <tr
-                  key={stock.ticker}
-                  className={`hover:bg-transparent/20 transition-colors duration-75 group ${
-                    isEditing ? 'bg-white/5 backdrop-blur-xl/10' : ''
-                  }`}
-                  onKeyDown={isEditing ? (e) => {
-                    if (e.key === 'Enter') {
-                      handleSaveClick(stock.ticker);
-                    } else if (e.key === 'Escape') {
-                      cancelInlineEdit();
-                    }
-                  } : undefined}
-                >
-                  {/* 1. WATCH */}
-                  <td className="py-2 px-3 font-sans overflow-hidden text-ellipsis whitespace-nowrap">
-                    {isEditing ? (
-                      <select
-                        value={editWatch}
-                        onChange={e => setEditWatch(e.target.value)}
-                        className="bg-white/5 backdrop-blur-xl text-[11px] text-white border border-white/10 p-0.5 rounded-none font-mono w-full"
-                      >
-                        <option value="">-</option>
-                        <option value="Buy">Buy</option>
-                        <option value="Sell">Sell</option>
-                        <option value="Watch">Watch</option>
-                        <option value="Attn">Attn</option>
-                        <option value="Interesting">Interesting</option>
-                        <option value="Not interesting">Not interesting</option>
-                      </select>
-                    ) : stock.watch === 'Attn' || stock.watch === 'Atten' ? (
-                      <span className="bg-amber-500/10 text-amber-400 font-extrabold px-1 border border-amber-400/30 text-[8.5px] uppercase rounded-none">
-                        Attn
-                      </span>
-                    ) : stock.watch === 'Watch' ? (
-                      <span className="bg-gradient-to-r from-cyan-500 to-blue-500/10 text-cyan-400 font-extrabold px-1 border border-cyan-400/30 text-[8.5px] uppercase rounded-none">
-                        Watch
-                      </span>
-                    ) : stock.watch === 'Sell' ? (
-                      <span className="bg-[#FF1744]/10 text-[#FF1744] font-extrabold px-1 border border-[#FF1744]/20 text-[8.5px] uppercase rounded-none">
-                        Sell
-                      </span>
-                    ) : stock.watch === 'Buy' ? (
-                      <span className="bg-[#00E676]/10 text-[#00E676] font-extrabold px-1 border border-[#00E676]/20 text-[8.5px] uppercase rounded-none">
-                        Buy
-                      </span>
-                    ) : stock.watch === 'Interesting' ? (
-                      <span className="bg-purple-500/10 text-purple-400 font-extrabold px-1 border border-purple-400/30 text-[8.5px] uppercase rounded-none">
-                        Interesting
-                      </span>
-                    ) : stock.watch === 'Not interesting' ? (
-                      <span className="bg-white/10 text-slate-300 font-bold px-1 border border-white/10 text-[8.5px] uppercase rounded-none">
-                        Not interesting
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">-</span>
-                    )}
-                  </td>
-
-                  {/* 2. TICKER */}
-                  <td className="py-2 px-3 font-extrabold text-white overflow-hidden text-ellipsis">
-                    {stock.ticker}
-                  </td>
-
-                  {/* 3. COMPANY NAME */}
-                  <td className="py-2 px-3 text-white font-sans font-medium hover:text-white transition-colors overflow-hidden text-ellipsis whitespace-nowrap">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editCompanyName}
-                        onChange={e => setEditCompanyName(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-left font-sans text-[11px] text-white border border-white/10 px-1 py-0.5 rounded-none focus:outline-none"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-between gap-1 group/cell">
-                        <span className="truncate">{stock.companyName}</span>
-                        <button
-                          onClick={() => startInlineEdit(stock)}
-                          className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-slate-400 hover:text-white transition-opacity p-0.5 shrink-0"
-                          title="Редактирай име"
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* 4. 365 CHART */}
-                  <td className="py-2 px-3 text-center">
-                    <button
-                      onClick={() => setActiveChartStock(stock)}
-                      className="inline-flex items-center justify-center p-1 rounded-none hover:bg-stone-100 border border-transparent hover:border-white/10 transition-all cursor-pointer"
-                      title="Кликнете за детайлна интерактивна графика"
-                    >
-                      <StockSparkline changePct={stock.dailyChangePct} ticker={stock.ticker} />
-                    </button>
-                  </td>
-
-                  {/* 5. DATE */}
-                  <td className="py-2 px-3 text-slate-400 text-[10px] overflow-hidden text-ellipsis whitespace-nowrap">
-                    {isEditing ? (
-                      <input
-                        type="date"
-                        value={editDate}
-                        onChange={e => setEditDate(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-left font-mono text-[11px] text-white border border-white/10 px-1 py-0.5 rounded-none focus:outline-none cursor-pointer"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-between gap-1 group/cell">
-                        <span className="truncate">{stock.date || '-'}</span>
-                        <button
-                          onClick={() => startInlineEdit(stock)}
-                          className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-slate-400 hover:text-white transition-opacity p-0.5 shrink-0"
-                          title="Редактирай дата"
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* 6. PRICE OF CALC. */}
-                  <td className="py-2 px-3 text-right text-slate-400">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editPriceOfCalc}
-                        onChange={e => setEditPriceOfCalc(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-right font-mono text-xs text-white border border-white/10 p-0.5 rounded-none focus:outline-none"
-                        placeholder="-"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-end gap-1 group/cell">
-                        <span>{stock.priceOfCalc !== null ? `$${stock.priceOfCalc.toFixed(2)}` : '-'}</span>
-                        <button
-                          onClick={() => startInlineEdit(stock)}
-                          className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-slate-400 hover:text-white transition-opacity p-0.5 shrink-0"
-                          title="Редактирай калк. цена"
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* 7. DAILY CHANGE % */}
-                  <td className="py-2 px-3 text-right font-extrabold">
-                    <span
-                      className={`flex items-center justify-end gap-0.5 ${
-                        isPositiveChange ? 'text-[#00E676]' : 'text-red-750'
-                      }`}
-                    >
-                      {isPositiveChange ? (
-                        <TrendingUp className="w-3 h-3 shrink-0" />
-                      ) : (
-                        <TrendingDown className="w-3 h-3 shrink-0" />
-                      )}
-                      <span>{stock.dailyChangePct ? `${isPositiveChange ? '+' : ''}${stock.dailyChangePct.toFixed(2)}%` : '0.00%'}</span>
-                    </span>
-                  </td>
-
-                  {/* 8. CURRENT PRICE */}
-                  <td className="py-2 px-3 text-right font-extrabold text-black bg-stone-50">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editCurrentPrice}
-                        onChange={e => setEditCurrentPrice(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-right font-bold text-white border border-white/10 p-0.5 rounded-none font-mono text-[11px] focus:outline-none"
-                      />
-                    ) : (
-                      <span>${stock.currentPrice.toFixed(2)}</span>
-                    )}
-                  </td>
-
-                  {/* 9. FAIR PRICE */}
-                  <td className="py-2 px-3 text-right font-extrabold text-[#00E676] bg-emerald-50/20">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editFair}
-                        onChange={e => setEditFair(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-right font-bold text-white border border-white/10 p-0.5 rounded-none font-mono text-[11px] focus:outline-none"
-                        placeholder="-"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-end gap-1 group/cell">
-                        <span>{stock.fairPrice !== null ? `$${stock.fairPrice.toFixed(2)}` : 'N/A'}</span>
-                        <button
-                          onClick={() => startInlineEdit(stock)}
-                          className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-[#00E676] hover:text-white transition-opacity p-0.5 shrink-0"
-                          title="Редактирай справедлива цена"
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* 10. DIFFERENCE */}
-                  <td className={`py-2 px-3 text-right font-extrabold ${isUndervalued ? 'text-[#00E676]' : 'text-red-750'}`}>
-                    {stock.difference !== null ? (
-                      <span>{stock.difference > 0 ? '▲ +' : '▼ '}{stock.difference.toFixed(2)}%</span>
-                    ) : (
-                      <span className="text-gray-450">#N/A</span>
-                    )}
-                  </td>
-
-                  {/* 11. BUY / SELL */}
-                  <td className="py-2 px-3 text-center">
-                    {stock.buySell === 'BUY' ? (
-                      <span className="bg-emerald-150 text-[#00E676] border border-emerald-500 px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wide">
-                        BUY
-                      </span>
-                    ) : stock.buySell === 'SELL' ? (
-                      <span className="bg-[#c5221f]/10 text-[#FF1744] border border-[#c5221f]/40 px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wide">
-                        SELL
-                      </span>
-                    ) : (
-                      <span className="bg-[#D9D8D5] text-white border border-white/10/30 px-1.5 py-0.5 text-[8.5px] font-bold uppercase">
-                        {stock.buySell}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* 12. MARKET CAP [LOCKED] */}
-                  <td className="py-2 px-3 text-right text-slate-300 font-mono bg-stone-50">
-                    {formatLargeNum(stock.marketCap)}
-                  </td>
-
-                  {/* 13. P/E RATIO [LOCKED] */}
-                  <td className="py-2 px-3 text-right text-slate-300 font-mono bg-stone-50">
-                    {stock.peRatio ? stock.peRatio.toFixed(2) : '-'}
-                  </td>
-
-                  {/* 14. EPS [LOCKED] */}
-                  <td className="py-2 px-3 text-right text-stone-900 font-bold bg-stone-50">
-                    {stock.eps ? `$${stock.eps.toFixed(2)}` : '-'}
-                  </td>
-
-                  {/* 15. SECTOR */}
-                  <td className="py-2 px-3 text-center whitespace-nowrap">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editProfileLink}
-                        onChange={e => setEditProfileLink(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-left font-sans text-[11px] text-white border border-white/10 px-1 py-0.5 rounded-none focus:outline-none"
-                        placeholder="Сектор"
-                      />
-                    ) : (
-                      <span className="inline-block px-1.5 py-0.5 text-[10.5px] font-sans font-medium text-stone-700 bg-stone-150 rounded-sm whitespace-nowrap">
-                        {getSectorForStock(stock.ticker, stock.profileLink, stock.companyName)}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* 16. DIVIDEND */}
-                  <td className="py-2 px-3 text-white whitespace-nowrap">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editDividend}
-                        onChange={e => setEditDividend(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-left font-mono text-[11px] text-white border border-white/10 px-1 py-0.5 rounded-none focus:outline-none"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-between gap-1 group/cell">
-                        <span className="whitespace-nowrap font-mono">{formatDividend(stock.dividend, stock.currentPrice)}</span>
-                        <button
-                          onClick={() => startInlineEdit(stock)}
-                          className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-slate-400 hover:text-white transition-opacity p-0.5 shrink-0"
-                          title="Редактирай дивидент"
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* 17. SIGNAL */}
-                  <td className="py-2 px-3 text-white overflow-hidden text-ellipsis whitespace-nowrap">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editSignal}
-                        onChange={e => setEditSignal(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-left font-mono text-[11px] text-white border border-white/10 px-1 py-0.5 rounded-none focus:outline-none"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-between gap-1 group/cell">
-                        <span className="truncate font-semibold">{stock.signal || '-'}</span>
-                        <button
-                          onClick={() => startInlineEdit(stock)}
-                          className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-slate-400 hover:text-white transition-opacity p-0.5 shrink-0"
-                          title="Редактирай сигнал"
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* 18. 52 LOW */}
-                  <td className="py-2 px-3 text-right text-gray-650">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editLow52}
-                        onChange={e => setEditLow52(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-right font-mono text-xs text-white border border-white/10 p-0.5 rounded-none focus:outline-none"
-                        placeholder="-"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-end gap-1 group/cell">
-                        <span>{stock.low52 !== null ? `$${stock.low52.toFixed(2)}` : '-'}</span>
-                        <button
-                          onClick={() => startInlineEdit(stock)}
-                          className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-slate-400 hover:text-white transition-opacity p-0.5 shrink-0"
-                          title="Редактирай 52W Low"
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* 19. 52 HIGH */}
-                  <td className="py-2 px-3 text-right text-gray-650">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editHigh52}
-                        onChange={e => setEditHigh52(e.target.value)}
-                        className="w-full bg-white/5 backdrop-blur-xl text-right font-mono text-xs text-white border border-white/10 p-0.5 rounded-none focus:outline-none"
-                        placeholder="-"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-end gap-1 group/cell">
-                        <span>{stock.high52 !== null ? `$${stock.high52.toFixed(2)}` : '-'}</span>
-                        <button
-                          onClick={() => startInlineEdit(stock)}
-                          className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-slate-400 hover:text-white transition-opacity p-0.5 shrink-0"
-                          title="Редактирай 52W High"
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* 20. AI ANALIS */}
-                  <td className="py-2 px-3 text-center">
-                    {isEditing ? (
-                      showConfirmFair === stock.ticker ? (
-                        <div className="flex flex-col items-center gap-1 bg-amber-50 border border-amber-200 p-1.5 rounded-none z-10 shrink-0 min-w-[130px]">
-                          <span className="text-[9px] font-bold text-amber-800 uppercase tracking-tight block text-center leading-none">
-                            Актуализиране на Fair Price?
-                          </span>
-                          <div className="flex items-center gap-1.5 justify-center mt-1">
-                            <button
-                              onClick={() => executeSave(stock.ticker, true)}
-                              className="px-2 py-0.5 text-[9px] font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-none border border-amber-750 cursor-pointer"
-                            >
-                              Да
-                            </button>
-                            <button
-                              onClick={() => executeSave(stock.ticker, false)}
-                              className="px-2 py-0.5 text-[9px] font-bold bg-stone-500 hover:bg-stone-600 text-white rounded-none border border-stone-600 cursor-pointer"
-                            >
-                              Не
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-1 shrink-0">
-                          <button
-                            onClick={() => handleSaveClick(stock.ticker)}
-                            className="p-1 rounded-none bg-emerald-700 text-white hover:bg-[#00E676] duration-100 border border-emerald-800 cursor-pointer"
-                            title="Запази"
-                          >
-                            <Check className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={cancelInlineEdit}
-                            className="p-1 rounded-none bg-red-700 text-white hover:bg-red-800 duration-100 border border-red-850 cursor-pointer"
-                            title="Отказ"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )
-                    ) : (
-                      <div className="flex items-center justify-center gap-1.5 shrink-0">
-                        <button
-                          onClick={() => onSelectStockForAi(stock)}
-                          className="inline-flex items-center gap-1 text-[9px] font-bold py-0.5 px-2.5 border border-white/10 bg-transparent hover:bg-[#00E676] hover:text-white hover:border-emerald-900 text-white transition-all rounded-none"
-                          title="Прочетете най-новите достоверни новини за компанията"
-                        >
-                          <Newspaper className="w-2.5 h-2.5 text-[#00E676] group-hover:text-white" />
-                          <span>Новини</span>
-                        </button>
-                        <button
-                          onClick={() => onDeleteStock(stock.ticker)}
-                          className="p-1 rounded-none border border-transparent hover:border-[#FF1744]/20 hover:bg-red-50 text-gray-550 hover:text-red-700 transition-all cursor-pointer"
-                          title="Изтриване на този ред"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-
-                </tr>
-              );
-            })}
-
-            {pageStocks.length === 0 && (
-              <tr>
-                <td colSpan={20} className="py-12 text-center text-gray-650 font-sans text-xs">
-                  Няма намерени резултати за "{search}". Проверете вашето търсене.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* table status footer */}
-      <div className="p-3 bg-transparent border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between font-mono text-[11px] text-white/90 gap-1.5">
-        <span>
-          Показване на всички <span className="font-extrabold underline">{sortedStocks.length}</span> намерени акции
-        </span>
-        <span className="text-[10px] text-slate-400 italic">
-          Използвайте скрол лентата за нагоре и надолу, за да прегледате пълната таблица
-        </span>
-      </div>
-
-      {/* Modern Retro Modal for adding a new Stock */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 bg-transparent/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-transparent border-2 border-white/10 rounded-none shadow-[6px_6px_0px_0px_rgba(20,20,20,1)] w-full max-w-md p-5 relative font-mono text-xs">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between border-b-2 border-white/10 pb-2.5 mb-4">
-              <h3 className="text-xs uppercase font-extrabold text-white flex items-center gap-1.5">
-                <Plus className="w-4 h-4 text-blue-800 animate-pulse" />
-                <span>Добави нов актив</span>
-              </h3>
-              <button 
-                onClick={() => setIsAddModalOpen(false)} 
-                className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
-                type="button"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddNewStockSubmit} className="space-y-3.5">
-              
-              <div className="grid grid-cols-2 gap-3.5">
-                {/* Ticker */}
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-white/90 mb-1">
-                    Тикер / Ticker *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="напр. MSFT"
-                    value={newTicker}
-                    onChange={e => setNewTicker(e.target.value)}
-                    className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-none font-bold uppercase p-2 focus:outline-none focus:border-blue-900"
-                  />
-                </div>
-
-                {/* Company Name */}
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-white/90 mb-1">
-                    Компания / Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="напр. Microsoft"
-                    value={newCompanyName}
-                    onChange={e => setNewCompanyName(e.target.value)}
-                    className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-none p-2 focus:outline-none focus:border-blue-900"
-                  />
-                </div>
-              </div>
-
-              {/* DATE Calendar widget */}
-              <div>
-                <label className="block text-[10px] font-bold uppercase text-white/90 mb-1">
-                  Дата / Date *
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={newDate}
-                  onChange={e => setNewDate(e.target.value)}
-                  className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-none p-2 focus:outline-none focus:border-blue-900 cursor-pointer"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3.5">
-                {/* Price of Calc */}
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-white/90 mb-1">
-                    Цена на калкулация *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="напр. 385.50"
-                    value={newPriceOfCalc}
-                    onChange={e => setNewPriceOfCalc(e.target.value)}
-                    className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-none p-2 focus:outline-none focus:border-blue-900"
-                  />
-                </div>
-
-                {/* Fair Price */}
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-white/90 mb-1">
-                    Справедлива цена *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="напр. 410.00"
-                    value={newFairPrice}
-                    onChange={e => setNewFairPrice(e.target.value)}
-                    className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-none p-2 focus:outline-none focus:border-blue-900"
-                  />
-                </div>
-              </div>
-
-              <div className="text-[10.5px] text-slate-400 italic pt-1 text-right leading-tight">
-                * Разликата, Сигналът и BUY/SELL се изчисляват автоматично на база цена и качество.
-              </div>
-
-              {/* Footer Buttons */}
-              <div className="flex items-center justify-end gap-2 border-t border-white/10/15 pt-3.5 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-3.5 py-2 font-bold uppercase bg-white/5 backdrop-blur-xl hover:bg-white/10/50 border border-white/10 rounded-none text-white cursor-pointer"
-                >
-                  Отказ
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 font-extrabold uppercase bg-emerald-700 hover:bg-[#00E676] border border-[#00E676]/50 text-white rounded-none shadow-sm cursor-pointer"
-                >
-                  Запази & Добави
-                </button>
-              </div>
-
-            </form>
-
-          </div>
-        </div>
-      )}
-
-      {/* Modern Interactive Historical Chart Modal */}
-      {activeChartStock && (
-        <StockDetailChartModal 
-          stock={activeChartStock} 
-          onClose={() => setActiveChartStock(null)} 
-        />
-      )}
-      
-    </div>
-  );
+ // Search state
+ const [search, setSearch] = useState('');
+
+ // Sorting state
+ const [sortField, setSortField] = useState<SortField | null>(null);
+ const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
+ // Add stock modal state
+ const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+ const [activeChartStock, setActiveChartStock] = useState<Stock | null>(null);
+ const [newTicker, setNewTicker] = useState('');
+ const [newCompanyName, setNewCompanyName] = useState('');
+ const [newDate, setNewDate] = useState('');
+ const [newPriceOfCalc, setNewPriceOfCalc] = useState('');
+ const [newFairPrice, setNewFairPrice] = useState('');
+
+ // Inline pricing edits state for all editable cells
+ const [editingRow, setEditingRow] = useState<string | null>(null);
+ const [showConfirmFair, setShowConfirmFair] = useState<string | null>(null);
+ const [editWatch, setEditWatch] = useState('');
+ const [editCompanyName, setEditCompanyName] = useState('');
+ const [editDate, setEditDate] = useState('');
+ const [editPriceOfCalc, setEditPriceOfCalc] = useState('');
+ const [editCurrentPrice, setEditCurrentPrice] = useState('');
+ const [editFair, setEditFair] = useState('');
+ const [editProfileLink, setEditProfileLink] = useState('');
+ const [editDividend, setEditDividend] = useState('');
+ const [editSignal, setEditSignal] = useState('');
+ const [editLow52, setEditLow52] = useState('');
+ const [editHigh52, setEditHigh52] = useState('');
+
+ // Pagination
+ const [currentPage, setCurrentPage] = useState(1);
+ const itemsPerPage = 15;
+
+ const handleSort = (field: SortField) => {
+ if (sortField === field) {
+ if (sortOrder === 'desc') {
+ setSortOrder('asc');
+ } else {
+ setSortField(null);
+ }
+ } else {
+ setSortField(field);
+ setSortOrder('desc');
+ }
+ };
+
+ const startInlineEdit = (stock: Stock) => {
+ setEditingRow(stock.ticker);
+ setEditWatch(stock.watch || '');
+ setEditCompanyName(stock.companyName);
+ setEditDate(toIsoDate(stock.date || ''));
+ setEditPriceOfCalc(stock.priceOfCalc !== null ? stock.priceOfCalc.toString() : '');
+ setEditCurrentPrice(stock.currentPrice.toString());
+ setEditFair(stock.fairPrice !== null ? stock.fairPrice.toString() : '');
+ setEditProfileLink(getSectorForStock(stock.ticker, stock.profileLink, stock.companyName));
+ setEditDividend(stock.dividend || '');
+ setEditSignal(stock.signal || '');
+ setEditLow52(stock.low52 !== null ? stock.low52.toString() : '');
+ setEditHigh52(stock.high52 !== null ? stock.high52.toString() : '');
+ };
+
+ const handleKeyDown = (e: React.KeyboardEvent, ticker: string) => {
+ if (e.key === 'Enter') {
+ handleSaveClick(ticker);
+ } else if (e.key === 'Escape') {
+ cancelInlineEdit();
+ }
+ };
+
+ const handleSaveClick = (ticker: string) => {
+ const original = stocks.find(s => s.ticker === ticker);
+ if (!original) return;
+
+ const cleanFair = editFair === '' ? null : parseFloat(editFair.replace(',', '.'));
+ 
+ // Show visual inline confirmation if Fair Price was actually modified
+ if (original.fairPrice !== cleanFair) {
+ setShowConfirmFair(ticker);
+ } else {
+ executeSave(ticker, false);
+ }
+ };
+
+ const executeSave = (ticker: string, confirmUpdate: boolean) => {
+ const original = stocks.find(s => s.ticker === ticker);
+ if (!original) return;
+
+ const parsedFair = editFair === '' ? null : parseFloat(editFair.replace(',', '.'));
+ const parsedPriceOfCalc = editPriceOfCalc === '' ? null : parseFloat(editPriceOfCalc.replace(',', '.'));
+ const parsedLow52 = editLow52 === '' ? null : parseFloat(editLow52.replace(',', '.'));
+ const parsedHigh52 = editHigh52 === '' ? null : parseFloat(editHigh52.replace(',', '.'));
+ const parsedCurrentPrice = editCurrentPrice === '' ? original.currentPrice : parseFloat(editCurrentPrice.replace(',', '.'));
+
+ if (parsedFair !== null && isNaN(parsedFair)) {
+ alert('Моля, въведете валидна справедлива цена.');
+ return;
+ }
+
+ if (parsedPriceOfCalc !== null && isNaN(parsedPriceOfCalc)) {
+ alert('Моля, въведете валидна цена на изчисление (Calculated Price).');
+ return;
+ }
+
+ if (parsedLow52 !== null && isNaN(parsedLow52)) {
+ alert('Моля, въведете валидна 52 Low стойност.');
+ return;
+ }
+
+ if (parsedHigh52 !== null && isNaN(parsedHigh52)) {
+ alert('Моля, въведете валидна 52 High стойност.');
+ return;
+ }
+
+ if (isNaN(parsedCurrentPrice) || parsedCurrentPrice <= 0) {
+ alert('Моля, въведете валидна текуща цена (по-голяма от 0).');
+ return;
+ }
+
+ let finalFair = parsedFair;
+ if (original.fairPrice !== parsedFair && !confirmUpdate) {
+ finalFair = original.fairPrice;
+ }
+
+ // Recalculate based on spreadsheet logic:
+ // Difference = (Fair Price - Current Price) / Current Price
+ let difference: number | null = null;
+ if (finalFair !== null && parsedCurrentPrice > 0) {
+ difference = parseFloat((((finalFair - parsedCurrentPrice) / parsedCurrentPrice) * 100).toFixed(2));
+ }
+
+ let buySell = 'SELL';
+ if (finalFair !== null && parsedCurrentPrice > 0) {
+ const dev = ((parsedCurrentPrice - finalFair) / finalFair) * 100;
+ if (dev < -10) {
+ buySell = 'BUY';
+ } else if (dev > 10) {
+ buySell = 'SELL';
+ } else {
+ buySell = 'ДРУГИ';
+ }
+ }
+ 
+ // Automatically set calculated defaults if no custom signal string is filled, or keep current input
+ const finalSignal = editSignal || (difference !== null ? (difference > 15 ? 'Buy' : difference < -15 ? 'Sell' : 'Hold') : 'Hold');
+
+ onUpdateStock({
+ ...original,
+ watch: editWatch,
+ companyName: editCompanyName,
+ date: fromIsoDate(editDate),
+ priceOfCalc: parsedPriceOfCalc,
+ currentPrice: parsedCurrentPrice,
+ fairPrice: finalFair,
+ difference,
+ buySell,
+ profileLink: editProfileLink,
+ dividend: editDividend,
+ signal: finalSignal,
+ low52: parsedLow52,
+ high52: parsedHigh52
+ });
+
+ setEditingRow(null);
+ setShowConfirmFair(null);
+ };
+
+ const cancelInlineEdit = () => {
+ setEditingRow(null);
+ setShowConfirmFair(null);
+ };
+
+ const handleAddNewStockSubmit = (e: React.FormEvent) => {
+ e.preventDefault();
+ const tickerUpper = newTicker.trim().toUpperCase();
+ if (!tickerUpper) {
+ alert('Моля, въведете валиден тикер.');
+ return;
+ }
+
+ if (stocks.some(s => s.ticker === tickerUpper)) {
+ alert(`Акция с тикер ${tickerUpper} вече съществува в списъка!`);
+ return;
+ }
+
+ const priceOfCalcNum = newPriceOfCalc === '' ? null : parseFloat(newPriceOfCalc);
+ const fairPriceNum = newFairPrice === '' ? null : parseFloat(newFairPrice);
+
+ if (priceOfCalcNum !== null && isNaN(priceOfCalcNum)) {
+ alert('Моля, въведете валидна цена на изчисление.');
+ return;
+ }
+ if (fairPriceNum !== null && isNaN(fairPriceNum)) {
+ alert('Моля, въведете валидна справедлива цена.');
+ return;
+ }
+
+ // Default current price to priceOfCalcNum or 100 if none given
+ const initialPrice = priceOfCalcNum !== null ? priceOfCalcNum : 100.0;
+
+ // Calculate difference
+ let diffPercent: number | null = null;
+ if (fairPriceNum !== null && initialPrice > 0) {
+ diffPercent = parseFloat((((fairPriceNum - initialPrice) / initialPrice) * 100).toFixed(2));
+ }
+
+ let buySellValue = 'SELL';
+ if (fairPriceNum !== null && initialPrice > 0) {
+ const dev = ((initialPrice - fairPriceNum) / fairPriceNum) * 100;
+ if (dev < -10) {
+ buySellValue = 'BUY';
+ } else if (dev > 10) {
+ buySellValue = 'SELL';
+ } else {
+ buySellValue = 'ДРУГИ';
+ }
+ }
+ const autoSignal = diffPercent !== null ? (diffPercent > 15 ? 'Buy' : diffPercent < -15 ? 'Sell' : 'Hold') : 'Hold';
+
+ const newStock: Stock = {
+ watch: '',
+ ticker: tickerUpper,
+ companyName: newCompanyName.trim() || tickerUpper,
+ date: fromIsoDate(newDate),
+ priceOfCalc: priceOfCalcNum,
+ dailyChangePct: 0.0,
+ currentPrice: initialPrice,
+ fairPrice: fairPriceNum,
+ difference: diffPercent,
+ buySell: buySellValue,
+ marketCap: 2500000000, // typical Google Finance synced placeholder or simulation base values
+ peRatio: 16.8,
+ eps: 4.12,
+ profileLink: `https://www.google.com/finance/quote/${tickerUpper}:NASDAQ`,
+ dividend: '1.2% (0.50$)',
+ signal: autoSignal,
+ low52: priceOfCalcNum ? parseFloat((priceOfCalcNum * 0.78).toFixed(2)) : 80.0,
+ high52: priceOfCalcNum ? parseFloat((priceOfCalcNum * 1.25).toFixed(2)) : 125.0,
+ };
+
+ onAddStock(newStock);
+ setIsAddModalOpen(false);
+
+ // Reset states
+ setNewTicker('');
+ setNewCompanyName('');
+ setNewDate('');
+ setNewPriceOfCalc('');
+ setNewFairPrice('');
+ };
+
+ // Filter logic
+ const filteredStocks = stocks.filter(stock => {
+ const matchesSearch =
+ stock.ticker.toLowerCase().includes(search.toLowerCase()) ||
+ stock.companyName.toLowerCase().includes(search.toLowerCase());
+
+ if (!matchesSearch) return false;
+
+ if (activeFilter.type === 'all') return true;
+ 
+ if (activeFilter.type === 'signal') {
+ const sig = stock.signal?.trim().toLowerCase();
+ if (activeFilter.value === 'buy') {
+ return sig === 'buy';
+ }
+ if (activeFilter.value === 'sell') {
+ return sig === 'sell';
+ }
+ if (activeFilter.value === 'hold') {
+ return sig === 'hold' || sig === 'изчакай' || !sig || sig === '-';
+ }
+ }
+
+ if (activeFilter.type === 'buySell') {
+ return stock.buySell === activeFilter.value;
+ }
+
+ if (activeFilter.type === 'watch') {
+ return stock.watch === 'Attn' || stock.watch === 'Atten' || stock.watch === 'Watch' || stock.watch === 'Sell' || stock.watch === 'Buy' || stock.watch === 'Interesting';
+ }
+
+ if (activeFilter.type === 'ticker') {
+ return stock.ticker.toLowerCase() === activeFilter.value.toLowerCase();
+ }
+
+ return true;
+ });
+
+ // Sort logic
+ const sortedStocks = !sortField
+ ? [...filteredStocks]
+ : [...filteredStocks].sort((a, b) => {
+ let valA = a[sortField];
+ let valB = b[sortField];
+
+ if (valA === null) return sortOrder === 'asc' ? 1 : -1;
+ if (valB === null) return sortOrder === 'asc' ? -1 : 1;
+
+ if (typeof valA === 'string' && typeof valB === 'string') {
+ return sortOrder === 'asc'
+ ? valA.localeCompare(valB)
+ : valB.localeCompare(valA);
+ }
+
+ return sortOrder === 'asc'
+ ? (valA as number) - (valB as number)
+ : (valB as number) - (valA as number);
+ });
+
+ // Direct non-paginated output to support continuous scrolling
+ const pageStocks = sortedStocks;
+
+ const formatLargeNum = (num: number | null) => {
+ if (num === null) return '-';
+ if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
+ if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
+ return num.toLocaleString();
+ };
+
+ return (
+ <div className="w-full bg-[#18181b] rounded-2xl border border-white/10 overflow-hidden shadow-xs">
+ 
+ {/* Search & Filters */}
+ <div className="p-3 bg-[#09090b] border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+ <div className="flex flex-wrap items-center gap-1">
+ <button
+ onClick={() => {
+ // Pre-fill today's ISO date
+ const todayStr = new Date().toISOString().split('T')[0];
+ setNewDate(todayStr);
+ setNewTicker('');
+ setNewCompanyName('');
+ setNewPriceOfCalc('');
+ setNewFairPrice('');
+ setIsAddModalOpen(true);
+ }}
+ className="px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-md border border-indigo-400/50 bg-indigo-500 rounded-xl hover:bg-indigo-400 text-zinc-50 flex items-center gap-1 cursor-pointer shrink-0"
+ title="Добави нова акция в таблицата"
+ >
+ <Plus className="w-3 h-3 text-zinc-50" />
+ Добавяне
+ </button>
+ <button
+ onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }}
+ className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-md border ${
+ activeFilter.type === 'all' ? 'bg-[#09090b] text-zinc-50 border-black' : 'bg-[#18181b] rounded-2xl text-zinc-50 border-white/20 hover:text-zinc-50 hover:bg-white/10/50'
+ }`}
+ >
+ Всички ({stocks.length})
+ </button>
+ <button
+ onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'BUY' }); setCurrentPage(1); }}
+ className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-md border ${
+ activeFilter.type === 'buySell' && activeFilter.value === 'BUY' ? 'bg-[#10b981] text-zinc-50 border-[#10b981]/50' : 'bg-[#18181b] rounded-2xl text-[#10b981] border-[#10b981]/30 hover:bg-[#10b981]/10'
+ }`}
+ >
+ BUY / ПОКУПКИ ({stocks.filter(s => s.buySell === 'BUY').length})
+ </button>
+ <button
+ onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'SELL' }); setCurrentPage(1); }}
+ className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-md border ${
+ activeFilter.type === 'buySell' && activeFilter.value === 'SELL' ? 'bg-[#f43f5e] text-zinc-50 border-[#f43f5e]/50' : 'bg-[#18181b] rounded-2xl text-[#f43f5e] border-[#f43f5e]/30 hover:bg-[#f43f5e]/10'
+ }`}
+ >
+ SELL / ПРОДАЖБИ ({stocks.filter(s => s.buySell === 'SELL').length})
+ </button>
+ <button
+ onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'ДРУГИ' }); setCurrentPage(1); }}
+ className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-md border ${
+ activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ' ? 'bg-gray-600 text-zinc-50 border-gray-700' : 'bg-[#18181b] rounded-2xl text-zinc-300 border-white/20 hover:bg-white/10'
+ }`}
+ >
+ ДРУГИ ({stocks.filter(s => s.buySell === 'ДРУГИ').length})
+ </button>
+ <button
+ onClick={() => { onSetActiveFilter({ type: 'signal', value: 'hold' }); setCurrentPage(1); }}
+ className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-md border ${
+ activeFilter.type === 'signal' && activeFilter.value === 'hold' ? 'bg-amber-700 text-zinc-50 border-amber-500/50' : 'bg-[#18181b] rounded-2xl text-amber-400 border-amber-500/40 hover:bg-[#b06000]/10'
+ }`}
+ >
+ ИЗЧАКАЙ ({stocks.filter(s => s.signal?.toLowerCase() === 'hold' || s.signal === '').length})
+ </button>
+ <button
+ onClick={() => { onSetActiveFilter({ type: 'watch', value: 'watch' }); setCurrentPage(1); }}
+ className={`px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase transition-all rounded-md border ${
+ activeFilter.type === 'watch' ? 'bg-indigo-500 text-zinc-50 border-indigo-800' : 'bg-[#18181b] rounded-2xl text-indigo-800 border-indigo-400/40 hover:bg-indigo-500/10'
+ }`}
+ >
+ ВНИМАНИЕ ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten' || s.watch === 'Watch' || s.watch === 'Sell' || s.watch === 'Buy' || s.watch === 'Interesting').length})
+ </button>
+
+ {/* Special badges when filtering by signals from the charts */}
+ {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
+ <span className="px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase rounded-md border bg-[#10b981] text-zinc-50 border-[#10b981]/50 flex items-center gap-1 shrink-0">
+ Активен Сигнал: BUY ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'buy').length})
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
+ </span>
+ )}
+ {activeFilter.type === 'signal' && activeFilter.value === 'sell' && (
+ <span className="px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase rounded-md border bg-[#f43f5e] text-zinc-50 border-[#f43f5e]/50 flex items-center gap-1 shrink-0">
+ Активен Сигнал: SELL ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'sell').length})
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
+ </span>
+ )}
+
+ {activeFilter.type === 'ticker' && (
+ <span className="px-2.5 py-1 text-[10px] font-mono font-extrabold uppercase rounded-md border bg-indigo-600 text-zinc-50 border-indigo-950 flex items-center gap-1 shrink-0">
+ Активен актив: {activeFilter.value}
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-indigo-200 ml-1 font-bold cursor-pointer">×</button>
+ </span>
+ )}
+ </div>
+
+ <div className="relative w-full md:w-64">
+ <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-zinc-400" />
+ <input
+ type="text"
+ placeholder="Търсене по тикер или име..."
+ value={search}
+ onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+ className="w-full bg-[#18181b] rounded-2xl border border-white/10 pl-8 pr-3 py-1 text-xs text-zinc-50 focus:outline-none focus:border-white/10 font-mono"
+ />
+ </div>
+ </div>
+
+ {/* Main Grid Responsive Table with exactly 20 columns and scrollbar view */}
+ <div className="w-full max-h-[520px] overflow-y-auto overflow-x-auto border-b border-white/10/15">
+ <table className="w-full text-left border-collapse min-w-[1900px] table-fixed">
+ 
+ <colgroup><col className="w-[100px]" /><col className="w-[85px]" /><col className="w-[185px]" /><col className="w-[95px]" /><col className="w-[120px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[110px]" /><col className="w-[110px]" /><col className="w-[95px]" /><col className="w-[115px]" /><col className="w-[95px]" /><col className="w-[90px]" /><col className="w-[140px]" /><col className="w-[140px]" /><col className="w-[110px]" /><col className="w-[100px]" /><col className="w-[100px]" /><col className="w-[120px]" /></colgroup>
+
+ <thead className="sticky top-0 z-20 bg-[#18181b] rounded-2xl">
+ <tr className="bg-[#18181b] rounded-2xl text-zinc-50/90 border-b-2 border-white/10 text-[10px] uppercase font-mono tracking-wider select-none">
+ <th className="py-3 px-4 whitespace-nowrap">Watch</th>
+ <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('ticker')}>
+ Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+ </th>
+ <th className="py-3 px-4 whitespace-nowrap">Company Name</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">365 Chart</th>
+ <th className="py-3 px-4 whitespace-nowrap">Date</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">Price of Calc.</th>
+ <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('dailyChangePct')}>
+ Daily Change %{sortField === 'dailyChangePct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+ </th>
+ <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('currentPrice')}>
+ Current Price{sortField === 'currentPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+ </th>
+ <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('fairPrice')}>
+ Fair Price{sortField === 'fairPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+ </th>
+ <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('difference')}>
+ Difference{sortField === 'difference' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+ </th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">BUY/SELL</th>
+ <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('marketCap')}>
+ Market Cap{sortField === 'marketCap' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+ </th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">P/E Ratio</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">EPS</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">Sector</th>
+ <th className="py-3 px-4 whitespace-nowrap">Dividend</th>
+ <th className="py-3 px-4 whitespace-nowrap">Signal</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">52 Low</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">52 High</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">Важни Новини</th>
+ </tr>
+ </thead>
+
+ <tbody className="divide-y divide-white/10 font-mono text-[11px] text-zinc-50">
+ {pageStocks.map(stock => {
+ const isEditing = editingRow === stock.ticker;
+ const isPositiveChange = stock.dailyChangePct >= 0;
+ const isUndervalued = stock.difference !== null && stock.difference > 0;
+
+ return (
+ <tr
+ key={stock.ticker}
+ className={`hover:bg-white/5 transition-colors duration-75 group ${
+ isEditing ? 'bg-[#18181b] rounded-2xl/10' : ''
+ }`}
+ onKeyDown={isEditing ? (e) => {
+ if (e.key === 'Enter') {
+ handleSaveClick(stock.ticker);
+ } else if (e.key === 'Escape') {
+ cancelInlineEdit();
+ }
+ } : undefined}
+ >
+ {/* 1. WATCH */}
+ <td className="py-3 px-4 font-sans overflow-hidden text-ellipsis whitespace-nowrap">
+ {isEditing ? (
+ <select
+ value={editWatch}
+ onChange={e => setEditWatch(e.target.value)}
+ className="bg-[#18181b] rounded-2xl text-[11px] text-zinc-50 border border-white/10 p-0.5 rounded-md font-mono w-full"
+ >
+ <option value="">-</option>
+ <option value="Buy">Buy</option>
+ <option value="Sell">Sell</option>
+ <option value="Watch">Watch</option>
+ <option value="Attn">Attn</option>
+ <option value="Interesting">Interesting</option>
+ <option value="Not interesting">Not interesting</option>
+ </select>
+ ) : stock.watch === 'Attn' || stock.watch === 'Atten' ? (
+ <span className="bg-amber-500/10 text-amber-400 font-extrabold px-1 border border-amber-400/30 text-[8.5px] uppercase rounded-md">
+ Attn
+ </span>
+ ) : stock.watch === 'Watch' ? (
+ <span className="bg-indigo-500 rounded-xl/10 text-indigo-400 font-extrabold px-1 border border-indigo-400/30 text-[8.5px] uppercase rounded-md">
+ Watch
+ </span>
+ ) : stock.watch === 'Sell' ? (
+ <span className="bg-[#f43f5e]/10 text-[#f43f5e] font-extrabold px-1 border border-[#f43f5e]/20 text-[8.5px] uppercase rounded-md">
+ Sell
+ </span>
+ ) : stock.watch === 'Buy' ? (
+ <span className="bg-[#10b981]/10 text-[#10b981] font-extrabold px-1 border border-[#10b981]/20 text-[8.5px] uppercase rounded-md">
+ Buy
+ </span>
+ ) : stock.watch === 'Interesting' ? (
+ <span className="bg-purple-500/10 text-purple-400 font-extrabold px-1 border border-purple-400/30 text-[8.5px] uppercase rounded-md">
+ Interesting
+ </span>
+ ) : stock.watch === 'Not interesting' ? (
+ <span className="bg-white/10 text-zinc-300 font-bold px-1 border border-white/10 text-[8.5px] uppercase rounded-md">
+ Not interesting
+ </span>
+ ) : (
+ <span className="text-zinc-400">-</span>
+ )}
+ </td>
+
+ {/* 2. TICKER */}
+ <td className="py-3 px-4 font-extrabold text-zinc-50 overflow-hidden text-ellipsis">
+ {stock.ticker}
+ </td>
+
+ {/* 3. COMPANY NAME */}
+ <td className="py-3 px-4 text-zinc-50 font-sans font-medium hover:text-zinc-50 transition-colors overflow-hidden text-ellipsis whitespace-nowrap">
+ {isEditing ? (
+ <input
+ type="text"
+ value={editCompanyName}
+ onChange={e => setEditCompanyName(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-left font-sans text-[11px] text-zinc-50 border border-white/10 px-1 py-0.5 rounded-md focus:outline-none"
+ />
+ ) : (
+ <div className="flex items-center justify-between gap-1 group/cell">
+ <span className="truncate">{stock.companyName}</span>
+ <button
+ onClick={() => startInlineEdit(stock)}
+ className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-zinc-400 hover:text-zinc-50 transition-opacity p-0.5 shrink-0"
+ title="Редактирай име"
+ >
+ <Edit2 className="w-2.5 h-2.5" />
+ </button>
+ </div>
+ )}
+ </td>
+
+ {/* 4. 365 CHART */}
+ <td className="py-3 px-4 text-center">
+ <button
+ onClick={() => setActiveChartStock(stock)}
+ className="inline-flex items-center justify-center p-1 rounded-md hover:bg-stone-100 border border-transparent hover:border-white/10 transition-all cursor-pointer"
+ title="Кликнете за детайлна интерактивна графика"
+ >
+ <StockSparkline changePct={stock.dailyChangePct} ticker={stock.ticker} />
+ </button>
+ </td>
+
+ {/* 5. DATE */}
+ <td className="py-3 px-4 text-zinc-400 text-[10px] overflow-hidden text-ellipsis whitespace-nowrap">
+ {isEditing ? (
+ <input
+ type="date"
+ value={editDate}
+ onChange={e => setEditDate(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-left font-mono text-[11px] text-zinc-50 border border-white/10 px-1 py-0.5 rounded-md focus:outline-none cursor-pointer"
+ />
+ ) : (
+ <div className="flex items-center justify-between gap-1 group/cell">
+ <span className="truncate">{stock.date || '-'}</span>
+ <button
+ onClick={() => startInlineEdit(stock)}
+ className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-zinc-400 hover:text-zinc-50 transition-opacity p-0.5 shrink-0"
+ title="Редактирай дата"
+ >
+ <Edit2 className="w-2.5 h-2.5" />
+ </button>
+ </div>
+ )}
+ </td>
+
+ {/* 6. PRICE OF CALC. */}
+ <td className="py-3 px-4 text-right text-zinc-400">
+ {isEditing ? (
+ <input
+ type="text"
+ value={editPriceOfCalc}
+ onChange={e => setEditPriceOfCalc(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-right font-mono text-xs text-zinc-50 border border-white/10 p-0.5 rounded-md focus:outline-none"
+ placeholder="-"
+ />
+ ) : (
+ <div className="flex items-center justify-end gap-1 group/cell">
+ <span>{stock.priceOfCalc !== null ? `$${stock.priceOfCalc.toFixed(2)}` : '-'}</span>
+ <button
+ onClick={() => startInlineEdit(stock)}
+ className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-zinc-400 hover:text-zinc-50 transition-opacity p-0.5 shrink-0"
+ title="Редактирай калк. цена"
+ >
+ <Edit2 className="w-2.5 h-2.5" />
+ </button>
+ </div>
+ )}
+ </td>
+
+ {/* 7. DAILY CHANGE % */}
+ <td className="py-3 px-4 text-right font-extrabold">
+ <span
+ className={`flex items-center justify-end gap-0.5 ${
+ isPositiveChange ? 'text-[#10b981]' : 'text-[#f43f5e]'
+ }`}
+ >
+ {isPositiveChange ? (
+ <TrendingUp className="w-3 h-3 shrink-0" />
+ ) : (
+ <TrendingDown className="w-3 h-3 shrink-0" />
+ )}
+ <span>{stock.dailyChangePct ? `${isPositiveChange ? '+' : ''}${stock.dailyChangePct.toFixed(2)}%` : '0.00%'}</span>
+ </span>
+ </td>
+
+ {/* 8. CURRENT PRICE */}
+ <td className="py-3 px-4 text-right font-extrabold text-zinc-50">
+ {isEditing ? (
+ <input
+ type="text"
+ value={editCurrentPrice}
+ onChange={e => setEditCurrentPrice(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-right font-bold text-zinc-50 border border-white/10 p-0.5 rounded-md font-mono text-[11px] focus:outline-none"
+ />
+ ) : (
+ <span>${stock.currentPrice.toFixed(2)}</span>
+ )}
+ </td>
+
+ {/* 9. FAIR PRICE */}
+ <td className="py-3 px-4 text-right font-extrabold text-[#10b981] ">
+ {isEditing ? (
+ <input
+ type="text"
+ value={editFair}
+ onChange={e => setEditFair(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-right font-bold text-zinc-50 border border-white/10 p-0.5 rounded-md font-mono text-[11px] focus:outline-none"
+ placeholder="-"
+ />
+ ) : (
+ <div className="flex items-center justify-end gap-1 group/cell">
+ <span>{stock.fairPrice !== null ? `$${stock.fairPrice.toFixed(2)}` : 'N/A'}</span>
+ <button
+ onClick={() => startInlineEdit(stock)}
+ className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-[#10b981] hover:text-zinc-50 transition-opacity p-0.5 shrink-0"
+ title="Редактирай справедлива цена"
+ >
+ <Edit2 className="w-2.5 h-2.5" />
+ </button>
+ </div>
+ )}
+ </td>
+
+ {/* 10. DIFFERENCE */}
+ <td className={`py-3 px-4 text-right font-extrabold ${isUndervalued ? 'text-[#10b981]' : 'text-[#f43f5e]'}`}>
+ {stock.difference !== null ? (
+ <span>{stock.difference > 0 ? '▲ +' : '▼ '}{stock.difference.toFixed(2)}%</span>
+ ) : (
+ <span className="text-zinc-500">#N/A</span>
+ )}
+ </td>
+
+ {/* 11. BUY / SELL */}
+ <td className="py-3 px-4 text-center">
+ {stock.buySell === 'BUY' ? (
+ <span className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wide">
+ BUY
+ </span>
+ ) : stock.buySell === 'SELL' ? (
+ <span className="bg-[#f43f5e]/10 text-[#f43f5e] border border-[#f43f5e]/20 px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wide">
+ SELL
+ </span>
+ ) : (
+ <span className="bg-[#D9D8D5] text-zinc-50 border border-white/10/30 px-1.5 py-0.5 text-[8.5px] font-bold uppercase">
+ {stock.buySell}
+ </span>
+ )}
+ </td>
+
+ {/* 12. MARKET CAP [LOCKED] */}
+ <td className="py-3 px-4 text-right text-zinc-300 font-mono ">
+ {formatLargeNum(stock.marketCap)}
+ </td>
+
+ {/* 13. P/E RATIO [LOCKED] */}
+ <td className="py-3 px-4 text-right text-zinc-300 font-mono ">
+ {stock.peRatio ? stock.peRatio.toFixed(2) : '-'}
+ </td>
+
+ {/* 14. EPS [LOCKED] */}
+ <td className="py-3 px-4 text-right text-stone-900 font-bold ">
+ {stock.eps ? `$${stock.eps.toFixed(2)}` : '-'}
+ </td>
+
+ {/* 15. SECTOR */}
+ <td className="py-3 px-4 text-center whitespace-nowrap">
+ {isEditing ? (
+ <input
+ type="text"
+ value={editProfileLink}
+ onChange={e => setEditProfileLink(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-left font-sans text-[11px] text-zinc-50 border border-white/10 px-1 py-0.5 rounded-md focus:outline-none"
+ placeholder="Сектор"
+ />
+ ) : (
+ <span className="inline-block px-1.5 py-0.5 text-[10.5px] font-sans font-medium text-stone-700 bg-stone-150 rounded-sm whitespace-nowrap">
+ {getSectorForStock(stock.ticker, stock.profileLink, stock.companyName)}
+ </span>
+ )}
+ </td>
+
+ {/* 16. DIVIDEND */}
+ <td className="py-3 px-4 text-zinc-50 whitespace-nowrap">
+ {isEditing ? (
+ <input
+ type="text"
+ value={editDividend}
+ onChange={e => setEditDividend(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-left font-mono text-[11px] text-zinc-50 border border-white/10 px-1 py-0.5 rounded-md focus:outline-none"
+ />
+ ) : (
+ <div className="flex items-center justify-between gap-1 group/cell">
+ <span className="whitespace-nowrap font-mono">{formatDividend(stock.dividend, stock.currentPrice)}</span>
+ <button
+ onClick={() => startInlineEdit(stock)}
+ className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-zinc-400 hover:text-zinc-50 transition-opacity p-0.5 shrink-0"
+ title="Редактирай дивидент"
+ >
+ <Edit2 className="w-2.5 h-2.5" />
+ </button>
+ </div>
+ )}
+ </td>
+
+ {/* 17. SIGNAL */}
+ <td className="py-3 px-4 text-zinc-50 overflow-hidden text-ellipsis whitespace-nowrap">
+ {isEditing ? (
+ <input
+ type="text"
+ value={editSignal}
+ onChange={e => setEditSignal(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-left font-mono text-[11px] text-zinc-50 border border-white/10 px-1 py-0.5 rounded-md focus:outline-none"
+ />
+ ) : (
+ <div className="flex items-center justify-between gap-1 group/cell">
+ <span className="truncate font-semibold">{stock.signal || '-'}</span>
+ <button
+ onClick={() => startInlineEdit(stock)}
+ className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-zinc-400 hover:text-zinc-50 transition-opacity p-0.5 shrink-0"
+ title="Редактирай сигнал"
+ >
+ <Edit2 className="w-2.5 h-2.5" />
+ </button>
+ </div>
+ )}
+ </td>
+
+ {/* 18. 52 LOW */}
+ <td className="py-3 px-4 text-right text-gray-650">
+ {isEditing ? (
+ <input
+ type="text"
+ value={editLow52}
+ onChange={e => setEditLow52(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-right font-mono text-xs text-zinc-50 border border-white/10 p-0.5 rounded-md focus:outline-none"
+ placeholder="-"
+ />
+ ) : (
+ <div className="flex items-center justify-end gap-1 group/cell">
+ <span>{stock.low52 !== null ? `$${stock.low52.toFixed(2)}` : '-'}</span>
+ <button
+ onClick={() => startInlineEdit(stock)}
+ className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-zinc-400 hover:text-zinc-50 transition-opacity p-0.5 shrink-0"
+ title="Редактирай 52W Low"
+ >
+ <Edit2 className="w-2.5 h-2.5" />
+ </button>
+ </div>
+ )}
+ </td>
+
+ {/* 19. 52 HIGH */}
+ <td className="py-3 px-4 text-right text-gray-650">
+ {isEditing ? (
+ <input
+ type="text"
+ value={editHigh52}
+ onChange={e => setEditHigh52(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl text-right font-mono text-xs text-zinc-50 border border-white/10 p-0.5 rounded-md focus:outline-none"
+ placeholder="-"
+ />
+ ) : (
+ <div className="flex items-center justify-end gap-1 group/cell">
+ <span>{stock.high52 !== null ? `$${stock.high52.toFixed(2)}` : '-'}</span>
+ <button
+ onClick={() => startInlineEdit(stock)}
+ className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-zinc-400 hover:text-zinc-50 transition-opacity p-0.5 shrink-0"
+ title="Редактирай 52W High"
+ >
+ <Edit2 className="w-2.5 h-2.5" />
+ </button>
+ </div>
+ )}
+ </td>
+
+ {/* 20. AI ANALIS */}
+ <td className="py-3 px-4 text-center">
+ {isEditing ? (
+ showConfirmFair === stock.ticker ? (
+ <div className="flex flex-col items-center gap-1 bg-amber-50 border border-amber-200 p-1.5 rounded-md z-10 shrink-0 min-w-[130px]">
+ <span className="text-[9px] font-bold text-amber-800 uppercase tracking-tight block text-center leading-none">
+ Актуализиране на Fair Price?
+ </span>
+ <div className="flex items-center gap-1.5 justify-center mt-1">
+ <button
+ onClick={() => executeSave(stock.ticker, true)}
+ className="px-2 py-0.5 text-[9px] font-bold bg-amber-600 hover:bg-amber-700 text-zinc-50 rounded-md border border-amber-750 cursor-pointer"
+ >
+ Да
+ </button>
+ <button
+ onClick={() => executeSave(stock.ticker, false)}
+ className="px-2 py-0.5 text-[9px] font-bold 0 hover:bg-stone-600 text-zinc-50 rounded-md border border-stone-600 cursor-pointer"
+ >
+ Не
+ </button>
+ </div>
+ </div>
+ ) : (
+ <div className="flex items-center justify-center gap-1 shrink-0">
+ <button
+ onClick={() => handleSaveClick(stock.ticker)}
+ className="p-1 rounded-md bg-emerald-700 text-zinc-50 hover:bg-[#10b981] duration-100 border border-emerald-800 cursor-pointer"
+ title="Запази"
+ >
+ <Check className="w-3 h-3" />
+ </button>
+ <button
+ onClick={cancelInlineEdit}
+ className="p-1 rounded-md bg-red-700 text-zinc-50 hover:bg-red-800 duration-100 border border-red-850 cursor-pointer"
+ title="Отказ"
+ >
+ <X className="w-3 h-3" />
+ </button>
+ </div>
+ )
+ ) : (
+ <div className="flex items-center justify-center gap-1.5 shrink-0">
+ <button
+ onClick={() => onSelectStockForAi(stock)}
+ className="inline-flex items-center gap-1 text-[9px] font-bold py-0.5 px-2.5 border border-white/10 bg-[#09090b] hover:bg-[#10b981] hover:text-zinc-50 hover:border-emerald-900 text-zinc-50 transition-all rounded-md"
+ title="Прочетете най-новите достоверни новини за компанията"
+ >
+ <Newspaper className="w-2.5 h-2.5 text-[#10b981] group-hover:text-zinc-50" />
+ <span>Новини</span>
+ </button>
+ <button
+ onClick={() => onDeleteStock(stock.ticker)}
+ className="p-1 rounded-md border border-transparent hover:border-[#f43f5e]/20 hover:bg-red-50 text-gray-550 hover:text-red-700 transition-all cursor-pointer"
+ title="Изтриване на този ред"
+ >
+ <Trash2 className="w-3.5 h-3.5" />
+ </button>
+ </div>
+ )}
+ </td>
+
+ </tr>
+ );
+ })}
+
+ {pageStocks.length === 0 && (
+ <tr>
+ <td colSpan={20} className="py-12 text-center text-gray-650 font-sans text-xs">
+ Няма намерени резултати за "{search}". Проверете вашето търсене.
+ </td>
+ </tr>
+ )}
+ </tbody>
+ </table>
+ </div>
+
+ {/* table status footer */}
+ <div className="p-3 bg-[#09090b] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between font-mono text-[11px] text-zinc-50/90 gap-1.5">
+ <span>
+ Показване на всички <span className="font-extrabold underline">{sortedStocks.length}</span> намерени акции
+ </span>
+ <span className="text-[10px] text-zinc-400 italic">
+ Използвайте скрол лентата за нагоре и надолу, за да прегледате пълната таблица
+ </span>
+ </div>
+
+ {/* Modern Retro Modal for adding a new Stock */}
+ {isAddModalOpen && (
+ <div className="fixed inset-0 bg-[#09090b]/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+ <div className="bg-[#09090b] border-2 border-white/10 rounded-md shadow-[6px_6px_0px_0px_rgba(20,20,20,1)] w-full max-w-md p-5 relative font-mono text-xs">
+ 
+ {/* Header */}
+ <div className="flex items-center justify-between border-b-2 border-white/10 pb-2.5 mb-4">
+ <h3 className="text-xs uppercase font-extrabold text-zinc-50 flex items-center gap-1.5">
+ <Plus className="w-4 h-4 text-blue-800 animate-pulse" />
+ <span>Добави нов актив</span>
+ </h3>
+ <button 
+ onClick={() => setIsAddModalOpen(false)} 
+ className="text-zinc-400 hover:text-zinc-50 p-0.5 cursor-pointer"
+ type="button"
+ >
+ <X className="w-4 h-4" />
+ </button>
+ </div>
+
+ <form onSubmit={handleAddNewStockSubmit} className="space-y-3.5">
+ 
+ <div className="grid grid-cols-2 gap-3.5">
+ {/* Ticker */}
+ <div>
+ <label className="block text-[10px] font-bold uppercase text-zinc-50/90 mb-1">
+ Тикер / Ticker *
+ </label>
+ <input
+ type="text"
+ required
+ placeholder="напр. MSFT"
+ value={newTicker}
+ onChange={e => setNewTicker(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl border border-white/10 font-bold uppercase p-2 focus:outline-none focus:border-blue-900"
+ />
+ </div>
+
+ {/* Company Name */}
+ <div>
+ <label className="block text-[10px] font-bold uppercase text-zinc-50/90 mb-1">
+ Компания / Name
+ </label>
+ <input
+ type="text"
+ placeholder="напр. Microsoft"
+ value={newCompanyName}
+ onChange={e => setNewCompanyName(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl border border-white/10 p-2 focus:outline-none focus:border-blue-900"
+ />
+ </div>
+ </div>
+
+ {/* DATE Calendar widget */}
+ <div>
+ <label className="block text-[10px] font-bold uppercase text-zinc-50/90 mb-1">
+ Дата / Date *
+ </label>
+ <input
+ type="date"
+ required
+ value={newDate}
+ onChange={e => setNewDate(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl border border-white/10 p-2 focus:outline-none focus:border-blue-900 cursor-pointer"
+ />
+ </div>
+
+ <div className="grid grid-cols-2 gap-3.5">
+ {/* Price of Calc */}
+ <div>
+ <label className="block text-[10px] font-bold uppercase text-zinc-50/90 mb-1">
+ Цена на калкулация *
+ </label>
+ <input
+ type="number"
+ step="0.01"
+ required
+ placeholder="напр. 385.50"
+ value={newPriceOfCalc}
+ onChange={e => setNewPriceOfCalc(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl border border-white/10 p-2 focus:outline-none focus:border-blue-900"
+ />
+ </div>
+
+ {/* Fair Price */}
+ <div>
+ <label className="block text-[10px] font-bold uppercase text-zinc-50/90 mb-1">
+ Справедлива цена *
+ </label>
+ <input
+ type="number"
+ step="0.01"
+ required
+ placeholder="напр. 410.00"
+ value={newFairPrice}
+ onChange={e => setNewFairPrice(e.target.value)}
+ className="w-full bg-[#18181b] rounded-2xl border border-white/10 p-2 focus:outline-none focus:border-blue-900"
+ />
+ </div>
+ </div>
+
+ <div className="text-[10.5px] text-zinc-400 italic pt-1 text-right leading-tight">
+ * Разликата, Сигналът и BUY/SELL се изчисляват автоматично на база цена и качество.
+ </div>
+
+ {/* Footer Buttons */}
+ <div className="flex items-center justify-end gap-2 border-t border-white/10/15 pt-3.5 mt-4">
+ <button
+ type="button"
+ onClick={() => setIsAddModalOpen(false)}
+ className="px-3.5 py-2 font-bold uppercase bg-[#18181b] rounded-2xl hover:bg-white/10/50 border border-white/10 rounded-md text-zinc-50 cursor-pointer"
+ >
+ Отказ
+ </button>
+ <button
+ type="submit"
+ className="px-4 py-2 font-extrabold uppercase bg-emerald-700 hover:bg-[#10b981] border border-[#10b981]/50 text-zinc-50 rounded-md shadow-sm cursor-pointer"
+ >
+ Запази & Добави
+ </button>
+ </div>
+
+ </form>
+
+ </div>
+ </div>
+ )}
+
+ {/* Modern Interactive Historical Chart Modal */}
+ {activeChartStock && (
+ <StockDetailChartModal 
+ stock={activeChartStock} 
+ onClose={() => setActiveChartStock(null)} 
+ />
+ )}
+ 
+ </div>
+ );
 }

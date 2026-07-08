@@ -2,12 +2,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #030712; /* Slate 950 */
-  --color-ink: #f8fafc;
+  --color-bg: #09090b; /* Zinc 950 */
+  --color-ink: #fafafa; /* Zinc 50 */
   --color-line: rgba(255, 255, 255, 0.1);
-  --color-card: rgba(15, 23, 42, 0.4);
-  --color-apple-green: #00E676; /* Neon Green */
-  --color-apple-red: #FF1744; /* Neon Red */
+  --color-card: #18181b; /* Zinc 900 */
+  --color-apple-green: #10b981; /* Emerald 500 */
+  --color-apple-red: #f43f5e; /* Rose 500 */
   
   --font-sans: "Inter", sans-serif;
   --font-mono: "Inter", sans-serif;
@@ -24,28 +24,7 @@ body {
   min-height: 100vh;
 }
 
-/* Aurora Mesh Background */
-body::before, body::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-  pointer-events: none;
-}
-
-body::before {
-  background: radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.12), transparent 40%),
-              radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.15), transparent 40%);
-}
-
-body::after {
-  background: radial-gradient(circle at 50% 80%, rgba(45, 212, 191, 0.1), transparent 50%);
-}
-
-/* Scrollbars matching Glass theme */
+/* Scrollbars matching Investolens theme */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -56,12 +35,12 @@ body::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Button transitions */
