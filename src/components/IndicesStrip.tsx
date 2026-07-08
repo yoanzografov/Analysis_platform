@@ -71,7 +71,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
  };
 
  return (
- <div className="w-full bg-[#18181b] rounded-2xl border-b border-white/10 select-none">
+ <div className="w-full bg-card rounded-2xl border-b border-border select-none">
  <div className="max-w-7xl mx-auto flex items-center h-16 divide-x divide-white/10/10">
  
  {/* Category Dropdown Selector */}
@@ -94,7 +94,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
 
  {/* Floating Dropdown */}
  {isOpen && (
- <div className="absolute left-0 top-[100%] mt-px w-full bg-[#18181b] rounded-2xl border-x border-b border-white/10 shadow-lg py-1 flex flex-col divide-y divide-stone-100">
+ <div className="absolute left-0 top-[100%] mt-px w-full bg-card rounded-2xl border-x border-b border-border shadow-lg py-1 flex flex-col divide-y divide-stone-100">
  {CATEGORIES.map(cat => (
  <button
  key={cat}
@@ -138,7 +138,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
  <span className="text-[10px] font-sans font-bold text-[#6366F1] tracking-tight truncate uppercase mb-0.5" title={item.name}>
  {item.name}
  </span>
- <span className="text-[13px] font-sans font-black text-zinc-50 leading-tight tracking-tight">
+ <span className="text-[13px] font-sans font-black text-ink leading-tight tracking-tight">
  {formatPrice(item.value, item.name)}
  </span>
  <div

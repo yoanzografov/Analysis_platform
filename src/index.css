@@ -1,18 +1,47 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --color-bg: #09090b; /* Zinc 950 */
-  --color-ink: #fafafa; /* Zinc 50 */
-  --color-line: #27272a; /* Zinc 800 */
-  --color-card: #09090b; /* Exact Investolens uses same bg for cards */
-  --color-apple-green: #10b981; /* Emerald 500 */
-  --color-apple-red: #f43f5e; /* Rose 500 */
+  --color-bg: var(--color-bg);
+  --color-card: var(--color-card);
+  --color-card-hover: var(--color-card-hover);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-ink-faint: var(--color-ink-faint);
+  --color-border: var(--color-border);
+  --color-border-hover: var(--color-border-hover);
+  
+  --color-apple-green: #10b981; 
+  --color-apple-red: #f43f5e; 
   
   --font-sans: "Inter", sans-serif;
   --font-mono: "Inter", sans-serif;
   --font-display: "Inter", sans-serif;
   --font-serif: "Inter", sans-serif;
+}
+
+:root {
+  --color-bg: #ffffff; /* pure white */
+  --color-card: #f4f4f5; /* zinc-100 */
+  --color-card-hover: #e4e4e7; /* zinc-200 */
+  --color-ink: #09090b; /* zinc-950 */
+  --color-ink-muted: #3f3f46; /* zinc-700 */
+  --color-ink-faint: #52525b; /* zinc-600 */
+  --color-border: #e4e4e7; /* zinc-200 */
+  --color-border-hover: #d4d4d8; /* zinc-300 */
+}
+
+.dark {
+  --color-bg: #09090b; /* Zinc 950 */
+  --color-card: #18181b; /* Zinc 900 */
+  --color-card-hover: #27272a; /* Zinc 800 */
+  --color-ink: #fafafa; /* Zinc 50 */
+  --color-ink-muted: #d4d4d8; /* Zinc 300 */
+  --color-ink-faint: #a1a1aa; /* Zinc 400 */
+  --color-border: #27272a; /* Zinc 800 */
+  --color-border-hover: #3f3f46; /* Zinc 700 */
 }
 
 /* Base styling */
@@ -35,12 +64,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-border);
   border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-border-hover);
 }
 
 /* Button transitions */

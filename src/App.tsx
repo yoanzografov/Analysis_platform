@@ -9,6 +9,7 @@ import PriceAlertPlanner from './components/PriceAlertPlanner';
 import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
+import ThemeToggle from './components/ThemeToggle';
 import { 
  Building2, 
  Download, 
@@ -527,7 +528,7 @@ export default function App() {
  };
 
  return (
- <div className="min-h-screen bg-[#09090b] text-zinc-50 flex flex-col pb-12 antialiased">
+ <div className="min-h-screen bg-bg text-ink flex flex-col pb-12 antialiased">
  {/* Dynamic indices banner strip */}
  <IndicesStrip indices={indices} isSimulating={isSimulating} />
 
@@ -546,14 +547,17 @@ export default function App() {
  )}
 
  {/* Dashboard Header Bar */}
- <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
+ <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
  <div>
  <div className="flex items-center gap-2">
- <Building2 className="w-5 h-5 text-zinc-50" />
- <h1 className="text-2xl font-bold font-extrabold text-zinc-50 font-mono tracking-tight uppercase">
- ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
- </h1>
- </div>
+  <Building2 className="w-5 h-5 text-ink" />
+  <h1 className="text-2xl font-bold font-extrabold text-ink font-mono tracking-tight uppercase">
+    ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
+  </h1>
+  <div className="ml-4">
+    <ThemeToggle />
+  </div>
+</div>
  </div>
 
  <div className="flex flex-wrap items-center gap-1.5">
@@ -562,8 +566,8 @@ export default function App() {
  onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
  className={`text-xs font-mono font-extrabold px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all border cursor-pointer ${
  isAutoLiveRefresh 
- ? 'bg-[#10b981] text-zinc-50 border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
- : 'bg-[#09090b] rounded-2xl text-zinc-400 border-gray-350 hover:bg-gray-50 hover:text-zinc-300'
+ ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
+ : 'bg-bg rounded-2xl text-ink-faint border-gray-350 hover:bg-gray-50 hover:text-ink-muted'
  }`}
  title="Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди"
  >
@@ -581,8 +585,8 @@ export default function App() {
  }}
  className={`text-xs font-mono font-extrabold px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all border cursor-pointer ${
  isSimulating 
- ? 'bg-red-700 text-zinc-50 border-red-850 hover:bg-red-800 font-extrabold' 
- : 'bg-[#09090b] rounded-2xl text-zinc-50 border-zinc-800 hover:bg-white/10 hover:text-zinc-50'
+ ? 'bg-red-700 text-ink border-red-850 hover:bg-red-800 font-extrabold' 
+ : 'bg-bg rounded-2xl text-ink border-border hover:bg-white/10 hover:text-ink'
  }`}
  title="Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити"
  >
@@ -606,7 +610,7 @@ export default function App() {
  className={`text-xs font-mono font-extrabold px-3 py-1.5 rounded-none border flex items-center gap-1.5 uppercase transition-all cursor-pointer ${
  isFetchingLivePrices
  ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
- : 'bg-[#09090b] text-zinc-50 border-black hover:bg-white/20'
+ : 'bg-bg text-ink border-black hover:bg-white/20'
  }`}
  title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
  >
@@ -617,7 +621,7 @@ export default function App() {
  {/* Export data back as sheet formatted CSV */}
  <button
  onClick={exportCSVFile}
- className="text-xs font-mono font-extrabold bg-[#09090b] rounded-2xl text-zinc-50 hover:bg-white/10 hover:text-zinc-50 border border-zinc-800 px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
+ className="text-xs font-mono font-extrabold bg-bg rounded-2xl text-ink hover:bg-white/10 hover:text-ink border border-border px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
  >
  <Download className="w-3 h-3" />
  Експорт CSV
@@ -643,14 +647,14 @@ export default function App() {
  <div className="space-y-2" id="stock-table-section">
  <div className="flex items-center justify-between">
  <div>
- <h2 className="text-xs uppercase font-extrabold text-zinc-50 font-mono tracking-tight">
+ <h2 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
  Интерактивна таблица за оценка
  </h2>
- <p className="text-sm text-zinc-300 mt-0.5">
+ <p className="text-sm text-ink-muted mt-0.5">
  Можете да щракнете върху всяка стойност в колона <span className="font-bold underline">"Текуща"</span> или <span className="font-bold text-[#10b981] underline">"Справедлива (Fair)"</span> за директно редактиране на показателите.
  </p>
  </div>
- <div className="text-right text-[9px] text-zinc-400 font-mono hidden sm:block">
+ <div className="text-right text-[9px] text-ink-faint font-mono hidden sm:block">
  Двоен клик или клик на химикал за бърза пазарна симулация
  </div>
  </div>
@@ -698,13 +702,13 @@ export default function App() {
  </div>
 
  {/* Real-time alert feed logs */}
- <div className="bg-[#09090b] rounded-2xl border border-zinc-800 p-4 flex flex-col justify-between rounded-none shadow-xs">
+ <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between rounded-none shadow-xs">
  <div>
- <h3 className="text-xs uppercase font-extrabold text-zinc-50 font-mono flex items-center gap-1.5">
+ <h3 className="text-xs uppercase font-extrabold text-ink font-mono flex items-center gap-1.5">
  <Bell className="w-3.5 h-3.5 text-amber-800" />
  Лог на известията & задействания
  </h3>
- <p className="text-xs text-zinc-400 font-mono mt-0.5">
+ <p className="text-xs text-ink-faint font-mono mt-0.5">
  Хроника на пазарните промени и филтри на заложени аларми.
  </p>
  </div>
@@ -718,12 +722,12 @@ export default function App() {
  ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
  : log.type === 'success'
  ? 'bg-emerald-50 border-emerald-600 text-emerald-950 font-extrabold'
- : 'bg-[#09090b]/30 border-zinc-800/20 text-zinc-300'
+ : 'bg-bg/30 border-border/20 text-ink-muted'
  }`}
  >
- <span className="text-zinc-400 block shrink-0">[{log.timestamp}]</span>
+ <span className="text-ink-faint block shrink-0">[{log.timestamp}]</span>
  <p>
- <span className="font-bold text-zinc-50 mr-1 uppercase">[{log.ticker}]</span>
+ <span className="font-bold text-ink mr-1 uppercase">[{log.ticker}]</span>
  {log.message}
  </p>
  </div>

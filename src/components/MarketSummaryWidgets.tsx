@@ -189,7 +189,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
  if (r.includes('extreme fear') || s < 25) {
  return { 
- bg: 'bg-red-600 text-zinc-50', 
+ bg: 'bg-red-600 text-ink', 
  border: 'border-red-600',
  text: 'text-red-600', 
  label: 'ЕКСТРЕМЕН СТРАХ', 
@@ -199,7 +199,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  }
  if (r.includes('extreme greed') || s > 75) {
  return { 
- bg: 'bg-green-700 text-zinc-50', 
+ bg: 'bg-green-700 text-ink', 
  border: 'border-green-700',
  text: 'text-green-700', 
  label: 'ЕКСТРЕМНА АЛЧНОСТ', 
@@ -209,7 +209,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  }
  if (r.includes('fear') || s < 45) {
  return { 
- bg: 'bg-orange-500 text-zinc-50', 
+ bg: 'bg-orange-500 text-ink', 
  border: 'border-orange-500',
  text: 'text-orange-500', 
  label: 'СТРАХ', 
@@ -219,7 +219,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  }
  if (r.includes('greed') || s > 55) {
  return { 
- bg: 'bg-emerald-600 text-zinc-50', 
+ bg: 'bg-emerald-600 text-ink', 
  border: 'border-emerald-600',
  text: 'text-[#10b981]', 
  label: 'АЛЧНОСТ', 
@@ -228,7 +228,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  };
  }
  return { 
- bg: 'bg-amber-500 text-zinc-50', 
+ bg: 'bg-amber-500 text-ink', 
  border: 'border-amber-500',
  text: 'text-amber-500', 
  label: 'НЕУТРАЛЕН', 
@@ -262,15 +262,15 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  `}} />
 
  {/* 1. TOP GAINER CONTAINER */}
- <div className="bg-[#09090b] rounded-2xl border border-zinc-800 p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
+ <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
  <div>
  {/* Header row with scrolling buttons */}
- <div className="flex items-center justify-between border-b border-zinc-800/50 pb-2 mb-2">
+ <div className="flex items-center justify-between border-b border-border/50 pb-2 mb-2">
  <div>
  <span className="text-xs text-emerald-700 font-mono tracking-wider block font-bold uppercase">
  ▲ Дневен Лидер на Пазара
  </span>
- <h3 className="text-sm uppercase font-extrabold text-zinc-50 font-mono tracking-tight">
+ <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
  Top Gainers (Топ 15)
  </h3>
  </div>
@@ -278,14 +278,14 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  <div className="flex items-center gap-1.5 shrink-0">
  <button 
  onClick={(e) => { e.stopPropagation(); scrollList(gainersRef, 'up'); }}
- className="p-1 hover:bg-zinc-800 border border-zinc-700 text-zinc-400 rounded-none transition-colors cursor-pointer"
+ className="p-1 hover:bg-card-hover border border-border-hover text-ink-faint rounded-none transition-colors cursor-pointer"
  title="Превърти нагоре"
  >
  <ChevronUp className="w-3.5 h-3.5" />
  </button>
  <button 
  onClick={(e) => { e.stopPropagation(); scrollList(gainersRef, 'down'); }}
- className="p-1 hover:bg-zinc-800 border border-zinc-700 text-zinc-400 rounded-none transition-colors cursor-pointer"
+ className="p-1 hover:bg-card-hover border border-border-hover text-ink-faint rounded-none transition-colors cursor-pointer"
  title="Превърти надолу"
  >
  <ChevronDown className="w-3.5 h-3.5" />
@@ -305,49 +305,49 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  <div 
  key={`${item.ticker}-${idx}`}
  onClick={() => handleWidgetClick(item.ticker)}
- className={`flex items-center justify-between py-1.5 px-2 border-b border-zinc-800/50 hover:bg-[#10b981]/5 transition-colors cursor-pointer rounded-none ${
+ className={`flex items-center justify-between py-1.5 px-2 border-b border-border/50 hover:bg-[#10b981]/5 transition-colors cursor-pointer rounded-none ${
  isSelected
  ? 'bg-[#10b981]/10 border-l-2 border-l-[#10b981] font-semibold'
  : ''
  }`}
  >
  <div className="flex items-center gap-2 min-w-0">
- <span className="text-[9px] font-mono font-black text-zinc-50 bg-[#10b981]/10 border border-[#10b981]/30 px-1.5 py-0.5 shrink-0 rounded-none">
+ <span className="text-[9px] font-mono font-black text-ink bg-[#10b981]/10 border border-[#10b981]/30 px-1.5 py-0.5 shrink-0 rounded-none">
  {item.ticker}
  </span>
- <span className="text-sm font-sans font-bold text-zinc-50 truncate max-w-[110px]" title={item.companyName}>
+ <span className="text-sm font-sans font-bold text-ink truncate max-w-[110px]" title={item.companyName}>
  {item.companyName}
  </span>
  </div>
  <div className="flex items-center gap-2 font-mono text-sm shrink-0">
- <span className="text-zinc-400 font-bold">${item.currentPrice.toFixed(2)}</span>
+ <span className="text-ink-faint font-bold">${item.currentPrice.toFixed(2)}</span>
  <span className="font-extrabold text-emerald-700">+{item.dailyChangePct.toFixed(2)}%</span>
  </div>
  </div>
  );
  })
  ) : (
- <p className="text-xs text-zinc-400 font-mono py-8 text-center">Няма данни за печеливши акции.</p>
+ <p className="text-xs text-ink-faint font-mono py-8 text-center">Няма данни за печеливши акции.</p>
  )}
  </div>
  </div>
  
- <div className="border-t border-zinc-800/10 pt-2 text-[9px] font-mono text-zinc-50/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-border/10 pt-2 text-[9px] font-mono text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Кликни на акция за филтър</span>
  <span className="font-bold underline group-hover:text-[#10b981]">Топ Печеливши ({top15Gainers.length})</span>
  </div>
  </div>
 
  {/* 2. TOP LOSER CONTAINER */}
- <div className="bg-[#09090b] rounded-2xl border border-zinc-800 p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
+ <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
  <div>
  {/* Header row with scrolling buttons */}
- <div className="flex items-center justify-between border-b border-zinc-800/50 pb-2 mb-2">
+ <div className="flex items-center justify-between border-b border-border/50 pb-2 mb-2">
  <div>
  <span className="text-xs text-red-700 font-mono tracking-wider block font-bold uppercase">
  ▼ Дневен Аутсайдер на Пазара
  </span>
- <h3 className="text-sm uppercase font-extrabold text-zinc-50 font-mono tracking-tight">
+ <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
  Top Losers (Топ 15)
  </h3>
  </div>
@@ -355,14 +355,14 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  <div className="flex items-center gap-1.5 shrink-0">
  <button 
  onClick={(e) => { e.stopPropagation(); scrollList(losersRef, 'up'); }}
- className="p-1 hover:bg-zinc-800 border border-zinc-700 text-zinc-400 rounded-none transition-colors cursor-pointer"
+ className="p-1 hover:bg-card-hover border border-border-hover text-ink-faint rounded-none transition-colors cursor-pointer"
  title="Превърти нагоре"
  >
  <ChevronUp className="w-3.5 h-3.5" />
  </button>
  <button 
  onClick={(e) => { e.stopPropagation(); scrollList(losersRef, 'down'); }}
- className="p-1 hover:bg-zinc-800 border border-zinc-700 text-zinc-400 rounded-none transition-colors cursor-pointer"
+ className="p-1 hover:bg-card-hover border border-border-hover text-ink-faint rounded-none transition-colors cursor-pointer"
  title="Превърти надолу"
  >
  <ChevronDown className="w-3.5 h-3.5" />
@@ -382,47 +382,47 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  <div 
  key={`${item.ticker}-${idx}`}
  onClick={() => handleWidgetClick(item.ticker)}
- className={`flex items-center justify-between py-1.5 px-2 border-b border-zinc-800/50 hover:bg-[#f43f5e]/5 transition-colors cursor-pointer rounded-none ${
+ className={`flex items-center justify-between py-1.5 px-2 border-b border-border/50 hover:bg-[#f43f5e]/5 transition-colors cursor-pointer rounded-none ${
  isSelected
  ? 'bg-[#f43f5e]/10 border-l-2 border-l-[#f43f5e] font-semibold'
  : ''
  }`}
  >
  <div className="flex items-center gap-2 min-w-0">
- <span className="text-[9px] font-mono font-black text-zinc-50 bg-[#f43f5e]/10 border border-[#f43f5e]/30 px-1.5 py-0.5 shrink-0 rounded-none">
+ <span className="text-[9px] font-mono font-black text-ink bg-[#f43f5e]/10 border border-[#f43f5e]/30 px-1.5 py-0.5 shrink-0 rounded-none">
  {item.ticker}
  </span>
- <span className="text-sm font-sans font-bold text-zinc-50 truncate max-w-[110px]" title={item.companyName}>
+ <span className="text-sm font-sans font-bold text-ink truncate max-w-[110px]" title={item.companyName}>
  {item.companyName}
  </span>
  </div>
  <div className="flex items-center gap-2 font-mono text-sm shrink-0">
- <span className="text-zinc-400 font-bold">${item.currentPrice.toFixed(2)}</span>
+ <span className="text-ink-faint font-bold">${item.currentPrice.toFixed(2)}</span>
  <span className="font-extrabold text-red-700">{item.dailyChangePct.toFixed(2)}%</span>
  </div>
  </div>
  );
  })
  ) : (
- <p className="text-xs text-zinc-400 font-mono py-8 text-center">Няма данни за губещи акции.</p>
+ <p className="text-xs text-ink-faint font-mono py-8 text-center">Няма данни за губещи акции.</p>
  )}
  </div>
  </div>
  
- <div className="border-t border-zinc-800/10 pt-2 text-[9px] font-mono text-zinc-50/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-border/10 pt-2 text-[9px] font-mono text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Кликни на акция за филтър</span>
  <span className="font-bold underline group-hover:text-[#f43f5e]">Топ Губещи ({top15Losers.length})</span>
  </div>
  </div>
 
  {/* 3. FEAR & GREED INDEX CONTAINER (HIGH-FIDELITY CNN BUSINESS COPIED STYLE) */}
- <div className="bg-[#09090b] rounded-2xl border border-zinc-800 p-4 flex flex-col justify-between relative md:col-span-1 h-[305px]">
+ <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between relative md:col-span-1 h-[305px]">
  <div className="flex items-center justify-between mb-1">
  <div>
  <span className="text-xs text-red-600 font-sans tracking-widest block font-extrabold uppercase">
  CNN BUSINESS REAL-TIME FEED
  </span>
- <h3 className="text-sm uppercase font-extrabold text-zinc-50 font-mono tracking-tight">
+ <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
  Fear & Greed Index
  </h3>
  </div>
@@ -430,7 +430,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  <button 
  onClick={() => fetchFearGreed(true)} 
  disabled={refreshing || loading}
- className="p-1 hover:bg-zinc-800 border border-zinc-700 text-zinc-400 rounded-none cursor-pointer transition-colors"
+ className="p-1 hover:bg-card-hover border border-border-hover text-ink-faint rounded-none cursor-pointer transition-colors"
  title="Обнови в реално време"
  >
  <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
@@ -439,8 +439,8 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
  {loading ? (
  <div className="py-12 flex flex-col items-center justify-center space-y-2 flex-1">
- <RefreshCw className="w-6 h-6 text-zinc-50 animate-spin" />
- <span className="text-xs font-mono text-zinc-400 uppercase">Зареждане на реално време от CNN...</span>
+ <RefreshCw className="w-6 h-6 text-ink animate-spin" />
+ <span className="text-xs font-mono text-ink-faint uppercase">Зареждане на реално време от CNN...</span>
  </div>
  ) : (() => {
  const getPoint = (r: number, s: number) => {
@@ -558,72 +558,72 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
  {/* Historical Scores List */}
  <div className="w-[50%] flex flex-col gap-1.5 font-mono text-[9px] pr-1">
- <div className="flex items-center justify-between border-b border-zinc-800/50 pb-1">
- <span className="text-zinc-500 font-bold tracking-tight">ПРЕД. ЗАТВОР</span>
+ <div className="flex items-center justify-between border-b border-border/50 pb-1">
+ <span className="text-ink0 font-bold tracking-tight">ПРЕД. ЗАТВОР</span>
  <div className="flex items-center gap-1 font-extrabold text-xs">
  <span style={{ color: getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).colorHex }}>
  {fngData?.previous_close ?? '—'}
  </span>
  {fngData?.previous_close_rating && (
- <span className="text-zinc-500 font-normal text-[8px]">
+ <span className="text-ink0 font-normal text-[8px]">
  ({getRatingInfo(fngData.previous_close_rating, fngData.previous_close).eng})
  </span>
  )}
  </div>
  </div>
 
- <div className="flex items-center justify-between border-b border-zinc-800/50 pb-1">
- <span className="text-zinc-500 font-bold tracking-tight">ПРЕДИ 1 СЕД.</span>
+ <div className="flex items-center justify-between border-b border-border/50 pb-1">
+ <span className="text-ink0 font-bold tracking-tight">ПРЕДИ 1 СЕД.</span>
  <div className="flex items-center gap-1 font-extrabold text-xs">
  <span style={{ color: getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).colorHex }}>
  {fngData?.one_week_ago ?? '—'}
  </span>
  {fngData?.one_week_ago_rating && (
- <span className="text-zinc-500 font-normal text-[8px]">
+ <span className="text-ink0 font-normal text-[8px]">
  ({getRatingInfo(fngData.one_week_ago_rating, fngData.one_week_ago).eng})
  </span>
  )}
  </div>
  </div>
 
- <div className="flex items-center justify-between border-b border-zinc-800/50 pb-1">
- <span className="text-zinc-500 font-bold tracking-tight">ПРЕДИ 1 МЕС.</span>
+ <div className="flex items-center justify-between border-b border-border/50 pb-1">
+ <span className="text-ink0 font-bold tracking-tight">ПРЕДИ 1 МЕС.</span>
  <div className="flex items-center gap-1 font-extrabold text-xs">
  <span style={{ color: getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).colorHex }}>
  {fngData?.one_month_ago ?? '—'}
  </span>
  {fngData?.one_month_ago_rating && (
- <span className="text-zinc-500 font-normal text-[8px]">
+ <span className="text-ink0 font-normal text-[8px]">
  ({getRatingInfo(fngData.one_month_ago_rating, fngData.one_month_ago).eng})
  </span>
  )}
  </div>
  </div>
 
- <div className="flex items-center justify-between border-b border-zinc-800/50 pb-1">
- <span className="text-zinc-500 font-bold tracking-tight">ПРЕДИ 1 ГОД.</span>
+ <div className="flex items-center justify-between border-b border-border/50 pb-1">
+ <span className="text-ink0 font-bold tracking-tight">ПРЕДИ 1 ГОД.</span>
  <div className="flex items-center gap-1 font-extrabold text-xs">
  <span style={{ color: getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).colorHex }}>
  {fngData?.one_year_ago ?? '—'}
  </span>
  {fngData?.one_year_ago_rating && (
- <span className="text-zinc-500 font-normal text-[8px]">
+ <span className="text-ink0 font-normal text-[8px]">
  ({getRatingInfo(fngData.one_year_ago_rating, fngData.one_year_ago).eng})
  </span>
  )}
  </div>
  </div>
 
- <div className="mt-1 text-center py-0.5 px-1 bg-[#09090b] border border-zinc-800/50 text-zinc-300 font-extrabold text-[8px] uppercase tracking-wide">
+ <div className="mt-1 text-center py-0.5 px-1 bg-bg border border-border/50 text-ink-muted font-extrabold text-[8px] uppercase tracking-wide">
  Текущо: <span style={{ color: currentInfo.colorHex }} className="font-black">{currentInfo.label}</span>
  </div>
  </div>
  </div>
 
  {/* Timestamp status footer */}
- <div className="border-t border-zinc-800/10 pt-1.5 text-[8px] font-mono text-zinc-400 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-border/10 pt-1.5 text-[8px] font-mono text-ink-faint uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Обновено: {fngData ? new Date(fngData.timestamp).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' }) : 'N/A'} ч.</span>
- <span className="font-extrabold text-zinc-300 underline">CNN Business Live</span>
+ <span className="font-extrabold text-ink-muted underline">CNN Business Live</span>
  </div>
  </div>
  );
