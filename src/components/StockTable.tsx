@@ -432,7 +432,19 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  
  {/* Search & Filters */}
  <div className="p-3 bg-bg border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3">
- <div className="flex flex-wrap items-center gap-1">
+ <div className="flex flex-wrap items-center gap-2">
+ 
+ <div className="relative w-full md:w-64">
+ <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-ink-faint" />
+ <input
+ type="text"
+ placeholder="Търсене по тикер или име..."
+ value={search}
+ onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+ className="w-full bg-bg rounded-2xl border border-border pl-8 pr-3 py-1 text-xs text-ink focus:outline-none focus:border-border font-mono"
+ />
+ </div>
+
  <button
  onClick={() => {
  // Pre-fill today's ISO date
@@ -444,7 +456,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  setNewFairPrice('');
  setIsAddModalOpen(true);
  }}
- className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border border-indigo-400/50 bg-indigo-500 rounded-xl hover:bg-indigo-400 text-ink flex items-center gap-1 cursor-pointer shrink-0"
+ className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border border-indigo-400/50 bg-indigo-500 hover:bg-indigo-400 text-ink flex items-center gap-1 cursor-pointer shrink-0"
  title="Добави нова акция в таблицата"
  >
  <Plus className="w-3 h-3 text-ink" />
@@ -453,7 +465,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <button
  onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }}
  className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'all' ? 'bg-bg text-ink border-black' : 'bg-bg rounded-2xl text-ink border-border-hover hover:text-ink hover:bg-white/10/50'
+ activeFilter.type === 'all' ? 'bg-bg text-ink border-black' : 'bg-bg text-ink border-border-hover hover:text-ink hover:bg-white/10'
  }`}
  >
  Всички ({stocks.length})
@@ -461,7 +473,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <button
  onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'BUY' }); setCurrentPage(1); }}
  className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'buySell' && activeFilter.value === 'BUY' ? 'bg-[#10b981] text-ink border-[#10b981]/50' : 'bg-bg rounded-2xl text-[#10b981] border-[#10b981]/30 hover:bg-[#10b981]/10'
+ activeFilter.type === 'buySell' && activeFilter.value === 'BUY' ? 'bg-[#10b981] text-ink border-[#10b981]/50' : 'bg-bg text-[#10b981] border-[#10b981]/30 hover:bg-[#10b981]/10'
  }`}
  >
  BUY / ПОКУПКИ ({stocks.filter(s => s.buySell === 'BUY').length})
@@ -469,7 +481,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <button
  onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'SELL' }); setCurrentPage(1); }}
  className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'buySell' && activeFilter.value === 'SELL' ? 'bg-[#f43f5e] text-ink border-[#f43f5e]/50' : 'bg-bg rounded-2xl text-[#f43f5e] border-[#f43f5e]/30 hover:bg-[#f43f5e]/10'
+ activeFilter.type === 'buySell' && activeFilter.value === 'SELL' ? 'bg-[#f43f5e] text-ink border-[#f43f5e]/50' : 'bg-bg text-[#f43f5e] border-[#f43f5e]/30 hover:bg-[#f43f5e]/10'
  }`}
  >
  SELL / ПРОДАЖБИ ({stocks.filter(s => s.buySell === 'SELL').length})
@@ -477,7 +489,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <button
  onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'ДРУГИ' }); setCurrentPage(1); }}
  className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ' ? 'bg-gray-600 text-ink border-gray-700' : 'bg-bg rounded-2xl text-ink-muted border-border-hover hover:bg-white/10'
+ activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ' ? 'bg-gray-600 text-ink border-gray-700' : 'bg-bg text-ink-muted border-border-hover hover:bg-white/10'
  }`}
  >
  ДРУГИ ({stocks.filter(s => s.buySell === 'ДРУГИ').length})
@@ -485,7 +497,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <button
  onClick={() => { onSetActiveFilter({ type: 'signal', value: 'hold' }); setCurrentPage(1); }}
  className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'signal' && activeFilter.value === 'hold' ? 'bg-amber-700 text-ink border-amber-500/50' : 'bg-bg rounded-2xl text-amber-400 border-amber-500/40 hover:bg-[#b06000]/10'
+ activeFilter.type === 'signal' && activeFilter.value === 'hold' ? 'bg-amber-700 text-ink border-amber-500/50' : 'bg-bg text-amber-500 border-amber-500/40 hover:bg-amber-500/10'
  }`}
  >
  ИЗЧАКАЙ ({stocks.filter(s => s.signal?.toLowerCase() === 'hold' || s.signal === '').length})
@@ -493,7 +505,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <button
  onClick={() => { onSetActiveFilter({ type: 'watch', value: 'watch' }); setCurrentPage(1); }}
  className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'watch' ? 'bg-indigo-500 text-ink border-indigo-800' : 'bg-bg rounded-2xl text-indigo-800 border-indigo-400/40 hover:bg-indigo-500/10'
+ activeFilter.type === 'watch' ? 'bg-indigo-500 text-ink border-indigo-800' : 'bg-bg text-indigo-500 border-indigo-400/40 hover:bg-indigo-500/10'
  }`}
  >
  ВНИМАНИЕ ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten' || s.watch === 'Watch' || s.watch === 'Sell' || s.watch === 'Buy' || s.watch === 'Interesting').length})
@@ -519,17 +531,6 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-indigo-200 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
- </div>
-
- <div className="relative w-full md:w-64">
- <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-ink-faint" />
- <input
- type="text"
- placeholder="Търсене по тикер или име..."
- value={search}
- onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
- className="w-full bg-bg rounded-2xl border border-border pl-8 pr-3 py-1 text-xs text-ink focus:outline-none focus:border-border font-mono"
- />
  </div>
  </div>
 
