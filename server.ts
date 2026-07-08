@@ -851,19 +851,23 @@ app.get("/api/stock-history", async (req, res) => {
       yahooRange = "1d";
       yahooInterval = "5m";
       break;
+    case "7d":
     case "5d":
     case "1w":
       yahooRange = "5d";
       yahooInterval = "15m";
       break;
+    case "1mo":
     case "1m":
       yahooRange = "1mo";
       yahooInterval = "1d";
       break;
+    case "3mo":
     case "3m":
       yahooRange = "3mo";
       yahooInterval = "1d";
       break;
+    case "6mo":
     case "6m":
       yahooRange = "6mo";
       yahooInterval = "1d";
@@ -876,9 +880,9 @@ app.get("/api/stock-history", async (req, res) => {
       yahooRange = "1y";
       yahooInterval = "1d";
       break;
-    case "3y":
-      yahooRange = "3y";
-      yahooInterval = "1wk";
+    case "2y":
+      yahooRange = "2y";
+      yahooInterval = "1d";
       break;
     case "5y":
       yahooRange = "5y";
@@ -886,7 +890,7 @@ app.get("/api/stock-history", async (req, res) => {
       break;
     case "10y":
       yahooRange = "10y";
-      yahooInterval = "1mo";
+      yahooInterval = "1wk";
       break;
     case "max":
       yahooRange = "max";

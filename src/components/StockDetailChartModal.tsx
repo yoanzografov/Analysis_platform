@@ -20,7 +20,7 @@ interface VolPoint   { time: number; value: number; color: string; }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const RANGES = ['1D','1W','1M','3M','6M','YTD','1Y','2Y','5Y','10Y','ALL'] as const;
+const RANGES = ['1D','1W','1M','3M','6M','YTD','1Y','2Y','5Y','10Y','MAX'] as const;
 type Range = typeof RANGES[number];
 
 const RANGE_CFG: Record<Range, { apiRange: string; points: number; ms: number; label: string }> = {
@@ -34,7 +34,7 @@ const RANGE_CFG: Record<Range, { apiRange: string; points: number; ms: number; l
   '2Y':  { apiRange: '2y',  points: 104, ms: 7*86_400_000,   label: 'Past 2 Years' },
   '5Y':  { apiRange: '5y',  points: 260, ms: 7*86_400_000,   label: 'Past 5 Years' },
   '10Y': { apiRange: '10y', points: 120, ms: 30*86_400_000,  label: 'Past 10 Years' },
-  'ALL': { apiRange: 'max', points: 200, ms: 30*86_400_000,  label: 'All Time' },
+  'MAX': { apiRange: 'max', points: 200, ms: 30*86_400_000,  label: 'All Time' },
 };
 
 // Apple system green/red
