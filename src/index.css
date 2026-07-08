@@ -4,8 +4,8 @@
 @theme {
   --color-bg: #09090b; /* Zinc 950 */
   --color-ink: #fafafa; /* Zinc 50 */
-  --color-line: rgba(255, 255, 255, 0.1);
-  --color-card: #18181b; /* Zinc 900 */
+  --color-line: #27272a; /* Zinc 800 */
+  --color-card: #09090b; /* Exact Investolens uses same bg for cards */
   --color-apple-green: #10b981; /* Emerald 500 */
   --color-apple-red: #f43f5e; /* Rose 500 */
   

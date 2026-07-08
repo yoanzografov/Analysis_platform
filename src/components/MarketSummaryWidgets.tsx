@@ -262,12 +262,12 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  `}} />
 
  {/* 1. TOP GAINER CONTAINER */}
- <div className="bg-[#18181b] rounded-2xl border border-white/10 p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
+ <div className="bg-[#09090b] rounded-2xl border border-zinc-800 p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
  <div>
  {/* Header row with scrolling buttons */}
  <div className="flex items-center justify-between border-b border-stone-100 pb-2 mb-2">
  <div>
- <span className="text-[10px] text-emerald-700 font-mono tracking-wider block font-bold uppercase">
+ <span className="text-xs text-emerald-700 font-mono tracking-wider block font-bold uppercase">
  ▲ Дневен Лидер на Пазара
  </span>
  <h3 className="text-sm uppercase font-extrabold text-zinc-50 font-mono tracking-tight">
@@ -315,11 +315,11 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  <span className="text-[9px] font-mono font-black text-stone-800 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 shrink-0 rounded-none">
  {item.ticker}
  </span>
- <span className="text-[11px] font-sans font-bold text-stone-800 truncate max-w-[110px]" title={item.companyName}>
+ <span className="text-sm font-sans font-bold text-stone-800 truncate max-w-[110px]" title={item.companyName}>
  {item.companyName}
  </span>
  </div>
- <div className="flex items-center gap-2 font-mono text-[11px] shrink-0">
+ <div className="flex items-center gap-2 font-mono text-sm shrink-0">
  <span className="text-stone-600 font-bold">${item.currentPrice.toFixed(2)}</span>
  <span className="font-extrabold text-emerald-700">+{item.dailyChangePct.toFixed(2)}%</span>
  </div>
@@ -332,19 +332,19 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  </div>
  </div>
  
- <div className="border-t border-white/10/10 pt-2 text-[9px] font-mono text-zinc-50/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-zinc-800/10 pt-2 text-[9px] font-mono text-zinc-50/60 uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Кликни на акция за филтър</span>
  <span className="font-bold underline group-hover:text-[#10b981]">Топ Печеливши ({top15Gainers.length})</span>
  </div>
  </div>
 
  {/* 2. TOP LOSER CONTAINER */}
- <div className="bg-[#18181b] rounded-2xl border border-white/10 p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
+ <div className="bg-[#09090b] rounded-2xl border border-zinc-800 p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
  <div>
  {/* Header row with scrolling buttons */}
  <div className="flex items-center justify-between border-b border-stone-100 pb-2 mb-2">
  <div>
- <span className="text-[10px] text-red-700 font-mono tracking-wider block font-bold uppercase">
+ <span className="text-xs text-red-700 font-mono tracking-wider block font-bold uppercase">
  ▼ Дневен Аутсайдер на Пазара
  </span>
  <h3 className="text-sm uppercase font-extrabold text-zinc-50 font-mono tracking-tight">
@@ -392,11 +392,11 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  <span className="text-[9px] font-mono font-black text-stone-800 bg-red-50 border border-red-300 px-1.5 py-0.5 shrink-0 rounded-none">
  {item.ticker}
  </span>
- <span className="text-[11px] font-sans font-bold text-stone-800 truncate max-w-[110px]" title={item.companyName}>
+ <span className="text-sm font-sans font-bold text-stone-800 truncate max-w-[110px]" title={item.companyName}>
  {item.companyName}
  </span>
  </div>
- <div className="flex items-center gap-2 font-mono text-[11px] shrink-0">
+ <div className="flex items-center gap-2 font-mono text-sm shrink-0">
  <span className="text-stone-600 font-bold">${item.currentPrice.toFixed(2)}</span>
  <span className="font-extrabold text-red-700">{item.dailyChangePct.toFixed(2)}%</span>
  </div>
@@ -409,17 +409,17 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  </div>
  </div>
  
- <div className="border-t border-white/10/10 pt-2 text-[9px] font-mono text-zinc-50/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-zinc-800/10 pt-2 text-[9px] font-mono text-zinc-50/60 uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Кликни на акция за филтър</span>
  <span className="font-bold underline group-hover:text-[#f43f5e]">Топ Губещи ({top15Losers.length})</span>
  </div>
  </div>
 
  {/* 3. FEAR & GREED INDEX CONTAINER (HIGH-FIDELITY CNN BUSINESS COPIED STYLE) */}
- <div className="bg-[#18181b] rounded-2xl border border-white/10 p-4 flex flex-col justify-between relative md:col-span-1 h-[305px]">
+ <div className="bg-[#09090b] rounded-2xl border border-zinc-800 p-4 flex flex-col justify-between relative md:col-span-1 h-[305px]">
  <div className="flex items-center justify-between mb-1">
  <div>
- <span className="text-[10px] text-red-600 font-sans tracking-widest block font-extrabold uppercase">
+ <span className="text-xs text-red-600 font-sans tracking-widest block font-extrabold uppercase">
  CNN BUSINESS REAL-TIME FEED
  </span>
  <h3 className="text-sm uppercase font-extrabold text-zinc-50 font-mono tracking-tight">
@@ -440,7 +440,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  {loading ? (
  <div className="py-12 flex flex-col items-center justify-center space-y-2 flex-1">
  <RefreshCw className="w-6 h-6 text-zinc-50 animate-spin" />
- <span className="text-[10px] font-mono text-zinc-400 uppercase">Зареждане на реално време от CNN...</span>
+ <span className="text-xs font-mono text-zinc-400 uppercase">Зареждане на реално време от CNN...</span>
  </div>
  ) : (() => {
  const getPoint = (r: number, s: number) => {
@@ -560,7 +560,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  <div className="w-[50%] flex flex-col gap-1.5 font-mono text-[9px] pr-1">
  <div className="flex items-center justify-between border-b border-stone-100 pb-1">
  <span className="text-stone-400 font-bold tracking-tight">ПРЕД. ЗАТВОР</span>
- <div className="flex items-center gap-1 font-extrabold text-[10px]">
+ <div className="flex items-center gap-1 font-extrabold text-xs">
  <span style={{ color: getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).colorHex }}>
  {fngData?.previous_close ?? '—'}
  </span>
@@ -574,7 +574,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
  <div className="flex items-center justify-between border-b border-stone-100 pb-1">
  <span className="text-stone-400 font-bold tracking-tight">ПРЕДИ 1 СЕД.</span>
- <div className="flex items-center gap-1 font-extrabold text-[10px]">
+ <div className="flex items-center gap-1 font-extrabold text-xs">
  <span style={{ color: getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).colorHex }}>
  {fngData?.one_week_ago ?? '—'}
  </span>
@@ -588,7 +588,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
  <div className="flex items-center justify-between border-b border-stone-100 pb-1">
  <span className="text-stone-400 font-bold tracking-tight">ПРЕДИ 1 МЕС.</span>
- <div className="flex items-center gap-1 font-extrabold text-[10px]">
+ <div className="flex items-center gap-1 font-extrabold text-xs">
  <span style={{ color: getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).colorHex }}>
  {fngData?.one_month_ago ?? '—'}
  </span>
@@ -602,7 +602,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
  <div className="flex items-center justify-between border-b border-stone-100 pb-1">
  <span className="text-stone-400 font-bold tracking-tight">ПРЕДИ 1 ГОД.</span>
- <div className="flex items-center gap-1 font-extrabold text-[10px]">
+ <div className="flex items-center gap-1 font-extrabold text-xs">
  <span style={{ color: getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).colorHex }}>
  {fngData?.one_year_ago ?? '—'}
  </span>
@@ -621,7 +621,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  </div>
 
  {/* Timestamp status footer */}
- <div className="border-t border-white/10/10 pt-1.5 text-[8px] font-mono text-zinc-400 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-zinc-800/10 pt-1.5 text-[8px] font-mono text-zinc-400 uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Обновено: {fngData ? new Date(fngData.timestamp).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' }) : 'N/A'} ч.</span>
  <span className="font-extrabold text-stone-700 underline">CNN Business Live</span>
  </div>

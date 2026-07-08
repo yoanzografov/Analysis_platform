@@ -64,17 +64,17 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  return (
  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-5">
  {/* 1. Best Deals Bar Chart */}
- <div className="bg-[#18181b] rounded-2xl rounded-none border border-white/10 p-4 lg:col-span-2">
+ <div className="bg-[#09090b] rounded-2xl rounded-none border border-zinc-800 p-4 lg:col-span-2">
  <div className="flex items-center justify-between mb-3">
  <div>
- <span className="text-[10px] text-zinc-50/60 font-serif italic uppercase tracking-wider block">
+ <span className="text-xs text-zinc-50/60 font-serif italic uppercase tracking-wider block">
  Deal Finder
  </span>
  <h3 className="text-xs uppercase font-extrabold text-zinc-50 font-mono tracking-tight">
  Най-подценени акции (% Разлика спрямо Справедлива цена)
  </h3>
  </div>
- <div className="p-1 px-1.5 bg-[#D9D8D5] border border-white/10 rounded-none">
+ <div className="p-1 px-1.5 bg-[#D9D8D5] border border-zinc-800 rounded-none">
  <Percent className="w-3.5 h-3.5 text-zinc-50" />
  </div>
  </div>
@@ -108,7 +108,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  if (active && payload && payload.length) {
  const data = payload[0].payload;
  return (
- <div className="bg-[#18181b] rounded-2xl border border-white/10 rounded-none px-3 py-2 text-xs font-mono text-zinc-50">
+ <div className="bg-[#09090b] rounded-2xl border border-zinc-800 rounded-none px-3 py-2 text-xs font-mono text-zinc-50">
  <p className="font-extrabold mb-1 tracking-wider">{data.ticker}</p>
  <p className="text-[#10b981]">Справедлива: ${data.fairPrice}</p>
  <p className="text-zinc-400">Текуща цена: ${data.currentPrice}</p>
@@ -127,9 +127,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  </div>
 
  {/* 2. Signals Pie Chart */}
- <div className="bg-[#18181b] rounded-2xl rounded-none border border-white/10 p-4 flex flex-col justify-between lg:col-span-1">
+ <div className="bg-[#09090b] rounded-2xl rounded-none border border-zinc-800 p-4 flex flex-col justify-between lg:col-span-1">
  <div>
- <span className="text-[10px] text-zinc-50/60 font-serif italic uppercase tracking-wider block">
+ <span className="text-xs text-zinc-50/60 font-serif italic uppercase tracking-wider block">
  Signal Weight Allocation
  </span>
  <h3 className="text-xs uppercase font-extrabold text-zinc-50 font-mono tracking-tight mb-2">
@@ -167,7 +167,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
  activeFilter.type === 'signal' && activeFilter.value === 'buy'
  ? 'bg-emerald-50 border-emerald-800 ring-2 ring-emerald-800'
- : 'bg-[#18181b] rounded-2xl border-white/10/30 hover:bg-emerald-50/40 hover:border-emerald-650'
+ : 'bg-[#09090b] rounded-2xl border-zinc-800/30 hover:bg-emerald-50/40 hover:border-emerald-650'
  }`}
  title="Филтрирай компании по Сигнал КУПУВАЙ"
  >
@@ -179,7 +179,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
  activeFilter.type === 'signal' && activeFilter.value === 'sell'
  ? 'bg-red-50 border-red-800 ring-2 ring-red-800'
- : 'bg-[#18181b] rounded-2xl border-white/10/30 hover:bg-red-50/40 hover:border-red-650'
+ : 'bg-[#09090b] rounded-2xl border-zinc-800/30 hover:bg-red-50/40 hover:border-red-650'
  }`}
  title="Филтрирай компании по Сигнал ПРОДАВАЙ"
  >
@@ -191,7 +191,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
  activeFilter.type === 'signal' && activeFilter.value === 'hold'
  ? 'bg-amber-50 border-amber-500/50 ring-2 ring-amber-800'
- : 'bg-[#18181b] rounded-2xl border-white/10/30 hover:bg-amber-50/40 hover:border-amber-650'
+ : 'bg-[#09090b] rounded-2xl border-zinc-800/30 hover:bg-amber-50/40 hover:border-amber-650'
  }`}
  title="Филтрирай компании по Сигнал ИЗЧАКАЙ"
  >
@@ -202,9 +202,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  </div>
 
  {/* 3. BUY / SELL Ratio Pie Chart */}
- <div className="bg-[#18181b] rounded-2xl rounded-none border border-white/10 p-4 flex flex-col justify-between lg:col-span-1">
+ <div className="bg-[#09090b] rounded-2xl rounded-none border border-zinc-800 p-4 flex flex-col justify-between lg:col-span-1">
  <div>
- <span className="text-[10px] text-zinc-50/60 font-serif italic uppercase tracking-wider block">
+ <span className="text-xs text-zinc-50/60 font-serif italic uppercase tracking-wider block">
  BUY / SELL Weight Allocation
  </span>
  <h3 className="text-xs uppercase font-extrabold text-zinc-50 font-mono tracking-tight mb-2">
@@ -242,7 +242,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
  activeFilter.type === 'buySell' && activeFilter.value === 'BUY'
  ? 'bg-emerald-50 border-emerald-800 ring-2 ring-emerald-800'
- : 'bg-[#18181b] rounded-2xl border-white/10/30 hover:bg-emerald-50/40 hover:border-emerald-650'
+ : 'bg-[#09090b] rounded-2xl border-zinc-800/30 hover:bg-emerald-50/40 hover:border-emerald-650'
  }`}
  title="Филтрирай компании по BUY"
  >
@@ -254,7 +254,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
  activeFilter.type === 'buySell' && activeFilter.value === 'SELL'
  ? 'bg-red-50 border-red-800 ring-2 ring-red-800'
- : 'bg-[#18181b] rounded-2xl border-white/10/30 hover:bg-red-50/40 hover:border-red-650'
+ : 'bg-[#09090b] rounded-2xl border-zinc-800/30 hover:bg-red-50/40 hover:border-red-650'
  }`}
  title="Филтрирай компании по SELL"
  >
@@ -266,7 +266,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
  activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ'
  ? 'bg-white/10 border-gray-600 ring-2 ring-gray-600'
- : 'bg-[#18181b] rounded-2xl border-white/10/30 hover:bg-gray-50/40 hover:border-gray-600'
+ : 'bg-[#09090b] rounded-2xl border-zinc-800/30 hover:bg-gray-50/40 hover:border-gray-600'
  }`}
  title="Филтрирай компании по ДРУГИ"
  >
