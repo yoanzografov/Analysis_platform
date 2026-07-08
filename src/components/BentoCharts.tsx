@@ -31,9 +31,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  }).length;
 
  const signalData = [
- { name: 'КУПУВАЙ (BUY)', value: signalBuyCount, color: '#0d7a3f' },
- { name: 'ПРОДАВАЙ (SELL)', value: signalSellCount, color: '#c5221f' },
- { name: 'ИЗЧАКАЙ (HOLD)', value: signalHoldCount, color: '#b06000' },
+ { name: 'КУПУВАЙ (BUY)', value: signalBuyCount, color: 'var(--color-chart-buy)' },
+ { name: 'ПРОДАВАЙ (SELL)', value: signalSellCount, color: 'var(--color-chart-sell)' },
+ { name: 'ИЗЧАКАЙ (HOLD)', value: signalHoldCount, color: 'var(--color-chart-hold)' },
  ].filter(d => d.value > 0);
 
  // 3. Count BUY / SELL column values strictly
@@ -42,9 +42,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  const bsOthersCount = stocks.filter(s => s.buySell === 'ДРУГИ').length;
 
  const buySellData = [
- { name: 'BUY (КУПУВАЙ)', value: bsBuyCount, color: '#0d7a3f' },
- { name: 'SELL (ПРОДАВАЙ)', value: bsSellCount, color: '#c5221f' },
- { name: 'ДРУГИ (OTHER)', value: bsOthersCount, color: '#7c7c7c' },
+ { name: 'BUY (КУПУВАЙ)', value: bsBuyCount, color: 'var(--color-chart-buy)' },
+ { name: 'SELL (ПРОДАВАЙ)', value: bsSellCount, color: 'var(--color-chart-sell)' },
+ { name: 'ДРУГИ (OTHER)', value: bsOthersCount, color: 'var(--color-chart-other)' },
  ];
  const buySellDataFiltered = buySellData.filter(d => d.value > 0);
 

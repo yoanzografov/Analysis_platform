@@ -31,6 +31,11 @@
   --color-ink-faint: #71717a; /* zinc-500 */
   --color-border: #e4e4e7; /* zinc-200 */
   --color-border-hover: #d4d4d8; /* zinc-300 */
+  
+  --color-chart-buy: #059669; /* emerald-600 */
+  --color-chart-sell: #e11d48; /* rose-600 */
+  --color-chart-hold: #d97706; /* amber-600 */
+  --color-chart-other: #71717a; /* zinc-500 */
 }
 
 .dark {
@@ -42,6 +47,11 @@
   --color-ink-faint: #a1a1aa; /* Zinc 400 */
   --color-border: #27272a; /* Zinc 800 */
   --color-border-hover: #3f3f46; /* Zinc 700 */
+  
+  --color-chart-buy: #10b981; /* emerald-500 */
+  --color-chart-sell: #f43f5e; /* rose-500 */
+  --color-chart-hold: #f59e0b; /* amber-500 */
+  --color-chart-other: #a1a1aa; /* zinc-400 */
 }
 
 /* Base styling */
