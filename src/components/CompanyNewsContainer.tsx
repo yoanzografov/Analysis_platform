@@ -250,23 +250,36 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  setError('');
  
  try {
- const response = await fetch('/api/company-news', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- },
- body: JSON.stringify({
- ticker: selectedStock ? selectedStock.ticker : '',
- companyName: selectedStock ? selectedStock.companyName : ''
- }),
- });
-
+ const ticker = selectedStock ? selectedStock.ticker : 'SPY';
+ const yahooRssUrl = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${ticker}&region=US&lang=en-US`;
+ const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooRssUrl)}`;
+ const response = await fetch(proxyUrl);
+ if (!response.ok) throw new Error('Network error');
  const data = await response.json();
- if (response.ok) {
- setNews(data.news || []);
- } else {
- setError(data.error || 'Неуспешно извличане на новини.');
- }
+ if (!data.contents) throw new Error('No contents');
+ const parser = new DOMParser();
+ const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+ const items = xmlDoc.querySelectorAll("item");
+ const parsedNews: NewsArticle[] = [];
+ items.forEach((item, index) => {
+ if (index >= 12) return;
+ const title = item.querySelector("title")?.textContent || '';
+ const link = item.querySelector("link")?.textContent || '';
+ const pubDate = item.querySelector("pubDate")?.textContent || '';
+ const description = item.querySelector("description")?.textContent || '';
+ const lowerTitle = title.toLowerCase();
+ let impact: 'Positive' | 'Negative' | 'Neutral' = 'Neutral';
+ if (lowerTitle.includes('up') || lowerTitle.includes('gain') || lowerTitle.includes('rise') || lowerTitle.includes('beat')) impact = 'Positive';
+ else if (lowerTitle.includes('down') || lowerTitle.includes('fall') || lowerTitle.includes('drop') || lowerTitle.includes('miss') || lowerTitle.includes('loss')) impact = 'Negative';
+ let timeStr = pubDate;
+ try { timeStr = new Date(pubDate).toLocaleDateString('bg-BG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch(e) {}
+ let summaryStr = description.replace(/<[^>]+>/g, '').trim();
+ if (summaryStr.length > 200) summaryStr = summaryStr.substring(0, 200) + '...';
+ if (!summaryStr) summaryStr = title;
+ parsedNews.push({ title, source: 'Yahoo Finance', time: timeStr, summary: summaryStr, impact, url: link });
+ });
+ if (parsedNews.length > 0) setNews(parsedNews);
+ else throw new Error('Няма открити новини.');
  } catch (err: any) {
  setError('Неуспешна връзка със сървъра. Използваме сигурен резервен поток.');
  // Fallback local items
