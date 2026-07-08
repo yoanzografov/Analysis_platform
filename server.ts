@@ -500,6 +500,7 @@ interface StockQuoteData {
   eps?: number;
   marketCap?: number;
   dividend?: number;
+  dividendYield?: number;
 }
 
 let cachedCookie: string | null = null;
@@ -1189,6 +1190,7 @@ app.get("/api/stock-quotes", async (req, res) => {
             eps: (q.epsTrailingTwelveMonths ?? q.trailingEps ?? q.epsForward) !== undefined ? parseFloat((q.epsTrailingTwelveMonths ?? q.trailingEps ?? q.epsForward).toFixed(2)) : undefined,
             marketCap: q.marketCap || undefined,
             dividend: q.dividendRate !== undefined ? q.dividendRate : q.trailingAnnualDividendRate,
+            dividendYield: q.dividendYield !== undefined ? q.dividendYield : q.trailingAnnualDividendYield,
           };
           // Sync server-side cache
           serverPriceCache[originalTicker] = currentPrice;

@@ -120,7 +120,11 @@ export default function App() {
                 peRatio: quote.peRatio !== undefined ? quote.peRatio : stock.peRatio,
                 eps: quote.eps !== undefined ? quote.eps : stock.eps,
                 marketCap: quote.marketCap !== undefined ? quote.marketCap : stock.marketCap,
-                dividend: quote.dividend !== undefined ? quote.dividend.toString() : stock.dividend,
+                dividend: (quote.dividend !== undefined || quote.dividendYield !== undefined)
+                  ? (quote.dividend && quote.dividendYield 
+                      ? `${quote.dividend.toFixed(2)} (${quote.dividendYield.toFixed(2)}%)` 
+                      : (quote.dividend ? quote.dividend.toString() : (quote.dividendYield ? `(${quote.dividendYield.toFixed(2)}%)` : '-')))
+                  : stock.dividend,
                 difference,
                 buySell,
                 signal
