@@ -9,7 +9,6 @@ import PriceAlertPlanner from './components/PriceAlertPlanner';
 import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
-import ThemeToggle from './components/ThemeToggle';
 import { 
  Building2, 
  Download, 
@@ -549,15 +548,12 @@ export default function App() {
  {/* Dashboard Header Bar */}
  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
  <div>
- <div className="flex items-center gap-2">
-  <Building2 className="w-5 h-5 text-ink" />
-  <h1 className="text-2xl font-bold font-extrabold text-ink font-mono tracking-tight uppercase">
-    ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
-  </h1>
-  <div className="ml-4">
-    <ThemeToggle />
+  <div className="flex items-center gap-2">
+    <Building2 className="w-5 h-5 text-ink" />
+    <h1 className="text-2xl font-bold font-extrabold text-ink font-mono tracking-tight uppercase">
+      ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
+    </h1>
   </div>
-</div>
  </div>
 
  <div className="flex flex-wrap items-center gap-1.5">

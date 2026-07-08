@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { MarketIndex } from '../types';
 import { Globe, ChevronDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 interface Props {
  indices: MarketIndex[];
@@ -169,6 +170,10 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
  </div>
  </div>
 
+ {/* Theme Toggle at the far right */}
+ <div className="px-4 shrink-0 h-full flex items-center justify-center relative z-20">
+ <ThemeToggle />
+ </div>
  </div>
  </div>
  );

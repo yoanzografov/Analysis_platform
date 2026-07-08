@@ -23,12 +23,12 @@
 }
 
 :root {
-  --color-bg: #ffffff; /* pure white */
-  --color-card: #f4f4f5; /* zinc-100 */
-  --color-card-hover: #e4e4e7; /* zinc-200 */
-  --color-ink: #09090b; /* zinc-950 */
-  --color-ink-muted: #3f3f46; /* zinc-700 */
-  --color-ink-faint: #52525b; /* zinc-600 */
+  --color-bg: #fafafa; /* zinc-50 - softer than pure white */
+  --color-card: #ffffff; /* pure white for cards to pop against soft bg */
+  --color-card-hover: #f4f4f5; /* zinc-100 */
+  --color-ink: #18181b; /* zinc-900 - softer than pure black */
+  --color-ink-muted: #52525b; /* zinc-600 */
+  --color-ink-faint: #71717a; /* zinc-500 */
   --color-border: #e4e4e7; /* zinc-200 */
   --color-border-hover: #d4d4d8; /* zinc-300 */
 }
