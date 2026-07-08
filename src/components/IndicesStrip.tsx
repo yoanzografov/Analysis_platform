@@ -71,8 +71,8 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
   };
 
   return (
-    <div className="w-full bg-white border-b border-[#141414] select-none">
-      <div className="max-w-7xl mx-auto flex items-center h-16 divide-x divide-[#141414]/10">
+    <div className="w-full bg-[#1c1c1e] border-b border-white/10 select-none">
+      <div className="max-w-7xl mx-auto flex items-center h-16 divide-x divide-white/10/10">
         
         {/* Category Dropdown Selector */}
         <div ref={dropdownRef} className="w-[230px] shrink-0 h-full px-4 flex flex-col justify-center relative z-20">
@@ -94,7 +94,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
 
           {/* Floating Dropdown */}
           {isOpen && (
-            <div className="absolute left-0 top-[100%] mt-px w-full bg-white border-x border-b border-[#141414] shadow-lg py-1 flex flex-col divide-y divide-stone-100">
+            <div className="absolute left-0 top-[100%] mt-px w-full bg-[#1c1c1e] border-x border-b border-white/10 shadow-lg py-1 flex flex-col divide-y divide-stone-100">
               {CATEGORIES.map(cat => (
                 <button
                   key={cat}
@@ -117,7 +117,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
 
         {/* Real-time Indices/Indicators Grid (8 columns) */}
         <div className="flex-1 h-full overflow-x-auto custom-mini-scroll flex">
-          <div className="min-w-[800px] flex-1 grid grid-cols-8 divide-x divide-[#141414]/10 h-full">
+          <div className="min-w-[800px] flex-1 grid grid-cols-8 divide-x divide-white/10/10 h-full">
             
             {/* Real items */}
             {displayItems.map((item, idx) => {
@@ -138,12 +138,12 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
                   <span className="text-[10px] font-sans font-bold text-[#6366F1] tracking-tight truncate uppercase mb-0.5" title={item.name}>
                     {item.name}
                   </span>
-                  <span className="text-[13px] font-sans font-black text-[#141414] leading-tight tracking-tight">
+                  <span className="text-[13px] font-sans font-black text-white leading-tight tracking-tight">
                     {formatPrice(item.value, item.name)}
                   </span>
                   <div
                     className={`flex items-center gap-0.5 text-[10px] font-mono font-black leading-none mt-0.5 ${
-                      isPositive ? 'text-emerald-600' : 'text-red-500'
+                      isPositive ? 'text-[#30d158]' : 'text-red-500'
                     }`}
                   >
                     {isPositive ? (

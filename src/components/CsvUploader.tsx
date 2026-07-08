@@ -117,18 +117,18 @@ export default function CsvUploader({ onDataLoaded }: Props) {
   };
 
   return (
-    <div className="w-full bg-white border border-[#141414] p-4 rounded-none shadow-xs space-y-4">
+    <div className="w-full bg-[#1c1c1e] border border-white/10 p-4 rounded-none shadow-xs space-y-4">
       {/* Header and Help Toggle */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileSpreadsheet className="w-4 h-4 text-emerald-700 shrink-0" />
-          <h3 className="text-xs uppercase font-extrabold text-[#141414] tracking-wide font-mono">
+          <h3 className="text-xs uppercase font-extrabold text-white tracking-wide font-mono">
             Синхронизиране с Google Sheets & CSV данни
           </h3>
         </div>
         <button
           onClick={() => setShowHelp(!showHelp)}
-          className="text-[10px] text-[#141414]/70 hover:text-black flex items-center gap-1 font-mono transition-colors border border-[#141414]/30 px-2 py-0.5 bg-[#D9D8D5]/40 cursor-pointer"
+          className="text-[10px] text-white/70 hover:text-white flex items-center gap-1 font-mono transition-colors border border-white/10/30 px-2 py-0.5 bg-[#D9D8D5]/40 cursor-pointer"
         >
           <HelpCircle className="w-3" />
           {showHelp ? 'Скрий Помощ' : 'Инструкции'}
@@ -136,23 +136,23 @@ export default function CsvUploader({ onDataLoaded }: Props) {
       </div>
 
       {showHelp && (
-        <div className="bg-[#D9D8D5] rounded-none p-3 text-xs text-[#141414] leading-relaxed space-y-2 border border-[#141414]">
+        <div className="bg-[#D9D8D5] rounded-none p-3 text-xs text-white leading-relaxed space-y-2 border border-white/10">
           <p className="font-bold font-serif italic text-[11px]">Два начина за синхронизиране на вашите данни от Google Sheets:</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[10px] font-mono text-[#141414]/80">
-            <div className="space-y-1 bg-white/40 p-2 border border-[#141414]/15">
-              <span className="font-black text-emerald-800 block uppercase">Метод A: Чрез Линк (Препоръчително)</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[10px] font-mono text-white/80">
+            <div className="space-y-1 bg-[#1c1c1e]/40 p-2 border border-white/10/15">
+              <span className="font-black text-[#30d158] block uppercase">Метод A: Чрез Линк (Препоръчително)</span>
               <p>1. В Google Sheet натиснете <span className="font-bold underline">Share</span> горе вдясно.</p>
               <p>2. Променете правата от Restricted на <span className="font-bold">"Anyone with the link"</span> (Всеки с линка може да преглежда).</p>
               <p>3. Копирайте линка на браузъра и го поставете в полето по-долу.</p>
             </div>
             
-            <div className="space-y-1 bg-white/40 p-2 border border-[#141414]/15">
+            <div className="space-y-1 bg-[#1c1c1e]/40 p-2 border border-white/10/15">
               <span className="font-black text-amber-800 block uppercase">Метод Б: Чрез CSV експорт</span>
               <p>1. Отидете на <span className="font-bold">File &gt; Download &gt; Comma Separated Values (.csv)</span>.</p>
               <p>2. Сваленият файл пренесете тук и го плъзнете в прекъснатото правоъгълно поле.</p>
             </div>
           </div>
-          <p className="text-[9px] text-amber-900 font-mono font-bold mt-1">
+          <p className="text-[9px] text-amber-400 font-mono font-bold mt-1">
             * Платформата поддържа оригиналната структура с показатели като "Fair Price" и "Current Price" и автоматично преизчислява формулите.
           </p>
         </div>
@@ -162,13 +162,13 @@ export default function CsvUploader({ onDataLoaded }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
         
         {/* Method A: Google Sheets Link Input Box */}
-        <form onSubmit={handleUrlSync} className="md:col-span-5 flex flex-col justify-between border border-[#141414]/40 p-3 bg-stone-50">
+        <form onSubmit={handleUrlSync} className="md:col-span-5 flex flex-col justify-between border border-white/10/40 p-3 bg-stone-50">
           <div>
-            <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider flex items-center gap-1">
-              <Link2 className="w-3 h-3 text-emerald-800" />
+            <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1">
+              <Link2 className="w-3 h-3 text-[#30d158]" />
               Метод А: Директен ЛИНК
             </span>
-            <p className="text-[10px] text-gray-700 leading-tight mt-1 font-serif">
+            <p className="text-[10px] text-gray-300 leading-tight mt-1 font-serif">
               Поставете споделения линк на вашата Google таблица тук за бърз live синхрон:
             </p>
             <input 
@@ -176,7 +176,7 @@ export default function CsvUploader({ onDataLoaded }: Props) {
               placeholder="https://docs.google.com/spreadsheets/d/..."
               value={sheetUrl}
               onChange={(e) => setSheetUrl(e.target.value)}
-              className="w-full mt-2 p-1.5 text-[10px] font-mono border border-[#141414] rounded-none focus:outline-none focus:bg-white bg-white/80"
+              className="w-full mt-2 p-1.5 text-[10px] font-mono border border-white/10 rounded-none focus:outline-none focus:bg-[#1c1c1e] bg-[#1c1c1e]/80"
             />
           </div>
 
@@ -215,7 +215,7 @@ export default function CsvUploader({ onDataLoaded }: Props) {
               ? 'border-emerald-700 bg-emerald-700/10'
               : status === 'success'
               ? 'border-emerald-700 bg-emerald-50'
-              : 'border-[#141414]/40 bg-[#E4E3E0]/20 hover:bg-[#E4E3E0]/45 hover:border-[#141414]'
+              : 'border-white/10/40 bg-black/20 hover:bg-black/45 hover:border-white/10'
           }`}
         >
           <input
@@ -228,29 +228,29 @@ export default function CsvUploader({ onDataLoaded }: Props) {
 
           {status === 'success' ? (
             <div className="flex flex-col items-center">
-              <div className="p-1.5 rounded-none bg-emerald-700/10 text-emerald-800 mb-1.5 border border-emerald-700/40">
+              <div className="p-1.5 rounded-none bg-emerald-700/10 text-[#30d158] mb-1.5 border border-emerald-700/40">
                 <Check className="w-4 h-4" />
               </div>
-              <p className="text-[11px] font-bold text-emerald-800 font-mono">Синхронизирането завърши успешно!</p>
-              <p className="text-[9px] text-[#141414]/60 mt-0.5 font-mono italic">{fileName}</p>
+              <p className="text-[11px] font-bold text-[#30d158] font-mono">Синхронизирането завърши успешно!</p>
+              <p className="text-[9px] text-white/60 mt-0.5 font-mono italic">{fileName}</p>
             </div>
           ) : status === 'error' ? (
             <div className="flex flex-col items-center p-1">
-              <div className="p-1 rounded-none bg-red-100 text-red-800 mb-1 border border-red-700/40">
+              <div className="p-1 rounded-none bg-[#ff3b30]/10 text-[#ff3b30] mb-1 border border-red-700/40">
                 <AlertCircle className="w-4 h-4" />
               </div>
-              <p className="text-[10px] font-bold text-red-800 font-mono text-center max-w-xs">{errorMessage}</p>
-              <p className="text-[8.5px] text-[#141414]/80 mt-1 hover:underline">Кликнете за да качите CSV в друг формат</p>
+              <p className="text-[10px] font-bold text-[#ff3b30] font-mono text-center max-w-xs">{errorMessage}</p>
+              <p className="text-[8.5px] text-white/80 mt-1 hover:underline">Кликнете за да качите CSV в друг формат</p>
             </div>
           ) : (
             <div className="flex flex-col items-center">
-              <div className="p-1.5 rounded-none bg-white border border-[#141414]/30 text-[#141414] mb-1.5 hover:bg-[#D9D8D5] transition-colors">
-                <Upload className="w-3.5 h-3.5 text-[#141414]" />
+              <div className="p-1.5 rounded-none bg-[#1c1c1e] border border-white/10/30 text-white mb-1.5 hover:bg-[#D9D8D5] transition-colors">
+                <Upload className="w-3.5 h-3.5 text-white" />
               </div>
-              <p className="text-[10px] text-[#141414] font-bold">
+              <p className="text-[10px] text-white font-bold">
                 Метод Б: Плъзнете своя <span className="underline font-mono">.csv</span> файл тук
               </p>
-              <p className="text-[8.5px] text-[#141414]/55 font-mono mt-0.5 uppercase">
+              <p className="text-[8.5px] text-white/55 font-mono mt-0.5 uppercase">
                 ИЛИ КЛИКНЕТЕ за да изберете от компютъра
               </p>
             </div>

@@ -2,9 +2,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #E4E3E0;
-  --color-ink: #141414;
-  --color-line: #141414;
+  --color-bg: #000000;
+  --color-ink: #ffffff;
+  --color-line: rgba(255, 255, 255, 0.1);
+  --color-card: #1c1c1e;
+  --color-apple-green: #30d158;
+  --color-apple-red: #ff3b30;
   
   --font-sans: "Inter", sans-serif;
   --font-mono: "Inter", sans-serif;
@@ -14,9 +17,9 @@
 
 /* Base high-density styling */
 body {
-  background-color: #E4E3E0;
-  color: #141414;
-  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-sans);
 }
 
 /* Scrollbars matching the High Density mechanical theme */
@@ -26,15 +29,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #D9D8D5;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #141414;
+  background: #3a3a3c;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #333333;
+  background: #48484a;
 }
 
 /* High density button transitions and states */

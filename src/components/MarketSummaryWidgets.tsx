@@ -221,7 +221,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
       return { 
          bg: 'bg-emerald-600 text-white', 
          border: 'border-emerald-600',
-         text: 'text-emerald-600', 
+         text: 'text-[#30d158]', 
          label: 'АЛЧНОСТ', 
          eng: 'Greed', 
          colorHex: '#059669' 
@@ -262,7 +262,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
       `}} />
 
       {/* 1. TOP GAINER CONTAINER */}
-      <div className="bg-white border border-[#141414] p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
+      <div className="bg-[#1c1c1e] border border-white/10 p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
         <div>
           {/* Header row with scrolling buttons */}
           <div className="flex items-center justify-between border-b border-stone-100 pb-2 mb-2">
@@ -270,7 +270,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               <span className="text-[10px] text-emerald-700 font-mono tracking-wider block font-bold uppercase">
                 ▲ Дневен Лидер на Пазара
               </span>
-              <h3 className="text-sm uppercase font-extrabold text-[#141414] font-mono tracking-tight">
+              <h3 className="text-sm uppercase font-extrabold text-white font-mono tracking-tight">
                 Top Gainers (Топ 15)
               </h3>
             </div>
@@ -332,14 +332,14 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           </div>
         </div>
         
-        <div className="border-t border-[#141414]/10 pt-2 text-[9px] font-mono text-[#141414]/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+        <div className="border-t border-white/10/10 pt-2 text-[9px] font-mono text-white/60 uppercase tracking-tight flex items-center justify-between shrink-0">
           <span>Кликни на акция за филтър</span>
-          <span className="font-bold underline group-hover:text-emerald-800">Топ Печеливши ({top15Gainers.length})</span>
+          <span className="font-bold underline group-hover:text-[#30d158]">Топ Печеливши ({top15Gainers.length})</span>
         </div>
       </div>
 
       {/* 2. TOP LOSER CONTAINER */}
-      <div className="bg-white border border-[#141414] p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
+      <div className="bg-[#1c1c1e] border border-white/10 p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group">
         <div>
           {/* Header row with scrolling buttons */}
           <div className="flex items-center justify-between border-b border-stone-100 pb-2 mb-2">
@@ -347,7 +347,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               <span className="text-[10px] text-red-700 font-mono tracking-wider block font-bold uppercase">
                 ▼ Дневен Аутсайдер на Пазара
               </span>
-              <h3 className="text-sm uppercase font-extrabold text-[#141414] font-mono tracking-tight">
+              <h3 className="text-sm uppercase font-extrabold text-white font-mono tracking-tight">
                 Top Losers (Топ 15)
               </h3>
             </div>
@@ -409,20 +409,20 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           </div>
         </div>
         
-        <div className="border-t border-[#141414]/10 pt-2 text-[9px] font-mono text-[#141414]/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+        <div className="border-t border-white/10/10 pt-2 text-[9px] font-mono text-white/60 uppercase tracking-tight flex items-center justify-between shrink-0">
           <span>Кликни на акция за филтър</span>
-          <span className="font-bold underline group-hover:text-red-800">Топ Губещи ({top15Losers.length})</span>
+          <span className="font-bold underline group-hover:text-[#ff3b30]">Топ Губещи ({top15Losers.length})</span>
         </div>
       </div>
 
       {/* 3. FEAR & GREED INDEX CONTAINER (HIGH-FIDELITY CNN BUSINESS COPIED STYLE) */}
-      <div className="bg-white border border-[#141414] p-4 flex flex-col justify-between relative md:col-span-1 h-[305px]">
+      <div className="bg-[#1c1c1e] border border-white/10 p-4 flex flex-col justify-between relative md:col-span-1 h-[305px]">
         <div className="flex items-center justify-between mb-1">
           <div>
             <span className="text-[10px] text-red-600 font-sans tracking-widest block font-extrabold uppercase">
               CNN BUSINESS REAL-TIME FEED
             </span>
-            <h3 className="text-sm uppercase font-extrabold text-[#141414] font-mono tracking-tight">
+            <h3 className="text-sm uppercase font-extrabold text-white font-mono tracking-tight">
               Fear & Greed Index
             </h3>
           </div>
@@ -439,8 +439,8 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
         {loading ? (
           <div className="py-12 flex flex-col items-center justify-center space-y-2 flex-1">
-            <RefreshCw className="w-6 h-6 text-[#141414] animate-spin" />
-            <span className="text-[10px] font-mono text-gray-500 uppercase">Зареждане на реално време от CNN...</span>
+            <RefreshCw className="w-6 h-6 text-white animate-spin" />
+            <span className="text-[10px] font-mono text-gray-400 uppercase">Зареждане на реално време от CNN...</span>
           </div>
         ) : (() => {
           const getPoint = (r: number, s: number) => {
@@ -621,7 +621,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               </div>
 
               {/* Timestamp status footer */}
-              <div className="border-t border-[#141414]/10 pt-1.5 text-[8px] font-mono text-gray-500 uppercase tracking-tight flex items-center justify-between shrink-0">
+              <div className="border-t border-white/10/10 pt-1.5 text-[8px] font-mono text-gray-400 uppercase tracking-tight flex items-center justify-between shrink-0">
                 <span>Обновено: {fngData ? new Date(fngData.timestamp).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' }) : 'N/A'} ч.</span>
                 <span className="font-extrabold text-stone-700 underline">CNN Business Live</span>
               </div>

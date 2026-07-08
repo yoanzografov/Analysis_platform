@@ -527,7 +527,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E4E3E0] text-[#141414] flex flex-col pb-12 antialiased">
+    <div className="min-h-screen bg-black text-white flex flex-col pb-12 antialiased">
       {/* Dynamic indices banner strip */}
       <IndicesStrip indices={indices} isSimulating={isSimulating} />
 
@@ -536,7 +536,7 @@ export default function App() {
         
         {/* Floating live alerts toast banner */}
         {activeAlertToast && (
-          <div className="fixed top-14 right-4 z-40 bg-amber-100 border border-amber-800 text-amber-900 rounded-none shadow-md p-3 max-w-sm flex items-start gap-2.5 font-mono text-xs">
+          <div className="fixed top-14 right-4 z-40 bg-amber-500/10 border border-amber-500/50 text-amber-400 rounded-none shadow-md p-3 max-w-sm flex items-start gap-2.5 font-mono text-xs">
             <Bell className="w-4 h-4 text-amber-800 shrink-0 mt-0.5" />
             <div>
               <span className="font-extrabold underline block mb-0.5 uppercase tracking-wide">СИГНАЛ ЗА ЦЕНА</span>
@@ -546,11 +546,11 @@ export default function App() {
         )}
 
         {/* Dashboard Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#141414] pb-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
             <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-[#141414]" />
-              <h1 className="text-xl font-extrabold text-[#141414] font-mono tracking-tight uppercase">
+              <Building2 className="w-5 h-5 text-white" />
+              <h1 className="text-xl font-extrabold text-white font-mono tracking-tight uppercase">
                 ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
               </h1>
             </div>
@@ -562,8 +562,8 @@ export default function App() {
               onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
               className={`text-[10px] font-mono font-extrabold px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all border cursor-pointer ${
                 isAutoLiveRefresh 
-                  ? 'bg-emerald-800 text-white border-emerald-950 hover:bg-emerald-900 font-extrabold' 
-                  : 'bg-white text-gray-500 border-gray-350 hover:bg-gray-50 hover:text-gray-700'
+                  ? 'bg-[#30d158] text-white border-[#30d158]/50 hover:bg-[#28b04a] font-extrabold' 
+                  : 'bg-[#1c1c1e] text-gray-400 border-gray-350 hover:bg-gray-50 hover:text-gray-300'
               }`}
               title="Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди"
             >
@@ -582,7 +582,7 @@ export default function App() {
               className={`text-[10px] font-mono font-extrabold px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all border cursor-pointer ${
                 isSimulating 
                   ? 'bg-red-700 text-white border-red-850 hover:bg-red-800 font-extrabold' 
-                  : 'bg-white text-[#141414] border-[#141414] hover:bg-[#141414] hover:text-white'
+                  : 'bg-[#1c1c1e] text-white border-white/10 hover:bg-[#2c2c2e] hover:text-white'
               }`}
               title="Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити"
             >
@@ -606,18 +606,18 @@ export default function App() {
               className={`text-[10px] font-mono font-extrabold px-3 py-1.5 rounded-none border flex items-center gap-1.5 uppercase transition-all cursor-pointer ${
                 isFetchingLivePrices
                   ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
-                  : 'bg-black text-white border-black hover:bg-[#252525]'
+                  : 'bg-black text-white border-black hover:bg-[#3a3a3c]'
               }`}
               title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
             >
-              <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-emerald-600' : ''}`} />
+              <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-[#30d158]' : ''}`} />
               {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
             </button>
 
             {/* Export data back as sheet formatted CSV */}
             <button
               onClick={exportCSVFile}
-              className="text-[10px] font-mono font-extrabold bg-white text-[#141414] hover:bg-[#141414] hover:text-white border border-[#141414] px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
+              className="text-[10px] font-mono font-extrabold bg-[#1c1c1e] text-white hover:bg-[#2c2c2e] hover:text-white border border-white/10 px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
             >
               <Download className="w-3 h-3" />
               Експорт CSV
@@ -643,14 +643,14 @@ export default function App() {
         <div className="space-y-2" id="stock-table-section">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xs uppercase font-extrabold text-[#141414] font-mono tracking-tight">
+              <h2 className="text-xs uppercase font-extrabold text-white font-mono tracking-tight">
                 Интерактивна таблица за оценка
               </h2>
-              <p className="text-[11px] text-gray-700 mt-0.5">
-                Можете да щракнете върху всяка стойност в колона <span className="font-bold underline">"Текуща"</span> или <span className="font-bold text-emerald-800 underline">"Справедлива (Fair)"</span> за директно редактиране на показателите.
+              <p className="text-[11px] text-gray-300 mt-0.5">
+                Можете да щракнете върху всяка стойност в колона <span className="font-bold underline">"Текуща"</span> или <span className="font-bold text-[#30d158] underline">"Справедлива (Fair)"</span> за директно редактиране на показателите.
               </p>
             </div>
-            <div className="text-right text-[9px] text-gray-500 font-mono hidden sm:block">
+            <div className="text-right text-[9px] text-gray-400 font-mono hidden sm:block">
               Двоен клик или клик на химикал за бърза пазарна симулация
             </div>
           </div>
@@ -698,13 +698,13 @@ export default function App() {
           </div>
 
           {/* Real-time alert feed logs */}
-          <div className="bg-white border border-[#141414] p-4 flex flex-col justify-between rounded-none shadow-xs">
+          <div className="bg-[#1c1c1e] border border-white/10 p-4 flex flex-col justify-between rounded-none shadow-xs">
             <div>
-              <h3 className="text-xs uppercase font-extrabold text-[#141414] font-mono flex items-center gap-1.5">
+              <h3 className="text-xs uppercase font-extrabold text-white font-mono flex items-center gap-1.5">
                 <Bell className="w-3.5 h-3.5 text-amber-800" />
                 Лог на известията & задействания
               </h3>
-              <p className="text-[10px] text-gray-500 font-mono mt-0.5">
+              <p className="text-[10px] text-gray-400 font-mono mt-0.5">
                 Хроника на пазарните промени и филтри на заложени аларми.
               </p>
             </div>
@@ -718,12 +718,12 @@ export default function App() {
                       ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
                       : log.type === 'success'
                       ? 'bg-emerald-50 border-emerald-600 text-emerald-950 font-extrabold'
-                      : 'bg-[#E4E3E0]/30 border-[#141414]/20 text-gray-700'
+                      : 'bg-black/30 border-white/10/20 text-gray-300'
                   }`}
                 >
-                  <span className="text-gray-500 block shrink-0">[{log.timestamp}]</span>
+                  <span className="text-gray-400 block shrink-0">[{log.timestamp}]</span>
                   <p>
-                    <span className="font-bold text-[#141414] mr-1 uppercase">[{log.ticker}]</span>
+                    <span className="font-bold text-white mr-1 uppercase">[{log.ticker}]</span>
                     {log.message}
                   </p>
                 </div>
