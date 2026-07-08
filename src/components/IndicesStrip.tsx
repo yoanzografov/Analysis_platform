@@ -72,109 +72,109 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
  };
 
  return (
- <div className="w-full bg-card rounded-2xl border-b border-border select-none">
- <div className="max-w-7xl mx-auto flex items-center h-16 divide-x divide-white/10/10">
- 
- {/* Category Dropdown Selector */}
- <div ref={dropdownRef} className="w-[230px] shrink-0 h-full px-4 flex flex-col justify-center relative z-20">
- <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-[#6366F1] mb-0.5 select-none">
- Index Markets
- </span>
- <button
- onClick={() => setIsOpen(!isOpen)}
- className="flex items-center justify-between w-full text-left font-mono font-bold text-xs uppercase tracking-tight hover:text-[#6366F1] transition-colors focus:outline-none group cursor-pointer"
- >
- <div className="flex items-center gap-1.5">
- <Globe className="w-3.5 h-3.5 text-stone-500 group-hover:text-[#6366F1]" />
- <span className="text-stone-800 font-sans font-extrabold text-[12px] leading-tight tracking-tight group-hover:text-[#6366F1]">
- {selectedCategory}
- </span>
- </div>
- <ChevronDown className={`w-3.5 h-3.5 text-stone-500 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-[#6366F1]' : ''}`} />
- </button>
+    <div className="w-full bg-bg rounded-2xl border border-border select-none mb-4 overflow-hidden">
+      <div className="max-w-7xl mx-auto flex items-center h-16 divide-x divide-border">
+        
+        {/* Category Dropdown Selector */}
+        <div ref={dropdownRef} className="w-[230px] shrink-0 h-full px-4 flex flex-col justify-center relative z-20">
+          <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-indigo-500 mb-0.5 select-none">
+            Index Markets
+          </span>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center justify-between w-full text-left font-mono font-bold text-xs uppercase tracking-tight hover:text-indigo-500 transition-colors focus:outline-none group cursor-pointer"
+          >
+            <div className="flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-ink-muted group-hover:text-indigo-500" />
+              <span className="text-ink font-sans font-extrabold text-[12px] leading-tight tracking-tight group-hover:text-indigo-500">
+                {selectedCategory}
+              </span>
+            </div>
+            <ChevronDown className={`w-3.5 h-3.5 text-ink-muted transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-indigo-500' : ''}`} />
+          </button>
 
- {/* Floating Dropdown */}
- {isOpen && (
- <div className="absolute left-0 top-[100%] mt-px w-full bg-card rounded-2xl border-x border-b border-border shadow-lg py-1 flex flex-col divide-y divide-stone-100">
- {CATEGORIES.map(cat => (
- <button
- key={cat}
- onClick={() => {
- setSelectedCategory(cat);
- setIsOpen(false);
- }}
- className={`w-full text-left px-4 py-2.5 text-xs font-sans font-bold transition-all ${
- selectedCategory === cat
- ? 'bg-stone-100 text-[#6366F1]'
- : 'text-stone-700 hover:bg-stone-50 hover:text-[#6366F1]'
- }`}
- >
- {cat}
- </button>
- ))}
- </div>
- )}
- </div>
+          {/* Floating Dropdown */}
+          {isOpen && (
+            <div className="absolute left-0 top-[100%] mt-px w-full bg-card rounded-2xl border border-border shadow-lg py-1 flex flex-col divide-y divide-border">
+              {CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-xs font-sans font-bold transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-card-hover text-indigo-500'
+                      : 'text-ink hover:bg-card-hover hover:text-indigo-500'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
- {/* Real-time Indices/Indicators Grid (8 columns) */}
- <div className="flex-1 h-full overflow-x-auto custom-mini-scroll flex">
- <div className="min-w-[800px] flex-1 grid grid-cols-8 divide-x divide-white/10/10 h-full">
- 
- {/* Real items */}
- {displayItems.map((item, idx) => {
- const flash = flashStates[item.name];
- const isPositive = item.changePct >= 0;
+        {/* Real-time Indices/Indicators Grid (8 columns) */}
+        <div className="flex-1 h-full overflow-x-auto custom-mini-scroll flex bg-bg">
+          <div className="min-w-[800px] flex-1 grid grid-cols-8 divide-x divide-border h-full">
+            
+            {/* Real items */}
+            {displayItems.map((item, idx) => {
+              const flash = flashStates[item.name];
+              const isPositive = item.changePct >= 0;
 
- return (
- <div
- key={`${item.name}-${item.ticker || idx}`}
- className={`h-full flex flex-col justify-center px-3.5 transition-all duration-300 ${
- flash === 'up'
- ? 'bg-emerald-500/10'
- : flash === 'down'
- ? 'bg-red-500/10'
- : 'hover:bg-stone-50/50'
- }`}
- >
- <span className="text-[10px] font-sans font-bold text-[#6366F1] tracking-tight truncate uppercase mb-0.5" title={item.name}>
- {item.name}
- </span>
- <span className="text-[13px] font-sans font-black text-ink leading-tight tracking-tight">
- {formatPrice(item.value, item.name)}
- </span>
- <div
- className={`flex items-center gap-0.5 text-[10px] font-mono font-black leading-none mt-0.5 ${
- isPositive ? 'text-[#10b981]' : 'text-red-500'
- }`}
- >
- {isPositive ? (
- <ArrowUpRight className="w-3 h-3 shrink-0" />
- ) : (
- <ArrowDownRight className="w-3 h-3 shrink-0" />
- )}
- <span className="truncate">
- {isPositive ? '+' : ''}{item.changeVal !== undefined ? item.changeVal.toFixed(2) : '0.00'}
- &nbsp;
- {isPositive ? '+' : ''}{item.changePct.toFixed(2)}%
- </span>
- </div>
- </div>
- );
- })}
+              return (
+                <div
+                  key={`${item.name}-${item.ticker || idx}`}
+                  className={`h-full flex flex-col justify-center px-3.5 transition-all duration-300 ${
+                    flash === 'up'
+                      ? 'bg-emerald-500/10'
+                      : flash === 'down'
+                      ? 'bg-red-500/10'
+                      : 'hover:bg-card-hover'
+                  }`}
+                >
+                  <span className="text-[10px] font-sans font-bold text-indigo-500 tracking-tight truncate uppercase mb-0.5" title={item.name}>
+                    {item.name}
+                  </span>
+                  <span className="text-[13px] font-sans font-black text-ink leading-tight tracking-tight">
+                    {formatPrice(item.value, item.name)}
+                  </span>
+                  <div
+                    className={`flex items-center gap-0.5 text-[10px] font-mono font-black leading-none mt-0.5 ${
+                      isPositive ? 'text-[#10b981]' : 'text-red-500'
+                    }`}
+                  >
+                    {isPositive ? (
+                      <ArrowUpRight className="w-3 h-3 shrink-0" />
+                    ) : (
+                      <ArrowDownRight className="w-3 h-3 shrink-0" />
+                    )}
+                    <span className="truncate">
+                      {isPositive ? '+' : ''}{item.changeVal !== undefined ? item.changeVal.toFixed(2) : '0.00'}
+                      &nbsp;
+                      {isPositive ? '+' : ''}{item.changePct.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
 
- {/* Empty placeholder containers */}
- {placeholders.map((_, i) => (
- <div key={`placeholder-${i}`} className="h-full bg-stone-50/10 hover:bg-stone-50/20 transition-colors" />
- ))}
+            {/* Empty placeholder containers */}
+            {placeholders.map((_, i) => (
+              <div key={`placeholder-${i}`} className="h-full bg-transparent hover:bg-card-hover transition-colors" />
+            ))}
 
- </div>
- </div>
+          </div>
+        </div>
 
- {/* Theme Toggle at the far right */}
- <div className="px-4 shrink-0 h-full flex items-center justify-center relative z-20">
- <ThemeToggle />
- </div>
- </div>
- </div>
- );
+        {/* Theme Toggle at the far right */}
+        <div className="px-4 shrink-0 h-full flex items-center justify-center relative z-20">
+          <ThemeToggle />
+        </div>
+      </div>
+    </div>
+  );
 }
