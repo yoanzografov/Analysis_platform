@@ -89,13 +89,13 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  <BarChart data={undervaluedStocks} margin={{ top: 10, right: 10, left: -30, bottom: 5 }}>
  <XAxis
  dataKey="ticker"
- stroke="#ffffff"
+ stroke="var(--color-ink-muted)"
  fontSize={10}
  tickLine={true}
  fontFamily="monospace"
  />
  <YAxis
- stroke="#ffffff"
+ stroke="var(--color-ink-muted)"
  fontSize={10}
  tickLine={true}
  axisLine={true}
@@ -103,12 +103,12 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  unit="%"
  />
  <Tooltip
- cursor={{ fill: 'rgba(20, 20, 20, 0.05)' }}
+ cursor={{ fill: 'rgba(128, 128, 128, 0.1)' }}
  content={({ active, payload }) => {
  if (active && payload && payload.length) {
  const data = payload[0].payload;
  return (
- <div className="bg-bg rounded-2xl border border-border rounded-none px-3 py-2 text-xs font-mono text-ink">
+ <div className="bg-bg border border-border px-3 py-2 text-xs font-mono text-ink shadow-md">
  <p className="font-extrabold mb-1 tracking-wider">{data.ticker}</p>
  <p className="text-[#10b981]">Справедлива: ${data.fairPrice}</p>
  <p className="text-ink-faint">Текуща цена: ${data.currentPrice}</p>
@@ -119,7 +119,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  return null;
  }}
  />
- <Bar dataKey="difference" fill="#ffffff" radius={0} />
+ <Bar dataKey="difference" fill="var(--color-ink)" radius={0} />
  </BarChart>
  </ResponsiveContainer>
  )}
