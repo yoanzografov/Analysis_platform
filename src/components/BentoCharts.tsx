@@ -64,7 +64,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  return (
  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-5">
  {/* 1. Best Deals Bar Chart */}
- <div className="bg-bg rounded-2xl rounded-none border border-border p-4 lg:col-span-2">
+ <div className="bg-bg rounded-2xl border border-border p-4 lg:col-span-2">
  <div className="flex items-center justify-between mb-3">
  <div>
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
@@ -127,7 +127,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  </div>
 
  {/* 2. Signals Pie Chart */}
- <div className="bg-bg rounded-2xl rounded-none border border-border p-4 flex flex-col justify-between lg:col-span-1">
+ <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between lg:col-span-1">
  <div>
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
  Signal Weight Allocation
@@ -162,37 +162,37 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  </div>
 
  <div className="grid grid-cols-3 gap-1 mt-1 font-mono">
- <button
- onClick={() => handleFilterToggle('signal', 'buy')}
- className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
- activeFilter.type === 'signal' && activeFilter.value === 'buy'
- ? 'bg-emerald-50 border-emerald-800 ring-2 ring-emerald-800'
- : 'bg-bg rounded-2xl border-border/30 hover:bg-emerald-50/40 hover:border-emerald-650'
- }`}
+        <button
+          onClick={() => handleFilterToggle('signal', 'buy')}
+          className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
+            activeFilter.type === 'signal' && activeFilter.value === 'buy'
+              ? 'bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/50'
+              : 'bg-bg border-border/30 hover:bg-emerald-500/10 hover:border-emerald-500/50'
+          }`}
  title="Филтрирай компании по Сигнал КУПУВАЙ"
  >
  <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">КУПУВАЙ</div>
  <div className="text-xs font-extrabold text-[#10b981]">{signalBuyCount}</div>
  </button>
- <button
- onClick={() => handleFilterToggle('signal', 'sell')}
- className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
- activeFilter.type === 'signal' && activeFilter.value === 'sell'
- ? 'bg-red-50 border-red-800 ring-2 ring-red-800'
- : 'bg-bg rounded-2xl border-border/30 hover:bg-red-50/40 hover:border-red-650'
- }`}
+        <button
+          onClick={() => handleFilterToggle('signal', 'sell')}
+          className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
+            activeFilter.type === 'signal' && activeFilter.value === 'sell'
+              ? 'bg-rose-500/20 border-rose-500 ring-2 ring-rose-500/50'
+              : 'bg-bg border-border/30 hover:bg-rose-500/10 hover:border-rose-500/50'
+          }`}
  title="Филтрирай компании по Сигнал ПРОДАВАЙ"
  >
  <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ПРОДАВАЙ</div>
  <div className="text-xs font-extrabold text-[#f43f5e]">{signalSellCount}</div>
  </button>
- <button
- onClick={() => handleFilterToggle('signal', 'hold')}
- className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
- activeFilter.type === 'signal' && activeFilter.value === 'hold'
- ? 'bg-amber-50 border-amber-500/50 ring-2 ring-amber-800'
- : 'bg-bg rounded-2xl border-border/30 hover:bg-amber-50/40 hover:border-amber-650'
- }`}
+        <button
+          onClick={() => handleFilterToggle('signal', 'hold')}
+          className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
+            activeFilter.type === 'signal' && activeFilter.value === 'hold'
+              ? 'bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/50'
+              : 'bg-bg border-border/30 hover:bg-amber-500/10 hover:border-amber-500/50'
+          }`}
  title="Филтрирай компании по Сигнал ИЗЧАКАЙ"
  >
  <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ИЗЧАКАЙ</div>
@@ -202,7 +202,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  </div>
 
  {/* 3. BUY / SELL Ratio Pie Chart */}
- <div className="bg-bg rounded-2xl rounded-none border border-border p-4 flex flex-col justify-between lg:col-span-1">
+ <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between lg:col-span-1">
  <div>
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
  BUY / SELL Weight Allocation
@@ -237,37 +237,37 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  </div>
 
  <div className="grid grid-cols-3 gap-1 mt-1 font-mono">
- <button
- onClick={() => handleFilterToggle('buySell', 'BUY')}
- className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
- activeFilter.type === 'buySell' && activeFilter.value === 'BUY'
- ? 'bg-emerald-50 border-emerald-800 ring-2 ring-emerald-800'
- : 'bg-bg rounded-2xl border-border/30 hover:bg-emerald-50/40 hover:border-emerald-650'
- }`}
+        <button
+          onClick={() => handleFilterToggle('buySell', 'BUY')}
+          className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
+            activeFilter.type === 'buySell' && activeFilter.value === 'BUY'
+              ? 'bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/50'
+              : 'bg-bg border-border/30 hover:bg-emerald-500/10 hover:border-emerald-500/50'
+          }`}
  title="Филтрирай компании по BUY"
  >
  <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">BUY</div>
  <div className="text-xs font-extrabold text-[#10b981]">{bsBuyCount}</div>
  </button>
- <button
- onClick={() => handleFilterToggle('buySell', 'SELL')}
- className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
- activeFilter.type === 'buySell' && activeFilter.value === 'SELL'
- ? 'bg-red-50 border-red-800 ring-2 ring-red-800'
- : 'bg-bg rounded-2xl border-border/30 hover:bg-red-50/40 hover:border-red-650'
- }`}
+        <button
+          onClick={() => handleFilterToggle('buySell', 'SELL')}
+          className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
+            activeFilter.type === 'buySell' && activeFilter.value === 'SELL'
+              ? 'bg-rose-500/20 border-rose-500 ring-2 ring-rose-500/50'
+              : 'bg-bg border-border/30 hover:bg-rose-500/10 hover:border-rose-500/50'
+          }`}
  title="Филтрирай компании по SELL"
  >
  <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">SELL</div>
  <div className="text-xs font-extrabold text-[#f43f5e]">{bsSellCount}</div>
  </button>
- <button
- onClick={() => handleFilterToggle('buySell', 'ДРУГИ')}
- className={`rounded-none py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
- activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ'
- ? 'bg-white/10 border-gray-600 ring-2 ring-gray-600'
- : 'bg-bg rounded-2xl border-border/30 hover:bg-gray-50/40 hover:border-gray-600'
- }`}
+        <button
+          onClick={() => handleFilterToggle('buySell', 'ДРУГИ')}
+          className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
+            activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ'
+              ? 'bg-slate-500/20 border-slate-500 ring-2 ring-slate-500/50'
+              : 'bg-bg border-border/30 hover:bg-slate-500/10 hover:border-slate-500/50'
+          }`}
  title="Филтрирай компании по ДРУГИ"
  >
  <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ДРУГИ</div>

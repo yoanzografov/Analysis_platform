@@ -177,19 +177,12 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  }
  };
 
- const handleSaveClick = (ticker: string) => {
- const original = stocks.find(s => s.ticker === ticker);
- if (!original) return;
+  const handleSaveClick = (ticker: string) => {
+    const original = stocks.find(s => s.ticker === ticker);
+    if (!original) return;
 
- const cleanFair = editFair === '' ? null : parseFloat(editFair.replace(',', '.'));
- 
- // Show visual inline confirmation if Fair Price was actually modified
- if (original.fairPrice !== cleanFair) {
- setShowConfirmFair(ticker);
- } else {
- executeSave(ticker, false);
- }
- };
+    executeSave(ticker, true);
+  };
 
  const executeSave = (ticker: string, confirmUpdate: boolean) => {
  const original = stocks.find(s => s.ticker === ticker);
@@ -390,7 +383,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  }
 
  if (activeFilter.type === 'ticker') {
- return stock.ticker.toLowerCase() === activeFilter.value.toLowerCase();
+ return (stock.ticker || '').toLowerCase() === (activeFilter.value || '').toLowerCase();
  }
 
  return true;
@@ -937,28 +930,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  {/* 20. AI ANALIS */}
  <td className="py-3 px-4 text-center">
  {isEditing ? (
- showConfirmFair === stock.ticker ? (
- <div className="flex flex-col items-center gap-1 bg-amber-50 border border-amber-200 p-1.5 rounded-md z-10 shrink-0 min-w-[130px]">
- <span className="text-[9px] font-bold text-amber-800 uppercase tracking-tight block text-center leading-none">
- Актуализиране на Fair Price?
- </span>
- <div className="flex items-center gap-1.5 justify-center mt-1">
- <button
- onClick={() => executeSave(stock.ticker, true)}
- className="px-2 py-0.5 text-[9px] font-bold bg-amber-600 hover:bg-amber-700 text-ink rounded-md border border-amber-750 cursor-pointer"
- >
- Да
- </button>
- <button
- onClick={() => executeSave(stock.ticker, false)}
- className="px-2 py-0.5 text-[9px] font-bold 0 hover:bg-stone-600 text-ink rounded-md border border-stone-600 cursor-pointer"
- >
- Не
- </button>
- </div>
- </div>
- ) : (
- <div className="flex items-center justify-center gap-1 shrink-0">
+  <div className="flex items-center justify-center gap-1 shrink-0">
  <button
  onClick={() => handleSaveClick(stock.ticker)}
  className="p-1 rounded-md bg-emerald-700 text-ink hover:bg-[#10b981] duration-100 border border-emerald-800 cursor-pointer"
@@ -974,7 +946,6 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <X className="w-3 h-3" />
  </button>
  </div>
- )
  ) : (
  <div className="flex items-center justify-center gap-1.5 shrink-0">
  <button

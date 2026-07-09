@@ -9,6 +9,7 @@ import PriceAlertPlanner from './components/PriceAlertPlanner';
 import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
+import ThemeToggle from './components/ThemeToggle';
 import { 
  Building2, 
  Download, 
@@ -40,6 +41,9 @@ export default function App() {
  // Primary datasets
  const [stocks, setStocks] = useState<Stock[]>([]);
  const [indices, setIndices] = useState<MarketIndex[]>([]);
+ const [isLoaded, setIsLoaded] = useState(false);
+ const [showNewUserModal, setShowNewUserModal] = useState(false);
+ const [confirmRestore, setConfirmRestore] = useState(false);
  
  // Real-time Simulation & Tick Engine
  const [isSimulating, setIsSimulating] = useState(false);
@@ -173,14 +177,7 @@ export default function App() {
  }
  } catch (err: any) {
  console.error(err);
- const newLog: NotificationLog = {
- id: `${Date.now()}-${Math.random()}`,
- timestamp: new Date().toLocaleTimeString(),
- ticker: 'ERR',
- message: `Интерпретаторът на Yahoo Finance е в почивка. Връзката ще бъде подновена автоматично след малко.`,
- type: 'info'
- };
- setLogs(prev => [newLog, ...prev]);
+ // Suppress UI error logging since we lack a backend
  } finally {
  setIsFetchingLivePrices(false);
  }
@@ -203,7 +200,7 @@ export default function App() {
  console.error("Грешка при четене на stocks от localStorage", e);
  }
  }
- if (initialStocks.length === 0) {
+ if (savedStocks === null) {
  const { stocks: parsedStocks } = parseCSVData(RAW_SPREADSHEET_CSV);
  initialStocks = parsedStocks;
  }
@@ -215,7 +212,7 @@ export default function App() {
  console.error("Грешка при четене на indices от localStorage", e);
  }
  }
- if (initialIndices.length === 0) {
+ if (savedIndices === null) {
  const { indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
  initialIndices = parsedIndices;
  }
@@ -227,7 +224,7 @@ export default function App() {
  console.error("Грешка при четене на alerts от localStorage", e);
  }
  }
- if (initialAlerts.length === 0) {
+ if (savedAlerts === null) {
  initialAlerts = [
  { id: '1', ticker: 'AAPL', criteria: 'ABOVE', targetPrice: 300, isActive: true, createdAt: new Date().toISOString() },
  { id: '2', ticker: 'TSLA', criteria: 'BELOW', targetPrice: 380, isActive: true, createdAt: new Date().toISOString() },
@@ -238,6 +235,7 @@ export default function App() {
  setStocks(initialStocks);
  setIndices(initialIndices);
  setAlerts(initialAlerts);
+ setIsLoaded(true);
 
  setLogs([
  { id: '1', timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Системата за следене на акции е стартирана успешно.', type: 'info' },
@@ -251,20 +249,22 @@ export default function App() {
 
  // Persistence save hooks
  useEffect(() => {
- if (stocks.length > 0) {
+ if (isLoaded) {
  safeLocalStorage.setItem('bulgarian_stock_tracker_stocks', JSON.stringify(stocks));
  }
- }, [stocks]);
+ }, [stocks, isLoaded]);
 
  useEffect(() => {
- if (indices.length > 0) {
+ if (isLoaded) {
  safeLocalStorage.setItem('bulgarian_stock_tracker_indices', JSON.stringify(indices));
  }
- }, [indices]);
+ }, [indices, isLoaded]);
 
  useEffect(() => {
+ if (isLoaded) {
  safeLocalStorage.setItem('bulgarian_stock_tracker_alerts', JSON.stringify(alerts));
- }, [alerts]);
+ }
+ }, [alerts, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
@@ -341,6 +341,55 @@ export default function App() {
  };
  setLogs(prev => [newLog, ...prev]);
  };
+
+  const handleNewUser = () => {
+    setStocks([]);
+    setIndices([]);
+    setAlerts([]);
+    
+    const newLog: NotificationLog = {
+      id: `${Date.now()}-${Math.random()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      ticker: 'SYS',
+      message: 'Всички данни бяха изтрити. Успешен старт за нов потребител.',
+      type: 'info'
+    };
+    setLogs(prev => [newLog, ...prev]);
+    setActiveAlertToast('Данните бяха изчистени успешно!');
+    setTimeout(() => setActiveAlertToast(null), 4000);
+    setShowNewUserModal(false);
+  };
+
+  const handleRestoreDefaults = () => {
+    if (!confirmRestore) {
+      setConfirmRestore(true);
+      setTimeout(() => setConfirmRestore(false), 3000);
+      return;
+    }
+    
+    const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+    setStocks(parsedStocks);
+    setIndices(parsedIndices);
+    
+    const newAlerts: PriceAlert[] = [
+      { id: '1', ticker: 'AAPL', criteria: 'ABOVE', targetPrice: 300, isActive: true, createdAt: new Date().toISOString() },
+      { id: '2', ticker: 'TSLA', criteria: 'BELOW', targetPrice: 380, isActive: true, createdAt: new Date().toISOString() },
+      { id: '3', ticker: 'NVDA', criteria: 'ABOVE', targetPrice: 215, isActive: true, createdAt: new Date().toISOString() },
+    ];
+    setAlerts(newAlerts);
+
+    const newLog: NotificationLog = {
+      id: `${Date.now()}-${Math.random()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      ticker: 'SYS',
+      message: 'Фабричните данни бяха възстановени успешно.',
+      type: 'success'
+    };
+    setLogs(prev => [newLog, ...prev]);
+    setActiveAlertToast('Фабричните данни бяха възстановени!');
+    setTimeout(() => setActiveAlertToast(null), 4000);
+    setConfirmRestore(false);
+  };
 
  // Force trigger live real-time price synchronization
  const triggerManualRefresh = () => {
@@ -529,14 +578,42 @@ export default function App() {
  return (
  <div className="min-h-screen bg-bg text-ink flex flex-col pb-12 antialiased">
  {/* Dynamic indices banner strip */}
- <IndicesStrip indices={indices} isSimulating={isSimulating} />
+ <IndicesStrip indices={indices} isSimulating={isSimulating} onNewUserClick={() => setShowNewUserModal(true)} />
 
  {/* Main Container */}
  <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5 flex-1 space-y-5">
  
+  {/* New User Confirmation Modal */}
+  {showNewUserModal && (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-bg border border-red-500/50 rounded-2xl shadow-2xl p-6 max-w-md w-full">
+        <h2 className="text-lg font-mono font-extrabold text-red-500 uppercase tracking-tight mb-2">
+          Изчистване на всички данни?
+        </h2>
+        <p className="text-sm font-sans text-ink-muted mb-6">
+          Сигурни ли сте, че искате да изтриете всички ваши акции, графики и известия? Това ще нулира платформата за <strong>нов потребител</strong>. Действието е <strong>необратимо</strong>.
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setShowNewUserModal(false)}
+            className="px-4 py-2 text-xs font-mono font-extrabold text-ink-faint border border-border hover:bg-card-hover transition-colors uppercase"
+          >
+            Отказ
+          </button>
+          <button
+            onClick={handleNewUser}
+            className="px-4 py-2 text-xs font-mono font-extrabold text-white bg-red-600 hover:bg-red-700 border border-red-700 transition-colors uppercase shadow-lg shadow-red-900/20"
+          >
+            Изчисти данните
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
  {/* Floating live alerts toast banner */}
  {activeAlertToast && (
- <div className="fixed top-14 right-4 z-40 bg-amber-500/10 border border-amber-500/50 text-amber-400 rounded-none shadow-md p-3 max-w-sm flex items-start gap-2.5 font-mono text-xs">
+ <div className="fixed top-14 right-4 z-40 bg-amber-500/10 border border-amber-500/50 text-amber-400 rounded-2xl shadow-md p-3 max-w-sm flex items-start gap-2.5 font-mono text-xs">
  <Bell className="w-4 h-4 text-amber-800 shrink-0 mt-0.5" />
  <div>
  <span className="font-extrabold underline block mb-0.5 uppercase tracking-wide">СИГНАЛ ЗА ЦЕНА</span>
@@ -545,84 +622,103 @@ export default function App() {
  </div>
  )}
 
- {/* Dashboard Header Bar */}
- <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
- <div>
-  <div className="flex items-center gap-2">
-    <Building2 className="w-5 h-5 text-ink" />
-    <h1 className="text-2xl font-bold font-extrabold text-ink font-mono tracking-tight uppercase">
-      ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
-    </h1>
+  {/* Dashboard Header Bar */}
+  <div className="flex items-center gap-6 overflow-x-auto border-b border-border pb-5 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+      <div className="flex items-center gap-2 shrink-0">
+        <Building2 className="w-5 h-5 text-ink" />
+        <h1 className="text-xl sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase whitespace-nowrap">
+          ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
+        </h1>
+        <div className="md:hidden ml-2">
+          <ThemeToggle />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+  {/* Auto live updates toggler */}
+  <button
+  onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
+  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  isAutoLiveRefresh 
+  ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
+  : 'bg-bg text-ink-faint border-gray-350 hover:bg-gray-50 hover:text-ink-muted'
+  }`}
+  title="Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди"
+  >
+  <span className={`w-1.5 h-1.5 rounded-full ${isAutoLiveRefresh ? 'bg-green-400 animate-ping' : 'bg-gray-400'}`} />
+  Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}
+  </button>
+
+  {/* Simulation Engine Activator */}
+  <button
+  onClick={() => {
+  setIsSimulating(!isSimulating);
+  if (!isSimulating) {
+  setIsAutoLiveRefresh(false); // turn off live refresh if user manually wants simulation ticks
+  }
+  }}
+  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  isSimulating 
+  ? 'bg-red-700 text-ink border-red-850 hover:bg-red-800 font-extrabold' 
+  : 'bg-bg text-ink border-border hover:bg-white/10 hover:text-ink'
+  }`}
+  title="Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити"
+  >
+  {isSimulating ? (
+  <>
+  <Square className="w-3 h-3 fill-current" />
+  СПРИ СИМУЛАТОР
+  </>
+  ) : (
+  <>
+  <Play className="w-3 h-3 fill-current" />
+  СТАРТИРАЙ СИМУЛАТОР
+  </>
+  )}
+  </button>
+
+  {/* Quick real live market quotes sync */}
+  <button
+  onClick={triggerManualRefresh}
+  disabled={isFetchingLivePrices}
+  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+  isFetchingLivePrices
+  ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
+  : 'bg-bg text-ink border-black hover:bg-white/20'
+  }`}
+  title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
+  >
+  <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-[#10b981]' : ''}`} />
+  {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
+  </button>
+
+  {/* Export data back as sheet formatted CSV */}
+  <button
+  onClick={exportCSVFile}
+  className="text-[10px] sm:text-xs font-mono font-extrabold bg-bg text-ink hover:bg-white/10 hover:text-ink border border-border px-3 py-1.5 rounded-xl flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0"
+  >
+  <Download className="w-3 h-3" />
+  Експорт CSV
+  </button>
+  
+  {/* Data Management Buttons */}
+  <div className="flex items-center gap-1.5 ml-2 border-l border-border pl-3 shrink-0">
+    <button
+    onClick={handleRestoreDefaults}
+    className="text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-xl border border-stone-300 bg-stone-100 text-stone-700 hover:bg-stone-200 uppercase transition-all cursor-pointer whitespace-nowrap"
+    title="Върнете началните фабрични данни (Презаписва таблицата)"
+    >
+    Фабрични данни
+    </button>
+    <button
+    onClick={handleNewUser}
+    className="text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-xl border border-[#f43f5e]/50 bg-[#f43f5e]/10 text-[#f43f5e] hover:bg-[#f43f5e]/20 uppercase transition-all cursor-pointer whitespace-nowrap"
+    title="Изтрийте всичко и започнете начисто (Нов потребител)"
+    >
+    Нов потребител (Изчисти)
+    </button>
   </div>
- </div>
-
- <div className="flex flex-wrap items-center gap-1.5">
- {/* Auto live updates toggler */}
- <button
- onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
- className={`text-xs font-mono font-extrabold px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all border cursor-pointer ${
- isAutoLiveRefresh 
- ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
- : 'bg-bg rounded-2xl text-ink-faint border-gray-350 hover:bg-gray-50 hover:text-ink-muted'
- }`}
- title="Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди"
- >
- <span className={`w-1.5 h-1.5 rounded-full ${isAutoLiveRefresh ? 'bg-green-400 animate-ping' : 'bg-gray-400'}`} />
- Живи Данни (Yahoo): {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}
- </button>
-
- {/* Simulation Engine Activator */}
- <button
- onClick={() => {
- setIsSimulating(!isSimulating);
- if (!isSimulating) {
- setIsAutoLiveRefresh(false); // turn off live refresh if user manually wants simulation ticks
- }
- }}
- className={`text-xs font-mono font-extrabold px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all border cursor-pointer ${
- isSimulating 
- ? 'bg-red-700 text-ink border-red-850 hover:bg-red-800 font-extrabold' 
- : 'bg-bg rounded-2xl text-ink border-border hover:bg-white/10 hover:text-ink'
- }`}
- title="Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити"
- >
- {isSimulating ? (
- <>
- <Square className="w-3 h-3 fill-current" />
- СПРИ СИМУЛАТОР
- </>
- ) : (
- <>
- <Play className="w-3 h-3 fill-current" />
- СТАРТИРАЙ СИМУЛАТОР
- </>
- )}
- </button>
-
- {/* Quick real live market quotes sync */}
- <button
- onClick={triggerManualRefresh}
- disabled={isFetchingLivePrices}
- className={`text-xs font-mono font-extrabold px-3 py-1.5 rounded-none border flex items-center gap-1.5 uppercase transition-all cursor-pointer ${
- isFetchingLivePrices
- ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
- : 'bg-bg text-ink border-black hover:bg-white/20'
- }`}
- title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
- >
- <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-[#10b981]' : ''}`} />
- {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
- </button>
-
- {/* Export data back as sheet formatted CSV */}
- <button
- onClick={exportCSVFile}
- className="text-xs font-mono font-extrabold bg-bg rounded-2xl text-ink hover:bg-white/10 hover:text-ink border border-border px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
- >
- <Download className="w-3 h-3" />
- Експорт CSV
- </button>
- </div>
+  </div>
  </div>
 
  {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
@@ -698,7 +794,7 @@ export default function App() {
  </div>
 
  {/* Real-time alert feed logs */}
- <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between rounded-none shadow-xs">
+ <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between rounded-xl shadow-xs">
  <div>
  <h3 className="text-xs uppercase font-extrabold text-ink font-mono flex items-center gap-1.5">
  <Bell className="w-3.5 h-3.5 text-amber-800" />
@@ -713,7 +809,7 @@ export default function App() {
  {logs.map(log => (
  <div 
  key={log.id} 
- className={`p-1.5 rounded-none border text-xs leading-relaxed flex items-start gap-1.5 ${
+ className={`p-1.5 rounded-xl border text-xs leading-relaxed flex items-start gap-1.5 ${
  log.type === 'alert' 
  ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
  : log.type === 'success'

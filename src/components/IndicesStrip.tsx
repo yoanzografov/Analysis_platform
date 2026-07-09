@@ -6,9 +6,10 @@ import ThemeToggle from './ThemeToggle';
 interface Props {
  indices: MarketIndex[];
  isSimulating: boolean;
+ onNewUserClick?: () => void;
 }
 
-export default function IndicesStrip({ indices, isSimulating }: Props) {
+export default function IndicesStrip({ indices, isSimulating, onNewUserClick }: Props) {
  const [selectedCategory, setSelectedCategory] = useState<string>('US Markets');
  const [isOpen, setIsOpen] = useState(false);
  const dropdownRef = useRef<HTMLDivElement>(null);
@@ -77,7 +78,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
         
         {/* Category Dropdown Selector */}
         <div ref={dropdownRef} className="w-[230px] shrink-0 h-full px-4 flex flex-col justify-center relative z-20">
-          <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-indigo-500 mb-0.5 select-none">
+          <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block mb-0.5 select-none">
             Index Markets
           </span>
           <button
@@ -86,7 +87,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
           >
             <div className="flex items-center gap-1.5">
               <Globe className="w-3.5 h-3.5 text-ink-muted group-hover:text-indigo-500" />
-              <span className="text-ink font-sans font-extrabold text-[12px] leading-tight tracking-tight group-hover:text-indigo-500">
+              <span className="text-sm font-sans font-extrabold text-ink leading-tight tracking-tight group-hover:text-indigo-500">
                 {selectedCategory}
               </span>
             </div>
@@ -95,7 +96,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
 
           {/* Floating Dropdown */}
           {isOpen && (
-            <div className="absolute left-0 top-[100%] mt-px w-full bg-card rounded-2xl border border-border shadow-lg py-1 flex flex-col divide-y divide-border">
+            <div className="absolute left-0 top-[100%] mt-2 w-full bg-card rounded-xl border border-border shadow-xl py-1.5 flex flex-col z-50">
               {CATEGORIES.map(cat => (
                 <button
                   key={cat}
@@ -103,10 +104,10 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
                     setSelectedCategory(cat);
                     setIsOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-xs font-sans font-bold transition-all ${
+                  className={`w-full text-left px-4 py-2 text-xs font-sans font-bold transition-all mx-1 w-[calc(100%-8px)] rounded-md ${
                     selectedCategory === cat
-                      ? 'bg-card-hover text-indigo-500'
-                      : 'text-ink hover:bg-card-hover hover:text-indigo-500'
+                      ? 'bg-indigo-500/10 text-indigo-500'
+                      : 'text-ink-muted hover:bg-card-hover hover:text-ink'
                   }`}
                 >
                   {cat}
@@ -170,8 +171,16 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
           </div>
         </div>
 
-        {/* Theme Toggle at the far right */}
-        <div className="px-4 shrink-0 h-full flex items-center justify-center relative z-20">
+        {/* Tools at the far right (Hidden on mobile) */}
+        <div className="hidden md:flex px-4 shrink-0 h-full items-center gap-3 relative z-20 border-l border-border">
+          {onNewUserClick && (
+            <button
+              onClick={onNewUserClick}
+              className="text-[10px] font-mono font-bold text-red-500 hover:text-red-600 uppercase tracking-tight"
+            >
+              Нов потребител
+            </button>
+          )}
           <ThemeToggle />
         </div>
       </div>

@@ -71,45 +71,44 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  console.log("Backend proxy fetch failed, trying direct public API:", e);
  }
 
- // 2. Fallback to direct public feargreedchart API (useful for static pages like GitHub Pages)
- if (!dataLoaded) {
- try {
- const publicRes = await fetch('https://feargreedchart.com/api/', {
- mode: 'cors'
- });
- if (publicRes.ok) {
- const publicData = await publicRes.json();
- const recent = publicData?.recent || [];
- const len = recent.length;
- if (len > 0) {
- const score = Math.round(recent[len - 1].score);
- 
- const previous_close = len >= 2 ? Math.round(recent[len - 2].score) : null;
- const one_week_ago = len >= 6 ? Math.round(recent[len - 6].score) : null;
- const one_month_ago = len >= 22 ? Math.round(recent[len - 22].score) : null;
- const one_year_ago = len >= 253 ? Math.round(recent[len - 253].score) : null;
+  // 2. Fallback to direct public CNN API via CORS proxy (useful for static pages or dev mode)
+  if (!dataLoaded) {
+    try {
+      const publicRes = await fetch('https://api.allorigins.win/raw?url=https%3A%2F%2Fproduction.dataviz.cnn.io%2Findex%2Ffearandgreed%2Fgraphdata');
+      if (publicRes.ok) {
+        const data = await publicRes.json();
+        const fnG = data?.fear_and_greed;
+        if (fnG && fnG.score !== undefined) {
+          const score = Math.round(fnG.score);
+          const rating = fnG.rating || getRatingForScore(score);
+          const timestamp = fnG.timestamp || new Date().toISOString();
+          
+          const previous_close = fnG.previous_close !== undefined ? Math.round(fnG.previous_close) : null;
+          const one_week_ago = fnG.previous_1_week !== undefined ? Math.round(fnG.previous_1_week) : null;
+          const one_month_ago = fnG.previous_1_month !== undefined ? Math.round(fnG.previous_1_month) : null;
+          const one_year_ago = fnG.previous_1_year !== undefined ? Math.round(fnG.previous_1_year) : null;
 
- setFngData({
- score,
- rating: getRatingForScore(score),
- timestamp: new Date().toISOString(),
- previous_close,
- previous_close_rating: previous_close !== null ? getRatingForScore(previous_close) : null,
- one_week_ago,
- one_week_ago_rating: one_week_ago !== null ? getRatingForScore(one_week_ago) : null,
- one_month_ago,
- one_month_ago_rating: one_month_ago !== null ? getRatingForScore(one_month_ago) : null,
- one_year_ago,
- one_year_ago_rating: one_year_ago !== null ? getRatingForScore(one_year_ago) : null,
- isFallback: false
- });
- dataLoaded = true;
- }
- }
- } catch (e) {
- console.log("Direct public Fear & Greed fetch failed too:", e);
- }
- }
+          setFngData({
+            score,
+            rating,
+            timestamp,
+            previous_close,
+            previous_close_rating: fnG.previous_close_rating || (previous_close !== null ? getRatingForScore(previous_close) : null),
+            one_week_ago,
+            one_week_ago_rating: fnG.one_week_ago_rating || (one_week_ago !== null ? getRatingForScore(one_week_ago) : null),
+            one_month_ago,
+            one_month_ago_rating: fnG.one_month_ago_rating || (one_month_ago !== null ? getRatingForScore(one_month_ago) : null),
+            one_year_ago,
+            one_year_ago_rating: fnG.one_year_ago_rating || (one_year_ago !== null ? getRatingForScore(one_year_ago) : null),
+            isFallback: false
+          });
+          dataLoaded = true;
+        }
+      }
+    } catch (e) {
+      console.log("Direct public Fear & Greed fetch via proxy failed too:", e);
+    }
+  }
 
  if (!dataLoaded) {
  throw new Error('Неуспешно извличане на данни от всички източници');
@@ -437,198 +436,86 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  </button>
  </div>
 
- {loading ? (
- <div className="py-12 flex flex-col items-center justify-center space-y-2 flex-1">
- <RefreshCw className="w-6 h-6 text-ink animate-spin" />
- <span className="text-xs font-mono text-ink-faint uppercase">Зареждане на реално време от CNN...</span>
- </div>
- ) : (() => {
- const getPoint = (r: number, s: number) => {
- const phi = s * 1.8; // degrees from 0 to 180
- const rad = (phi * Math.PI) / 180;
- const x = 100 - r * Math.cos(rad);
- const y = 92 - r * Math.sin(rad); // center y is 92
- return { x, y };
- };
+        {loading ? (
+          <div className="py-12 flex flex-col items-center justify-center space-y-2 flex-1">
+            <RefreshCw className="w-6 h-6 text-ink animate-spin" />
+            <span className="text-xs font-mono text-ink-faint uppercase">Зареждане на реално време от CNN...</span>
+          </div>
+        ) : (
+          <div className="flex flex-col flex-1 justify-between pt-2">
+            <div className="flex flex-col gap-4 flex-1 justify-center">
+              {/* Metric Cards (Streamlit Columns equivalent) */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-1 bg-card-hover p-2 rounded-lg border border-border/50 text-center flex flex-col justify-center">
+                  <span className="text-[10px] text-ink-faint uppercase font-bold mb-1 tracking-tight">Състояние</span>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span className="text-sm font-sans" style={{ color: currentInfo.colorHex }}>{currentInfo.label}</span>
+                  </div>
+                </div>
+                <div className="col-span-2 bg-card-hover p-2 rounded-lg border border-border/50 text-center flex flex-col justify-center">
+                  <span className="text-[10px] text-ink-faint uppercase font-bold mb-1 tracking-tight">Текущ Индекс (0-100)</span>
+                  <span className="text-xl font-mono font-black" style={{ color: currentInfo.colorHex }}>{currentScore} <span className="text-ink-faint text-xs font-normal">/ 100</span></span>
+                </div>
+              </div>
 
- const getSegmentPath = (s1: number, s2: number, ri: number, ro: number) => {
- const p_o1 = getPoint(ro, s1);
- const p_o2 = getPoint(ro, s2);
- const p_i2 = getPoint(ri, s2);
- const p_i1 = getPoint(ri, s1);
- return `M ${p_o1.x.toFixed(2)} ${p_o1.y.toFixed(2)} A ${ro} ${ro} 0 0 1 ${p_o2.x.toFixed(2)} ${p_o2.y.toFixed(2)} L ${p_i2.x.toFixed(2)} ${p_i2.y.toFixed(2)} A ${ri} ${ri} 0 0 0 ${p_i1.x.toFixed(2)} ${p_i1.y.toFixed(2)} Z`;
- };
+              {/* Progress Bar (Streamlit style) */}
+              <div className="w-full bg-border/30 rounded-md h-3.5 overflow-hidden relative shadow-inner">
+                <div 
+                  className="h-full rounded-md transition-all duration-700 ease-out" 
+                  style={{ width: `${currentScore}%`, backgroundColor: currentInfo.colorHex }}
+                />
+              </div>
 
- const getSegmentState = (segIndex: number) => {
- const score = currentScore;
- let isActive = false;
- if (segIndex === 0 && score >= 0 && score <= 20) isActive = true;
- else if (segIndex === 1 && score > 20 && score <= 40) isActive = true;
- else if (segIndex === 2 && score > 40 && score <= 60) isActive = true;
- else if (segIndex === 3 && score > 60 && score <= 80) isActive = true;
- else if (segIndex === 4 && score > 80 && score <= 100) isActive = true;
+              {/* Historical Trend Table (Streamlit Table equivalent) */}
+              <div className="w-full">
+                <span className="text-[10px] font-sans font-extrabold uppercase tracking-widest text-ink-muted block mb-2">Исторически стойности</span>
+                <table className="w-full text-[10px] font-mono text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border/50 text-ink-faint">
+                      <th className="py-1.5 font-normal uppercase">Период</th>
+                      <th className="py-1.5 font-normal uppercase text-center">Индекс</th>
+                      <th className="py-1.5 font-normal uppercase text-right">Състояние</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/20">
+                    <tr className="hover:bg-card-hover transition-colors">
+                      <td className="py-1.5 text-ink0 font-bold">Сега</td>
+                      <td className="py-1.5 text-center font-extrabold" style={{ color: currentInfo.colorHex }}>{currentScore}</td>
+                      <td className="py-1.5 text-right font-sans" style={{ color: currentInfo.colorHex }}>{currentInfo.label}</td>
+                    </tr>
+                    <tr className="hover:bg-card-hover transition-colors">
+                      <td className="py-1.5 text-ink0 font-bold">Вчера</td>
+                      <td className="py-1.5 text-center font-extrabold" style={{ color: getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).colorHex }}>{fngData?.previous_close ?? '—'}</td>
+                      <td className="py-1.5 text-right font-sans" style={{ color: getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).colorHex }}>{getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).label}</td>
+                    </tr>
+                    <tr className="hover:bg-card-hover transition-colors">
+                      <td className="py-1.5 text-ink0 font-bold">Преди 1 седм.</td>
+                      <td className="py-1.5 text-center font-extrabold" style={{ color: getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).colorHex }}>{fngData?.one_week_ago ?? '—'}</td>
+                      <td className="py-1.5 text-right font-sans" style={{ color: getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).colorHex }}>{getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).label}</td>
+                    </tr>
+                    <tr className="hover:bg-card-hover transition-colors">
+                      <td className="py-1.5 text-ink0 font-bold">Преди 1 месец</td>
+                      <td className="py-1.5 text-center font-extrabold" style={{ color: getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).colorHex }}>{fngData?.one_month_ago ?? '—'}</td>
+                      <td className="py-1.5 text-right font-sans" style={{ color: getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).colorHex }}>{getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).label}</td>
+                    </tr>
+                    <tr className="hover:bg-card-hover transition-colors">
+                      <td className="py-1.5 text-ink0 font-bold">Преди 1 год.</td>
+                      <td className="py-1.5 text-center font-extrabold" style={{ color: getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).colorHex }}>{fngData?.one_year_ago ?? '—'}</td>
+                      <td className="py-1.5 text-right font-sans" style={{ color: getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).colorHex }}>{getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).label}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
- if (isActive) {
- if (segIndex === 0) return { active: true, fill: '#fee2e2', stroke: '#ef4444', text: '#1c1917' }; // Extreme Fear (light red)
- if (segIndex === 1) return { active: true, fill: '#ffe5dc', stroke: '#ff5b37', text: '#1c1917' }; // Fear (peach from screenshot)
- if (segIndex === 2) return { active: true, fill: '#fef3c7', stroke: '#f59e0b', text: '#1c1917' }; // Neutral (light yellow)
- if (segIndex === 3) return { active: true, fill: '#d1fae5', stroke: '#10b981', text: '#1c1917' }; // Greed (light green)
- if (segIndex === 4) return { active: true, fill: '#dcfce7', stroke: '#22c55e', text: '#1c1917' }; // Extreme Greed (light dark-green)
- }
- return { active: false, fill: '#f8f8f8', stroke: '#e4e4e7', text: '#71717a' };
- };
-
- const needleRotation = (currentScore - 50) * 1.8;
-
- return (
- <div className="flex flex-col flex-1 justify-between h-[215px] pt-1">
- <div className="flex items-center justify-between gap-4 flex-1">
- {/* Speedometer Gauge SVG */}
- <div className="relative w-[50%] flex items-center justify-center select-none">
- <svg viewBox="0 0 200 120" className="w-full max-w-[130px] h-auto">
- <defs>
- <filter id="hubShadow" x="-20%" y="-20%" width="140%" height="140%">
- <feDropShadow dx="0" dy="1" stdDeviation="1" floodOpacity="0.1" floodColor="#000000" />
- </filter>
- </defs>
-
- {/* 5 Semicircular segments/wedges */}
- {[0, 1, 2, 3, 4].map((idx) => {
- const state = getSegmentState(idx);
- return (
- <path
- key={idx}
- d={getSegmentPath(idx * 20, (idx + 1) * 20, 65, 90)}
- fill={state.fill}
- stroke={state.stroke}
- strokeWidth={state.active ? 1.2 : 0.6}
- className="transition-all duration-300"
- />
- );
- })}
-
- {/* Inner dotted arc for scale */}
- <path
- d="M 44 92 A 56 56 0 0 1 156 92"
- fill="none"
- stroke="#cccccc"
- strokeWidth="0.8"
- strokeDasharray="0.5 3"
- strokeLinecap="round"
- />
-
- {/* Scale Numeric Ticks */}
- <text x="54" y="100" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">0</text>
- <text x="100" y="52" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">50</text>
- <text x="146" y="100" textAnchor="middle" className="text-[5.2px] font-sans font-bold fill-stone-400">100</text>
-
- {/* Sleek needle pointing to the current score */}
- <line
- x1="100"
- y1="92"
- x2="100"
- y2="36"
- stroke="#1c1917"
- strokeWidth="2.2"
- strokeLinecap="round"
- transform={`rotate(${needleRotation} 100 92)`}
- className="transition-transform duration-500 ease-out"
- />
-
- {/* Center circular hub with drop shadow */}
- <circle
- cx="100"
- cy="92"
- r="18"
- fill="#ffffff"
- filter="url(#hubShadow)"
- />
-
- {/* Score text inside the center hub */}
- <text
- x="100"
- y="98"
- textAnchor="middle"
- className="text-[15px] font-sans font-black fill-[#1c1917] tracking-tighter"
- >
- {currentScore}
- </text>
- </svg>
- </div>
-
- {/* Historical Scores List */}
- <div className="w-[50%] flex flex-col gap-1.5 font-mono text-[9px] pr-1">
- <div className="flex items-center justify-between border-b border-border/50 pb-1">
- <span className="text-ink0 font-bold tracking-tight">ПРЕД. ЗАТВОР</span>
- <div className="flex items-center gap-1 font-extrabold text-xs">
- <span style={{ color: getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).colorHex }}>
- {fngData?.previous_close ?? '—'}
- </span>
- {fngData?.previous_close_rating && (
- <span className="text-ink0 font-normal text-[8px]">
- ({getRatingInfo(fngData.previous_close_rating, fngData.previous_close).eng})
- </span>
- )}
- </div>
- </div>
-
- <div className="flex items-center justify-between border-b border-border/50 pb-1">
- <span className="text-ink0 font-bold tracking-tight">ПРЕДИ 1 СЕД.</span>
- <div className="flex items-center gap-1 font-extrabold text-xs">
- <span style={{ color: getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).colorHex }}>
- {fngData?.one_week_ago ?? '—'}
- </span>
- {fngData?.one_week_ago_rating && (
- <span className="text-ink0 font-normal text-[8px]">
- ({getRatingInfo(fngData.one_week_ago_rating, fngData.one_week_ago).eng})
- </span>
- )}
- </div>
- </div>
-
- <div className="flex items-center justify-between border-b border-border/50 pb-1">
- <span className="text-ink0 font-bold tracking-tight">ПРЕДИ 1 МЕС.</span>
- <div className="flex items-center gap-1 font-extrabold text-xs">
- <span style={{ color: getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).colorHex }}>
- {fngData?.one_month_ago ?? '—'}
- </span>
- {fngData?.one_month_ago_rating && (
- <span className="text-ink0 font-normal text-[8px]">
- ({getRatingInfo(fngData.one_month_ago_rating, fngData.one_month_ago).eng})
- </span>
- )}
- </div>
- </div>
-
- <div className="flex items-center justify-between border-b border-border/50 pb-1">
- <span className="text-ink0 font-bold tracking-tight">ПРЕДИ 1 ГОД.</span>
- <div className="flex items-center gap-1 font-extrabold text-xs">
- <span style={{ color: getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).colorHex }}>
- {fngData?.one_year_ago ?? '—'}
- </span>
- {fngData?.one_year_ago_rating && (
- <span className="text-ink0 font-normal text-[8px]">
- ({getRatingInfo(fngData.one_year_ago_rating, fngData.one_year_ago).eng})
- </span>
- )}
- </div>
- </div>
-
- <div className="mt-1 text-center py-0.5 px-1 bg-bg border border-border/50 text-ink-muted font-extrabold text-[8px] uppercase tracking-wide">
- Текущо: <span style={{ color: currentInfo.colorHex }} className="font-black">{currentInfo.label}</span>
- </div>
- </div>
- </div>
-
- {/* Timestamp status footer */}
- <div className="border-t border-border/10 pt-1.5 text-[8px] font-mono text-ink-faint uppercase tracking-tight flex items-center justify-between shrink-0">
- <span>Обновено: {fngData ? new Date(fngData.timestamp).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' }) : 'N/A'} ч.</span>
- <span className="font-extrabold text-ink-muted underline">CNN Business Live</span>
- </div>
- </div>
- );
- })()}
- </div>
- </div>
- );
+            {/* Timestamp status footer */}
+            <div className="border-t border-border/10 pt-1.5 text-[8px] font-mono text-ink-faint uppercase tracking-tight flex items-center justify-between shrink-0">
+              <span>Обновено: {fngData ? new Date(fngData.timestamp).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' }) : 'N/A'} ч.</span>
+              <span className="font-extrabold text-ink-muted underline">CNN Business Live</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
