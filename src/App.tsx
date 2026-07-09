@@ -183,88 +183,97 @@ export default function App() {
  }
  };
 
- // Load default CSV data or localStorage on rise and trigger instantaneous live update
- useEffect(() => {
- const savedStocks = safeLocalStorage.getItem('bulgarian_stock_tracker_stocks');
- const savedIndices = safeLocalStorage.getItem('bulgarian_stock_tracker_indices');
- const savedAlerts = safeLocalStorage.getItem('bulgarian_stock_tracker_alerts');
+ // Load default CSV data or localStorage or Server data on rise and trigger instantaneous live update
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const res = await fetch('/api/portfolio');
+        if (res.ok) {
+          const serverData = await res.json();
+          if (serverData && (serverData.stocks || serverData.indices || serverData.alerts)) {
+            if (serverData.stocks) setStocks(serverData.stocks);
+            if (serverData.indices) setIndices(serverData.indices);
+            if (serverData.alerts) setAlerts(serverData.alerts);
+            setIsLoaded(true);
+            setLogs([
+              { id: '1', timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Системата за следене на акции е стартирана успешно (от сървъра).', type: 'info' },
+            ]);
+            setTimeout(() => {
+              fetchRealStockPricesDirect(serverData.stocks || []);
+            }, 300);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Грешка при зареждане от сървъра:", err);
+      }
 
- let initialStocks: Stock[] = [];
- let initialIndices: MarketIndex[] = [];
- let initialAlerts: PriceAlert[] = [];
+      const savedStocks = safeLocalStorage.getItem('bulgarian_stock_tracker_stocks');
+      const savedIndices = safeLocalStorage.getItem('bulgarian_stock_tracker_indices');
+      const savedAlerts = safeLocalStorage.getItem('bulgarian_stock_tracker_alerts');
 
- if (savedStocks) {
- try {
- initialStocks = JSON.parse(savedStocks);
- } catch (e) {
- console.error("Грешка при четене на stocks от localStorage", e);
- }
- }
- if (savedStocks === null) {
- const { stocks: parsedStocks } = parseCSVData(RAW_SPREADSHEET_CSV);
- initialStocks = parsedStocks;
- }
+      let initialStocks = [];
+      let initialIndices = [];
+      let initialAlerts = [];
 
- if (savedIndices) {
- try {
- initialIndices = JSON.parse(savedIndices);
- } catch (e) {
- console.error("Грешка при четене на indices от localStorage", e);
- }
- }
- if (savedIndices === null) {
- const { indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
- initialIndices = parsedIndices;
- }
+      if (savedStocks) {
+        try { initialStocks = JSON.parse(savedStocks); } catch (e) { }
+      }
+      if (savedStocks === null) {
+        const { stocks: parsedStocks } = parseCSVData(RAW_SPREADSHEET_CSV);
+        initialStocks = parsedStocks;
+      }
 
- if (savedAlerts) {
- try {
- initialAlerts = JSON.parse(savedAlerts);
- } catch (e) {
- console.error("Грешка при четене на alerts от localStorage", e);
- }
- }
- if (savedAlerts === null) {
- initialAlerts = [
- { id: '1', ticker: 'AAPL', criteria: 'ABOVE', targetPrice: 300, isActive: true, createdAt: new Date().toISOString() },
- { id: '2', ticker: 'TSLA', criteria: 'BELOW', targetPrice: 380, isActive: true, createdAt: new Date().toISOString() },
- { id: '3', ticker: 'NVDA', criteria: 'ABOVE', targetPrice: 215, isActive: true, createdAt: new Date().toISOString() },
- ];
- }
+      if (savedIndices) {
+        try { initialIndices = JSON.parse(savedIndices); } catch (e) { }
+      }
+      if (savedIndices === null) {
+        const { indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+        initialIndices = parsedIndices;
+      }
 
- setStocks(initialStocks);
- setIndices(initialIndices);
- setAlerts(initialAlerts);
- setIsLoaded(true);
+      if (savedAlerts) {
+        try { initialAlerts = JSON.parse(savedAlerts); } catch (e) { }
+      }
+      if (savedAlerts === null) {
+        initialAlerts = [
+          { id: '1', ticker: 'AAPL', criteria: 'ABOVE', targetPrice: 300, isActive: true, createdAt: new Date().toISOString() },
+          { id: '2', ticker: 'TSLA', criteria: 'BELOW', targetPrice: 380, isActive: true, createdAt: new Date().toISOString() },
+          { id: '3', ticker: 'NVDA', criteria: 'ABOVE', targetPrice: 215, isActive: true, createdAt: new Date().toISOString() },
+        ];
+      }
 
- setLogs([
- { id: '1', timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Системата за следене на акции е стартирана успешно.', type: 'info' },
- ]);
+      setStocks(initialStocks);
+      setIndices(initialIndices);
+      setAlerts(initialAlerts);
+      setIsLoaded(true);
 
- // Fast initial update with real financial values straight on app mount
- setTimeout(() => {
- fetchRealStockPricesDirect(initialStocks);
- }, 300);
- }, []);
+      setLogs([
+        { id: '1', timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Системата за следене на акции е стартирана успешно.', type: 'info' },
+      ]);
+
+      setTimeout(() => {
+        fetchRealStockPricesDirect(initialStocks);
+      }, 300);
+    };
+
+    loadData();
+  }, []);
 
  // Persistence save hooks
- useEffect(() => {
- if (isLoaded) {
- safeLocalStorage.setItem('bulgarian_stock_tracker_stocks', JSON.stringify(stocks));
- }
- }, [stocks, isLoaded]);
+  useEffect(() => {
+    if (isLoaded) {
+      safeLocalStorage.setItem('bulgarian_stock_tracker_stocks', JSON.stringify(stocks));
+      safeLocalStorage.setItem('bulgarian_stock_tracker_indices', JSON.stringify(indices));
+      safeLocalStorage.setItem('bulgarian_stock_tracker_alerts', JSON.stringify(alerts));
 
- useEffect(() => {
- if (isLoaded) {
- safeLocalStorage.setItem('bulgarian_stock_tracker_indices', JSON.stringify(indices));
- }
- }, [indices, isLoaded]);
-
- useEffect(() => {
- if (isLoaded) {
- safeLocalStorage.setItem('bulgarian_stock_tracker_alerts', JSON.stringify(alerts));
- }
- }, [alerts, isLoaded]);
+      fetch('/api/portfolio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stocks, indices, alerts })
+      }).catch(err => console.error(err));
+    }
+  }, [stocks, indices, alerts, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
@@ -629,16 +638,17 @@ export default function App() {
         <h1 className="text-xl sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase whitespace-nowrap">
           ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
         </h1>
-        <div className="md:hidden ml-2">
-          <ThemeToggle />
-        </div>
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
+  <div className="md:hidden">
+    <ThemeToggle />
+  </div>
+
   {/* Auto live updates toggler */}
   <button
   onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isAutoLiveRefresh 
   ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
   : 'bg-bg text-ink-faint border-gray-350 hover:bg-gray-50 hover:text-ink-muted'
@@ -657,7 +667,7 @@ export default function App() {
   setIsAutoLiveRefresh(false); // turn off live refresh if user manually wants simulation ticks
   }
   }}
-  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isSimulating 
   ? 'bg-red-700 text-ink border-red-850 hover:bg-red-800 font-extrabold' 
   : 'bg-bg text-ink border-border hover:bg-white/10 hover:text-ink'
@@ -681,7 +691,7 @@ export default function App() {
   <button
   onClick={triggerManualRefresh}
   disabled={isFetchingLivePrices}
-  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
   isFetchingLivePrices
   ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
   : 'bg-bg text-ink border-black hover:bg-white/20'
@@ -695,7 +705,7 @@ export default function App() {
   {/* Export data back as sheet formatted CSV */}
   <button
   onClick={exportCSVFile}
-  className="text-[10px] sm:text-xs font-mono font-extrabold bg-bg text-ink hover:bg-white/10 hover:text-ink border border-border px-3 py-1.5 rounded-xl flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0"
+  className="text-[10px] sm:text-xs font-mono font-extrabold bg-bg text-ink hover:bg-white/10 hover:text-ink border border-border px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0"
   >
   <Download className="w-3 h-3" />
   Експорт CSV
@@ -705,7 +715,7 @@ export default function App() {
   <div className="flex items-center gap-1.5 ml-2 border-l border-border pl-3 shrink-0">
     <button
     onClick={handleRestoreDefaults}
-    className="text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-xl border border-stone-300 bg-stone-100 text-stone-700 hover:bg-stone-200 uppercase transition-all cursor-pointer whitespace-nowrap"
+    className="text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border border-stone-300 bg-stone-100 text-stone-700 hover:bg-stone-200 uppercase transition-all cursor-pointer whitespace-nowrap"
     title="Върнете началните фабрични данни (Презаписва таблицата)"
     >
     Фабрични данни

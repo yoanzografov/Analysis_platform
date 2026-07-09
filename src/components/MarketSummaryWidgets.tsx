@@ -61,7 +61,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
  // 1. Try fetching from our Express backend proxy first (which now queries the official CNN dataviz API)
  try {
- const res = await fetch('/api/fear-greed');
+ const res = await fetch('/api/fear-and-greed');
  if (res.ok) {
  const data = await res.json();
  setFngData(data);

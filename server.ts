@@ -3,8 +3,15 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import fs from "fs/promises";
+import fsSync from "fs";
+import Parser from "rss-parser";
+
+const rssParser = new Parser();
 
 dotenv.config();
+
+const DB_PATH = path.resolve("database.json");
 
 const app = express();
 const PORT = 3000;
@@ -696,6 +703,171 @@ function generateFallbackQuotes(tickers: string[]): Record<string, StockQuoteDat
   return results;
 }
 
+app.get("/api/fear-and-greed", async (req, res) => {
+  try {
+    const cnnUrl = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
+    const response = await fetch(cnnUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Referer": "https://edition.cnn.com/markets/fear-and-greed",
+        "Origin": "https://edition.cnn.com"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`CNN API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const fnG = data?.fear_and_greed;
+    
+    if (!fnG) {
+      throw new Error("Invalid CNN data format");
+    }
+
+    const getRatingForScore = (s: number) => {
+      if (s <= 25) return 'extreme fear';
+      if (s <= 45) return 'fear';
+      if (s <= 55) return 'neutral';
+      if (s <= 75) return 'greed';
+      return 'extreme greed';
+    };
+
+    const score = Math.round(fnG.score);
+    const previous_close = fnG.previous_close !== undefined ? Math.round(fnG.previous_close) : null;
+    const one_week_ago = fnG.previous_1_week !== undefined ? Math.round(fnG.previous_1_week) : null;
+    const one_month_ago = fnG.previous_1_month !== undefined ? Math.round(fnG.previous_1_month) : null;
+    const one_year_ago = fnG.previous_1_year !== undefined ? Math.round(fnG.previous_1_year) : null;
+
+    res.json({
+      score,
+      rating: fnG.rating || getRatingForScore(score),
+      timestamp: fnG.timestamp || new Date().toISOString(),
+      previous_close,
+      previous_close_rating: fnG.previous_close_rating || (previous_close !== null ? getRatingForScore(previous_close) : null),
+      one_week_ago,
+      one_week_ago_rating: fnG.one_week_ago_rating || (one_week_ago !== null ? getRatingForScore(one_week_ago) : null),
+      one_month_ago,
+      one_month_ago_rating: fnG.one_month_ago_rating || (one_month_ago !== null ? getRatingForScore(one_month_ago) : null),
+      one_year_ago,
+      one_year_ago_rating: fnG.one_year_ago_rating || (one_year_ago !== null ? getRatingForScore(one_year_ago) : null),
+      isFallback: false
+    });
+  } catch (error) {
+    console.error("Грешка при извличане на Fear & Greed Index:", error);
+    res.status(500).json({ error: "Грешка при извличане на Fear & Greed Index" });
+  }
+});
+
+app.get("/api/news", async (req, res) => {
+  const ticker = req.query.ticker as string;
+  if (!ticker) {
+    return res.status(400).json({ error: "Липсва тикер" });
+  }
+
+  try {
+    const aiClient = getGeminiClient();
+    
+    // 1. Fetch from Yahoo Finance and Google News
+    const yahooUrl = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(ticker)}&region=US&lang=en-US`;
+    const googleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(ticker)}+stock+news&hl=en-US&gl=US&ceid=US:en`;
+
+    const [yahooFeed, googleFeed] = await Promise.allSettled([
+      rssParser.parseURL(yahooUrl),
+      rssParser.parseURL(googleUrl)
+    ]);
+
+    let rawNews: Array<{ title: string; link: string; pubDate: string; source: string }> = [];
+
+    if (yahooFeed.status === 'fulfilled' && yahooFeed.value.items) {
+      const items = yahooFeed.value.items.slice(0, 5).map(item => ({
+        title: item.title || '',
+        link: item.link || '',
+        pubDate: item.pubDate || new Date().toISOString(),
+        source: 'Yahoo Finance'
+      }));
+      rawNews = [...rawNews, ...items];
+    }
+
+    if (googleFeed.status === 'fulfilled' && googleFeed.value.items) {
+      const items = googleFeed.value.items.slice(0, 5).map(item => ({
+        title: item.title || '',
+        link: item.link || '',
+        pubDate: item.pubDate || new Date().toISOString(),
+        source: 'Google Finance'
+      }));
+      rawNews = [...rawNews, ...items];
+    }
+
+    // Sort by date descending and take top 5 unique by title
+    rawNews.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+    
+    const uniqueNews = [];
+    const seenTitles = new Set();
+    for (const item of rawNews) {
+      if (!seenTitles.has(item.title)) {
+        seenTitles.add(item.title);
+        uniqueNews.push(item);
+      }
+      if (uniqueNews.length >= 5) break;
+    }
+
+    if (uniqueNews.length === 0) {
+      return res.json([]);
+    }
+
+    // 2. Ask Gemini to translate and determine sentiment
+    const prompt = `Ти си финансов анализатор. Преведи следните новини за акцията ${ticker} на български език.
+За всяка новина определи влиянието й върху компанията: "Positive" (Положително), "Negative" (Отрицателно) или "Neutral" (Неутрално).
+Направи много кратко резюме (1 изречение) за всяка новина.
+
+Върни резултата СТРИКТНО като валиден JSON масив, където всеки обект има следните полета:
+- "title": "Преведено заглавие"
+- "summary": "Кратко резюме на български"
+- "impact": "Positive", "Negative" или "Neutral"
+
+Оригинални новини:
+${JSON.stringify(uniqueNews, null, 2)}
+`;
+
+    const result = await aiClient.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const aiText = result.text;
+    let aiParsed = [];
+    try {
+      aiParsed = JSON.parse(aiText);
+    } catch (e) {
+      console.error("Грешка при парсване на AI отговора:", e);
+      aiParsed = uniqueNews.map(n => ({ title: n.title, summary: "", impact: "Neutral" }));
+    }
+
+    // Merge API data with AI data
+    const finalNews = uniqueNews.map((newsItem, index) => {
+      const aiData = aiParsed[index] || {};
+      return {
+        title: aiData.title || newsItem.title,
+        source: newsItem.source,
+        time: new Date(newsItem.pubDate).toLocaleDateString("bg-BG", { hour: '2-digit', minute: '2-digit' }),
+        summary: aiData.summary || "Няма налично резюме.",
+        impact: aiData.impact === "Positive" || aiData.impact === "Negative" ? aiData.impact : "Neutral",
+        url: newsItem.link
+      };
+    });
+
+    return res.json(finalNews);
+  } catch (error: any) {
+    console.error("Грешка при извличане на новини:", error.message);
+    return res.status(500).json({ error: "Грешка при зареждане на новините" });
+  }
+});
+
 app.get("/api/fear-greed", async (req, res) => {
   const getRatingForScore = (s: number) => {
     if (s <= 25) return "extreme fear";
@@ -1257,6 +1429,46 @@ app.get("/api/stock-quotes", async (req, res) => {
     const tickers = symbolsQuery.split(",").map(t => t.trim().toUpperCase()).filter(Boolean);
     const simulatedQuotes = generateFallbackQuotes(tickers);
     return res.json({ quotes: simulatedQuotes, source: "live-simulated-recovery" });
+  }
+});
+
+// Portfolio data endpoints
+app.get("/api/portfolio", async (req, res) => {
+  try {
+    if (fsSync.existsSync(DB_PATH)) {
+      const data = await fs.readFile(DB_PATH, "utf-8");
+      return res.json(JSON.parse(data));
+    } else {
+      return res.json(null);
+    }
+  } catch (error: any) {
+    console.error("Грешка при четене на portfolio:", error.message);
+    return res.status(500).json({ error: "Грешка при зареждане на портфолиото" });
+  }
+});
+
+app.post("/api/portfolio", async (req, res) => {
+  try {
+    const { stocks, indices, alerts } = req.body;
+    
+    // Read existing to merge or initialize empty
+    let existingData: any = { stocks: null, indices: null, alerts: null };
+    if (fsSync.existsSync(DB_PATH)) {
+      const data = await fs.readFile(DB_PATH, "utf-8");
+      try { existingData = JSON.parse(data); } catch(e) {}
+    }
+    
+    const newData = {
+      stocks: stocks !== undefined ? stocks : existingData.stocks,
+      indices: indices !== undefined ? indices : existingData.indices,
+      alerts: alerts !== undefined ? alerts : existingData.alerts
+    };
+    
+    await fs.writeFile(DB_PATH, JSON.stringify(newData, null, 2), "utf-8");
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error("Грешка при запис на portfolio:", error.message);
+    return res.status(500).json({ error: "Грешка при записване на портфолиото" });
   }
 });
 

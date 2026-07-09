@@ -90,7 +90,8 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   else if (stock.ticker.startsWith('SWX:')) tvSymbol = `SIX:${sym}`;
   else if (stock.ticker === '^GSPC') tvSymbol = 'SP:SPX';
   else if (stock.ticker === '^NDX') tvSymbol = 'NASDAQ:NDX';
-  else if (!stock.ticker.includes(':')) tvSymbol = `NASDAQ:${sym}`;
+  else if (!stock.ticker.includes(':')) tvSymbol = sym;
+
 
   return (
     <div
