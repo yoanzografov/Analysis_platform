@@ -466,46 +466,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 />
               </div>
 
-              {/* Historical Trend Table (Streamlit Table equivalent) */}
-              <div className="w-full">
-                <span className="text-[10px] font-sans font-extrabold uppercase tracking-widest text-ink-muted block mb-2">Исторически стойности</span>
-                <table className="w-full text-[10px] font-mono text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-border/50 text-ink-faint">
-                      <th className="py-1.5 font-normal uppercase">Период</th>
-                      <th className="py-1.5 font-normal uppercase text-center">Индекс</th>
-                      <th className="py-1.5 font-normal uppercase text-right">Състояние</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/20">
-                    <tr className="hover:bg-card-hover transition-colors">
-                      <td className="py-1.5 text-ink0 font-bold">Сега</td>
-                      <td className="py-1.5 text-center font-extrabold" style={{ color: currentInfo.colorHex }}>{currentScore}</td>
-                      <td className="py-1.5 text-right font-sans" style={{ color: currentInfo.colorHex }}>{currentInfo.label}</td>
-                    </tr>
-                    <tr className="hover:bg-card-hover transition-colors">
-                      <td className="py-1.5 text-ink0 font-bold">Вчера</td>
-                      <td className="py-1.5 text-center font-extrabold" style={{ color: getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).colorHex }}>{fngData?.previous_close ?? '—'}</td>
-                      <td className="py-1.5 text-right font-sans" style={{ color: getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).colorHex }}>{getRatingInfo(fngData?.previous_close_rating, fngData?.previous_close).label}</td>
-                    </tr>
-                    <tr className="hover:bg-card-hover transition-colors">
-                      <td className="py-1.5 text-ink0 font-bold">Преди 1 седм.</td>
-                      <td className="py-1.5 text-center font-extrabold" style={{ color: getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).colorHex }}>{fngData?.one_week_ago ?? '—'}</td>
-                      <td className="py-1.5 text-right font-sans" style={{ color: getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).colorHex }}>{getRatingInfo(fngData?.one_week_ago_rating, fngData?.one_week_ago).label}</td>
-                    </tr>
-                    <tr className="hover:bg-card-hover transition-colors">
-                      <td className="py-1.5 text-ink0 font-bold">Преди 1 месец</td>
-                      <td className="py-1.5 text-center font-extrabold" style={{ color: getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).colorHex }}>{fngData?.one_month_ago ?? '—'}</td>
-                      <td className="py-1.5 text-right font-sans" style={{ color: getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).colorHex }}>{getRatingInfo(fngData?.one_month_ago_rating, fngData?.one_month_ago).label}</td>
-                    </tr>
-                    <tr className="hover:bg-card-hover transition-colors">
-                      <td className="py-1.5 text-ink0 font-bold">Преди 1 год.</td>
-                      <td className="py-1.5 text-center font-extrabold" style={{ color: getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).colorHex }}>{fngData?.one_year_ago ?? '—'}</td>
-                      <td className="py-1.5 text-right font-sans" style={{ color: getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).colorHex }}>{getRatingInfo(fngData?.one_year_ago_rating, fngData?.one_year_ago).label}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+
             </div>
 
             {/* Timestamp status footer */}
