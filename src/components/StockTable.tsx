@@ -528,7 +528,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </div>
 
  {/* Main Grid Responsive Table with exactly 20 columns and scrollbar view */}
- <div className="w-full max-h-[520px] overflow-y-auto overflow-x-auto border-b border-border/15">
+ <div className="w-full h-auto md:max-h-[520px] overflow-y-auto overflow-x-auto border-b border-border/15">
  <table className="w-full text-left border-collapse min-w-[1900px] table-fixed">
  
  <colgroup><col className="w-[100px]" /><col className="w-[85px]" /><col className="w-[185px]" /><col className="w-[95px]" /><col className="w-[120px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[110px]" /><col className="w-[110px]" /><col className="w-[95px]" /><col className="w-[115px]" /><col className="w-[95px]" /><col className="w-[90px]" /><col className="w-[140px]" /><col className="w-[140px]" /><col className="w-[110px]" /><col className="w-[100px]" /><col className="w-[100px]" /><col className="w-[120px]" /></colgroup>
