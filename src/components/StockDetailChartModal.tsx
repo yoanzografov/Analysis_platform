@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Stock } from '../types';
 import { X, ExternalLink } from 'lucide-react';
 import { formatDividend } from '../utils/sectorHelper';
-import { SymbolOverview } from 'react-ts-tradingview-widgets';
+import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -135,37 +135,19 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           </div>
         </div>
 
-        {/* CHART (TradingView SymbolOverview Widget) */}
+        {/* CHART (TradingView AdvancedRealTimeChart Widget) */}
         <div className="flex-1 relative mx-2 min-h-0">
-          <SymbolOverview
-            symbols={[[stock.companyName, tvSymbol]]}
-            colorTheme={isDark ? "dark" : "light"}
+          <AdvancedRealTimeChart
+            symbol={tvSymbol}
+            theme={isDark ? "dark" : "light"}
             autosize
-            chartType="area"
-            downColor={NEON_RED}
-            borderDownColor={NEON_RED}
-            upColor={NEON_GREEN}
-            borderUpColor={NEON_GREEN}
-            lineColor={accent}
-            topColor={`${accent}40`}
-            bottomColor={`${accent}00`}
-            fontFamily="Inter, sans-serif"
-            gridLineColor={isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}
-            isTransparent
-            showFloatingTooltip
-            dateFormat="yyyy-MM-dd"
-            // @ts-ignore: inject dateRanges to customize the time intervals
-            dateRanges={[
-              "1d|1",
-              "5d|5",
-              "1m|30",
-              "6m|120",
-              "ytd|1D",
-              "12m|1D",
-              "60m|1W",
-              "120m|1M",
-              "all|1M"
-            ]}
+            style="3" // Area chart
+            hide_side_toolbar
+            hide_legend
+            allow_symbol_change={false}
+            save_image={false}
+            withdateranges
+            range="12M"
           />
         </div>
 
