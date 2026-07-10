@@ -122,7 +122,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
               {exch} · {ccy}
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right pr-12 sm:pr-14">
             <div className="text-3xl font-bold text-ink tracking-tight leading-tight tabular-nums">
               {fp(stock.currentPrice)}
             </div>
