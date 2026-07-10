@@ -703,60 +703,61 @@ function generateFallbackQuotes(tickers: string[]): Record<string, StockQuoteDat
   return results;
 }
 
-app.get("/api/fear-and-greed", async (req, res) => {
+app.get("/api/vix", async (req, res) => {
   try {
-    const cnnUrl = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
-    const response = await fetch(cnnUrl, {
+    const tvUrl = "https://scanner.tradingview.com/america/scan";
+    const body = {
+      symbols: { tickers: ["CBOE:VIX"], query: { types: [] } },
+      columns: ["close", "change", "change_abs"]
+    };
+
+    const response = await fetch(tvUrl, {
+      method: 'POST',
       headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Referer": "https://edition.cnn.com/markets/fear-and-greed",
-        "Origin": "https://edition.cnn.com"
-      }
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+      },
+      body: JSON.stringify(body)
     });
 
     if (!response.ok) {
-      throw new Error(`CNN API error: ${response.status}`);
+      throw new Error(`TradingView API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const fnG = data?.fear_and_greed;
-    
-    if (!fnG) {
-      throw new Error("Invalid CNN data format");
+    if (!data || !data.data || data.data.length === 0) {
+      throw new Error("Invalid TradingView data format");
     }
 
-    const getRatingForScore = (s: number) => {
-      if (s <= 25) return 'extreme fear';
-      if (s <= 45) return 'fear';
-      if (s <= 55) return 'neutral';
-      if (s <= 75) return 'greed';
-      return 'extreme greed';
+    const vixData = data.data[0].d; // [close, change_pct, change_abs]
+    
+    // Map VIX to fear/greed logic
+    // VIX < 15: Extreme Greed
+    // 15 - 20: Greed
+    // 20 - 25: Neutral
+    // 25 - 30: Fear
+    // > 30: Extreme Fear
+    const score = vixData[0];
+    
+    const getRatingForVix = (s: number) => {
+      if (s < 15) return 'extreme greed';
+      if (s < 20) return 'greed';
+      if (s < 25) return 'neutral';
+      if (s < 30) return 'fear';
+      return 'extreme fear';
     };
-
-    const score = Math.round(fnG.score);
-    const previous_close = fnG.previous_close !== undefined ? Math.round(fnG.previous_close) : null;
-    const one_week_ago = fnG.previous_1_week !== undefined ? Math.round(fnG.previous_1_week) : null;
-    const one_month_ago = fnG.previous_1_month !== undefined ? Math.round(fnG.previous_1_month) : null;
-    const one_year_ago = fnG.previous_1_year !== undefined ? Math.round(fnG.previous_1_year) : null;
 
     res.json({
       score,
-      rating: fnG.rating || getRatingForScore(score),
-      timestamp: fnG.timestamp || new Date().toISOString(),
-      previous_close,
-      previous_close_rating: fnG.previous_close_rating || (previous_close !== null ? getRatingForScore(previous_close) : null),
-      one_week_ago,
-      one_week_ago_rating: fnG.one_week_ago_rating || (one_week_ago !== null ? getRatingForScore(one_week_ago) : null),
-      one_month_ago,
-      one_month_ago_rating: fnG.one_month_ago_rating || (one_month_ago !== null ? getRatingForScore(one_month_ago) : null),
-      one_year_ago,
-      one_year_ago_rating: fnG.one_year_ago_rating || (one_year_ago !== null ? getRatingForScore(one_year_ago) : null),
+      change_pct: vixData[1],
+      change_abs: vixData[2],
+      rating: getRatingForVix(score),
+      timestamp: new Date().toISOString(),
       isFallback: false
     });
   } catch (error) {
-    console.error("Грешка при извличане на Fear & Greed Index:", error);
-    res.status(500).json({ error: "Грешка при извличане на Fear & Greed Index" });
+    console.error("Грешка при извличане на VIX Index:", error);
+    res.status(500).json({ error: "Грешка при извличане на VIX Index" });
   }
 });
 
