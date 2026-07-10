@@ -154,8 +154,18 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             isTransparent
             showFloatingTooltip
             dateFormat="yyyy-MM-dd"
-            // @ts-ignore: TradingView widget supports dateRange, but react wrapper typing misses it
-            dateRange="12M"
+            // @ts-ignore: inject dateRanges to customize the time intervals
+            dateRanges={[
+              "1d|1",
+              "5d|5",
+              "1m|30",
+              "6m|120",
+              "ytd|1D",
+              "12m|1D",
+              "60m|1W",
+              "120m|1M",
+              "all|1M"
+            ]}
           />
         </div>
 
