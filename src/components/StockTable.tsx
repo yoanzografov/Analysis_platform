@@ -812,7 +812,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </td>
 
  {/* 14. EPS [LOCKED] */}
- <td className="py-3 px-4 text-right text-stone-900 font-bold ">
+ <td className="py-3 px-4 text-right text-ink font-bold ">
  {stock.eps ? `$${stock.eps.toFixed(2)}` : '-'}
  </td>
 
@@ -827,7 +827,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  placeholder="Сектор"
  />
  ) : (
- <span className="inline-block px-1.5 py-0.5 text-[10.5px] font-sans font-medium text-stone-700 bg-stone-150 rounded-sm whitespace-nowrap">
+ <span className="inline-block px-1.5 py-0.5 text-[10.5px] font-sans font-medium text-ink bg-border rounded-sm whitespace-nowrap">
  {getSectorForStock(stock.ticker, stock.profileLink, stock.companyName)}
  </span>
  )}
