@@ -1433,45 +1433,7 @@ app.get("/api/stock-quotes", async (req, res) => {
   }
 });
 
-// Portfolio data endpoints
-app.get("/api/portfolio", async (req, res) => {
-  try {
-    if (fsSync.existsSync(DB_PATH)) {
-      const data = await fs.readFile(DB_PATH, "utf-8");
-      return res.json(JSON.parse(data));
-    } else {
-      return res.json(null);
-    }
-  } catch (error: any) {
-    console.error("Грешка при четене на portfolio:", error.message);
-    return res.status(500).json({ error: "Грешка при зареждане на портфолиото" });
-  }
-});
 
-app.post("/api/portfolio", async (req, res) => {
-  try {
-    const { stocks, indices, alerts } = req.body;
-    
-    // Read existing to merge or initialize empty
-    let existingData: any = { stocks: null, indices: null, alerts: null };
-    if (fsSync.existsSync(DB_PATH)) {
-      const data = await fs.readFile(DB_PATH, "utf-8");
-      try { existingData = JSON.parse(data); } catch(e) {}
-    }
-    
-    const newData = {
-      stocks: stocks !== undefined ? stocks : existingData.stocks,
-      indices: indices !== undefined ? indices : existingData.indices,
-      alerts: alerts !== undefined ? alerts : existingData.alerts
-    };
-    
-    await fs.writeFile(DB_PATH, JSON.stringify(newData, null, 2), "utf-8");
-    return res.json({ success: true });
-  } catch (error: any) {
-    console.error("Грешка при запис на portfolio:", error.message);
-    return res.status(500).json({ error: "Грешка при записване на портфолиото" });
-  }
-});
 
 // Vite middleware integration
 async function startServer() {

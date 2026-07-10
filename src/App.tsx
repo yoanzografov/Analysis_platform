@@ -10,6 +10,8 @@ import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
+import { db } from './lib/firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { 
  Building2, 
  Download, 
@@ -18,24 +20,6 @@ import {
  Square, 
  RefreshCw
 } from 'lucide-react';
-
-const safeLocalStorage = {
- getItem: (key: string): string | null => {
- try {
- return localStorage.getItem(key);
- } catch (e) {
- console.warn('localStorage is not accessible:', e);
- return null;
- }
- },
- setItem: (key: string, value: string): void => {
- try {
- localStorage.setItem(key, value);
- } catch (e) {
- console.warn('localStorage is not writable:', e);
- }
- }
-};
 
 export default function App() {
  // Primary datasets
@@ -62,6 +46,9 @@ export default function App() {
 
  // Selected Stock for deep AI Analyst drawer
  const [selectedStockForAi, setSelectedStockForAi] = useState<Stock | null>(null);
+
+ // Prevent infinite save loops with Firebase
+ const lastSavedRef = useRef('');
 
  // Live direct quotes sync from Yahoo Finance backend proxy
  const fetchRealStockPricesDirect = async (stocksList?: Stock[]) => {
@@ -183,95 +170,74 @@ export default function App() {
  }
  };
 
- // Load default CSV data or localStorage or Server data on rise and trigger instantaneous live update
+ // Load and listen to Firebase Firestore
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const res = await fetch('/api/portfolio');
-        if (res.ok) {
-          const serverData = await res.json();
-          if (serverData && (serverData.stocks || serverData.indices || serverData.alerts)) {
-            if (serverData.stocks) setStocks(serverData.stocks);
-            if (serverData.indices) setIndices(serverData.indices);
-            if (serverData.alerts) setAlerts(serverData.alerts);
-            setIsLoaded(true);
-            setLogs([
-              { id: '1', timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Системата за следене на акции е стартирана успешно (от сървъра).', type: 'info' },
-            ]);
-            setTimeout(() => {
-              fetchRealStockPricesDirect(serverData.stocks || []);
-            }, 300);
-            return;
-          }
+    const unsub = onSnapshot(doc(db, "portfolio", "default"), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const incomingDataString = JSON.stringify(data);
+        
+        // Only update state if data is actually different from our last local save
+        if (lastSavedRef.current !== incomingDataString) {
+          lastSavedRef.current = incomingDataString;
+          if (data.stocks) setStocks(data.stocks);
+          if (data.indices) setIndices(data.indices);
+          if (data.alerts) setAlerts(data.alerts);
         }
-      } catch (err) {
-        console.error("Грешка при зареждане от сървъра:", err);
-      }
-
-      const savedStocks = safeLocalStorage.getItem('bulgarian_stock_tracker_stocks');
-      const savedIndices = safeLocalStorage.getItem('bulgarian_stock_tracker_indices');
-      const savedAlerts = safeLocalStorage.getItem('bulgarian_stock_tracker_alerts');
-
-      let initialStocks = [];
-      let initialIndices = [];
-      let initialAlerts = [];
-
-      if (savedStocks) {
-        try { initialStocks = JSON.parse(savedStocks); } catch (e) { }
-      }
-      if (savedStocks === null) {
-        const { stocks: parsedStocks } = parseCSVData(RAW_SPREADSHEET_CSV);
-        initialStocks = parsedStocks;
-      }
-
-      if (savedIndices) {
-        try { initialIndices = JSON.parse(savedIndices); } catch (e) { }
-      }
-      if (savedIndices === null) {
-        const { indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
-        initialIndices = parsedIndices;
-      }
-
-      if (savedAlerts) {
-        try { initialAlerts = JSON.parse(savedAlerts); } catch (e) { }
-      }
-      if (savedAlerts === null) {
-        initialAlerts = [
+        
+        if (!isLoaded) {
+          setIsLoaded(true);
+          setLogs([
+            { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Свързано с облачната база данни (Firebase).', type: 'info' },
+          ]);
+          setTimeout(() => {
+            fetchRealStockPricesDirect(data.stocks || []);
+          }, 300);
+        }
+      } else {
+        // First time initialization: Load defaults if DB is empty
+        const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+        const defaultAlerts = [
           { id: '1', ticker: 'AAPL', criteria: 'ABOVE', targetPrice: 300, isActive: true, createdAt: new Date().toISOString() },
           { id: '2', ticker: 'TSLA', criteria: 'BELOW', targetPrice: 380, isActive: true, createdAt: new Date().toISOString() },
           { id: '3', ticker: 'NVDA', criteria: 'ABOVE', targetPrice: 215, isActive: true, createdAt: new Date().toISOString() },
         ];
+        
+        setStocks(parsedStocks);
+        setIndices(parsedIndices);
+        // @ts-ignore
+        setAlerts(defaultAlerts);
+        setIsLoaded(true);
+        
+        const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts };
+        lastSavedRef.current = JSON.stringify(initialData);
+        
+        setDoc(doc(db, "portfolio", "default"), initialData)
+          .catch(err => console.error("Error setting default data", err));
+          
+        setTimeout(() => {
+          fetchRealStockPricesDirect(parsedStocks);
+        }, 300);
       }
+    }, (error) => {
+      console.error("Firebase Snapshot Error:", error);
+    });
 
-      setStocks(initialStocks);
-      setIndices(initialIndices);
-      setAlerts(initialAlerts);
-      setIsLoaded(true);
+    return () => unsub();
+  }, [isLoaded]);
 
-      setLogs([
-        { id: '1', timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Системата за следене на акции е стартирана успешно.', type: 'info' },
-      ]);
-
-      setTimeout(() => {
-        fetchRealStockPricesDirect(initialStocks);
-      }, 300);
-    };
-
-    loadData();
-  }, []);
-
- // Persistence save hooks
+ // Persistence save hooks (to Firebase)
   useEffect(() => {
     if (isLoaded) {
-      safeLocalStorage.setItem('bulgarian_stock_tracker_stocks', JSON.stringify(stocks));
-      safeLocalStorage.setItem('bulgarian_stock_tracker_indices', JSON.stringify(indices));
-      safeLocalStorage.setItem('bulgarian_stock_tracker_alerts', JSON.stringify(alerts));
-
-      fetch('/api/portfolio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stocks, indices, alerts })
-      }).catch(err => console.error(err));
+      const currentDataString = JSON.stringify({ stocks, indices, alerts });
+      if (lastSavedRef.current !== currentDataString) {
+        lastSavedRef.current = currentDataString;
+        setDoc(doc(db, "portfolio", "default"), {
+          stocks,
+          indices,
+          alerts
+        }, { merge: true }).catch(err => console.error("Firebase Save Error:", err));
+      }
     }
   }, [stocks, indices, alerts, isLoaded]);
 
