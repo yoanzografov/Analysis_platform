@@ -1304,18 +1304,29 @@ app.get("/api/stock-quotes", async (req, res) => {
 
     for (const t of tickers) {
       let ySym = t;
-      if (t.startsWith("EPA:")) {
-        ySym = t.replace("EPA:", "") + ".PA";
-      } else if (t.startsWith("ETR:")) {
-        const raw = t.replace("ETR:", "");
-        ySym = (raw === "DHL" ? "DPW" : raw) + ".DE";
-      } else if (t.startsWith("STO:")) {
-        ySym = t.replace("STO:", "") + ".ST";
-      } else if (t.startsWith("SWX:")) {
-        ySym = t.replace("SWX:", "") + ".SW";
-      } else if (t.includes(":")) {
+      const googleToYahooMap: Record<string, string> = {
+        "EPA": ".PA", "ETR": ".DE", "FRA": ".F", "LON": ".L", "AMS": ".AS",
+        "EBR": ".BR", "BIT": ".MI", "BME": ".MC", "VIE": ".VI", "CPH": ".CO",
+        "HEL": ".HE", "STO": ".ST", "SWX": ".SW", "OSL": ".OL", "LIS": ".LS",
+        "ATH": ".AT", "IST": ".IS", "WSE": ".WA", "PRG": ".PR", "TSE": ".T",
+        "HKG": ".HK", "BSE": ".BO", "NSE": ".NS", "TPE": ".TW", "ASX": ".AX",
+        "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO"
+      };
+
+      if (t.includes(":")) {
         const parts = t.split(":");
-        ySym = parts[1] + "." + parts[0];
+        const prefix = parts[0];
+        let raw = parts[1];
+        
+        if (prefix === "ETR" && raw === "DHL") {
+          raw = "DPW";
+        }
+        
+        if (googleToYahooMap[prefix]) {
+          ySym = raw + googleToYahooMap[prefix];
+        } else {
+          ySym = raw + "." + prefix;
+        }
       }
 
       originalToYahoo[t] = ySym;
