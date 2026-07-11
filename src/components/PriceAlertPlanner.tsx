@@ -42,11 +42,11 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  };
 
  return (
- <div className="bg-card rounded-2xl rounded-none border border-border p-4 mt-5">
+ <div className="bg-card rounded-2xl border border-border p-4 mt-5">
  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div>
  <span className="text-[10px] text-blue-700 font-serif italic uppercase tracking-wider block">
- Alert Engine
+ Alert Engine • ЕДИНСТВЕН ДОСТОВЕРЕН ИЗТОЧНИК • REAL-TIME
  </span>
  <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
  Планиране на персонализирани известия за цена
@@ -56,7 +56,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  </p>
  </div>
 
- <form onSubmit={handleCreateAlert} className="flex flex-wrap items-end gap-2.5 bg-bg/40 p-2 border border-border w-full md:w-auto">
+ <form onSubmit={handleCreateAlert} className="flex flex-wrap items-end gap-2.5 bg-bg/40 p-2 rounded-2xl border border-border w-full md:w-auto">
  <div className="flex-1 min-w-[100px]">
  <label className="block text-[9px] text-ink-faint font-mono uppercase mb-0.5">ТИКЕР</label>
  <input
@@ -64,7 +64,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  placeholder="AAPL, TSLA..."
  value={newTicker}
  onChange={e => setNewTicker(e.target.value)}
- className="w-full bg-card rounded-2xl border border-border rounded-none px-2 py-1 text-xs text-ink uppercase font-bold focus:outline-none"
+ className="w-full bg-card rounded-2xl border border-border px-2 py-1 text-xs text-ink uppercase font-bold focus:outline-none"
  />
  </div>
 
@@ -73,7 +73,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  <select
  value={criteria}
  onChange={e => setCriteria(e.target.value as any)}
- className="bg-card rounded-2xl border border-border rounded-none px-2 py-1 text-xs text-ink font-extrabold focus:outline-none"
+ className="bg-card rounded-2xl border border-border px-2 py-1 text-xs text-ink font-extrabold focus:outline-none"
  >
  <option value="ABOVE">ЦЕНА НАД (▲)</option>
  <option value="BELOW">ЦЕНА ПОД (▼)</option>
@@ -88,13 +88,13 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  placeholder="400.00"
  value={targetVal}
  onChange={e => setTargetVal(e.target.value)}
- className="w-full bg-card rounded-2xl border border-border rounded-none px-2 py-1 text-xs text-ink font-mono focus:outline-none"
+ className="w-full bg-card rounded-2xl border border-border px-2 py-1 text-xs text-ink font-mono focus:outline-none"
  />
  </div>
 
  <button
  type="submit"
- className="bg-bg hover:bg-white/20 text-ink font-extrabold text-[10px] px-4 h-[26px] border border-border rounded-none flex items-center gap-1 transition-all uppercase"
+ className="bg-bg hover:bg-white/20 text-ink font-extrabold text-[10px] px-4 h-[26px] border border-border rounded-2xl flex items-center gap-1 transition-all uppercase"
  >
  <PlusCircle className="w-3.5 h-3.5" />
  Добави

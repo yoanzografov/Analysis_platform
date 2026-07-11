@@ -770,7 +770,7 @@ export default function App() {
  </div>
 
  {/* Real-time alert feed logs */}
- <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between rounded-xl shadow-xs">
+ <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between shadow-xs">
  <div>
  <h3 className="text-xs uppercase font-extrabold text-ink font-mono flex items-center gap-1.5">
  <Bell className="w-3.5 h-3.5 text-amber-800" />
@@ -785,7 +785,7 @@ export default function App() {
  {logs.map(log => (
  <div 
  key={log.id} 
- className={`p-1.5 rounded-xl border text-xs leading-relaxed flex items-start gap-1.5 ${
+ className={`p-1.5 rounded-2xl border text-xs leading-relaxed flex items-start gap-1.5 ${
  log.type === 'alert' 
  ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
  : log.type === 'success'

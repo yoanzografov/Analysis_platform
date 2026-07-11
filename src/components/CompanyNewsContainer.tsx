@@ -364,21 +364,21 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  switch (impact) {
  case 'Positive':
  return (
- <span className="inline-flex items-center gap-1 bg-emerald-50 text-[#10b981] border border-emerald-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none font-mono">
+ <span className="inline-flex items-center gap-1 bg-emerald-50 text-[#10b981] border border-emerald-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-2xl font-mono">
  <TrendingUp className="w-2.5 h-2.5" />
  Положително
  </span>
  );
  case 'Negative':
  return (
- <span className="inline-flex items-center gap-1 bg-red-50 text-[#f43f5e] border border-red-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none font-mono">
+ <span className="inline-flex items-center gap-1 bg-red-50 text-[#f43f5e] border border-red-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-2xl font-mono">
  <TrendingDown className="w-2.5 h-2.5" />
  Отрицателно
  </span>
  );
  default:
  return (
- <span className="inline-flex items-center gap-1 bg-bg text-ink-muted border border-border-hover px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none font-mono">
+ <span className="inline-flex items-center gap-1 bg-bg text-ink-muted border border-border-hover px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-2xl font-mono">
  <Minus className="w-2.5 h-2.5" />
  Неутрално
  </span>
@@ -387,7 +387,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  };
 
  return (
- <div id="company-news-container" className="bg-bg rounded-2xl rounded-none border border-border p-4 mt-5 shadow-xs">
+ <div id="company-news-container" className="bg-bg rounded-2xl border border-border p-4 mt-5 shadow-xs">
  {/* Header section */}
  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4 mb-4">
  <div>
@@ -405,7 +405,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
 
  <div className="flex flex-wrap items-center gap-2.5">
  {/* Dropdown for quick stock selection */}
- <div className="flex items-center gap-2 bg-bg p-1.5 border border-border text-xs">
+ <div className="flex items-center gap-2 bg-bg p-1.5 border border-border rounded-2xl text-xs">
  <label className="text-[10px] font-mono font-bold text-ink-muted uppercase whitespace-nowrap">АКТИВ:</label>
  <select
  value={selectedStock ? selectedStock.ticker : ''}
@@ -414,7 +414,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  const found = stocks.find((s) => s.ticker === tick);
  onSelectStock(found || null);
  }}
- className="bg-bg rounded-2xl border border-border rounded-none px-2 py-0.5 text-xs text-ink font-bold focus:outline-none min-w-[120px] max-w-[180px]"
+ className="bg-bg rounded-2xl border border-border px-2 py-0.5 text-xs text-ink font-bold focus:outline-none min-w-[120px] max-w-[180px]"
  >
  <option value="">-- Общ Пазар --</option>
  {stocks.map((s, idx) => (
@@ -428,7 +428,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  <button
  onClick={fetchNews}
  disabled={loading}
- className="bg-bg rounded-2xl hover:bg-bg border border-border text-ink font-extrabold text-[10px] px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer disabled:opacity-50"
+ className="bg-bg rounded-2xl hover:bg-bg border border-border text-ink font-extrabold text-[10px] px-3 py-1.5 flex items-center gap-1.5 uppercase transition-all cursor-pointer disabled:opacity-50"
  title="Обновяване на новинарския поток"
  >
  <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
@@ -438,7 +438,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  {selectedStock && (
  <button
  onClick={() => onSelectStock(null)}
- className="bg-bg hover:bg-card-hover border border-border-hover text-ink-muted font-bold text-[10px] px-3 py-1.5 rounded-none flex items-center gap-1.5 uppercase transition-all cursor-pointer"
+ className="bg-bg hover:bg-card-hover border border-border-hover text-ink-muted font-bold text-[10px] px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all cursor-pointer"
  >
  <X className="w-3 h-3" />
  Общи новини
@@ -448,7 +448,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  </div>
 
  {/* Main Content list */}
- <div className="bg-bg border border-border p-4 min-h-[220px]">
+ <div className="bg-bg border border-border p-4 rounded-2xl min-h-[220px]">
  {loading ? (
  <div className="flex flex-col items-center justify-center text-center py-12">
  <RefreshCw className="w-8 h-8 text-[#10b981] animate-spin mb-4" />
@@ -460,7 +460,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  </p>
  </div>
  ) : error ? (
- <div className="bg-bg border border-border p-4 rounded-none">
+ <div className="bg-bg border border-border p-4 rounded-2xl">
  <div className="flex items-center gap-2 text-amber-800 font-mono text-xs font-bold mb-2">
  <AlertTriangle className="w-4 h-4 shrink-0" />
  <span>{error}</span>
