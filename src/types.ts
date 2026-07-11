@@ -18,6 +18,7 @@ export interface Stock {
   low52: number | null;
   high52: number | null;
   aiAnalysis?: string;
+  calcLink?: string; // Link to Google Sheets calculation
 }
 
 export interface MarketIndex {

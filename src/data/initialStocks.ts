@@ -355,6 +355,7 @@ export function parseCSVData(csvText: string): { stocks: Stock[]; indices: Marke
     const signal = cells[16] || 'Hold';
     const low52 = cleanNum(cells[17]);
     const high52 = cleanNum(cells[18]);
+    const calcLink = cells[19] || '';
 
     // Avoid duplicate insertions
     if (!stocks.some(s => s.ticker === ticker)) {
@@ -377,6 +378,7 @@ export function parseCSVData(csvText: string): { stocks: Stock[]; indices: Marke
         signal,
         low52,
         high52,
+        calcLink,
       });
     }
   }

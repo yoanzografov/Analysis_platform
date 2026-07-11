@@ -121,6 +121,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  const [newDate, setNewDate] = useState('');
  const [newPriceOfCalc, setNewPriceOfCalc] = useState('');
  const [newFairPrice, setNewFairPrice] = useState('');
+ const [newCalcLink, setNewCalcLink] = useState('');
 
  // Inline pricing edits state for all editable cells
  const [editingRow, setEditingRow] = useState<string | null>(null);
@@ -136,6 +137,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  const [editSignal, setEditSignal] = useState('');
  const [editLow52, setEditLow52] = useState('');
  const [editHigh52, setEditHigh52] = useState('');
+ const [editCalcLink, setEditCalcLink] = useState('');
 
  // Pagination
  const [currentPage, setCurrentPage] = useState(1);
@@ -167,6 +169,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  setEditSignal(stock.signal || '');
  setEditLow52(stock.low52 !== null ? stock.low52.toString() : '');
  setEditHigh52(stock.high52 !== null ? stock.high52.toString() : '');
+ setEditCalcLink(stock.calcLink || '');
  };
 
  const handleKeyDown = (e: React.KeyboardEvent, ticker: string) => {
@@ -260,7 +263,8 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  dividend: editDividend,
  signal: finalSignal,
  low52: parsedLow52,
- high52: parsedHigh52
+ high52: parsedHigh52,
+ calcLink: editCalcLink
  });
 
  setEditingRow(null);
@@ -338,6 +342,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  signal: autoSignal,
  low52: priceOfCalcNum ? parseFloat((priceOfCalcNum * 0.78).toFixed(2)) : 80.0,
  high52: priceOfCalcNum ? parseFloat((priceOfCalcNum * 1.25).toFixed(2)) : 125.0,
+ calcLink: newCalcLink,
  };
 
  onAddStock(newStock);
@@ -349,6 +354,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  setNewDate('');
  setNewPriceOfCalc('');
  setNewFairPrice('');
+ setNewCalcLink('');
  };
 
  // Filter logic
@@ -495,14 +501,14 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </div>
  </div>
 
-  {/* Main Grid Responsive Table with exactly 20 columns and scrollbar view */}
+  {/* Main Grid Responsive Table with exactly 21 columns and scrollbar view */}
   <div 
     className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth"
     style={{ WebkitOverflowScrolling: 'touch' }}
   >
-  <table className="w-full text-left border-collapse min-w-[1900px] table-fixed">
+  <table className="w-full text-left border-collapse min-w-[2000px] table-fixed">
  
- <colgroup><col className="w-[100px]" /><col className="w-[85px]" /><col className="w-[185px]" /><col className="w-[95px]" /><col className="w-[120px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[110px]" /><col className="w-[110px]" /><col className="w-[95px]" /><col className="w-[115px]" /><col className="w-[95px]" /><col className="w-[90px]" /><col className="w-[140px]" /><col className="w-[140px]" /><col className="w-[110px]" /><col className="w-[100px]" /><col className="w-[100px]" /><col className="w-[120px]" /></colgroup>
+ <colgroup><col className="w-[100px]" /><col className="w-[85px]" /><col className="w-[185px]" /><col className="w-[95px]" /><col className="w-[120px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[105px]" /><col className="w-[110px]" /><col className="w-[110px]" /><col className="w-[95px]" /><col className="w-[115px]" /><col className="w-[95px]" /><col className="w-[90px]" /><col className="w-[140px]" /><col className="w-[140px]" /><col className="w-[110px]" /><col className="w-[100px]" /><col className="w-[100px]" /><col className="w-[70px]" /><col className="w-[120px]" /></colgroup>
 
  <thead className="sticky top-0 z-20 bg-bg rounded-2xl">
  <tr className="bg-bg rounded-2xl text-ink/90 border-b-2 border-border text-xs uppercase font-medium font-mono tracking-wider select-none">
@@ -537,6 +543,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <th className="py-3 px-4 whitespace-nowrap">Signal</th>
  <th className="py-3 px-4 text-right whitespace-nowrap">52 Low</th>
  <th className="py-3 px-4 text-right whitespace-nowrap">52 High</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">Калк</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">Важни Новини</th>
  </tr>
  </thead>
@@ -898,7 +905,32 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  )}
  </td>
 
- {/* 20. AI ANALIS */}
+ {/* 20. CALC LINK */}
+ <td className="py-3 px-4 text-center">
+ {isEditing ? (
+ <input
+ type="text"
+ placeholder="Линк..."
+ value={editCalcLink}
+ onChange={e => setEditCalcLink(e.target.value)}
+ className="w-full bg-bg rounded-2xl text-xs text-ink border border-border p-1 focus:outline-none focus:border-indigo-500 font-mono"
+ />
+ ) : stock.calcLink ? (
+ <a
+ href={stock.calcLink}
+ target="_blank"
+ rel="noopener noreferrer"
+ className="inline-flex items-center justify-center p-1.5 rounded-full bg-[#10b981]/10 text-[#10b981] hover:bg-[#10b981]/20 transition-colors"
+ title="Отвори калкулацията"
+ >
+ <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+ </a>
+ ) : (
+ <span className="text-ink-faint text-[10px]">-</span>
+ )}
+ </td>
+
+ {/* 21. AI ANALIS */}
  <td className="py-3 px-4 text-center">
  {isEditing ? (
   <div className="flex items-center justify-center gap-1 shrink-0">
@@ -944,7 +976,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
  {pageStocks.length === 0 && (
  <tr>
- <td colSpan={20} className="py-12 text-center text-gray-650 font-sans text-xs">
+ <td colSpan={21} className="py-12 text-center text-gray-650 font-sans text-xs">
  Няма намерени резултати за "{search}". Проверете вашето търсене.
  </td>
  </tr>
@@ -1062,6 +1094,20 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  className="w-full bg-bg rounded-2xl border border-border p-2 focus:outline-none focus:border-blue-900"
  />
  </div>
+ </div>
+
+ {/* Calc Link */}
+ <div className="mt-3.5">
+ <label className="block text-xs font-bold uppercase text-ink/90 mb-1">
+ Линк към калкулация (Опционално)
+ </label>
+ <input
+ type="url"
+ placeholder="https://docs.google.com/spreadsheets/d/..."
+ value={newCalcLink}
+ onChange={e => setNewCalcLink(e.target.value)}
+ className="w-full bg-bg rounded-2xl border border-border p-2 focus:outline-none focus:border-blue-900"
+ />
  </div>
 
  <div className="text-[10.5px] text-ink-faint italic pt-1 text-right leading-tight">
