@@ -83,14 +83,32 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   }, [onClose]);
 
   // Map to TradingView Symbol
-  let tvSymbol = stock.ticker;
-  if (stock.ticker.startsWith('EPA:')) tvSymbol = `EURONEXT:${sym}`;
-  else if (stock.ticker.startsWith('ETR:')) tvSymbol = `XETR:${sym}`;
-  else if (stock.ticker.startsWith('STO:')) tvSymbol = `OMXSTO:${sym}`;
-  else if (stock.ticker.startsWith('SWX:')) tvSymbol = `SIX:${sym}`;
-  else if (stock.ticker === '^GSPC') tvSymbol = 'SP:SPX';
-  else if (stock.ticker === '^NDX') tvSymbol = 'NASDAQ:NDX';
-  else if (!stock.ticker.includes(':')) tvSymbol = sym;
+  const gfToTvMap: Record<string, string> = {
+    "EPA": "EURONEXT", "ETR": "XETR", "FRA": "FWB", "LON": "LSE", "AMS": "EURONEXT",
+    "EBR": "EURONEXT", "BIT": "MIL", "BME": "BME", "VIE": "VIE", "CPH": "OMXCOP",
+    "HEL": "OMXHEL", "STO": "OMXSTO", "SWX": "SIX", "OSL": "OSL", "LIS": "EURONEXT",
+    "ATH": "ATHEX", "IST": "BIST", "WSE": "GPW", "PRG": "PVS", "TSE": "TSE",
+    "HKG": "HKEX", "BSE": "BSE", "NSE": "NSE", "TPE": "TWSE", "ASX": "ASX",
+    "NZZE": "NZX", "TSX": "TSX", "CVE": "TSXV", "JSE": "JSE"
+  };
+
+  let tvSymbol = sym; // Default to raw ticker without prefix
+  if (stock.ticker.includes(':')) {
+    const parts = stock.ticker.split(':');
+    const prefix = parts[0];
+    const rawSym = parts[1];
+    
+    if (gfToTvMap[prefix]) {
+      tvSymbol = `${gfToTvMap[prefix]}:${rawSym}`;
+    } else {
+      tvSymbol = stock.ticker; // fallback to original
+    }
+  } else {
+    // Indexes and fallbacks
+    if (stock.ticker === '^GSPC') tvSymbol = 'SP:SPX';
+    else if (stock.ticker === '^NDX') tvSymbol = 'NASDAQ:NDX';
+    else if (stock.ticker === '^DJI') tvSymbol = 'CBOT:YM1!';
+  }
 
 
   return (
