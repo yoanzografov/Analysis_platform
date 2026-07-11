@@ -455,54 +455,22 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <Plus className="w-3 h-3 text-ink" />
  Добавяне
  </button>
- <button
- onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }}
- className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'all' ? 'bg-bg text-ink border-black' : 'bg-bg text-ink border-border-hover hover:text-ink hover:bg-white/10'
- }`}
- >
- Всички ({stocks.length})
- </button>
- <button
- onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'BUY' }); setCurrentPage(1); }}
- className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'buySell' && activeFilter.value === 'BUY' ? 'bg-[#10b981] text-ink border-[#10b981]/50' : 'bg-bg text-[#10b981] border-[#10b981]/30 hover:bg-[#10b981]/10'
- }`}
- >
- BUY / ПОКУПКИ ({stocks.filter(s => s.buySell === 'BUY').length})
- </button>
- <button
- onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'SELL' }); setCurrentPage(1); }}
- className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'buySell' && activeFilter.value === 'SELL' ? 'bg-[#f43f5e] text-ink border-[#f43f5e]/50' : 'bg-bg text-[#f43f5e] border-[#f43f5e]/30 hover:bg-[#f43f5e]/10'
- }`}
- >
- SELL / ПРОДАЖБИ ({stocks.filter(s => s.buySell === 'SELL').length})
- </button>
- <button
- onClick={() => { onSetActiveFilter({ type: 'buySell', value: 'ДРУГИ' }); setCurrentPage(1); }}
- className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ' ? 'bg-gray-600 text-ink border-gray-700' : 'bg-bg text-ink-muted border-border-hover hover:bg-white/10'
- }`}
- >
- ДРУГИ ({stocks.filter(s => s.buySell === 'ДРУГИ').length})
- </button>
- <button
- onClick={() => { onSetActiveFilter({ type: 'signal', value: 'hold' }); setCurrentPage(1); }}
- className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'signal' && activeFilter.value === 'hold' ? 'bg-amber-700 text-ink border-amber-500/50' : 'bg-bg text-amber-500 border-amber-500/40 hover:bg-amber-500/10'
- }`}
- >
- ИЗЧАКАЙ ({stocks.filter(s => s.signal?.toLowerCase() === 'hold' || s.signal === '').length})
- </button>
- <button
- onClick={() => { onSetActiveFilter({ type: 'watch', value: 'watch' }); setCurrentPage(1); }}
- className={`px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border ${
- activeFilter.type === 'watch' ? 'bg-indigo-500 text-ink border-indigo-800' : 'bg-bg text-indigo-500 border-indigo-400/40 hover:bg-indigo-500/10'
- }`}
- >
- ВНИМАНИЕ ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten' || s.watch === 'Watch' || s.watch === 'Sell' || s.watch === 'Buy' || s.watch === 'Interesting').length})
- </button>
+        <select
+          value={`${activeFilter.type}|${activeFilter.value}`}
+          onChange={(e) => {
+            const [type, value] = e.target.value.split('|');
+            onSetActiveFilter({ type: type as any, value });
+            setCurrentPage(1);
+          }}
+          className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-xl border border-border-hover bg-bg text-ink cursor-pointer focus:outline-none focus:border-indigo-500 h-[26px]"
+        >
+          <option value="all|all">Всички ({stocks.length})</option>
+          <option value="buySell|BUY">BUY / ПОКУПКИ ({stocks.filter(s => s.buySell === 'BUY').length})</option>
+          <option value="buySell|SELL">SELL / ПРОДАЖБИ ({stocks.filter(s => s.buySell === 'SELL').length})</option>
+          <option value="buySell|ДРУГИ">ДРУГИ ({stocks.filter(s => s.buySell === 'ДРУГИ').length})</option>
+          <option value="signal|hold">ИЗЧАКАЙ ({stocks.filter(s => s.signal?.toLowerCase() === 'hold' || s.signal === '').length})</option>
+          <option value="watch|watch">ВНИМАНИЕ ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten' || s.watch === 'Watch' || s.watch === 'Sell' || s.watch === 'Buy' || s.watch === 'Interesting').length})</option>
+        </select>
 
  {/* Special badges when filtering by signals from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
