@@ -88,7 +88,9 @@ export default function CsvUploader({ onDataLoaded }: Props) {
 
  if (sheetIdMatch && sheetIdMatch[1]) {
  // Construct clean direct export URL as CSV format
- fetchUrl = `https://docs.google.com/spreadsheets/d/${sheetIdMatch[1]}/export?format=csv`;
+ const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetIdMatch[1]}/export?format=csv`;
+ // Use a CORS proxy to bypass browser restrictions
+ fetchUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(exportUrl)}`;
  }
 
  const response = await fetch(fetchUrl);
