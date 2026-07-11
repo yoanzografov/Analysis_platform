@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Stock, TableFilter } from '../types';
-import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2 } from 'lucide-react';
+import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
@@ -477,6 +477,16 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
           <option value="signal|hold">ИЗЧАКАЙ ({stocks.filter(s => s.signal?.toLowerCase() === 'hold' || s.signal === '').length})</option>
           <option value="watch|watch">ВНИМАНИЕ ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten' || s.watch === 'Watch' || s.watch === 'Sell' || s.watch === 'Buy' || s.watch === 'Interesting').length})</option>
         </select>
+        <a
+          href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-xl border border-indigo-400/50 bg-indigo-50/5 hover:bg-indigo-500 hover:text-ink text-indigo-400 flex items-center gap-1 cursor-pointer shrink-0 h-[26px]"
+          title="Отвори калкулатора в Google Sheets"
+        >
+          <Calculator className="w-3.5 h-3.5" />
+          Calculator
+        </a>
 
  {/* Special badges when filtering by signals from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
