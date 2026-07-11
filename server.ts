@@ -508,6 +508,7 @@ interface StockQuoteData {
   marketCap?: number;
   dividend?: number;
   dividendYield?: number;
+  earningsTimestamp?: number;
 }
 
 let cachedCookie: string | null = null;
@@ -1375,6 +1376,7 @@ app.get("/api/stock-quotes", async (req, res) => {
             marketCap: q.marketCap || undefined,
             dividend: q.dividendRate !== undefined ? q.dividendRate : q.trailingAnnualDividendRate,
             dividendYield: q.dividendYield !== undefined ? q.dividendYield : q.trailingAnnualDividendYield,
+            earningsTimestamp: q.earningsTimestamp ?? q.earningsTimestampStart ?? undefined,
           };
           // Sync server-side cache
           serverPriceCache[originalTicker] = currentPrice;

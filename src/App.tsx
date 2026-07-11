@@ -118,7 +118,8 @@ export default function App() {
  : stock.dividend,
  difference,
  buySell,
- signal
+ signal,
+ earningsTimestamp: quote.earningsTimestamp !== undefined ? quote.earningsTimestamp : stock.earningsTimestamp
  };
  }
  return stock;

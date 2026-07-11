@@ -614,8 +614,21 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </td>
 
  {/* 2. TICKER */}
- <td className="py-3 px-4 font-extrabold text-ink overflow-hidden text-ellipsis">
- {stock.ticker}
+ <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis">
+   <div className="flex flex-col gap-1 items-start">
+     <span className="font-extrabold">{stock.ticker}</span>
+     {stock.earningsTimestamp && (() => {
+       const daysLeft = Math.ceil((stock.earningsTimestamp * 1000 - Date.now()) / (1000 * 60 * 60 * 24));
+       if (daysLeft >= 0 && daysLeft <= 14) {
+         return (
+           <span className="animate-pulse bg-amber-500/10 text-amber-500 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1 shadow-sm shadow-amber-500/10" title="Наближаващ финансов отчет">
+             ⚠️ {daysLeft === 0 ? 'ДНЕС' : `ОТЧЕТ: ${daysLeft} ДНИ`}
+           </span>
+         );
+       }
+       return null;
+     })()}
+   </div>
  </td>
 
  {/* 3. COMPANY NAME */}

@@ -19,6 +19,7 @@ export interface Stock {
   high52: number | null;
   aiAnalysis?: string;
   calcLink?: string; // Link to Google Sheets calculation
+  earningsTimestamp?: number;
 }
 
 export interface MarketIndex {
