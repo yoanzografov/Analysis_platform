@@ -160,7 +160,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             theme={isDark ? "dark" : "light"}
             autosize
             style="3" // Area chart
-            hide_side_toolbar
+            hide_side_toolbar={false} // explicitly enable side toolbar for measure tool
             hide_legend
             allow_symbol_change={false}
             save_image={false}
