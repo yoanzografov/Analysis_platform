@@ -367,6 +367,11 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
  if (activeFilter.type === 'all') return true;
  
+ // Support filtering exactly by watch column values
+ if (activeFilter.type === 'watch') {
+   return stock.watch === activeFilter.value;
+ }
+
  if (activeFilter.type === 'signal') {
  const sig = stock.signal?.trim().toLowerCase();
  if (activeFilter.value === 'buy') {
@@ -382,10 +387,6 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
  if (activeFilter.type === 'buySell') {
  return stock.buySell === activeFilter.value;
- }
-
- if (activeFilter.type === 'watch') {
- return stock.watch === 'Attn' || stock.watch === 'Atten' || stock.watch === 'Watch' || stock.watch === 'Sell' || stock.watch === 'Buy' || stock.watch === 'Interesting';
  }
 
  if (activeFilter.type === 'ticker') {
@@ -471,11 +472,12 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
           className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-xl border border-border-hover bg-bg text-ink cursor-pointer focus:outline-none focus:border-indigo-500 h-[26px]"
         >
           <option value="all|all">Всички ({stocks.length})</option>
-          <option value="buySell|BUY">BUY / ПОКУПКИ ({stocks.filter(s => s.buySell === 'BUY').length})</option>
-          <option value="buySell|SELL">SELL / ПРОДАЖБИ ({stocks.filter(s => s.buySell === 'SELL').length})</option>
-          <option value="buySell|ДРУГИ">ДРУГИ ({stocks.filter(s => s.buySell === 'ДРУГИ').length})</option>
-          <option value="signal|hold">ИЗЧАКАЙ ({stocks.filter(s => s.signal?.toLowerCase() === 'hold' || s.signal === '').length})</option>
-          <option value="watch|watch">ВНИМАНИЕ ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten' || s.watch === 'Watch' || s.watch === 'Sell' || s.watch === 'Buy' || s.watch === 'Interesting').length})</option>
+          <option value="watch|Buy">Watch: Buy ({stocks.filter(s => s.watch === 'Buy').length})</option>
+          <option value="watch|Sell">Watch: Sell ({stocks.filter(s => s.watch === 'Sell').length})</option>
+          <option value="watch|Watch">Watch: Watch ({stocks.filter(s => s.watch === 'Watch').length})</option>
+          <option value="watch|Attn">Watch: Attn ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten').length})</option>
+          <option value="watch|Interesting">Watch: Interesting ({stocks.filter(s => s.watch === 'Interesting').length})</option>
+          <option value="watch|Not interesting">Watch: Not interesting ({stocks.filter(s => s.watch === 'Not interesting').length})</option>
         </select>
         <a
           href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
