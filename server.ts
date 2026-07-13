@@ -1439,6 +1439,40 @@ app.get("/api/stock-quotes", async (req, res) => {
       }
     }
 
+    // Override ^VIX with TradingView real-time feed if it was requested
+    if (tickers.includes("^VIX")) {
+      try {
+        const tvUrl = "https://scanner.tradingview.com/america/scan";
+        const body = {
+          symbols: { tickers: ["CBOE:VIX"], query: { types: [] } },
+          columns: ["close", "change", "change_abs"]
+        };
+        const tvResponse = await fetch(tvUrl, {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0"
+          },
+          body: JSON.stringify(body)
+        });
+        if (tvResponse.ok) {
+          const tvData = await tvResponse.json();
+          if (tvData?.data?.[0]?.d) {
+            const vixData = tvData.data[0].d;
+            results["^VIX"] = {
+              ...(results["^VIX"] || {}),
+              currentPrice: parseFloat(vixData[0].toFixed(2)),
+              dailyChangePct: parseFloat(vixData[1].toFixed(2)),
+              companyName: "CBOE Volatility Index",
+            };
+            serverPriceCache["^VIX"] = vixData[0];
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch VIX from TradingView override:", err);
+      }
+    }
+
     return res.json({ quotes: results, source: "live-yahoo-chart-unblocked" });
 
   } catch (error: any) {
