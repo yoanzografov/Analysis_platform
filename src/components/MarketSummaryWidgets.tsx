@@ -108,15 +108,17 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  // Filter valid stocks with valid changes
  const validGainers = stocks.filter(s => s.dailyChangePct !== null && !isNaN(s.dailyChangePct));
 
- // 1. Get Top 15 Gainers
- const top15Gainers = [...validGainers]
- .sort((a, b) => b.dailyChangePct - a.dailyChangePct)
- .slice(0, 15);
+ // 1. Get Top 15 Gainers (only positive change)
+ const top15Gainers = validGainers
+   .filter(s => s.dailyChangePct > 0)
+   .sort((a, b) => b.dailyChangePct - a.dailyChangePct)
+   .slice(0, 15);
 
- // 2. Get Top 15 Losers
- const top15Losers = [...validGainers]
- .sort((a, b) => a.dailyChangePct - b.dailyChangePct)
- .slice(0, 15);
+ // 2. Get Top 15 Losers (only negative change)
+ const top15Losers = validGainers
+   .filter(s => s.dailyChangePct < 0)
+   .sort((a, b) => a.dailyChangePct - b.dailyChangePct)
+   .slice(0, 15);
 
  const handleWidgetClick = (ticker: string) => {
  if (activeFilter.type === 'ticker' && activeFilter.value === ticker) {
