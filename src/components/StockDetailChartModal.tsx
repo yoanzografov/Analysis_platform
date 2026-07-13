@@ -159,12 +159,18 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             symbol={tvSymbol}
             theme={isDark ? "dark" : "light"}
             autosize
-            style="3" // Area chart
-            hide_side_toolbar={false} // explicitly enable side toolbar for measure tool
-            hide_legend
-            allow_symbol_change={false}
-            save_image={false}
-            withdateranges
+            style="1" // Candlestick chart
+            interval="D"
+            timezone="exchange"
+            hide_top_toolbar={false}
+            hide_side_toolbar={false}
+            hide_legend={false}
+            allow_symbol_change={true}
+            save_image={true}
+            details={true}
+            hotlist={true}
+            calendar={true}
+            withdateranges={true}
             range="12M"
           />
         </div>
