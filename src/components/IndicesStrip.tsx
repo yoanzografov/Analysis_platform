@@ -144,20 +144,11 @@ export default function IndicesStrip({ indices, isSimulating, onNewUserClick }: 
                     {formatPrice(item.value, item.name)}
                   </span>
                   <div
-                    className={`flex items-center gap-0.5 text-[10px] font-mono font-black leading-none mt-0.5 ${
+                    className={`text-[10px] font-mono font-black leading-none mt-0.5 truncate ${
                       isPositive ? 'text-[#10b981]' : 'text-red-500'
                     }`}
                   >
-                    {isPositive ? (
-                      <ArrowUpRight className="w-3 h-3 shrink-0" />
-                    ) : (
-                      <ArrowDownRight className="w-3 h-3 shrink-0" />
-                    )}
-                    <span className="truncate">
-                      {isPositive ? '+' : ''}{item.changeVal !== undefined ? item.changeVal.toFixed(2) : '0.00'}
-                      &nbsp;
-                      {isPositive ? '+' : ''}{item.changePct.toFixed(2)}%
-                    </span>
+                    {isPositive ? '+' : ''}{item.changeVal !== undefined ? item.changeVal.toFixed(2) : '0.00'} {isPositive ? '+' : ''}{item.changePct.toFixed(2)}%
                   </div>
                 </div>
               );
