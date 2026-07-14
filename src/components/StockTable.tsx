@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter } from '../types';
 import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
@@ -173,15 +173,20 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  setEditCalcLink(stock.calcLink || '');
  };
 
- const handleKeyDown = (e: React.KeyboardEvent, ticker: string) => {
- if (e.key === 'Enter') {
- handleSaveClick(ticker);
- } else if (e.key === 'Escape') {
- cancelInlineEdit();
- }
- };
+  useEffect(() => {
+    if (!editingRow) return;
+    const onGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleSaveClick(editingRow);
+      } else if (e.key === 'Escape') {
+        cancelInlineEdit();
+      }
+    };
+    window.addEventListener('keydown', onGlobalKeyDown);
+    return () => window.removeEventListener('keydown', onGlobalKeyDown);
+  });
 
-  const handleSaveClick = (ticker: string) => {
+ const handleSaveClick = (ticker: string) => {
     const original = stocks.find(s => s.ticker === ticker);
     if (!original) return;
 
