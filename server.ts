@@ -779,11 +779,19 @@ app.get("/api/news", async (req, res) => {
     const cleanTicker = ticker.includes(':') ? ticker.split(':')[1] : ticker;
     const saUrl = `https://seekingalpha.com/api/sa/combined/${encodeURIComponent(cleanTicker)}.xml`;
 
+    const fetchWithTimeout = (promise: Promise<any>, ms: number) => {
+      let timeoutId: NodeJS.Timeout;
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('RSS Feed Timeout')), ms);
+      });
+      return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+    };
+
     const [yahooFeed, googleFeed, bingFeed, saFeed] = await Promise.allSettled([
-      rssParser.parseURL(yahooUrl),
-      rssParser.parseURL(googleUrl),
-      rssParser.parseURL(bingUrl),
-      rssParser.parseURL(saUrl)
+      fetchWithTimeout(rssParser.parseURL(yahooUrl), 5000),
+      fetchWithTimeout(rssParser.parseURL(googleUrl), 5000),
+      fetchWithTimeout(rssParser.parseURL(bingUrl), 5000),
+      fetchWithTimeout(rssParser.parseURL(saUrl), 5000)
     ]);
 
     let rawNews: Array<{ title: string; link: string; pubDate: string; source: string }> = [];
