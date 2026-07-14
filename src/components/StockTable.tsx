@@ -655,7 +655,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <span className="truncate">{stock.companyName}</span>
  <button
  onClick={() => startInlineEdit(stock)}
- className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
+ className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
  title="Редактирай име"
  >
  <Edit2 className="w-2.5 h-2.5" />
@@ -689,7 +689,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <span className="truncate">{stock.date || '-'}</span>
  <button
  onClick={() => startInlineEdit(stock)}
- className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
+ className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
  title="Редактирай дата"
  >
  <Edit2 className="w-2.5 h-2.5" />
@@ -713,7 +713,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <span>{stock.priceOfCalc !== null ? `$${stock.priceOfCalc.toFixed(2)}` : '-'}</span>
  <button
  onClick={() => startInlineEdit(stock)}
- className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
+ className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
  title="Редактирай калк. цена"
  >
  <Edit2 className="w-2.5 h-2.5" />
@@ -767,7 +767,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <span>{stock.fairPrice !== null ? `$${stock.fairPrice.toFixed(2)}` : 'N/A'}</span>
  <button
  onClick={() => startInlineEdit(stock)}
- className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-[#10b981] hover:text-ink transition-opacity p-0.5 shrink-0"
+ className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-[#10b981] hover:text-ink transition-opacity p-0.5 shrink-0"
  title="Редактирай справедлива цена"
  >
  <Edit2 className="w-2.5 h-2.5" />
@@ -848,7 +848,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <span className="whitespace-nowrap font-mono">{formatDividend(stock.dividend, stock.currentPrice)}</span>
  <button
  onClick={() => startInlineEdit(stock)}
- className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
+ className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
  title="Редактирай дивидент"
  >
  <Edit2 className="w-2.5 h-2.5" />
@@ -871,7 +871,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <span className="truncate font-semibold">{stock.signal || '-'}</span>
  <button
  onClick={() => startInlineEdit(stock)}
- className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
+ className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
  title="Редактирай сигнал"
  >
  <Edit2 className="w-2.5 h-2.5" />
@@ -895,7 +895,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <span>{stock.low52 !== null ? `$${stock.low52.toFixed(2)}` : '-'}</span>
  <button
  onClick={() => startInlineEdit(stock)}
- className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
+ className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
  title="Редактирай 52W Low"
  >
  <Edit2 className="w-2.5 h-2.5" />
@@ -919,7 +919,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <span>{stock.high52 !== null ? `$${stock.high52.toFixed(2)}` : '-'}</span>
  <button
  onClick={() => startInlineEdit(stock)}
- className="opacity-0 group-hover:opacity-100 group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
+ className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
  title="Редактирай 52W High"
  >
  <Edit2 className="w-2.5 h-2.5" />
