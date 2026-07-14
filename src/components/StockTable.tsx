@@ -658,47 +658,50 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
   {/* 2. TICKER */}
   <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis">
-    <div className="flex items-center gap-2">
-      <StockLogo ticker={stock.ticker} />
-      <div className="flex flex-col gap-1 items-start">
-        <span className="font-extrabold">{stock.ticker}</span>
-        {stock.earningsTimestamp && (() => {
-          const daysLeft = Math.ceil((stock.earningsTimestamp * 1000 - Date.now()) / (1000 * 60 * 60 * 24));
-          if (daysLeft >= 0 && daysLeft <= 14) {
-            return (
-              <span className="animate-pulse bg-amber-500/10 text-amber-500 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1 shadow-sm shadow-amber-500/10" title="Наближаващ финансов отчет">
-                ⚠️ {daysLeft === 0 ? 'ДНЕС' : `ОТЧЕТ: ${daysLeft} ДНИ`}
-              </span>
-            );
-          }
-          return null;
-        })()}
-      </div>
+    <div className="flex flex-col gap-1 items-start">
+      <span className="font-extrabold">{stock.ticker}</span>
+      {stock.earningsTimestamp && (() => {
+        const daysLeft = Math.ceil((stock.earningsTimestamp * 1000 - Date.now()) / (1000 * 60 * 60 * 24));
+        if (daysLeft >= 0 && daysLeft <= 14) {
+          return (
+            <span className="animate-pulse bg-amber-500/10 text-amber-500 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1 shadow-sm shadow-amber-500/10" title="Наближаващ финансов отчет">
+              ⚠️ {daysLeft === 0 ? 'ДНЕС' : `ОТЧЕТ: ${daysLeft} ДНИ`}
+            </span>
+          );
+        }
+        return null;
+      })()}
     </div>
   </td>
 
- {/* 3. COMPANY NAME */}
- <td className="py-3 px-4 text-ink font-sans font-medium hover:text-ink transition-colors overflow-hidden text-ellipsis whitespace-nowrap">
- {isEditing ? (
- <input
- type="text"
- value={editCompanyName}
- onChange={e => setEditCompanyName(e.target.value)}
- className="w-full bg-bg rounded-2xl text-left font-sans text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
- />
- ) : (
- <div className="flex items-center justify-between gap-1 group/cell">
- <span className="truncate">{stock.companyName}</span>
- <button
- onClick={() => startInlineEdit(stock)}
- className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
- title="Редактирай име"
- >
- <Edit2 className="w-2.5 h-2.5" />
- </button>
- </div>
- )}
- </td>
+  {/* 3. COMPANY NAME */}
+  <td className="py-3 px-4 text-ink font-sans font-medium hover:text-ink transition-colors overflow-hidden text-ellipsis whitespace-nowrap">
+  {isEditing ? (
+  <div className="flex items-center gap-2">
+    <StockLogo ticker={stock.ticker} />
+    <input
+    type="text"
+    value={editCompanyName}
+    onChange={e => setEditCompanyName(e.target.value)}
+    className="w-full bg-bg rounded-2xl text-left font-sans text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
+    />
+  </div>
+  ) : (
+  <div className="flex items-center gap-2 group/cell">
+    <StockLogo ticker={stock.ticker} />
+    <div className="flex items-center justify-between gap-1 w-full overflow-hidden">
+      <span className="truncate">{stock.companyName}</span>
+      <button
+      onClick={() => startInlineEdit(stock)}
+      className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
+      title="Редактирай име"
+      >
+      <Edit2 className="w-2.5 h-2.5" />
+      </button>
+    </div>
+  </div>
+  )}
+  </td>
 
  {/* 4. 365 CHART */}
  <td className="py-3 px-4 text-center">
