@@ -1,7 +1,7 @@
 import React from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { Stock, TableFilter } from '../types';
-import { Percent, TrendingUp } from 'lucide-react';
+import { Percent, TrendingUp, Info } from 'lucide-react';
 
 interface Props {
  stocks: Stock[];
@@ -66,13 +66,25 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
   {/* 1. BUY / SELL Ratio Pie Chart */}
   <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between lg:col-span-1">
 
- <div>
- <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
- BUY / SELL Weight Allocation
- </span>
- <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
- Съотношение BUY / SELL
- </h3>
+ <div className="flex items-start justify-between">
+   <div>
+     <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
+       BUY / SELL Weight Allocation
+     </span>
+     <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
+       Съотношение BUY / SELL
+     </h3>
+   </div>
+   <div className="group relative z-50">
+     <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink transition-colors cursor-help" />
+     <div className="absolute right-0 w-64 p-3 bg-bg border border-border rounded-xl shadow-xl text-[10px] text-ink opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none mt-2 font-mono">
+       <span className="font-extrabold block mb-1">Как се изчислява?</span>
+       <span className="text-emerald-500 font-bold">BUY:</span> Отклонение &lt; -10%<br />
+       <span className="text-red-500 font-bold">SELL:</span> Отклонение &gt; 10%<br />
+       <span className="text-blue-500 font-bold">ДРУГИ (Fair Value):</span> Между -10% и +10%<br /><br />
+       <span className="text-ink-muted block leading-tight">Отклонението е процентната разлика между Текущата и Справедливата цена.</span>
+     </div>
+   </div>
  </div>
 
  <div className="h-32 relative flex items-center justify-center my-1.5">
