@@ -161,6 +161,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  const [editLow52, setEditLow52] = useState('');
  const [editHigh52, setEditHigh52] = useState('');
  const [editCalcLink, setEditCalcLink] = useState('');
+ const [editAiAnalysis, setEditAiAnalysis] = useState('');
 
  // Pagination
  const [currentPage, setCurrentPage] = useState(1);
@@ -194,6 +195,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  setEditLow52(stock.low52 !== null ? stock.low52.toString() : '');
  setEditHigh52(stock.high52 !== null ? stock.high52.toString() : '');
  setEditCalcLink(stock.calcLink || '');
+ setEditAiAnalysis(stock.aiAnalysis || '');
  };
 
   useEffect(() => {
@@ -294,7 +296,8 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  signal: finalSignal,
  low52: parsedLow52,
  high52: parsedHigh52,
- calcLink: editCalcLink
+ calcLink: editCalcLink,
+ aiAnalysis: editAiAnalysis
  });
 
  setEditingRow(null);
@@ -583,6 +586,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <th className="py-3 px-4 whitespace-nowrap">Signal</th>
  <th className="py-3 px-4 text-right whitespace-nowrap">52 Low</th>
  <th className="py-3 px-4 text-right whitespace-nowrap">52 High</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">AI Анализ</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">Калк</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">Важни Новини</th>
  </tr>
@@ -979,7 +983,32 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  )}
  </td>
 
- {/* 20. CALC LINK */}
+ {/* 20. AI ANALYSIS LINK */}
+ <td className="py-3 px-4 text-center">
+ {isEditing ? (
+ <input
+ type="text"
+ placeholder="AI Линк..."
+ value={editAiAnalysis}
+ onChange={e => setEditAiAnalysis(e.target.value)}
+ className="w-full bg-bg rounded-2xl text-xs text-ink border border-border p-1 focus:outline-none focus:border-indigo-500 font-mono"
+ />
+ ) : stock.aiAnalysis ? (
+ <a
+ href={stock.aiAnalysis}
+ target="_blank"
+ rel="noopener noreferrer"
+ className="inline-flex items-center justify-center p-1.5 rounded-full bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+ title="Отвори AI Анализа"
+ >
+ <Sparkles className="w-3.5 h-3.5" />
+ </a>
+ ) : (
+ <span className="text-ink-faint text-[10px]">-</span>
+ )}
+ </td>
+
+ {/* 21. CALC LINK */}
  <td className="py-3 px-4 text-center">
  {isEditing ? (
  <input
@@ -1004,7 +1033,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  )}
  </td>
 
- {/* 21. AI ANALIS */}
+ {/* 22. AI ANALIS */}
  <td className="py-3 px-4 text-center">
  {isEditing ? (
   <div className="flex items-center justify-center gap-1 shrink-0">
@@ -1050,7 +1079,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
  {pageStocks.length === 0 && (
  <tr>
- <td colSpan={21} className="py-12 text-center text-gray-650 font-sans text-xs">
+ <td colSpan={22} className="py-12 text-center text-gray-650 font-sans text-xs">
  Няма намерени резултати за "{search}". Проверете вашето търсене.
  </td>
  </tr>
