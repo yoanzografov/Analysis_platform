@@ -472,12 +472,12 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
           className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-xl border border-border-hover bg-bg text-ink cursor-pointer focus:outline-none focus:border-indigo-500 h-[26px]"
         >
           <option value="all|all">Всички ({stocks.length})</option>
-          <option value="watch|Buy">Watch: Buy ({stocks.filter(s => s.watch === 'Buy').length})</option>
-          <option value="watch|Sell">Watch: Sell ({stocks.filter(s => s.watch === 'Sell').length})</option>
-          <option value="watch|Watch">Watch: Watch ({stocks.filter(s => s.watch === 'Watch').length})</option>
-          <option value="watch|Attn">Watch: Attn ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten').length})</option>
-          <option value="watch|Interesting">Watch: Interesting ({stocks.filter(s => s.watch === 'Interesting').length})</option>
-          <option value="watch|Not interesting">Watch: Not interesting ({stocks.filter(s => s.watch === 'Not interesting').length})</option>
+          <option value="watch|Buy">Buy ({stocks.filter(s => s.watch === 'Buy').length})</option>
+          <option value="watch|Sell">Sell ({stocks.filter(s => s.watch === 'Sell').length})</option>
+          <option value="watch|Watch">Watch ({stocks.filter(s => s.watch === 'Watch').length})</option>
+          <option value="watch|Attn">Attn ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten').length})</option>
+          <option value="watch|Interesting">Interesting ({stocks.filter(s => s.watch === 'Interesting').length})</option>
+          <option value="watch|Not interesting">Not interesting ({stocks.filter(s => s.watch === 'Not interesting').length})</option>
         </select>
         <a
           href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
