@@ -12,7 +12,8 @@ interface Props {
  onAddStock: (newStock: Stock) => void;
  activeFilter: TableFilter;
  onSetActiveFilter: (filter: TableFilter) => void;
- buySellThreshold: number;
+ buyThreshold: number;
+ sellThreshold: number;
 }
 
 type SortField = 'ticker' | 'dailyChangePct' | 'currentPrice' | 'fairPrice' | 'difference' | 'marketCap';
@@ -127,7 +128,7 @@ const StockLogo = ({ ticker }: { ticker: string }) => {
   );
 };
 
-export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, activeFilter, onSetActiveFilter, buySellThreshold }: Props) {
+export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold }: Props) {
  // Search state
  const [search, setSearch] = useState('');
 
@@ -269,9 +270,9 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  let buySell = 'SELL';
  if (finalFair !== null && parsedCurrentPrice > 0) {
  const dev = ((parsedCurrentPrice - finalFair) / finalFair) * 100;
- if (dev < -buySellThreshold) {
+ if (dev < -buyThreshold) {
  buySell = 'BUY';
- } else if (dev > buySellThreshold) {
+ } else if (dev > sellThreshold) {
  buySell = 'SELL';
  } else {
  buySell = 'ДРУГИ';
@@ -347,9 +348,9 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  let buySellValue = 'SELL';
  if (fairPriceNum !== null && initialPrice > 0) {
  const dev = ((initialPrice - fairPriceNum) / fairPriceNum) * 100;
- if (dev < -buySellThreshold) {
+ if (dev < -buyThreshold) {
  buySellValue = 'BUY';
- } else if (dev > buySellThreshold) {
+ } else if (dev > sellThreshold) {
  buySellValue = 'SELL';
  } else {
  buySellValue = 'ДРУГИ';

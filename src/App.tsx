@@ -50,23 +50,30 @@ export default function App() {
  // Prevent infinite save loops with Firebase
  const lastSavedRef = useRef('');
 
- const [buySellThreshold, setBuySellThreshold] = useState<number>(10);
- const thresholdRef = useRef(10);
- useEffect(() => { thresholdRef.current = buySellThreshold; }, [buySellThreshold]);
+  const [buyThreshold, setBuyThreshold] = useState<number>(10);
+  const [sellThreshold, setSellThreshold] = useState<number>(10);
+  
+  const buyThresholdRef = useRef(10);
+  const sellThresholdRef = useRef(10);
+  useEffect(() => { 
+    buyThresholdRef.current = buyThreshold;
+    sellThresholdRef.current = sellThreshold; 
+  }, [buyThreshold, sellThreshold]);
 
- const handleUpdateThreshold = (newVal: number) => {
-   setBuySellThreshold(newVal);
-   setStocks(prev => prev.map(s => {
-     let bs = 'SELL';
-     if (s.fairPrice !== null && s.currentPrice > 0) {
-       const dev = ((s.currentPrice - s.fairPrice) / s.fairPrice) * 100;
-       if (dev < -newVal) bs = 'BUY';
-       else if (dev > newVal) bs = 'SELL';
-       else bs = 'ДРУГИ';
-     }
-     return { ...s, buySell: bs };
-   }));
- };
+  const handleUpdateThresholds = (newBuy: number, newSell: number) => {
+    setBuyThreshold(newBuy);
+    setSellThreshold(newSell);
+    setStocks(prev => prev.map(s => {
+      let bs = 'SELL';
+      if (s.fairPrice !== null && s.currentPrice > 0) {
+        const dev = ((s.currentPrice - s.fairPrice) / s.fairPrice) * 100;
+        if (dev < -newBuy) bs = 'BUY';
+        else if (dev > newSell) bs = 'SELL';
+        else bs = 'ДРУГИ';
+      }
+      return { ...s, buySell: bs };
+    }));
+  };
 
  // Live direct quotes sync from Yahoo Finance backend proxy
  const fetchRealStockPricesDirect = async (stocksList?: Stock[]) => {
@@ -107,17 +114,15 @@ export default function App() {
  let buySell = 'SELL';
  if (stock.fairPrice !== null && nextPrice > 0) {
  const dev = ((nextPrice - stock.fairPrice) / stock.fairPrice) * 100;
- if (dev < -thresholdRef.current) {
+ if (dev < -buyThresholdRef.current) {
  buySell = 'BUY';
- } else if (dev > thresholdRef.current) {
+ } else if (dev > sellThresholdRef.current) {
  buySell = 'SELL';
  } else {
  buySell = 'ДРУГИ';
  }
  }
  const signal = difference !== null ? (difference > 15 ? 'Buy' : difference < -15 ? 'Sell' : 'Hold') : 'Hold';
-
-
 
  return {
  ...stock,
@@ -202,7 +207,11 @@ export default function App() {
           if (data.stocks) setStocks(data.stocks);
           if (data.indices) setIndices(data.indices);
           if (data.alerts) setAlerts(data.alerts);
-          if (data.settings?.buySellThreshold !== undefined) setBuySellThreshold(data.settings.buySellThreshold);
+          if (data.settings?.buyThreshold !== undefined) setBuyThreshold(data.settings.buyThreshold);
+          else if (data.settings?.buySellThreshold !== undefined) setBuyThreshold(data.settings.buySellThreshold);
+          
+          if (data.settings?.sellThreshold !== undefined) setSellThreshold(data.settings.sellThreshold);
+          else if (data.settings?.buySellThreshold !== undefined) setSellThreshold(data.settings.buySellThreshold);
         }
         
         if (!isLoaded) {
@@ -229,7 +238,7 @@ export default function App() {
         setAlerts(defaultAlerts);
         setIsLoaded(true);
         
-        const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts, settings: { buySellThreshold: 10 } };
+        const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts, settings: { buyThreshold: 10, sellThreshold: 10 } };
         lastSavedRef.current = JSON.stringify(initialData);
         
         setDoc(doc(db, "portfolio", "default"), initialData)
@@ -246,21 +255,21 @@ export default function App() {
     return () => unsub();
   }, [isLoaded]);
 
- // Persistence save hooks (to Firebase)
+  // Persistence save hooks (to Firebase)
   useEffect(() => {
     if (isLoaded) {
-      const currentDataString = JSON.stringify({ stocks, indices, alerts, settings: { buySellThreshold } });
+      const currentDataString = JSON.stringify({ stocks, indices, alerts, settings: { buyThreshold, sellThreshold } });
       if (lastSavedRef.current !== currentDataString) {
         lastSavedRef.current = currentDataString;
         setDoc(doc(db, "portfolio", "default"), {
           stocks,
           indices,
           alerts,
-          settings: { buySellThreshold }
+          settings: { buyThreshold, sellThreshold }
         }, { merge: true }).catch(err => console.error("Firebase Save Error:", err));
       }
     }
-  }, [stocks, indices, alerts, buySellThreshold, isLoaded]);
+  }, [stocks, indices, alerts, buyThreshold, sellThreshold, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
@@ -413,17 +422,15 @@ export default function App() {
  let buySell = 'SELL';
  if (stock.fairPrice !== null && nextPrice > 0) {
  const dev = ((nextPrice - stock.fairPrice) / stock.fairPrice) * 100;
- if (dev < -thresholdRef.current) {
+ if (dev < -buyThresholdRef.current) {
  buySell = 'BUY';
- } else if (dev > thresholdRef.current) {
+ } else if (dev > sellThresholdRef.current) {
  buySell = 'SELL';
  } else {
  buySell = 'ДРУГИ';
  }
  }
  const signal = difference !== null ? (difference > 15 ? 'Buy' : difference < -15 ? 'Sell' : 'Hold') : 'Hold';
-
-
 
  return {
  ...stock,
@@ -725,14 +732,15 @@ export default function App() {
  onSetActiveFilter={setActiveFilter}
  />
 
- {/* Bento Board: Analytics charts, Distribution */}
- <BentoCharts 
- stocks={stocks} 
- activeFilter={activeFilter}
- onSetActiveFilter={setActiveFilter}
- buySellThreshold={buySellThreshold}
- onUpdateThreshold={handleUpdateThreshold}
- />
+  {/* Bento Board: Analytics charts, Distribution */}
+  <BentoCharts 
+  stocks={stocks} 
+  activeFilter={activeFilter}
+  onSetActiveFilter={setActiveFilter}
+  buyThreshold={buyThreshold}
+  sellThreshold={sellThreshold}
+  onUpdateThresholds={handleUpdateThresholds}
+  />
 
  {/* Main Grid stock table database */}
  <div className="space-y-2" id="stock-table-section">
@@ -754,11 +762,12 @@ export default function App() {
  stocks={stocks} 
  onUpdateStock={handleUpdateStock} 
  onDeleteStock={handleDeleteStock}
- onSelectStockForAi={setSelectedStockForAi} 
- activeFilter={activeFilter}
- onSetActiveFilter={setActiveFilter}
- buySellThreshold={buySellThreshold}
- onAddStock={(newStock) => {
+  onSelectStockForAi={setSelectedStockForAi} 
+  activeFilter={activeFilter}
+  onSetActiveFilter={setActiveFilter}
+  buyThreshold={buyThreshold}
+  sellThreshold={sellThreshold}
+  onAddStock={(newStock) => {
  setStocks(prev => [...prev, newStock]);
  const newLog = {
  id: `${Date.now()}-${Math.random()}`,
