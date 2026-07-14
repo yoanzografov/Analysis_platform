@@ -67,14 +67,29 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
   {/* 1. BUY / SELL Ratio Pie Chart */}
   <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between lg:col-span-1">
-
+ <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
  <div>
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
  BUY / SELL Weight Allocation
  </span>
- <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
+ <h3 className="text-[10px] sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
  Съотношение BUY / SELL
  </h3>
+ </div>
+ 
+ <div className="flex items-center gap-1 text-[10px] font-mono bg-black/10 px-1.5 py-0.5 rounded border border-border/50 self-start">
+ <span className="text-ink-muted font-bold tracking-tighter">±</span>
+ <input 
+ type="number" 
+ value={buySellThreshold}
+ onChange={e => {
+   const val = Number(e.target.value);
+   if (!isNaN(val) && val >= 0) onUpdateThreshold(val);
+ }}
+ className="w-7 bg-transparent text-ink font-extrabold text-center focus:outline-none p-0"
+ />
+ <span className="text-ink-muted font-bold tracking-tighter">%</span>
+ </div>
  </div>
 
  <div className="h-32 relative flex items-center justify-center my-1.5">
@@ -139,22 +154,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  ДРУГИ
  <Info className="w-3 h-3 text-ink-faint hover:text-ink transition-colors" />
  <div className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 w-72 p-3 bg-bg border border-border rounded-xl shadow-xl text-[10px] text-ink text-left opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all z-[100] font-mono normal-case">
- <div className="flex items-center justify-between mb-2">
- <span className="font-extrabold text-sm">Праг за BUY/SELL:</span>
- <div className="flex items-center gap-1">
- <span className="text-ink-muted">±</span>
- <input 
- type="number" 
- value={buySellThreshold}
- onChange={e => {
-   const val = Number(e.target.value);
-   if (!isNaN(val) && val >= 0) onUpdateThreshold(val);
- }}
- className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5"
- />
- <span className="text-ink-muted">%</span>
- </div>
- </div>
+ <span className="font-extrabold block mb-1">Как се изчислява?</span>
  <span className="text-emerald-500 font-bold">BUY:</span> Отклонение &lt; -{buySellThreshold}%<br />
  <span className="text-red-500 font-bold">SELL:</span> Отклонение &gt; {buySellThreshold}%<br />
  <span className="text-blue-500 font-bold">ДРУГИ:</span> Между -{buySellThreshold}% и +{buySellThreshold}%<br /><br />
