@@ -66,25 +66,13 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
   {/* 1. BUY / SELL Ratio Pie Chart */}
   <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between lg:col-span-1">
 
- <div className="flex items-start justify-between">
-   <div>
-     <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
-       BUY / SELL Weight Allocation
-     </span>
-     <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
-       Съотношение BUY / SELL
-     </h3>
-   </div>
-   <div className="group relative z-50">
-     <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink transition-colors cursor-help" />
-     <div className="absolute right-0 w-64 p-3 bg-bg border border-border rounded-xl shadow-xl text-[10px] text-ink opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none mt-2 font-mono">
-       <span className="font-extrabold block mb-1">Как се изчислява?</span>
-       <span className="text-emerald-500 font-bold">BUY:</span> Отклонение &lt; -10%<br />
-       <span className="text-red-500 font-bold">SELL:</span> Отклонение &gt; 10%<br />
-       <span className="text-blue-500 font-bold">ДРУГИ (Fair Value):</span> Между -10% и +10%<br /><br />
-       <span className="text-ink-muted block leading-tight">Отклонението е процентната разлика между Текущата и Справедливата цена.</span>
-     </div>
-   </div>
+ <div>
+ <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
+ BUY / SELL Weight Allocation
+ </span>
+ <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
+ Съотношение BUY / SELL
+ </h3>
  </div>
 
  <div className="h-32 relative flex items-center justify-center my-1.5">
@@ -145,7 +133,17 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
           }`}
  title="Филтрирай компании по ДРУГИ"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ДРУГИ</div>
+ <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight flex items-center justify-center gap-1 group/info relative">
+ ДРУГИ
+ <Info className="w-3 h-3 text-ink-faint hover:text-ink transition-colors" />
+ <div className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 w-64 p-3 bg-bg border border-border rounded-xl shadow-xl text-[10px] text-ink text-left opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all pointer-events-none z-[100] font-mono normal-case cursor-default">
+ <span className="font-extrabold block mb-1">Как се изчислява?</span>
+ <span className="text-emerald-500 font-bold">BUY:</span> Отклонение &lt; -10%<br />
+ <span className="text-red-500 font-bold">SELL:</span> Отклонение &gt; 10%<br />
+ <span className="text-blue-500 font-bold">ДРУГИ (Fair Value):</span> Между -10% и +10%<br /><br />
+ <span className="text-ink-muted block leading-tight">Отклонението е процентната разлика между Текущата и Справедливата цена.</span>
+ </div>
+ </div>
  <div className="text-xs font-extrabold text-ink-muted">{bsOthersCount}</div>
  </button>
  </div>
