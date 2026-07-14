@@ -105,6 +105,27 @@ function fromIsoDate(isoStr: string): string {
  return isoStr;
 }
 
+const StockLogo = ({ ticker }: { ticker: string }) => {
+  const [error, setError] = useState(false);
+  
+  if (error) {
+    return (
+      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-ink-muted border border-white/20 shrink-0">
+        {ticker.charAt(0)}
+      </div>
+    );
+  }
+  
+  return (
+    <img 
+      src={`https://financialmodelingprep.com/image-stock/${ticker}.png`} 
+      alt={ticker}
+      onError={() => setError(true)}
+      className="w-6 h-6 rounded-full bg-white/10 shrink-0 object-contain"
+    />
+  );
+};
+
 export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, activeFilter, onSetActiveFilter }: Props) {
  // Search state
  const [search, setSearch] = useState('');
@@ -635,23 +656,26 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  )}
  </td>
 
- {/* 2. TICKER */}
- <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis">
-   <div className="flex flex-col gap-1 items-start">
-     <span className="font-extrabold">{stock.ticker}</span>
-     {stock.earningsTimestamp && (() => {
-       const daysLeft = Math.ceil((stock.earningsTimestamp * 1000 - Date.now()) / (1000 * 60 * 60 * 24));
-       if (daysLeft >= 0 && daysLeft <= 14) {
-         return (
-           <span className="animate-pulse bg-amber-500/10 text-amber-500 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1 shadow-sm shadow-amber-500/10" title="Наближаващ финансов отчет">
-             ⚠️ {daysLeft === 0 ? 'ДНЕС' : `ОТЧЕТ: ${daysLeft} ДНИ`}
-           </span>
-         );
-       }
-       return null;
-     })()}
-   </div>
- </td>
+  {/* 2. TICKER */}
+  <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis">
+    <div className="flex items-center gap-2">
+      <StockLogo ticker={stock.ticker} />
+      <div className="flex flex-col gap-1 items-start">
+        <span className="font-extrabold">{stock.ticker}</span>
+        {stock.earningsTimestamp && (() => {
+          const daysLeft = Math.ceil((stock.earningsTimestamp * 1000 - Date.now()) / (1000 * 60 * 60 * 24));
+          if (daysLeft >= 0 && daysLeft <= 14) {
+            return (
+              <span className="animate-pulse bg-amber-500/10 text-amber-500 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1 shadow-sm shadow-amber-500/10" title="Наближаващ финансов отчет">
+                ⚠️ {daysLeft === 0 ? 'ДНЕС' : `ОТЧЕТ: ${daysLeft} ДНИ`}
+              </span>
+            );
+          }
+          return null;
+        })()}
+      </div>
+    </div>
+  </td>
 
  {/* 3. COMPANY NAME */}
  <td className="py-3 px-4 text-ink font-sans font-medium hover:text-ink transition-colors overflow-hidden text-ellipsis whitespace-nowrap">
