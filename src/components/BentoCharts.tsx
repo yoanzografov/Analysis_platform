@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { Stock, TableFilter } from '../types';
-import { Percent, TrendingUp, Info } from 'lucide-react';
+import { Percent, TrendingUp, Info, Settings2 } from 'lucide-react';
 
 interface Props {
   stocks: Stock[];
@@ -87,13 +87,61 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
   {/* 1. BUY / SELL Ratio Pie Chart */}
   <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between lg:col-span-1">
  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
- <div>
+ <div className="flex-1">
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
  BUY / SELL Weight Allocation
  </span>
  <h3 className="text-[10px] sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
  Съотношение BUY / SELL
  </h3>
+ </div>
+ 
+ <div className="relative">
+   <button 
+     onClick={(e) => { e.stopPropagation(); setShowContextMenu(!showContextMenu); }}
+     className="p-1.5 rounded-lg hover:bg-black/10 text-ink-muted hover:text-ink transition-colors"
+     title="Настройки на праговете"
+   >
+     <Settings2 className="w-4 h-4" />
+   </button>
+   
+   {showContextMenu && (
+     <div 
+       ref={contextMenuRef}
+       onClick={(e) => e.stopPropagation()}
+       className="absolute top-full right-0 mt-1 w-48 bg-bg border border-border rounded-xl shadow-2xl z-[200] p-3 cursor-default"
+     >
+       <div className="text-[10px] font-extrabold text-ink mb-2 border-b border-border/50 pb-1 uppercase tracking-tight text-left">
+         Настройки на ДРУГИ
+       </div>
+       <div className="flex flex-col gap-2 font-mono text-[10px] text-left">
+         <div className="flex items-center justify-between">
+           <span className="text-red-500 font-bold">+ SELL %</span>
+           <input 
+             type="number" 
+             value={sellThreshold}
+             onChange={e => {
+               const val = Number(e.target.value);
+               if (!isNaN(val) && val >= 0) onUpdateThresholds(buyThreshold, val);
+             }}
+             className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5 text-ink"
+           />
+         </div>
+         <div className="flex items-center justify-between">
+           <span className="text-emerald-500 font-bold">- BUY %</span>
+           <input 
+             type="number" 
+             value={buyThreshold}
+             onChange={e => {
+               const val = Number(e.target.value);
+               if (!isNaN(val) && val >= 0) onUpdateThresholds(val, sellThreshold);
+             }}
+             className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5 text-ink"
+           />
+         </div>
+       </div>
+     </div>
+   )}
  </div>
  </div>
 
@@ -148,16 +196,12 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  </button>
         <button
           onClick={() => handleFilterToggle('buySell', 'ДРУГИ')}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setShowContextMenu(true);
-          }}
           className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center relative ${
             activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ'
               ? 'bg-slate-500/20 border-slate-500 ring-2 ring-slate-500/50'
               : 'bg-bg border-border/30 hover:bg-slate-500/10 hover:border-slate-500/50'
           }`}
- title="Филтрирай компании по ДРУГИ (Десен клик за настройки)"
+ title="Филтрирай компании по ДРУГИ"
  >
  <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight flex items-center justify-center gap-1 group/info relative">
  ДРУГИ
@@ -167,48 +211,10 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  <span className="text-emerald-500 font-bold">BUY:</span> Отклонение &lt; -{buyThreshold}%<br />
  <span className="text-red-500 font-bold">SELL:</span> Отклонение &gt; {sellThreshold}%<br />
  <span className="text-blue-500 font-bold">ДРУГИ:</span> Между -{buyThreshold}% и +{sellThreshold}%<br /><br />
- <span className="text-ink-muted block leading-tight">Отклонението е процентната разлика между Текущата и Справедливата цена. (Десен клик на бутона за промяна на праговете)</span>
+ <span className="text-ink-muted block leading-tight">Отклонението е процентната разлика между Текущата и Справедливата цена. Можете да промените тези прагове от иконката за настройки в горния десен ъгъл.</span>
  </div>
  </div>
  <div className="text-xs font-extrabold text-ink-muted">{bsOthersCount}</div>
- 
- {showContextMenu && (
-   <div 
-     ref={contextMenuRef}
-     onClick={(e) => e.stopPropagation()}
-     className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-48 bg-bg border border-border rounded-xl shadow-2xl z-[200] p-3 cursor-default"
-   >
-     <div className="text-[10px] font-extrabold text-ink mb-2 border-b border-border/50 pb-1 uppercase tracking-tight text-left">
-       Настройки на ДРУГИ
-     </div>
-     <div className="flex flex-col gap-2 font-mono text-[10px] text-left">
-       <div className="flex items-center justify-between">
-         <span className="text-red-500 font-bold">+ SELL %</span>
-         <input 
-           type="number" 
-           value={sellThreshold}
-           onChange={e => {
-             const val = Number(e.target.value);
-             if (!isNaN(val) && val >= 0) onUpdateThresholds(buyThreshold, val);
-           }}
-           className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5 text-ink"
-         />
-       </div>
-       <div className="flex items-center justify-between">
-         <span className="text-emerald-500 font-bold">- BUY %</span>
-         <input 
-           type="number" 
-           value={buyThreshold}
-           onChange={e => {
-             const val = Number(e.target.value);
-             if (!isNaN(val) && val >= 0) onUpdateThresholds(val, sellThreshold);
-           }}
-           className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5 text-ink"
-         />
-       </div>
-     </div>
-   </div>
- )}
  </button>
  </div>
    </div>
