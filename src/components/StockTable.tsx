@@ -125,6 +125,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
  // Inline pricing edits state for all editable cells
  const [editingRow, setEditingRow] = useState<string | null>(null);
+ const [selectedRow, setSelectedRow] = useState<string | null>(null);
  const [showConfirmFair, setShowConfirmFair] = useState<string | null>(null);
  const [editWatch, setEditWatch] = useState('');
  const [editCompanyName, setEditCompanyName] = useState('');
@@ -567,9 +568,15 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  return (
  <tr
  key={stock.ticker}
- className={`hover:bg-white/5 transition-colors duration-75 group ${
+ onClick={(e) => {
+   // Avoid selecting row when clicking on buttons, links or selects inside the row
+   if ((e.target as HTMLElement).tagName !== 'BUTTON' && (e.target as HTMLElement).tagName !== 'A' && (e.target as HTMLElement).tagName !== 'SELECT') {
+     setSelectedRow(stock.ticker);
+   }
+ }}
+ className={`hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
  isEditing ? 'bg-bg rounded-2xl/10' : ''
- }`}
+ } ${selectedRow === stock.ticker ? 'bg-indigo-500/10 outline-double outline-1 outline-indigo-500/50' : ''}`}
  onKeyDown={isEditing ? (e) => {
  if (e.key === 'Enter') {
  handleSaveClick(stock.ticker);
