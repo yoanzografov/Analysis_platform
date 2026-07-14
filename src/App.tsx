@@ -298,9 +298,9 @@ export default function App() {
  };
 
  // Live updater for a single stock from the table or simulation
- const handleUpdateStock = (updatedStock: Stock) => {
- setStocks(prev => prev.map(s => s.ticker === updatedStock.ticker ? updatedStock : s));
- };
+  const handleUpdateStock = (oldTicker: string, updatedStock: Stock) => {
+  setStocks(prev => prev.map(s => s.ticker === oldTicker ? updatedStock : s));
+  };
 
  const handleDeleteStock = (ticker: string) => {
  const confirmDelete = window.confirm(`Сигурни ли сте, че искате да изтриете акцията ${ticker}?`);

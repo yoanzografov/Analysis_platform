@@ -6,7 +6,7 @@ import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
 interface Props {
  stocks: Stock[];
- onUpdateStock: (updatedStock: Stock) => void;
+ onUpdateStock: (oldTicker: string, updatedStock: Stock) => void;
  onDeleteStock: (ticker: string) => void;
  onSelectStockForAi: (stock: Stock) => void;
  onAddStock: (newStock: Stock) => void;
@@ -148,6 +148,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  const [editingRow, setEditingRow] = useState<string | null>(null);
  const [selectedRow, setSelectedRow] = useState<string | null>(null);
  const [showConfirmFair, setShowConfirmFair] = useState<string | null>(null);
+ const [editTicker, setEditTicker] = useState('');
  const [editWatch, setEditWatch] = useState('');
  const [editCompanyName, setEditCompanyName] = useState('');
  const [editDate, setEditDate] = useState('');
@@ -180,6 +181,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
  const startInlineEdit = (stock: Stock) => {
  setEditingRow(stock.ticker);
+ setEditTicker(stock.ticker);
  setEditWatch(stock.watch || '');
  setEditCompanyName(stock.companyName);
  setEditDate(toIsoDate(stock.date || ''));
@@ -276,8 +278,9 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  // Automatically set calculated defaults if no custom signal string is filled, or keep current input
  const finalSignal = editSignal || (difference !== null ? (difference > 15 ? 'Buy' : difference < -15 ? 'Sell' : 'Hold') : 'Hold');
 
- onUpdateStock({
+ onUpdateStock(ticker, {
  ...original,
+ ticker: editTicker.trim().toUpperCase() || original.ticker,
  watch: editWatch,
  companyName: editCompanyName,
  date: fromIsoDate(editDate),
@@ -658,8 +661,16 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
   {/* 2. TICKER */}
   <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis">
-    <div className="flex flex-col gap-1 items-start">
-      <span className="font-extrabold">{stock.ticker}</span>
+    {isEditing ? (
+      <input
+        type="text"
+        value={editTicker}
+        onChange={e => setEditTicker(e.target.value)}
+        className="w-16 bg-bg rounded-2xl text-left font-sans text-xs font-extrabold text-ink border border-border px-1 py-0.5 focus:outline-none"
+      />
+    ) : (
+      <div className="flex flex-col gap-1 items-start">
+        <span className="font-extrabold">{stock.ticker}</span>
       {stock.earningsTimestamp && (() => {
         const daysLeft = Math.ceil((stock.earningsTimestamp * 1000 - Date.now()) / (1000 * 60 * 60 * 24));
         if (daysLeft >= 0 && daysLeft <= 14) {
@@ -672,6 +683,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
         return null;
       })()}
     </div>
+    )}
   </td>
 
   {/* 3. COMPANY NAME */}
