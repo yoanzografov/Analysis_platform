@@ -50,6 +50,24 @@ export default function App() {
  // Prevent infinite save loops with Firebase
  const lastSavedRef = useRef('');
 
+ const [buySellThreshold, setBuySellThreshold] = useState<number>(10);
+ const thresholdRef = useRef(10);
+ useEffect(() => { thresholdRef.current = buySellThreshold; }, [buySellThreshold]);
+
+ const handleUpdateThreshold = (newVal: number) => {
+   setBuySellThreshold(newVal);
+   setStocks(prev => prev.map(s => {
+     let bs = 'SELL';
+     if (s.fairPrice !== null && s.currentPrice > 0) {
+       const dev = ((s.currentPrice - s.fairPrice) / s.fairPrice) * 100;
+       if (dev < -newVal) bs = 'BUY';
+       else if (dev > newVal) bs = 'SELL';
+       else bs = 'ДРУГИ';
+     }
+     return { ...s, buySell: bs };
+   }));
+ };
+
  // Live direct quotes sync from Yahoo Finance backend proxy
  const fetchRealStockPricesDirect = async (stocksList?: Stock[]) => {
  const targetList = stocksList || stocks;
@@ -89,9 +107,9 @@ export default function App() {
  let buySell = 'SELL';
  if (stock.fairPrice !== null && nextPrice > 0) {
  const dev = ((nextPrice - stock.fairPrice) / stock.fairPrice) * 100;
- if (dev < -10) {
+ if (dev < -thresholdRef.current) {
  buySell = 'BUY';
- } else if (dev > 10) {
+ } else if (dev > thresholdRef.current) {
  buySell = 'SELL';
  } else {
  buySell = 'ДРУГИ';
@@ -184,6 +202,7 @@ export default function App() {
           if (data.stocks) setStocks(data.stocks);
           if (data.indices) setIndices(data.indices);
           if (data.alerts) setAlerts(data.alerts);
+          if (data.settings?.buySellThreshold !== undefined) setBuySellThreshold(data.settings.buySellThreshold);
         }
         
         if (!isLoaded) {
@@ -210,7 +229,7 @@ export default function App() {
         setAlerts(defaultAlerts);
         setIsLoaded(true);
         
-        const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts };
+        const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts, settings: { buySellThreshold: 10 } };
         lastSavedRef.current = JSON.stringify(initialData);
         
         setDoc(doc(db, "portfolio", "default"), initialData)
@@ -230,17 +249,18 @@ export default function App() {
  // Persistence save hooks (to Firebase)
   useEffect(() => {
     if (isLoaded) {
-      const currentDataString = JSON.stringify({ stocks, indices, alerts });
+      const currentDataString = JSON.stringify({ stocks, indices, alerts, settings: { buySellThreshold } });
       if (lastSavedRef.current !== currentDataString) {
         lastSavedRef.current = currentDataString;
         setDoc(doc(db, "portfolio", "default"), {
           stocks,
           indices,
-          alerts
+          alerts,
+          settings: { buySellThreshold }
         }, { merge: true }).catch(err => console.error("Firebase Save Error:", err));
       }
     }
-  }, [stocks, indices, alerts, isLoaded]);
+  }, [stocks, indices, alerts, buySellThreshold, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
@@ -393,9 +413,9 @@ export default function App() {
  let buySell = 'SELL';
  if (stock.fairPrice !== null && nextPrice > 0) {
  const dev = ((nextPrice - stock.fairPrice) / stock.fairPrice) * 100;
- if (dev < -10) {
+ if (dev < -thresholdRef.current) {
  buySell = 'BUY';
- } else if (dev > 10) {
+ } else if (dev > thresholdRef.current) {
  buySell = 'SELL';
  } else {
  buySell = 'ДРУГИ';
@@ -710,6 +730,8 @@ export default function App() {
  stocks={stocks} 
  activeFilter={activeFilter}
  onSetActiveFilter={setActiveFilter}
+ buySellThreshold={buySellThreshold}
+ onUpdateThreshold={handleUpdateThreshold}
  />
 
  {/* Main Grid stock table database */}
@@ -735,6 +757,7 @@ export default function App() {
  onSelectStockForAi={setSelectedStockForAi} 
  activeFilter={activeFilter}
  onSetActiveFilter={setActiveFilter}
+ buySellThreshold={buySellThreshold}
  onAddStock={(newStock) => {
  setStocks(prev => [...prev, newStock]);
  const newLog = {

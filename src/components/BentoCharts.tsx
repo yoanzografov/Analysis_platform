@@ -7,9 +7,11 @@ interface Props {
  stocks: Stock[];
  activeFilter: TableFilter;
  onSetActiveFilter: (filter: TableFilter) => void;
+ buySellThreshold: number;
+ onUpdateThreshold: (val: number) => void;
 }
 
-export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }: Props) {
+export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, buySellThreshold, onUpdateThreshold }: Props) {
  // 1. Calculate the values for "Best Deals"
  const undervaluedStocks = [...stocks]
  .filter(s => s.difference !== null && s.difference > 0 && s.fairPrice !== null)
@@ -136,11 +138,26 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter }:
  <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight flex items-center justify-center gap-1 group/info relative">
  ДРУГИ
  <Info className="w-3 h-3 text-ink-faint hover:text-ink transition-colors" />
- <div className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 w-64 p-3 bg-bg border border-border rounded-xl shadow-xl text-[10px] text-ink text-left opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all pointer-events-none z-[100] font-mono normal-case cursor-default">
- <span className="font-extrabold block mb-1">Как се изчислява?</span>
- <span className="text-emerald-500 font-bold">BUY:</span> Отклонение &lt; -10%<br />
- <span className="text-red-500 font-bold">SELL:</span> Отклонение &gt; 10%<br />
- <span className="text-blue-500 font-bold">ДРУГИ (Fair Value):</span> Между -10% и +10%<br /><br />
+ <div className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 w-72 p-3 bg-bg border border-border rounded-xl shadow-xl text-[10px] text-ink text-left opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all z-[100] font-mono normal-case">
+ <div className="flex items-center justify-between mb-2">
+ <span className="font-extrabold text-sm">Праг за BUY/SELL:</span>
+ <div className="flex items-center gap-1">
+ <span className="text-ink-muted">±</span>
+ <input 
+ type="number" 
+ value={buySellThreshold}
+ onChange={e => {
+   const val = Number(e.target.value);
+   if (!isNaN(val) && val >= 0) onUpdateThreshold(val);
+ }}
+ className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5"
+ />
+ <span className="text-ink-muted">%</span>
+ </div>
+ </div>
+ <span className="text-emerald-500 font-bold">BUY:</span> Отклонение &lt; -{buySellThreshold}%<br />
+ <span className="text-red-500 font-bold">SELL:</span> Отклонение &gt; {buySellThreshold}%<br />
+ <span className="text-blue-500 font-bold">ДРУГИ:</span> Между -{buySellThreshold}% и +{buySellThreshold}%<br /><br />
  <span className="text-ink-muted block leading-tight">Отклонението е процентната разлика между Текущата и Справедливата цена.</span>
  </div>
  </div>
