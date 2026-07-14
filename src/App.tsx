@@ -630,7 +630,7 @@ export default function App() {
       <div className="flex items-center gap-2 shrink-0">
         <Building2 className="w-5 h-5 text-ink" />
         <h1 className="text-xl sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase whitespace-nowrap">
-          ПЛАТФОРМА 2026: СЛЕДЕНЕ НА АКЦИИ
+          ПЛАТФОРМА ЗА СЛЕДЕНЕ НА АКЦИИ
         </h1>
       </div>
 
