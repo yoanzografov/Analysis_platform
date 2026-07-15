@@ -62,7 +62,7 @@ function StockSparkline({ changePct, ticker }: { changePct: number; ticker: stri
  });
 
  return (
- <svg className="w-14 h-4 overflow-visible inline-block opacity-85 hover:opacity-100 transition-opacity" viewBox="0 0 50 16">
+ <svg className="w-14 h-4 min-w-[56px] shrink-0 overflow-visible inline-block opacity-85 hover:opacity-100 transition-opacity" viewBox="0 0 50 16">
  <polyline
  fill="none"
  stroke={isUp ? "#15803d" : "#b91c1c"}
@@ -725,7 +725,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <td className="py-3 px-4 text-center">
  <button
  onClick={() => setActiveChartStock(stock)}
- className="inline-flex items-center justify-center p-1 rounded-md hover:bg-stone-100 border border-transparent hover:border-border transition-all cursor-pointer"
+ className="inline-flex items-center justify-center p-1 rounded-md hover:bg-stone-100 border border-transparent hover:border-border transition-all cursor-pointer shrink-0 min-w-[64px]"
  title="Кликнете за детайлна интерактивна графика"
  >
  <StockSparkline changePct={stock.dailyChangePct} ticker={stock.ticker} />
