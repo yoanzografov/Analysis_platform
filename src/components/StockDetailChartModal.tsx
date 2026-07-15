@@ -111,6 +111,21 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   }
 
 
+  const [activeRange, setActiveRange] = useState<string>("1Y");
+
+  const RANGES = [
+    { label: '1D', val: '1D', tvRange: '1D', interval: '5' },
+    { label: '1W', val: '1W', tvRange: '5D', interval: '15' },
+    { label: '1M', val: '1M', tvRange: '1M', interval: '60' },
+    { label: '3M', val: '3M', tvRange: '3M', interval: '120' },
+    { label: '6M', val: '6M', tvRange: '6M', interval: 'D' },
+    { label: '1Y', val: '1Y', tvRange: '12M', interval: 'D' },
+    { label: '5Y', val: '5Y', tvRange: '60M', interval: 'W' },
+    { label: 'ALL', val: 'ALL', tvRange: 'ALL', interval: 'W' },
+  ] as const;
+
+  const currentConf = RANGES.find(r => r.val === activeRange)!;
+
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
@@ -128,27 +143,45 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         </button>
 
         {/* HEADER */}
-        <div className="p-6 pb-4 flex justify-between items-start">
+        <div className="p-4 sm:p-6 pb-2 sm:pb-4 flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <div className="text-3xl font-bold text-ink tracking-tight leading-tight">
+            <div className="text-2xl sm:text-3xl font-bold text-ink tracking-tight leading-tight">
               {sym}
             </div>
-            <div className="text-base text-ink-muted mt-0.5 font-medium">
+            <div className="text-sm sm:text-base text-ink-muted mt-0.5 font-medium">
               {stock.companyName}
             </div>
-            <div className="text-[13px] text-ink-faint mt-1">
+            <div className="text-xs sm:text-[13px] text-ink-faint mt-1">
               {exch} · {ccy}
             </div>
           </div>
-          <div className="text-right pr-12 sm:pr-14">
-            <div className="text-3xl font-bold text-ink tracking-tight leading-tight tabular-nums">
+          
+          <div className="flex flex-col items-start sm:items-end w-full sm:w-auto pr-8 sm:pr-14">
+            <div className="text-2xl sm:text-3xl font-bold text-ink tracking-tight leading-tight tabular-nums">
               {fp(stock.currentPrice)}
             </div>
             <div 
-              className="text-lg font-semibold mt-0.5 flex items-center justify-end gap-1.5 tabular-nums"
+              className="text-base sm:text-lg font-semibold mt-0.5 flex items-center justify-end gap-1.5 tabular-nums"
               style={{ color: accent }}
             >
               {isUp ? '+' : ''}{(stock.dailyChangePct ?? 0).toFixed(2)}%
+            </div>
+            
+            {/* TIME RANGE BUTTONS */}
+            <div className="flex flex-wrap gap-1 mt-3 sm:mt-4 bg-border/40 p-1 rounded-lg">
+              {RANGES.map(r => (
+                <button
+                  key={r.val}
+                  onClick={() => setActiveRange(r.val)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                    activeRange === r.val 
+                      ? 'bg-bg text-ink shadow-sm' 
+                      : 'text-ink-faint hover:text-ink hover:bg-border/60'
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -156,11 +189,12 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         {/* CHART (TradingView AdvancedRealTimeChart Widget) */}
         <div className="flex-1 relative mx-2 min-h-0">
           <AdvancedRealTimeChart
+            key={activeRange} // force re-render when changing ranges to avoid widget bug
             symbol={tvSymbol}
             theme={isDark ? "dark" : "light"}
             autosize
             style="1" // Candlestick chart
-            interval="D"
+            interval={currentConf.interval as any}
             timezone="exchange"
             hide_top_toolbar={false}
             hide_side_toolbar={false}
@@ -170,8 +204,8 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             details={true}
             hotlist={true}
             calendar={true}
-            withdateranges={true}
-            range="12M"
+            withdateranges={false} // Disable native date ranges since we have our custom buttons
+            range={currentConf.tvRange as any}
           />
         </div>
 
