@@ -22,7 +22,9 @@ import {
  Settings2,
  ChevronDown,
  Trash2,
- ArchiveRestore
+ ArchiveRestore,
+ Activity,
+ Info
 } from 'lucide-react';
 
 export default function App() {
@@ -662,6 +664,7 @@ export default function App() {
   >
   <span className={`w-1.5 h-1.5 rounded-full ${isAutoLiveRefresh ? 'bg-green-400 animate-ping' : 'bg-gray-400'}`} />
   Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}
+  <Info className="w-3.5 h-3.5 opacity-60 ml-0.5" />
   </button>
 
   {/* Simulation Engine Activator */}
@@ -690,6 +693,7 @@ export default function App() {
   СТАРТИРАЙ СИМУЛАТОР
   </>
   )}
+  <Info className="w-3.5 h-3.5 opacity-60 ml-0.5" />
   </button>
 
   {/* Quick real live market quotes sync */}
@@ -705,6 +709,7 @@ export default function App() {
   >
   <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-[#10b981]' : ''}`} />
   {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
+  <Info className="w-3.5 h-3.5 opacity-60 ml-0.5" />
   </button>
 
 
