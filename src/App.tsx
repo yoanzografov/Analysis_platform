@@ -30,6 +30,9 @@ import {
 export default function App() {
  // Primary datasets
  const [stocks, setStocks] = useState<Stock[]>([]);
+   const [searchQuery, setSearchQuery] = useState('');
+   const [isSearching, setIsSearching] = useState(false);
+   const [hoveredButtonInfo, setHoveredButtonInfo] = useState<string | null>(null);
  const [indices, setIndices] = useState<MarketIndex[]>([]);
  const [isLoaded, setIsLoaded] = useState(false);
  const [showNewUserModal, setShowNewUserModal] = useState(false);
@@ -655,7 +658,9 @@ export default function App() {
   {/* Auto live updates toggler */}
   <button
   onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-  className={`group relative text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  onMouseEnter={() => setHoveredButtonInfo('Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди')}
+  onMouseLeave={() => setHoveredButtonInfo(null)}
+  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isAutoLiveRefresh 
   ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
   : 'bg-bg text-ink-faint border-gray-350 hover:bg-gray-50 hover:text-ink-muted'
