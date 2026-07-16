@@ -391,9 +391,6 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  {/* Header section */}
  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4 mb-4">
  <div>
- <span className="text-[10px] text-[#10b981] font-mono font-bold uppercase tracking-wider block">
- ЕДИНСТВЕН ДОСТОВЕРЕН ИЗТОЧНИК • REAL-TIME
- </span>
  <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight flex items-center gap-1.5">
  <Newspaper className="w-3.5 h-3.5 text-[#10b981]" />
  {selectedStock ? `Най-важни новини за ${selectedStock.companyName} (${selectedStock.ticker})` : 'Глобални финансови & пазарни новини'}

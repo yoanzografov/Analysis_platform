@@ -45,9 +45,6 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  <div className="bg-card rounded-2xl border border-border p-4 mt-5">
  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div>
- <span className="text-[10px] text-blue-700 font-serif italic uppercase tracking-wider block">
- Alert Engine • ЕДИНСТВЕН ДОСТОВЕРЕН ИЗТОЧНИК • REAL-TIME
- </span>
  <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
  Планиране на персонализирани известия за цена
  </h3>
