@@ -355,75 +355,33 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  </div>
  </div>
 
- {/* 3. VIX INDEX CONTAINER (TRADINGVIEW STYLE) */}
- <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between relative md:col-span-1 h-[305px]">
- <div className="flex items-center justify-between mb-1">
- <div>
- <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
- VIX Volatility Index
- </h3>
+ {/* 3. VIX INDEX CONTAINER — TradingView embed widget */}
+ <div className="bg-bg rounded-2xl border border-border overflow-hidden relative md:col-span-1 h-[305px] flex flex-col">
+  <div className="flex items-center justify-between px-4 pt-3 pb-2 shrink-0">
+    <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
+      VIX Volatility Index
+    </h3>
+    <a
+      href="https://www.tradingview.com/chart/?symbol=CBOE%3AVIX"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-[9px] font-extrabold text-[#2962FF] uppercase tracking-wide hover:underline font-mono"
+    >
+      TradingView ↗
+    </a>
+  </div>
+  <div className="flex-1 w-full">
+    <iframe
+      src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_vix&symbol=CBOE%3AVIX&interval=D&hidesidetoolbar=1&hidetoptoolbar=1&symboledit=0&saveimage=0&toolbarbg=f1f3f6&studies=%5B%5D&theme=light&style=2&timezone=Etc%2FUTC&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=&utm_medium=widget&utm_campaign=chart&utm_term=CBOE%3AVIX"
+      id="tradingview_vix"
+      className="w-full h-full border-0"
+      allowTransparency={true}
+      scrolling="no"
+      allowFullScreen={false}
+      title="VIX Volatility Index — TradingView"
+    />
+  </div>
  </div>
-
- <button 
- onClick={() => fetchVix(true)} 
- disabled={refreshing || loading}
- className="p-1 hover:bg-card-hover border border-border-hover text-ink-faint rounded-none cursor-pointer transition-colors"
- title="Обнови в реално време"
- >
- <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
- </button>
  </div>
-
-        {loading ? (
-          <div className="py-12 flex flex-col items-center justify-center space-y-2 flex-1">
-            <RefreshCw className="w-6 h-6 text-ink animate-spin" />
-            <span className="text-xs font-mono text-ink-faint uppercase">Зареждане на реално време от TradingView...</span>
-          </div>
-        ) : (
-          <div className="flex flex-col flex-1 justify-between pt-2">
-            <div className="flex flex-col gap-4 flex-1 justify-center">
-              {/* Metric Cards */}
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-1 bg-card-hover p-2 rounded-lg border border-border/50 text-center flex flex-col justify-center">
-                  <span className="text-[10px] text-ink-faint uppercase font-bold mb-1 tracking-tight">Състояние</span>
-                  <div className="flex items-center justify-center gap-1.5">
-                    <span className="text-sm font-sans" style={{ color: currentInfo.colorHex }}>{currentInfo.label}</span>
-                  </div>
-                </div>
-                <div className="col-span-2 bg-card-hover p-2 rounded-lg border border-border/50 flex flex-col justify-center items-center">
-                  <span className="text-[10px] text-ink-faint uppercase font-bold mb-1 tracking-tight">Текуща Стойност</span>
-                  <div className="flex items-end gap-2">
-                    <span className="text-2xl font-mono font-black leading-none" style={{ color: currentInfo.colorHex }}>
-                      {fngData?.score?.toFixed(2) || currentScore}
-                    </span>
-                    {fngData?.change_pct !== undefined && (
-                      <div className={`flex items-center text-sm font-bold pb-0.5 ${fngData.change_pct >= 0 ? 'text-[#10b981]' : 'text-red-600'}`}>
-                        {fngData.change_pct >= 0 ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        {Math.abs(fngData.change_pct).toFixed(2)}%
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Progress Bar (0 to ~50 max scale for VIX usually) */}
-              <div className="w-full bg-border/30 rounded-md h-3.5 overflow-hidden relative shadow-inner">
-                <div 
-                  className="h-full rounded-md transition-all duration-700 ease-out" 
-                  style={{ width: `${Math.min((fngData?.score || currentScore) / 50 * 100, 100)}%`, backgroundColor: currentInfo.colorHex }}
-                />
-              </div>
-
-            </div>
-
-            {/* Timestamp status footer */}
-            <div className="border-t border-border/10 pt-1.5 text-[8px] font-mono text-ink-faint uppercase tracking-tight flex items-center justify-between shrink-0">
-              <span>Обновено: {fngData ? new Date(fngData.timestamp).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A'} ч.</span>
-              <span className="font-extrabold text-[#2962FF] underline">TradingView Live</span>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+ );
 }
