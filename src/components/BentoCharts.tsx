@@ -91,9 +91,22 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
  BUY / SELL Weight Allocation
  </span>
+ <div className="flex items-center gap-1.5">
  <h3 className="text-[10px] sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
  Съотношение BUY / SELL
  </h3>
+ <div className="group/info relative flex items-center -mt-2">
+   <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
+   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+     <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📈 BUY / SELL Weight Allocation</span>
+     Кръговата диаграма показва разпределението на всички акции по колоната <strong>BUY / SELL</strong>.<br/><br/>
+     <span className="text-emerald-400 font-bold">BUY</span> = Текущата цена е под Справедливата с повече от -{buyThreshold}%<br/>
+     <span className="text-rose-400 font-bold">SELL</span> = Текущата цена е над Справедливата с повече от +{sellThreshold}%<br/>
+     <span className="text-slate-400 font-bold">ДРУГИ</span> = В средата между двата прага<br/><br/>
+     Натисни BUY, SELL или ДРУГИ за да филтрираш таблицата.
+   </div>
+ </div>
+ </div>
  </div>
  
  <div className="relative">
@@ -227,9 +240,20 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
  Deal Finder
  </span>
+ <div className="flex items-center gap-1.5">
  <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
  Най-подценени акции (% Разлика спрямо Справедлива цена)
  </h3>
+ <div className="group/info relative flex items-center shrink-0">
+   <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
+   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+     <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">🔍 Deal Finder</span>
+     Показва топ 6 най-подценени акции от твоя портфейл.<br/><br/>
+     Сортирани по <strong>% разлика</strong> между Справедливата и Текущата цена — колкото по-висок %, толкова по-голям потенциал за растеж.<br/><br/>
+     <span className="text-emerald-400">Положителна стойност</span> = Акцията се търгува <strong>под</strong> справедливата си цена (добра сделка).
+   </div>
+ </div>
+ </div>
  </div>
  <div className="p-1 px-1.5 bg-[#D9D8D5] border border-border rounded-none">
  <Percent className="w-3.5 h-3.5 text-ink" />
@@ -290,9 +314,23 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
  Signal Weight Allocation
  </span>
+ <div className="flex items-center gap-1.5">
  <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
  Съотношение Купувай / Продавай / Изчакай
  </h3>
+ <div className="group/info relative flex items-center -mt-2">
+   <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
+   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+     <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📊 Signal Weight Allocation</span>
+     Кръговата диаграма показва разпределението на всички акции по колоната <strong>Сигнал</strong>.<br/><br/>
+     Сигналът се изчислява от теб ръчно (или по твоя алгоритъм) и отразява препоръката за всяка акция:<br/><br/>
+     <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = Препоръчана за покупка<br/>
+     <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = Препоръчана за продажба<br/>
+     <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = Без ясна препоръка<br/><br/>
+     Натисни всеки сегмент за да филтрираш таблицата по сигнал.
+   </div>
+ </div>
+ </div>
  </div>
 
  <div className="h-32 relative flex items-center justify-center my-1.5">
