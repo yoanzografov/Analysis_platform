@@ -318,18 +318,19 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
  Съотношение Купувай / Продавай / Изчакай
  </h3>
- <div className="group/info relative flex items-center -mt-2">
-   <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
-   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
-     <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📊 Signal Weight Allocation</span>
-     Кръговата диаграма показва разпределението на всички акции по колоната <strong>Сигнал</strong>.<br/><br/>
-     Сигналът се изчислява от теб ръчно (или по твоя алгоритъм) и отразява препоръката за всяка акция:<br/><br/>
-     <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = Препоръчана за покупка<br/>
-     <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = Препоръчана за продажба<br/>
-     <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = Без ясна препоръка<br/><br/>
-     Натисни всеки сегмент за да филтрираш таблицата по сигнал.
-   </div>
- </div>
+  <div className="group/info relative flex items-center -mt-2">
+    <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
+    <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-72 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+      <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📊 Signal Weight Allocation</span>
+      Сигналът се изчислява <strong>автоматично</strong> по формулата:<br/><br/>
+      <span className="text-yellow-300 font-mono text-[10px] block mb-2">% Разлика = (Справедлива − Текуща) / Текуща × 100</span>
+      <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = % Разлика &gt; +15%<br/>
+      <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = между -15% и +15%<br/>
+      <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = % Разлика &lt; -15%<br/><br/>
+      Ако си въвел сигнал ръчно в таблицата, той се запазва вместо автоматичния.<br/><br/>
+      Натисни всеки сегмент за да филтрираш таблицата по сигнал.
+    </div>
+  </div>
  </div>
  </div>
 
