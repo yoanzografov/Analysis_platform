@@ -32,7 +32,7 @@ export default function App() {
  const [stocks, setStocks] = useState<Stock[]>([]);
    const [searchQuery, setSearchQuery] = useState('');
    const [isSearching, setIsSearching] = useState(false);
-   const [hoveredButtonInfo, setHoveredButtonInfo] = useState<string | null>(null);
+
  const [indices, setIndices] = useState<MarketIndex[]>([]);
  const [isLoaded, setIsLoaded] = useState(false);
  const [showNewUserModal, setShowNewUserModal] = useState(false);
@@ -642,7 +642,7 @@ export default function App() {
  )}
 
   {/* Dashboard Header Bar */}
-  <div className="flex items-center gap-6 overflow-x-auto border-b border-border pb-5 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+  <div className="flex items-center gap-6 flex-wrap border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0">
       <div className="flex items-center gap-2 shrink-0">
         <Building2 className="w-5 h-5 text-ink" />
         <h1 className="text-xl sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase whitespace-nowrap">
@@ -658,8 +658,6 @@ export default function App() {
   {/* Auto live updates toggler */}
   <button
   onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-  onMouseEnter={() => setHoveredButtonInfo('Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди')}
-  onMouseLeave={() => setHoveredButtonInfo(null)}
   className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isAutoLiveRefresh 
   ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
@@ -668,9 +666,11 @@ export default function App() {
   >
   <span className={`w-1.5 h-1.5 rounded-full ${isAutoLiveRefresh ? 'bg-green-400 animate-ping' : 'bg-gray-400'}`} />
   Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}
-  <Info className="w-3.5 h-3.5 opacity-60 ml-0.5" />
-  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
-    Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди
+  <div className="group/info relative flex items-center">
+    <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+      Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди
+    </div>
   </div>
   </button>
 
@@ -682,7 +682,7 @@ export default function App() {
   setIsAutoLiveRefresh(false); 
   }
   }}
-  className={`group relative text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isSimulating 
   ? 'bg-red-700 text-ink border-red-850 hover:bg-red-800 font-extrabold' 
   : 'bg-bg text-ink border-border hover:bg-white/10 hover:text-ink'
@@ -699,9 +699,11 @@ export default function App() {
   СТАРТИРАЙ СИМУЛАТОР
   </>
   )}
-  <Info className="w-3.5 h-3.5 opacity-60 ml-0.5" />
-  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
-    Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити
+  <div className="group/info relative flex items-center">
+    <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+      Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити
+    </div>
   </div>
   </button>
 
@@ -709,7 +711,7 @@ export default function App() {
   <button
   onClick={triggerManualRefresh}
   disabled={isFetchingLivePrices}
-  className={`group relative text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
   isFetchingLivePrices
   ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
   : 'bg-bg text-ink border-black hover:bg-white/20'
@@ -717,9 +719,11 @@ export default function App() {
   >
   <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-[#10b981]' : ''}`} />
   {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
-  <Info className="w-3.5 h-3.5 opacity-60 ml-0.5" />
-  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
-    Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи
+  <div className="group/info relative flex items-center">
+    <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+      Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи
+    </div>
   </div>
   </button>
 
