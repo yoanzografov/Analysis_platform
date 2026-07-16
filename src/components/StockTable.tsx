@@ -288,7 +288,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
     return 'Hold';
   };
   const computedSignal = autoSignalFromPrices(parsedCurrentPrice, parsedLow52, parsedHigh52);
-  const finalSignal = editSignal || computedSignal;
+  const finalSignal = computedSignal; // Always auto-calculated from 52W Low/High
 
  onUpdateStock(ticker, {
  ...original,

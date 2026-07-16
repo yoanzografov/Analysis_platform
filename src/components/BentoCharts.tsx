@@ -327,7 +327,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
       <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = Цената е до 5% над 52-Week Low (евтина!)<br/>
       <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = Цената е между двата прага<br/>
       <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = Цената е до 5% под 52-Week High (скъпа!)<br/><br/>
-      Ако си въвел сигнал ръчно в таблицата, той се запазва вместо автоматичния.<br/><br/>
+      Сигналът се изчислява <strong>винаги автоматично</strong> — ръчна промяна не се запазва.<br/><br/>
       Натисни всеки сегмент за да филтрираш таблицата по сигнал.
     </div>
   </div>
