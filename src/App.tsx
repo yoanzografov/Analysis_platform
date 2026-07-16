@@ -655,16 +655,18 @@ export default function App() {
   {/* Auto live updates toggler */}
   <button
   onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`group relative text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isAutoLiveRefresh 
   ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
   : 'bg-bg text-ink-faint border-gray-350 hover:bg-gray-50 hover:text-ink-muted'
   }`}
-  title="Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди"
   >
   <span className={`w-1.5 h-1.5 rounded-full ${isAutoLiveRefresh ? 'bg-green-400 animate-ping' : 'bg-gray-400'}`} />
   Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}
   <Info className="w-3.5 h-3.5 opacity-60 ml-0.5" />
+  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+    Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди
+  </div>
   </button>
 
   {/* Simulation Engine Activator */}
@@ -672,15 +674,14 @@ export default function App() {
   onClick={() => {
   setIsSimulating(!isSimulating);
   if (!isSimulating) {
-  setIsAutoLiveRefresh(false); // turn off live refresh if user manually wants simulation ticks
+  setIsAutoLiveRefresh(false); 
   }
   }}
-  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`group relative text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isSimulating 
   ? 'bg-red-700 text-ink border-red-850 hover:bg-red-800 font-extrabold' 
   : 'bg-bg text-ink border-border hover:bg-white/10 hover:text-ink'
   }`}
-  title="Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити"
   >
   {isSimulating ? (
   <>
@@ -694,22 +695,27 @@ export default function App() {
   </>
   )}
   <Info className="w-3.5 h-3.5 opacity-60 ml-0.5" />
+  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+    Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити
+  </div>
   </button>
 
   {/* Quick real live market quotes sync */}
   <button
   onClick={triggerManualRefresh}
   disabled={isFetchingLivePrices}
-  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`group relative text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
   isFetchingLivePrices
   ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
   : 'bg-bg text-ink border-black hover:bg-white/20'
   }`}
-  title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
   >
   <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-[#10b981]' : ''}`} />
   {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
   <Info className="w-3.5 h-3.5 opacity-60 ml-0.5" />
+  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+    Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи
+  </div>
   </button>
 
 
