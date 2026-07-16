@@ -586,7 +586,13 @@ export default function App() {
  return (
  <div className="min-h-screen bg-bg text-ink flex flex-col pb-12 antialiased">
  {/* Dynamic indices banner strip */}
- <IndicesStrip indices={indices} isSimulating={isSimulating} onNewUserClick={() => setShowNewUserModal(true)} />
+ <IndicesStrip 
+  indices={indices} 
+  isSimulating={isSimulating} 
+  onNewUserClick={() => setShowNewUserModal(true)} 
+  onExportCSV={exportCSVFile}
+  onRestoreDefaults={handleRestoreDefaults}
+ />
 
  {/* Main Container */}
  <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5 flex-1 space-y-5">
@@ -701,47 +707,7 @@ export default function App() {
   {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
   </button>
 
-  {/* System Settings Dropdown */}
-  <div className="relative ml-2 pl-3 border-l border-border shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsSettingsMenuOpen(false); }}>
-    <button
-      onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
-      className="text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border border-border bg-bg text-ink hover:bg-white/10 uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-      title="Системни настройки и данни"
-    >
-      <Settings2 className="w-3 h-3" />
-      Настройки
-      <ChevronDown className={`w-3 h-3 transition-transform ${isSettingsMenuOpen ? 'rotate-180' : ''}`} />
-    </button>
 
-    {isSettingsMenuOpen && (
-      <div className="absolute right-0 top-full mt-2 w-56 bg-bg border border-border rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
-        <button
-          onClick={() => { exportCSVFile(); setIsSettingsMenuOpen(false); }}
-          className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
-        >
-          <Download className="w-4 h-4" />
-          Експорт CSV
-        </button>
-        <button
-          onClick={() => { handleRestoreDefaults(); setIsSettingsMenuOpen(false); }}
-          className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
-          title="Върнете началните фабрични данни"
-        >
-          <ArchiveRestore className="w-4 h-4 text-stone-500" />
-          Фабрични данни
-        </button>
-        <div className="h-px bg-border/50 my-1 mx-1" />
-        <button
-          onClick={() => { handleNewUser(); setIsSettingsMenuOpen(false); }}
-          className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#f43f5e] hover:bg-[#f43f5e]/10 rounded-lg transition-colors cursor-pointer"
-          title="Изтрийте всичко и започнете начисто"
-        >
-          <Trash2 className="w-4 h-4" />
-          Нов потребител (Изчисти)
-        </button>
-      </div>
-    )}
-  </div>
   </div>
  </div>
 
