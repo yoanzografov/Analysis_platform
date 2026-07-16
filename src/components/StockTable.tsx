@@ -279,8 +279,16 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  }
  }
  
- // Automatically set calculated defaults if no custom signal string is filled, or keep current input
- const finalSignal = editSignal || (difference !== null ? (difference > 15 ? 'Buy' : difference < -15 ? 'Sell' : 'Hold') : 'Hold');
+  // Signal formula matching Google Sheets: =IF(P<=AW*1.05, "Buy", IF(P>=AO*0.95, "Sell", "Hold"))
+  // P = currentPrice, AW = low52 (52-Week Low), AO = high52 (52-Week High)
+  const autoSignalFromPrices = (cp: number, lo: number | null, hi: number | null): string => {
+    if (!lo || !hi) return 'Hold';
+    if (cp <= lo * 1.05) return 'Buy';
+    if (cp >= hi * 0.95) return 'Sell';
+    return 'Hold';
+  };
+  const computedSignal = autoSignalFromPrices(parsedCurrentPrice, parsedLow52, parsedHigh52);
+  const finalSignal = editSignal || computedSignal;
 
  onUpdateStock(ticker, {
  ...original,
@@ -356,7 +364,12 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  buySellValue = 'ДРУГИ';
  }
  }
- const autoSignal = diffPercent !== null ? (diffPercent > 15 ? 'Buy' : diffPercent < -15 ? 'Sell' : 'Hold') : 'Hold';
+  // Signal formula matching Google Sheets: Buy if currentPrice <= low52*1.05, Sell if currentPrice >= high52*0.95
+  const low52Default = priceOfCalcNum ? parseFloat((priceOfCalcNum * 0.78).toFixed(2)) : 80.0;
+  const high52Default = priceOfCalcNum ? parseFloat((priceOfCalcNum * 1.25).toFixed(2)) : 125.0;
+  let autoSignal = 'Hold';
+  if (initialPrice <= low52Default * 1.05) autoSignal = 'Buy';
+  else if (initialPrice >= high52Default * 0.95) autoSignal = 'Sell';
 
  const newStock: Stock = {
  watch: '',

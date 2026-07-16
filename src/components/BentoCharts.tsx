@@ -322,11 +322,11 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
     <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
     <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-72 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
       <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📊 Signal Weight Allocation</span>
-      Сигналът се изчислява <strong>автоматично</strong> по формулата:<br/><br/>
-      <span className="text-yellow-300 font-mono text-[10px] block mb-2">% Разлика = (Справедлива − Текуща) / Текуща × 100</span>
-      <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = % Разлика &gt; +15%<br/>
-      <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = между -15% и +15%<br/>
-      <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = % Разлика &lt; -15%<br/><br/>
+      Сигналът се изчислява автоматично спрямо <strong>52-Week Low</strong> и <strong>52-Week High</strong>:<br/><br/>
+      <span className="text-yellow-300 font-mono text-[10px] block mb-2">IF(Цена ≤ 52W-Low × 1.05 → Buy<br/>IF(Цена ≥ 52W-High × 0.95 → Sell<br/>иначе → Hold)</span>
+      <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = Цената е до 5% над 52-Week Low (евтина!)<br/>
+      <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = Цената е между двата прага<br/>
+      <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = Цената е до 5% под 52-Week High (скъпа!)<br/><br/>
       Ако си въвел сигнал ръчно в таблицата, той се запазва вместо автоматичния.<br/><br/>
       Натисни всеки сегмент за да филтрираш таблицата по сигнал.
     </div>
