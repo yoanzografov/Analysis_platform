@@ -213,11 +213,8 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  {/* Header row with scrolling buttons */}
  <div className="flex items-center justify-between border-b border-border/50 pb-2 mb-2">
  <div>
- <span className="text-xs text-emerald-700 font-mono tracking-wider block font-bold uppercase">
- ▲ Дневен Лидер на Пазара
- </span>
- <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
- Top Gainers (Топ 15)
+ <h3 className="text-sm uppercase font-extrabold text-emerald-700 font-mono tracking-tight">
+ Top Gainers
  </h3>
  </div>
  
@@ -290,11 +287,8 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  {/* Header row with scrolling buttons */}
  <div className="flex items-center justify-between border-b border-border/50 pb-2 mb-2">
  <div>
- <span className="text-xs text-red-700 font-mono tracking-wider block font-bold uppercase">
- ▼ Дневен Аутсайдер на Пазара
- </span>
- <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
- Top Losers (Топ 15)
+ <h3 className="text-sm uppercase font-extrabold text-red-700 font-mono tracking-tight">
+ Top Losers
  </h3>
  </div>
  
