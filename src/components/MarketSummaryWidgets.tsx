@@ -359,9 +359,6 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between relative md:col-span-1 h-[305px]">
  <div className="flex items-center justify-between mb-1">
  <div>
- <span className="text-xs text-[#2962FF] font-sans tracking-widest block font-extrabold uppercase">
- TRADINGVIEW REAL-TIME FEED
- </span>
  <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
  VIX Volatility Index
  </h3>
