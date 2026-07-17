@@ -311,13 +311,13 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
   {/* 3. Mixed Links Container */}
   <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col transition-all duration-200 h-[305px] hover:shadow-md relative group md:col-span-1">
     
-    <div className="flex-1 flex flex-col gap-3 overflow-y-auto custom-mini-scroll pr-1">
+    <div className="flex-1 flex flex-col gap-2 overflow-y-auto custom-mini-scroll pr-1">
       
-      {/* Section 1: Какво движи пазара? */}
+      {/* Section 1: Полезни връзки */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between border-b border-border/50 pb-1.5 shrink-0">
-          <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
-            Какво движи пазара?
+          <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
+            Полезни връзки
           </h3>
         </div>
         
@@ -345,15 +345,6 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           </div>
         </a>
-      </div>
-
-      {/* Section 2: Полезни връзки */}
-      <div className="flex flex-col gap-2 mt-1">
-        <div className="flex items-center justify-between border-b border-border/50 pb-1.5 shrink-0">
-          <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
-            Полезни връзки
-          </h3>
-        </div>
 
         {/* Link 2: CME FedWatch Tool & FOMC Countdown */}
         <a 
@@ -376,30 +367,47 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 cmegroup.com
               </span>
             </div>
-          <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </div>
           </div>
+          
+          {/* FOMC Countdown Strip */}
+          <div className="mt-3 pt-2 border-t border-border/30 flex flex-col gap-1">
+            <span className="text-[9px] text-ink-faint font-sans uppercase font-bold tracking-wider">
+              The next FOMC meeting is in:
+            </span>
+            <div className="flex items-center gap-1.5 font-mono text-xs font-extrabold text-ink">
+              {fomcTimeLeft ? (
+                <>
+                  <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.d).padStart(2, '0')}d</div>:
+                  <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.h).padStart(2, '0')}h</div>:
+                  <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.m).padStart(2, '0')}m</div>:
+                  <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm text-indigo-500">{String(fomcTimeLeft.s).padStart(2, '0')}s</div>
+                </>
+              ) : (
+                <span className="animate-pulse text-ink-faint">Зареждане...</span>
+              )}
+            </div>
+          </div>
+        </a>
+      </div>
+
+      {/* Thin Divider Line */}
+      <div className="h-px w-full bg-border/80 my-2 shrink-0" />
+
+      {/* Section 2: Какво движи пазара? */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between border-b border-border/50 pb-1.5 shrink-0">
+          <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
+            Какво движи пазара?
+          </h3>
         </div>
         
-        {/* FOMC Countdown Strip */}
-        <div className="mt-3 pt-2 border-t border-border/30 flex flex-col gap-1">
-          <span className="text-[9px] text-ink-faint font-sans uppercase font-bold tracking-wider">
-            The next FOMC meeting is in:
-          </span>
-          <div className="flex items-center gap-1.5 font-mono text-xs font-extrabold text-ink">
-            {fomcTimeLeft ? (
-              <>
-                <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.d).padStart(2, '0')}d</div>:
-                <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.h).padStart(2, '0')}h</div>:
-                <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.m).padStart(2, '0')}m</div>:
-                <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm text-indigo-500">{String(fomcTimeLeft.s).padStart(2, '0')}s</div>
-              </>
-            ) : (
-              <span className="animate-pulse text-ink-faint">Зареждане...</span>
-            )}
-          </div>
+        {/* Placeholder for future content */}
+        <div className="flex-1 min-h-[40px]">
+          {/* Content will be added here later */}
         </div>
-      </a>
       </div>
       
     </div>
