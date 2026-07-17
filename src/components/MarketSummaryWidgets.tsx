@@ -324,29 +324,36 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             {/* SVG Gauge */}
             <div className="flex justify-center mt-2">
               <svg width="220" height="118" viewBox="0 0 220 118" className="overflow-visible">
-                {/* Colored arc segments */}
-                <path d={arcPath(180, 144)} stroke="#dc2626" strokeWidth="14" fill="none" strokeLinecap="butt" />
-                <path d={arcPath(144, 108)} stroke="#f97316" strokeWidth="14" fill="none" strokeLinecap="butt" />
-                <path d={arcPath(108,  72)} stroke="#eab308" strokeWidth="14" fill="none" strokeLinecap="butt" />
-                <path d={arcPath( 72,  36)} stroke="#22c55e" strokeWidth="14" fill="none" strokeLinecap="butt" />
-                <path d={arcPath( 36,   0)} stroke="#16a34a" strokeWidth="14" fill="none" strokeLinecap="butt" />
+                {/* Background track */}
+                <path d={arcPath(180, 0)} stroke="currentColor" strokeOpacity="0.05" strokeWidth="16" fill="none" strokeLinecap="round" />
+                
+                {/* Colored arc segments (rounded with gaps) */}
+                <path d={arcPath(178, 146)} stroke="#dc2626" strokeWidth="16" fill="none" strokeLinecap="round" />
+                <path d={arcPath(142, 110)} stroke="#f97316" strokeWidth="16" fill="none" strokeLinecap="round" />
+                <path d={arcPath(106,  74)} stroke="#eab308" strokeWidth="16" fill="none" strokeLinecap="round" />
+                <path d={arcPath( 70,  38)} stroke="#22c55e" strokeWidth="16" fill="none" strokeLinecap="round" />
+                <path d={arcPath( 34,   2)} stroke="#16a34a" strokeWidth="16" fill="none" strokeLinecap="round" />
                 
                 {/* Zone labels */}
-                <text x="8"   y="108" fontSize="6.5" fill="#dc2626" fontWeight="700" fontFamily="monospace">EXT{"\n"}FEAR</text>
-                <text x="193" y="108" fontSize="6.5" fill="#16a34a" fontWeight="700" fontFamily="monospace" textAnchor="end">EXT{"\n"}GREED</text>
+                <text x="5"   y="112" fontSize="7" fill="#dc2626" fontWeight="800" fontFamily="monospace">EXT{"\n"}FEAR</text>
+                <text x="195" y="112" fontSize="7" fill="#16a34a" fontWeight="800" fontFamily="monospace" textAnchor="end">EXT{"\n"}GREED</text>
                 
-                {/* Needle */}
-                <line x1={cx} y1={cy} x2={nx} y2={ny} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-                  className="text-ink" style={{ transition: 'x2 1s cubic-bezier(0.34, 1.56, 0.64, 1), y2 1s cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
-                <circle cx={cx} cy={cy} r="5" fill="currentColor" className="text-ink" />
-                <circle cx={cx} cy={cy} r="2.5" fill="white" />
+                {/* Sleek Needle */}
+                <polygon 
+                  points={`${cx-3},${cy+2} ${cx+3},${cy+2} ${nx},${ny}`} 
+                  fill="currentColor" 
+                  className="text-ink shadow-2xl" 
+                  style={{ transition: 'all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }} 
+                />
+                <circle cx={cx} cy={cy} r="6" fill="currentColor" className="text-ink" />
+                <circle cx={cx} cy={cy} r="2" fill="white" />
                 
                 {/* Center value */}
-                <text x={cx} y={cy - 14} textAnchor="middle" fontSize="24" fontWeight="900" fill={info.color} fontFamily="monospace">
+                <text x={cx} y={cy - 20} textAnchor="middle" fontSize="28" fontWeight="900" fill={info.color} fontFamily="monospace" className="tracking-tighter">
                   {fng !== null ? Math.round(fng) : '--'}
                 </text>
-                <text x={cx} y={cy - 4} textAnchor="middle" fontSize="7" fontWeight="700" fill={info.color} fontFamily="monospace">
-                  {info.label.toUpperCase()}
+                <text x={cx} y={cy - 6} textAnchor="middle" fontSize="8" fontWeight="800" fill={info.color} fontFamily="monospace" className="uppercase tracking-widest opacity-90">
+                  {info.label}
                 </text>
               </svg>
             </div>
