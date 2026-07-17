@@ -429,9 +429,71 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           </h3>
         </div>
         
-        {/* Placeholder for future content */}
-        <div className="flex-1 min-h-[40px]">
-          {/* Content will be added here later */}
+        {/* Indicators List */}
+        <div className="flex flex-col gap-3 pb-2 mt-1">
+          {[
+            {
+              category: "Инфлация",
+              items: [
+                { name: "CPI (Inflation)", url: "https://tradingeconomics.com/united-states/inflation-cpi" },
+                { name: "Core CPI", url: "https://tradingeconomics.com/united-states/core-inflation-rate" },
+                { name: "PCE", url: "https://tradingeconomics.com/united-states/personal-consumption-expenditures-price-index" },
+                { name: "Core PCE", url: "https://tradingeconomics.com/united-states/core-pce-price-index-yoy" },
+              ]
+            },
+            {
+              category: "Централна Банка",
+              items: [
+                { name: "Fed Funds Rate", url: "https://tradingeconomics.com/united-states/interest-rate" },
+              ]
+            },
+            {
+              category: "Пазар на труда",
+              items: [
+                { name: "Non-Farm Payrolls", url: "https://tradingeconomics.com/united-states/non-farm-payrolls" },
+                { name: "Unemployment Rate", url: "https://tradingeconomics.com/united-states/unemployment-rate" },
+              ]
+            },
+            {
+              category: "Икономика",
+              items: [
+                { name: "GDP Growth Rate", url: "https://tradingeconomics.com/united-states/gdp-growth-rate" },
+                { name: "Retail Sales", url: "https://tradingeconomics.com/united-states/retail-sales" },
+                { name: "Consumer Confidence", url: "https://tradingeconomics.com/united-states/consumer-confidence" },
+              ]
+            },
+            {
+              category: "Други",
+              items: [
+                { name: "Housing Starts", url: "https://tradingeconomics.com/united-states/housing-starts" },
+                { name: "Earnings Calendar", url: "https://www.investing.com/earnings-calendar/" },
+                { name: "Crude Oil", url: "https://tradingeconomics.com/commodity/crude-oil" },
+                { name: "VIX Volatility", url: "https://tradingeconomics.com/vix:ind" },
+              ]
+            }
+          ].map((group) => (
+            <div key={group.category} className="flex flex-col gap-1.5">
+              <span className="text-[10px] uppercase font-bold text-ink-faint tracking-wider pl-0.5">
+                {group.category}
+              </span>
+              <div className="grid grid-cols-2 gap-1.5">
+                {group.items.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-1.5 rounded-lg border border-border/40 bg-bg hover:bg-card-hover hover:border-indigo-500/30 transition-colors group cursor-pointer"
+                  >
+                    <span className="text-[10px] font-semibold text-ink group-hover:text-indigo-500 truncate pr-1">
+                      {item.name}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-faint group-hover:text-indigo-500 shrink-0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
       
