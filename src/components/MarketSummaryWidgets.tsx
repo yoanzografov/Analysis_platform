@@ -391,6 +391,31 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             </div>
           </div>
         </a>
+
+        {/* Link 3: Angelov Dimitar Community */}
+        <a 
+          href="https://angelovdimitar.com/angelov-dimitar-community/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 p-2.5 rounded-xl border border-border/50 hover:bg-card-hover hover:border-border transition-all group cursor-pointer"
+        >
+          <img 
+            src="https://www.google.com/s2/favicons?domain=angelovdimitar.com&sz=32" 
+            alt="Angelov Dimitar" 
+            className="w-5 h-5 rounded-md bg-white/10 p-0.5"
+          />
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
+              Angelov Dimitar Community
+            </span>
+            <span className="text-[10px] text-ink-faint font-mono truncate">
+              angelovdimitar.com
+            </span>
+          </div>
+          <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </div>
+        </a>
       </div>
 
       {/* Thin Divider Line */}
