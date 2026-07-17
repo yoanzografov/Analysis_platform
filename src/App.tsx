@@ -62,13 +62,30 @@ export default function App() {
 
   const [buyThreshold, setBuyThreshold] = useState<number>(10);
   const [sellThreshold, setSellThreshold] = useState<number>(10);
+  const [signalThreshold, setSignalThreshold] = useState<number>(5);
   
   const buyThresholdRef = useRef(10);
   const sellThresholdRef = useRef(10);
+  const signalThresholdRef = useRef(5);
   useEffect(() => { 
     buyThresholdRef.current = buyThreshold;
     sellThresholdRef.current = sellThreshold; 
-  }, [buyThreshold, sellThreshold]);
+    signalThresholdRef.current = signalThreshold;
+  }, [buyThreshold, sellThreshold, signalThreshold]);
+
+  const handleUpdateSignalThreshold = (newVal: number) => {
+    setSignalThreshold(newVal);
+    setStocks(prev => prev.map(stock => {
+      let newSignal = 'Hold';
+      if (stock.currentPrice > 0 && stock.low52 && stock.high52) {
+        const buyLimit = stock.low52 * (1 + newVal / 100);
+        const sellLimit = stock.high52 * (1 - newVal / 100);
+        if (stock.currentPrice <= buyLimit) newSignal = 'Buy';
+        else if (stock.currentPrice >= sellLimit) newSignal = 'Sell';
+      }
+      return { ...stock, signal: newSignal };
+    }));
+  };
 
   const handleUpdateThresholds = (newBuy: number, newSell: number) => {
     setBuyThreshold(newBuy);
@@ -132,7 +149,17 @@ export default function App() {
  buySell = 'ДРУГИ';
  }
  }
- const signal = difference !== null ? (difference > 15 ? 'Buy' : difference < -15 ? 'Sell' : 'Hold') : 'Hold';
+ // Replace the hardcoded signal logic
+        let signal = stock.signal || 'Hold';
+        const l52 = quote ? (quote.low52 !== undefined ? quote.low52 : stock.low52) : stock.low52;
+        const h52 = quote ? (quote.high52 !== undefined ? quote.high52 : stock.high52) : stock.high52;
+        if (nextPrice > 0 && l52 && h52) {
+          const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
+          const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
+          if (nextPrice <= buyLimit) signal = 'Buy';
+          else if (nextPrice >= sellLimit) signal = 'Sell';
+          else signal = 'Hold';
+        }
 
  return {
  ...stock,
@@ -440,7 +467,17 @@ export default function App() {
  buySell = 'ДРУГИ';
  }
  }
- const signal = difference !== null ? (difference > 15 ? 'Buy' : difference < -15 ? 'Sell' : 'Hold') : 'Hold';
+ // Replace the hardcoded signal logic
+        let signal = stock.signal || 'Hold';
+        const l52 = stock.low52;
+        const h52 = stock.high52;
+        if (nextPrice > 0 && l52 && h52) {
+          const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
+          const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
+          if (nextPrice <= buyLimit) signal = 'Buy';
+          else if (nextPrice >= sellLimit) signal = 'Sell';
+          else signal = 'Hold';
+        }
 
  return {
  ...stock,
@@ -786,6 +823,8 @@ export default function App() {
   buyThreshold={buyThreshold}
   sellThreshold={sellThreshold}
   onUpdateThresholds={handleUpdateThresholds}
+  signalThreshold={signalThreshold}
+  onUpdateSignalThreshold={handleUpdateSignalThreshold}
   />
 
  {/* Main Grid stock table database */}

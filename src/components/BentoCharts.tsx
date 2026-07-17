@@ -10,11 +10,26 @@ interface Props {
   buyThreshold: number;
   sellThreshold: number;
   onUpdateThresholds: (buy: number, sell: number) => void;
+  signalThreshold: number;
+  onUpdateSignalThreshold: (val: number) => void;
 }
 
-export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold, onUpdateThresholds }: Props) {
+export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold, onUpdateThresholds, signalThreshold, onUpdateSignalThreshold }: Props) {
   const [showContextMenu, setShowContextMenu] = useState(false);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+
+  const [isEditingSignal, setIsEditingSignal] = useState(false);
+  const [localSignalVal, setLocalSignalVal] = useState(signalThreshold.toString());
+
+  const handleSubmitSignal = () => {
+    setIsEditingSignal(false);
+    const parsed = parseFloat(localSignalVal);
+    if (!isNaN(parsed) && parsed >= 0) {
+      onUpdateSignalThreshold(parsed);
+    } else {
+      setLocalSignalVal(signalThreshold.toString());
+    }
+  };
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -323,15 +338,36 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
     <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-72 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
       <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📊 Signal Weight Allocation</span>
       Сигналът се изчислява автоматично спрямо <strong>52-Week Low</strong> и <strong>52-Week High</strong>:<br/><br/>
-      <span className="text-yellow-300 font-mono text-[10px] block mb-2">IF(Цена ≤ 52W-Low × 1.05 → Buy<br/>IF(Цена ≥ 52W-High × 0.95 → Sell<br/>иначе → Hold)</span>
-      <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = Цената е до 5% над 52-Week Low (евтина!)<br/>
+      <span className="text-yellow-300 font-mono text-[10px] block mb-2">IF(Цена ≤ 52W-Low × {1 + signalThreshold/100} → Buy<br/>IF(Цена ≥ 52W-High × {1 - signalThreshold/100} → Sell<br/>иначе → Hold)</span>
+      <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = Цената е до {signalThreshold}% над 52-Week Low (евтина!)<br/>
       <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = Цената е между двата прага<br/>
-      <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = Цената е до 5% под 52-Week High (скъпа!)<br/><br/>
+      <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = Цената е до {signalThreshold}% под 52-Week High (скъпа!)<br/><br/>
       Сигналът се изчислява <strong>винаги автоматично</strong> — ръчна промяна не се запазва.<br/><br/>
       Натисни всеки сегмент за да филтрираш таблицата по сигнал.
     </div>
   </div>
  </div>
+ </div>
+ <div className="flex items-center gap-2 mb-2 mt-1">
+   <span className="text-[10px] text-ink-faint font-semibold uppercase">Отстояние от 52W Min/Max:</span>
+   {isEditingSignal ? (
+     <input
+       autoFocus
+       className="w-8 text-right bg-transparent border-b border-indigo-500 text-[10px] font-mono font-bold text-ink outline-none"
+       value={localSignalVal}
+       onChange={e => setLocalSignalVal(e.target.value)}
+       onBlur={handleSubmitSignal}
+       onKeyDown={e => e.key === 'Enter' && handleSubmitSignal()}
+     />
+   ) : (
+     <span 
+       onClick={() => setIsEditingSignal(true)}
+       className="cursor-pointer px-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[10px] font-mono font-bold text-indigo-500/80 hover:text-indigo-500 shrink-0 transition-colors bg-bg border border-border/40"
+       title="Кликни за редакция"
+     >
+       {signalThreshold}%
+     </span>
+   )}
  </div>
 
  <div className="h-32 relative flex items-center justify-center my-1.5">
