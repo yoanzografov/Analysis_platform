@@ -71,53 +71,53 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
  };
 
  return (
-    <div className="w-full bg-bg rounded-2xl border border-border select-none mt-5 mb-4 relative z-50 overflow-hidden shadow-sm">
-      <div className="max-w-7xl mx-auto flex items-center h-16 divide-x divide-border">
-        
-        {/* Category Dropdown Selector */}
-        <div ref={dropdownRef} className="w-[160px] md:w-[230px] shrink-0 h-full px-2 md:px-4 flex flex-col justify-center relative z-20">
-          <span className="text-[10px] md:text-xs text-ink/60 font-serif italic uppercase tracking-wider block mb-0.5 select-none truncate">
-            Index Markets
-          </span>
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center justify-between w-full text-left font-mono font-bold text-xs uppercase tracking-tight hover:text-indigo-500 transition-colors focus:outline-none group cursor-pointer"
-          >
-            <div className="flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5 text-ink-muted group-hover:text-indigo-500" />
-              <span className="text-sm font-sans font-extrabold text-ink leading-tight tracking-tight group-hover:text-indigo-500">
-                {selectedCategory}
-              </span>
-            </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-ink-muted transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-indigo-500' : ''}`} />
-          </button>
+    <div className="w-full relative z-50 mb-4 mt-5">
+      <div className="w-full bg-bg rounded-2xl border border-border select-none shadow-sm flex items-center h-16 divide-x divide-border">
+          
+          {/* Category Dropdown Selector */}
+          <div ref={dropdownRef} className="w-[160px] md:w-[230px] shrink-0 h-full px-2 md:px-4 flex flex-col justify-center relative z-20 rounded-l-2xl">
+            <span className="text-[10px] md:text-xs text-ink/60 font-serif italic uppercase tracking-wider block mb-0.5 select-none truncate">
+              Index Markets
+            </span>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex items-center justify-between w-full text-left font-mono font-bold text-xs uppercase tracking-tight hover:text-indigo-500 transition-colors focus:outline-none group cursor-pointer"
+            >
+              <div className="flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-ink-muted group-hover:text-indigo-500" />
+                <span className="text-sm font-sans font-extrabold text-ink leading-tight tracking-tight group-hover:text-indigo-500">
+                  {selectedCategory}
+                </span>
+              </div>
+              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-indigo-500' : ''}`} />
+            </button>
 
-          {/* Floating Dropdown */}
-          {isOpen && (
-            <div className="absolute left-0 top-[100%] mt-2 w-full bg-card rounded-xl border border-border shadow-xl py-1.5 flex flex-col z-50">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setSelectedCategory(cat);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-2 text-xs font-sans font-bold transition-all mx-1 w-[calc(100%-8px)] rounded-md ${
-                    selectedCategory === cat
-                      ? 'bg-indigo-500/10 text-indigo-500'
-                      : 'text-ink-muted hover:bg-card-hover hover:text-ink'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+            {/* Floating Dropdown */}
+            {isOpen && (
+              <div className="absolute left-0 top-[100%] mt-2 w-full bg-card rounded-xl border border-border shadow-xl py-1.5 flex flex-col z-50">
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-xs font-sans font-bold transition-all mx-1 w-[calc(100%-8px)] rounded-md ${
+                      selectedCategory === cat
+                        ? 'bg-indigo-500/10 text-indigo-500'
+                        : 'text-ink-muted hover:bg-card-hover hover:text-ink'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Real-time Indices/Indicators Grid (8 columns) */}
-        <div className="flex-1 h-full overflow-x-auto custom-mini-scroll flex bg-bg">
-          <div className="min-w-[800px] flex-1 grid grid-cols-8 divide-x divide-border h-full">
+          {/* Real-time Indices/Indicators Grid (8 columns) */}
+          <div className="flex-1 h-full overflow-x-auto overflow-y-hidden custom-mini-scroll flex bg-bg rounded-r-2xl">
+            <div className="min-w-[800px] flex-1 grid grid-cols-8 divide-x divide-border h-full">
             
             {/* Real items */}
             {displayItems.map((item, idx) => {
