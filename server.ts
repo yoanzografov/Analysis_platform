@@ -1505,6 +1505,32 @@ async function startServer() {
     });
   }
 
+  app.get("/api/fng", async (req, res) => {
+    try {
+      const url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+          "Referer": "https://edition.cnn.com/"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`CNN API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data || !data.fear_and_greed) {
+        throw new Error("Invalid CNN data format");
+      }
+
+      res.json(data.fear_and_greed);
+    } catch (error) {
+      console.error("Грешка при извличане на Fear & Greed:", error);
+      res.status(500).json({ error: "Грешка при извличане на Fear & Greed Index" });
+    }
+  });
+
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Express server running on code container port ${PORT}`);
   });
