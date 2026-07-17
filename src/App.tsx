@@ -588,13 +588,13 @@ export default function App() {
  document.body.removeChild(link);
  };
 
- return (
- <div className="min-h-screen bg-bg text-ink flex flex-col pb-12 antialiased">
-  {/* Dynamic indices banner strip */}
-  <IndicesStrip 
-   indices={indices} 
-   isSimulating={isSimulating} 
-  />
+  return (
+  <div className="min-h-screen bg-bg text-ink flex flex-col pb-12 antialiased overflow-x-hidden w-full">
+   {/* Dynamic indices banner strip */}
+   <IndicesStrip 
+    indices={indices} 
+    isSimulating={isSimulating} 
+   />
 
  {/* Main Container */}
  <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5 flex-1 space-y-5">
@@ -640,9 +640,9 @@ export default function App() {
 
   {/* Dashboard Header Bar */}
   <div className="flex items-center justify-between gap-6 flex-wrap border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0">
-      <div className="flex items-center gap-2 shrink-0">
-        <Building2 className="w-5 h-5 text-ink" />
-        <h1 className="text-xl sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase whitespace-nowrap">
+      <div className="flex items-center gap-2 shrink-0 max-w-full">
+        <Building2 className="w-5 h-5 text-ink shrink-0" />
+        <h1 className="text-lg sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase leading-tight">
           ПЛАТФОРМА ЗА СЛЕДЕНЕ НА АКЦИИ
         </h1>
       </div>

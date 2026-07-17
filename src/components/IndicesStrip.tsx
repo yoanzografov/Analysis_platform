@@ -71,12 +71,12 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
  };
 
  return (
-    <div className="w-full bg-bg rounded-2xl border border-border select-none mb-4 relative z-50">
+    <div className="w-full bg-bg sm:rounded-2xl border-y sm:border-x border-border select-none mb-4 relative z-50 overflow-hidden">
       <div className="max-w-7xl mx-auto flex items-center h-16 divide-x divide-border">
         
         {/* Category Dropdown Selector */}
-        <div ref={dropdownRef} className="w-[230px] shrink-0 h-full px-4 flex flex-col justify-center relative z-20">
-          <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block mb-0.5 select-none">
+        <div ref={dropdownRef} className="w-[160px] md:w-[230px] shrink-0 h-full px-2 md:px-4 flex flex-col justify-center relative z-20">
+          <span className="text-[10px] md:text-xs text-ink/60 font-serif italic uppercase tracking-wider block mb-0.5 select-none truncate">
             Index Markets
           </span>
           <button
