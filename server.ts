@@ -1524,7 +1524,7 @@ async function startServer() {
         throw new Error("Invalid CNN data format");
       }
 
-      res.json(data.fear_and_greed);
+      res.json(data);
     } catch (error) {
       console.error("Грешка при извличане на Fear & Greed:", error);
       res.status(500).json({ error: "Грешка при извличане на Fear & Greed Index" });

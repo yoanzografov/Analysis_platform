@@ -8,18 +8,25 @@ interface Props {
  onSetActiveFilter: (filter: TableFilter) => void;
 }
 
-interface FngData {
-  score: number;
-  rating: string;
-  timestamp: string;
-  previous_close: number;
-  previous_1_week: number;
-  previous_1_month: number;
-  previous_1_year: number;
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+
+interface CnnData {
+  fear_and_greed: {
+    score: number;
+    rating: string;
+    timestamp: string;
+  };
+  market_volatility_vix: {
+    rating: string;
+    data: { x: number; y: number; rating: string }[];
+  };
+  market_volatility_vix_50: {
+    data: { x: number; y: number; rating: string }[];
+  };
 }
 
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
-  const [fngData, setFngData] = useState<FngData | null>(null);
+  const [fngData, setFngData] = useState<CnnData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
@@ -255,64 +262,95 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  </div>
  </div>
 
- {/* 3. FEAR & GREED GAUGE — CNN Style */}
+ {/* 3. FEAR & GREED VIX LINE CHART — CNN Style */}
   {(() => {
-    const fng = fngData?.score ?? null;
-    const gaugeVal = fng !== null ? fng : 50; // Already on a 0-100 scale
+    let chartData: any[] = [];
+    let currentRating = 'neutral';
+    
+    if (fngData?.market_volatility_vix?.data && fngData?.market_volatility_vix_50?.data) {
+      currentRating = fngData.market_volatility_vix.rating;
+      
+      // Combine VIX and 50-day MA
+      const vixData = fngData.market_volatility_vix.data;
+      const maData = fngData.market_volatility_vix_50.data;
+      
+      // Create map for easy lookup
+      const maMap = new Map();
+      maData.forEach(d => maMap.set(d.x, d.y));
+      
+      chartData = vixData.map(d => ({
+        date: d.x,
+        vix: d.y,
+        ma50: maMap.get(d.x) || null
+      }));
+    }
 
-    // Color + label based on CNN gauge logic
-    const getInfo = (g: number) => {
-      if (g >= 75) return { label: 'ЕКСТРЕМНА АЛЧНОСТ', eng: 'Extreme Greed', color: '#16a34a', bg: 'bg-green-700' };
-      if (g >= 55) return { label: 'АЛЧНОСТ',           eng: 'Greed',         color: '#22c55e', bg: 'bg-green-500' };
-      if (g >= 45) return { label: 'НЕУТРАЛЕН',          eng: 'Neutral',       color: '#eab308', bg: 'bg-yellow-500' };
-      if (g >= 25) return { label: 'СТРАХ',              eng: 'Fear',          color: '#f97316', bg: 'bg-orange-500' };
-      return               { label: 'ЕКСТРЕМЕН СТРАХ',   eng: 'Extreme Fear',  color: '#dc2626', bg: 'bg-red-600' };
+    const formatDate = (timestamp: number) => {
+      const d = new Date(timestamp);
+      return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     };
-    const info = getInfo(gaugeVal);
-
-    // SVG gauge geometry
-    const cx = 110, cy = 105, r = 82;
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
-    // Arc from 180° to 0° (left to right)
-    const arcPath = (startDeg: number, endDeg: number) => {
-      const s = { x: cx + r * Math.cos(toRad(startDeg)), y: cy - r * Math.sin(toRad(startDeg)) };
-      const e = { x: cx + r * Math.cos(toRad(endDeg)),   y: cy - r * Math.sin(toRad(endDeg)) };
-      const large = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
-      return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 0 ${e.x} ${e.y}`;
+    
+    const getRatingColor = (r: string) => {
+      const lower = r.toLowerCase();
+      if (lower.includes('extreme fear')) return '#dc2626'; // red
+      if (lower.includes('fear')) return '#f97316'; // orange
+      if (lower.includes('extreme greed')) return '#16a34a'; // dark green
+      if (lower.includes('greed')) return '#22c55e'; // green
+      return '#64748b'; // neutral/slate
     };
-    // Needle angle: gaugeVal 0=left(180deg) 100=right(0deg)
-    const needleDeg = 180 - (gaugeVal / 100) * 180;
-    const needleLen = 65;
-    const nx = cx + needleLen * Math.cos(toRad(needleDeg));
-    const ny = cy - needleLen * Math.sin(toRad(needleDeg));
-
-    const histItems = [
-      { label: 'Вчера',      val: fngData?.previous_close },
-      { label: 'Мин. Седм.', val: fngData?.previous_1_week },
-      { label: 'Мин. Месец', val: fngData?.previous_1_month },
-    ];
-
-    const changeFromYesterday = fngData ? fngData.score - fngData.previous_close : 0;
+    
+    const formatRatingText = (r: string) => {
+      return r.toUpperCase();
+    };
 
     return (
-      <div className="bg-bg rounded-2xl border border-border p-3 flex flex-col relative md:col-span-1 h-[305px] group hover:shadow-md transition-all duration-200">
+      <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col relative md:col-span-1 h-[305px] group hover:shadow-md transition-all duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between mb-1 shrink-0">
-          <h3 className="text-[11px] uppercase font-extrabold text-ink font-mono tracking-tight" title="Базиран на 7 индикатора за пазара">
-            Fear & Greed Index <span className="text-[9px] text-ink/40 font-normal ml-1">ⓘ</span>
-          </h3>
-          <div className="flex items-center gap-2">
-            <button onClick={() => fetchFng(true)} disabled={refreshing || loading}
-              className="p-1 hover:bg-card-hover border border-border/40 text-ink-faint rounded transition-colors cursor-pointer"
-              title="Обнови">
-              <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
-            </button>
-            <a href="https://edition.cnn.com/markets/fear-and-greed" target="_blank" rel="noopener noreferrer"
-              className="text-[8px] font-bold text-[#cc0000] uppercase tracking-wide hover:underline font-mono">
-              CNN ↗
-            </a>
+        <div className="flex items-center justify-between shrink-0 mb-1">
+          <div className="flex flex-col">
+            <h3 className="text-xs uppercase font-extrabold text-ink font-sans tracking-wide">
+              MARKET VOLATILITY
+            </h3>
+            <span className="text-[10px] text-ink-faint font-bold font-sans mt-0.5">
+              VIX and its 50-day moving average
+            </span>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-1 mb-1">
+              <button onClick={() => fetchFng(true)} disabled={refreshing || loading}
+                className="p-1 hover:bg-card-hover border border-border/40 text-ink-faint rounded transition-colors cursor-pointer"
+                title="Обнови">
+                <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <a href="https://edition.cnn.com/markets/fear-and-greed" target="_blank" rel="noopener noreferrer"
+                className="text-[8px] font-bold text-[#cc0000] uppercase tracking-wide hover:underline font-mono">
+                CNN ↗
+              </a>
+            </div>
+            {fngData && (
+              <div 
+                className="text-[10px] font-black uppercase px-2 py-1 rounded border border-border/50"
+                style={{ backgroundColor: `${getRatingColor(currentRating)}15`, color: getRatingColor(currentRating) }}
+              >
+                {formatRatingText(currentRating)}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Legend */}
+        {fngData && !loading && (
+          <div className="flex items-center gap-3 text-[10px] font-sans font-medium text-ink/80 mb-2 mt-1">
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#005b9f' }}></span>
+              VIX
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#f97316' }}></span>
+              50-day moving average
+            </div>
+          </div>
+        )}
 
         {loading && !fngData ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-2">
@@ -320,72 +358,59 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             <span className="text-[10px] font-mono text-ink-faint uppercase">Зареждане...</span>
           </div>
         ) : (
-          <div className="flex flex-col flex-1">
-            {/* SVG Gauge */}
-            <div className="flex justify-center mt-2">
-              <svg width="220" height="118" viewBox="0 0 220 118" className="overflow-visible">
-                {/* Background track */}
-                <path d={arcPath(180, 0)} stroke="currentColor" strokeOpacity="0.05" strokeWidth="16" fill="none" strokeLinecap="round" />
-                
-                {/* Colored arc segments (rounded with gaps) */}
-                <path d={arcPath(178, 146)} stroke="#dc2626" strokeWidth="16" fill="none" strokeLinecap="round" />
-                <path d={arcPath(142, 110)} stroke="#f97316" strokeWidth="16" fill="none" strokeLinecap="round" />
-                <path d={arcPath(106,  74)} stroke="#eab308" strokeWidth="16" fill="none" strokeLinecap="round" />
-                <path d={arcPath( 70,  38)} stroke="#22c55e" strokeWidth="16" fill="none" strokeLinecap="round" />
-                <path d={arcPath( 34,   2)} stroke="#16a34a" strokeWidth="16" fill="none" strokeLinecap="round" />
-                
-                {/* Zone labels */}
-                <text x="5"   y="112" fontSize="7" fill="#dc2626" fontWeight="800" fontFamily="monospace">EXT{"\n"}FEAR</text>
-                <text x="195" y="112" fontSize="7" fill="#16a34a" fontWeight="800" fontFamily="monospace" textAnchor="end">EXT{"\n"}GREED</text>
-                
-                {/* Sleek Needle */}
-                <polygon 
-                  points={`${cx-3},${cy+2} ${cx+3},${cy+2} ${nx},${ny}`} 
-                  fill="currentColor" 
-                  className="text-ink shadow-2xl" 
-                  style={{ transition: 'all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }} 
-                />
-                <circle cx={cx} cy={cy} r="6" fill="currentColor" className="text-ink" />
-                <circle cx={cx} cy={cy} r="2" fill="white" />
-                
-                {/* Center value */}
-                <text x={cx} y={cy - 20} textAnchor="middle" fontSize="28" fontWeight="900" fill={info.color} fontFamily="monospace" className="tracking-tighter">
-                  {fng !== null ? Math.round(fng) : '--'}
-                </text>
-                <text x={cx} y={cy - 6} textAnchor="middle" fontSize="8" fontWeight="800" fill={info.color} fontFamily="monospace" className="uppercase tracking-widest opacity-90">
-                  {info.label}
-                </text>
-              </svg>
-            </div>
-
-            {/* Change badge */}
-            <div className="flex justify-center -mt-2 mb-2">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold text-white ${
-                changeFromYesterday >= 0 ? 'bg-green-600' : 'bg-red-500'
-              }`}>
-                {changeFromYesterday >= 0 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                {Math.abs(changeFromYesterday).toFixed(1)} т. спрямо вчера
-              </span>
-            </div>
-
-            {/* Historical comparison row */}
-            <div className="grid grid-cols-3 gap-1 mt-auto">
-              {histItems.map(({ label, val }) => {
-                if (val === undefined || val === null) return null;
-                const hi = getInfo(val);
-                return (
-                  <div key={label} className="bg-card-hover border border-border/40 rounded-lg p-1.5 text-center">
-                    <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight mb-0.5">{label}</div>
-                    <div className="text-[11px] font-mono font-black" style={{ color: hi.color }}>{Math.round(val)}</div>
-                    <div className="text-[7px] font-bold" style={{ color: hi.color }}>{hi.eng}</div>
-                  </div>
-                );
-              })}
-            </div>
-
+          <div className="flex flex-col flex-1 min-h-0 w-full mt-2">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color, #e2e8f0)" />
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={(tick) => {
+                      const d = new Date(tick);
+                      return d.getMonth() === 0 || d.getMonth() === 6 ? d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : d.toLocaleDateString('en-US', { month: 'short' });
+                    }}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: '#64748b' }}
+                    minTickGap={40}
+                  />
+                  <YAxis 
+                    domain={['auto', 'auto']}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: '#64748b' }}
+                    tickFormatter={(val) => val.toFixed(2)}
+                  />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    labelFormatter={(label) => new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    formatter={(value: number, name: string) => [value.toFixed(2), name === 'vix' ? 'VIX' : '50-day MA']}
+                  />
+                  <Line 
+                    type="linear" 
+                    dataKey="vix" 
+                    stroke="#005b9f" 
+                    strokeWidth={1.5} 
+                    dot={false} 
+                    isAnimationActive={false}
+                  />
+                  <Line 
+                    type="linear" 
+                    dataKey="ma50" 
+                    stroke="#f97316" 
+                    strokeWidth={1.5} 
+                    dot={false} 
+                    isAnimationActive={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-xs text-ink-faint">Няма данни за графиката</div>
+            )}
+            
             {/* Footer */}
-            <div className="border-t border-border/10 pt-1 mt-1 text-[7px] font-mono text-ink-faint uppercase tracking-tight flex items-center justify-between">
-              <span>CNN Fear & Greed • {fngData ? new Date(fngData.timestamp).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+            <div className="border-t border-border/10 pt-1 mt-2 text-[8px] font-sans text-ink-faint">
+              Last updated {fngData ? new Date(fngData.fear_and_greed.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} at {fngData ? new Date(fngData.fear_and_greed.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' }) : ''}
             </div>
           </div>
         )}
