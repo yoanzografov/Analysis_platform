@@ -708,7 +708,7 @@ app.get("/api/vix", async (req, res) => {
   try {
     const tvUrl = "https://scanner.tradingview.com/america/scan";
     const body = {
-      symbols: { tickers: ["CBOE:VIX"], query: { types: [] } },
+      symbols: { tickers: ["TVC:VIX"], query: { types: [] } },
       columns: ["close", "change", "change_abs", "open", "high", "low"]
     };
 
