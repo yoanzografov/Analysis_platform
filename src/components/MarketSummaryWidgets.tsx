@@ -28,8 +28,42 @@ interface CnnData {
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
   const [fngData, setFngData] = useState<CnnData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(60);
+  
+  const [fomcTimeLeft, setFomcTimeLeft] = useState<{ d: number, h: number, m: number, s: number } | null>(null);
+
+  useEffect(() => {
+    const FOMC_MEETINGS = [
+      new Date('2026-07-29T18:00:00Z'),
+      new Date('2026-09-16T18:00:00Z'),
+      new Date('2026-11-04T19:00:00Z'),
+      new Date('2026-12-16T19:00:00Z'),
+      new Date('2027-01-27T19:00:00Z'),
+      new Date('2027-03-17T18:00:00Z'),
+      new Date('2027-05-05T18:00:00Z')
+    ];
+
+    const updateTimer = () => {
+      const now = new Date();
+      const target = FOMC_MEETINGS.find(date => date > now) || FOMC_MEETINGS[0];
+      const diff = target.getTime() - now.getTime();
+      
+      if (diff > 0) {
+        setFomcTimeLeft({
+          d: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          h: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          m: Math.floor((diff / 1000 / 60) % 60),
+          s: Math.floor((diff / 1000) % 60)
+        });
+      }
+    };
+
+    updateTimer();
+    const iv = setInterval(updateTimer, 1000);
+    return () => clearInterval(iv);
+  }, []);
 
   const gainersRef = useRef<HTMLDivElement>(null);
   const losersRef = useRef<HTMLDivElement>(null);
@@ -310,6 +344,52 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
         </div>
         <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        </div>
+      </a>
+
+      {/* Link 2: CME FedWatch Tool & FOMC Countdown */}
+      <a 
+        href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex flex-col p-3 rounded-xl border border-border/50 hover:bg-card-hover hover:border-border transition-all group cursor-pointer relative overflow-hidden"
+      >
+        <div className="flex items-center gap-3 w-full">
+          <img 
+            src="https://www.google.com/s2/favicons?domain=cmegroup.com&sz=32" 
+            alt="CME" 
+            className="w-6 h-6 rounded-md bg-white/90 p-0.5"
+          />
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
+              CME FedWatch Tool
+            </span>
+            <span className="text-[10px] text-ink-faint font-mono truncate">
+              cmegroup.com
+            </span>
+          </div>
+          <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </div>
+        </div>
+        
+        {/* FOMC Countdown Strip */}
+        <div className="mt-3 pt-2 border-t border-border/30 flex flex-col gap-1">
+          <span className="text-[9px] text-ink-faint font-sans uppercase font-bold tracking-wider">
+            The next FOMC meeting is in:
+          </span>
+          <div className="flex items-center gap-1.5 font-mono text-xs font-extrabold text-ink">
+            {fomcTimeLeft ? (
+              <>
+                <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.d).padStart(2, '0')}d</div>:
+                <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.h).padStart(2, '0')}h</div>:
+                <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.m).padStart(2, '0')}m</div>:
+                <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm text-indigo-500">{String(fomcTimeLeft.s).padStart(2, '0')}s</div>
+              </>
+            ) : (
+              <span className="animate-pulse text-ink-faint">Зареждане...</span>
+            )}
+          </div>
         </div>
       </a>
       
