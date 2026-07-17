@@ -53,7 +53,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
       const res = await fetch('/api/fng');
       if (res.ok) {
         const data = await res.json();
-        setFngData(data);
+        console.log("FNG DATA API Response:", data); setFngData(data);
       } else {
         throw new Error('Failed to fetch Fear & Greed data');
       }

@@ -1505,13 +1505,33 @@ async function startServer() {
     });
   }
 
+  let cachedFngData: any = null;
+  let lastFngFetchTime = 0;
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 минути кеш
+
   app.get("/api/fng", async (req, res) => {
     try {
+      const now = Date.now();
+      if (cachedFngData && now - lastFngFetchTime < CACHE_DURATION) {
+        return res.json(cachedFngData);
+      }
+
       const url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
       const response = await fetch(url, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-          "Referer": "https://edition.cnn.com/"
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Referer": "https://edition.cnn.com/",
+          "Accept": "application/json, text/plain, */*",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Origin": "https://edition.cnn.com",
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache",
+          "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+          "Sec-Ch-Ua-Mobile": "?0",
+          "Sec-Ch-Ua-Platform": '"macOS"',
+          "Sec-Fetch-Dest": "empty",
+          "Sec-Fetch-Mode": "cors",
+          "Sec-Fetch-Site": "same-site"
         }
       });
 
@@ -1523,6 +1543,9 @@ async function startServer() {
       if (!data || !data.fear_and_greed) {
         throw new Error("Invalid CNN data format");
       }
+
+      cachedFngData = data;
+      lastFngFetchTime = now;
 
       res.json(data);
     } catch (error) {
