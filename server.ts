@@ -1516,41 +1516,69 @@ async function startServer() {
         return res.json(cachedFngData);
       }
 
-      const url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Referer": "https://edition.cnn.com/",
-          "Accept": "application/json, text/plain, */*",
-          "Accept-Language": "en-US,en;q=0.9",
-          "Origin": "https://edition.cnn.com",
-          "Cache-Control": "no-cache",
-          "Pragma": "no-cache",
-          "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-          "Sec-Ch-Ua-Mobile": "?0",
-          "Sec-Ch-Ua-Platform": '"macOS"',
-          "Sec-Fetch-Dest": "empty",
-          "Sec-Fetch-Mode": "cors",
-          "Sec-Fetch-Site": "same-site"
-        }
-      });
+      // Използваме Yahoo Finance вместо CNN, за да избегнем WAF (Web Application Firewall) блокове (HTTP 418 Teapot)
+      const url = "https://query1.finance.yahoo.com/v8/finance/chart/^VIX?range=2y&interval=1d";
+      const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error(`CNN API error: ${response.status}`);
+        throw new Error(`YF API error: ${response.status}`);
       }
 
       const data = await response.json();
-      if (!data || !data.fear_and_greed) {
-        throw new Error("Invalid CNN data format");
+      const result = data.chart.result[0];
+      const timestamps = result.timestamp;
+      const quotes = result.indicators.quote[0].close;
+
+      const combined = timestamps.map((t: number, i: number) => ({
+        timestamp: t * 1000,
+        close: quotes[i]
+      })).filter((d: any) => d.close !== null && d.close !== undefined);
+
+      // Изчисляване на 50-дневна пълзяща средна
+      for (let i = 0; i < combined.length; i++) {
+        if (i >= 49) {
+          let sum = 0;
+          for (let j = i - 49; j <= i; j++) {
+            sum += combined[j].close;
+          }
+          combined[i].ma50 = sum / 50;
+        } else {
+          combined[i].ma50 = null;
+        }
       }
 
-      cachedFngData = data;
+      // Взимаме последната 1 година (около 252 работни дни на борсата)
+      const lastYear = combined.slice(-252);
+      
+      const lastItem = lastYear[lastYear.length - 1];
+      const ratio = lastItem.close / lastItem.ma50;
+      let rating = "neutral";
+      if (ratio > 1.2) rating = "extreme fear";
+      else if (ratio > 1.05) rating = "fear";
+      else if (ratio < 0.8) rating = "extreme greed";
+      else if (ratio < 0.95) rating = "greed";
+
+      // Форматираме данните така, че frontend-а (който очаква CNN формат) да работи без промяна
+      const cnnMockData = {
+        market_volatility_vix: {
+          rating: rating,
+          data: lastYear.map((d: any) => ({ x: d.timestamp, y: d.close }))
+        },
+        market_volatility_vix_50: {
+          data: lastYear.map((d: any) => ({ x: d.timestamp, y: d.ma50 }))
+        },
+        fear_and_greed: {
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      cachedFngData = cnnMockData;
       lastFngFetchTime = now;
 
-      res.json(data);
+      res.json(cnnMockData);
     } catch (error) {
-      console.error("Грешка при извличане на Fear & Greed:", error);
-      res.status(500).json({ error: "Грешка при извличане на Fear & Greed Index" });
+      console.error("Грешка при извличане на VIX данни:", error);
+      res.status(500).json({ error: "Грешка при извличане на VIX" });
     }
   });
 
