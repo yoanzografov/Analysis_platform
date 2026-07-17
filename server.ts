@@ -1516,22 +1516,21 @@ async function startServer() {
         return res.json(cachedFngData);
       }
 
-      // Използваме Yahoo Finance вместо CNN, за да избегнем WAF (Web Application Firewall) блокове (HTTP 418 Teapot)
-      const url = "https://query1.finance.yahoo.com/v8/finance/chart/^VIX?range=2y&interval=1d";
-      const response = await fetch(url);
+      // Използваме yahooFinance.chart вместо raw fetch, за да избегнем WAF / 429 Too Many Requests
+      const twoYearsAgo = new Date();
+      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
 
-      if (!response.ok) {
-        throw new Error(`YF API error: ${response.status}`);
-      }
+      const queryOptions = {
+        period1: twoYearsAgo,
+        interval: '1d' as const
+      };
 
-      const data = await response.json();
-      const result = data.chart.result[0];
-      const timestamps = result.timestamp;
-      const quotes = result.indicators.quote[0].close;
+      const result = await yahooFinance.chart('^VIX', queryOptions);
+      const quotes = result.quotes;
 
-      const combined = timestamps.map((t: number, i: number) => ({
-        timestamp: t * 1000,
-        close: quotes[i]
+      const combined = quotes.map((q: any) => ({
+        timestamp: new Date(q.date).getTime(),
+        close: q.close
       })).filter((d: any) => d.close !== null && d.close !== undefined);
 
       // Изчисляване на 50-дневна пълзяща средна

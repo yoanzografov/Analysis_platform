@@ -166,9 +166,6 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
 
           </div>
         </div>
-
-          </div>
-        </div>
       </div>
     </div>
   );
