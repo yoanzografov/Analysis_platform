@@ -29,6 +29,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
   const [fngData, setFngData] = useState<CnnData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [secondsLeft, setSecondsLeft] = useState(60);
 
   const gainersRef = useRef<HTMLDivElement>(null);
   const losersRef = useRef<HTMLDivElement>(null);
@@ -54,6 +55,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
       if (res.ok) {
         const data = await res.json();
         console.log("FNG DATA API Response:", data); setFngData(data);
+        setSecondsLeft(60);
       } else {
         throw new Error('Failed to fetch Fear & Greed data');
       }
@@ -67,9 +69,19 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
   useEffect(() => {
     fetchFng();
-    // Auto refresh every 5 minutes
-    const interval = setInterval(() => fetchFng(), 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    
+    const fetchInterval = setInterval(() => {
+      fetchFng();
+    }, 60 * 1000);
+
+    const timerInterval = setInterval(() => {
+      setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => {
+      clearInterval(fetchInterval);
+      clearInterval(timerInterval);
+    };
   }, []);
 
  // Filter valid stocks with valid changes
@@ -265,24 +277,27 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  {/* 3. FEAR & GREED VIX LINE CHART — CNN Style */}
   {(() => {
     let chartData: any[] = [];
-    let currentRating = 'neutral';
+    let currentVix: string | null = null;
     
     if (fngData?.market_volatility_vix?.data && fngData?.market_volatility_vix_50?.data) {
-      currentRating = fngData.market_volatility_vix.rating;
-      
       // Combine VIX and 50-day MA
       const vixData = fngData.market_volatility_vix.data;
       const maData = fngData.market_volatility_vix_50.data;
       
       // Create map for easy lookup
       const maMap = new Map();
-      maData.forEach(d => maMap.set(d.x, d.y));
+      maData.forEach((d: any) => maMap.set(d.x, d.y));
       
-      chartData = vixData.map(d => ({
+      chartData = vixData.map((d: any) => ({
         date: d.x,
         vix: d.y,
         ma50: maMap.get(d.x) || null
       }));
+
+      // Extract current VIX value from the very last entry
+      if (chartData.length > 0) {
+        currentVix = chartData[chartData.length - 1].vix.toFixed(2);
+      }
     }
 
     const formatDate = (timestamp: number) => {
@@ -305,16 +320,28 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
     return (
       <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col relative md:col-span-1 h-[305px] group hover:shadow-md transition-all duration-200">
-        {/* Header */}
-        <div className="flex items-center justify-between shrink-0 mb-1">
+        {/* Header and Value */}
+        <div className="flex items-start justify-between shrink-0 mb-3">
           <div className="flex flex-col">
             <h3 className="text-xs uppercase font-extrabold text-ink font-sans tracking-wide">
               MARKET VOLATILITY
             </h3>
-            <span className="text-[10px] text-ink-faint font-bold font-sans mt-0.5">
-              VIX Index от YahooFinance
+            <span className="text-[10px] text-ink-faint font-bold font-sans mt-0.5 mb-2">
+              VIX and its 50-day moving average
             </span>
+            
+            {currentVix !== null && (
+              <div className="mt-1 flex flex-col">
+                <span className="text-[10px] text-ink-faint uppercase tracking-wider font-bold">
+                  Текущ VIX Индекс
+                </span>
+                <span className="text-3xl font-mono font-black text-ink leading-none mt-1">
+                  {currentVix}
+                </span>
+              </div>
+            )}
           </div>
+          
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-1 mb-1">
               <button onClick={() => fetchFng(true)} disabled={refreshing || loading}
@@ -327,26 +354,33 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 Yahoo Finance ↗
               </a>
             </div>
-            {fngData && (
-              <div 
-                className="text-[10px] font-black uppercase px-2 py-1 rounded border border-border/50"
-                style={{ backgroundColor: `${getRatingColor(currentRating)}15`, color: getRatingColor(currentRating) }}
-              >
-                {formatRatingText(currentRating)}
-              </div>
-            )}
           </div>
         </div>
+
+        {/* Timer Bar */}
+        {fngData && !loading && (
+          <div className="flex flex-col gap-1 mb-3 shrink-0">
+            <div className="w-full bg-border/40 h-1.5 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-indigo-500 transition-all duration-1000 ease-linear rounded-full"
+                style={{ width: `${Math.max(0, Math.min(100, ((60 - secondsLeft) / 60) * 100))}%` }}
+              />
+            </div>
+            <span className="text-[9px] text-ink-faint font-sans font-bold">
+              🔄 Опресняване на данните след: <strong className="text-ink">{secondsLeft} сек.</strong>
+            </span>
+          </div>
+        )}
 
         {/* Legend */}
         {fngData && !loading && (
           <div className="flex items-center gap-3 text-[10px] font-sans font-medium text-ink/80 mb-2 mt-1">
             <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#005b9f' }}></span>
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#00ffcc' }}></span>
               VIX
             </div>
             <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#f97316' }}></span>
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ff9900' }}></span>
               50-day moving average
             </div>
           </div>
@@ -389,16 +423,17 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                   <Line 
                     type="linear" 
                     dataKey="vix" 
-                    stroke="#005b9f" 
-                    strokeWidth={1.5} 
+                    stroke="#00ffcc" 
+                    strokeWidth={2} 
                     dot={false} 
                     isAnimationActive={false}
                   />
                   <Line 
                     type="linear" 
                     dataKey="ma50" 
-                    stroke="#f97316" 
-                    strokeWidth={1.5} 
+                    stroke="#ff9900" 
+                    strokeWidth={1.5}
+                    strokeDasharray="5 5"
                     dot={false} 
                     isAnimationActive={false}
                   />
