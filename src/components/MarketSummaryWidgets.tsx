@@ -312,7 +312,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               MARKET VOLATILITY
             </h3>
             <span className="text-[10px] text-ink-faint font-bold font-sans mt-0.5">
-              VIX and its 50-day moving average
+              VIX Index от YahooFinance
             </span>
           </div>
           <div className="flex flex-col items-end gap-1">
@@ -322,9 +322,9 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 title="Обнови">
                 <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
-              <a href="https://edition.cnn.com/markets/fear-and-greed" target="_blank" rel="noopener noreferrer"
-                className="text-[8px] font-bold text-[#cc0000] uppercase tracking-wide hover:underline font-mono">
-                CNN ↗
+              <a href="https://finance.yahoo.com/quote/%5EVIX" target="_blank" rel="noopener noreferrer"
+                className="text-[8px] font-bold text-[#7b1fa2] uppercase tracking-wide hover:underline font-mono">
+                Yahoo Finance ↗
               </a>
             </div>
             {fngData && (
