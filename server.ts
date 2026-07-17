@@ -709,7 +709,7 @@ app.get("/api/vix", async (req, res) => {
     const tvUrl = "https://scanner.tradingview.com/america/scan";
     const body = {
       symbols: { tickers: ["CBOE:VIX"], query: { types: [] } },
-      columns: ["close", "change", "change_abs"]
+      columns: ["close", "change", "change_abs", "open", "high", "low"]
     };
 
     const response = await fetch(tvUrl, {
@@ -730,16 +730,9 @@ app.get("/api/vix", async (req, res) => {
       throw new Error("Invalid TradingView data format");
     }
 
-    const vixData = data.data[0].d; // [close, change_pct, change_abs]
-    
-    // Map VIX to fear/greed logic
-    // VIX < 15: Extreme Greed
-    // 15 - 20: Greed
-    // 20 - 25: Neutral
-    // 25 - 30: Fear
-    // > 30: Extreme Fear
-    const score = vixData[0];
-    
+    const d = data.data[0].d; // [close, change_pct, change_abs, open, high, low]
+    const score = d[0];
+
     const getRatingForVix = (s: number) => {
       if (s < 15) return 'extreme greed';
       if (s < 20) return 'greed';
@@ -750,8 +743,11 @@ app.get("/api/vix", async (req, res) => {
 
     res.json({
       score,
-      change_pct: vixData[1],
-      change_abs: vixData[2],
+      change_pct: d[1],
+      change_abs: d[2],
+      open: d[3] ?? null,
+      high: d[4] ?? null,
+      low:  d[5] ?? null,
       rating: getRatingForVix(score),
       timestamp: new Date().toISOString(),
       isFallback: false
