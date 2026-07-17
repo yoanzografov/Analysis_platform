@@ -285,9 +285,34 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
       </div>
     </div>
     
-    {/* Placeholder content space */}
-    <div className="flex-1 flex items-center justify-center border border-border/30 border-dashed rounded-xl mt-2">
-      <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest opacity-50">Резервирано място</span>
+    {/* Links List */}
+    <div className="flex-1 flex flex-col gap-2 mt-2 overflow-y-auto custom-mini-scroll pr-1">
+      
+      {/* Link 1: Fear & Greed Index */}
+      <a 
+        href="https://edition.cnn.com/markets/fear-and-greed" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 p-3 rounded-xl border border-border/50 hover:bg-card-hover hover:border-border transition-all group cursor-pointer"
+      >
+        <img 
+          src="https://www.google.com/s2/favicons?domain=cnn.com&sz=32" 
+          alt="CNN" 
+          className="w-6 h-6 rounded-md bg-white/10 p-0.5"
+        />
+        <div className="flex flex-col flex-1 min-w-0">
+          <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
+            Fear & Greed Index
+          </span>
+          <span className="text-[10px] text-ink-faint font-mono truncate">
+            cnn.com
+          </span>
+        </div>
+        <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        </div>
+      </a>
+      
     </div>
   </div>
  </div>
