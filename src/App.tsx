@@ -634,15 +634,15 @@ export default function App() {
  )}
 
   {/* Dashboard Header Bar */}
-  <div className="flex items-center justify-start gap-4 md:gap-6 flex-wrap border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0">
-      <div className="flex items-center gap-2 shrink-0 max-w-full">
+  <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0">
+      <div className="flex items-center gap-2 max-w-full">
         <Building2 className="w-5 h-5 text-ink shrink-0" />
         <h1 className="text-lg sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase leading-tight">
           ПЛАТФОРМА ЗА СЛЕДЕНЕ НА АКЦИИ
         </h1>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0 flex-wrap justify-start">
+      <div className="flex items-center gap-2 flex-wrap justify-start">
 
   {/* Auto live updates toggler */}
   <button
