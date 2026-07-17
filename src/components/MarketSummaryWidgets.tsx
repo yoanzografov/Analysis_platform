@@ -25,6 +25,47 @@ interface CnnData {
   };
 }
 
+function IndicatorItem({ name, url, value, onChange }: { name: string; url: string; value: string; onChange: (v: string) => void }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [localVal, setLocalVal] = useState(value);
+
+  const handleSubmit = () => {
+    setIsEditing(false);
+    onChange(localVal);
+  };
+
+  return (
+    <div className="flex items-center justify-between p-1.5 rounded-lg border border-border/40 bg-bg hover:bg-card-hover hover:border-indigo-500/30 transition-colors group">
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-1 truncate cursor-pointer text-[10px] font-semibold text-ink group-hover:text-indigo-500 pr-1"
+      >
+        {name}
+      </a>
+      {isEditing ? (
+        <input
+          autoFocus
+          className="w-10 text-right bg-transparent border-b border-indigo-500 text-[10px] font-mono font-bold text-ink outline-none"
+          value={localVal}
+          onChange={e => setLocalVal(e.target.value)}
+          onBlur={handleSubmit}
+          onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+        />
+      ) : (
+        <span 
+          onClick={(e) => { e.preventDefault(); setIsEditing(true); }}
+          className="cursor-pointer px-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[10px] font-mono font-bold text-indigo-500/80 group-hover:text-indigo-500 shrink-0 transition-colors"
+          title="Кликни за редакция"
+        >
+          {value || '--'}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
   const [fngData, setFngData] = useState<CnnData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -33,6 +74,23 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
   const [secondsLeft, setSecondsLeft] = useState(60);
   
   const [fomcTimeLeft, setFomcTimeLeft] = useState<{ d: number, h: number, m: number, s: number } | null>(null);
+
+  const [macroValues, setMacroValues] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const saved = localStorage.getItem('macro_indicator_values');
+    if (saved) {
+      try {
+        setMacroValues(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  const handleMacroUpdate = (name: string, value: string) => {
+    const newValues = { ...macroValues, [name]: value };
+    setMacroValues(newValues);
+    localStorage.setItem('macro_indicator_values', JSON.stringify(newValues));
+  };
 
   useEffect(() => {
     const FOMC_MEETINGS = [
@@ -478,18 +536,13 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               </span>
               <div className="grid grid-cols-2 gap-1.5">
                 {group.items.map((item) => (
-                  <a
+                  <IndicatorItem
                     key={item.name}
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-1.5 rounded-lg border border-border/40 bg-bg hover:bg-card-hover hover:border-indigo-500/30 transition-colors group cursor-pointer"
-                  >
-                    <span className="text-[10px] font-semibold text-ink group-hover:text-indigo-500 truncate pr-1">
-                      {item.name}
-                    </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-faint group-hover:text-indigo-500 shrink-0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                  </a>
+                    name={item.name}
+                    url={item.url}
+                    value={macroValues[item.name] || ''}
+                    onChange={(val) => handleMacroUpdate(item.name, val)}
+                  />
                 ))}
               </div>
             </div>
