@@ -1489,6 +1489,97 @@ app.get("/api/stock-quotes", async (req, res) => {
 
 
 
+let cachedFngData: any = null;
+let lastFngFetchTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 минути кеш
+
+app.get("/api/fng", async (req, res) => {
+  try {
+    const now = Date.now();
+    if (cachedFngData && now - lastFngFetchTime < CACHE_DURATION) {
+      return res.json(cachedFngData);
+    }
+
+    const url = "https://query2.finance.yahoo.com/v8/finance/chart/^VIX?range=2y&interval=1d";
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`YF API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+      throw new Error("Invalid format from YF API");
+    }
+
+    const result = data.chart.result[0];
+    const timestamps = result.timestamp;
+    const quotes = result.indicators.quote[0].close;
+
+    const combined = timestamps.map((t: number, i: number) => ({
+      timestamp: t * 1000,
+      close: quotes[i]
+    })).filter((d: any) => d.close !== null && d.close !== undefined);
+
+    if (combined.length === 0) {
+      console.error("All quotes were filtered out due to missing close prices");
+      return res.status(500).json({ error: "No valid quotes" });
+    }
+
+    // Изчисляване на 50-дневна пълзяща средна
+    for (let i = 0; i < combined.length; i++) {
+      if (i >= 49) {
+        let sum = 0;
+        for (let j = i - 49; j <= i; j++) {
+          sum += combined[j].close;
+        }
+        combined[i].ma50 = sum / 50;
+      } else {
+        combined[i].ma50 = null;
+      }
+    }
+
+    // Взимаме последната 1 година (около 252 работни дни на борсата)
+    const lastYear = combined.slice(-252);
+    
+    const lastItem = lastYear[lastYear.length - 1];
+    const ratio = lastItem.close / lastItem.ma50;
+    let rating = "neutral";
+    if (ratio > 1.2) rating = "extreme fear";
+    else if (ratio > 1.05) rating = "fear";
+    else if (ratio < 0.8) rating = "extreme greed";
+    else if (ratio < 0.95) rating = "greed";
+
+    // Форматираме данните така, че frontend-а (който очаква CNN формат) да работи без промяна
+    const cnnMockData = {
+      market_volatility_vix: {
+        rating: rating,
+        data: lastYear.map((d: any) => ({ x: d.timestamp, y: d.close }))
+      },
+      market_volatility_vix_50: {
+        data: lastYear.map((d: any) => ({ x: d.timestamp, y: d.ma50 }))
+      },
+      fear_and_greed: {
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    cachedFngData = cnnMockData;
+    lastFngFetchTime = now;
+
+    res.json(cnnMockData);
+  } catch (error: any) {
+    console.error("Detailed Error in /api/fng:", error?.message || error);
+    if (error?.stack) console.error(error.stack);
+    res.status(500).json({ error: "Грешка при извличане на VIX" });
+  }
+});
+
 // Vite middleware integration
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
@@ -1504,97 +1595,6 @@ async function startServer() {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
-
-  let cachedFngData: any = null;
-  let lastFngFetchTime = 0;
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 минути кеш
-
-  app.get("/api/fng", async (req, res) => {
-    try {
-      const now = Date.now();
-      if (cachedFngData && now - lastFngFetchTime < CACHE_DURATION) {
-        return res.json(cachedFngData);
-      }
-
-      const url = "https://query2.finance.yahoo.com/v8/finance/chart/^VIX?range=2y&interval=1d";
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`YF API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
-        throw new Error("Invalid format from YF API");
-      }
-
-      const result = data.chart.result[0];
-      const timestamps = result.timestamp;
-      const quotes = result.indicators.quote[0].close;
-
-      const combined = timestamps.map((t: number, i: number) => ({
-        timestamp: t * 1000,
-        close: quotes[i]
-      })).filter((d: any) => d.close !== null && d.close !== undefined);
-
-      if (combined.length === 0) {
-        console.error("All quotes were filtered out due to missing close prices");
-        return res.status(500).json({ error: "No valid quotes" });
-      }
-
-      // Изчисляване на 50-дневна пълзяща средна
-      for (let i = 0; i < combined.length; i++) {
-        if (i >= 49) {
-          let sum = 0;
-          for (let j = i - 49; j <= i; j++) {
-            sum += combined[j].close;
-          }
-          combined[i].ma50 = sum / 50;
-        } else {
-          combined[i].ma50 = null;
-        }
-      }
-
-      // Взимаме последната 1 година (около 252 работни дни на борсата)
-      const lastYear = combined.slice(-252);
-      
-      const lastItem = lastYear[lastYear.length - 1];
-      const ratio = lastItem.close / lastItem.ma50;
-      let rating = "neutral";
-      if (ratio > 1.2) rating = "extreme fear";
-      else if (ratio > 1.05) rating = "fear";
-      else if (ratio < 0.8) rating = "extreme greed";
-      else if (ratio < 0.95) rating = "greed";
-
-      // Форматираме данните така, че frontend-а (който очаква CNN формат) да работи без промяна
-      const cnnMockData = {
-        market_volatility_vix: {
-          rating: rating,
-          data: lastYear.map((d: any) => ({ x: d.timestamp, y: d.close }))
-        },
-        market_volatility_vix_50: {
-          data: lastYear.map((d: any) => ({ x: d.timestamp, y: d.ma50 }))
-        },
-        fear_and_greed: {
-          timestamp: new Date().toISOString()
-        }
-      };
-
-      cachedFngData = cnnMockData;
-      lastFngFetchTime = now;
-
-      res.json(cnnMockData);
-    } catch (error: any) {
-      console.error("Detailed Error in /api/fng:", error?.message || error);
-      if (error?.stack) console.error(error.stack);
-      res.status(500).json({ error: "Грешка при извличане на VIX" });
-    }
-  });
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Express server running on code container port ${PORT}`);
