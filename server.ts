@@ -1516,22 +1516,36 @@ async function startServer() {
         return res.json(cachedFngData);
       }
 
-      // Използваме yahooFinance.chart вместо raw fetch, за да избегнем WAF / 429 Too Many Requests
-      const twoYearsAgo = new Date();
-      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+      const url = "https://query2.finance.yahoo.com/v8/finance/chart/^VIX?range=2y&interval=1d";
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+        }
+      });
 
-      const queryOptions = {
-        period1: twoYearsAgo,
-        interval: '1d' as const
-      };
+      if (!response.ok) {
+        throw new Error(`YF API error: ${response.status}`);
+      }
 
-      const result = await yahooFinance.chart('^VIX', queryOptions);
-      const quotes = result.quotes;
+      const data = await response.json();
+      
+      if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+        throw new Error("Invalid format from YF API");
+      }
 
-      const combined = quotes.map((q: any) => ({
-        timestamp: new Date(q.date).getTime(),
-        close: q.close
+      const result = data.chart.result[0];
+      const timestamps = result.timestamp;
+      const quotes = result.indicators.quote[0].close;
+
+      const combined = timestamps.map((t: number, i: number) => ({
+        timestamp: t * 1000,
+        close: quotes[i]
       })).filter((d: any) => d.close !== null && d.close !== undefined);
+
+      if (combined.length === 0) {
+        console.error("All quotes were filtered out due to missing close prices");
+        return res.status(500).json({ error: "No valid quotes" });
+      }
 
       // Изчисляване на 50-дневна пълзяща средна
       for (let i = 0; i < combined.length; i++) {
@@ -1575,8 +1589,9 @@ async function startServer() {
       lastFngFetchTime = now;
 
       res.json(cnnMockData);
-    } catch (error) {
-      console.error("Грешка при извличане на VIX данни:", error);
+    } catch (error: any) {
+      console.error("Detailed Error in /api/fng:", error?.message || error);
+      if (error?.stack) console.error(error.stack);
       res.status(500).json({ error: "Грешка при извличане на VIX" });
     }
   });
