@@ -590,14 +590,14 @@ export default function App() {
 
   return (
   <div className="min-h-screen bg-bg text-ink flex flex-col pb-12 antialiased overflow-x-hidden w-full">
+
+  {/* Main Container */}
+  <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5 flex-1 space-y-5">
    {/* Dynamic indices banner strip */}
    <IndicesStrip 
     indices={indices} 
     isSimulating={isSimulating} 
    />
-
- {/* Main Container */}
- <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5 flex-1 space-y-5">
  
   {/* New User Confirmation Modal */}
   {showNewUserModal && (
