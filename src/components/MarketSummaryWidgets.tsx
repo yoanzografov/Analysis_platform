@@ -274,9 +274,21 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  </div>
  </div>
 
-  {/* 3. Empty Space for Future VIX Widget */}
-  <div className="bg-bg rounded-2xl border border-border/30 border-dashed p-4 flex flex-col items-center justify-center relative md:col-span-1 h-[305px]">
-    <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest opacity-50">Резервирано място</span>
+  {/* 3. Useful Links Container */}
+  <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col transition-all duration-200 h-[305px] hover:shadow-md relative group md:col-span-1">
+    {/* Header row */}
+    <div className="flex items-center justify-between border-b border-border/50 pb-2 mb-2 shrink-0">
+      <div>
+        <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
+          Полезни връзки
+        </h3>
+      </div>
+    </div>
+    
+    {/* Placeholder content space */}
+    <div className="flex-1 flex items-center justify-center border border-border/30 border-dashed rounded-xl mt-2">
+      <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest opacity-50">Резервирано място</span>
+    </div>
   </div>
  </div>
  );
