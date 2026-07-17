@@ -71,7 +71,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
  };
 
  return (
-    <div className="w-full bg-bg rounded-2xl border border-border select-none mb-4 relative z-50 overflow-hidden shadow-sm">
+    <div className="w-full bg-bg rounded-2xl border border-border select-none mt-5 mb-4 relative z-50 overflow-hidden shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center h-16 divide-x divide-border">
         
         {/* Category Dropdown Selector */}
