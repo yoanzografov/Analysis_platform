@@ -394,7 +394,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
         {/* Link 3: Angelov Dimitar Community */}
         <a 
-          href="https://angelovdimitar.com/angelov-dimitar-community/" 
+          href="https://angelovdimitar.com/" 
           target="_blank" 
           rel="noopener noreferrer"
           className="flex items-center gap-3 p-2.5 rounded-xl border border-border/50 hover:bg-card-hover hover:border-border transition-all group cursor-pointer"
