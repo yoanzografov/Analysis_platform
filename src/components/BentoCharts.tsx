@@ -18,33 +18,26 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
   const [showContextMenu, setShowContextMenu] = useState(false);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
-  const [isEditingSignal, setIsEditingSignal] = useState(false);
-  const [localSignalVal, setLocalSignalVal] = useState(signalThreshold.toString());
+  const [showSignalContextMenu, setShowSignalContextMenu] = useState(false);
+  const signalContextMenuRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmitSignal = () => {
-    setIsEditingSignal(false);
-    const parsed = parseFloat(localSignalVal);
-    if (!isNaN(parsed) && parsed >= 0) {
-      onUpdateSignalThreshold(parsed);
-    } else {
-      setLocalSignalVal(signalThreshold.toString());
-    }
-  };
-
-  // Close context menu when clicking outside
+  // Close context menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
         setShowContextMenu(false);
       }
+      if (signalContextMenuRef.current && !signalContextMenuRef.current.contains(e.target as Node)) {
+        setShowSignalContextMenu(false);
+      }
     };
-    if (showContextMenu) {
+    if (showContextMenu || showSignalContextMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showContextMenu]);
+  }, [showContextMenu, showSignalContextMenu]);
 
  // 1. Calculate the values for "Best Deals"
  const undervaluedStocks = [...stocks]
@@ -325,12 +318,13 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
   {/* 3. Signals Pie Chart */}
   <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between lg:col-span-1">
 
- <div>
+ <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+ <div className="flex-1">
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
  Signal Weight Allocation
  </span>
  <div className="flex items-center gap-1.5">
- <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
+ <h3 className="text-[10px] sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
  Съотношение Купувай / Продавай / Изчакай
  </h3>
   <div className="group/info relative flex items-center -mt-2">
@@ -348,26 +342,42 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
   </div>
  </div>
  </div>
- <div className="flex items-center gap-2 mb-2 mt-1">
-   <span className="text-[10px] text-ink-faint font-semibold uppercase">Отстояние от 52W Min/Max:</span>
-   {isEditingSignal ? (
-     <input
-       autoFocus
-       className="w-8 text-right bg-transparent border-b border-indigo-500 text-[10px] font-mono font-bold text-ink outline-none"
-       value={localSignalVal}
-       onChange={e => setLocalSignalVal(e.target.value)}
-       onBlur={handleSubmitSignal}
-       onKeyDown={e => e.key === 'Enter' && handleSubmitSignal()}
-     />
-   ) : (
-     <span 
-       onClick={() => setIsEditingSignal(true)}
-       className="cursor-pointer px-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[10px] font-mono font-bold text-indigo-500/80 hover:text-indigo-500 shrink-0 transition-colors bg-bg border border-border/40"
-       title="Кликни за редакция"
+
+ <div className="relative">
+   <button 
+     onClick={(e) => { e.stopPropagation(); setShowSignalContextMenu(!showSignalContextMenu); }}
+     className="p-1.5 rounded-lg hover:bg-black/10 text-ink-muted hover:text-ink transition-colors"
+     title="Настройки на праговете"
+   >
+     <Settings2 className="w-4 h-4" />
+   </button>
+   
+   {showSignalContextMenu && (
+     <div 
+       ref={signalContextMenuRef}
+       onClick={(e) => e.stopPropagation()}
+       className="absolute top-full right-0 mt-1 w-48 bg-bg border border-border rounded-xl shadow-2xl z-[200] p-3 cursor-default"
      >
-       {signalThreshold}%
-     </span>
+       <div className="text-[10px] font-extrabold text-ink mb-2 border-b border-border/50 pb-1 uppercase tracking-tight text-left">
+         Настройки на СИГНАЛ
+       </div>
+       <div className="flex flex-col gap-2 font-mono text-[10px] text-left">
+         <div className="flex items-center justify-between">
+           <span className="text-indigo-500 font-bold">Отстояние %</span>
+           <input 
+             type="number" 
+             value={signalThreshold}
+             onChange={e => {
+               const val = Number(e.target.value);
+               if (!isNaN(val) && val >= 0) onUpdateSignalThreshold(val);
+             }}
+             className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5 text-ink"
+           />
+         </div>
+       </div>
+     </div>
    )}
+ </div>
  </div>
 
  <div className="h-32 relative flex items-center justify-center my-1.5">
