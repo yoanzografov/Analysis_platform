@@ -8,7 +8,7 @@ export interface Stock {
   currentPrice: number;
   fairPrice: number | null;
   difference: number | null; // e.g., -63.76 %
-  buySell: 'BUY' | 'SELL' | '#N/A' | string;
+  buySell: 'UNDERVALUED' | 'OVERVALUED' | '#N/A' | string;
   marketCap: number | null;
   peRatio: number | null;
   eps: number | null;

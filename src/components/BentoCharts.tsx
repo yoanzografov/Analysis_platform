@@ -65,14 +65,14 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  { name: 'ИЗЧАКАЙ (HOLD)', value: signalHoldCount, color: 'var(--color-chart-hold)' },
  ].filter(d => d.value > 0);
 
- // 3. Count BUY / SELL column values strictly
- const bsBuyCount = stocks.filter(s => s.buySell === 'BUY').length;
- const bsSellCount = stocks.filter(s => s.buySell === 'SELL').length;
+ // 3. Count Over/Under column values strictly
+ const bsBuyCount = stocks.filter(s => s.buySell === 'UNDERVALUED').length;
+ const bsSellCount = stocks.filter(s => s.buySell === 'OVERVALUED').length;
  const bsOthersCount = stocks.filter(s => s.buySell === 'ДРУГИ').length;
 
  const buySellData = [
- { name: 'BUY (КУПУВАЙ)', value: bsBuyCount, color: 'var(--color-chart-buy)' },
- { name: 'SELL (ПРОДАВАЙ)', value: bsSellCount, color: 'var(--color-chart-sell)' },
+ { name: 'UNDERVALUED', value: bsBuyCount, color: 'var(--color-chart-buy)' },
+ { name: 'OVERVALUED', value: bsSellCount, color: 'var(--color-chart-sell)' },
  { name: 'ДРУГИ (OTHER)', value: bsOthersCount, color: 'var(--color-chart-other)' },
  ];
  const buySellDataFiltered = buySellData.filter(d => d.value > 0);
@@ -92,26 +92,26 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
 
    return (
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-  {/* 1. BUY / SELL Ratio Pie Chart */}
+  {/* 1. OVER / UNDER Ratio Pie Chart */}
   <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between lg:col-span-1">
  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
  <div className="flex-1">
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
- BUY / SELL Weight Allocation
+ OVER / UNDER Weight Allocation
  </span>
  <div className="flex items-center gap-1.5">
  <h3 className="text-[10px] sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
- Съотношение BUY / SELL
+ Съотношение OVER / UNDER
  </h3>
  <div className="group/info relative flex items-center -mt-2">
    <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
    <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
-     <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📈 BUY / SELL Weight Allocation</span>
-     Кръговата диаграма показва разпределението на всички акции по колоната <strong>BUY / SELL</strong>.<br/><br/>
-     <span className="text-emerald-400 font-bold">BUY</span> = Текущата цена е под Справедливата с повече от -{buyThreshold}%<br/>
-     <span className="text-rose-400 font-bold">SELL</span> = Текущата цена е над Справедливата с повече от +{sellThreshold}%<br/>
+     <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📈 OVER / UNDER Weight Allocation</span>
+     Кръговата диаграма показва разпределението на всички акции по колоната <strong>Over/Under</strong>.<br/><br/>
+     <span className="text-emerald-400 font-bold">UNDERVALUED</span> = Текущата цена е под Справедливата с повече от -{buyThreshold}%<br/>
+     <span className="text-rose-400 font-bold">OVERVALUED</span> = Текущата цена е над Справедливата с повече от +{sellThreshold}%<br/>
      <span className="text-slate-400 font-bold">ДРУГИ</span> = В средата между двата прага<br/><br/>
-     Натисни BUY, SELL или ДРУГИ за да филтрираш таблицата.
+     Натисни UNDERVALUED, OVERVALUED или ДРУГИ за да филтрираш таблицата.
    </div>
  </div>
  </div>
@@ -192,27 +192,27 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
 
  <div className="grid grid-cols-3 gap-1 mt-1 font-mono">
         <button
-          onClick={() => handleFilterToggle('buySell', 'BUY')}
+          onClick={() => handleFilterToggle('buySell', 'UNDERVALUED')}
           className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
-            activeFilter.type === 'buySell' && activeFilter.value === 'BUY'
+            activeFilter.type === 'buySell' && activeFilter.value === 'UNDERVALUED'
               ? 'bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/50'
               : 'bg-bg border-border/30 hover:bg-emerald-500/10 hover:border-emerald-500/50'
           }`}
- title="Филтрирай компании по BUY"
+ title="Филтрирай компании по UNDERVALUED"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">BUY</div>
+ <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">UNDERVALUED</div>
  <div className="text-xs font-extrabold text-[#10b981]">{bsBuyCount}</div>
  </button>
         <button
-          onClick={() => handleFilterToggle('buySell', 'SELL')}
+          onClick={() => handleFilterToggle('buySell', 'OVERVALUED')}
           className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
-            activeFilter.type === 'buySell' && activeFilter.value === 'SELL'
+            activeFilter.type === 'buySell' && activeFilter.value === 'OVERVALUED'
               ? 'bg-rose-500/20 border-rose-500 ring-2 ring-rose-500/50'
               : 'bg-bg border-border/30 hover:bg-rose-500/10 hover:border-rose-500/50'
           }`}
- title="Филтрирай компании по SELL"
+ title="Филтрирай компании по OVERVALUED"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">SELL</div>
+ <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">OVERVALUED</div>
  <div className="text-xs font-extrabold text-[#f43f5e]">{bsSellCount}</div>
  </button>
         <button
@@ -229,8 +229,8 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  <Info className="w-3 h-3 text-ink-faint hover:text-ink transition-colors" />
  <div className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 w-72 p-3 bg-bg border border-border rounded-xl shadow-xl text-[10px] text-ink text-left opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all z-[100] font-mono normal-case">
  <span className="font-extrabold block mb-1">Как се изчислява?</span>
- <span className="text-emerald-500 font-bold">BUY:</span> Отклонение &lt; -{buyThreshold}%<br />
- <span className="text-red-500 font-bold">SELL:</span> Отклонение &gt; {sellThreshold}%<br />
+ <span className="text-emerald-500 font-bold">UNDERVALUED:</span> Отклонение &lt; -{buyThreshold}%<br />
+ <span className="text-red-500 font-bold">OVERVALUED:</span> Отклонение &gt; {sellThreshold}%<br />
  <span className="text-blue-500 font-bold">ДРУГИ:</span> Между -{buyThreshold}% и +{sellThreshold}%<br /><br />
  <span className="text-ink-muted block leading-tight">Отклонението е процентната разлика между Текущата и Справедливата цена. Можете да промените тези прагове от иконката за настройки в горния десен ъгъл.</span>
  </div>

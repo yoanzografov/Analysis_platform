@@ -267,13 +267,13 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  difference = parseFloat((((finalFair - parsedCurrentPrice) / parsedCurrentPrice) * 100).toFixed(2));
  }
 
- let buySell = 'SELL';
+ let buySell = 'OVERVALUED';
  if (finalFair !== null && parsedCurrentPrice > 0) {
  const dev = ((parsedCurrentPrice - finalFair) / finalFair) * 100;
  if (dev < -buyThreshold) {
- buySell = 'BUY';
+ buySell = 'UNDERVALUED';
  } else if (dev > sellThreshold) {
- buySell = 'SELL';
+ buySell = 'OVERVALUED';
  } else {
  buySell = 'ДРУГИ';
  }
@@ -353,13 +353,13 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  diffPercent = parseFloat((((fairPriceNum - initialPrice) / initialPrice) * 100).toFixed(2));
  }
 
- let buySellValue = 'SELL';
+ let buySellValue = 'OVERVALUED';
  if (fairPriceNum !== null && initialPrice > 0) {
  const dev = ((initialPrice - fairPriceNum) / fairPriceNum) * 100;
  if (dev < -buyThreshold) {
- buySellValue = 'BUY';
+ buySellValue = 'UNDERVALUED';
  } else if (dev > sellThreshold) {
- buySellValue = 'SELL';
+ buySellValue = 'OVERVALUED';
  } else {
  buySellValue = 'ДРУГИ';
  }
@@ -541,13 +541,13 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  {/* Special badges when filtering by signals from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
  <span className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase rounded-md border bg-[#10b981] text-ink border-[#10b981]/50 flex items-center gap-1 shrink-0">
- Активен Сигнал: BUY ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'buy').length})
+ Активен Сигнал: UNDERVALUED ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'buy').length})
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
  {activeFilter.type === 'signal' && activeFilter.value === 'sell' && (
  <span className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase rounded-md border bg-[#f43f5e] text-ink border-[#f43f5e]/50 flex items-center gap-1 shrink-0">
- Активен Сигнал: SELL ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'sell').length})
+ Активен Сигнал: OVERVALUED ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'sell').length})
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
@@ -590,7 +590,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('difference')}>
  Difference{sortField === 'difference' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
- <th className="py-3 px-4 text-center whitespace-nowrap">BUY/SELL</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">Over/Under</th>
  <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('marketCap')}>
  Market Cap{sortField === 'marketCap' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
@@ -857,11 +857,11 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
  {/* 11. BUY / SELL */}
  <td className="py-3 px-4 text-center">
- {stock.buySell === 'BUY' ? (
+ {stock.buySell === 'UNDERVALUED' ? (
  <span className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
  BUY
  </span>
- ) : stock.buySell === 'SELL' ? (
+ ) : stock.buySell === 'OVERVALUED' ? (
  <span className="bg-[#f43f5e]/10 text-[#f43f5e] border border-[#f43f5e]/20 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
  SELL
  </span>
@@ -1229,7 +1229,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </div>
 
  <div className="text-[10.5px] text-ink-faint italic pt-1 text-right leading-tight">
- * Разликата, Сигналът и BUY/SELL се изчисляват автоматично на база цена и качество.
+ * Разликата, Сигналът и Over/Under се изчисляват автоматично на база цена и качество.
  </div>
 
  {/* Footer Buttons */}

@@ -335,13 +335,13 @@ export function parseCSVData(csvText: string): { stocks: Stock[]; indices: Marke
       difference = parseFloat((((fairPrice - currentPrice) / currentPrice) * 100).toFixed(2));
     }
 
-    let buySell = cells[10] ? cells[10].trim().toUpperCase() : 'SELL';
+    let buySell = cells[10] ? cells[10].trim().toUpperCase() : 'OVERVALUED';
     if (fairPrice !== null && currentPrice > 0) {
       const dev = ((currentPrice - fairPrice) / fairPrice) * 100;
-      if (dev < -10) {
-        buySell = 'BUY';
-      } else if (dev > 10) {
-        buySell = 'SELL';
+      if (dev < -15) {
+        buySell = 'UNDERVALUED';
+      } else if (dev > 15) {
+        buySell = 'OVERVALUED';
       } else {
         buySell = 'ДРУГИ';
       }

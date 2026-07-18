@@ -371,11 +371,11 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     
     <div className="flex-1 flex flex-col gap-2 overflow-y-auto custom-mini-scroll pr-1">
       
-      {/* Section 1: Полезни връзки */}
+      {/* Section 1: Какво движи пазара? */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between border-b border-border/50 pb-1.5 shrink-0">
           <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
-            Полезни връзки
+            Какво движи пазара?
           </h3>
         </div>
         
@@ -450,9 +450,22 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           </div>
         </a>
 
+      </div>
+
+      {/* Thin Divider Line */}
+      <div className="h-px w-full bg-border/80 my-2 shrink-0" />
+
+      {/* Section 2: Полезни връзки */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between border-b border-border/50 pb-1.5 shrink-0">
+          <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
+            Полезни връзки
+          </h3>
+        </div>
+
         {/* Link 3: Angelov Dimitar Community */}
         <a 
-          href="https://angelovdimitar.com/" 
+          href="https://angelovdimitar.com/angelov-dimitar-community/" 
           target="_blank" 
           rel="noopener noreferrer"
           className="flex items-center gap-3 p-2.5 rounded-xl border border-border/50 hover:bg-card-hover hover:border-border transition-all group cursor-pointer"
@@ -464,7 +477,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           />
           <div className="flex flex-col flex-1 min-w-0">
             <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
-              Angelov Dimitar Community
+              Angelov Dimitar
             </span>
             <span className="text-[10px] text-ink-faint font-mono truncate">
               angelovdimitar.com
@@ -476,17 +489,6 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
         </a>
       </div>
 
-      {/* Thin Divider Line */}
-      <div className="h-px w-full bg-border/80 my-2 shrink-0" />
-
-      {/* Section 2: Какво движи пазара? */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between border-b border-border/50 pb-1.5 shrink-0">
-          <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
-            Какво движи пазара?
-          </h3>
-        </div>
-        
         {/* Indicators List */}
         <div className="flex flex-col gap-3 pb-2 mt-1">
           {[
@@ -549,9 +551,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           ))}
         </div>
       </div>
-      
     </div>
   </div>
- </div>
- );
+  );
 }

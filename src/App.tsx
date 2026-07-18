@@ -91,11 +91,11 @@ export default function App() {
     setBuyThreshold(newBuy);
     setSellThreshold(newSell);
     setStocks(prev => prev.map(s => {
-      let bs = 'SELL';
+      let bs = 'OVERVALUED';
       if (s.fairPrice !== null && s.currentPrice > 0) {
         const dev = ((s.currentPrice - s.fairPrice) / s.fairPrice) * 100;
-        if (dev < -newBuy) bs = 'BUY';
-        else if (dev > newSell) bs = 'SELL';
+        if (dev < -newBuy) bs = 'UNDERVALUED';
+        else if (dev > newSell) bs = 'OVERVALUED';
         else bs = 'ДРУГИ';
       }
       return { ...s, buySell: bs };
@@ -138,13 +138,13 @@ export default function App() {
  if (stock.fairPrice !== null && nextPrice > 0) {
  difference = parseFloat((((stock.fairPrice - nextPrice) / nextPrice) * 100).toFixed(2));
  }
- let buySell = 'SELL';
+ let buySell = 'OVERVALUED';
  if (stock.fairPrice !== null && nextPrice > 0) {
  const dev = ((nextPrice - stock.fairPrice) / stock.fairPrice) * 100;
  if (dev < -buyThresholdRef.current) {
- buySell = 'BUY';
+ buySell = 'UNDERVALUED';
  } else if (dev > sellThresholdRef.current) {
- buySell = 'SELL';
+ buySell = 'OVERVALUED';
  } else {
  buySell = 'ДРУГИ';
  }
@@ -456,13 +456,13 @@ export default function App() {
  difference = parseFloat((((stock.fairPrice - nextPrice) / nextPrice) * 100).toFixed(2));
  }
 
- let buySell = 'SELL';
+ let buySell = 'OVERVALUED';
  if (stock.fairPrice !== null && nextPrice > 0) {
  const dev = ((nextPrice - stock.fairPrice) / stock.fairPrice) * 100;
  if (dev < -buyThresholdRef.current) {
- buySell = 'BUY';
+ buySell = 'UNDERVALUED';
  } else if (dev > sellThresholdRef.current) {
- buySell = 'SELL';
+ buySell = 'OVERVALUED';
  } else {
  buySell = 'ДРУГИ';
  }
@@ -596,7 +596,7 @@ export default function App() {
 
  // Export updated stocks table database back as a clean structured CSV spreadsheet
  const exportCSVFile = () => {
- let csvContent = "Watch,Ticker,Company Name,365 Chart,Date,Price of Calc.,Daily Change %,Current Price,Fair Price,Difference,BUY/SELL,Market Cap,P/E Ratio,EPS,Sector,Dividend,Signal,52 Low,52 High,AI Analis\n";
+ let csvContent = "Watch,Ticker,Company Name,365 Chart,Date,Price of Calc.,Daily Change %,Current Price,Fair Price,Difference,Over/Under,Market Cap,P/E Ratio,EPS,Sector,Dividend,Signal,52 Low,52 High,AI Analis\n";
  
  stocks.forEach(s => {
  const changeStr = `${s.dailyChangePct >= 0 ? '▲ +' : '▼ '}${Math.abs(s.dailyChangePct).toFixed(2)}%`;
