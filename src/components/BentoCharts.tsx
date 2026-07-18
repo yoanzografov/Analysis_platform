@@ -60,9 +60,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  }).length;
 
  const signalData = [
- { name: 'КУПУВАЙ (BUY)', value: signalBuyCount, color: 'var(--color-chart-buy)' },
- { name: 'ПРОДАВАЙ (SELL)', value: signalSellCount, color: 'var(--color-chart-sell)' },
- { name: 'ИЗЧАКАЙ (HOLD)', value: signalHoldCount, color: 'var(--color-chart-hold)' },
+ { name: 'UNDERVALUED', value: signalBuyCount, color: 'var(--color-chart-buy)' },
+ { name: 'OVERVALUED', value: signalSellCount, color: 'var(--color-chart-sell)' },
+ { name: 'HOLD/ДРУГИ', value: signalHoldCount, color: 'var(--color-chart-other)' },
  ].filter(d => d.value > 0);
 
  // 3. Count Over/Under column values strictly
@@ -412,9 +412,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
               ? 'bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/50'
               : 'bg-bg border-border/30 hover:bg-emerald-500/10 hover:border-emerald-500/50'
           }`}
- title="Филтрирай компании по Сигнал КУПУВАЙ"
+ title="Филтрирай компании по Сигнал UNDERVALUED"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">КУПУВАЙ</div>
+ <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">UNDERVALUED</div>
  <div className="text-xs font-extrabold text-[#10b981]">{signalBuyCount}</div>
  </button>
         <button
@@ -424,9 +424,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
               ? 'bg-rose-500/20 border-rose-500 ring-2 ring-rose-500/50'
               : 'bg-bg border-border/30 hover:bg-rose-500/10 hover:border-rose-500/50'
           }`}
- title="Филтрирай компании по Сигнал ПРОДАВАЙ"
+ title="Филтрирай компании по Сигнал OVERVALUED"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ПРОДАВАЙ</div>
+ <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">OVERVALUED</div>
  <div className="text-xs font-extrabold text-[#f43f5e]">{signalSellCount}</div>
  </button>
         <button
@@ -436,9 +436,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
               ? 'bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/50'
               : 'bg-bg border-border/30 hover:bg-amber-500/10 hover:border-amber-500/50'
           }`}
- title="Филтрирай компании по Сигнал ИЗЧАКАЙ"
+ title="Филтрирай компании по Сигнал HOLD/ДРУГИ"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ИЗЧАКАЙ</div>
+ <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">HOLD/ДРУГИ</div>
  <div className="text-xs font-extrabold text-amber-800">{signalHoldCount}</div>
  </button>
  </div>

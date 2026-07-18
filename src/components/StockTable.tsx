@@ -642,8 +642,8 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  className="bg-bg rounded-2xl text-xs text-ink border border-border p-0.5 rounded-md font-mono w-full"
  >
  <option value="">-</option>
- <option value="Buy">Buy</option>
- <option value="Sell">Sell</option>
+ <option value="Buy">UNDERVALUED</option>
+ <option value="Sell">OVERVALUED</option>
  <option value="Watch">Watch</option>
  <option value="Attn">Attn</option>
  <option value="Interesting">Interesting</option>
@@ -659,11 +659,11 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </span>
  ) : stock.watch === 'Sell' ? (
  <span className="bg-[#f43f5e]/10 text-[#f43f5e] font-extrabold px-1 border border-[#f43f5e]/20 text-[10px] uppercase rounded-md">
- Sell
+ OVERVALUED
  </span>
  ) : stock.watch === 'Buy' ? (
  <span className="bg-[#10b981]/10 text-[#10b981] font-extrabold px-1 border border-[#10b981]/20 text-[10px] uppercase rounded-md">
- Buy
+ UNDERVALUED
  </span>
  ) : stock.watch === 'Interesting' ? (
  <span className="bg-purple-500/10 text-purple-400 font-extrabold px-1 border border-purple-400/30 text-[10px] uppercase rounded-md">
@@ -938,7 +938,11 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  />
  ) : (
  <div className="flex items-center justify-between gap-1 group/cell">
- <span className="truncate font-semibold">{stock.signal || '-'}</span>
+ <span className="truncate font-semibold text-[10px] uppercase">
+    {stock.signal?.trim().toLowerCase() === 'buy' ? 'UNDERVALUED' : 
+     stock.signal?.trim().toLowerCase() === 'sell' ? 'OVERVALUED' : 
+     (stock.signal || '-')}
+  </span>
  <button
  onClick={() => startInlineEdit(stock)}
  className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
