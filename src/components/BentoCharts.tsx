@@ -60,9 +60,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  }).length;
 
  const signalData = [
- { name: 'UNDERVALUED', value: signalBuyCount, color: 'var(--color-chart-buy)' },
- { name: 'OVERVALUED', value: signalSellCount, color: 'var(--color-chart-sell)' },
- { name: 'HOLD/ДРУГИ', value: signalHoldCount, color: 'var(--color-chart-other)' },
+  { name: 'КУПУВАЙ (BUY)', value: signalBuyCount, color: 'var(--color-chart-buy)' },
+  { name: 'ПРОДАВАЙ (SELL)', value: signalSellCount, color: 'var(--color-chart-sell)' },
+  { name: 'ИЗЧАКАЙ (HOLD)', value: signalHoldCount, color: 'var(--color-chart-hold)' },
  ].filter(d => d.value > 0);
 
  // 3. Count Over/Under column values strictly
@@ -330,12 +330,12 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
   <div className="group/info relative flex items-center -mt-2">
     <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
     <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-72 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
-      <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📊 Относно Сигналите</span>
-      <span className="text-yellow-300 font-mono text-[10px] block mb-2">IF(Цена ≤ 52W-Low × {1 + signalThreshold/100} → UNDERVALUED<br/>IF(Цена ≥ 52W-High × {1 - signalThreshold/100} → OVERVALUED<br/>иначе → Hold)</span>
-      Графиката показва обобщение на всички активни сигнали на базата на 52-седмични върхове и дъна.<br/><br/>
-      <span className="text-emerald-400 font-bold">UNDERVALUED</span> = Цената е до {signalThreshold}% над 52-Week Low (евтина!)<br/>
+      <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📊 Signal Weight Allocation</span>
+      Сигналът се изчислява автоматично спрямо <strong>52-Week Low</strong> и <strong>52-Week High</strong>:<br/><br/>
+      <span className="text-yellow-300 font-mono text-[10px] block mb-2">IF(Цена ≤ 52W-Low × {1 + signalThreshold/100} → Buy<br/>IF(Цена ≥ 52W-High × {1 - signalThreshold/100} → Sell<br/>иначе → Hold)</span>
+      <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = Цената е до {signalThreshold}% над 52-Week Low (евтина!)<br/>
       <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = Цената е между двата прага<br/>
-      <span className="text-rose-400 font-bold">OVERVALUED</span> = Цената е до {signalThreshold}% под 52-Week High (скъпа!)<br/><br/>
+      <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = Цената е до {signalThreshold}% под 52-Week High (скъпа!)<br/><br/>
       Сигналът се изчислява <strong>винаги автоматично</strong> — ръчна промяна не се запазва.<br/><br/>
       Натисни всеки сегмент за да филтрираш таблицата по сигнал.
     </div>
@@ -412,9 +412,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
               ? 'bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/50'
               : 'bg-bg border-border/30 hover:bg-emerald-500/10 hover:border-emerald-500/50'
           }`}
- title="Филтрирай компании по Сигнал UNDERVALUED"
+ title="Филтрирай компании по Сигнал КУПУВАЙ"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">UNDERVALUED</div>
+ <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">КУПУВАЙ</div>
  <div className="text-xs font-extrabold text-[#10b981]">{signalBuyCount}</div>
  </button>
         <button
@@ -424,9 +424,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
               ? 'bg-rose-500/20 border-rose-500 ring-2 ring-rose-500/50'
               : 'bg-bg border-border/30 hover:bg-rose-500/10 hover:border-rose-500/50'
           }`}
- title="Филтрирай компании по Сигнал OVERVALUED"
+ title="Филтрирай компании по Сигнал ПРОДАВАЙ"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">OVERVALUED</div>
+ <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ПРОДАВАЙ</div>
  <div className="text-xs font-extrabold text-[#f43f5e]">{signalSellCount}</div>
  </button>
         <button
@@ -436,9 +436,9 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
               ? 'bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/50'
               : 'bg-bg border-border/30 hover:bg-amber-500/10 hover:border-amber-500/50'
           }`}
- title="Филтрирай компании по Сигнал HOLD/ДРУГИ"
+ title="Филтрирай компании по Сигнал ИЗЧАКАЙ"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">HOLD/ДРУГИ</div>
+ <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ИЗЧАКАЙ</div>
  <div className="text-xs font-extrabold text-amber-800">{signalHoldCount}</div>
  </button>
  </div>
