@@ -241,7 +241,15 @@ export default function App() {
         // Only update state if data is actually different from our last local save
         if (lastSavedRef.current !== incomingDataString) {
           lastSavedRef.current = incomingDataString;
-          if (data.stocks) setStocks(data.stocks);
+          if (data.stocks) {
+            const migratedStocks = data.stocks.map((s: any) => ({
+              ...s,
+              watch: s.watch === 'Buy' || s.watch === 'BUY' ? 'UNDERVALUED' : s.watch === 'Sell' || s.watch === 'SELL' ? 'OVERVALUED' : s.watch,
+              signal: s.signal === 'Buy' || s.signal === 'BUY' ? 'UNDERVALUED' : s.signal === 'Sell' || s.signal === 'SELL' ? 'OVERVALUED' : s.signal,
+              buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
+            }));
+            setStocks(migratedStocks);
+          }
           if (data.indices) setIndices(data.indices);
           if (data.alerts) setAlerts(data.alerts);
           if (data.settings?.buyThreshold !== undefined) setBuyThreshold(data.settings.buyThreshold);
