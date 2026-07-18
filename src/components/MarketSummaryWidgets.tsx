@@ -452,7 +452,6 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
       </div>
 
-      </div>
 
         {/* Indicators List */}
         <div className="flex flex-col gap-3 pb-2 mt-1">
