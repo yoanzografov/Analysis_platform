@@ -80,8 +80,8 @@ export default function App() {
       if (stock.currentPrice > 0 && stock.low52 && stock.high52) {
         const buyLimit = stock.low52 * (1 + newVal / 100);
         const sellLimit = stock.high52 * (1 - newVal / 100);
-        if (stock.currentPrice <= buyLimit) newSignal = 'Buy';
-        else if (stock.currentPrice >= sellLimit) newSignal = 'Sell';
+        if (stock.currentPrice <= buyLimit) newSignal = 'UNDERVALUED';
+        else if (stock.currentPrice >= sellLimit) newSignal = 'OVERVALUED';
       }
       return { ...stock, signal: newSignal };
     }));
@@ -156,8 +156,8 @@ export default function App() {
         if (nextPrice > 0 && l52 && h52) {
           const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
           const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
-          if (nextPrice <= buyLimit) signal = 'Buy';
-          else if (nextPrice >= sellLimit) signal = 'Sell';
+          if (nextPrice <= buyLimit) signal = 'UNDERVALUED';
+          else if (nextPrice >= sellLimit) signal = 'OVERVALUED';
           else signal = 'Hold';
         }
 
@@ -474,8 +474,8 @@ export default function App() {
         if (nextPrice > 0 && l52 && h52) {
           const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
           const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
-          if (nextPrice <= buyLimit) signal = 'Buy';
-          else if (nextPrice >= sellLimit) signal = 'Sell';
+          if (nextPrice <= buyLimit) signal = 'UNDERVALUED';
+          else if (nextPrice >= sellLimit) signal = 'OVERVALUED';
           else signal = 'Hold';
         }
 

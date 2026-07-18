@@ -279,12 +279,12 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  }
  }
  
-  // Signal formula matching Google Sheets: =IF(P<=AW*1.05, "Buy", IF(P>=AO*0.95, "Sell", "Hold"))
+  // Signal formula matching Google Sheets: =IF(P<=AW*1.05, "UNDERVALUED", IF(P>=AO*0.95, "OVERVALUED", "Hold"))
   // P = currentPrice, AW = low52 (52-Week Low), AO = high52 (52-Week High)
   const autoSignalFromPrices = (cp: number, lo: number | null, hi: number | null): string => {
     if (!lo || !hi) return 'Hold';
-    if (cp <= lo * 1.05) return 'Buy';
-    if (cp >= hi * 0.95) return 'Sell';
+    if (cp <= lo * 1.05) return 'UNDERVALUED';
+    if (cp >= hi * 0.95) return 'OVERVALUED';
     return 'Hold';
   };
   const computedSignal = autoSignalFromPrices(parsedCurrentPrice, parsedLow52, parsedHigh52);
@@ -364,12 +364,12 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  buySellValue = 'ДРУГИ';
  }
  }
-  // Signal formula matching Google Sheets: Buy if currentPrice <= low52*1.05, Sell if currentPrice >= high52*0.95
+  // Signal formula matching Google Sheets: UNDERVALUED if currentPrice <= low52*1.05, OVERVALUED if currentPrice >= high52*0.95
   const low52Default = priceOfCalcNum ? parseFloat((priceOfCalcNum * 0.78).toFixed(2)) : 80.0;
   const high52Default = priceOfCalcNum ? parseFloat((priceOfCalcNum * 1.25).toFixed(2)) : 125.0;
   let autoSignal = 'Hold';
-  if (initialPrice <= low52Default * 1.05) autoSignal = 'Buy';
-  else if (initialPrice >= high52Default * 0.95) autoSignal = 'Sell';
+  if (initialPrice <= low52Default * 1.05) autoSignal = 'UNDERVALUED';
+  else if (initialPrice >= high52Default * 0.95) autoSignal = 'OVERVALUED';
 
  const newStock: Stock = {
  watch: '',
@@ -423,10 +423,10 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  if (activeFilter.type === 'signal') {
  const sig = stock.signal?.trim().toLowerCase();
  if (activeFilter.value === 'buy') {
- return sig === 'buy';
+ return sig === 'undervalued';
  }
  if (activeFilter.value === 'sell') {
- return sig === 'sell';
+ return sig === 'overvalued';
  }
  if (activeFilter.value === 'hold') {
  return sig === 'hold' || sig === 'изчакай' || !sig || sig === '-';
@@ -541,13 +541,13 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  {/* Special badges when filtering by signals from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
  <span className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase rounded-md border bg-[#10b981] text-ink border-[#10b981]/50 flex items-center gap-1 shrink-0">
- Активен Сигнал: UNDERVALUED ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'buy').length})
+ Активен Сигнал: UNDERVALUED ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'undervalued').length})
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
  {activeFilter.type === 'signal' && activeFilter.value === 'sell' && (
  <span className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase rounded-md border bg-[#f43f5e] text-ink border-[#f43f5e]/50 flex items-center gap-1 shrink-0">
- Активен Сигнал: OVERVALUED ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'sell').length})
+ Активен Сигнал: OVERVALUED ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'overvalued').length})
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
