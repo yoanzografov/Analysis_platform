@@ -77,11 +77,9 @@ export default function App() {
     setSignalThreshold(newVal);
     setStocks(prev => prev.map(stock => {
       let newSignal = 'Hold';
-      if (stock.currentPrice > 0 && stock.low52 && stock.high52) {
-        const buyLimit = stock.low52 * (1 + newVal / 100);
-        const sellLimit = stock.high52 * (1 - newVal / 100);
-        if (stock.currentPrice <= buyLimit) newSignal = 'Buy';
-        else if (stock.currentPrice >= sellLimit) newSignal = 'Sell';
+      if (stock.difference !== null) {
+        if (stock.difference > newVal) newSignal = 'Buy';
+        else if (stock.difference < -newVal) newSignal = 'Sell';
       }
       return { ...stock, signal: newSignal };
     }));
@@ -151,13 +149,9 @@ export default function App() {
  }
  // Replace the hardcoded signal logic
         let signal = stock.signal || 'Hold';
-        const l52 = quote ? (quote.low52 !== undefined ? quote.low52 : stock.low52) : stock.low52;
-        const h52 = quote ? (quote.high52 !== undefined ? quote.high52 : stock.high52) : stock.high52;
-        if (nextPrice > 0 && l52 && h52) {
-          const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
-          const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
-          if (nextPrice <= buyLimit) signal = 'Buy';
-          else if (nextPrice >= sellLimit) signal = 'Sell';
+        if (difference !== null) {
+          if (difference > signalThresholdRef.current) signal = 'Buy';
+          else if (difference < -signalThresholdRef.current) signal = 'Sell';
           else signal = 'Hold';
         }
 
@@ -478,13 +472,9 @@ export default function App() {
  }
  // Replace the hardcoded signal logic
         let signal = stock.signal || 'Hold';
-        const l52 = stock.low52;
-        const h52 = stock.high52;
-        if (nextPrice > 0 && l52 && h52) {
-          const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
-          const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
-          if (nextPrice <= buyLimit) signal = 'Buy';
-          else if (nextPrice >= sellLimit) signal = 'Sell';
+        if (difference !== null) {
+          if (difference > signalThresholdRef.current) signal = 'Buy';
+          else if (difference < -signalThresholdRef.current) signal = 'Sell';
           else signal = 'Hold';
         }
 
