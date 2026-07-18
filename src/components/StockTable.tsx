@@ -858,13 +858,13 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  {/* 11. BUY / SELL */}
  <td className="py-3 px-4 text-center">
  {stock.buySell === 'UNDERVALUED' ? (
- <span className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
- BUY
- </span>
+  <span className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
+  UNDERVALUED
+  </span>
  ) : stock.buySell === 'OVERVALUED' ? (
- <span className="bg-[#f43f5e]/10 text-[#f43f5e] border border-[#f43f5e]/20 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
- SELL
- </span>
+  <span className="bg-[#f43f5e]/10 text-[#f43f5e] border border-[#f43f5e]/20 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
+  OVERVALUED
+  </span>
  ) : (
  <span className="bg-[#D9D8D5] text-ink border border-border/30 px-1.5 py-0.5 text-[10px] font-bold uppercase">
  {stock.buySell}
