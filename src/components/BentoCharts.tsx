@@ -21,6 +21,19 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
   const [showSignalContextMenu, setShowSignalContextMenu] = useState(false);
   const signalContextMenuRef = useRef<HTMLDivElement>(null);
 
+  const [localBuy, setLocalBuy] = useState(buyThreshold);
+  const [localSell, setLocalSell] = useState(sellThreshold);
+  const [localSignal, setLocalSignal] = useState(signalThreshold);
+
+  useEffect(() => {
+    setLocalBuy(buyThreshold);
+    setLocalSell(sellThreshold);
+  }, [buyThreshold, sellThreshold, showContextMenu]);
+
+  useEffect(() => {
+    setLocalSignal(signalThreshold);
+  }, [signalThreshold, showSignalContextMenu]);
+
   // Close context menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -140,10 +153,20 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
            <span className="text-red-500 font-bold">+ SELL %</span>
            <input 
              type="number" 
-             value={sellThreshold}
+             value={localSell}
              onChange={e => {
                const val = Number(e.target.value);
-               if (!isNaN(val) && val >= 0) onUpdateThresholds(buyThreshold, val);
+               if (!isNaN(val)) setLocalSell(val);
+             }}
+             onKeyDown={e => {
+               if (e.key === 'Enter') {
+                 if (localSell >= 0 && localBuy >= 0) onUpdateThresholds(localBuy, localSell);
+                 setShowContextMenu(false);
+               } else if (e.key === 'Escape') {
+                 setLocalSell(sellThreshold);
+                 setLocalBuy(buyThreshold);
+                 setShowContextMenu(false);
+               }
              }}
              className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5 text-ink"
            />
@@ -152,10 +175,20 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
            <span className="text-emerald-500 font-bold">- BUY %</span>
            <input 
              type="number" 
-             value={buyThreshold}
+             value={localBuy}
              onChange={e => {
                const val = Number(e.target.value);
-               if (!isNaN(val) && val >= 0) onUpdateThresholds(val, sellThreshold);
+               if (!isNaN(val)) setLocalBuy(val);
+             }}
+             onKeyDown={e => {
+               if (e.key === 'Enter') {
+                 if (localSell >= 0 && localBuy >= 0) onUpdateThresholds(localBuy, localSell);
+                 setShowContextMenu(false);
+               } else if (e.key === 'Escape') {
+                 setLocalSell(sellThreshold);
+                 setLocalBuy(buyThreshold);
+                 setShowContextMenu(false);
+               }
              }}
              className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5 text-ink"
            />
@@ -363,16 +396,25 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
        </div>
        <div className="flex flex-col gap-2 font-mono text-[10px] text-left">
          <div className="flex items-center justify-between">
-           <span className="text-indigo-500 font-bold">Отстояние %</span>
-           <input 
-             type="number" 
-             value={signalThreshold}
-             onChange={e => {
-               const val = Number(e.target.value);
-               if (!isNaN(val) && val >= 0) onUpdateSignalThreshold(val);
-             }}
-             className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5 text-ink"
-           />
+            <span className="text-indigo-500 font-bold">Отстояние %</span>
+            <input 
+              type="number" 
+              value={localSignal}
+              onChange={e => {
+                const val = Number(e.target.value);
+                if (!isNaN(val)) setLocalSignal(val);
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  if (localSignal >= 0) onUpdateSignalThreshold(localSignal);
+                  setShowSignalContextMenu(false);
+                } else if (e.key === 'Escape') {
+                  setLocalSignal(signalThreshold);
+                  setShowSignalContextMenu(false);
+                }
+              }}
+              className="w-12 bg-black/20 border border-border rounded text-center focus:outline-none focus:border-indigo-500 p-0.5 text-ink"
+            />
          </div>
        </div>
      </div>
