@@ -54,8 +54,18 @@ export default function App() {
  // Filter state for the Stock Table, customizable by Bento charts
  const [activeFilter, setActiveFilter] = useState<TableFilter>({ type: 'all', value: 'all' });
 
- // Selected Stock for deep AI Analyst drawer
+ // Selected Stock for deep AI Analyst drawer and News Container
  const [selectedStockForAi, setSelectedStockForAi] = useState<Stock | null>(null);
+
+ // Sync activeFilter with selectedStockForAi so the news container updates
+ useEffect(() => {
+   if (activeFilter.type === 'ticker' && activeFilter.value) {
+     const stock = stocks.find(s => s.ticker === activeFilter.value);
+     if (stock) {
+       setSelectedStockForAi(stock);
+     }
+   }
+ }, [activeFilter, stocks]);
 
  // Prevent infinite save loops with Firebase
  const lastSavedRef = useRef('');
