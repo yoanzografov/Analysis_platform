@@ -25,7 +25,14 @@ interface CnnData {
   };
 }
 
-function IndicatorItem({ name, url, value, onChange }: { name: string; url: string; value: string; onChange: (v: string) => void }) {
+interface IndicatorItemProps {
+  name: string;
+  url: string;
+  value: string;
+  onChange: (v: string) => void;
+}
+
+const IndicatorItem: React.FC<IndicatorItemProps> = ({ name, url, value, onChange }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [localVal, setLocalVal] = useState(value);
 
