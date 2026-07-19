@@ -767,59 +767,85 @@ app.get("/api/news", async (req, res) => {
   try {
     const aiClient = getGeminiClient();
     
-    // 1. Fetch from Multiple News Sources (Yahoo, Google, Bing, Seeking Alpha)
-    const yahooUrl = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(ticker)}&region=US&lang=en-US`;
-    const googleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(ticker)}+stock+news&hl=en-US&gl=US&ceid=US:en`;
-    const bingUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(ticker)}+stock&format=rss`;
-    // Clean ticker for Seeking Alpha (e.g. remove EPA: prefix if it was passed)
-    const cleanTicker = ticker.includes(':') ? ticker.split(':')[1] : ticker;
-    const saUrl = `https://seekingalpha.com/api/sa/combined/${encodeURIComponent(cleanTicker)}.xml`;
-
-    const fetchWithTimeout = (promise: Promise<any>, ms: number) => {
-      let timeoutId: NodeJS.Timeout;
-      const timeoutPromise = new Promise((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error('RSS Feed Timeout')), ms);
-      });
-      return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
-    };
-
-    const [yahooFeed, googleFeed, bingFeed, saFeed] = await Promise.allSettled([
-      fetchWithTimeout(rssParser.parseURL(yahooUrl), 5000),
-      fetchWithTimeout(rssParser.parseURL(googleUrl), 5000),
-      fetchWithTimeout(rssParser.parseURL(bingUrl), 5000),
-      fetchWithTimeout(rssParser.parseURL(saUrl), 5000)
-    ]);
-
     let rawNews: Array<{ title: string; link: string; pubDate: string; source: string }> = [];
 
-    const processFeed = (feed: any, sourceName: string) => {
-      if (feed.status === 'fulfilled' && feed.value.items) {
-        const items = feed.value.items.slice(0, 5).map((item: any) => ({
-          title: item.title || '',
-          link: item.link || '',
-          pubDate: item.pubDate || new Date().toISOString(),
-          source: sourceName
-        }));
-        rawNews = [...rawNews, ...items];
+    // 1. Try Financial Modeling Prep (FMP) API if key is available
+    if (process.env.FMP_API_KEY) {
+      try {
+        const cleanTicker = ticker.includes(':') ? ticker.split(':')[1] : ticker;
+        const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v3/stock_news?tickers=${encodeURIComponent(cleanTicker)}&limit=5&apikey=${process.env.FMP_API_KEY}`);
+        
+        if (fmpResponse.ok) {
+          const fmpData = await fmpResponse.json();
+          if (Array.isArray(fmpData) && fmpData.length > 0) {
+            rawNews = fmpData.map((item: any) => ({
+              title: item.title || '',
+              link: item.url || '',
+              pubDate: item.publishedDate || new Date().toISOString(),
+              source: item.site || 'FMP News'
+            }));
+          }
+        } else {
+          console.error("FMP API returned status:", fmpResponse.status);
+        }
+      } catch (err) {
+        console.error("Error fetching from FMP API:", err);
       }
-    };
+    }
 
-    processFeed(yahooFeed, 'Yahoo Finance');
-    processFeed(googleFeed, 'Google News');
-    processFeed(bingFeed, 'Bing News');
-    processFeed(saFeed, 'Seeking Alpha');
+    // 2. Fallback to RSS Feeds if FMP API wasn't used or failed to return news
+    if (rawNews.length === 0) {
+      const yahooUrl = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(ticker)}&region=US&lang=en-US`;
+      const googleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(ticker)}+stock+news&hl=en-US&gl=US&ceid=US:en`;
+      const bingUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(ticker)}+stock&format=rss`;
+      const cleanTicker = ticker.includes(':') ? ticker.split(':')[1] : ticker;
+      const saUrl = `https://seekingalpha.com/api/sa/combined/${encodeURIComponent(cleanTicker)}.xml`;
 
-    // Sort by date descending and take top 5 unique by title
-    rawNews.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-    
-    const uniqueNews = [];
-    const seenTitles = new Set();
-    for (const item of rawNews) {
-      if (!seenTitles.has(item.title)) {
-        seenTitles.add(item.title);
-        uniqueNews.push(item);
+      const fetchWithTimeout = (promise: Promise<any>, ms: number) => {
+        let timeoutId: NodeJS.Timeout;
+        const timeoutPromise = new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('RSS Feed Timeout')), ms);
+        });
+        return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+      };
+
+      const [yahooFeed, googleFeed, bingFeed, saFeed] = await Promise.allSettled([
+        fetchWithTimeout(rssParser.parseURL(yahooUrl), 5000),
+        fetchWithTimeout(rssParser.parseURL(googleUrl), 5000),
+        fetchWithTimeout(rssParser.parseURL(bingUrl), 5000),
+        fetchWithTimeout(rssParser.parseURL(saUrl), 5000)
+      ]);
+
+      const processFeed = (feed: any, sourceName: string) => {
+        if (feed.status === 'fulfilled' && feed.value.items) {
+          const items = feed.value.items.slice(0, 5).map((item: any) => ({
+            title: item.title || '',
+            link: item.link || '',
+            pubDate: item.pubDate || new Date().toISOString(),
+            source: sourceName
+          }));
+          rawNews = [...rawNews, ...items];
+        }
+      };
+
+      processFeed(yahooFeed, 'Yahoo Finance');
+      processFeed(googleFeed, 'Google News');
+      processFeed(bingFeed, 'Bing News');
+      processFeed(saFeed, 'Seeking Alpha');
+
+      // Sort by date descending and take top 5 unique by title
+      rawNews.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+      
+      const uniqueNews = [];
+      const seenTitles = new Set();
+      for (const item of rawNews) {
+        if (!seenTitles.has(item.title)) {
+          seenTitles.add(item.title);
+          uniqueNews.push(item);
+        }
+        if (uniqueNews.length >= 5) break;
       }
-      if (uniqueNews.length >= 5) break;
+      rawNews = uniqueNews;
     }
 
     if (uniqueNews.length === 0) {

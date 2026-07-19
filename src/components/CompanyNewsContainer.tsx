@@ -398,7 +398,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  {selectedStock ? `Най-важни новини за ${selectedStock.companyName} (${selectedStock.ticker})` : 'Глобални финансови & пазарни новини'}
  </h3>
  <p className="text-[11px] text-ink-faint mt-0.5">
- Актуални и изключително проверени новини от единствен авторитетен източник: Yahoo Finance (https://finance.yahoo.com/).
+ Актуални и изключително проверени новини от Financial Modeling Prep API и Yahoo Finance.
  </p>
  </div>
 
