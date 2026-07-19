@@ -256,10 +256,12 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  
  const parsedNews: NewsArticle[] = await response.json();
  
- if (parsedNews && parsedNews.length > 0) {
+ if (Array.isArray(parsedNews) && parsedNews.length > 0) {
  setNews(parsedNews);
+ } else if (Array.isArray(parsedNews) && parsedNews.length === 0) {
+ setNews([]);
  } else {
- throw new Error('Няма открити новини.');
+ throw new Error('Невалиден формат на новините.');
  }
  } catch (err: any) {
  console.error("Error fetching news:", err);

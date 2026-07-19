@@ -827,7 +827,9 @@ app.get("/api/news", async (req, res) => {
     }
 
     // 2. Ask Gemini to translate and determine sentiment
-    const prompt = `Ти си финансов анализатор. Преведи следните новини за акцията ${ticker} на български език.
+    let aiParsed: any[] = [];
+    try {
+      const prompt = `Ти си финансов анализатор. Преведи следните новини за акцията ${ticker} на български език.
 За всяка новина определи влиянието й върху компанията: "Positive" (Положително), "Negative" (Отрицателно) или "Neutral" (Неутрално).
 Направи много кратко резюме (1 изречение) за всяка новина.
 
@@ -840,21 +842,24 @@ app.get("/api/news", async (req, res) => {
 ${JSON.stringify(uniqueNews, null, 2)}
 `;
 
-    const result = await aiClient.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      }
-    });
+      const result = await aiClient.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+        }
+      });
 
-    const aiText = result.text;
-    let aiParsed = [];
-    try {
+      const aiText = result.text;
       aiParsed = JSON.parse(aiText);
-    } catch (e) {
-      console.error("Грешка при парсване на AI отговора:", e);
-      aiParsed = uniqueNews.map(n => ({ title: n.title, summary: "", impact: "Neutral" }));
+    } catch (e: any) {
+      console.error("Грешка при AI превода (Gemini):", e.message);
+      // Fallback to original English news if AI fails
+      aiParsed = uniqueNews.map(n => ({ 
+        title: n.title, 
+        summary: "Оригинална новина (преводът е временно недостъпен).", 
+        impact: "Neutral" 
+      }));
     }
 
     // Merge API data with AI data
