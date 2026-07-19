@@ -47,14 +47,14 @@ const IndicatorItem: React.FC<IndicatorItemProps> = ({ name, url, value, onChang
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex-1 truncate cursor-pointer text-[10px] font-semibold text-ink group-hover:text-indigo-500 pr-1"
+        className="flex-1 truncate cursor-pointer text-xs font-semibold text-ink group-hover:text-indigo-500 pr-1"
       >
         {name}
       </a>
       {isEditing ? (
         <input
           autoFocus
-          className="w-10 text-right bg-transparent border-b border-indigo-500 text-[10px] font-mono font-bold text-ink outline-none"
+          className="w-10 text-right bg-transparent border-b border-indigo-500 text-xs font-mono font-bold text-ink outline-none"
           value={localVal}
           onChange={e => setLocalVal(e.target.value)}
           onBlur={handleSubmit}
@@ -63,7 +63,7 @@ const IndicatorItem: React.FC<IndicatorItemProps> = ({ name, url, value, onChang
       ) : (
         <span 
           onClick={(e) => { e.preventDefault(); setIsEditing(true); }}
-          className="cursor-pointer px-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[10px] font-mono font-bold text-indigo-500/80 group-hover:text-indigo-500 shrink-0 transition-colors"
+          className="cursor-pointer px-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-xs font-mono font-bold text-indigo-500/80 group-hover:text-indigo-500 shrink-0 transition-colors"
           title="Кликни за редакция"
         >
           {value || '--'}
@@ -273,7 +273,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  }`}
  >
  <div className="flex items-center gap-2 min-w-0">
- <span className="text-[9px] font-mono font-black text-ink bg-[#10b981]/10 border border-[#10b981]/30 px-1.5 py-0.5 shrink-0 rounded-none">
+ <span className="text-sm font-mono font-black text-ink bg-[#10b981]/10 border border-[#10b981]/30 px-1.5 py-0.5 shrink-0 rounded-none">
  {item.ticker}
  </span>
  <span className="text-sm font-sans font-bold text-ink truncate max-w-[110px]" title={item.companyName}>
@@ -293,7 +293,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  </div>
  </div>
  
- <div className="border-t border-border/10 pt-2 text-[9px] font-mono text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-border/10 pt-2 text-sm font-mono text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Кликни на акция за филтър</span>
  <span className="font-bold underline group-hover:text-[#10b981]">Топ Печеливши ({top15Gainers.length})</span>
  </div>
@@ -347,7 +347,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  }`}
  >
  <div className="flex items-center gap-2 min-w-0">
- <span className="text-[9px] font-mono font-black text-ink bg-[#f43f5e]/10 border border-[#f43f5e]/30 px-1.5 py-0.5 shrink-0 rounded-none">
+ <span className="text-sm font-mono font-black text-ink bg-[#f43f5e]/10 border border-[#f43f5e]/30 px-1.5 py-0.5 shrink-0 rounded-none">
  {item.ticker}
  </span>
  <span className="text-sm font-sans font-bold text-ink truncate max-w-[110px]" title={item.companyName}>
@@ -367,7 +367,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  </div>
  </div>
  
- <div className="border-t border-border/10 pt-2 text-[9px] font-mono text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-border/10 pt-2 text-sm font-mono text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Кликни на акция за филтър</span>
  <span className="font-bold underline group-hover:text-[#f43f5e]">Топ Губещи ({top15Losers.length})</span>
  </div>
@@ -402,7 +402,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
               Fear & Greed Index
             </span>
-            <span className="text-[10px] text-ink-faint font-mono truncate">
+            <span className="text-xs text-ink-faint font-mono truncate">
               cnn.com
             </span>
           </div>
@@ -428,7 +428,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
                 CME FedWatch Tool
               </span>
-              <span className="text-[10px] text-ink-faint font-mono truncate">
+              <span className="text-xs text-ink-faint font-mono truncate">
                 cmegroup.com
               </span>
             </div>
@@ -439,7 +439,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           
           {/* FOMC Countdown Strip */}
           <div className="mt-3 pt-2 border-t border-border/30 flex flex-col gap-1">
-            <span className="text-[9px] text-ink-faint font-sans uppercase font-bold tracking-wider">
+            <span className="text-sm text-ink-faint font-sans uppercase font-bold tracking-wider">
               The next FOMC meeting is in:
             </span>
             <div className="flex items-center gap-1.5 font-mono text-xs font-extrabold text-ink">
@@ -473,7 +473,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
               TradingView Heat Map
             </span>
-            <span className="text-[10px] text-ink-faint font-mono truncate">
+            <span className="text-xs text-ink-faint font-mono truncate">
               tradingview.com
             </span>
           </div>
@@ -529,7 +529,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             }
           ].map((group) => (
             <div key={group.category} className="flex flex-col gap-1.5">
-              <span className="text-[10px] uppercase font-bold text-ink-faint tracking-wider pl-0.5">
+              <span className="text-xs uppercase font-bold text-ink-faint tracking-wider pl-0.5">
                 {group.category}
               </span>
               <div className="grid grid-cols-2 gap-1.5">

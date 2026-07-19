@@ -113,13 +113,13 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  OVER / UNDER Weight Allocation
  </span>
  <div className="flex items-center gap-1.5">
- <h3 className="text-[10px] sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
+ <h3 className="text-xs sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
  Съотношение OVER / UNDER
  </h3>
  <div className="group/info relative flex items-center -mt-2">
    <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
-   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
-     <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📈 OVER / UNDER Weight Allocation</span>
+   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-sm leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+     <span className="font-bold block mb-1 uppercase tracking-wide text-xs">📈 OVER / UNDER Weight Allocation</span>
      Кръговата диаграма показва разпределението на всички акции по колоната <strong>Over/Under</strong>.<br/><br/>
      <span className="text-emerald-400 font-bold">UNDERVALUED</span> = Текущата цена е под Справедливата с повече от -{buyThreshold}%<br/>
      <span className="text-rose-400 font-bold">OVERVALUED</span> = Текущата цена е над Справедливата с повече от +{sellThreshold}%<br/>
@@ -145,10 +145,10 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
        onClick={(e) => e.stopPropagation()}
        className="absolute top-full right-0 mt-1 w-48 bg-bg border border-border rounded-xl shadow-2xl z-[200] p-3 cursor-default"
      >
-       <div className="text-[10px] font-extrabold text-ink mb-2 border-b border-border/50 pb-1 uppercase tracking-tight text-left">
+       <div className="text-xs font-extrabold text-ink mb-2 border-b border-border/50 pb-1 uppercase tracking-tight text-left">
          Настройки на ДРУГИ
        </div>
-       <div className="flex flex-col gap-2 font-mono text-[10px] text-left">
+       <div className="flex flex-col gap-2 font-mono text-xs text-left">
          <div className="flex items-center justify-between">
            <span className="text-red-500 font-bold">+ SELL %</span>
            <input 
@@ -219,7 +219,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  </ResponsiveContainer>
  <div className="absolute flex flex-col items-center justify-center font-mono">
  <span className="text-xl font-extrabold text-ink">{stocks.length}</span>
- <span className="text-[9px] text-ink/60 tracking-wider">АКЦИИ ОБЩО</span>
+ <span className="text-sm text-ink/60 tracking-wider">АКЦИИ ОБЩО</span>
  </div>
  </div>
 
@@ -233,7 +233,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
           }`}
  title="Филтрирай компании по UNDERVALUED"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">UNDERVALUED</div>
+ <div className="text-xs text-ink-faint uppercase font-bold tracking-tight">UNDERVALUED</div>
  <div className="text-xs font-extrabold text-[#10b981]">{bsBuyCount}</div>
  </button>
         <button
@@ -245,7 +245,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
           }`}
  title="Филтрирай компании по OVERVALUED"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">OVERVALUED</div>
+ <div className="text-xs text-ink-faint uppercase font-bold tracking-tight">OVERVALUED</div>
  <div className="text-xs font-extrabold text-[#f43f5e]">{bsSellCount}</div>
  </button>
         <button
@@ -257,10 +257,10 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
           }`}
  title="Филтрирай компании по ДРУГИ"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight flex items-center justify-center gap-1 group/info relative">
+ <div className="text-xs text-ink-faint uppercase font-bold tracking-tight flex items-center justify-center gap-1 group/info relative">
  ДРУГИ
  <Info className="w-3 h-3 text-ink-faint hover:text-ink transition-colors" />
- <div className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 w-72 p-3 bg-bg border border-border rounded-xl shadow-xl text-[10px] text-ink text-left opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all z-[100] font-mono normal-case">
+ <div className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 w-72 p-3 bg-bg border border-border rounded-xl shadow-xl text-xs text-ink text-left opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all z-[100] font-mono normal-case">
  <span className="font-extrabold block mb-1">Как се изчислява?</span>
  <span className="text-emerald-500 font-bold">UNDERVALUED:</span> Отклонение &lt; -{buyThreshold}%<br />
  <span className="text-red-500 font-bold">OVERVALUED:</span> Отклонение &gt; {sellThreshold}%<br />
@@ -287,8 +287,8 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  </h3>
  <div className="group/info relative flex items-center shrink-0">
    <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
-   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
-     <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">🔍 Deal Finder</span>
+   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-sm leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+     <span className="font-bold block mb-1 uppercase tracking-wide text-xs">🔍 Deal Finder</span>
      Показва топ 6 най-подценени акции от твоя портфейл.<br/><br/>
      Сортирани по <strong>% разлика</strong> между Справедливата и Текущата цена — колкото по-висок %, толкова по-голям потенциал за растеж.<br/><br/>
      <span className="text-emerald-400">Положителна стойност</span> = Акцията се търгува <strong>под</strong> справедливата си цена (добра сделка).
@@ -357,15 +357,15 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  Signal Weight Allocation
  </span>
  <div className="flex items-center gap-1.5">
- <h3 className="text-[10px] sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
+ <h3 className="text-xs sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
  Съотношение Купувай / Продавай / Изчакай
  </h3>
   <div className="group/info relative flex items-center -mt-2">
     <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
-    <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-72 p-3 bg-gray-900 text-white text-[11px] leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
-      <span className="font-bold block mb-1 uppercase tracking-wide text-[10px]">📊 Signal Weight Allocation</span>
+    <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-72 p-3 bg-gray-900 text-white text-sm leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+      <span className="font-bold block mb-1 uppercase tracking-wide text-xs">📊 Signal Weight Allocation</span>
       Сигналът се изчислява автоматично спрямо <strong>52-Week Low</strong> и <strong>52-Week High</strong>:<br/><br/>
-      <span className="text-yellow-300 font-mono text-[10px] block mb-2">IF(Цена ≤ 52W-Low × {1 + signalThreshold/100} → Buy<br/>IF(Цена ≥ 52W-High × {1 - signalThreshold/100} → Sell<br/>иначе → Hold)</span>
+      <span className="text-yellow-300 font-mono text-xs block mb-2">IF(Цена ≤ 52W-Low × {1 + signalThreshold/100} → Buy<br/>IF(Цена ≥ 52W-High × {1 - signalThreshold/100} → Sell<br/>иначе → Hold)</span>
       <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = Цената е до {signalThreshold}% над 52-Week Low (евтина!)<br/>
       <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = Цената е между двата прага<br/>
       <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = Цената е до {signalThreshold}% под 52-Week High (скъпа!)<br/><br/>
@@ -391,10 +391,10 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
        onClick={(e) => e.stopPropagation()}
        className="absolute top-full right-0 mt-1 w-48 bg-bg border border-border rounded-xl shadow-2xl z-[200] p-3 cursor-default"
      >
-       <div className="text-[10px] font-extrabold text-ink mb-2 border-b border-border/50 pb-1 uppercase tracking-tight text-left">
+       <div className="text-xs font-extrabold text-ink mb-2 border-b border-border/50 pb-1 uppercase tracking-tight text-left">
          Настройки на СИГНАЛ
        </div>
-       <div className="flex flex-col gap-2 font-mono text-[10px] text-left">
+       <div className="flex flex-col gap-2 font-mono text-xs text-left">
          <div className="flex items-center justify-between">
             <span className="text-indigo-500 font-bold">Отстояние %</span>
             <input 
@@ -442,7 +442,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  </ResponsiveContainer>
  <div className="absolute flex flex-col items-center justify-center font-mono">
  <span className="text-xl font-extrabold text-ink">{stocks.length}</span>
- <span className="text-[9px] text-ink/60 tracking-wider">АКЦИИ ОБЩО</span>
+ <span className="text-sm text-ink/60 tracking-wider">АКЦИИ ОБЩО</span>
  </div>
  </div>
 
@@ -456,7 +456,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
           }`}
  title="Филтрирай компании по Сигнал КУПУВАЙ"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">КУПУВАЙ</div>
+ <div className="text-xs text-ink-faint uppercase font-bold tracking-tight">КУПУВАЙ</div>
  <div className="text-xs font-extrabold text-[#10b981]">{signalBuyCount}</div>
  </button>
         <button
@@ -468,7 +468,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
           }`}
  title="Филтрирай компании по Сигнал ПРОДАВАЙ"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ПРОДАВАЙ</div>
+ <div className="text-xs text-ink-faint uppercase font-bold tracking-tight">ПРОДАВАЙ</div>
  <div className="text-xs font-extrabold text-[#f43f5e]">{signalSellCount}</div>
  </button>
         <button
@@ -480,7 +480,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
           }`}
  title="Филтрирай компании по Сигнал ИЗЧАКАЙ"
  >
- <div className="text-[8px] text-ink-faint uppercase font-bold tracking-tight">ИЗЧАКАЙ</div>
+ <div className="text-xs text-ink-faint uppercase font-bold tracking-tight">ИЗЧАКАЙ</div>
  <div className="text-xs font-extrabold text-amber-800">{signalHoldCount}</div>
  </button>
  </div>

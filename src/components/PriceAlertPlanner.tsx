@@ -48,14 +48,14 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
  Планиране на персонализирани известия за цена
  </h3>
- <p className="text-[11px] text-ink-faint mt-0.5">
+ <p className="text-sm text-ink-faint mt-0.5">
  Конфигурирайте известия, които ще изскочат на екрана веднага щом пазарната цена пресече таргета.
  </p>
  </div>
 
  <form onSubmit={handleCreateAlert} className="flex flex-wrap items-end gap-2.5 bg-bg/40 p-2 rounded-2xl border border-border w-full md:w-auto">
  <div className="flex-1 min-w-[100px]">
- <label className="block text-[9px] text-ink-faint font-mono uppercase mb-0.5">ТИКЕР</label>
+ <label className="block text-sm text-ink-faint font-mono uppercase mb-0.5">ТИКЕР</label>
  <input
  type="text"
  placeholder="AAPL, TSLA..."
@@ -66,7 +66,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  </div>
 
  <div>
- <label className="block text-[9px] text-ink-faint font-mono uppercase mb-0.5">СИГНАЛ ПРИ</label>
+ <label className="block text-sm text-ink-faint font-mono uppercase mb-0.5">СИГНАЛ ПРИ</label>
  <select
  value={criteria}
  onChange={e => setCriteria(e.target.value as any)}
@@ -78,7 +78,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  </div>
 
  <div className="flex-1 min-w-[90px]">
- <label className="block text-[9px] text-ink-faint font-mono uppercase mb-0.5">ТАРГЕТ ЦЕНА ($)</label>
+ <label className="block text-sm text-ink-faint font-mono uppercase mb-0.5">ТАРГЕТ ЦЕНА ($)</label>
  <input
  type="number"
  step="0.01"
@@ -91,7 +91,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
 
  <button
  type="submit"
- className="bg-bg hover:bg-white/20 text-ink font-extrabold text-[10px] px-4 h-[26px] border border-border rounded-2xl flex items-center gap-1 transition-all uppercase"
+ className="bg-bg hover:bg-white/20 text-ink font-extrabold text-xs px-4 h-[26px] border border-border rounded-2xl flex items-center gap-1 transition-all uppercase"
  >
  <PlusCircle className="w-3.5 h-3.5" />
  Добави
@@ -100,13 +100,13 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  </div>
 
  {formError && (
- <p className="text-[11px] text-red-700 font-mono mt-2 font-bold">{formError}</p>
+ <p className="text-sm text-red-700 font-mono mt-2 font-bold">{formError}</p>
  )}
 
  {/* Existing Alerts Strip */}
  {alerts.length > 0 && (
  <div className="mt-3.5 border-t border-border/20 pt-3">
- <h4 className="text-[10px] font-extrabold text-ink mb-2 font-mono flex items-center gap-1.5 uppercase">
+ <h4 className="text-xs font-extrabold text-ink mb-2 font-mono flex items-center gap-1.5 uppercase">
  <BellRing className="w-3.5 h-3.5 text-blue-800" />
  АКТИВНИ ТРИГЕРИ ({alerts.length}):
  </h4>
@@ -117,7 +117,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onDelete
  className="bg-card rounded-2xl border border-border rounded-none px-2 py-0.5 text-xs flex items-center gap-2 font-mono text-ink"
  >
  <span className="font-extrabold text-blue-800">{alert.ticker}</span>
- <span className="text-[9px] text-ink/60">
+ <span className="text-sm text-ink/60">
  {alert.criteria === 'ABOVE' ? 'над ▲' : 'под ▼'}
  </span>
  <span className="font-bold underline">${alert.targetPrice}</span>

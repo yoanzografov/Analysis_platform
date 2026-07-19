@@ -226,7 +226,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             { l: 'EPS', v: stock.eps ? stock.eps.toFixed(2) : '—' },
           ].map((s, i) => (
             <div key={i} className="flex flex-col gap-0.5">
-              <div className="text-[11px] font-semibold text-ink-faint uppercase tracking-wider">{s.l}</div>
+              <div className="text-sm font-semibold text-ink-faint uppercase tracking-wider">{s.l}</div>
               <div className="text-sm font-medium text-ink tabular-nums">{s.v}</div>
             </div>
           ))}

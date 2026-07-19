@@ -366,21 +366,21 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  switch (impact) {
  case 'Positive':
  return (
- <span className="inline-flex items-center gap-1 bg-emerald-50 text-[#10b981] border border-emerald-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-2xl font-mono">
+ <span className="inline-flex items-center gap-1 bg-emerald-50 text-[#10b981] border border-emerald-300 px-1.5 py-0.5 text-sm font-bold uppercase rounded-2xl font-mono">
  <TrendingUp className="w-2.5 h-2.5" />
  Положително
  </span>
  );
  case 'Negative':
  return (
- <span className="inline-flex items-center gap-1 bg-red-50 text-[#f43f5e] border border-red-300 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-2xl font-mono">
+ <span className="inline-flex items-center gap-1 bg-red-50 text-[#f43f5e] border border-red-300 px-1.5 py-0.5 text-sm font-bold uppercase rounded-2xl font-mono">
  <TrendingDown className="w-2.5 h-2.5" />
  Отрицателно
  </span>
  );
  default:
  return (
- <span className="inline-flex items-center gap-1 bg-bg text-ink-muted border border-border-hover px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-2xl font-mono">
+ <span className="inline-flex items-center gap-1 bg-bg text-ink-muted border border-border-hover px-1.5 py-0.5 text-sm font-bold uppercase rounded-2xl font-mono">
  <Minus className="w-2.5 h-2.5" />
  Неутрално
  </span>
@@ -397,7 +397,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  <Newspaper className="w-3.5 h-3.5 text-[#10b981]" />
  {selectedStock ? `Най-важни новини за ${selectedStock.companyName} (${selectedStock.ticker})` : 'Глобални финансови & пазарни новини'}
  </h3>
- <p className="text-[11px] text-ink-faint mt-0.5">
+ <p className="text-sm text-ink-faint mt-0.5">
  Актуални и изключително проверени новини от Financial Modeling Prep API и Yahoo Finance.
  </p>
  </div>
@@ -405,7 +405,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  <div className="flex flex-wrap items-center gap-2.5">
  {/* Dropdown for quick stock selection */}
  <div className="flex items-center gap-2 bg-bg p-1.5 border border-border rounded-2xl text-xs">
- <label className="text-[10px] font-mono font-bold text-ink-muted uppercase whitespace-nowrap">АКТИВ:</label>
+ <label className="text-xs font-mono font-bold text-ink-muted uppercase whitespace-nowrap">АКТИВ:</label>
  <select
  value={selectedStock ? selectedStock.ticker : ''}
  onChange={(e) => {
@@ -427,7 +427,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  <button
  onClick={fetchNews}
  disabled={loading}
- className="bg-bg rounded-2xl hover:bg-bg border border-border text-ink font-extrabold text-[10px] px-3 py-1.5 flex items-center gap-1.5 uppercase transition-all cursor-pointer disabled:opacity-50"
+ className="bg-bg rounded-2xl hover:bg-bg border border-border text-ink font-extrabold text-xs px-3 py-1.5 flex items-center gap-1.5 uppercase transition-all cursor-pointer disabled:opacity-50"
  title="Обновяване на новинарския поток"
  >
  <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
@@ -437,7 +437,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  {selectedStock && (
  <button
  onClick={() => onSelectStock(null)}
- className="bg-bg hover:bg-card-hover border border-border-hover text-ink-muted font-bold text-[10px] px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all cursor-pointer"
+ className="bg-bg hover:bg-card-hover border border-border-hover text-ink-muted font-bold text-xs px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all cursor-pointer"
  >
  <X className="w-3 h-3" />
  Общи новини
@@ -454,7 +454,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  <h4 className="text-xs font-extrabold font-mono uppercase text-ink tracking-tight">
  Извличане на проверени новини...
  </h4>
- <p className="text-[11px] text-ink-faint max-w-md mt-2 leading-relaxed">
+ <p className="text-sm text-ink-faint max-w-md mt-2 leading-relaxed">
  Google AI сканира надеждни източници в реално време, за да открие най-влиятелните статии и регулаторни събития за {selectedStock ? selectedStock.companyName : 'глобалните пазари'}...
  </p>
  </div>
@@ -467,11 +467,11 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  
  {/* Displaying fallbacks inside error screen automatically */}
  <div className="mt-4 space-y-4">
- <h4 className="text-[10px] uppercase font-bold text-ink-faint font-mono tracking-wider">Резервни актуални новини:</h4>
+ <h4 className="text-xs uppercase font-bold text-ink-faint font-mono tracking-wider">Резервни актуални новини:</h4>
  <div className="flex flex-col gap-3 max-h-[520px] overflow-y-auto pr-1">
  {news.map((item, idx) => (
  <div key={idx} className="bg-bg rounded-2xl border border-border p-3">
- <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-1.5 mb-2 font-mono text-[10px]">
+ <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-1.5 mb-2 font-mono text-xs">
  <div className="flex items-center gap-1.5">
  <span className="font-bold text-ink uppercase">{item.source}</span>
  <span className="text-ink0">•</span>
@@ -480,12 +480,12 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  {getImpactBadge(item.impact)}
  </div>
  <h5 className="text-xs font-bold text-ink font-sans leading-snug">{item.title}</h5>
- <p className="text-[11px] text-ink-faint mt-1.5 leading-relaxed">{item.summary}</p>
+ <p className="text-sm text-ink-faint mt-1.5 leading-relaxed">{item.summary}</p>
  <a
  href={item.url}
  target="_blank"
  referrerPolicy="no-referrer"
- className="inline-flex items-center gap-1 text-[10px] font-bold text-[#10b981] hover:underline mt-2"
+ className="inline-flex items-center gap-1 text-xs font-bold text-[#10b981] hover:underline mt-2"
  >
  Прочетете цялата статия на {item.source} <ExternalLink className="w-3 h-3" />
  </a>
@@ -500,7 +500,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  <h4 className="text-xs font-extrabold font-mono uppercase text-ink tracking-tight">
  Няма налични новини в момента
  </h4>
- <p className="text-[11px] text-ink-faint max-w-md mt-1">
+ <p className="text-sm text-ink-faint max-w-md mt-1">
  Не бяха открити скорошни събития за този актив. Моля, проверете отново по-късно или изберете друг актив.
  </p>
  </div>
@@ -512,7 +512,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between hover:border-emerald-800 transition-all shadow-xs group"
  >
  <div>
- <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2 mb-3 font-mono text-[10px]">
+ <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2 mb-3 font-mono text-xs">
  <div className="flex items-center gap-1.5">
  <span className="font-extrabold text-[#10b981] uppercase tracking-tight">{item.source}</span>
  <span className="text-ink0">•</span>
@@ -528,19 +528,19 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  {item.title}
  </h4>
  
- <p className="text-[11px] text-ink-faint mt-2 leading-relaxed font-sans">
+ <p className="text-sm text-ink-faint mt-2 leading-relaxed font-sans">
  {item.summary}
  </p>
  </div>
 
  <div className="mt-4 pt-2.5 border-t border-dashed border-border/50 flex items-center justify-between">
- <span className="text-[9px] font-mono text-ink-faint uppercase">Официален източник</span>
+ <span className="text-sm font-mono text-ink-faint uppercase">Официален източник</span>
  <a
  href={item.url}
  target="_blank"
  rel="noopener noreferrer"
  referrerPolicy="no-referrer"
- className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#10b981] hover:text-emerald-950 hover:underline cursor-pointer"
+ className="inline-flex items-center gap-1.5 text-xs font-bold text-[#10b981] hover:text-emerald-950 hover:underline cursor-pointer"
  >
  Линк към статията <ExternalLink className="w-3 h-3 text-[#10b981]" />
  </a>
@@ -552,7 +552,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  </div>
 
  {/* Footer disclaimer */}
- <div className="mt-3 bg-bg border border-border p-2.5 text-[9px] text-ink-faint leading-normal font-mono flex items-start gap-1.5">
+ <div className="mt-3 bg-bg border border-border p-2.5 text-sm text-ink-faint leading-normal font-mono flex items-start gap-1.5">
  <HelpCircle className="w-3.5 h-3.5 text-[#10b981] shrink-0 mt-0.5" />
  <span>
  Всички изведени новини се извличат автоматично в реално време чрез Google Search Grounding и са строго ограничени до единствения официален източник Yahoo Finance. Анализът на ценовия импулс („Положително“, „Отрицателно“, „Неутрално“) се определя от изкуствения интелект и е с чисто информационен характер.

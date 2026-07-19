@@ -112,7 +112,7 @@ const StockLogo = ({ ticker }: { ticker: string }) => {
   
   if (error) {
     return (
-      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-ink-muted border border-white/20 shrink-0">
+      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-ink-muted border border-white/20 shrink-0">
         {ticker.charAt(0)}
       </div>
     );
@@ -650,27 +650,27 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <option value="Not interesting">Not interesting</option>
  </select>
  ) : stock.watch === 'Attn' || stock.watch === 'Atten' ? (
- <span className="bg-amber-500/10 text-amber-400 font-extrabold px-1 border border-amber-400/30 text-[10px] uppercase rounded-md">
+ <span className="bg-amber-500/10 text-amber-400 font-extrabold px-1 border border-amber-400/30 text-xs uppercase rounded-md">
  Attn
  </span>
  ) : stock.watch === 'Watch' ? (
- <span className="bg-indigo-500 rounded-xl/10 text-indigo-400 font-extrabold px-1 border border-indigo-400/30 text-[10px] uppercase rounded-md">
+ <span className="bg-indigo-500 rounded-xl/10 text-indigo-400 font-extrabold px-1 border border-indigo-400/30 text-xs uppercase rounded-md">
  Watch
  </span>
  ) : stock.watch === 'Sell' ? (
- <span className="bg-[#f43f5e]/10 text-[#f43f5e] font-extrabold px-1 border border-[#f43f5e]/20 text-[10px] uppercase rounded-md">
+ <span className="bg-[#f43f5e]/10 text-[#f43f5e] font-extrabold px-1 border border-[#f43f5e]/20 text-xs uppercase rounded-md">
  OVERVALUED
  </span>
  ) : stock.watch === 'Buy' ? (
- <span className="bg-[#10b981]/10 text-[#10b981] font-extrabold px-1 border border-[#10b981]/20 text-[10px] uppercase rounded-md">
+ <span className="bg-[#10b981]/10 text-[#10b981] font-extrabold px-1 border border-[#10b981]/20 text-xs uppercase rounded-md">
  UNDERVALUED
  </span>
  ) : stock.watch === 'Interesting' ? (
- <span className="bg-purple-500/10 text-purple-400 font-extrabold px-1 border border-purple-400/30 text-[10px] uppercase rounded-md">
+ <span className="bg-purple-500/10 text-purple-400 font-extrabold px-1 border border-purple-400/30 text-xs uppercase rounded-md">
  Interesting
  </span>
  ) : stock.watch === 'Not interesting' ? (
- <span className="bg-white/10 text-ink-muted font-bold px-1 border border-border text-[10px] uppercase rounded-md">
+ <span className="bg-white/10 text-ink-muted font-bold px-1 border border-border text-xs uppercase rounded-md">
  Not interesting
  </span>
  ) : (
@@ -694,7 +694,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
         const daysLeft = Math.ceil((stock.earningsTimestamp * 1000 - Date.now()) / (1000 * 60 * 60 * 24));
         if (daysLeft >= 0 && daysLeft <= 14) {
           return (
-            <span className="animate-pulse bg-amber-500/10 text-amber-500 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1 shadow-sm shadow-amber-500/10" title="Наближаващ финансов отчет">
+            <span className="animate-pulse bg-amber-500/10 text-amber-500 text-sm font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1 shadow-sm shadow-amber-500/10" title="Наближаващ финансов отчет">
               ⚠️ {daysLeft === 0 ? 'ДНЕС' : `ОТЧЕТ: ${daysLeft} ДНИ`}
             </span>
           );
@@ -858,15 +858,15 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  {/* 11. BUY / SELL */}
  <td className="py-3 px-4 text-center">
  {stock.buySell === 'UNDERVALUED' ? (
-  <span className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
+  <span className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-1.5 py-0.5 text-xs font-extrabold uppercase tracking-wide">
   UNDERVALUED
   </span>
  ) : stock.buySell === 'OVERVALUED' ? (
-  <span className="bg-[#f43f5e]/10 text-[#f43f5e] border border-[#f43f5e]/20 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
+  <span className="bg-[#f43f5e]/10 text-[#f43f5e] border border-[#f43f5e]/20 px-1.5 py-0.5 text-xs font-extrabold uppercase tracking-wide">
   OVERVALUED
   </span>
  ) : (
- <span className="bg-[#D9D8D5] text-ink border border-border/30 px-1.5 py-0.5 text-[10px] font-bold uppercase">
+ <span className="bg-[#D9D8D5] text-ink border border-border/30 px-1.5 py-0.5 text-xs font-bold uppercase">
  {stock.buySell}
  </span>
  )}
@@ -938,7 +938,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  />
  ) : (
  <div className="flex items-center justify-between gap-1 group/cell">
- <span className="truncate font-semibold text-[10px] uppercase">
+ <span className="truncate font-semibold text-xs uppercase">
     {stock.signal?.trim().toLowerCase() === 'buy' ? 'КУПУВАЙ' : 
      stock.signal?.trim().toLowerCase() === 'sell' ? 'ПРОДАВАЙ' : 
      stock.signal?.trim().toLowerCase() === 'hold' ? 'ИЗЧАКАЙ' : 
@@ -1024,7 +1024,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <Sparkles className="w-3.5 h-3.5" />
  </a>
  ) : (
- <span className="text-ink-faint text-[10px]">-</span>
+ <span className="text-ink-faint text-xs">-</span>
  )}
  </td>
 
@@ -1049,7 +1049,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
  </a>
  ) : (
- <span className="text-ink-faint text-[10px]">-</span>
+ <span className="text-ink-faint text-xs">-</span>
  )}
  </td>
 
@@ -1076,7 +1076,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <div className="flex items-center justify-center gap-1.5 shrink-0">
  <button
  onClick={() => onSelectStockForAi(stock)}
- className="inline-flex items-center gap-1 text-[9px] font-bold py-0.5 px-2.5 border border-border bg-bg hover:bg-[#10b981] hover:text-ink hover:border-emerald-900 text-ink transition-all rounded-md"
+ className="inline-flex items-center gap-1 text-sm font-bold py-0.5 px-2.5 border border-border bg-bg hover:bg-[#10b981] hover:text-ink hover:border-emerald-900 text-ink transition-all rounded-md"
  title="Прочетете най-новите достоверни новини за компанията"
  >
  <Newspaper className="w-2.5 h-2.5 text-[#10b981] group-hover:text-ink" />

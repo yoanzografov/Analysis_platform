@@ -711,7 +711,7 @@ export default function App() {
   {/* Auto live updates toggler */}
   <button
   onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-xs sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isAutoLiveRefresh 
   ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
   : 'bg-bg text-ink-faint border-gray-350 hover:bg-gray-50 hover:text-ink-muted'
@@ -721,7 +721,7 @@ export default function App() {
   Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}
   <div className="group/info relative flex items-center">
     <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-sm leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
       Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди
     </div>
   </div>
@@ -735,7 +735,7 @@ export default function App() {
   setIsAutoLiveRefresh(false); 
   }
   }}
-  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-xs sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isSimulating 
   ? 'bg-red-700 text-ink border-red-850 hover:bg-red-800 font-extrabold' 
   : 'bg-bg text-ink border-border hover:bg-white/10 hover:text-ink'
@@ -754,7 +754,7 @@ export default function App() {
   )}
   <div className="group/info relative flex items-center">
     <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-sm leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
       Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити
     </div>
   </div>
@@ -764,7 +764,7 @@ export default function App() {
   <button
   onClick={triggerManualRefresh}
   disabled={isFetchingLivePrices}
-  className={`text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-xs sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
   isFetchingLivePrices
   ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
   : 'bg-bg text-ink border-black hover:bg-white/20'
@@ -774,7 +774,7 @@ export default function App() {
   {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
   <div className="group/info relative flex items-center">
     <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-[11px] leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-sm leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
       Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи
     </div>
   </div>
@@ -786,7 +786,7 @@ export default function App() {
   <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsSettingsMenuOpen(false); }}>
     <button
       onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
-      className="text-[10px] sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border border-border bg-bg text-ink hover:bg-white/10 uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+      className="text-xs sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border border-border bg-bg text-ink hover:bg-white/10 uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
       title="Системни настройки и данни"
     >
       <Settings2 className="w-3 h-3" />
@@ -865,7 +865,7 @@ export default function App() {
  Можете да щракнете върху всяка стойност в колона <span className="font-bold underline">"Текуща"</span> или <span className="font-bold text-[#10b981] underline">"Справедлива (Fair)"</span> за директно редактиране на показателите.
  </p>
  </div>
- <div className="text-right text-[9px] text-ink-faint font-mono hidden sm:block">
+ <div className="text-right text-sm text-ink-faint font-mono hidden sm:block">
  Двоен клик или клик на химикал за бърза пазарна симулация
  </div>
  </div>

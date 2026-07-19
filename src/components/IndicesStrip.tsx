@@ -76,7 +76,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
           
           {/* Category Dropdown Selector */}
           <div ref={dropdownRef} className="w-[160px] md:w-[230px] shrink-0 h-full px-2 md:px-4 flex flex-col justify-center relative z-20 rounded-l-2xl">
-            <span className="text-[10px] md:text-xs text-ink/60 font-serif italic uppercase tracking-wider block mb-0.5 select-none truncate">
+            <span className="text-xs md:text-xs text-ink/60 font-serif italic uppercase tracking-wider block mb-0.5 select-none truncate">
               Index Markets
             </span>
             <button
@@ -135,14 +135,14 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
                       : 'hover:bg-card-hover'
                   }`}
                 >
-                  <span className="text-[10px] font-sans font-bold text-indigo-500 tracking-tight truncate uppercase mb-0.5" title={item.name}>
+                  <span className="text-xs font-sans font-bold text-indigo-500 tracking-tight truncate uppercase mb-0.5" title={item.name}>
                     {item.name}
                   </span>
                   <span className="text-[13px] font-sans font-black text-ink leading-tight tracking-tight">
                     {formatPrice(item.value, item.name)}
                   </span>
                   <div
-                    className={`flex items-center gap-0.5 text-[10px] font-mono font-black leading-none mt-0.5 truncate ${
+                    className={`flex items-center gap-0.5 text-xs font-mono font-black leading-none mt-0.5 truncate ${
                       isPositive ? 'text-[#10b981]' : 'text-red-500'
                     }`}
                   >

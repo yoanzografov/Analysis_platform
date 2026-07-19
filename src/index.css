@@ -55,6 +55,9 @@
 }
 
 /* Base styling */
+html {
+  font-size: 17px; /* Slightly larger base font size to scale all rem values */
+}
 body {
   background-color: var(--color-bg);
   color: var(--color-ink);
