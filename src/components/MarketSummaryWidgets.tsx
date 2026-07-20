@@ -516,7 +516,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           {/* Custom Inflation Group */}
           <div className="flex flex-col gap-1.5">
             <span className="text-xs uppercase font-bold text-ink-faint tracking-wider pl-0.5">
-              Инфлация
+              Макроикономически Индикатори
             </span>
             {inflationLoading ? (
               <div className="text-xs text-ink-faint">Зареждане на данни...</div>

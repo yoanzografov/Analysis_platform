@@ -134,7 +134,7 @@ export default function App() {
  : defaultIndexTickers;
  const allSymbols = Array.from(new Set([...stockTickers, ...indexTickers]));
 
- const response = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(allSymbols.join(','))}`);
+ const response = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(allSymbols.join(','))}`, { cache: 'no-store' });
  if (!response.ok) {
  throw new Error('Грешка при комуникация със сървъра за котировки');
  }

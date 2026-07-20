@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import fs from "fs/promises";
 import fsSync from "fs";
 import Parser from "rss-parser";
+import yahooFinance from 'yahoo-finance2';
 
 const rssParser = new Parser();
 
@@ -885,43 +886,36 @@ app.get("/api/inflation-data", async (req, res) => {
     });
 
     const data = [
-      { 
-        name: "CPI (Inflation) YoY", 
-        actual: rawData['Inflation Rate']?.actual ? rawData['Inflation Rate'].actual + '%' : "N/A", 
-        forecast: "N/A", // TradingEconomics indicators page does not have forecast inline
-        previous: rawData['Inflation Rate']?.previous ? rawData['Inflation Rate'].previous + '%' : "N/A" 
-      },
-      { 
-        name: "Core CPI YoY", 
-        actual: rawData['Core Inflation Rate']?.actual ? rawData['Core Inflation Rate'].actual + '%' : "N/A", 
-        forecast: "N/A", 
-        previous: rawData['Core Inflation Rate']?.previous ? rawData['Core Inflation Rate'].previous + '%' : "N/A" 
-      },
-      { 
-        name: "PCE Price Index YoY", 
-        actual: rawData['PCE Price Index Annual Change']?.actual ? rawData['PCE Price Index Annual Change'].actual + '%' : "N/A", 
-        forecast: "N/A", 
-        previous: rawData['PCE Price Index Annual Change']?.previous ? rawData['PCE Price Index Annual Change'].previous + '%' : "N/A" 
-      },
-      { 
-        name: "Core PCE Price Index YoY", 
-        actual: rawData['Core PCE Price Index YoY']?.actual ? rawData['Core PCE Price Index YoY'].actual + '%' : "N/A", 
-        forecast: "N/A", 
-        previous: rawData['Core PCE Price Index YoY']?.previous ? rawData['Core PCE Price Index YoY'].previous + '%' : "N/A" 
-      }
-    ];
+      { name: "CPI (Inflation) YoY", key: "Inflation Rate" },
+      { name: "Core CPI YoY", key: "Core Inflation Rate" },
+      { name: "PCE Price Index YoY", key: "PCE Price Index Annual Change" },
+      { name: "Core PCE Price Index YoY", key: "Core PCE Price Index YoY" },
+      { name: "Fed Funds Rate", key: "Interest Rate" },
+      { name: "Non-Farm Payrolls", key: "Non Farm Payrolls" },
+      { name: "Unemployment Rate", key: "Unemployment Rate" },
+      { name: "GDP Growth Rate", key: "GDP Growth Rate" },
+      { name: "Retail Sales MoM", key: "Retail Sales MoM" },
+      { name: "Consumer Confidence", key: "Consumer Confidence" },
+      { name: "Housing Starts", key: "Housing Starts" }
+    ].map(item => ({
+      name: item.name,
+      actual: rawData[item.key]?.actual || "N/A",
+      forecast: "N/A",
+      previous: rawData[item.key]?.previous || "N/A"
+    }));
 
     cachedInflationData = data;
     lastInflationFetch = now;
     res.json(data);
   } catch (error) {
-    console.error("Error scraping inflation:", error);
+    console.error("Error scraping macro indicators:", error);
     // Return fallback realistic data if scraping fails
     res.json([
       { name: "CPI (Inflation) YoY", actual: "2.8%", forecast: "2.9%", previous: "3.1%" },
       { name: "Core CPI YoY", actual: "3.2%", forecast: "3.3%", previous: "3.4%" },
-      { name: "PCE Price Index YoY", actual: "2.6%", forecast: "2.6%", previous: "2.7%" },
-      { name: "Core PCE Price Index YoY", actual: "2.8%", forecast: "2.8%", previous: "2.9%" }
+      { name: "Fed Funds Rate", actual: "5.50%", forecast: "5.50%", previous: "5.50%" },
+      { name: "Non-Farm Payrolls", actual: "275K", forecast: "200K", previous: "229K" },
+      { name: "Unemployment Rate", actual: "3.9%", forecast: "3.7%", previous: "3.7%" }
     ]);
   }
 });
@@ -1542,16 +1536,11 @@ app.get("/api/stock-quotes", async (req, res) => {
 
     const yahooTickersToFetch = Array.from(new Set(Object.values(originalToYahoo)));
 
-    // Fetch Yahoo Quotes in small chunks of 30 to prevent 400 Bad Request/URI Too Long issues
-    const chunkSize = 30;
     let allQuotes: any[] = [];
-
-    for (let i = 0; i < yahooTickersToFetch.length; i += chunkSize) {
-      const chunk = yahooTickersToFetch.slice(i, i + chunkSize);
-      const chunkQuotes = await fetchYahooQuotesWithRetry(chunk);
-      if (chunkQuotes && chunkQuotes.length > 0) {
-        allQuotes = allQuotes.concat(chunkQuotes);
-      }
+    try {
+      allQuotes = await yahooFinance.quote(yahooTickersToFetch);
+    } catch (e: any) {
+      console.warn("yahoo-finance2 fetch failed, will attempt fallback:", e.message);
     }
 
     const results: Record<string, StockQuoteData> = {};
@@ -1559,7 +1548,6 @@ app.get("/api/stock-quotes", async (req, res) => {
     if (allQuotes && allQuotes.length > 0) {
       for (const q of allQuotes) {
         const qSymbol = q.symbol.toUpperCase();
-        // Resolve original symbol from mapping, otherwise fallback to itself
         const originalTicker = yahooToOriginal[qSymbol] || qSymbol;
 
         const currentPrice = q.regularMarketPrice ?? q.postMarketPrice ?? q.bid;
@@ -1582,52 +1570,8 @@ app.get("/api/stock-quotes", async (req, res) => {
             marketCap: q.marketCap || undefined,
             dividend: q.dividendRate !== undefined ? q.dividendRate : q.trailingAnnualDividendRate,
             dividendYield: q.dividendYield !== undefined ? q.dividendYield : q.trailingAnnualDividendYield,
-            earningsTimestamp: q.earningsTimestamp ?? q.earningsTimestampStart ?? undefined,
+            earningsTimestamp: q.earningsTimestamp ?? undefined,
           };
-          // Sync server-side cache
-          serverPriceCache[originalTicker] = currentPrice;
-        }
-      }
-    }
-
-    // Identify any tickers that failed to fetch from Yahoo or were not returned
-    const missingTickers = tickers.filter(t => !results[t]);
-    if (missingTickers.length > 0) {
-      // Map missing tickers to their Yahoo representation
-      const missingYahooToOriginal: Record<string, string> = {};
-      const missingYahooSymbols: string[] = [];
-
-      for (const t of missingTickers) {
-        const ySym = originalToYahoo[t] || t;
-        missingYahooToOriginal[ySym] = t;
-        missingYahooSymbols.push(ySym);
-      }
-
-      // Fetch from the unblocked chart endpoint
-      const chartQuotes = await fetchChartQuotesInParallel(missingYahooSymbols);
-      
-      for (const cq of chartQuotes) {
-        const qSymbol = cq.symbol.toUpperCase();
-        const originalTicker = missingYahooToOriginal[qSymbol] || qSymbol;
-        
-        const currentPrice = cq.regularMarketPrice;
-        const prevClose = cq.regularMarketPreviousClose;
-        const dailyChangePct = cq.regularMarketChangePercent;
-
-        if (currentPrice !== undefined && currentPrice !== null) {
-          const fallback = generateFallbackQuotes([originalTicker])[originalTicker];
-          
-          results[originalTicker] = {
-            currentPrice: parseFloat(currentPrice.toFixed(2)),
-            dailyChangePct: parseFloat((dailyChangePct || 0).toFixed(2)),
-            companyName: fallback.companyName,
-            low52: cq.fiftyTwoWeekLow ? parseFloat(cq.fiftyTwoWeekLow.toFixed(2)) : fallback.low52,
-            high52: cq.fiftyTwoWeekHigh ? parseFloat(cq.fiftyTwoWeekHigh.toFixed(2)) : fallback.high52,
-            peRatio: fallback.peRatio,
-            eps: fallback.eps,
-            marketCap: fallback.marketCap,
-          };
-          // Sync server-side cache
           serverPriceCache[originalTicker] = currentPrice;
         }
       }
@@ -1676,7 +1620,7 @@ app.get("/api/stock-quotes", async (req, res) => {
       }
     }
 
-    return res.json({ quotes: results, source: "live-yahoo-chart-unblocked" });
+    return res.json({ quotes: results, source: "live-yahoo-finance2" });
 
   } catch (error: any) {
     console.error("Грешка при обслужване на котировки:", error.message);
