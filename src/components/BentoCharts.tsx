@@ -276,7 +276,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
   {/* 2. Best Deals Bar Chart */}
   <div className="bg-bg rounded-2xl border border-border p-4 lg:col-span-1">
 
- <div className="flex items-center justify-between mb-3">
+ <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
  <div>
  <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
  Deal Finder

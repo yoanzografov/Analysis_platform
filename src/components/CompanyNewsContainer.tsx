@@ -21,6 +21,7 @@ interface NewsArticle {
  summary: string;
  impact: 'Positive' | 'Negative' | 'Neutral';
  url: string;
+ image?: string;
 }
 
 interface Props {
@@ -250,11 +251,12 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  setError('');
  
  try {
- const ticker = selectedStock ? selectedStock.ticker : 'SPY';
- const response = await fetch(`/api/news?ticker=${encodeURIComponent(ticker)}`);
+ const endpoint = selectedStock ? `/api/news?ticker=${encodeURIComponent(selectedStock.ticker)}` : `/api/global-news`;
+ const response = await fetch(endpoint);
  if (!response.ok) throw new Error('Network error');
  
- const parsedNews: NewsArticle[] = await response.json();
+ const data = await response.json();
+ const parsedNews: NewsArticle[] = data.news ? data.news : data;
  
  if (Array.isArray(parsedNews) && parsedNews.length > 0) {
  setNews(parsedNews);
@@ -509,8 +511,14 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  {news.map((item, idx) => (
  <div 
  key={idx} 
- className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between hover:border-emerald-800 transition-all shadow-xs group"
+ className="bg-bg rounded-2xl border border-border p-4 flex flex-col md:flex-row gap-4 hover:border-emerald-800 transition-all shadow-xs group"
  >
+ {item.image && (
+   <div className="w-full md:w-32 h-24 shrink-0 rounded-xl overflow-hidden bg-card border border-border">
+     <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+   </div>
+ )}
+ <div className="flex-1 flex flex-col justify-between">
  <div>
  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2 mb-3 font-mono text-xs">
  <div className="flex items-center gap-1.5">
@@ -544,6 +552,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  >
  Линк към статията <ExternalLink className="w-3 h-3 text-[#10b981]" />
  </a>
+ </div>
  </div>
  </div>
  ))}

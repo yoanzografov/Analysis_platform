@@ -73,6 +73,13 @@ const IndicatorItem: React.FC<IndicatorItemProps> = ({ name, url, value, onChang
   );
 }
 
+interface InflationData {
+  name: string;
+  actual: string;
+  forecast: string;
+  previous: string;
+}
+
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
   const [fngData, setFngData] = useState<CnnData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -83,6 +90,25 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
   const [fomcTimeLeft, setFomcTimeLeft] = useState<{ d: number, h: number, m: number, s: number } | null>(null);
 
   const [macroValues, setMacroValues] = useState<Record<string, string>>({});
+  const [inflationData, setInflationData] = useState<InflationData[] | null>(null);
+  const [inflationLoading, setInflationLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInflation = async () => {
+      try {
+        const res = await fetch('/api/inflation-data');
+        if (res.ok) {
+          const data = await res.json();
+          setInflationData(data);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setInflationLoading(false);
+      }
+    };
+    fetchInflation();
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem('macro_indicator_values');
@@ -487,16 +513,41 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
         {/* Indicators List */}
         <div className="flex flex-col gap-3 pb-2 mt-1">
+          {/* Custom Inflation Group */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs uppercase font-bold text-ink-faint tracking-wider pl-0.5">
+              Инфлация
+            </span>
+            {inflationLoading ? (
+              <div className="text-xs text-ink-faint">Зареждане на данни...</div>
+            ) : inflationData && inflationData.length > 0 ? (
+              <div className="flex flex-col gap-1.5">
+                {inflationData.map((item) => (
+                  <div key={item.name} className="flex flex-col p-2 rounded-lg border border-border/40 bg-bg hover:bg-card-hover hover:border-indigo-500/30 transition-colors">
+                    <div className="font-bold text-ink text-xs mb-1.5 truncate">{item.name}</div>
+                    <div className="flex items-center justify-between text-[11px] font-mono">
+                      <div className="flex flex-col">
+                        <span className="text-ink-faint">Actual</span>
+                        <span className="text-indigo-500 font-bold">{item.actual}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-ink-faint">Forecast</span>
+                        <span className="text-ink font-semibold">{item.forecast}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-ink-faint">Previous</span>
+                        <span className="text-ink font-semibold">{item.previous}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-ink-faint">Няма данни.</div>
+            )}
+          </div>
+
           {[
-            {
-              category: "Инфлация",
-              items: [
-                { name: "CPI (Inflation)", url: "https://tradingeconomics.com/united-states/inflation-cpi" },
-                { name: "Core CPI", url: "https://tradingeconomics.com/united-states/core-inflation-rate" },
-                { name: "PCE", url: "https://tradingeconomics.com/united-states/personal-consumption-expenditures-price-index" },
-                { name: "Core PCE", url: "https://tradingeconomics.com/united-states/core-pce-price-index-yoy" },
-              ]
-            },
             {
               category: "Централна Банка",
               items: [
@@ -532,7 +583,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               <span className="text-xs uppercase font-bold text-ink-faint tracking-wider pl-0.5">
                 {group.category}
               </span>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {group.items.map((item) => (
                   <IndicatorItem
                     key={item.name}

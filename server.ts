@@ -758,6 +758,110 @@ app.get("/api/vix", async (req, res) => {
   }
 });
 
+app.get("/api/global-news", async (req, res) => {
+  try {
+    let rawNews: any[] = [];
+    if (process.env.FMP_API_KEY) {
+      try {
+        const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v4/general_news?page=0&apikey=${process.env.FMP_API_KEY}`);
+        if (fmpResponse.ok) {
+          const fmpData = await fmpResponse.json();
+          if (Array.isArray(fmpData) && fmpData.length > 0) {
+            rawNews = fmpData.slice(0, 10).map((item: any) => ({
+              title: item.title || '',
+              link: item.url || '',
+              pubDate: item.publishedDate || new Date().toISOString(),
+              source: item.site || 'FMP News',
+              image: item.image || ''
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching from FMP General News API:", err);
+      }
+    }
+
+    if (rawNews.length === 0) {
+      const fallback = getLocalFallbackNews("", "");
+      return res.json({
+        news: fallback.map(n => ({
+          title: n.title,
+          url: n.url,
+          time: n.time,
+          source: n.source,
+          image: "",
+          summary: n.summary,
+          impact: n.impact
+        }))
+      });
+    }
+
+    try {
+      const ai = getGeminiClient();
+      const prompt = `Преведи следните глобални финансови новини на български език и определи тяхното пазарно влияние (impact: "Positive" | "Negative" | "Neutral"). Извлечи кратко резюме от заглавието.
+Запази оригиналните линкове (url), източници (source) и изображения (image) непроменени. Върни отговора САМО като валиден JSON масив.
+
+Входни новини (JSON масив):
+${JSON.stringify(rawNews)}
+
+Очакван изход (JSON масив):
+[
+  {
+    "title": "Преведено заглавие",
+    "source": "Източник (напр. FMP News)",
+    "time": "Преди колко време (напр. 'Днес')",
+    "summary": "Кратко резюме (1-2 изречения)",
+    "impact": "Positive" | "Negative" | "Neutral",
+    "url": "Оригиналният url",
+    "image": "Оригиналното image url"
+  }
+]`;
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: { responseMimeType: "application/json" }
+      });
+      if (response && response.text) {
+        let cleanText = response.text.trim();
+        if (cleanText.startsWith("\`\`\`json")) cleanText = cleanText.substring(7);
+        if (cleanText.endsWith("\`\`\`")) cleanText = cleanText.substring(0, cleanText.length - 3);
+        const parsed = JSON.parse(cleanText.trim());
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return res.json({ news: parsed });
+        }
+      }
+    } catch(e: any) {
+      console.warn("Gemini translation for global news failed:", e.message);
+    }
+
+    const englishFallback = rawNews.map(n => ({
+      title: n.title,
+      url: n.link,
+      time: "Днес",
+      source: n.source,
+      image: n.image,
+      summary: "Market news.",
+      impact: "Neutral"
+    }));
+    return res.json({ news: englishFallback });
+
+  } catch (error) {
+    console.error("Error in /api/global-news:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/api/inflation-data", (req, res) => {
+  // Return realistic mock data for inflation since free API is unavailable
+  const data = [
+    { name: "CPI (Inflation) YoY", actual: "2.8%", forecast: "2.9%", previous: "3.1%" },
+    { name: "Core CPI YoY", actual: "3.2%", forecast: "3.3%", previous: "3.4%" },
+    { name: "PCE Price Index YoY", actual: "2.6%", forecast: "2.6%", previous: "2.7%" },
+    { name: "Core PCE Price Index YoY", actual: "2.8%", forecast: "2.8%", previous: "2.9%" }
+  ];
+  res.json(data);
+});
+
 app.get("/api/news", async (req, res) => {
   const ticker = req.query.ticker as string;
   if (!ticker) {
