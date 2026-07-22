@@ -510,78 +510,13 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
       </div>
 
-
-        {/* Indicators List */}
-        <div className="flex flex-col gap-3 pb-2 mt-1">
-          {/* Custom Inflation Group */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs uppercase font-bold text-ink-faint tracking-wider pl-0.5">
-              Макроикономически Индикатори
-            </span>
-            {inflationLoading ? (
-              <div className="text-xs text-ink-faint">Зареждане на данни...</div>
-            ) : inflationData && inflationData.length > 0 ? (
-              <div className="flex flex-col gap-1.5">
-                {inflationData.map((item) => (
-                  <div key={item.name} className="flex flex-col p-2 rounded-lg border border-border/40 bg-bg hover:bg-card-hover hover:border-indigo-500/30 transition-colors">
-                    {item.url ? (
-                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="font-bold text-ink text-xs mb-1.5 truncate hover:text-indigo-500 transition-colors">
-                        {item.name}
-                      </a>
-                    ) : (
-                      <div className="font-bold text-ink text-xs mb-1.5 truncate">{item.name}</div>
-                    )}
-                    <div className="flex items-center justify-between text-[11px] font-mono">
-                      <div className="flex flex-col">
-                        <span className="text-ink-faint">Actual</span>
-                        <span className="text-indigo-500 font-bold">{item.actual}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-ink-faint">Forecast</span>
-                        <span className="text-ink font-semibold">{item.forecast}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-ink-faint">Previous</span>
-                        <span className="text-ink font-semibold">{item.previous}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-xs text-ink-faint">Няма данни.</div>
-            )}
-          </div>
-
-          {[
-            {
-              category: "Други",
-              items: [
-                { name: "Earnings Calendar", url: "https://www.investing.com/earnings-calendar/" },
-                { name: "Crude Oil", url: "https://tradingeconomics.com/commodity/crude-oil" },
-                { name: "VIX Volatility", url: "https://tradingeconomics.com/vix:ind" },
-              ]
-            }
-          ].map((group) => (
-            <div key={group.category} className="flex flex-col gap-1.5">
-              <span className="text-xs uppercase font-bold text-ink-faint tracking-wider pl-0.5">
-                {group.category}
-              </span>
-              <div className="flex flex-col gap-1.5">
-                {group.items.map((item) => (
-                  <IndicatorItem
-                    key={item.name}
-                    name={item.name}
-                    url={item.url}
-                    value={macroValues[item.name] || ''}
-                    onChange={(val) => handleMacroUpdate(item.name, val)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* New Section Placeholder */}
+      <div className="flex flex-col gap-3 pb-2 mt-4 pt-4 border-t border-border/30">
+        <span className="text-xs uppercase font-bold text-ink-faint tracking-wider pl-0.5">
+          Какво движи пазара
+        </span>
       </div>
+    </div>
     </div>
   </div>
   );
