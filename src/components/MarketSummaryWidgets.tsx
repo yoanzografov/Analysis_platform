@@ -524,7 +524,13 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               <div className="flex flex-col gap-1.5">
                 {inflationData.map((item) => (
                   <div key={item.name} className="flex flex-col p-2 rounded-lg border border-border/40 bg-bg hover:bg-card-hover hover:border-indigo-500/30 transition-colors">
-                    <div className="font-bold text-ink text-xs mb-1.5 truncate">{item.name}</div>
+                    {item.url ? (
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="font-bold text-ink text-xs mb-1.5 truncate hover:text-indigo-500 transition-colors">
+                        {item.name}
+                      </a>
+                    ) : (
+                      <div className="font-bold text-ink text-xs mb-1.5 truncate">{item.name}</div>
+                    )}
                     <div className="flex items-center justify-between text-[11px] font-mono">
                       <div className="flex flex-col">
                         <span className="text-ink-faint">Actual</span>
@@ -549,30 +555,8 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
           {[
             {
-              category: "Централна Банка",
-              items: [
-                { name: "Fed Funds Rate", url: "https://tradingeconomics.com/united-states/interest-rate" },
-              ]
-            },
-            {
-              category: "Пазар на труда",
-              items: [
-                { name: "Non-Farm Payrolls", url: "https://tradingeconomics.com/united-states/non-farm-payrolls" },
-                { name: "Unemployment Rate", url: "https://tradingeconomics.com/united-states/unemployment-rate" },
-              ]
-            },
-            {
-              category: "Икономика",
-              items: [
-                { name: "GDP Growth Rate", url: "https://tradingeconomics.com/united-states/gdp-growth-rate" },
-                { name: "Retail Sales", url: "https://tradingeconomics.com/united-states/retail-sales" },
-                { name: "Consumer Confidence", url: "https://tradingeconomics.com/united-states/consumer-confidence" },
-              ]
-            },
-            {
               category: "Други",
               items: [
-                { name: "Housing Starts", url: "https://tradingeconomics.com/united-states/housing-starts" },
                 { name: "Earnings Calendar", url: "https://www.investing.com/earnings-calendar/" },
                 { name: "Crude Oil", url: "https://tradingeconomics.com/commodity/crude-oil" },
                 { name: "VIX Volatility", url: "https://tradingeconomics.com/vix:ind" },
@@ -583,7 +567,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               <span className="text-xs uppercase font-bold text-ink-faint tracking-wider pl-0.5">
                 {group.category}
               </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              <div className="flex flex-col gap-1.5">
                 {group.items.map((item) => (
                   <IndicatorItem
                     key={item.name}

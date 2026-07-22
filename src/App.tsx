@@ -859,14 +859,14 @@ export default function App() {
  <div className="flex items-center justify-between">
  <div>
  <h2 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
- Интерактивна таблица за оценка
+ Интерактивна таблица
  </h2>
  <p className="text-sm text-ink-muted mt-0.5">
- Можете да щракнете върху всяка стойност в колона <span className="font-bold underline">"Текуща"</span> или <span className="font-bold text-[#10b981] underline">"Справедлива (Fair)"</span> за директно редактиране на показателите.
+ Клик върху цена за редакция.
  </p>
  </div>
  <div className="text-right text-sm text-ink-faint font-mono hidden sm:block">
- Двоен клик или клик на химикал за бърза пазарна симулация
+ Двоен клик за симулация
  </div>
  </div>
  

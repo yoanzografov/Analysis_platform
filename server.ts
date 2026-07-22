@@ -886,19 +886,20 @@ app.get("/api/inflation-data", async (req, res) => {
     });
 
     const data = [
-      { name: "CPI (Inflation) YoY", key: "Inflation Rate" },
-      { name: "Core CPI YoY", key: "Core Inflation Rate" },
-      { name: "PCE Price Index YoY", key: "PCE Price Index Annual Change" },
-      { name: "Core PCE Price Index YoY", key: "Core PCE Price Index YoY" },
-      { name: "Fed Funds Rate", key: "Interest Rate" },
-      { name: "Non-Farm Payrolls", key: "Non Farm Payrolls" },
-      { name: "Unemployment Rate", key: "Unemployment Rate" },
-      { name: "GDP Growth Rate", key: "GDP Growth Rate" },
-      { name: "Retail Sales MoM", key: "Retail Sales MoM" },
-      { name: "Consumer Confidence", key: "Consumer Confidence" },
-      { name: "Housing Starts", key: "Housing Starts" }
+      { name: "CPI (Inflation) YoY", key: "Inflation Rate", url: "https://tradingeconomics.com/united-states/inflation-cpi" },
+      { name: "Core CPI YoY", key: "Core Inflation Rate", url: "https://tradingeconomics.com/united-states/core-inflation-rate" },
+      { name: "PCE Price Index YoY", key: "PCE Price Index Annual Change", url: "https://tradingeconomics.com/united-states/pce-price-index-annual-change" },
+      { name: "Core PCE Price Index YoY", key: "Core PCE Price Index YoY", url: "https://tradingeconomics.com/united-states/core-pce-price-index-yoy" },
+      { name: "Fed Funds Rate", key: "Interest Rate", url: "https://tradingeconomics.com/united-states/interest-rate" },
+      { name: "Non-Farm Payrolls", key: "Non Farm Payrolls", url: "https://tradingeconomics.com/united-states/non-farm-payrolls" },
+      { name: "Unemployment Rate", key: "Unemployment Rate", url: "https://tradingeconomics.com/united-states/unemployment-rate" },
+      { name: "GDP Growth Rate", key: "GDP Growth Rate", url: "https://tradingeconomics.com/united-states/gdp-growth-rate" },
+      { name: "Retail Sales MoM", key: "Retail Sales MoM", url: "https://tradingeconomics.com/united-states/retail-sales" },
+      { name: "Consumer Confidence", key: "Consumer Confidence", url: "https://tradingeconomics.com/united-states/consumer-confidence" },
+      { name: "Housing Starts", key: "Housing Starts", url: "https://tradingeconomics.com/united-states/housing-starts" }
     ].map(item => ({
       name: item.name,
+      url: item.url,
       actual: rawData[item.key]?.actual || "N/A",
       forecast: "N/A",
       previous: rawData[item.key]?.previous || "N/A"
