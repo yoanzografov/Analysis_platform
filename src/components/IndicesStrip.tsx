@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { MarketIndex } from '../types';
 import { Globe, ChevronDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import IndexDetailChartModal from './IndexDetailChartModal';
 
 interface Props {
   indices: MarketIndex[];
@@ -73,6 +74,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [flashStates, setFlashStates] = useState<Record<string, 'up' | 'down' | null>>({});
+  const [activeChartIndex, setActiveChartIndex] = useState<MarketIndex | null>(null);
 
  useEffect(() => {
  // Detect index differences to apply visual highlight flash effect
@@ -188,6 +190,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
               return (
                 <div
                   key={`${item.name}-${item.ticker || idx}`}
+                  onClick={() => setActiveChartIndex(item)}
                   className={`group relative h-full flex flex-col justify-center px-3.5 transition-all duration-300 cursor-pointer ${
                     flash === 'up'
                       ? 'bg-emerald-500/10'
@@ -236,6 +239,13 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
           </div>
         </div>
       </div>
+      
+      {activeChartIndex && (
+        <IndexDetailChartModal
+          index={activeChartIndex}
+          onClose={() => setActiveChartIndex(null)}
+        />
+      )}
     </div>
   );
 }
