@@ -112,7 +112,7 @@ const StockLogo = ({ ticker }: { ticker: string }) => {
   
   if (error) {
     return (
-      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-ink-muted border border-white/20 shrink-0">
+      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-ink-muted border border-white/20 shrink-0">
         {ticker.charAt(0)}
       </div>
     );

@@ -54,7 +54,7 @@ const IndicatorItem: React.FC<IndicatorItemProps> = ({ name, url, value, onChang
       {isEditing ? (
         <input
           autoFocus
-          className="w-10 text-right bg-transparent border-b border-indigo-500 text-xs font-mono font-bold text-ink outline-none"
+          className="w-10 text-right bg-transparent border-b border-indigo-500 text-xs font-sans tabular-nums font-bold text-ink outline-none"
           value={localVal}
           onChange={e => setLocalVal(e.target.value)}
           onBlur={handleSubmit}
@@ -63,7 +63,7 @@ const IndicatorItem: React.FC<IndicatorItemProps> = ({ name, url, value, onChang
       ) : (
         <span 
           onClick={(e) => { e.preventDefault(); setIsEditing(true); }}
-          className="cursor-pointer px-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-xs font-mono font-bold text-indigo-500/80 group-hover:text-indigo-500 shrink-0 transition-colors"
+          className="cursor-pointer px-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-xs font-sans tabular-nums font-bold text-indigo-500/80 group-hover:text-indigo-500 shrink-0 transition-colors"
           title="Кликни за редакция"
         >
           {value || '--'}
@@ -257,7 +257,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  {/* Header row with scrolling buttons */}
  <div className="flex items-center justify-between border-b border-border/50 pb-2 mb-2">
  <div>
- <h3 className="text-sm uppercase font-extrabold text-emerald-700 font-mono tracking-tight">
+ <h3 className="text-xs uppercase font-extrabold text-emerald-700 font-sans tabular-nums tracking-tight">
  Top Gainers
  </h3>
  </div>
@@ -299,14 +299,14 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  }`}
  >
  <div className="flex items-center gap-2 min-w-0">
- <span className="text-sm font-mono font-black text-ink bg-[#10b981]/10 border border-[#10b981]/30 px-1.5 py-0.5 shrink-0 rounded-none">
+ <span className="text-xs font-sans tabular-nums font-black text-ink bg-[#10b981]/10 border border-[#10b981]/30 px-1.5 py-0.5 shrink-0 rounded-none">
  {item.ticker}
  </span>
- <span className="text-sm font-sans font-bold text-ink truncate max-w-[110px]" title={item.companyName}>
+ <span className="text-xs font-sans font-bold text-ink truncate max-w-[110px]" title={item.companyName}>
  {item.companyName}
  </span>
  </div>
- <div className="flex items-center gap-2 font-mono text-sm shrink-0">
+ <div className="flex items-center gap-2 font-sans tabular-nums text-xs shrink-0">
  <span className="text-ink-faint font-bold">${item.currentPrice.toFixed(2)}</span>
  <span className="font-extrabold text-emerald-700">+{item.dailyChangePct.toFixed(2)}%</span>
  </div>
@@ -314,12 +314,12 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  );
  })
  ) : (
- <p className="text-xs text-ink-faint font-mono py-8 text-center">Няма данни за печеливши акции.</p>
+ <p className="text-xs text-ink-faint font-sans tabular-nums py-8 text-center">Няма данни за печеливши акции.</p>
  )}
  </div>
  </div>
  
- <div className="border-t border-border/10 pt-2 text-sm font-mono text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-border/10 pt-2 text-xs font-sans tabular-nums text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Кликни на акция за филтър</span>
  <span className="font-bold underline group-hover:text-[#10b981]">Топ Печеливши ({top15Gainers.length})</span>
  </div>
@@ -331,7 +331,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  {/* Header row with scrolling buttons */}
  <div className="flex items-center justify-between border-b border-border/50 pb-2 mb-2">
  <div>
- <h3 className="text-sm uppercase font-extrabold text-red-700 font-mono tracking-tight">
+ <h3 className="text-xs uppercase font-extrabold text-red-700 font-sans tabular-nums tracking-tight">
  Top Losers
  </h3>
  </div>
@@ -373,14 +373,14 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  }`}
  >
  <div className="flex items-center gap-2 min-w-0">
- <span className="text-sm font-mono font-black text-ink bg-[#f43f5e]/10 border border-[#f43f5e]/30 px-1.5 py-0.5 shrink-0 rounded-none">
+ <span className="text-xs font-sans tabular-nums font-black text-ink bg-[#f43f5e]/10 border border-[#f43f5e]/30 px-1.5 py-0.5 shrink-0 rounded-none">
  {item.ticker}
  </span>
- <span className="text-sm font-sans font-bold text-ink truncate max-w-[110px]" title={item.companyName}>
+ <span className="text-xs font-sans font-bold text-ink truncate max-w-[110px]" title={item.companyName}>
  {item.companyName}
  </span>
  </div>
- <div className="flex items-center gap-2 font-mono text-sm shrink-0">
+ <div className="flex items-center gap-2 font-sans tabular-nums text-xs shrink-0">
  <span className="text-ink-faint font-bold">${item.currentPrice.toFixed(2)}</span>
  <span className="font-extrabold text-red-700">{item.dailyChangePct.toFixed(2)}%</span>
  </div>
@@ -388,12 +388,12 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
  );
  })
  ) : (
- <p className="text-xs text-ink-faint font-mono py-8 text-center">Няма данни за губещи акции.</p>
+ <p className="text-xs text-ink-faint font-sans tabular-nums py-8 text-center">Няма данни за губещи акции.</p>
  )}
  </div>
  </div>
  
- <div className="border-t border-border/10 pt-2 text-sm font-mono text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+ <div className="border-t border-border/10 pt-2 text-xs font-sans tabular-nums text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
  <span>Кликни на акция за филтър</span>
  <span className="font-bold underline group-hover:text-[#f43f5e]">Топ Губещи ({top15Losers.length})</span>
  </div>
@@ -407,7 +407,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
       {/* Section 1: Полезни връзки */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between border-b border-border/50 pb-1.5 shrink-0">
-          <h3 className="text-sm uppercase font-extrabold text-ink font-mono tracking-tight">
+          <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight">
             Полезни връзки
           </h3>
         </div>
@@ -428,7 +428,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
               Fear & Greed Index
             </span>
-            <span className="text-xs text-ink-faint font-mono truncate">
+            <span className="text-xs text-ink-faint font-sans tabular-nums truncate">
               cnn.com
             </span>
           </div>
@@ -454,7 +454,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
               <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
                 CME FedWatch Tool
               </span>
-              <span className="text-xs text-ink-faint font-mono truncate">
+              <span className="text-xs text-ink-faint font-sans tabular-nums truncate">
                 cmegroup.com
               </span>
             </div>
@@ -465,10 +465,10 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           
           {/* FOMC Countdown Strip */}
           <div className="mt-3 pt-2 border-t border-border/30 flex flex-col gap-1">
-            <span className="text-sm text-ink-faint font-sans uppercase font-bold tracking-wider">
+            <span className="text-xs text-ink-faint font-sans uppercase font-bold tracking-wider">
               The next FOMC meeting is in:
             </span>
-            <div className="flex items-center gap-1.5 font-mono text-xs font-extrabold text-ink">
+            <div className="flex items-center gap-1.5 font-sans tabular-nums text-xs font-extrabold text-ink">
               {fomcTimeLeft ? (
                 <>
                   <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-sm">{String(fomcTimeLeft.d).padStart(2, '0')}d</div>:
@@ -499,7 +499,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
               TradingView Heat Map
             </span>
-            <span className="text-xs text-ink-faint font-mono truncate">
+            <span className="text-xs text-ink-faint font-sans tabular-nums truncate">
               tradingview.com
             </span>
           </div>

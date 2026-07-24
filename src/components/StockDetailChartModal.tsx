@@ -148,10 +148,10 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             <div className="text-2xl sm:text-3xl font-bold text-ink tracking-tight leading-tight">
               {sym}
             </div>
-            <div className="text-sm sm:text-base text-ink-muted mt-0.5 font-medium">
+            <div className="text-xs sm:text-xs text-ink-muted mt-0.5 font-medium">
               {stock.companyName}
             </div>
-            <div className="text-xs sm:text-[13px] text-ink-faint mt-1">
+            <div className="text-xs sm:text-xs text-ink-faint mt-1">
               {exch} · {ccy}
             </div>
           </div>
@@ -161,7 +161,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
               {fp(stock.currentPrice)}
             </div>
             <div 
-              className="text-base sm:text-lg font-semibold mt-0.5 flex items-center justify-end gap-1.5 tabular-nums"
+              className="text-xs sm:text-lg font-semibold mt-0.5 flex items-center justify-end gap-1.5 tabular-nums"
               style={{ color: accent }}
             >
               {isUp ? '+' : ''}{(stock.dailyChangePct ?? 0).toFixed(2)}%
@@ -226,8 +226,8 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             { l: 'EPS', v: stock.eps ? stock.eps.toFixed(2) : '—' },
           ].map((s, i) => (
             <div key={i} className="flex flex-col gap-0.5">
-              <div className="text-sm font-semibold text-ink-faint uppercase tracking-wider">{s.l}</div>
-              <div className="text-sm font-medium text-ink tabular-nums">{s.v}</div>
+              <div className="text-xs font-semibold text-ink-faint uppercase tracking-wider">{s.l}</div>
+              <div className="text-xs font-medium text-ink tabular-nums">{s.v}</div>
             </div>
           ))}
         </div>

@@ -662,22 +662,22 @@ export default function App() {
   {showNewUserModal && (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-bg border border-red-500/50 rounded-2xl shadow-2xl p-6 max-w-md w-full">
-        <h2 className="text-lg font-mono font-extrabold text-red-500 uppercase tracking-tight mb-2">
+        <h2 className="text-lg font-sans tabular-nums font-extrabold text-red-500 uppercase tracking-tight mb-2">
           Изчистване на всички данни?
         </h2>
-        <p className="text-sm font-sans text-ink-muted mb-6">
+        <p className="text-xs font-sans text-ink-muted mb-6">
           Сигурни ли сте, че искате да изтриете всички ваши акции, графики и известия? Това ще нулира платформата за <strong>нов потребител</strong>. Действието е <strong>необратимо</strong>.
         </p>
         <div className="flex justify-end gap-3">
           <button
             onClick={() => setShowNewUserModal(false)}
-            className="px-4 py-2 text-xs font-mono font-extrabold text-ink-faint border border-border hover:bg-card-hover transition-colors uppercase"
+            className="px-4 py-2 text-xs font-sans tabular-nums font-extrabold text-ink-faint border border-border hover:bg-card-hover transition-colors uppercase"
           >
             Отказ
           </button>
           <button
             onClick={handleNewUser}
-            className="px-4 py-2 text-xs font-mono font-extrabold text-white bg-red-600 hover:bg-red-700 border border-red-700 transition-colors uppercase shadow-lg shadow-red-900/20"
+            className="px-4 py-2 text-xs font-sans tabular-nums font-extrabold text-white bg-red-600 hover:bg-red-700 border border-red-700 transition-colors uppercase shadow-lg shadow-red-900/20"
           >
             Изчисти данните
           </button>
@@ -688,7 +688,7 @@ export default function App() {
 
  {/* Floating live alerts toast banner */}
  {activeAlertToast && (
- <div className="fixed top-14 right-4 z-40 bg-amber-500/10 border border-amber-500/50 text-amber-400 rounded-2xl shadow-md p-3 max-w-sm flex items-start gap-2.5 font-mono text-xs">
+ <div className="fixed top-14 right-4 z-40 bg-amber-500/10 border border-amber-500/50 text-amber-400 rounded-2xl shadow-md p-3 max-w-sm flex items-start gap-2.5 font-sans tabular-nums text-xs">
  <Bell className="w-4 h-4 text-amber-800 shrink-0 mt-0.5" />
  <div>
  <span className="font-extrabold underline block mb-0.5 uppercase tracking-wide">СИГНАЛ ЗА ЦЕНА</span>
@@ -701,7 +701,7 @@ export default function App() {
   <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-[100]">
       <div className="flex items-center gap-2 max-w-full">
         <Building2 className="w-5 h-5 text-ink shrink-0" />
-        <h1 className="text-lg sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase leading-tight">
+        <h1 className="text-lg sm:text-2xl font-extrabold text-ink font-sans tabular-nums tracking-tight uppercase leading-tight">
           ПЛАТФОРМА ЗА СЛЕДЕНЕ НА АКЦИИ
         </h1>
       </div>
@@ -711,7 +711,7 @@ export default function App() {
   {/* Auto live updates toggler */}
   <button
   onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-  className={`text-xs sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isAutoLiveRefresh 
   ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
   : 'bg-bg text-ink-faint border-gray-350 hover:bg-gray-50 hover:text-ink-muted'
@@ -721,7 +721,7 @@ export default function App() {
   Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}
   <div className="group/info relative flex items-center">
     <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-sm leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-xs leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
       Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди
     </div>
   </div>
@@ -735,7 +735,7 @@ export default function App() {
   setIsAutoLiveRefresh(false); 
   }
   }}
-  className={`text-xs sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
   isSimulating 
   ? 'bg-red-700 text-ink border-red-850 hover:bg-red-800 font-extrabold' 
   : 'bg-bg text-ink border-border hover:bg-white/10 hover:text-ink'
@@ -754,7 +754,7 @@ export default function App() {
   )}
   <div className="group/info relative flex items-center">
     <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-sm leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-xs leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
       Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити
     </div>
   </div>
@@ -764,7 +764,7 @@ export default function App() {
   <button
   onClick={triggerManualRefresh}
   disabled={isFetchingLivePrices}
-  className={`text-xs sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+  className={`text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
   isFetchingLivePrices
   ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
   : 'bg-bg text-ink border-black hover:bg-white/20'
@@ -774,7 +774,7 @@ export default function App() {
   {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
   <div className="group/info relative flex items-center">
     <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-sm leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-xs leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
       Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи
     </div>
   </div>
@@ -786,7 +786,7 @@ export default function App() {
   <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsSettingsMenuOpen(false); }}>
     <button
       onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
-      className="text-xs sm:text-xs font-mono font-extrabold px-3 py-1.5 rounded-2xl border border-border bg-bg text-ink hover:bg-white/10 uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+      className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-border bg-bg text-ink hover:bg-white/10 uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
       title="Системни настройки и данни"
     >
       <Settings2 className="w-3 h-3" />
@@ -858,14 +858,14 @@ export default function App() {
  <div className="space-y-2" id="stock-table-section">
  <div className="flex items-center justify-between">
  <div>
- <h2 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
+ <h2 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight">
  Интерактивна таблица
  </h2>
- <p className="text-sm text-ink-muted mt-0.5">
+ <p className="text-xs text-ink-muted mt-0.5">
  Клик върху цена за редакция.
  </p>
  </div>
- <div className="text-right text-sm text-ink-faint font-mono hidden sm:block">
+ <div className="text-right text-xs text-ink-faint font-sans tabular-nums hidden sm:block">
  Двоен клик за симулация
  </div>
  </div>
@@ -917,16 +917,16 @@ export default function App() {
  {/* Real-time alert feed logs */}
  <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between shadow-xs">
  <div>
- <h3 className="text-xs uppercase font-extrabold text-ink font-mono flex items-center gap-1.5">
+ <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums flex items-center gap-1.5">
  <Bell className="w-3.5 h-3.5 text-amber-800" />
  Лог на известията & задействания
  </h3>
- <p className="text-xs text-ink-faint font-mono mt-0.5">
+ <p className="text-xs text-ink-faint font-sans tabular-nums mt-0.5">
  Хроника на пазарните промени и филтри на заложени аларми.
  </p>
  </div>
 
- <div className="h-28 overflow-y-auto mt-3.5 space-y-1.5 pr-1 text-xs font-mono">
+ <div className="h-28 overflow-y-auto mt-3.5 space-y-1.5 pr-1 text-xs font-sans tabular-nums">
  {logs.map(log => (
  <div 
  key={log.id} 

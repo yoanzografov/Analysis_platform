@@ -81,11 +81,11 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
             </span>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center justify-between w-full text-left font-mono font-bold text-xs uppercase tracking-tight hover:text-indigo-500 transition-colors focus:outline-none group cursor-pointer"
+              className="flex items-center justify-between w-full text-left font-sans tabular-nums font-bold text-xs uppercase tracking-tight hover:text-indigo-500 transition-colors focus:outline-none group cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5 text-ink-muted group-hover:text-indigo-500" />
-                <span className="text-sm font-sans font-extrabold text-ink leading-tight tracking-tight group-hover:text-indigo-500">
+                <span className="text-xs font-sans font-extrabold text-ink leading-tight tracking-tight group-hover:text-indigo-500">
                   {selectedCategory}
                 </span>
               </div>
@@ -138,11 +138,11 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
                   <span className="text-xs font-sans font-bold text-indigo-500 tracking-tight truncate uppercase mb-0.5" title={item.name}>
                     {item.name}
                   </span>
-                  <span className="text-[13px] font-sans font-black text-ink leading-tight tracking-tight">
+                  <span className="text-xs font-sans font-black text-ink leading-tight tracking-tight">
                     {formatPrice(item.value, item.name)}
                   </span>
                   <div
-                    className={`flex items-center gap-0.5 text-xs font-mono font-black leading-none mt-0.5 truncate ${
+                    className={`flex items-center gap-0.5 text-xs font-sans tabular-nums font-black leading-none mt-0.5 truncate ${
                       isPositive ? 'text-[#10b981]' : 'text-red-500'
                     }`}
                   >

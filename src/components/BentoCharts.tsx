@@ -113,12 +113,12 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  OVER / UNDER Weight Allocation
  </span>
  <div className="flex items-center gap-1.5">
- <h3 className="text-xs sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
+ <h3 className="text-xs sm:text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight mb-2">
  Съотношение OVER / UNDER
  </h3>
  <div className="group/info relative flex items-center -mt-2">
    <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
-   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-sm leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-xs leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
      <span className="font-bold block mb-1 uppercase tracking-wide text-xs">📈 OVER / UNDER Weight Allocation</span>
      Кръговата диаграма показва разпределението на всички акции по колоната <strong>Over/Under</strong>.<br/><br/>
      <span className="text-emerald-400 font-bold">UNDERVALUED</span> = Текущата цена е под Справедливата с повече от -{buyThreshold}%<br/>
@@ -148,7 +148,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
        <div className="text-xs font-extrabold text-ink mb-2 border-b border-border/50 pb-1 uppercase tracking-tight text-left">
          Настройки на ДРУГИ
        </div>
-       <div className="flex flex-col gap-2 font-mono text-xs text-left">
+       <div className="flex flex-col gap-2 font-sans tabular-nums text-xs text-left">
          <div className="flex items-center justify-between">
            <span className="text-red-500 font-bold">+ SELL %</span>
            <input 
@@ -217,13 +217,13 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  </Pie>
  </PieChart>
  </ResponsiveContainer>
- <div className="absolute flex flex-col items-center justify-center font-mono">
+ <div className="absolute flex flex-col items-center justify-center font-sans tabular-nums">
  <span className="text-xl font-extrabold text-ink">{stocks.length}</span>
- <span className="text-sm text-ink/60 tracking-wider">АКЦИИ ОБЩО</span>
+ <span className="text-xs text-ink/60 tracking-wider">АКЦИИ ОБЩО</span>
  </div>
  </div>
 
- <div className="grid grid-cols-3 gap-1 mt-1 font-mono">
+ <div className="grid grid-cols-3 gap-1 mt-1 font-sans tabular-nums">
         <button
           onClick={() => handleFilterToggle('buySell', 'UNDERVALUED')}
           className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
@@ -260,7 +260,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  <div className="text-xs text-ink-faint uppercase font-bold tracking-tight flex items-center justify-center gap-1 group/info relative">
  ДРУГИ
  <Info className="w-3 h-3 text-ink-faint hover:text-ink transition-colors" />
- <div className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 w-72 p-3 bg-bg border border-border rounded-xl shadow-xl text-xs text-ink text-left opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all z-[100] font-mono normal-case">
+ <div className="absolute bottom-full mb-2 right-1/2 translate-x-1/2 w-72 p-3 bg-bg border border-border rounded-xl shadow-xl text-xs text-ink text-left opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all z-[100] font-sans tabular-nums normal-case">
  <span className="font-extrabold block mb-1">Как се изчислява?</span>
  <span className="text-emerald-500 font-bold">UNDERVALUED:</span> Отклонение &lt; -{buyThreshold}%<br />
  <span className="text-red-500 font-bold">OVERVALUED:</span> Отклонение &gt; {sellThreshold}%<br />
@@ -282,12 +282,12 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  Deal Finder
  </span>
  <div className="flex items-center gap-1.5">
- <h3 className="text-xs uppercase font-extrabold text-ink font-mono tracking-tight">
+ <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight">
  Най-подценени акции (% Разлика спрямо Справедлива цена)
  </h3>
  <div className="group/info relative flex items-center shrink-0">
    <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
-   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-sm leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+   <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-64 p-3 bg-gray-900 text-white text-xs leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
      <span className="font-bold block mb-1 uppercase tracking-wide text-xs">🔍 Deal Finder</span>
      Показва топ 6 най-подценени акции от твоя портфейл.<br/><br/>
      Сортирани по <strong>% разлика</strong> между Справедливата и Текущата цена — колкото по-висок %, толкова по-голям потенциал за растеж.<br/><br/>
@@ -303,7 +303,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
 
  <div className="h-48 mt-2">
  {undervaluedStocks.length === 0 ? (
- <div className="h-full flex flex-col items-center justify-center text-center text-ink/70 font-mono text-xs">
+ <div className="h-full flex flex-col items-center justify-center text-center text-ink/70 font-sans tabular-nums text-xs">
  Няма намерени подценени акции (Fair Price &gt; Current Price)
  </div>
  ) : (
@@ -330,7 +330,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  if (active && payload && payload.length) {
  const data = payload[0].payload;
  return (
- <div className="bg-bg border border-border px-3 py-2 text-xs font-mono text-ink shadow-md">
+ <div className="bg-bg border border-border px-3 py-2 text-xs font-sans tabular-nums text-ink shadow-md">
  <p className="font-extrabold mb-1 tracking-wider">{data.ticker}</p>
  <p className="text-[#10b981]">Справедлива: ${data.fairPrice}</p>
  <p className="text-ink-faint">Текуща цена: ${data.currentPrice}</p>
@@ -357,15 +357,15 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  Signal Weight Allocation
  </span>
  <div className="flex items-center gap-1.5">
- <h3 className="text-xs sm:text-xs uppercase font-extrabold text-ink font-mono tracking-tight mb-2">
+ <h3 className="text-xs sm:text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight mb-2">
  Съотношение Купувай / Продавай / Изчакай
  </h3>
   <div className="group/info relative flex items-center -mt-2">
     <Info className="w-3.5 h-3.5 text-ink-faint hover:text-ink cursor-help transition-colors" />
-    <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-72 p-3 bg-gray-900 text-white text-sm leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
+    <div className="absolute top-full mt-2 left-0 hidden group-hover/info:block w-72 p-3 bg-gray-900 text-white text-xs leading-snug rounded-lg shadow-xl z-[200] pointer-events-none whitespace-normal normal-case font-sans border border-gray-700">
       <span className="font-bold block mb-1 uppercase tracking-wide text-xs">📊 Signal Weight Allocation</span>
       Сигналът се изчислява автоматично спрямо <strong>52-Week Low</strong> и <strong>52-Week High</strong>:<br/><br/>
-      <span className="text-yellow-300 font-mono text-xs block mb-2">IF(Цена ≤ 52W-Low × {1 + signalThreshold/100} → Buy<br/>IF(Цена ≥ 52W-High × {1 - signalThreshold/100} → Sell<br/>иначе → Hold)</span>
+      <span className="text-yellow-300 font-sans tabular-nums text-xs block mb-2">IF(Цена ≤ 52W-Low × {1 + signalThreshold/100} → Buy<br/>IF(Цена ≥ 52W-High × {1 - signalThreshold/100} → Sell<br/>иначе → Hold)</span>
       <span className="text-emerald-400 font-bold">КУПУВАЙ</span> = Цената е до {signalThreshold}% над 52-Week Low (евтина!)<br/>
       <span className="text-amber-400 font-bold">ИЗЧАКАЙ</span> = Цената е между двата прага<br/>
       <span className="text-rose-400 font-bold">ПРОДАВАЙ</span> = Цената е до {signalThreshold}% под 52-Week High (скъпа!)<br/><br/>
@@ -394,7 +394,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
        <div className="text-xs font-extrabold text-ink mb-2 border-b border-border/50 pb-1 uppercase tracking-tight text-left">
          Настройки на СИГНАЛ
        </div>
-       <div className="flex flex-col gap-2 font-mono text-xs text-left">
+       <div className="flex flex-col gap-2 font-sans tabular-nums text-xs text-left">
          <div className="flex items-center justify-between">
             <span className="text-indigo-500 font-bold">Отстояние %</span>
             <input 
@@ -440,13 +440,13 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  </Pie>
  </PieChart>
  </ResponsiveContainer>
- <div className="absolute flex flex-col items-center justify-center font-mono">
+ <div className="absolute flex flex-col items-center justify-center font-sans tabular-nums">
  <span className="text-xl font-extrabold text-ink">{stocks.length}</span>
- <span className="text-sm text-ink/60 tracking-wider">АКЦИИ ОБЩО</span>
+ <span className="text-xs text-ink/60 tracking-wider">АКЦИИ ОБЩО</span>
  </div>
  </div>
 
- <div className="grid grid-cols-3 gap-1 mt-1 font-mono">
+ <div className="grid grid-cols-3 gap-1 mt-1 font-sans tabular-nums">
         <button
           onClick={() => handleFilterToggle('signal', 'buy')}
           className={`rounded-xl py-1.5 px-0.5 border text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center ${
