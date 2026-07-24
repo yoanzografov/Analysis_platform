@@ -650,23 +650,23 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <option value="Not interesting">Not interesting</option>
  </select>
  ) : stock.watch === 'Attn' || stock.watch === 'Atten' ? (
- <span className="bg-amber-500/10 text-amber-400 font-extrabold px-1 border border-amber-400/30 text-xs uppercase rounded-md">
+ <span className="bg-amber-500 text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
  Attn
  </span>
  ) : stock.watch === 'Watch' ? (
- <span className="bg-indigo-500 rounded-xl/10 text-indigo-400 font-extrabold px-1 border border-indigo-400/30 text-xs uppercase rounded-md">
+ <span className="bg-indigo-500 text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
  Watch
  </span>
  ) : stock.watch === 'Sell' ? (
- <span className="bg-[#f43f5e]/10 text-[#f43f5e] font-extrabold px-1 border border-[#f43f5e]/20 text-xs uppercase rounded-md">
+ <span className="bg-[#f43f5e] text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
  OVERVALUED
  </span>
  ) : stock.watch === 'Buy' ? (
- <span className="bg-[#10b981]/10 text-[#10b981] font-extrabold px-1 border border-[#10b981]/20 text-xs uppercase rounded-md">
+ <span className="bg-[#10b981] text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
  UNDERVALUED
  </span>
  ) : stock.watch === 'Interesting' ? (
- <span className="bg-purple-500/10 text-purple-400 font-extrabold px-1 border border-purple-400/30 text-xs uppercase rounded-md">
+ <span className="bg-purple-500 text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
  Interesting
  </span>
  ) : stock.watch === 'Not interesting' ? (
