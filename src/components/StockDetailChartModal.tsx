@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Stock } from '../types';
 import { X, ExternalLink } from 'lucide-react';
 import { formatDividend } from '../utils/sectorHelper';
 import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
+import { getTradingViewSymbol } from '../utils/tvSymbolMap';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,34 +84,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     return () => window.removeEventListener('keydown', fn);
   }, [onClose]);
 
-  // Map to TradingView Symbol
-  const gfToTvMap: Record<string, string> = {
-    "EPA": "EURONEXT", "ETR": "XETR", "FRA": "FWB", "LON": "LSE", "AMS": "EURONEXT",
-    "EBR": "EURONEXT", "BIT": "MIL", "BME": "BME", "VIE": "VIE", "CPH": "OMXCOP",
-    "HEL": "OMXHEL", "STO": "OMXSTO", "SWX": "SIX", "OSL": "OSL", "LIS": "EURONEXT",
-    "ATH": "ATHEX", "IST": "BIST", "WSE": "GPW", "PRG": "PVS", "TSE": "TSE",
-    "HKG": "HKEX", "BSE": "BSE", "NSE": "NSE", "TPE": "TWSE", "ASX": "ASX",
-    "NZZE": "NZX", "TSX": "TSX", "CVE": "TSXV", "JSE": "JSE"
-  };
-
-  let tvSymbol = sym; // Default to raw ticker without prefix
-  if (stock.ticker.includes(':')) {
-    const parts = stock.ticker.split(':');
-    const prefix = parts[0];
-    const rawSym = parts[1];
-    
-    if (gfToTvMap[prefix]) {
-      tvSymbol = `${gfToTvMap[prefix]}:${rawSym}`;
-    } else {
-      tvSymbol = stock.ticker; // fallback to original
-    }
-  } else {
-    // Indexes and fallbacks
-    if (stock.ticker === '^GSPC') tvSymbol = 'SP:SPX';
-    else if (stock.ticker === '^NDX') tvSymbol = 'NASDAQ:NDX';
-    else if (stock.ticker === '^DJI') tvSymbol = 'CBOT:YM1!';
-  }
-
+  const tvSymbol = getTradingViewSymbol(stock.companyName, stock.ticker);
 
   const [activeRange, setActiveRange] = useState<string>("1Y");
 
@@ -126,7 +101,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
 
   const currentConf = RANGES.find(r => r.val === activeRange)!;
 
-  return (
+  return createPortal(
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-[9999] flex items-center justify-center p-2 bg-bg/90 backdrop-blur-md font-sans"
@@ -245,6 +220,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           </a>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

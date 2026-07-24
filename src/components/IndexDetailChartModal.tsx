@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { MarketIndex } from '../types';
 import { X, ExternalLink } from 'lucide-react';
 import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
+import { getTradingViewSymbol } from '../utils/tvSymbolMap';
 
 interface Props { 
   index: MarketIndex; 
@@ -42,56 +43,7 @@ export default function IndexDetailChartModal({ index, onClose }: Props) {
     return () => window.removeEventListener('keydown', fn);
   }, [onClose]);
 
-  const getTvSymbol = (name: string, ticker?: string) => {
-    const map: Record<string, string> = {
-      '^GSPC': 'SP:SPX',
-      '^NDX': 'NASDAQ:NDX',
-      '^IXIC': 'NASDAQ:IXIC',
-      '^DJI': 'CBOT:YM1!',
-      '^VIX': 'CBOE:VIX',
-      '^FTSE': 'TVC:UKX',
-      '^FCHI': 'EURONEXT:PX1',
-      '^GDAXI': 'XETR:DAX',
-      '^N100': 'EURONEXT:N100',
-      '^STOXX50E': 'TVC:SX5E', 
-      '000001.SS': 'TVC:SHCOMP',
-      '^N225': 'TSE:NI225',
-      '^HSI': 'HSI:HSI',
-      '^AXJO': 'ASX:XJO',
-      '^KS11': 'KRX:KOSPI',
-      'CL=F': 'NYMEX:CL1!',
-      'BZ=F': 'TVC:UKOIL',
-      'GC=F': 'COMEX:GC1!',
-      'SI=F': 'COMEX:SI1!',
-      'HG=F': 'COMEX:HG1!',
-      'NG=F': 'NYMEX:NG1!',
-      'PL=F': 'NYMEX:PL1!',
-      'EURUSD=X': 'FX_IDC:EURUSD',
-      'JPY=X': 'FX_IDC:USDJPY',
-      'GBP=X': 'FX_IDC:USDGBP',
-      'USDAUD=X': 'FX_IDC:USDAUD',
-      'USDCAD=X': 'FX_IDC:USDCAD',
-      'USDMXN=X': 'FX_IDC:USDMXN',
-      'USDHKD=X': 'FX_IDC:USDHKD',
-      'BTC-USD': 'COINBASE:BTCUSD',
-    };
-
-    if (ticker && map[ticker]) return map[ticker];
-
-    const lookupKey = name || ticker || '';
-    if (lookupKey.includes('S&P 500')) return 'SP:SPX';
-    if (lookupKey.includes('Dow Jones')) return 'CBOT:YM1!';
-    if (lookupKey.includes('Nasdaq')) return 'NASDAQ:NDX';
-    if (lookupKey.includes('DAX')) return 'XETR:DAX';
-    if (lookupKey.includes('Nikkei 225')) return 'TSE:NI225';
-    if (lookupKey.includes('FTSE 100')) return 'TVC:UKX';
-    if (lookupKey.includes('VIX')) return 'CBOE:VIX';
-    if (lookupKey.includes('Euro STOXX 50')) return 'TVC:SX5E';
-    
-    return ticker || name;
-  };
-
-  const tvSymbol = getTvSymbol(index.name, index.ticker);
+  const tvSymbol = getTradingViewSymbol(index.name, index.ticker);
 
   const [activeRange, setActiveRange] = useState<string>("1Y");
 
