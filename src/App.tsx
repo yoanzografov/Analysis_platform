@@ -698,7 +698,7 @@ export default function App() {
  )}
 
   {/* Dashboard Header Bar */}
-  <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0">
+  <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-50">
       <div className="flex items-center gap-2 max-w-full">
         <Building2 className="w-5 h-5 text-ink shrink-0" />
         <h1 className="text-lg sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase leading-tight">
@@ -795,7 +795,7 @@ export default function App() {
     </button>
 
     {isSettingsMenuOpen && (
-      <div className="absolute right-0 top-full mt-2 w-56 bg-bg border border-border rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
+      <div className="absolute left-0 top-full mt-2 w-56 bg-bg border border-border rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-1 origin-top-left animate-in fade-in zoom-in-95 duration-100">
         <button
           onClick={() => { exportCSVFile(); setIsSettingsMenuOpen(false); }}
           className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"

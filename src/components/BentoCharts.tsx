@@ -104,7 +104,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
 
 
    return (
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 relative z-40">
   {/* 1. OVER / UNDER Ratio Pie Chart */}
   <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between lg:col-span-1">
  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
