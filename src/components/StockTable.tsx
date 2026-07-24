@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter } from '../types';
 import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
+import DividendModal from './DividendModal';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
 interface Props {
@@ -139,6 +140,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  // Add stock modal state
  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
  const [activeChartStock, setActiveChartStock] = useState<Stock | null>(null);
+ const [dividendModalStock, setDividendModalStock] = useState<Stock | null>(null);
  const [newTicker, setNewTicker] = useState('');
  const [newCompanyName, setNewCompanyName] = useState('');
  const [newDate, setNewDate] = useState('');
@@ -1260,11 +1262,19 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </div>
  )}
 
- {/* Modern Interactive Historical Chart Modal */}
+ {/* Modern Interactive Detail Chart Modal */}
  {activeChartStock && (
  <StockDetailChartModal 
  stock={activeChartStock} 
  onClose={() => setActiveChartStock(null)} 
+ />
+ )}
+
+ {/* Dividend Fundamental Data Modal */}
+ {dividendModalStock && (
+ <DividendModal 
+ stock={dividendModalStock} 
+ onClose={() => setDividendModalStock(null)} 
  />
  )}
  
