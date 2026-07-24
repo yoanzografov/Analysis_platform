@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MarketIndex } from '../types';
 import { X, ExternalLink } from 'lucide-react';
 import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
@@ -41,21 +42,19 @@ export default function IndexDetailChartModal({ index, onClose }: Props) {
     return () => window.removeEventListener('keydown', fn);
   }, [onClose]);
 
-  // Map common index names to TradingView symbols
   const getTvSymbol = (name: string, ticker?: string) => {
-    if (ticker) return ticker;
-    const map: Record<string, string> = {
-      'S&P 500': 'SP:SPX',
-      'Dow Jones': 'CBOT:YM1!',
-      'Nasdaq': 'NASDAQ:NDX',
-      'DAX': 'XETR:DAX',
-      'Nikkei 225': 'TSE:NI225',
-      'FTSE 100': 'TVC:UKX',
-      'VIX': 'CBOE:VIX',
-      'Gold': 'COMEX:GC1!',
-      'Crude Oil': 'NYMEX:CL1!'
-    };
-    return map[name] || name;
+    // Map either the known name or the known Yahoo ticker to a TradingView symbol
+    const lookupKey = name || ticker || '';
+    
+    if (lookupKey.includes('S&P 500') || lookupKey.includes('^GSPC')) return 'SP:SPX';
+    if (lookupKey.includes('Dow Jones') || lookupKey.includes('^DJI')) return 'CBOT:YM1!';
+    if (lookupKey.includes('Nasdaq') || lookupKey.includes('^IXIC') || lookupKey.includes('^NDX')) return 'NASDAQ:NDX';
+    if (lookupKey.includes('DAX') || lookupKey.includes('^GDAXI')) return 'XETR:DAX';
+    if (lookupKey.includes('Nikkei 225') || lookupKey.includes('^N225')) return 'TSE:NI225';
+    if (lookupKey.includes('FTSE 100') || lookupKey.includes('^FTSE')) return 'TVC:UKX';
+    if (lookupKey.includes('VIX')) return 'CBOE:VIX';
+    
+    return ticker || name;
   };
 
   const tvSymbol = getTvSymbol(index.name, index.ticker);
@@ -75,7 +74,7 @@ export default function IndexDetailChartModal({ index, onClose }: Props) {
 
   const currentConf = RANGES.find(r => r.val === activeRange)!;
 
-  return (
+  return createPortal(
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-[9999] flex items-center justify-center p-2 bg-bg/90 backdrop-blur-md font-sans"
@@ -152,6 +151,7 @@ export default function IndexDetailChartModal({ index, onClose }: Props) {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
