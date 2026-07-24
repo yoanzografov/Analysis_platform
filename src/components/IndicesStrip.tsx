@@ -7,6 +7,67 @@ interface Props {
   isSimulating: boolean;
 }
 
+function IndexHoverChart({ changePct, name }: { changePct: number; name: string }) {
+  const isUp = changePct >= 0;
+  let seed = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  
+  const steps = 24;
+  const prices: number[] = new Array(steps + 1);
+  let currentVal = 100;
+  prices[0] = currentVal;
+  
+  for (let i = 1; i <= steps; i++) {
+    seed = (seed * 9301 + 49297) % 233280;
+    const rnd = (seed / 233280) - 0.5;
+    const trend = (changePct / 100) / steps;
+    currentVal = currentVal * (1 + rnd * 0.04 + trend);
+    prices[i] = currentVal;
+  }
+  
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const range = maxPrice - minPrice || 1;
+  
+  const width = 160;
+  const height = 50;
+  const padding = 2;
+  const scaleHeight = height - padding * 2;
+  
+  const points = prices.map((price, i) => {
+    const x = (i / steps) * (width - padding * 2) + padding;
+    const y = height - padding - ((price - minPrice) / range) * scaleHeight;
+    return `${x},${y}`;
+  }).join(' ');
+  
+  const strokeColor = isUp ? '#10b981' : '#f43f5e';
+  const fillColor = isUp ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)';
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-sans font-bold text-ink-muted">Дневно движение</span>
+        <span className={`text-xs font-sans font-black tabular-nums ${isUp ? 'text-[#10b981]' : 'text-[#f43f5e]'}`}>
+          {isUp ? '+' : ''}{changePct.toFixed(2)}%
+        </span>
+      </div>
+      <svg width={width} height={height} className="overflow-visible">
+        <polyline
+          points={points}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <polygon
+          points={`${padding},${height - padding} ${points} ${width - padding},${height - padding}`}
+          fill={fillColor}
+        />
+      </svg>
+    </div>
+  );
+}
+
 export default function IndicesStrip({ indices, isSimulating }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string>('US Markets');
   const [isOpen, setIsOpen] = useState(false);
@@ -127,7 +188,7 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
               return (
                 <div
                   key={`${item.name}-${item.ticker || idx}`}
-                  className={`h-full flex flex-col justify-center px-3.5 transition-all duration-300 ${
+                  className={`group relative h-full flex flex-col justify-center px-3.5 transition-all duration-300 cursor-pointer ${
                     flash === 'up'
                       ? 'bg-emerald-500/10'
                       : flash === 'down'
@@ -154,6 +215,14 @@ export default function IndicesStrip({ indices, isSimulating }: Props) {
                     <span>
                       {isPositive ? '+' : ''}{item.changeVal !== undefined ? item.changeVal.toFixed(2) : '0.00'} {isPositive ? '+' : ''}{item.changePct.toFixed(2)}%
                     </span>
+                  </div>
+
+                  {/* Hover Chart Popover */}
+                  <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 hidden group-hover:block p-4 bg-bg border-2 border-border rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] z-[200] pointer-events-none origin-top animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-bg border-t-2 border-l-2 border-border rotate-45" />
+                    <div className="relative z-10 bg-bg">
+                      <IndexHoverChart changePct={item.changePct} name={item.name} />
+                    </div>
                   </div>
                 </div>
               );
