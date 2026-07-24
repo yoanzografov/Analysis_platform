@@ -698,7 +698,7 @@ export default function App() {
  )}
 
   {/* Dashboard Header Bar */}
-  <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-50">
+  <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-[100]">
       <div className="flex items-center gap-2 max-w-full">
         <Building2 className="w-5 h-5 text-ink shrink-0" />
         <h1 className="text-lg sm:text-2xl font-extrabold text-ink font-mono tracking-tight uppercase leading-tight">
