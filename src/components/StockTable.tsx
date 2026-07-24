@@ -489,7 +489,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  placeholder="Търсене по тикер или име..."
  value={search}
  onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
- className="w-full bg-bg rounded-2xl border border-border pl-8 pr-3 py-1 text-xs text-ink focus:outline-none focus:border-border font-mono"
+ className="w-full bg-bg rounded-2xl border border-border pl-8 pr-3 py-1 text-xs text-ink focus:outline-none focus:border-border font-sans tabular-nums"
  />
  </div>
 
@@ -504,7 +504,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  setNewFairPrice('');
  setIsAddModalOpen(true);
  }}
- className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-md border border-indigo-400/50 bg-indigo-500 hover:bg-indigo-400 text-ink flex items-center gap-1 cursor-pointer shrink-0"
+ className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-400/50 bg-indigo-500 hover:bg-indigo-400 text-ink flex items-center gap-1 cursor-pointer shrink-0"
  title="Добави нова акция в таблицата"
  >
  <Plus className="w-3 h-3 text-ink" />
@@ -517,7 +517,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
             onSetActiveFilter({ type: type as any, value });
             setCurrentPage(1);
           }}
-          className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-xl border border-border-hover bg-bg text-ink cursor-pointer focus:outline-none focus:border-indigo-500 h-[26px]"
+          className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-xl border border-border-hover bg-bg text-ink cursor-pointer focus:outline-none focus:border-indigo-500 h-[26px]"
         >
           <option value="all|all">Всички ({stocks.length})</option>
           <option value="watch|Buy">Buy ({stocks.filter(s => s.watch === 'Buy').length})</option>
@@ -531,7 +531,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
           href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase transition-all rounded-xl border border-indigo-400/50 bg-indigo-50/5 hover:bg-indigo-500 hover:text-ink text-indigo-400 flex items-center gap-1 cursor-pointer shrink-0 h-[26px]"
+          className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-xl border border-indigo-400/50 bg-indigo-50/5 hover:bg-indigo-500 hover:text-ink text-indigo-400 flex items-center gap-1 cursor-pointer shrink-0 h-[26px]"
           title="Отвори калкулатора в Google Sheets"
         >
           <Calculator className="w-3.5 h-3.5" />
@@ -540,20 +540,20 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
 
  {/* Special badges when filtering by signals from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
- <span className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase rounded-md border bg-[#10b981] text-ink border-[#10b981]/50 flex items-center gap-1 shrink-0">
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-[#10b981] text-ink border-[#10b981]/50 flex items-center gap-1 shrink-0">
  Активен Сигнал: КУПУВАЙ ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'buy').length})
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
  {activeFilter.type === 'signal' && activeFilter.value === 'sell' && (
- <span className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase rounded-md border bg-[#f43f5e] text-ink border-[#f43f5e]/50 flex items-center gap-1 shrink-0">
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-[#f43f5e] text-ink border-[#f43f5e]/50 flex items-center gap-1 shrink-0">
  Активен Сигнал: ПРОДАВАЙ ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'sell').length})
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
 
  {activeFilter.type === 'ticker' && (
- <span className="px-2.5 py-1 text-xs font-mono font-extrabold uppercase rounded-md border bg-indigo-600 text-ink border-indigo-950 flex items-center gap-1 shrink-0">
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-indigo-600 text-ink border-indigo-950 flex items-center gap-1 shrink-0">
  Активен актив: {activeFilter.value}
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-indigo-200 ml-1 font-bold cursor-pointer">×</button>
  </span>
@@ -569,7 +569,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
   <table className="w-full text-left border-collapse min-w-[2000px] table-auto">
 
  <thead className="sticky top-0 z-20 bg-bg rounded-2xl">
- <tr className="bg-bg rounded-2xl text-ink/90 border-b-2 border-border text-xs uppercase font-medium font-mono tracking-wider select-none">
+ <tr className="bg-bg rounded-2xl text-ink/90 border-b-2 border-border text-xs uppercase font-medium font-sans tabular-nums tracking-wider select-none">
  <th className="py-3 px-4 whitespace-nowrap">Watch</th>
  <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('ticker')}>
  Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
@@ -607,7 +607,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </tr>
  </thead>
 
- <tbody className="divide-y divide-white/10 font-mono text-xs text-ink">
+ <tbody className="divide-y divide-white/10 font-sans tabular-nums text-xs text-ink">
  {pageStocks.map(stock => {
  const isEditing = editingRow === stock.ticker;
  const isPositiveChange = stock.dailyChangePct >= 0;
@@ -639,7 +639,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <select
  value={editWatch}
  onChange={e => setEditWatch(e.target.value)}
- className="bg-bg rounded-2xl text-xs text-ink border border-border p-0.5 rounded-md font-mono w-full"
+ className="bg-bg rounded-2xl text-xs text-ink border border-border p-0.5 rounded-md font-sans tabular-nums w-full"
  >
  <option value="">-</option>
  <option value="Buy">UNDERVALUED</option>
@@ -694,7 +694,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
         const daysLeft = Math.ceil((stock.earningsTimestamp * 1000 - Date.now()) / (1000 * 60 * 60 * 24));
         if (daysLeft >= 0 && daysLeft <= 14) {
           return (
-            <span className="animate-pulse bg-amber-500/10 text-amber-500 text-sm font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1 shadow-sm shadow-amber-500/10" title="Наближаващ финансов отчет">
+            <span className="animate-pulse bg-amber-500/10 text-amber-500 text-xs font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1 shadow-sm shadow-amber-500/10" title="Наближаващ финансов отчет">
               ⚠️ {daysLeft === 0 ? 'ДНЕС' : `ОТЧЕТ: ${daysLeft} ДНИ`}
             </span>
           );
@@ -752,7 +752,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  type="date"
  value={editDate}
  onChange={e => setEditDate(e.target.value)}
- className="w-full bg-bg rounded-2xl text-left font-mono text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none cursor-pointer"
+ className="w-full bg-bg rounded-2xl text-left font-sans tabular-nums text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none cursor-pointer"
  />
  ) : (
  <div className="flex items-center justify-between gap-1 group/cell">
@@ -775,7 +775,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  type="text"
  value={editPriceOfCalc}
  onChange={e => setEditPriceOfCalc(e.target.value)}
- className="w-full bg-bg rounded-2xl text-right font-mono text-xs text-ink border border-border p-0.5 rounded-md focus:outline-none"
+ className="w-full bg-bg rounded-2xl text-right font-sans tabular-nums text-xs text-ink border border-border p-0.5 rounded-md focus:outline-none"
  placeholder="-"
  />
  ) : (
@@ -815,7 +815,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  type="text"
  value={editCurrentPrice}
  onChange={e => setEditCurrentPrice(e.target.value)}
- className="w-full bg-bg rounded-2xl text-right font-bold text-ink border border-border p-0.5 rounded-md font-mono text-xs focus:outline-none"
+ className="w-full bg-bg rounded-2xl text-right font-bold text-ink border border-border p-0.5 rounded-md font-sans tabular-nums text-xs focus:outline-none"
  />
  ) : (
  <span>${stock.currentPrice.toFixed(2)}</span>
@@ -829,7 +829,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  type="text"
  value={editFair}
  onChange={e => setEditFair(e.target.value)}
- className="w-full bg-bg rounded-2xl text-right font-bold text-ink border border-border p-0.5 rounded-md font-mono text-xs focus:outline-none"
+ className="w-full bg-bg rounded-2xl text-right font-bold text-ink border border-border p-0.5 rounded-md font-sans tabular-nums text-xs focus:outline-none"
  placeholder="-"
  />
  ) : (
@@ -873,12 +873,12 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </td>
 
  {/* 12. MARKET CAP [LOCKED] */}
- <td className="py-3 px-4 text-right text-ink-muted font-mono ">
+ <td className="py-3 px-4 text-right text-ink-muted font-sans tabular-nums ">
  {formatLargeNum(stock.marketCap)}
  </td>
 
  {/* 13. P/E RATIO [LOCKED] */}
- <td className="py-3 px-4 text-right text-ink-muted font-mono ">
+ <td className="py-3 px-4 text-right text-ink-muted font-sans tabular-nums ">
  {stock.peRatio ? stock.peRatio.toFixed(2) : '-'}
  </td>
 
@@ -898,7 +898,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  placeholder="Сектор"
  />
  ) : (
- <span className="inline-block px-1.5 py-0.5 text-[10.5px] font-sans font-medium text-ink bg-border rounded-sm whitespace-nowrap">
+ <span className="inline-block px-1.5 py-0.5 text-xs font-sans font-medium text-ink bg-border rounded-sm whitespace-nowrap">
  {getSectorForStock(stock.ticker, stock.profileLink, stock.companyName)}
  </span>
  )}
@@ -911,11 +911,11 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  type="text"
  value={editDividend}
  onChange={e => setEditDividend(e.target.value)}
- className="w-full bg-bg rounded-2xl text-left font-mono text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
+ className="w-full bg-bg rounded-2xl text-left font-sans tabular-nums text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
  />
  ) : (
  <div className="flex items-center justify-between gap-1 group/cell">
- <span className="whitespace-nowrap font-mono">{formatDividend(stock.dividend, stock.currentPrice)}</span>
+ <span className="whitespace-nowrap font-sans tabular-nums">{formatDividend(stock.dividend, stock.currentPrice)}</span>
  <button
  onClick={() => startInlineEdit(stock)}
  className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
@@ -934,7 +934,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  type="text"
  value={editSignal}
  onChange={e => setEditSignal(e.target.value)}
- className="w-full bg-bg rounded-2xl text-left font-mono text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
+ className="w-full bg-bg rounded-2xl text-left font-sans tabular-nums text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
  />
  ) : (
  <div className="flex items-center justify-between gap-1 group/cell">
@@ -962,7 +962,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  type="text"
  value={editLow52}
  onChange={e => setEditLow52(e.target.value)}
- className="w-full bg-bg rounded-2xl text-right font-mono text-xs text-ink border border-border p-0.5 rounded-md focus:outline-none"
+ className="w-full bg-bg rounded-2xl text-right font-sans tabular-nums text-xs text-ink border border-border p-0.5 rounded-md focus:outline-none"
  placeholder="-"
  />
  ) : (
@@ -986,7 +986,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  type="text"
  value={editHigh52}
  onChange={e => setEditHigh52(e.target.value)}
- className="w-full bg-bg rounded-2xl text-right font-mono text-xs text-ink border border-border p-0.5 rounded-md focus:outline-none"
+ className="w-full bg-bg rounded-2xl text-right font-sans tabular-nums text-xs text-ink border border-border p-0.5 rounded-md focus:outline-none"
  placeholder="-"
  />
  ) : (
@@ -1011,7 +1011,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  placeholder="AI Линк..."
  value={editAiAnalysis}
  onChange={e => setEditAiAnalysis(e.target.value)}
- className="w-full bg-bg rounded-2xl text-xs text-ink border border-border p-1 focus:outline-none focus:border-indigo-500 font-mono"
+ className="w-full bg-bg rounded-2xl text-xs text-ink border border-border p-1 focus:outline-none focus:border-indigo-500 font-sans tabular-nums"
  />
  ) : stock.aiAnalysis ? (
  <a
@@ -1036,7 +1036,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  placeholder="Линк..."
  value={editCalcLink}
  onChange={e => setEditCalcLink(e.target.value)}
- className="w-full bg-bg rounded-2xl text-xs text-ink border border-border p-1 focus:outline-none focus:border-indigo-500 font-mono"
+ className="w-full bg-bg rounded-2xl text-xs text-ink border border-border p-1 focus:outline-none focus:border-indigo-500 font-sans tabular-nums"
  />
  ) : stock.calcLink ? (
  <a
@@ -1076,7 +1076,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <div className="flex items-center justify-center gap-1.5 shrink-0">
  <button
  onClick={() => onSelectStockForAi(stock)}
- className="inline-flex items-center gap-1 text-sm font-bold py-0.5 px-2.5 border border-border bg-bg hover:bg-[#10b981] hover:text-ink hover:border-emerald-900 text-ink transition-all rounded-md"
+ className="inline-flex items-center gap-1 text-xs font-bold py-0.5 px-2.5 border border-border bg-bg hover:bg-[#10b981] hover:text-ink hover:border-emerald-900 text-ink transition-all rounded-md"
  title="Прочетете най-новите достоверни новини за компанията"
  >
  <Newspaper className="w-2.5 h-2.5 text-[#10b981] group-hover:text-ink" />
@@ -1109,7 +1109,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </div>
 
  {/* table status footer */}
- <div className="p-3 bg-bg border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-mono text-xs text-ink/90 gap-1.5">
+ <div className="p-3 bg-bg border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans tabular-nums text-xs text-ink/90 gap-1.5">
  <span>
  Показване на всички <span className="font-extrabold underline">{sortedStocks.length}</span> намерени акции
  </span>
@@ -1121,7 +1121,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  {/* Modern Retro Modal for adding a new Stock */}
  {isAddModalOpen && (
  <div className="fixed inset-0 bg-bg/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
- <div className="bg-bg border-2 border-border rounded-md shadow-[6px_6px_0px_0px_rgba(20,20,20,1)] w-full max-w-md p-5 relative font-mono text-xs">
+ <div className="bg-bg border-2 border-border rounded-md shadow-[6px_6px_0px_0px_rgba(20,20,20,1)] w-full max-w-md p-5 relative font-sans tabular-nums text-xs">
  
  {/* Header */}
  <div className="flex items-center justify-between border-b-2 border-border pb-2.5 mb-4">
@@ -1233,7 +1233,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  />
  </div>
 
- <div className="text-[10.5px] text-ink-faint italic pt-1 text-right leading-tight">
+ <div className="text-xs text-ink-faint italic pt-1 text-right leading-tight">
  * Разликата, Сигналът и Over/Under се изчисляват автоматично на база цена и качество.
  </div>
 
