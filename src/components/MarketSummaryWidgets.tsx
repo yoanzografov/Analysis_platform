@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Stock, TableFilter } from '../types';
 import { ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
+import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
 
 interface Props {
  stocks: Stock[];
