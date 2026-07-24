@@ -915,18 +915,29 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  onChange={e => setEditDividend(e.target.value)}
  className="w-full bg-bg rounded-2xl text-left font-sans tabular-nums text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
  />
- ) : (
- <div className="flex items-center justify-between gap-1 group/cell">
- <span className="whitespace-nowrap font-sans tabular-nums">{formatDividend(stock.dividend, stock.currentPrice)}</span>
- <button
- onClick={() => startInlineEdit(stock)}
- className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
- title="Редактирай дивидент"
- >
- <Edit2 className="w-2.5 h-2.5" />
- </button>
- </div>
- )}
+                      ) : (
+                        <div className="flex items-center justify-between gap-1 group/cell">
+                          <span className="whitespace-nowrap font-sans tabular-nums">{formatDividend(stock.dividend, stock.currentPrice)}</span>
+                          <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 transition-opacity">
+                            {stock.ticker && !stock.ticker.startsWith('^') && (
+                              <button
+                                onClick={() => setDividendModalStock(stock)}
+                                className="text-indigo-400 hover:text-indigo-300 transition-colors p-0.5 shrink-0"
+                                title="TradingView Financials & Dividends"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => startInlineEdit(stock)}
+                              className="text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
+                              title="Редактирай дивидент"
+                            >
+                              <Edit2 className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
  </td>
 
  {/* 17. SIGNAL */}
