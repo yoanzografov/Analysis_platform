@@ -428,10 +428,10 @@ export function getSectorForStock(ticker: string, customSector?: string, company
  * e.g., converts "2.47" into "2.47 (2.64%)" based on currentPrice
  */
 export function formatDividend(dividendStr: string | null | undefined, currentPrice: number): string {
-  if (!dividendStr) return '-';
+  if (!dividendStr) return '';
   
   const trimmed = dividendStr.trim();
-  if (trimmed === '' || trimmed === '0' || trimmed === '0.00' || trimmed === '0.00%') return '-';
+  if (trimmed === '' || trimmed === '0' || trimmed === '0.00' || trimmed === '0.00%') return '';
   
   // If it already has the percentage format e.g., "2.47 (2.64%)", return it with $ prefix if missing
   if (trimmed.includes('(') && trimmed.includes('%')) {
