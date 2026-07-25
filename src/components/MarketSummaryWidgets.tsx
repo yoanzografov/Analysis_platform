@@ -534,6 +534,8 @@ function MarketDriversWidget() {
           width="100%"
           height="100%"
           locale="en"
+          countryFilter="us,eu"
+          importanceFilter="0,1"
         />
       </div>
     </div>
