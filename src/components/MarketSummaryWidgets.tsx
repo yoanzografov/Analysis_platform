@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Stock, TableFilter } from '../types';
 import { ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
-import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
+import { AdvancedRealTimeChart, EconomicCalendar } from 'react-ts-tradingview-widgets';
 
 interface Props {
  stocks: Stock[];
@@ -526,61 +526,14 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
 // ─── Market Drivers Component ────────────────────────────────────────────────
 function MarketDriversWidget() {
-  const [region, setRegion] = useState<'US' | 'EU' | 'GB'>('US');
-  const [indicator, setIndicator] = useState<'IRYY' | 'CIRYY' | 'INTR' | 'UR'>('IRYY');
-
-  const regionOptions = [
-    { value: 'US', label: 'US' },
-    { value: 'EU', label: 'EU' },
-    { value: 'GB', label: 'UK' },
-  ];
-
-  const indicatorOptions = [
-    { value: 'IRYY', label: 'Inflation' },
-    { value: 'CIRYY', label: 'Core Inflation' },
-    { value: 'INTR', label: 'Interest Rate' },
-    { value: 'UR', label: 'Unemployment' },
-  ];
-
-  const tvSymbol = `ECONOMICS:${region}${indicator}`;
-
   return (
     <div className="flex flex-col gap-2 h-full">
-      <div className="flex items-center gap-2">
-        <select
-          value={region}
-          onChange={(e) => setRegion(e.target.value as any)}
-          className="bg-bg border border-border text-ink text-xs rounded p-1 outline-none focus:border-indigo-500 flex-shrink-0"
-        >
-          {regionOptions.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-
-        <select
-          value={indicator}
-          onChange={(e) => setIndicator(e.target.value as any)}
-          className="bg-bg border border-border text-ink text-xs rounded p-1 outline-none focus:border-indigo-500 flex-1"
-        >
-          {indicatorOptions.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="flex-1 w-full min-h-[120px] rounded-lg overflow-hidden border border-border relative mt-1">
-        {/* We use AdvancedRealTimeChart as requested, but small */}
-        <AdvancedRealTimeChart
-          symbol={tvSymbol}
-          theme="dark"
-          autosize
-          hide_top_toolbar
-          hide_legend
-          save_image={false}
-          backgroundColor="rgba(0,0,0,0)"
-          gridColor="rgba(255,255,255,0.05)"
-          allow_symbol_change={false}
-          hide_volume
+      <div className="flex-1 w-full min-h-[300px] rounded-lg overflow-hidden border border-border relative mt-1">
+        <EconomicCalendar
+          colorTheme="dark"
+          width="100%"
+          height="100%"
+          locale="en"
         />
       </div>
     </div>
