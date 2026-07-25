@@ -918,7 +918,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
                       ) : (
                         <div className="flex items-center justify-between gap-1 group/cell">
                           <span className="whitespace-nowrap font-sans tabular-nums">{formatDividend(stock.dividend, stock.currentPrice)}</span>
-                          <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 transition-opacity">
+                          <div className="flex gap-1 transition-opacity">
                             {stock.ticker && !stock.ticker.startsWith('^') && (
                               <button
                                 onClick={() => setDividendModalStock(stock)}
