@@ -577,7 +577,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 whitespace-nowrap">Company Name</th>
- <th className="py-3 px-4 whitespace-nowrap">Dividend</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">Financials</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">365 Chart</th>
  <th className="py-3 px-4 whitespace-nowrap">Date</th>
  <th className="py-3 px-4 text-right whitespace-nowrap">Price of Calc.</th>
@@ -737,7 +737,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
   </td>
 
  {/* 16. DIVIDEND */}
- <td className="py-3 px-4 text-ink whitespace-nowrap">
+ <td className="py-3 px-4 text-ink whitespace-nowrap text-center">
  {isEditing ? (
  <input
  type="text"
@@ -746,7 +746,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  className="w-full bg-bg rounded-2xl text-left font-sans tabular-nums text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
  />
                       ) : (
-                        <div className="flex items-center justify-between gap-1 group/cell">
+                        <div className="flex items-center justify-center gap-2 group/cell">
                           <span className="whitespace-nowrap font-sans tabular-nums">{formatDividend(stock.dividend, stock.currentPrice)}</span>
                           <div className="flex gap-1 transition-opacity">
                             {stock.ticker && !stock.ticker.startsWith('^') && (
