@@ -6,8 +6,7 @@ import dotenv from "dotenv";
 import fs from "fs/promises";
 import fsSync from "fs";
 import Parser from "rss-parser";
-import { YahooFinance } from 'yahoo-finance2';
-const yahooFinance = new YahooFinance();
+import yahooFinance from 'yahoo-finance2';
 
 const rssParser = new Parser();
 
