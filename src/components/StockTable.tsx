@@ -641,6 +641,9 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <select
  value={editWatch}
  onChange={e => setEditWatch(e.target.value)}
+ onKeyDown={(e) => {
+    if (e.key === 'Enter') e.stopPropagation();
+  }}
  className="bg-bg rounded-2xl text-xs text-ink border border-border p-0.5 rounded-md font-sans tabular-nums w-full"
  >
  <option value="">-</option>
