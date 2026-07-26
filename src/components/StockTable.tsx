@@ -577,7 +577,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 whitespace-nowrap">Company Name</th>
- <th className="py-3 px-4 text-center whitespace-nowrap">Financials</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">Statistics</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">365 Chart</th>
  <th className="py-3 px-4 whitespace-nowrap">Date</th>
  <th className="py-3 px-4 text-right whitespace-nowrap">Price of Calc.</th>
