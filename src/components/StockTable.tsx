@@ -644,8 +644,8 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  className="bg-bg rounded-2xl text-xs text-ink border border-border p-0.5 rounded-md font-sans tabular-nums w-full"
  >
  <option value="">-</option>
- <option value="Buy">UNDERVALUED</option>
- <option value="Sell">OVERVALUED</option>
+ <option value="Buy">Buy</option>
+ <option value="Sell">Sell</option>
  <option value="Watch">Watch</option>
  <option value="Attn">Attn</option>
  <option value="Interesting">Interesting</option>
@@ -661,11 +661,11 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </span>
  ) : stock.watch === 'Sell' ? (
  <span className="bg-[#f43f5e] text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
- OVERVALUED
+ Sell
  </span>
  ) : stock.watch === 'Buy' ? (
  <span className="bg-[#10b981] text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
- UNDERVALUED
+ Buy
  </span>
  ) : stock.watch === 'Interesting' ? (
  <span className="bg-purple-500 text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
