@@ -347,8 +347,7 @@ export default function App() {
     }
   };
 
-  return (
-) => unsub();
+    return () => unsub();
   }, [isLoaded]);
 
   // Persistence save hooks (to Firebase)
