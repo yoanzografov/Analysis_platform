@@ -13,6 +13,7 @@ import ThemeToggle from './components/ThemeToggle';
 import { db } from './lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { 
+  Save,
  Building2, 
  Download, 
  Bell, 
@@ -311,7 +312,43 @@ export default function App() {
       console.error("Firebase Snapshot Error:", error);
     });
 
-    return () => unsub();
+  
+  const handleSaveToCloud = async () => {
+    try {
+      const currentDataString = JSON.stringify({ stocks, indices, alerts, settings: { buyThreshold, sellThreshold } });
+      lastSavedRef.current = currentDataString;
+      await setDoc(doc(db, "portfolio", "default"), {
+        stocks,
+        indices,
+        alerts,
+        settings: { buyThreshold, sellThreshold }
+      }, { merge: true });
+      
+      const newLog = {
+        id: `${Date.now()}-${Math.random()}`,
+        timestamp: new Date().toLocaleTimeString(),
+        ticker: 'SYS',
+        message: 'Промените са запазени успешно на всички устройства!',
+        type: 'success'
+      };
+      // @ts-ignore
+      setLogs(prev => [newLog, ...prev]);
+    } catch (err) {
+      console.error("Firebase Manual Save Error:", err);
+      const newLog = {
+        id: `${Date.now()}-${Math.random()}`,
+        timestamp: new Date().toLocaleTimeString(),
+        ticker: 'SYS',
+        message: 'Възникна грешка при запазването.',
+        type: 'error'
+      };
+      // @ts-ignore
+      setLogs(prev => [newLog, ...prev]);
+    }
+  };
+
+  return (
+) => unsub();
   }, [isLoaded]);
 
   // Persistence save hooks (to Firebase)
@@ -779,6 +816,16 @@ export default function App() {
   </button>
 
   <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+
+  {/* Save Button */}
+  <button
+    onClick={handleSaveToCloud}
+    className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+    title="Запази всички промени"
+  >
+    <Save className="w-3 h-3" />
+    <span className="hidden sm:inline">Save</span>
+  </button>
 
   {/* System Settings Dropdown */}
   <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsSettingsMenuOpen(false); }}>
