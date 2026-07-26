@@ -222,12 +222,12 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
     executeSave(ticker, true);
   };
 
- const executeSave = (ticker: string, confirmUpdate: boolean) => {
- const original = stocks.find(s => s.ticker === ticker);
- if (!original) return;
+  const executeSave = (ticker: string, confirmUpdate: boolean, overrides?: Partial<Stock>) => {
+  const original = stocks.find(s => s.ticker === ticker);
+  if (!original) return;
 
- const parsedFair = editFair === '' ? null : parseFloat(editFair.replace(',', '.'));
- const parsedPriceOfCalc = editPriceOfCalc === '' ? null : parseFloat(editPriceOfCalc.replace(',', '.'));
+  const parsedFair = editFair === '' ? null : parseFloat(editFair.replace(',', '.'));
+  const parsedPriceOfCalc = editPriceOfCalc === '' ? null : parseFloat(editPriceOfCalc.replace(',', '.'));
  const parsedLow52 = editLow52 === '' ? null : parseFloat(editLow52.replace(',', '.'));
  const parsedHigh52 = editHigh52 === '' ? null : parseFloat(editHigh52.replace(',', '.'));
  const parsedCurrentPrice = editCurrentPrice === '' ? original.currentPrice : parseFloat(editCurrentPrice.replace(',', '.'));
@@ -295,7 +295,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  onUpdateStock(ticker, {
  ...original,
  ticker: editTicker.trim().toUpperCase() || original.ticker,
- watch: editWatch,
+ watch: overrides?.watch !== undefined ? overrides.watch : editWatch,
  companyName: editCompanyName,
  date: fromIsoDate(editDate),
  priceOfCalc: parsedPriceOfCalc,
@@ -640,7 +640,11 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  {isEditing ? (
  <select
  value={editWatch}
- onChange={e => setEditWatch(e.target.value)}
+ onChange={e => {
+    const newVal = e.target.value;
+    setEditWatch(newVal);
+    executeSave(stock.ticker, true, { watch: newVal });
+  }}
  onKeyDown={(e) => {
     if (e.key === 'Enter') e.stopPropagation();
   }}
