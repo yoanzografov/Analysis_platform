@@ -162,7 +162,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         </div>
 
         {/* CHART (TradingView AdvancedRealTimeChart Widget) */}
-        <div className="flex-1 relative mx-2 min-h-0">
+        <div className="flex-1 relative mx-2 mb-4 min-h-0">
           <AdvancedRealTimeChart
             key={activeRange} // force re-render when changing ranges to avoid widget bug
             symbol={tvSymbol}
@@ -176,48 +176,12 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             hide_legend={false}
             allow_symbol_change={true}
             save_image={true}
-            details={true}
-            hotlist={true}
-            calendar={true}
+            details={false}
+            hotlist={false}
+            calendar={false}
             withdateranges={false} // Disable native date ranges since we have our custom buttons
             range={currentConf.tvRange as any}
           />
-        </div>
-
-        {/* STATS GRID */}
-        <div className="p-4 sm:p-6 grid grid-cols-4 gap-4 sm:gap-6 border-t border-border">
-          {[
-            { l: 'Open', v: '—' },
-            { l: 'High', v: fc(stock.high52) },
-            { l: 'Low', v: fc(stock.low52) },
-            { l: 'Vol', v: (stock as any).volume ? fmtVol((stock as any).volume) : '—' },
-            { l: 'P/E Ratio', v: stock.peRatio ? stock.peRatio.toFixed(2) : '—' },
-            { l: 'Mkt Cap', v: fmtMC(stock.marketCap) },
-            { l: '52W High', v: fc(stock.high52) },
-            { l: '52W Low', v: fc(stock.low52) },
-            { l: 'Avg Vol', v: (stock as any).avgVolume ? fmtVol((stock as any).avgVolume) : '—' },
-            { l: 'Yield', v: formatDividend(stock.dividend, stock.currentPrice) },
-            { l: 'Beta', v: (stock as any).beta ? (stock as any).beta.toFixed(2) : '—' },
-            { l: 'EPS', v: stock.eps ? stock.eps.toFixed(2) : '—' },
-          ].map((s, i) => (
-            <div key={i} className="flex flex-col gap-0.5">
-              <div className="text-xs font-semibold text-ink-faint uppercase tracking-wider">{s.l}</div>
-              <div className="text-xs font-medium text-ink tabular-nums">{s.v}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* FOOTER */}
-        <div className="flex justify-center items-center gap-1 py-3 px-5 border-t border-border">
-          <a
-            href={`https://finance.yahoo.com/quote/${encodeURIComponent(sym)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-ink-faint hover:text-ink transition-colors no-underline"
-          >
-            <ExternalLink size={12} />
-            See More Data from Yahoo Finance
-          </a>
         </div>
       </div>
     </div>,
