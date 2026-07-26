@@ -747,7 +747,6 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  />
                       ) : (
                         <div className="flex items-center justify-center gap-2 group/cell">
-                          <span className="whitespace-nowrap font-sans tabular-nums">{formatDividend(stock.dividend, stock.currentPrice)}</span>
                           <div className="flex gap-3 transition-opacity">
                             {stock.ticker && !stock.ticker.startsWith('^') && (
                               <button
