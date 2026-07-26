@@ -905,12 +905,6 @@ export default function App() {
  <h2 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight">
  Интерактивна таблица
  </h2>
- <p className="text-xs text-ink-muted mt-0.5">
- Клик върху цена за редакция.
- </p>
- </div>
- <div className="text-right text-xs text-ink-faint font-sans tabular-nums hidden sm:block">
- Двоен клик за симулация
  </div>
  </div>
  
