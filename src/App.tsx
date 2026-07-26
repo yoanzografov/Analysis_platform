@@ -313,6 +313,9 @@ export default function App() {
     });
 
   
+    return () => unsub();
+  }, [isLoaded]);
+
   const handleSaveToCloud = async () => {
     try {
       const currentDataString = JSON.stringify({ stocks, indices, alerts, settings: { buyThreshold, sellThreshold } });
@@ -346,9 +349,6 @@ export default function App() {
       setLogs(prev => [newLog, ...prev]);
     }
   };
-
-    return () => unsub();
-  }, [isLoaded]);
 
   // Persistence save hooks (to Firebase)
   useEffect(() => {
