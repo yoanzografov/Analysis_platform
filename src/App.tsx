@@ -258,7 +258,7 @@ export default function App() {
           if (data.stocks) {
             const migratedStocks = data.stocks.map((s: any) => ({
               ...s,
-              watch: s.watch === 'Buy' || s.watch === 'BUY' ? 'UNDERVALUED' : s.watch === 'Sell' || s.watch === 'SELL' ? 'OVERVALUED' : s.watch,
+              watch: s.watch === 'UNDERVALUED' ? 'Buy' : s.watch === 'OVERVALUED' ? 'Sell' : s.watch,
               // Normalize signal back to proper casing if it was altered
               signal: s.signal === 'UNDERVALUED' ? 'Buy' : s.signal === 'OVERVALUED' ? 'Sell' : s.signal,
               buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
