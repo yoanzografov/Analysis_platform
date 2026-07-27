@@ -571,7 +571,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
   <table className="responsive-stock-table w-full text-left border-collapse min-w-max md:min-w-full table-auto">
 
  <thead className="sticky top-0 z-20 bg-bg">
- <tr className="bg-bg text-ink/90 border-b-2 border-border text-[11px] md:text-xs uppercase font-medium font-sans tabular-nums tracking-wider select-none">
+ <tr className="bg-bg text-ink/90 border-b-2 border-border text-[11px] md:text-xs uppercase font-medium font-sans tabular-nums tracking-wider">
  <th className="py-3 px-4 whitespace-nowrap">Watch</th>
  <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap sticky left-0 z-30 bg-bg shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" onClick={() => handleSort('ticker')}>
  Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}

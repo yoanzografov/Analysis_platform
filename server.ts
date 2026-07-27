@@ -1793,9 +1793,14 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Express server running on code container port ${PORT}`);
-  });
+  // Only listen if not running on Vercel or in a serverless environment
+  if (process.env.NODE_ENV !== 'production' || process.env.RUN_LOCAL === 'true') {
+    app.listen(PORT, () => {
+      console.log(`[Express] Сървърът стартира на http://localhost:${PORT}`);
+    });
+  }
 }
 
 startServer();
+
+export default app;
