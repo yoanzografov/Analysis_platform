@@ -1600,6 +1600,46 @@ app.get("/api/stock-quotes", async (req, res) => {
       }
     }
 
+    // --- FINNHUB ULTRA-HYBRID OVERRIDE ---
+    // Overwrite the currentPrice and dailyChangePct for US stocks using Finnhub to ensure realtime accuracy.
+    const finnhubKey = process.env.FINNHUB_API_KEY;
+    if (finnhubKey) {
+      // Finnhub works best for standard US stock tickers (usually 1-5 uppercase letters, no special characters like : or = or ^)
+      const usStocks = tickers.filter(t => /^[A-Z]{1,5}$/.test(t));
+      
+      if (usStocks.length > 0) {
+        // Fetch all US stocks concurrently from Finnhub
+        await Promise.allSettled(usStocks.map(async (t) => {
+          try {
+            const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${t}&token=${finnhubKey}`);
+            if (res.ok) {
+              const data = await res.json();
+              // Check if Finnhub returned valid data (c > 0)
+              if (data && typeof data.c === 'number' && data.c > 0) {
+                if (!results[t]) {
+                  results[t] = {
+                    currentPrice: 0,
+                    dailyChangePct: 0
+                  };
+                }
+                
+                results[t].currentPrice = parseFloat(data.c.toFixed(2));
+                
+                if (typeof data.dp === 'number') {
+                  results[t].dailyChangePct = parseFloat(data.dp.toFixed(2));
+                }
+                
+                // Update server cache with the realtime Finnhub price
+                serverPriceCache[t] = results[t].currentPrice;
+              }
+            }
+          } catch(e: any) {
+            console.warn(`Finnhub override failed for ${t}:`, e.message);
+          }
+        }));
+      }
+    }
+
     // Override ^VIX with TradingView real-time feed if it was requested
     if (tickers.includes("^VIX")) {
       try {
