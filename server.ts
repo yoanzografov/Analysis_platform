@@ -1541,7 +1541,16 @@ app.get("/api/stock-quotes", async (req, res) => {
     try {
       allQuotes = await yahooFinance.quote(yahooTickersToFetch);
     } catch (e: any) {
-      console.warn("yahoo-finance2 fetch failed, will attempt fallback:", e.message);
+      console.warn("yahoo-finance2 batch fetch failed, fetching individually:", e.message);
+      // Fallback: fetch individually so one bad ticker doesn't ruin the whole batch
+      for (const ticker of yahooTickersToFetch) {
+        try {
+          const q = await yahooFinance.quote(ticker);
+          if (q) allQuotes.push(q);
+        } catch(err: any) {
+          console.warn(`Failed to fetch individual quote for ${ticker}: ${err.message}`);
+        }
+      }
     }
 
     const results: Record<string, StockQuoteData> = {};
