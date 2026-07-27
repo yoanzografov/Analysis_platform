@@ -563,17 +563,17 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </div>
  </div>
 
-  {/* Main Grid Responsive Table with exactly 21 columns and scrollbar view */}
+  {/* Main Grid Responsive Table with touch scroll */}
   <div 
-    className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth"
+    className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth shadow-inner"
     style={{ WebkitOverflowScrolling: 'touch' }}
   >
-  <table className="w-full text-left border-collapse min-w-[2000px] table-auto">
+  <table className="w-full text-left border-collapse min-w-max md:min-w-full table-auto">
 
- <thead className="sticky top-0 z-20 bg-bg rounded-2xl">
- <tr className="bg-bg rounded-2xl text-ink/90 border-b-2 border-border text-xs uppercase font-medium font-sans tabular-nums tracking-wider select-none">
+ <thead className="sticky top-0 z-20 bg-bg">
+ <tr className="bg-bg text-ink/90 border-b-2 border-border text-[11px] md:text-xs uppercase font-medium font-sans tabular-nums tracking-wider select-none">
  <th className="py-3 px-4 whitespace-nowrap">Watch</th>
- <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('ticker')}>
+ <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap sticky left-0 z-30 bg-bg shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" onClick={() => handleSort('ticker')}>
  Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 whitespace-nowrap">Company Name</th>
@@ -688,7 +688,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </td>
 
   {/* 2. TICKER */}
-  <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis">
+  <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis sticky left-0 z-10 bg-bg/95 backdrop-blur-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-card-hover">
     {isEditing ? (
       <input
         type="text"
