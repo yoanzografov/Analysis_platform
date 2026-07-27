@@ -568,7 +568,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
     className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth shadow-inner"
     style={{ WebkitOverflowScrolling: 'touch' }}
   >
-  <table className="w-full text-left border-collapse min-w-max md:min-w-full table-auto">
+  <table className="responsive-stock-table w-full text-left border-collapse min-w-max md:min-w-full table-auto">
 
  <thead className="sticky top-0 z-20 bg-bg">
  <tr className="bg-bg text-ink/90 border-b-2 border-border text-[11px] md:text-xs uppercase font-medium font-sans tabular-nums tracking-wider select-none">

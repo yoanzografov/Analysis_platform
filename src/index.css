@@ -90,3 +90,23 @@ body {
 button, select, input {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Responsive Table Columns */
+@media (max-width: 1279px) {
+  .responsive-stock-table th:nth-child(3), .responsive-stock-table td:nth-child(3),
+  .responsive-stock-table th:nth-child(4), .responsive-stock-table td:nth-child(4),
+  .responsive-stock-table th:nth-child(5), .responsive-stock-table td:nth-child(5),
+  .responsive-stock-table th:nth-child(6), .responsive-stock-table td:nth-child(6),
+  .responsive-stock-table th:nth-child(7), .responsive-stock-table td:nth-child(7),
+  .responsive-stock-table th:nth-child(10), .responsive-stock-table td:nth-child(10),
+  .responsive-stock-table th:nth-child(13), .responsive-stock-table td:nth-child(13),
+  .responsive-stock-table th:nth-child(14), .responsive-stock-table td:nth-child(14),
+  .responsive-stock-table th:nth-child(15), .responsive-stock-table td:nth-child(15),
+  .responsive-stock-table th:nth-child(16), .responsive-stock-table td:nth-child(16),
+  .responsive-stock-table th:nth-child(18), .responsive-stock-table td:nth-child(18),
+  .responsive-stock-table th:nth-child(19), .responsive-stock-table td:nth-child(19),
+  .responsive-stock-table th:nth-child(20), .responsive-stock-table td:nth-child(20),
+  .responsive-stock-table th:nth-child(21), .responsive-stock-table td:nth-child(21) {
+    display: none;
+  }
+}
