@@ -22,7 +22,6 @@ import {
  ChevronDown,
  Trash2,
  ArchiveRestore,
- Activity,
  Info
 } from 'lucide-react';
 
@@ -514,82 +513,6 @@ export default function App() {
  fetchRealStockPricesDirect();
  };
 
- // Live simulation tick engine loop
- useEffect(() => {
- if (!isSimulating) return;
-
- const interval = setInterval(() => {
- setStocks(currentStocks => {
- return currentStocks.map(stock => {
- // Slow tick: only update 4% of stocks per interval to keep dashboard realistic
- if (Math.random() > 0.94) {
- const pctChange = (Math.random() * 1.6 - 0.8) / 100; // -0.8% to +0.8%
- const originalPrice = stock.currentPrice;
- const nextPrice = parseFloat((originalPrice * (1 + pctChange)).toFixed(2));
-
- let difference = stock.difference;
- if (stock.fairPrice !== null && nextPrice > 0) {
- difference = parseFloat((((stock.fairPrice - nextPrice) / nextPrice) * 100).toFixed(2));
- }
-
- let buySell = 'OVERVALUED';
- if (stock.fairPrice !== null && nextPrice > 0) {
- const dev = ((nextPrice - stock.fairPrice) / stock.fairPrice) * 100;
- if (dev < -buyThresholdRef.current) {
- buySell = 'UNDERVALUED';
- } else if (dev > sellThresholdRef.current) {
- buySell = 'OVERVALUED';
- } else {
- buySell = 'ДРУГИ';
- }
- }
- // Replace the hardcoded signal logic
-        let signal = stock.signal || 'Hold';
-        const l52 = stock.low52;
-        const h52 = stock.high52;
-        
-        if (nextPrice > 0 && typeof l52 === 'number' && typeof h52 === 'number') {
-          const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
-          const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
-          if (nextPrice <= buyLimit) signal = 'Buy';
-          else if (nextPrice >= sellLimit) signal = 'Sell';
-          else signal = 'Hold';
-        } else {
-          signal = '-';
-        }
-
- return {
- ...stock,
- currentPrice: nextPrice,
- difference,
- buySell,
- signal,
- dailyChangePct: parseFloat((stock.dailyChangePct + pctChange * 100).toFixed(2))
- };
- }
- return stock;
- });
- });
-
- // Indices ticks
- setIndices(currentIndexs => {
- return currentIndexs.map(idx => {
- if (Math.random() > 0.5) {
- const change = (Math.random() * 0.1 - 0.05);
- return {
- ...idx,
- value: parseFloat((idx.value * (1 + change / 100)).toFixed(2)),
- changePct: parseFloat((idx.changePct + change).toFixed(2)),
- };
- }
- return idx;
- });
- });
-
- }, 3000);
-
- return () => clearInterval(interval);
- }, [isSimulating, alerts]);
 
  // Alert threshold logic evaluator
  const prevPricesRef = useRef<Record<string, number>>({});
@@ -865,7 +788,6 @@ export default function App() {
    {/* Dynamic indices banner strip */}
    <IndicesStrip 
     indices={indices} 
-    isSimulating={isSimulating} 
    />
 
  {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}

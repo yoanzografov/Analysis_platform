@@ -5,7 +5,6 @@ import IndexDetailChartModal from './IndexDetailChartModal';
 
 interface Props {
   indices: MarketIndex[];
-  isSimulating: boolean;
 }
 
 function IndexHoverChart({ changePct, name }: { changePct: number; name: string }) {
@@ -69,7 +68,7 @@ function IndexHoverChart({ changePct, name }: { changePct: number; name: string 
   );
 }
 
-export default function IndicesStrip({ indices, isSimulating }: Props) {
+export default function IndicesStrip({ indices }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string>('US Markets');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
