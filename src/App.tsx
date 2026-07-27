@@ -68,8 +68,14 @@ export default function App() {
    }
  }, [activeFilter, stocks]);
 
- // Prevent infinite save loops with Firebase
- const lastSavedRef = useRef('');
+  // Prevent infinite save loops with Firebase
+  const lastSavedRef = useRef('');
+  // Ref version of isLoaded so we can read it inside Firebase callback without re-creating the listener
+  const isLoadedRef = useRef(false);
+  // Flag set to true while WE are saving to Firebase, so we ignore our own incoming snapshots
+  const isSavingRef = useRef(false);
+  // Debounce timer ref for auto-save
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [buyThreshold, setBuyThreshold] = useState<number>(10);
   const [sellThreshold, setSellThreshold] = useState<number>(10);
@@ -247,21 +253,50 @@ export default function App() {
  }
  };
 
- // Load and listen to Firebase Firestore
+ // Load and listen to Firebase Firestore - runs ONCE on mount, never re-runs
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "portfolio", "default"), (docSnap) => {
+      // Ignore snapshots triggered by our own saves
+      if (isSavingRef.current) return;
+
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const incomingDataString = JSON.stringify(data);
-        
-        // Only update state if data is actually different from our last local save
-        if (lastSavedRef.current !== incomingDataString) {
-          lastSavedRef.current = incomingDataString;
+
+        // On first load: always apply the data
+        if (!isLoadedRef.current) {
+          isLoadedRef.current = true;
+          setIsLoaded(true);
+
           if (data.stocks) {
             const migratedStocks = data.stocks.map((s: any) => ({
               ...s,
               watch: s.watch === 'UNDERVALUED' ? 'Buy' : s.watch === 'OVERVALUED' ? 'Sell' : s.watch,
-              // Normalize signal back to proper casing if it was altered
+              signal: s.signal === 'UNDERVALUED' ? 'Buy' : s.signal === 'OVERVALUED' ? 'Sell' : s.signal,
+              buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
+            }));
+            setStocks(migratedStocks);
+            // Fetch live prices after initial load
+            setTimeout(() => fetchRealStockPricesDirect(migratedStocks), 500);
+          }
+          if (data.indices) setIndices(data.indices);
+          if (data.alerts) setAlerts(data.alerts);
+          if (data.settings?.buyThreshold !== undefined) setBuyThreshold(data.settings.buyThreshold);
+          else if (data.settings?.buySellThreshold !== undefined) setBuyThreshold(data.settings.buySellThreshold);
+          if (data.settings?.sellThreshold !== undefined) setSellThreshold(data.settings.sellThreshold);
+          else if (data.settings?.buySellThreshold !== undefined) setSellThreshold(data.settings.buySellThreshold);
+
+          setLogs([{ id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Свързано с облачната база данни (Firebase).', type: 'info' }]);
+          return;
+        }
+
+        // On subsequent snapshots (from another device/tab): only apply if data is genuinely different
+        const incomingStr = JSON.stringify(data);
+        if (lastSavedRef.current !== incomingStr) {
+          lastSavedRef.current = incomingStr;
+          if (data.stocks) {
+            const migratedStocks = data.stocks.map((s: any) => ({
+              ...s,
+              watch: s.watch === 'UNDERVALUED' ? 'Buy' : s.watch === 'OVERVALUED' ? 'Sell' : s.watch,
               signal: s.signal === 'UNDERVALUED' ? 'Buy' : s.signal === 'OVERVALUED' ? 'Sell' : s.signal,
               buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
             }));
@@ -269,54 +304,35 @@ export default function App() {
           }
           if (data.indices) setIndices(data.indices);
           if (data.alerts) setAlerts(data.alerts);
-          if (data.settings?.buyThreshold !== undefined) setBuyThreshold(data.settings.buyThreshold);
-          else if (data.settings?.buySellThreshold !== undefined) setBuyThreshold(data.settings.buySellThreshold);
-          
-          if (data.settings?.sellThreshold !== undefined) setSellThreshold(data.settings.sellThreshold);
-          else if (data.settings?.buySellThreshold !== undefined) setSellThreshold(data.settings.buySellThreshold);
-        }
-        
-        if (!isLoaded) {
-          setIsLoaded(true);
-          setLogs([
-            { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Свързано с облачната база данни (Firebase).', type: 'info' },
-          ]);
-          setTimeout(() => {
-            fetchRealStockPricesDirect(data.stocks || []);
-          }, 300);
         }
       } else {
-        // First time initialization: Load defaults if DB is empty
+        // First time: DB is empty, initialize with defaults
+        isLoadedRef.current = true;
+        setIsLoaded(true);
         const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
         const defaultAlerts = [
           { id: '1', ticker: 'AAPL', criteria: 'ABOVE', targetPrice: 300, isActive: true, createdAt: new Date().toISOString() },
           { id: '2', ticker: 'TSLA', criteria: 'BELOW', targetPrice: 380, isActive: true, createdAt: new Date().toISOString() },
           { id: '3', ticker: 'NVDA', criteria: 'ABOVE', targetPrice: 215, isActive: true, createdAt: new Date().toISOString() },
         ];
-        
         setStocks(parsedStocks);
         setIndices(parsedIndices);
         // @ts-ignore
         setAlerts(defaultAlerts);
-        setIsLoaded(true);
-        
         const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts, settings: { buyThreshold: 10, sellThreshold: 10 } };
         lastSavedRef.current = JSON.stringify(initialData);
-        
+        isSavingRef.current = true;
         setDoc(doc(db, "portfolio", "default"), initialData)
+          .finally(() => { isSavingRef.current = false; })
           .catch(err => console.error("Error setting default data", err));
-          
-        setTimeout(() => {
-          fetchRealStockPricesDirect(parsedStocks);
-        }, 300);
+        setTimeout(() => fetchRealStockPricesDirect(parsedStocks), 500);
       }
     }, (error) => {
       console.error("Firebase Snapshot Error:", error);
     });
 
-  
     return () => unsub();
-  }, [isLoaded]);
+  }, []); // <-- Empty deps: create listener ONCE, never re-create it
 
   const handleSaveToCloud = async () => {
     try {
@@ -352,20 +368,25 @@ export default function App() {
     }
   };
 
-  // Persistence save hooks (to Firebase)
+  // Debounced auto-save to Firebase (waits 3s after last change before saving)
   useEffect(() => {
-    if (isLoaded) {
-      const currentDataString = JSON.stringify({ stocks, indices, alerts, settings: { buyThreshold, sellThreshold } });
-      if (lastSavedRef.current !== currentDataString) {
-        lastSavedRef.current = currentDataString;
-        setDoc(doc(db, "portfolio", "default"), {
-          stocks,
-          indices,
-          alerts,
-          settings: { buyThreshold, sellThreshold }
-        }, { merge: true }).catch(err => console.error("Firebase Save Error:", err));
-      }
-    }
+    if (!isLoaded) return;
+    // Clear any pending save timer
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      const payload = { stocks, indices, alerts, settings: { buyThreshold, sellThreshold } };
+      const payloadStr = JSON.stringify(payload);
+      if (lastSavedRef.current === payloadStr) return; // Nothing changed
+      lastSavedRef.current = payloadStr;
+      isSavingRef.current = true;
+      setDoc(doc(db, "portfolio", "default"), payload, { merge: true })
+        .then(() => { setTimeout(() => { isSavingRef.current = false; }, 500); })
+        .catch(err => {
+          console.error("Firebase Save Error:", err);
+          isSavingRef.current = false;
+        });
+    }, 3000); // 3 second debounce
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [stocks, indices, alerts, buyThreshold, sellThreshold, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
