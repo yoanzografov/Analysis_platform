@@ -187,6 +187,8 @@ export default function App() {
  peRatio: quote.peRatio !== undefined ? quote.peRatio : stock.peRatio,
  eps: quote.eps !== undefined ? quote.eps : stock.eps,
  marketCap: quote.marketCap !== undefined ? quote.marketCap : stock.marketCap,
+ // Update profileLink (used as sector) if Yahoo returned a sector
+ profileLink: quote.sector ? quote.sector : stock.profileLink,
  dividend: quote.dividend !== undefined 
  ? quote.dividend.toString()
  : stock.dividend,
