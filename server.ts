@@ -6,9 +6,10 @@ import dotenv from "dotenv";
 import fs from "fs/promises";
 import fsSync from "fs";
 import Parser from "rss-parser";
-import { default as YahooFinance } from 'yahoo-finance2';
+import * as yfModule from 'yahoo-finance2';
 
-const yahooFinance = new (YahooFinance as any)({
+const YahooFinance = (yfModule as any).default?.default || (yfModule as any).default || yfModule;
+const yahooFinance = new YahooFinance({
   suppressNotices: ['yahooSurvey']
 });
 const rssParser = new Parser();
