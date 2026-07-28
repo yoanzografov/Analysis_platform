@@ -688,7 +688,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </td>
 
   {/* 2. TICKER */}
-  <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis sticky left-0 z-10 bg-bg/95 backdrop-blur-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-card-hover">
+  <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis sticky left-0 z-10 bg-bg/95 backdrop-blur-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-card-hover border-b border-border">
     {isEditing ? (
       <input
         type="text"
