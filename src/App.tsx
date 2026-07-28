@@ -438,9 +438,28 @@ export default function App() {
  }
  };
 
- // Live updater for a single stock from the table or simulation
+ // Live updater for a single stock — immediately persists to Firebase
   const handleUpdateStock = (oldTicker: string, updatedStock: Stock) => {
-  setStocks(prev => prev.map(s => s.ticker === oldTicker ? updatedStock : s));
+    const updatedStocks = stocks.map(s => s.ticker === oldTicker ? updatedStock : s);
+    setStocks(updatedStocks);
+
+    // Write immediately to Firebase (don't wait for 3s debounce)
+    // This prevents data loss when user refreshes before debounce fires
+    const payload = {
+      stocks: updatedStocks,
+      indices,
+      alerts,
+      settings: { buyThreshold, sellThreshold }
+    };
+    const payloadStr = JSON.stringify(payload);
+    lastSavedRef.current = payloadStr;
+    isSavingRef.current = true;
+    setDoc(doc(db, 'portfolio', 'default'), payload, { merge: true })
+      .then(() => { setTimeout(() => { isSavingRef.current = false; }, 500); })
+      .catch(err => {
+        console.error('Immediate save error:', err);
+        isSavingRef.current = false;
+      });
   };
 
  const handleDeleteStock = (ticker: string) => {
