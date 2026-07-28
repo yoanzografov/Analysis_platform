@@ -949,10 +949,17 @@ export default function App() {
  };
  setLogs(prev => [newLog, ...prev]);
  }}
- />
- </div>
+  />
+  </div>
 
-
+  {/* Planning custom price alerts container (placed below table) */}
+  <PriceAlertPlanner
+    stocks={stocks}
+    alerts={alerts}
+    onAddAlert={handleAddAlert}
+    onUpdateAlert={handleUpdateAlert}
+    onDeleteAlert={handleDeleteAlert}
+  />
 
  {/* Verified Business & Stock News Feed */}
  <CompanyNewsContainer

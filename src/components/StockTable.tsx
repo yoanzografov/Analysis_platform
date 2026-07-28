@@ -545,19 +545,6 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
           Calculator
         </a>
 
-      {/* Price Alert Planner container (placed right next to/under Calculator button) */}
-      {alerts && onAddAlert && onDeleteAlert && (
-        <div className="w-full mt-2">
-          <PriceAlertPlanner
-            stocks={stocks}
-            alerts={alerts}
-            onAddAlert={onAddAlert}
-            onUpdateAlert={onUpdateAlert}
-            onDeleteAlert={onDeleteAlert}
-          />
-        </div>
-      )}
-
  {/* Special badges when filtering by signals from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
  <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-[#10b981] text-ink border-[#10b981]/50 flex items-center gap-1 shrink-0">
