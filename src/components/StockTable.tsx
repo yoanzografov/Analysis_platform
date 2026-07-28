@@ -202,23 +202,6 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  setEditAiAnalysis(stock.aiAnalysis || '');
  };
 
-  // Global Enter/ESC handler — runs after every render so it always sees latest field values
-  useEffect(() => {
-    if (!editingRow) return;
-    const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement).tagName;
-      if (e.key === 'Enter' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
-        e.preventDefault();
-        handleSaveClick(editingRow);
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        cancelInlineEdit();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
-
  const handleSaveClick = (ticker: string) => {
     const original = stocks.find(s => s.ticker === ticker);
     if (!original) return;
@@ -631,13 +614,20 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  className={`hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
  isEditing ? 'bg-bg rounded-2xl/10' : ''
  } ${selectedRow === stock.ticker ? 'bg-indigo-500/10 outline-double outline-1 outline-indigo-500/50' : ''}`}
- onKeyDown={isEditing ? (e) => {
- if (e.key === 'Enter') {
- handleSaveClick(stock.ticker);
- } else if (e.key === 'Escape') {
- cancelInlineEdit();
- }
- } : undefined}
+  onKeyDown={isEditing ? (e) => {
+    const tag = (e.target as HTMLElement).tagName;
+    if (e.key === 'Enter') {
+      if (tag === 'TEXTAREA') {
+        // Allow normal newline behavior in textareas
+        return;
+      }
+      e.preventDefault();
+      handleSaveClick(stock.ticker);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelInlineEdit();
+    }
+  } : undefined}
  >
  {/* 1. WATCH */}
  <td className="py-3 px-4 font-sans overflow-hidden text-ellipsis whitespace-nowrap">
