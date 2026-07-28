@@ -4,10 +4,12 @@ import App from './App.tsx';
 import './index.css';
 
 // Error Boundary - catches any crash and shows friendly message instead of black screen
-class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
-  state = { error: null };
-  static getDerivedStateFromError(error: Error) { return { error }; }
-  render() {
+interface EBProps { children: ReactNode; }
+interface EBState { error: Error | null; }
+class ErrorBoundary extends Component<EBProps, EBState> {
+  state: EBState = { error: null };
+  static getDerivedStateFromError(error: Error): EBState { return { error }; }
+  render(): ReactNode {
     if (this.state.error) {
       return (
         <div style={{
@@ -31,12 +33,12 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
             Опресни страницата
           </button>
           <pre style={{ fontSize: '11px', color: '#a1a1aa', maxWidth: '500px', overflow: 'auto', textAlign: 'left' }}>
-            {(this.state.error as Error).message}
+            {this.state.error.message}
           </pre>
         </div>
       );
     }
-    return this.props.children;
+    return (this.props as EBProps).children;
   }
 }
 
