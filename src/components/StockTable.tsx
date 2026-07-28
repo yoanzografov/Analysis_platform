@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Stock, TableFilter } from '../types';
+import { Stock, TableFilter, PriceAlert } from '../types';
 import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
+import PriceAlertPlanner from './PriceAlertPlanner';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
 interface Props {
  stocks: Stock[];
+ alerts?: PriceAlert[];
+ onAddAlert?: (ticker: string, criteria: 'ABOVE' | 'BELOW', target: number) => void;
+ onUpdateAlert?: (id: string, ticker: string, criteria: 'ABOVE' | 'BELOW', target: number) => void;
+ onDeleteAlert?: (id: string) => void;
  onUpdateStock: (oldTicker: string, updatedStock: Stock) => void;
  onDeleteStock: (ticker: string) => void;
  onSelectStockForAi: (stock: Stock) => void;
@@ -129,7 +134,7 @@ const StockLogo = ({ ticker }: { ticker: string }) => {
   );
 };
 
-export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold }: Props) {
+export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, onDeleteAlert, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold }: Props) {
  // Search state
  const [search, setSearch] = useState('');
 
@@ -539,6 +544,19 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
           <Calculator className="w-3.5 h-3.5" />
           Calculator
         </a>
+
+      {/* Price Alert Planner container (placed right next to/under Calculator button) */}
+      {alerts && onAddAlert && onDeleteAlert && (
+        <div className="w-full mt-2">
+          <PriceAlertPlanner
+            stocks={stocks}
+            alerts={alerts}
+            onAddAlert={onAddAlert}
+            onUpdateAlert={onUpdateAlert}
+            onDeleteAlert={onDeleteAlert}
+          />
+        </div>
+      )}
 
  {/* Special badges when filtering by signals from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (

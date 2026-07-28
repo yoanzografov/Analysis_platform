@@ -927,6 +927,10 @@ export default function App() {
  
  <StockTable 
  stocks={stocks} 
+ alerts={alerts}
+ onAddAlert={handleAddAlert}
+ onUpdateAlert={handleUpdateAlert}
+ onDeleteAlert={handleDeleteAlert}
  onUpdateStock={handleUpdateStock} 
  onDeleteStock={handleDeleteStock}
   onSelectStockForAi={setSelectedStockForAi} 
@@ -948,14 +952,7 @@ export default function App() {
  />
  </div>
 
- {/* Planning custom price alerts container (moved below table) */}
- <PriceAlertPlanner
-    stocks={stocks}
-    alerts={alerts}
-    onAddAlert={handleAddAlert}
-    onUpdateAlert={handleUpdateAlert}
-    onDeleteAlert={handleDeleteAlert}
- />
+
 
  {/* Verified Business & Stock News Feed */}
  <CompanyNewsContainer
