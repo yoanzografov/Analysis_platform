@@ -228,22 +228,29 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  setEditAiAnalysis(stock.aiAnalysis || '');
  };
 
+  // Refs that always point to the LATEST save/cancel — fixes stale closure bug
+  const saveRef = useRef<() => void>(() => {});
+  const cancelRef = useRef<() => void>(() => {});
+
+  // Keep refs up to date on every render
+  saveRef.current = () => { if (editingRow) handleSaveClick(editingRow); };
+  cancelRef.current = () => cancelInlineEdit();
+
   useEffect(() => {
     if (!editingRow) return;
-    const onGlobalKeyDown = (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName;
-      // Enter saves (but not in textarea to allow multiline), ESC cancels always
       if (e.key === 'Enter' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
         e.preventDefault();
-        handleSaveClick(editingRow);
+        saveRef.current();          // always reads latest state ✓
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        cancelInlineEdit();
+        cancelRef.current();
       }
     };
-    window.addEventListener('keydown', onGlobalKeyDown);
-    return () => window.removeEventListener('keydown', onGlobalKeyDown);
-  }, [editingRow]);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [editingRow]);                 // only re-register when editing starts/stops
 
  const handleSaveClick = (ticker: string) => {
     const original = stocks.find(s => s.ticker === ticker);
