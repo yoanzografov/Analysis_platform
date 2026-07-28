@@ -91,14 +91,19 @@ button, select, input {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Responsive Table Columns */
+/* Responsive Table Columns - hidden on screens < 1280px */
+/* Column order: 1=Watch, 2=Ticker(sticky), 3=CompanyName, 4=Statistics, 5=365Chart, 6=Date, 7=PriceOfCalc,
+   8=DailyChange%, 9=CurrentPrice, 10=FairPrice, 11=Difference, 12=Over/Under, 13=MarketCap,
+   14=P/E, 15=EPS, 16=Sector, 17=Signal, 18=52Low, 19=52High, 20=AI, 21=Calc, 22=News */
 @media (max-width: 1279px) {
+  /* Hide on tablet/mobile - keep: Watch(1), Ticker(2), 365Chart(5), DailyChange%(8), CurrentPrice(9), Signal(17) */
   .responsive-stock-table th:nth-child(3), .responsive-stock-table td:nth-child(3),
   .responsive-stock-table th:nth-child(4), .responsive-stock-table td:nth-child(4),
-  .responsive-stock-table th:nth-child(5), .responsive-stock-table td:nth-child(5),
   .responsive-stock-table th:nth-child(6), .responsive-stock-table td:nth-child(6),
   .responsive-stock-table th:nth-child(7), .responsive-stock-table td:nth-child(7),
   .responsive-stock-table th:nth-child(10), .responsive-stock-table td:nth-child(10),
+  .responsive-stock-table th:nth-child(11), .responsive-stock-table td:nth-child(11),
+  .responsive-stock-table th:nth-child(12), .responsive-stock-table td:nth-child(12),
   .responsive-stock-table th:nth-child(13), .responsive-stock-table td:nth-child(13),
   .responsive-stock-table th:nth-child(14), .responsive-stock-table td:nth-child(14),
   .responsive-stock-table th:nth-child(15), .responsive-stock-table td:nth-child(15),
@@ -106,7 +111,8 @@ button, select, input {
   .responsive-stock-table th:nth-child(18), .responsive-stock-table td:nth-child(18),
   .responsive-stock-table th:nth-child(19), .responsive-stock-table td:nth-child(19),
   .responsive-stock-table th:nth-child(20), .responsive-stock-table td:nth-child(20),
-  .responsive-stock-table th:nth-child(21), .responsive-stock-table td:nth-child(21) {
+  .responsive-stock-table th:nth-child(21), .responsive-stock-table td:nth-child(21),
+  .responsive-stock-table th:nth-child(22), .responsive-stock-table td:nth-child(22) {
     display: none;
   }
 }
