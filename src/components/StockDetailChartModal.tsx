@@ -67,14 +67,6 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   else if (stock.ticker.startsWith('^')) { exch = 'Index'; ccy = 'pts'; }
 
   const cs = ccy === 'EUR' ? '€' : ccy === 'SEK' ? 'kr ' : ccy === 'CHF' ? 'CHF ' : ccy === 'pts' ? '' : '$';
-  
-  const priceToDisplay = (typeof stock.currentPrice === 'number' && stock.currentPrice > 0)
-    ? stock.currentPrice
-    : (typeof stock.priceOfCalc === 'number' && stock.priceOfCalc > 0)
-    ? stock.priceOfCalc
-    : (typeof stock.fairPrice === 'number' && stock.fairPrice > 0)
-    ? stock.fairPrice
-    : null;
 
   const fp = (v: number | null | undefined) => {
     if (v == null || typeof v !== 'number' || isNaN(v) || v <= 0) return '—';
@@ -143,7 +135,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           
           <div className="flex flex-col items-start sm:items-end w-full sm:w-auto pr-8 sm:pr-14">
             <div className="text-2xl sm:text-3xl font-bold text-ink tracking-tight leading-tight tabular-nums">
-              {fp(priceToDisplay)}
+              {fp(stock.currentPrice)}
             </div>
             <div 
               className="text-xs sm:text-lg font-semibold mt-0.5 flex items-center justify-end gap-1.5 tabular-nums"
