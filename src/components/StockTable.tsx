@@ -231,15 +231,19 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
   useEffect(() => {
     if (!editingRow) return;
     const onGlobalKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
+      const tag = (e.target as HTMLElement).tagName;
+      // Enter saves (but not in textarea to allow multiline), ESC cancels always
+      if (e.key === 'Enter' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+        e.preventDefault();
         handleSaveClick(editingRow);
       } else if (e.key === 'Escape') {
+        e.preventDefault();
         cancelInlineEdit();
       }
     };
     window.addEventListener('keydown', onGlobalKeyDown);
     return () => window.removeEventListener('keydown', onGlobalKeyDown);
-  });
+  }, [editingRow]);
 
  const handleSaveClick = (ticker: string) => {
     const original = stocks.find(s => s.ticker === ticker);
@@ -1122,17 +1126,19 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
   <div className="flex items-center justify-center gap-1 shrink-0">
  <button
  onClick={() => handleSaveClick(stock.ticker)}
- className="p-1 rounded-md bg-emerald-700 text-ink hover:bg-[#10b981] duration-100 border border-emerald-800 cursor-pointer"
- title="Запази"
+ className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-700 text-white text-[10px] font-bold hover:bg-[#10b981] duration-100 border border-emerald-800 cursor-pointer"
+ title="Запази промените (Enter)"
  >
- <Check className="w-3 h-3" />
+ <Check className="w-2.5 h-2.5" />
+ <span className="hidden sm:inline">↵</span>
  </button>
  <button
  onClick={cancelInlineEdit}
- className="p-1 rounded-md bg-red-700 text-ink hover:bg-red-800 duration-100 border border-red-850 cursor-pointer"
- title="Отказ"
+ className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-red-700 text-white text-[10px] font-bold hover:bg-red-800 duration-100 border border-red-800 cursor-pointer"
+ title="Отказ (Esc)"
  >
- <X className="w-3 h-3" />
+ <X className="w-2.5 h-2.5" />
+ <span className="hidden sm:inline">Esc</span>
  </button>
  </div>
  ) : (
