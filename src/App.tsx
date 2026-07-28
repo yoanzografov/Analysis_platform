@@ -301,7 +301,7 @@ export default function App() {
         const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts, settings: { buyThreshold: 10, sellThreshold: 10 } };
         lastSavedRef.current = JSON.stringify(initialData);
         
-        setDoc(doc(db, "portfolio", "default"), initialData)
+        setDoc(doc(db, "portfolio", "default"), JSON.parse(JSON.stringify(initialData)))
           .catch(err => console.error("Error setting default data", err));
           
         setTimeout(() => {
@@ -318,14 +318,10 @@ export default function App() {
 
   const handleSaveToCloud = async () => {
     try {
-      const currentDataString = JSON.stringify({ stocks, indices, alerts, settings: { buyThreshold, sellThreshold } });
+      const payload = { stocks, indices, alerts, settings: { buyThreshold, sellThreshold } };
+      const currentDataString = JSON.stringify(payload);
       lastSavedRef.current = currentDataString;
-      await setDoc(doc(db, "portfolio", "default"), {
-        stocks,
-        indices,
-        alerts,
-        settings: { buyThreshold, sellThreshold }
-      }, { merge: true });
+      await setDoc(doc(db, "portfolio", "default"), JSON.parse(JSON.stringify(payload)), { merge: true });
       
       const newLog = {
         id: `${Date.now()}-${Math.random()}`,
@@ -353,15 +349,11 @@ export default function App() {
   // Persistence save hooks (to Firebase)
   useEffect(() => {
     if (isLoaded) {
-      const currentDataString = JSON.stringify({ stocks, indices, alerts, settings: { buyThreshold, sellThreshold } });
+      const payload = { stocks, indices, alerts, settings: { buyThreshold, sellThreshold } };
+      const currentDataString = JSON.stringify(payload);
       if (lastSavedRef.current !== currentDataString) {
         lastSavedRef.current = currentDataString;
-        setDoc(doc(db, "portfolio", "default"), {
-          stocks,
-          indices,
-          alerts,
-          settings: { buyThreshold, sellThreshold }
-        }, { merge: true }).catch(err => console.error("Firebase Save Error:", err));
+        setDoc(doc(db, "portfolio", "default"), JSON.parse(JSON.stringify(payload)), { merge: true }).catch(err => console.error("Firebase Save Error:", err));
       }
     }
   }, [stocks, indices, alerts, buyThreshold, sellThreshold, isLoaded]);
