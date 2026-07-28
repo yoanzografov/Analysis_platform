@@ -25,7 +25,8 @@ import {
  Trash2,
  ArchiveRestore,
  Activity,
- Info
+ Info,
+ X
 } from 'lucide-react';
 
 export default function App() {
@@ -592,7 +593,7 @@ export default function App() {
  }
 
  if (triggered) {
- const message = `Предупреждение за цена! Акцията ${stock.ticker} премина границата от $${alert.targetPrice} (Текуща: $${newPrice})`;
+ const message = `Предупреждение за цена! Акцията ${stock.ticker} премина гранатата от $${alert.targetPrice} (Текуща: $${newPrice})`;
 
  const newLog: NotificationLog = {
  id: `${Date.now()}-${Math.random()}`,
@@ -725,16 +726,27 @@ export default function App() {
     </div>
   )}
 
- {/* Floating live alerts toast banner */}
- {activeAlertToast && (
- <div className="fixed top-14 right-4 z-40 bg-amber-500/10 border border-amber-500/50 text-amber-400 rounded-2xl shadow-md p-3 max-w-sm flex items-start gap-2.5 font-sans tabular-nums text-xs">
- <Bell className="w-4 h-4 text-amber-800 shrink-0 mt-0.5" />
- <div>
- <span className="font-extrabold underline block mb-0.5 uppercase tracking-wide">СИГНАЛ ЗА ЦЕНА</span>
- {activeAlertToast}
- </div>
- </div>
- )}
+  {/* Floating live alerts toast banner */}
+  {activeAlertToast && (
+    <div className="fixed top-16 right-4 z-[9999] bg-emerald-950/90 border border-emerald-500/60 text-emerald-200 rounded-2xl shadow-2xl p-3.5 max-w-sm flex items-start justify-between gap-3 font-sans tabular-nums text-xs animate-bounce">
+      <div className="flex items-start gap-2.5">
+        <Bell className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5 animate-pulse" />
+        <div>
+          <span className="font-extrabold text-emerald-300 block mb-0.5 uppercase tracking-wide">
+            🚨 ИЗВЕСТИЕ ЗА ЦЕНА!
+          </span>
+          <p className="leading-snug">{activeAlertToast}</p>
+        </div>
+      </div>
+      <button
+        onClick={() => setActiveAlertToast(null)}
+        className="text-emerald-400 hover:text-white transition-colors p-1 cursor-pointer"
+        title="Затвори"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  )}
 
   {/* Dashboard Header Bar */}
   <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-[100]">

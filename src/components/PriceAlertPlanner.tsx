@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Stock, PriceAlert } from '../types';
-import { BellRing, Ban, PlusCircle, CheckCircle, XCircle, Edit3 } from 'lucide-react';
+import { BellRing, Ban, PlusCircle, CheckCircle, XCircle, Edit3, Flame, AlertTriangle } from 'lucide-react';
 
 interface Props {
   stocks: Stock[];
@@ -168,28 +168,61 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
               (кликнете върху тригер за редакция)
             </span>
           </h4>
-          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+          <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
             {alerts.map(alert => {
               const isBeingEdited = editingAlertId === alert.id;
+              const matchingStock = stocks.find(s => s.ticker === alert.ticker);
+              const curPrice = matchingStock?.currentPrice || matchingStock?.priceOfCalc || 0;
+
+              const isTriggeredAbove = alert.criteria === 'ABOVE' && curPrice > 0 && curPrice >= alert.targetPrice;
+              const isTriggeredBelow = alert.criteria === 'BELOW' && curPrice > 0 && curPrice <= alert.targetPrice;
+              const isTriggered = isTriggeredAbove || isTriggeredBelow;
+
+              const distancePct = curPrice > 0 ? Math.abs(curPrice - alert.targetPrice) / alert.targetPrice : 1;
+              const isNear = !isTriggered && curPrice > 0 && distancePct <= 0.03;
+
+              let badgeStyle = 'bg-card border-border hover:border-indigo-400/60 hover:bg-white/5';
+              if (isBeingEdited) {
+                badgeStyle = 'border-indigo-500 bg-indigo-500/20 ring-2 ring-indigo-500/50 shadow-md font-bold';
+              } else if (isTriggeredAbove) {
+                badgeStyle = 'border-emerald-500 bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/50 animate-pulse font-bold';
+              } else if (isTriggeredBelow) {
+                badgeStyle = 'border-rose-500 bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/50 animate-pulse font-bold';
+              } else if (isNear) {
+                badgeStyle = 'border-amber-500/70 bg-amber-500/10 text-amber-300 font-semibold';
+              }
+
               return (
                 <div
                   key={alert.id}
                   onClick={() => handleStartEdit(alert)}
-                  className={`rounded-2xl border px-2.5 py-1 text-xs flex items-center gap-2 font-sans tabular-nums text-ink cursor-pointer transition-all group ${
-                    isBeingEdited
-                      ? 'border-indigo-500 bg-indigo-500/20 ring-2 ring-indigo-500/50 shadow-md font-bold'
-                      : 'bg-card border-border hover:border-indigo-400/60 hover:bg-white/5'
-                  }`}
+                  className={`rounded-2xl border px-2.5 py-1 text-xs flex items-center gap-2 font-sans tabular-nums cursor-pointer transition-all group ${badgeStyle}`}
                   title="Кликнете за редакция на тригера"
                 >
                   <span className="font-extrabold text-blue-800 flex items-center gap-1">
                     {alert.ticker}
-                    <Edit3 className="w-3 h-3 text-indigo-400" />
+                    <Edit3 className="w-3 h-3 text-indigo-400 opacity-60 group-hover:opacity-100 transition-opacity" />
                   </span>
-                  <span className="text-xs text-ink/60">
-                    {alert.criteria === 'ABOVE' ? 'над ▲' : 'под ▼'}
-                  </span>
-                  <span className="font-bold underline">${alert.targetPrice}</span>
+
+                  {isTriggered ? (
+                    <span className="flex items-center gap-1 font-extrabold text-xs">
+                      <Flame className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                      {isTriggeredAbove ? 'ЗАДЕЙСТВАН НАД ▲' : 'ЗАДЕЙСТВАН ПОД ▼'} (${curPrice.toFixed(2)})
+                    </span>
+                  ) : isNear ? (
+                    <span className="flex items-center gap-1 font-bold text-xs text-amber-400">
+                      <AlertTriangle className="w-3 h-3" />
+                      БЛИЗО (${curPrice.toFixed(2)})
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-xs text-ink/60">
+                        {alert.criteria === 'ABOVE' ? 'над ▲' : 'под ▼'}
+                      </span>
+                      <span className="font-bold underline">${alert.targetPrice}</span>
+                    </>
+                  )}
+
                   <button
                     type="button"
                     onClick={(e) => {
