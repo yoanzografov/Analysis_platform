@@ -202,6 +202,28 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  setEditAiAnalysis(stock.aiAnalysis || '');
  };
 
+  // Global Enter/ESC handler — runs after every render so it always sees latest field values
+  useEffect(() => {
+    if (!editingRow) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (e.key === 'Enter') {
+        if (tag === 'TEXTAREA') {
+          // Allow normal newline behavior in textareas
+          return;
+        }
+        e.preventDefault();
+        handleSaveClick(editingRow);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelInlineEdit();
+      }
+    };
+    // Use capture phase so we intercept before native inputs
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  });
+
  const handleSaveClick = (ticker: string) => {
     const original = stocks.find(s => s.ticker === ticker);
     if (!original) return;
@@ -606,28 +628,13 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <tr
  key={stock.ticker}
  onClick={(e) => {
-   // Avoid selecting row when clicking on buttons, links or selects inside the row
-   if ((e.target as HTMLElement).tagName !== 'BUTTON' && (e.target as HTMLElement).tagName !== 'A' && (e.target as HTMLElement).tagName !== 'SELECT') {
+   if (!isEditing) {
      setSelectedRow(stock.ticker);
    }
  }}
- className={`hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
- isEditing ? 'bg-bg rounded-2xl/10' : ''
- } ${selectedRow === stock.ticker ? 'bg-indigo-500/10 outline-double outline-1 outline-indigo-500/50' : ''}`}
-  onKeyDown={isEditing ? (e) => {
-    const tag = (e.target as HTMLElement).tagName;
-    if (e.key === 'Enter') {
-      if (tag === 'TEXTAREA') {
-        // Allow normal newline behavior in textareas
-        return;
-      }
-      e.preventDefault();
-      handleSaveClick(stock.ticker);
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      cancelInlineEdit();
-    }
-  } : undefined}
+ className={`border-b border-border hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
+ isEditing ? 'bg-bg' : ''
+ } ${selectedRow === stock.ticker ? 'bg-indigo-500/10' : ''}`}
  >
  {/* 1. WATCH */}
  <td className="py-3 px-4 font-sans overflow-hidden text-ellipsis whitespace-nowrap">
