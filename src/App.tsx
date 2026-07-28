@@ -621,27 +621,40 @@ export default function App() {
  });
  }, [stocks, alerts]);
 
- // Add and Delete alert controllers
- const handleAddAlert = (ticker: string, criteria: 'ABOVE' | 'BELOW', targetPrice: number) => {
- const newAlert: PriceAlert = {
- id: `${Date.now()}-${Math.random()}`,
- ticker,
- criteria,
- targetPrice,
- isActive: true,
- createdAt: new Date().toISOString()
- };
- setAlerts(prev => [newAlert, ...prev]);
+  // Add, Update, and Delete alert controllers
+  const handleAddAlert = (ticker: string, criteria: 'ABOVE' | 'BELOW', targetPrice: number) => {
+    const newAlert: PriceAlert = {
+      id: `${Date.now()}-${Math.random()}`,
+      ticker,
+      criteria,
+      targetPrice,
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+    setAlerts(prev => [newAlert, ...prev]);
 
- const newLog: NotificationLog = {
- id: `${Date.now()}-${Math.random()}`,
- timestamp: new Date().toLocaleTimeString(),
- ticker,
- message: `Създаден нов сигнал за задействане при цена ${criteria === 'ABOVE' ? 'над' : 'под'} $${targetPrice}.`,
- type: 'info'
- };
- setLogs(prev => [newLog, ...prev]);
- };
+    const newLog: NotificationLog = {
+      id: `${Date.now()}-${Math.random()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      ticker,
+      message: `Създаден нов сигнал за задействане при цена ${criteria === 'ABOVE' ? 'над' : 'под'} $${targetPrice}.`,
+      type: 'info'
+    };
+    setLogs(prev => [newLog, ...prev]);
+  };
+
+  const handleUpdateAlert = (id: string, ticker: string, criteria: 'ABOVE' | 'BELOW', targetPrice: number) => {
+    setAlerts(prev => prev.map(a => a.id === id ? { ...a, ticker, criteria, targetPrice } : a));
+
+    const newLog: NotificationLog = {
+      id: `${Date.now()}-${Math.random()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      ticker,
+      message: `Редактиран сигнал за задействане при цена ${criteria === 'ABOVE' ? 'над' : 'под'} $${targetPrice}.`,
+      type: 'info'
+    };
+    setLogs(prev => [newLog, ...prev]);
+  };
 
  const handleDeleteAlert = (id: string) => {
  setAlerts(prev => prev.filter(a => a.id !== id));
@@ -925,10 +938,11 @@ export default function App() {
 
  {/* Planning custom price alerts container (moved below table) */}
  <PriceAlertPlanner
- stocks={stocks}
- alerts={alerts}
- onAddAlert={handleAddAlert}
- onDeleteAlert={handleDeleteAlert}
+    stocks={stocks}
+    alerts={alerts}
+    onAddAlert={handleAddAlert}
+    onUpdateAlert={handleUpdateAlert}
+    onDeleteAlert={handleDeleteAlert}
  />
 
  {/* Verified Business & Stock News Feed */}
