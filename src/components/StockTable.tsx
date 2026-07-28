@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter } from '../types';
 import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
@@ -167,32 +167,6 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  const [editCalcLink, setEditCalcLink] = useState('');
  const [editAiAnalysis, setEditAiAnalysis] = useState('');
 
- // Resizable Company Name column
- const [companyNameWidth, setCompanyNameWidth] = useState(180);
- const resizingRef = useRef(false);
- const resizeStartXRef = useRef(0);
- const resizeStartWidthRef = useRef(180);
-
- const handleCompanyNameResizeStart = (e: React.MouseEvent) => {
-   e.preventDefault();
-   resizingRef.current = true;
-   resizeStartXRef.current = e.clientX;
-   resizeStartWidthRef.current = companyNameWidth;
-   const handleMouseMove = (ev: MouseEvent) => {
-     if (!resizingRef.current) return;
-     const delta = ev.clientX - resizeStartXRef.current;
-     setCompanyNameWidth(Math.max(80, resizeStartWidthRef.current + delta));
-   };
-   const handleMouseUp = () => {
-     resizingRef.current = false;
-     document.removeEventListener('mousemove', handleMouseMove);
-     document.removeEventListener('mouseup', handleMouseUp);
-     document.body.style.cursor = '';
-   };
-   document.body.style.cursor = 'col-resize';
-   document.addEventListener('mousemove', handleMouseMove);
-   document.addEventListener('mouseup', handleMouseUp);
- };
  // Pagination
  const [currentPage, setCurrentPage] = useState(1);
  const itemsPerPage = 15;
@@ -243,7 +217,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }); // НЕ слагаме dependency array — нужно е да се освежава на всеки render
+  });
 
  const handleSaveClick = (ticker: string) => {
     const original = stocks.find(s => s.ticker === ticker);
@@ -593,39 +567,25 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </div>
  </div>
 
-  {/* Main Grid Responsive Table with touch scroll */}
+  {/* Main Grid Responsive Table with exactly 21 columns and scrollbar view */}
   <div 
-    className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth shadow-inner"
+    className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth"
     style={{ WebkitOverflowScrolling: 'touch' }}
   >
-  <table className="responsive-stock-table w-full text-left border-separate border-spacing-0 min-w-max md:min-w-full table-auto">
+  <table className="w-full text-left border-collapse min-w-[2000px] table-auto">
 
- <thead className="sticky top-0 z-20 bg-bg">
- <tr className="bg-bg text-ink/90 border-b-2 border-border text-[11px] md:text-xs uppercase font-medium font-sans tabular-nums tracking-wider">
- <th className="py-3 px-4 whitespace-nowrap border-r border-border/10">Watch</th>
- <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap sticky left-0 z-30 bg-bg shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r border-border/10" onClick={() => handleSort('ticker')}>
+ <thead className="sticky top-0 z-20 bg-bg rounded-2xl">
+ <tr className="bg-bg rounded-2xl text-ink/90 border-b-2 border-border text-xs uppercase font-medium font-sans tabular-nums tracking-wider select-none">
+ <th className="py-3 px-4 whitespace-nowrap">Watch</th>
+ <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('ticker')}>
  Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
-  <th
-   className="py-3 px-4 whitespace-nowrap relative select-none border-r border-border/10 group"
-   style={{ width: companyNameWidth, minWidth: 80 }}
-  >
-   Company Name
-   {/* Drag handle */}
-   <span
-    onMouseDown={handleCompanyNameResizeStart}
-    className="absolute right-0 top-0 h-full w-2 cursor-col-resize flex items-center justify-center opacity-0 group-hover:opacity-100"
-    style={{ userSelect: 'none' }}
-    title="Плъзни за да промениш широчината"
-   >
-    <span className="w-0.5 h-4 bg-border rounded-full" />
-   </span>
-  </th>
- <th className="py-3 px-4 text-center whitespace-nowrap border-r border-border/10">Statistics</th>
- <th className="py-3 px-4 text-center whitespace-nowrap border-r border-border/10">365 Chart</th>
- <th className="py-3 px-4 whitespace-nowrap border-r border-border/10">Date</th>
- <th className="py-3 px-4 text-right whitespace-nowrap border-r border-border/10">Price of Calc.</th>
- <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap border-r border-border/10" onClick={() => handleSort('dailyChangePct')}>
+ <th className="py-3 px-4 whitespace-nowrap">Company Name</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">Statistics</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap">365 Chart</th>
+ <th className="py-3 px-4 whitespace-nowrap">Date</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">Price of Calc.</th>
+ <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('dailyChangePct')}>
  Daily Change %{sortField === 'dailyChangePct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('currentPrice')}>
@@ -653,7 +613,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </tr>
  </thead>
 
- <tbody className="font-sans tabular-nums text-xs text-ink">
+ <tbody className="divide-y divide-white/10 font-sans tabular-nums text-xs text-ink">
  {pageStocks.map(stock => {
  const isEditing = editingRow === stock.ticker;
  const isPositiveChange = stock.dailyChangePct >= 0;
@@ -668,9 +628,9 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
      setSelectedRow(stock.ticker);
    }
  }}
- className={`border-b border-border hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
- isEditing ? 'bg-bg' : ''
- } ${selectedRow === stock.ticker ? 'bg-indigo-500/10' : ''}`}
+ className={`hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
+ isEditing ? 'bg-bg rounded-2xl/10' : ''
+ } ${selectedRow === stock.ticker ? 'bg-indigo-500/10 outline-double outline-1 outline-indigo-500/50' : ''}`}
  onKeyDown={isEditing ? (e) => {
  if (e.key === 'Enter') {
  handleSaveClick(stock.ticker);
@@ -732,7 +692,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </td>
 
   {/* 2. TICKER */}
-  <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis sticky left-0 z-10 bg-bg/95 backdrop-blur-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-card-hover border-b border-border">
+  <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis">
     {isEditing ? (
       <input
         type="text"
@@ -759,10 +719,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
   </td>
 
   {/* 3. COMPANY NAME */}
-  <td
-   className="py-3 px-4 text-ink font-sans font-medium transition-colors border-b border-border overflow-hidden text-ellipsis whitespace-nowrap"
-   style={{ width: companyNameWidth, minWidth: 80, maxWidth: companyNameWidth }}
-  >
+  <td className="py-3 px-4 text-ink font-sans font-medium hover:text-ink transition-colors overflow-hidden text-ellipsis whitespace-nowrap">
   {isEditing ? (
   <div className="flex items-center gap-2">
     <StockLogo ticker={stock.ticker} />
