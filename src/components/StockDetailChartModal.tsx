@@ -67,11 +67,21 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   else if (stock.ticker.startsWith('^')) { exch = 'Index'; ccy = 'pts'; }
 
   const cs = ccy === 'EUR' ? '€' : ccy === 'SEK' ? 'kr ' : ccy === 'CHF' ? 'CHF ' : ccy === 'pts' ? '' : '$';
-  const fp = (v: number) => {
+  
+  const priceToDisplay = (typeof stock.currentPrice === 'number' && stock.currentPrice > 0)
+    ? stock.currentPrice
+    : (typeof stock.priceOfCalc === 'number' && stock.priceOfCalc > 0)
+    ? stock.priceOfCalc
+    : (typeof stock.fairPrice === 'number' && stock.fairPrice > 0)
+    ? stock.fairPrice
+    : null;
+
+  const fp = (v: number | null | undefined) => {
+    if (v == null || typeof v !== 'number' || isNaN(v) || v <= 0) return '—';
     const s = v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return (ccy === 'SEK' || ccy === 'CHF') ? `${s} ${cs.trim()}` : `${cs}${s}`;
   };
-  const fc = (v: number | string | null | undefined) => v == null ? '—' : typeof v === 'string' ? v : fp(v);
+  const fc = (v: number | string | null | undefined) => v == null ? '—' : typeof v === 'string' ? v : fp(typeof v === 'number' ? v : parseFloat(v));
   const sym = stock.ticker.includes(':') ? stock.ticker.split(':').pop()! : stock.ticker;
 
   const isUp = (stock.dailyChangePct ?? 0) >= 0;
@@ -96,7 +106,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
     { label: '6M', val: '6M', tvRange: '6M', interval: 'D' },
     { label: '1Y', val: '1Y', tvRange: '12M', interval: 'D' },
     { label: '5Y', val: '5Y', tvRange: '60M', interval: 'W' },
-    { label: 'ALL', val: 'ALL', tvRange: 'ALL', interval: 'W' },
+    { label: 'ALL', val: 'ALL', tvRange: 'ALL', interval: 'M' },
   ] as const;
 
   const currentConf = RANGES.find(r => r.val === activeRange)!;
@@ -120,7 +130,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
         {/* HEADER */}
         <div className="p-4 sm:p-6 pb-2 sm:pb-4 flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <div className="text-2xl sm:text-3xl font-bold text-ink tracking-tight leading-tight">
+            <div className="text-2xl sm:text-3xl font-bold text-ink tracking-tight leading-tight uppercase">
               {sym}
             </div>
             <div className="text-xs sm:text-xs text-ink-muted mt-0.5 font-medium">
@@ -133,7 +143,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
           
           <div className="flex flex-col items-start sm:items-end w-full sm:w-auto pr-8 sm:pr-14">
             <div className="text-2xl sm:text-3xl font-bold text-ink tracking-tight leading-tight tabular-nums">
-              {fp(stock.currentPrice)}
+              {fp(priceToDisplay)}
             </div>
             <div 
               className="text-xs sm:text-lg font-semibold mt-0.5 flex items-center justify-end gap-1.5 tabular-nums"
