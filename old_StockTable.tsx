@@ -619,13 +619,21 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <tr
  key={stock.ticker}
  onClick={(e) => {
-   if (!isEditing) {
+   // Avoid selecting row when clicking on buttons, links or selects inside the row
+   if ((e.target as HTMLElement).tagName !== 'BUTTON' && (e.target as HTMLElement).tagName !== 'A' && (e.target as HTMLElement).tagName !== 'SELECT') {
      setSelectedRow(stock.ticker);
    }
  }}
- className={`border-b border-border hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
- isEditing ? 'bg-bg' : ''
- } ${selectedRow === stock.ticker ? 'bg-indigo-500/10' : ''}`}
+ className={`hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
+ isEditing ? 'bg-bg rounded-2xl/10' : ''
+ } ${selectedRow === stock.ticker ? 'bg-indigo-500/10 outline-double outline-1 outline-indigo-500/50' : ''}`}
+ onKeyDown={isEditing ? (e) => {
+ if (e.key === 'Enter') {
+ handleSaveClick(stock.ticker);
+ } else if (e.key === 'Escape') {
+ cancelInlineEdit();
+ }
+ } : undefined}
  >
  {/* 1. WATCH */}
  <td className="py-3 px-4 font-sans overflow-hidden text-ellipsis whitespace-nowrap">
@@ -1071,19 +1079,17 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
   <div className="flex items-center justify-center gap-1 shrink-0">
  <button
  onClick={() => handleSaveClick(stock.ticker)}
- className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-700 text-white text-[10px] font-bold hover:bg-[#10b981] duration-100 border border-emerald-800 cursor-pointer"
- title="Запази промените (Enter)"
+ className="p-1 rounded-md bg-emerald-700 text-ink hover:bg-[#10b981] duration-100 border border-emerald-800 cursor-pointer"
+ title="Запази"
  >
- <Check className="w-2.5 h-2.5" />
- <span className="hidden sm:inline">↵</span>
+ <Check className="w-3 h-3" />
  </button>
  <button
  onClick={cancelInlineEdit}
- className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-red-700 text-white text-[10px] font-bold hover:bg-red-800 duration-100 border border-red-800 cursor-pointer"
- title="Отказ (Esc)"
+ className="p-1 rounded-md bg-red-700 text-ink hover:bg-red-800 duration-100 border border-red-850 cursor-pointer"
+ title="Отказ"
  >
- <X className="w-2.5 h-2.5" />
- <span className="hidden sm:inline">Esc</span>
+ <X className="w-3 h-3" />
  </button>
  </div>
  ) : (
