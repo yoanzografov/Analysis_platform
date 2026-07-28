@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Stock, TableFilter } from '../types';
 import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';

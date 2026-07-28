@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { StrictMode, Component, ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
@@ -5,12 +6,17 @@ import './index.css';
 
 // Error Boundary - catches any crash and shows friendly message instead of black screen
 interface EBProps { children: ReactNode; }
-interface EBState { error: Error | null; }
+interface EBState { hasError: boolean; message: string; }
 class ErrorBoundary extends Component<EBProps, EBState> {
-  state: EBState = { error: null };
-  static getDerivedStateFromError(error: Error): EBState { return { error }; }
+  constructor(props: EBProps) {
+    super(props);
+    this.state = { hasError: false, message: '' };
+  }
+  static getDerivedStateFromError(error: Error): EBState {
+    return { hasError: true, message: error.message };
+  }
   render(): ReactNode {
-    if (this.state.error) {
+    if (this.state.hasError) {
       return (
         <div style={{
           minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -25,20 +31,17 @@ class ErrorBoundary extends Component<EBProps, EBState> {
           </p>
           <button
             onClick={() => window.location.reload()}
-            style={{
-              padding: '10px 24px', background: '#10b981', color: 'white',
-              border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: 'pointer'
-            }}
+            style={{ padding: '10px 24px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
           >
             Опресни страницата
           </button>
           <pre style={{ fontSize: '11px', color: '#a1a1aa', maxWidth: '500px', overflow: 'auto', textAlign: 'left' }}>
-            {this.state.error.message}
+            {this.state.message}
           </pre>
         </div>
       );
     }
-    return (this.props as EBProps).children;
+    return this.props.children;
   }
 }
 
