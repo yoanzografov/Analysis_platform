@@ -5,6 +5,7 @@ import IndexDetailChartModal from './IndexDetailChartModal';
 
 interface Props {
   indices: MarketIndex[];
+  isSimulating?: boolean;
 }
 
 function IndexHoverChart({ changePct, name }: { changePct: number; name: string }) {

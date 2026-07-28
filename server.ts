@@ -935,6 +935,7 @@ app.get("/api/news", async (req, res) => {
     const aiClient = getGeminiClient();
     
     let rawNews: Array<{ title: string; link: string; pubDate: string; source: string }> = [];
+    let uniqueNews: Array<{ title: string; link: string; pubDate: string; source: string }> = [];
 
     // 1. Try Financial Modeling Prep (FMP) API if key is available
     if (process.env.FMP_API_KEY) {
@@ -1003,7 +1004,7 @@ app.get("/api/news", async (req, res) => {
       // Sort by date descending and take top 5 unique by title
       rawNews.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
       
-      const uniqueNews = [];
+      uniqueNews = [];
       const seenTitles = new Set();
       for (const item of rawNews) {
         if (!seenTitles.has(item.title)) {
