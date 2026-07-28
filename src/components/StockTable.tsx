@@ -576,7 +576,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap sticky left-0 z-30 bg-bg shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" onClick={() => handleSort('ticker')}>
  Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
- <th className="py-3 px-4 whitespace-nowrap">Company Name</th>
+ <th className="py-3 px-4 whitespace-nowrap max-w-[140px]">Company Name</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">Statistics</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">365 Chart</th>
  <th className="py-3 px-4 whitespace-nowrap">Date</th>
@@ -609,7 +609,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </tr>
  </thead>
 
- <tbody className="divide-y divide-white/10 font-sans tabular-nums text-xs text-ink">
+ <tbody className="divide-y divide-border font-sans tabular-nums text-xs text-ink">
  {pageStocks.map(stock => {
  const isEditing = editingRow === stock.ticker;
  const isPositiveChange = stock.dailyChangePct >= 0;
@@ -715,7 +715,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
   </td>
 
   {/* 3. COMPANY NAME */}
-  <td className="py-3 px-4 text-ink font-sans font-medium hover:text-ink transition-colors overflow-hidden text-ellipsis whitespace-nowrap">
+  <td className="py-3 px-4 text-ink font-sans font-medium hover:text-ink transition-colors whitespace-nowrap max-w-[140px] overflow-hidden text-ellipsis">
   {isEditing ? (
   <div className="flex items-center gap-2">
     <StockLogo ticker={stock.ticker} />
