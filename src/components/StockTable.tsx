@@ -167,6 +167,32 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  const [editCalcLink, setEditCalcLink] = useState('');
  const [editAiAnalysis, setEditAiAnalysis] = useState('');
 
+ // Resizable Company Name column
+ const [companyNameWidth, setCompanyNameWidth] = useState(180);
+ const resizingRef = useRef(false);
+ const resizeStartXRef = useRef(0);
+ const resizeStartWidthRef = useRef(180);
+
+ const handleCompanyNameResizeStart = (e: React.MouseEvent) => {
+   e.preventDefault();
+   resizingRef.current = true;
+   resizeStartXRef.current = e.clientX;
+   resizeStartWidthRef.current = companyNameWidth;
+   const handleMouseMove = (ev: MouseEvent) => {
+     if (!resizingRef.current) return;
+     const delta = ev.clientX - resizeStartXRef.current;
+     setCompanyNameWidth(Math.max(80, resizeStartWidthRef.current + delta));
+   };
+   const handleMouseUp = () => {
+     resizingRef.current = false;
+     document.removeEventListener('mousemove', handleMouseMove);
+     document.removeEventListener('mouseup', handleMouseUp);
+     document.body.style.cursor = '';
+   };
+   document.body.style.cursor = 'col-resize';
+   document.addEventListener('mousemove', handleMouseMove);
+   document.addEventListener('mouseup', handleMouseUp);
+ };
  // Pagination
  const [currentPage, setCurrentPage] = useState(1);
  const itemsPerPage = 15;
@@ -568,20 +594,34 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
     className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth shadow-inner"
     style={{ WebkitOverflowScrolling: 'touch' }}
   >
-  <table className="responsive-stock-table w-full text-left border-collapse min-w-max md:min-w-full table-auto">
+  <table className="responsive-stock-table w-full text-left border-separate border-spacing-0 min-w-max md:min-w-full table-auto">
 
  <thead className="sticky top-0 z-20 bg-bg">
  <tr className="bg-bg text-ink/90 border-b-2 border-border text-[11px] md:text-xs uppercase font-medium font-sans tabular-nums tracking-wider">
- <th className="py-3 px-4 whitespace-nowrap">Watch</th>
- <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap sticky left-0 z-30 bg-bg shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" onClick={() => handleSort('ticker')}>
+ <th className="py-3 px-4 whitespace-nowrap border-r border-border/10">Watch</th>
+ <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap sticky left-0 z-30 bg-bg shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r border-border/10" onClick={() => handleSort('ticker')}>
  Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
- <th className="py-3 px-4 whitespace-nowrap max-w-[140px]">Company Name</th>
- <th className="py-3 px-4 text-center whitespace-nowrap">Statistics</th>
- <th className="py-3 px-4 text-center whitespace-nowrap">365 Chart</th>
- <th className="py-3 px-4 whitespace-nowrap">Date</th>
- <th className="py-3 px-4 text-right whitespace-nowrap">Price of Calc.</th>
- <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('dailyChangePct')}>
+  <th
+   className="py-3 px-4 whitespace-nowrap relative select-none border-r border-border/10 group"
+   style={{ width: companyNameWidth, minWidth: 80 }}
+  >
+   Company Name
+   {/* Drag handle */}
+   <span
+    onMouseDown={handleCompanyNameResizeStart}
+    className="absolute right-0 top-0 h-full w-2 cursor-col-resize flex items-center justify-center opacity-0 group-hover:opacity-100"
+    style={{ userSelect: 'none' }}
+    title="Плъзни за да промениш широчината"
+   >
+    <span className="w-0.5 h-4 bg-border rounded-full" />
+   </span>
+  </th>
+ <th className="py-3 px-4 text-center whitespace-nowrap border-r border-border/10">Statistics</th>
+ <th className="py-3 px-4 text-center whitespace-nowrap border-r border-border/10">365 Chart</th>
+ <th className="py-3 px-4 whitespace-nowrap border-r border-border/10">Date</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap border-r border-border/10">Price of Calc.</th>
+ <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap border-r border-border/10" onClick={() => handleSort('dailyChangePct')}>
  Daily Change %{sortField === 'dailyChangePct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('currentPrice')}>
@@ -609,7 +649,7 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
  </tr>
  </thead>
 
- <tbody className="divide-y divide-border font-sans tabular-nums text-xs text-ink">
+ <tbody className="font-sans tabular-nums text-xs text-ink">
  {pageStocks.map(stock => {
  const isEditing = editingRow === stock.ticker;
  const isPositiveChange = stock.dailyChangePct >= 0;
@@ -624,9 +664,9 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
      setSelectedRow(stock.ticker);
    }
  }}
- className={`hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
- isEditing ? 'bg-bg rounded-2xl/10' : ''
- } ${selectedRow === stock.ticker ? 'bg-indigo-500/10 outline-double outline-1 outline-indigo-500/50' : ''}`}
+ className={`border-b border-border hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
+ isEditing ? 'bg-bg' : ''
+ } ${selectedRow === stock.ticker ? 'bg-indigo-500/10' : ''}`}
  onKeyDown={isEditing ? (e) => {
  if (e.key === 'Enter') {
  handleSaveClick(stock.ticker);
@@ -715,7 +755,10 @@ export default function StockTable({ stocks, onUpdateStock, onDeleteStock, onSel
   </td>
 
   {/* 3. COMPANY NAME */}
-  <td className="py-3 px-4 text-ink font-sans font-medium hover:text-ink transition-colors whitespace-nowrap max-w-[140px] overflow-hidden text-ellipsis">
+  <td
+   className="py-3 px-4 text-ink font-sans font-medium transition-colors border-b border-border overflow-hidden text-ellipsis whitespace-nowrap"
+   style={{ width: companyNameWidth, minWidth: 80, maxWidth: companyNameWidth }}
+  >
   {isEditing ? (
   <div className="flex items-center gap-2">
     <StockLogo ticker={stock.ticker} />
