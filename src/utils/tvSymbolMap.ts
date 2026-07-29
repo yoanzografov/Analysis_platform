@@ -18,7 +18,7 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     }
   }
 
-  // Handle Indexes, Commodities, Crypto, Currencies
+  // Handle Indexes, Commodities, Crypto, Currencies (use TVC / OANDA free symbols for widgets)
   const map: Record<string, string> = {
     '^GSPC': 'OANDA:SPX500USD',
     '^NDX': 'OANDA:NAS100USD',
@@ -35,13 +35,13 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     '^HSI': 'OANDA:HK33HKD',
     '^AXJO': 'OANDA:AU200AUD',
     '^KS11': 'KRX:KOSPI',
-    'CL=F': 'NYMEX:CL1!',
+    'CL=F': 'TVC:USOIL',
     'BZ=F': 'TVC:UKOIL',
-    'GC=F': 'COMEX:GC1!',
-    'SI=F': 'COMEX:SI1!',
-    'HG=F': 'COMEX:HG1!',
-    'NG=F': 'NYMEX:NG1!',
-    'PL=F': 'NYMEX:PL1!',
+    'GC=F': 'TVC:GOLD',
+    'SI=F': 'TVC:SILVER',
+    'HG=F': 'TVC:COPPER',
+    'NG=F': 'TVC:NATURALGAS',
+    'PL=F': 'TVC:PLATINUM',
     'EURUSD=X': 'OANDA:EURUSD',
     'JPY=X': 'OANDA:USDJPY',
     'GBP=X': 'OANDA:USDGBP',
@@ -63,6 +63,13 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
   if (lookupKey.includes('FTSE 100')) return 'OANDA:UK100GBP';
   if (lookupKey.includes('VIX')) return 'CBOE:VIX';
   if (lookupKey.includes('Euro STOXX 50')) return 'OANDA:EU50EUR';
+  if (lookupKey.includes('Gold')) return 'TVC:GOLD';
+  if (lookupKey.includes('Silver')) return 'TVC:SILVER';
+  if (lookupKey.includes('Crude Oil') || lookupKey.includes('WTI')) return 'TVC:USOIL';
+  if (lookupKey.includes('Brent')) return 'TVC:UKOIL';
+  if (lookupKey.includes('Copper')) return 'TVC:COPPER';
+  if (lookupKey.includes('Natural Gas')) return 'TVC:NATURALGAS';
+  if (lookupKey.includes('Platinum')) return 'TVC:PLATINUM';
   
   // If the ticker has a prefix but wasn't caught, or doesn't have a prefix
   if (ticker && ticker.includes(':')) {
