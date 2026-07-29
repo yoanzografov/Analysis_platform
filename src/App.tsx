@@ -206,22 +206,34 @@ export default function App() {
    return currentIndexs.map(idx => {
      const relatedTicker = idx.ticker || '';
      const quote = relatedTicker ? data.quotes[relatedTicker.trim().toUpperCase()] : null;
+     
+     let currentPrice = idx.value;
+     let dailyChangePct = idx.changePct ?? 0;
+     let changeVal = idx.changeVal ?? 0;
+
      if (quote) {
-       const currentPrice = (typeof quote.currentPrice === 'number' && quote.currentPrice > 0) ? quote.currentPrice : idx.value;
-       const dailyChangePct = (typeof quote.dailyChangePct === 'number' && !isNaN(quote.dailyChangePct)) ? quote.dailyChangePct : (idx.changePct ?? 0);
-       let changeVal = (typeof quote.changeVal === 'number' && !isNaN(quote.changeVal)) ? quote.changeVal : (idx.changeVal ?? 0);
-       if (changeVal === 0 && currentPrice && dailyChangePct !== 0) {
-         const prevPrice = currentPrice / (1 + dailyChangePct / 100);
-         changeVal = currentPrice - prevPrice;
+       if (typeof quote.currentPrice === 'number' && quote.currentPrice > 0) {
+         currentPrice = quote.currentPrice;
        }
-       return {
-         ...idx,
-         value: currentPrice,
-         changePct: dailyChangePct,
-         changeVal: parseFloat((changeVal || 0).toFixed(2))
-       };
+       if (typeof quote.dailyChangePct === 'number' && !isNaN(quote.dailyChangePct) && quote.dailyChangePct !== 0) {
+         dailyChangePct = quote.dailyChangePct;
+       }
+       if (typeof quote.changeVal === 'number' && !isNaN(quote.changeVal) && quote.changeVal !== 0) {
+         changeVal = quote.changeVal;
+       }
      }
-     return idx;
+
+     if (changeVal === 0 && currentPrice > 0 && dailyChangePct !== 0) {
+       const prevPrice = currentPrice / (1 + dailyChangePct / 100);
+       changeVal = currentPrice - prevPrice;
+     }
+
+     return {
+       ...idx,
+       value: currentPrice,
+       changePct: parseFloat((dailyChangePct || 0).toFixed(2)),
+       changeVal: parseFloat((changeVal || 0).toFixed(2))
+     };
    });
  });
 

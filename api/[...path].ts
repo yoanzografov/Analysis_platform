@@ -39,19 +39,24 @@ async function fetchYahooV7(symbols: string[]): Promise<any[]> {
 
 // Yahoo Finance v8 chart API fallback for a single symbol
 async function fetchYahooV8Single(symbol: string): Promise<any | null> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`;
   const res = await fetch(url, { headers: YAHOO_HEADERS });
   if (!res.ok) return null;
   const json = await res.json();
   const meta = json?.chart?.result?.[0]?.meta;
   if (!meta) return null;
+
+  const price = meta.regularMarketPrice;
+  const prevClose = meta.previousClose ?? meta.chartPreviousClose;
+  const changeVal = (price != null && prevClose != null) ? price - prevClose : 0;
+  const changePct = (price != null && prevClose != null && prevClose > 0) ? ((price - prevClose) / prevClose) * 100 : 0;
+
   return {
     symbol,
-    regularMarketPrice: meta.regularMarketPrice,
-    regularMarketPreviousClose: meta.previousClose ?? meta.chartPreviousClose,
-    regularMarketChangePercent: meta.regularMarketPrice && meta.previousClose
-      ? ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose) * 100
-      : 0,
+    regularMarketPrice: price,
+    regularMarketPreviousClose: prevClose,
+    regularMarketChange: changeVal,
+    regularMarketChangePercent: changePct,
     fiftyTwoWeekLow: meta.fiftyTwoWeekLow,
     fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh,
     longName: meta.longName ?? meta.shortName,
