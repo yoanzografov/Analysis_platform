@@ -8,8 +8,9 @@ interface Props {
   isSimulating?: boolean;
 }
 
-function IndexHoverChart({ changePct, name }: { changePct: number; name: string }) {
-  const isUp = changePct >= 0;
+function IndexHoverChart({ changePct, name }: { changePct?: number; name: string }) {
+  const safePct = typeof changePct === 'number' && !isNaN(changePct) ? changePct : 0;
+  const isUp = safePct >= 0;
   let seed = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   
   const steps = 24;
@@ -20,7 +21,7 @@ function IndexHoverChart({ changePct, name }: { changePct: number; name: string 
   for (let i = 1; i <= steps; i++) {
     seed = (seed * 9301 + 49297) % 233280;
     const rnd = (seed / 233280) - 0.5;
-    const trend = (changePct / 100) / steps;
+    const trend = (safePct / 100) / steps;
     currentVal = currentVal * (1 + rnd * 0.04 + trend);
     prices[i] = currentVal;
   }
@@ -48,7 +49,7 @@ function IndexHoverChart({ changePct, name }: { changePct: number; name: string 
       <div className="flex items-center justify-between">
         <span className="text-xs font-sans font-bold text-ink-muted">Дневно движение</span>
         <span className={`text-xs font-sans font-black tabular-nums ${isUp ? 'text-[#10b981]' : 'text-[#f43f5e]'}`}>
-          {isUp ? '+' : ''}{changePct.toFixed(2)}%
+          {isUp ? '+' : ''}{safePct.toFixed(2)}%
         </span>
       </div>
       <svg width={width} height={height} className="overflow-visible">
@@ -185,7 +186,9 @@ export default function IndicesStrip({ indices }: Props) {
             {/* Real items */}
             {displayItems.map((item, idx) => {
               const flash = flashStates[item.name];
-              const isPositive = item.changePct >= 0;
+              const safePct = typeof item.changePct === 'number' && !isNaN(item.changePct) ? item.changePct : 0;
+              const safeVal = typeof item.changeVal === 'number' && !isNaN(item.changeVal) ? item.changeVal : 0;
+              const isPositive = safePct >= 0;
 
               return (
                 <div
@@ -216,7 +219,7 @@ export default function IndicesStrip({ indices }: Props) {
                       <ArrowDownRight className="w-3 h-3 shrink-0" />
                     )}
                     <span>
-                      {isPositive ? '+' : ''}{item.changeVal !== undefined ? item.changeVal.toFixed(2) : '0.00'} {isPositive ? '+' : ''}{item.changePct.toFixed(2)}%
+                      {isPositive ? '+' : ''}{safeVal.toFixed(2)} {isPositive ? '+' : ''}{safePct.toFixed(2)}%
                     </span>
                   </div>
 
@@ -224,7 +227,7 @@ export default function IndicesStrip({ indices }: Props) {
                   <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 hidden group-hover:block p-4 bg-bg border-2 border-border rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] z-[200] pointer-events-none origin-top animate-in fade-in zoom-in-95 duration-150">
                     <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-bg border-t-2 border-l-2 border-border rotate-45" />
                     <div className="relative z-10 bg-bg">
-                      <IndexHoverChart changePct={item.changePct} name={item.name} />
+                      <IndexHoverChart changePct={safePct} name={item.name} />
                     </div>
                   </div>
                 </div>
