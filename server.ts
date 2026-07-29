@@ -505,6 +505,7 @@ const baselinePrices: Record<string, { price: number; name: string; pe?: number;
 interface StockQuoteData {
   currentPrice: number;
   dailyChangePct: number;
+  changeVal?: number;
   companyName?: string;
   low52?: number;
   high52?: number;
@@ -1568,15 +1569,20 @@ app.get("/api/stock-quotes", async (req, res) => {
         const currentPrice = q.regularMarketPrice ?? q.postMarketPrice ?? q.bid;
         const prevClose = q.regularMarketPreviousClose;
         let dailyChangePct = q.regularMarketChangePercent;
+        let changeVal = q.regularMarketChange;
 
-        if (dailyChangePct === undefined && prevClose && currentPrice) {
+        if ((dailyChangePct === undefined || dailyChangePct === null) && prevClose && currentPrice) {
           dailyChangePct = ((currentPrice - prevClose) / prevClose) * 100;
+        }
+        if ((changeVal === undefined || changeVal === null) && prevClose && currentPrice) {
+          changeVal = currentPrice - prevClose;
         }
 
         if (currentPrice !== undefined && currentPrice !== null) {
           results[originalTicker] = {
             currentPrice: parseFloat(currentPrice.toFixed(2)),
             dailyChangePct: parseFloat((dailyChangePct || 0).toFixed(2)),
+            changeVal: changeVal !== undefined && changeVal !== null ? parseFloat(changeVal.toFixed(2)) : 0,
             companyName: q.longName || q.shortName || undefined,
             low52: q.fiftyTwoWeekLow ? parseFloat(q.fiftyTwoWeekLow.toFixed(2)) : undefined,
             high52: q.fiftyTwoWeekHigh ? parseFloat(q.fiftyTwoWeekHigh.toFixed(2)) : undefined,

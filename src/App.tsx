@@ -203,26 +203,26 @@ export default function App() {
 
  // Set indexes to real financial values 
  setIndices(currentIndexs => {
-  return currentIndexs.map(idx => {
-    const relatedTicker = idx.ticker || '';
-    const quote = relatedTicker ? data.quotes[relatedTicker.trim().toUpperCase()] : null;
-    if (quote) {
-      const currentPrice = (typeof quote.currentPrice === 'number' && quote.currentPrice > 0) ? quote.currentPrice : idx.value;
-      const dailyChangePct = (typeof quote.dailyChangePct === 'number' && !isNaN(quote.dailyChangePct)) ? quote.dailyChangePct : (idx.changePct ?? 0);
-      let changeVal = idx.changeVal ?? 0;
-      if (currentPrice && dailyChangePct !== 0) {
-        const prevPrice = currentPrice / (1 + dailyChangePct / 100);
-        changeVal = currentPrice - prevPrice;
-      }
-      return {
-        ...idx,
-        value: currentPrice,
-        changePct: dailyChangePct,
-        changeVal: parseFloat((changeVal || 0).toFixed(2))
-      };
-    }
-    return idx;
-  });
+   return currentIndexs.map(idx => {
+     const relatedTicker = idx.ticker || '';
+     const quote = relatedTicker ? data.quotes[relatedTicker.trim().toUpperCase()] : null;
+     if (quote) {
+       const currentPrice = (typeof quote.currentPrice === 'number' && quote.currentPrice > 0) ? quote.currentPrice : idx.value;
+       const dailyChangePct = (typeof quote.dailyChangePct === 'number' && !isNaN(quote.dailyChangePct)) ? quote.dailyChangePct : (idx.changePct ?? 0);
+       let changeVal = (typeof quote.changeVal === 'number' && !isNaN(quote.changeVal)) ? quote.changeVal : (idx.changeVal ?? 0);
+       if (changeVal === 0 && currentPrice && dailyChangePct !== 0) {
+         const prevPrice = currentPrice / (1 + dailyChangePct / 100);
+         changeVal = currentPrice - prevPrice;
+       }
+       return {
+         ...idx,
+         value: currentPrice,
+         changePct: dailyChangePct,
+         changeVal: parseFloat((changeVal || 0).toFixed(2))
+       };
+     }
+     return idx;
+   });
  });
 
  const newLog: NotificationLog = {

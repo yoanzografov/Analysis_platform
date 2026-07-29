@@ -64,8 +64,12 @@ function buildResult(q: any) {
 
   const prevClose = q.regularMarketPreviousClose;
   let changePct = q.regularMarketChangePercent;
+  let changeVal = q.regularMarketChange;
   if (changePct == null && prevClose && price) {
     changePct = ((price - prevClose) / prevClose) * 100;
+  }
+  if (changeVal == null && prevClose && price) {
+    changeVal = price - prevClose;
   }
 
   const pe = q.trailingPE ?? q.forwardPE;
@@ -74,6 +78,7 @@ function buildResult(q: any) {
   return {
     currentPrice: parseFloat(price.toFixed(2)),
     dailyChangePct: parseFloat((changePct ?? 0).toFixed(2)),
+    changeVal: changeVal != null ? parseFloat(changeVal.toFixed(2)) : 0,
     companyName: q.longName || q.shortName || undefined,
     low52: q.fiftyTwoWeekLow != null ? parseFloat(q.fiftyTwoWeekLow.toFixed(2)) : undefined,
     high52: q.fiftyTwoWeekHigh != null ? parseFloat(q.fiftyTwoWeekHigh.toFixed(2)) : undefined,
