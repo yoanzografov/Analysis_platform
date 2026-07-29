@@ -209,7 +209,7 @@ export default function IndicesStrip({ indices }: Props) {
                     {formatPrice(item.value, item.name)}
                   </span>
                   <div
-                    className={`flex items-center gap-0.5 text-xs font-sans tabular-nums font-black leading-none mt-0.5 truncate ${
+                    className={`flex items-center gap-0.5 text-xs font-sans tabular-nums leading-none mt-0.5 truncate ${
                       isPositive ? 'text-[#10b981]' : 'text-red-500'
                     }`}
                   >
@@ -218,8 +218,11 @@ export default function IndicesStrip({ indices }: Props) {
                     ) : (
                       <ArrowDownRight className="w-3 h-3 shrink-0" />
                     )}
-                    <span>
-                      {isPositive ? '+' : ''}{safeVal.toFixed(2)} {isPositive ? '+' : ''}{safePct.toFixed(2)}%
+                    <span className="font-black">
+                      {isPositive ? '+' : ''}{safePct.toFixed(2)}%
+                    </span>
+                    <span className="text-[10px] opacity-75 font-bold shrink-0">
+                      ({isPositive ? '+' : ''}{safeVal.toFixed(2)})
                     </span>
                   </div>
 
