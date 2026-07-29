@@ -18,23 +18,30 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     }
   }
 
-  // Handle Indexes, Commodities, Crypto, Currencies (use TVC / OANDA free symbols for widgets)
+  // Handle Indexes, Commodities, Crypto, Currencies (use 100% free TVC / OANDA un-restricted symbols for widgets)
   const map: Record<string, string> = {
+    // US Markets
     '^GSPC': 'OANDA:SPX500USD',
     '^NDX': 'OANDA:NAS100USD',
     '^IXIC': 'OANDA:NAS100USD',
     '^DJI': 'OANDA:US30USD',
-    '^VIX': 'CBOE:VIX',
+    '^VIX': 'TVC:VIX',
+
+    // European Markets
     '^FTSE': 'OANDA:UK100GBP',
     '^FCHI': 'OANDA:FR40EUR',
     '^GDAXI': 'OANDA:DE30EUR',
-    '^N100': 'EURONEXT:N100',
+    '^N100': 'OANDA:EU50EUR',
     '^STOXX50E': 'OANDA:EU50EUR', 
+
+    // Asian Markets
     '000001.SS': 'TVC:SHCOMP',
     '^N225': 'OANDA:JP225USD',
     '^HSI': 'OANDA:HK33HKD',
     '^AXJO': 'OANDA:AU200AUD',
-    '^KS11': 'KRX:KOSPI',
+    '^KS11': 'TVC:KOSPI',
+
+    // Commodities (Free TVC spot symbols)
     'CL=F': 'TVC:USOIL',
     'BZ=F': 'TVC:UKOIL',
     'GC=F': 'TVC:GOLD',
@@ -42,9 +49,11 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     'HG=F': 'TVC:COPPER',
     'NG=F': 'TVC:NATURALGAS',
     'PL=F': 'TVC:PLATINUM',
+
+    // Currencies & Crypto
     'EURUSD=X': 'OANDA:EURUSD',
     'JPY=X': 'OANDA:USDJPY',
-    'GBP=X': 'OANDA:USDGBP',
+    'GBP=X': 'OANDA:GBPUSD',
     'USDAUD=X': 'OANDA:USDAUD',
     'USDCAD=X': 'OANDA:USDCAD',
     'USDMXN=X': 'OANDA:USDMXN',
@@ -59,10 +68,16 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
   if (lookupKey.includes('Dow Jones')) return 'OANDA:US30USD';
   if (lookupKey.includes('Nasdaq')) return 'OANDA:NAS100USD';
   if (lookupKey.includes('DAX')) return 'OANDA:DE30EUR';
-  if (lookupKey.includes('Nikkei 225')) return 'OANDA:JP225USD';
-  if (lookupKey.includes('FTSE 100')) return 'OANDA:UK100GBP';
-  if (lookupKey.includes('VIX')) return 'CBOE:VIX';
-  if (lookupKey.includes('Euro STOXX 50')) return 'OANDA:EU50EUR';
+  if (lookupKey.includes('Nikkei')) return 'OANDA:JP225USD';
+  if (lookupKey.includes('FTSE')) return 'OANDA:UK100GBP';
+  if (lookupKey.includes('VIX')) return 'TVC:VIX';
+  if (lookupKey.includes('Euro STOXX') || lookupKey.includes('Euronext')) return 'OANDA:EU50EUR';
+  if (lookupKey.includes('Hang Seng')) return 'OANDA:HK33HKD';
+  if (lookupKey.includes('ASX')) return 'OANDA:AU200AUD';
+  if (lookupKey.includes('KOSPI')) return 'TVC:KOSPI';
+  if (lookupKey.includes('SSE')) return 'TVC:SHCOMP';
+  if (lookupKey.includes('CAC')) return 'OANDA:FR40EUR';
+  
   if (lookupKey.includes('Gold')) return 'TVC:GOLD';
   if (lookupKey.includes('Silver')) return 'TVC:SILVER';
   if (lookupKey.includes('Crude Oil') || lookupKey.includes('WTI')) return 'TVC:USOIL';
