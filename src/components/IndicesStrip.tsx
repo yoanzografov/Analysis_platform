@@ -181,7 +181,7 @@ export default function IndicesStrip({ indices }: Props) {
 
           {/* Real-time Indices/Indicators Grid (8 columns) */}
           <div className="flex-1 h-full overflow-x-auto overflow-y-hidden custom-mini-scroll flex bg-bg rounded-r-2xl">
-            <div className="min-w-[800px] flex-1 grid grid-cols-8 divide-x divide-border h-full">
+            <div className="min-w-[980px] flex-1 grid grid-cols-8 divide-x divide-border h-full">
             
             {/* Real items */}
             {displayItems.map((item, idx) => {
@@ -194,7 +194,7 @@ export default function IndicesStrip({ indices }: Props) {
                 <div
                   key={`${item.name}-${item.ticker || idx}`}
                   onClick={() => setActiveChartIndex(item)}
-                  className={`group relative h-full flex flex-col justify-center px-3.5 transition-all duration-300 cursor-pointer ${
+                  className={`group relative h-full flex flex-col justify-center px-2.5 transition-all duration-300 cursor-pointer ${
                     flash === 'up'
                       ? 'bg-emerald-500/10'
                       : flash === 'down'
@@ -209,20 +209,12 @@ export default function IndicesStrip({ indices }: Props) {
                     {formatPrice(item.value, item.name)}
                   </span>
                   <div
-                    className={`flex items-center gap-0.5 text-xs font-sans tabular-nums leading-none mt-0.5 truncate ${
+                    className={`flex items-center gap-1 text-[11px] font-sans tabular-nums font-black leading-none mt-1 whitespace-nowrap ${
                       isPositive ? 'text-[#10b981]' : 'text-red-500'
                     }`}
                   >
-                    {isPositive ? (
-                      <ArrowUpRight className="w-3 h-3 shrink-0" />
-                    ) : (
-                      <ArrowDownRight className="w-3 h-3 shrink-0" />
-                    )}
-                    <span className="font-black">
-                      {isPositive ? '+' : ''}{safePct.toFixed(2)}%
-                    </span>
-                    <span className="text-[10px] opacity-75 font-bold shrink-0">
-                      ({isPositive ? '+' : ''}{safeVal.toFixed(2)})
+                    <span>
+                      {isPositive ? '+' : ''}{safeVal.toFixed(2)} {isPositive ? '+' : ''}{safePct.toFixed(2)}%
                     </span>
                   </div>
 
