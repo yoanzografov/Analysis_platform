@@ -440,7 +440,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
           <div className="flex items-center justify-between border-b border-border/50 pb-2 shrink-0 sticky top-0 bg-bg z-10">
             <h3 className="text-xs uppercase font-extrabold text-ink font-sans tracking-tight flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-indigo-400" />
-              Какво движи пазара & Полезни връзки
+              Какво движи пазара
             </h3>
           </div>
 
