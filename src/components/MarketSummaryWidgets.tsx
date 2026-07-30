@@ -586,23 +586,6 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0" />
           </a>
 
-          {/* Market Drivers Section: TradingView Economic Calendar Widget */}
-          <div className="flex flex-col gap-2 pt-3 border-t border-border/30 mt-2">
-            <span className="text-xs uppercase font-extrabold text-ink tracking-wider">
-              Икономически Календар (TradingView Widget)
-            </span>
-            <div className="w-full h-72 rounded-xl overflow-hidden border border-border relative">
-              <EconomicCalendar
-                colorTheme="dark"
-                width="100%"
-                height="100%"
-                locale="en"
-                countryFilter="us,eu"
-                importanceFilter="0,1"
-              />
-            </div>
-          </div>
-
         </div>
       </div>
 

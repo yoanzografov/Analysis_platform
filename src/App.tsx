@@ -12,12 +12,14 @@ import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
 import { db } from './lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import { 
   Save,
  Building2, 
  Download, 
  Bell, 
  Play, 
+ Calendar,
  Square, 
  RefreshCw,
  Settings2,
@@ -897,6 +899,29 @@ export default function App() {
 
   </div>
  </div>
+
+  {/* TradingView Economic Calendar placed right after the Settings menu */}
+  <div className="bg-card rounded-2xl border border-border p-4 my-4 shadow-xs">
+    <div className="flex items-center justify-between border-b border-border/40 pb-2.5 mb-3">
+      <div className="flex items-center gap-2">
+        <div className="w-2.5 h-5 bg-indigo-500 rounded-full" />
+        <h2 className="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5">
+          <Calendar className="w-4 h-4 text-indigo-400" />
+          Икономически Календар (TradingView)
+        </h2>
+      </div>
+    </div>
+    <div className="w-full h-[360px] rounded-xl overflow-hidden border border-border/50 relative">
+      <EconomicCalendar
+        colorTheme="dark"
+        width="100%"
+        height="100%"
+        locale="en"
+        countryFilter="us,eu"
+        importanceFilter="0,1"
+      />
+    </div>
+  </div>
 
    {/* Dynamic indices banner strip */}
    <IndicesStrip 
