@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Info, Calendar, Flame, AlertCircle, X, HelpCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Info, Calendar, Flame, AlertCircle, X, HelpCircle, Clock } from 'lucide-react';
 
 export interface MarketIndicator {
   id: number;
@@ -22,7 +22,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
     title: '1. Лихвени проценти (FOMC / Federal Funds Rate)',
     englishTitle: 'Fed Interest Rate Decision',
     schedule: 'На всеки 6 седмици (Сряда 21:00 ч. БГ време / 8 пъти годишно)',
-    nextDateDesc: 'Следващо решение: Сряда (FOMC редовно заседание)',
+    nextDateDesc: 'Следващо решение: Заседание на ФЕД (FOMC)',
     impact: 'CRITICAL',
     shortSummary: 'Централните банки (Фед/ЕЦБ) определят цената на парите. Основен двигател за оценката на целия фондов пазар.',
     description: 'Лихвените проценти определят цената, на която банките и компаниите вземат заеми. Когато икономиката прегрява и инфлацията е висока → Фед повишава лихвите. Когато икономиката се охлажда → Фед понижава лихвите.',
@@ -36,7 +36,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
     title: '2. Данни за заетостта (Non-Farm Payrolls - NFP & Безработица)',
     englishTitle: 'Non-Farm Payrolls & Unemployment Rate',
     schedule: 'Всеки първи петък от месеца (15:30 ч. БГ време)',
-    nextDateDesc: 'Следващи данни: Първият петък на идното месечно тримесечие',
+    nextDateDesc: 'Следващи данни: Първият петък на месеца',
     impact: 'CRITICAL',
     shortSummary: 'Месечен доклад за новите работни места в САЩ и процента безработица. Сърцето на икономиката.',
     description: 'NFP измерва колко нови работни места са създадени в икономиката на САЩ през изминалия месец (без селското стопанство и държавните служители). Безработицата показва процента търсещи работа.',
@@ -161,26 +161,58 @@ const INDICATORS_DATA: MarketIndicator[] = [
 
 export default function WhatMovesTheMarket() {
   const [selectedIndicator, setSelectedIndicator] = useState<MarketIndicator | null>(null);
+  const [fomcTimeLeft, setFomcTimeLeft] = useState<{ d: number; h: number; m: number; s: number } | null>(null);
+
+  // FOMC Meetings Schedule Live Timer
+  useEffect(() => {
+    const FOMC_MEETINGS = [
+      new Date('2026-09-16T18:00:00Z'),
+      new Date('2026-11-04T19:00:00Z'),
+      new Date('2026-12-16T19:00:00Z'),
+      new Date('2027-01-27T19:00:00Z'),
+      new Date('2027-03-17T18:00:00Z'),
+      new Date('2027-05-05T18:00:00Z')
+    ];
+
+    const updateTimer = () => {
+      const now = new Date();
+      const target = FOMC_MEETINGS.find(date => date > now) || FOMC_MEETINGS[0];
+      const diff = target.getTime() - now.getTime();
+      
+      if (diff > 0) {
+        setFomcTimeLeft({
+          d: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          h: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          m: Math.floor((diff / 1000 / 60) % 60),
+          s: Math.floor((diff / 1000) % 60)
+        });
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getImpactBadge = (impact: MarketIndicator['impact']) => {
     switch (impact) {
       case 'CRITICAL':
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center gap-1">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center gap-1 shrink-0">
             <Flame className="w-3 h-3 text-rose-400 animate-pulse" />
             Критично (🔴🔴🔴)
           </span>
         );
       case 'HIGH':
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center gap-1">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center gap-1 shrink-0">
             <AlertCircle className="w-3 h-3 text-amber-400" />
             Високо (🔴🔴)
           </span>
         );
       case 'MEDIUM':
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-500/20 text-blue-400 border border-blue-500/40">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-500/20 text-blue-400 border border-blue-500/40 shrink-0">
             Средно (🟡)
           </span>
         );
@@ -189,7 +221,7 @@ export default function WhatMovesTheMarket() {
 
   return (
     <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 mt-6 font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-4 mb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border/40 pb-4 mb-4">
         <div>
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-6 bg-indigo-500 rounded-full" />
@@ -201,9 +233,27 @@ export default function WhatMovesTheMarket() {
             Икономически календар и 10-те основни макроикономически индикатора, определящи посоката на световните борсови пазари (TradingView Feed).
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-xl border border-indigo-500/30 shrink-0 self-start sm:self-auto">
-          <Calendar className="w-4 h-4 text-indigo-400" />
-          <span>Календар на новините</span>
+
+        {/* Featured Live FOMC Countdown Badge in Header */}
+        <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 px-3 py-2 rounded-2xl shrink-0 self-start md:self-auto">
+          <Clock className="w-4 h-4 text-indigo-400 animate-spin-slow shrink-0" />
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">
+              Следващо заседание на ФЕД (FOMC Rate Decision):
+            </span>
+            <div className="flex items-center gap-1 font-sans tabular-nums text-xs font-black text-indigo-400">
+              {fomcTimeLeft ? (
+                <>
+                  <div className="bg-bg/90 border border-indigo-500/30 px-1.5 py-0.5 rounded shadow-2xs">{String(fomcTimeLeft.d).padStart(2, '0')}д</div>:
+                  <div className="bg-bg/90 border border-indigo-500/30 px-1.5 py-0.5 rounded shadow-2xs">{String(fomcTimeLeft.h).padStart(2, '0')}ч</div>:
+                  <div className="bg-bg/90 border border-indigo-500/30 px-1.5 py-0.5 rounded shadow-2xs">{String(fomcTimeLeft.m).padStart(2, '0')}м</div>:
+                  <div className="bg-bg/90 border border-indigo-500/30 px-1.5 py-0.5 rounded shadow-2xs">{String(fomcTimeLeft.s).padStart(2, '0')}с</div>
+                </>
+              ) : (
+                <span>Зареждане на таймера...</span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -212,7 +262,9 @@ export default function WhatMovesTheMarket() {
         {INDICATORS_DATA.map((ind) => (
           <div
             key={ind.id}
-            className="bg-bg/40 hover:bg-bg/80 border border-border/60 hover:border-indigo-500/50 rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-200 group relative"
+            className={`bg-bg/40 hover:bg-bg/80 border rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-200 group relative ${
+              ind.id === 1 ? 'border-indigo-500/60 bg-indigo-500/5' : 'border-border/60 hover:border-indigo-500/50'
+            }`}
           >
             <div>
               <div className="flex items-start justify-between gap-2 mb-2">
@@ -226,9 +278,31 @@ export default function WhatMovesTheMarket() {
                 {ind.title}
               </h3>
 
-              <div className="text-[11px] text-ink-muted leading-relaxed line-clamp-3 mb-3">
+              <div className="text-[11px] text-ink-muted leading-relaxed line-clamp-3 mb-2">
                 {ind.shortSummary}
               </div>
+
+              {/* Special Countdown Badge specifically for Indicator #1 (FOMC / Interest Rates) */}
+              {ind.id === 1 && (
+                <div className="my-2 p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex flex-col gap-1">
+                  <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-indigo-400 shrink-0" />
+                    Оставащо време до решението:
+                  </span>
+                  <div className="flex items-center gap-1 font-sans tabular-nums text-xs font-black text-indigo-400">
+                    {fomcTimeLeft ? (
+                      <>
+                        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded">{String(fomcTimeLeft.d).padStart(2, '0')}d</div>:
+                        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded">{String(fomcTimeLeft.h).padStart(2, '0')}h</div>:
+                        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded">{String(fomcTimeLeft.m).padStart(2, '0')}m</div>:
+                        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded">{String(fomcTimeLeft.s).padStart(2, '0')}s</div>
+                      </>
+                    ) : (
+                      <span>--d --h --m --s</span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -280,6 +354,28 @@ export default function WhatMovesTheMarket() {
                 </h3>
               </div>
             </div>
+
+            {/* If Indicator #1 selected in Modal, show live timer there too */}
+            {selectedIndicator.id === 1 && (
+              <div className="my-3 p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/40 flex items-center justify-between">
+                <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-indigo-400" />
+                  Таймер до следващото FOMC заседание:
+                </span>
+                <div className="flex items-center gap-1 font-sans tabular-nums text-xs font-black text-indigo-400">
+                  {fomcTimeLeft ? (
+                    <>
+                      <div className="bg-bg border border-indigo-500/30 px-1.5 py-0.5 rounded">{String(fomcTimeLeft.d).padStart(2, '0')}д</div>:
+                      <div className="bg-bg border border-indigo-500/30 px-1.5 py-0.5 rounded">{String(fomcTimeLeft.h).padStart(2, '0')}ч</div>:
+                      <div className="bg-bg border border-indigo-500/30 px-1.5 py-0.5 rounded">{String(fomcTimeLeft.m).padStart(2, '0')}м</div>:
+                      <div className="bg-bg border border-indigo-500/30 px-1.5 py-0.5 rounded">{String(fomcTimeLeft.s).padStart(2, '0')}с</div>
+                    </>
+                  ) : (
+                    <span>--</span>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3.5 mt-4 text-xs leading-relaxed">
               <div className="bg-bg/60 p-3 rounded-2xl border border-border/40">
