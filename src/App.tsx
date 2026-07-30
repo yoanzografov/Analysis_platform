@@ -896,33 +896,20 @@ export default function App() {
     )}
   </div>
 
+  {/* Header button for TradingView Economic Calendar Modal */}
+  <button
+    onClick={() => setShowEconomicCalendarModal(true)}
+    className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
+    title="Отвори Икономически Календар"
+  >
+    <Calendar className="w-3.5 h-3.5" />
+    <span className="hidden sm:inline">Календар</span>
+  </button>
+
   <ThemeToggle />
 
   </div>
  </div>
-
-  {/* TradingView Economic Calendar placed right after the Settings menu */}
-  <div className="bg-card rounded-2xl border border-border p-4 my-4 shadow-xs">
-    <div className="flex items-center justify-between border-b border-border/40 pb-2.5 mb-3">
-      <div className="flex items-center gap-2">
-        <div className="w-2.5 h-5 bg-indigo-500 rounded-full" />
-        <h2 className="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5">
-          <Calendar className="w-4 h-4 text-indigo-400" />
-          Икономически Календар (TradingView)
-        </h2>
-      </div>
-    </div>
-    <div className="w-full h-[360px] rounded-xl overflow-hidden border border-border/50 relative">
-      <EconomicCalendar
-        colorTheme="dark"
-        width="100%"
-        height="100%"
-        locale="en"
-        countryFilter="us,eu"
-        importanceFilter="0,1"
-      />
-    </div>
-  </div>
 
    {/* Dynamic indices banner strip */}
    <IndicesStrip 
@@ -1043,6 +1030,49 @@ export default function App() {
  </div>
  </div>
 
+
+  {/* TradingView Economic Calendar Modal Popup */}
+  {showEconomicCalendarModal && (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) setShowEconomicCalendarModal(false); }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 bg-bg/80 backdrop-blur-md font-sans"
+    >
+      <div className="w-full max-w-4xl bg-card border-2 border-indigo-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl relative h-[80vh] flex flex-col">
+        <button
+          onClick={() => setShowEconomicCalendarModal(false)}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-bg border border-border flex items-center justify-center text-ink hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer"
+          title="Затвори"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        <div className="flex items-center gap-2.5 mb-4 shrink-0">
+          <div className="w-9 h-9 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+            <Calendar className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base sm:text-lg font-black text-ink leading-tight uppercase">
+              Икономически Календар (TradingView)
+            </h3>
+            <span className="text-xs text-ink-faint">
+              Предстоящи макроикономически доклади и събития за САЩ и Европа в реално време
+            </span>
+          </div>
+        </div>
+
+        <div className="flex-1 w-full rounded-2xl overflow-hidden border border-border/50 relative">
+          <EconomicCalendar
+            colorTheme="dark"
+            width="100%"
+            height="100%"
+            locale="en"
+            countryFilter="us,eu"
+            importanceFilter="0,1"
+          />
+        </div>
+      </div>
+    </div>
+  )}
  </main>
 
 
