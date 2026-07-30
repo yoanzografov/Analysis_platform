@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Info, Calendar, Flame, AlertCircle, X, HelpCircle, Clock } from 'lucide-react';
+import { Info, Calendar, Flame, AlertCircle, X, HelpCircle, Clock, ExternalLink } from 'lucide-react';
 
 export interface MarketIndicator {
   id: number;
@@ -7,17 +7,17 @@ export interface MarketIndicator {
   englishTitle: string;
   schedule: string;
   nextDateDesc: string;
-  targetDate: Date;
   impact: 'CRITICAL' | 'HIGH' | 'MEDIUM';
   shortSummary: string;
   description: string;
   whyItMovesMarket: string;
   marketReaction: string;
-  tradingViewSymbol?: string;
+  tradingViewSymbol: string;
+  tradingViewUrl: string;
   source: string;
 }
 
-const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
+const INDICATORS_DATA: MarketIndicator[] = [
   {
     id: 1,
     title: '1. Лихвени проценти (FOMC / Federal Funds Rate)',
@@ -30,6 +30,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'По-високите лихви оскъпяват кредитите, намаляват корпоративните печалби и правят облигациите по-атрактивни спрямо акциите.',
     marketReaction: 'Повишение на лихвите → Падане на акциите (особено технологични). Понижение на лихвите → Рали на борсите.',
     tradingViewSymbol: 'FRED:FEDFUNDS',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-FEDFUNDS/',
     source: 'Federal Reserve (Федерален резерв на САЩ)'
   },
   {
@@ -44,6 +45,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'Силният пазар на труда означава стабилно потребление, но и риск от инфлационен натиск и последващо вдигане на лихвите.',
     marketReaction: '„Добрата новина може да е лоша новина“: Твърде много нови работни места плашат пазара от нови лихвени повишения.',
     tradingViewSymbol: 'FRED:PAYEMS',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PAYEMS/',
     source: 'Bureau of Labor Statistics (BLS)'
   },
   {
@@ -58,6 +60,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'Високата инфлация намалява покупателната способност на хората и принуждава Фед да държи лихвите високи.',
     marketReaction: 'CPI над очакванията → Спад на акциите и скок на щатския долар. CPI под очакванията → Силно пазарно рали.',
     tradingViewSymbol: 'FRED:CPIAUCSL',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-CPIAUCSL/',
     source: 'US Bureau of Labor Statistics'
   },
   {
@@ -72,6 +75,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'Дава ранен сигнал за това накъде ще се движи инфлацията при следващите CPI доклади.',
     marketReaction: 'Висок PPI → Риск от бъдеща висока инфлация. Нисък PPI → Спокойствие за бизнеса.',
     tradingViewSymbol: 'FRED:PPIACO',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PPIACO/',
     source: 'US Bureau of Labor Statistics'
   },
   {
@@ -86,6 +90,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'Умереният растеж е перфектен за акциите („Goldilocks economy“). Спадът сигнализира рецесия, а прекаленият растеж — прегряване.',
     marketReaction: 'Стабилен БВП (2% - 3%) → Силна подкрепа за индексите S&P 500 и Dow Jones.',
     tradingViewSymbol: 'FRED:GDP',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-GDP/',
     source: 'US Bureau of Economic Analysis (BEA)'
   },
   {
@@ -100,6 +105,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'Изключително бърз реален индикатор за джоба на потребителя, излизащ преди тримесечните данни за БВП.',
     marketReaction: 'Ръст на продажбите → По-високи печалби за потребителските компании.',
     tradingViewSymbol: 'FRED:RSAFS',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-RSAFS/',
     source: 'US Census Bureau'
   },
   {
@@ -114,6 +120,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'Оптимистичните потребители харчат повече пари и вземат кредити. Песимизмът предвещава забавяне.',
     marketReaction: 'Висок CCI index → Позитивно за търговията на дребно и автопроизводителите.',
     tradingViewSymbol: 'FRED:UMCSENT',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-UMCSENT/',
     source: 'The Conference Board / University of Michigan'
   },
   {
@@ -128,6 +135,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'Спадът в имотния сектор исторически изпреварва и сигнализира за наближаващи икономически спадове.',
     marketReaction: 'Силно строителство → Подкрепа за ипотечните кредитори и строителните компании.',
     tradingViewSymbol: 'FRED:PERMIT',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PERMIT/',
     source: 'US Census Bureau / HUD'
   },
   {
@@ -142,6 +150,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'VIX > 30 = Екстремен страх и паника на пазара. VIX < 15 = Спокойствие, самодоволство и алчност.',
     marketReaction: 'Скок на VIX → Обикновено съвпада с остри разпродажби на S&P 500 и Nasdaq.',
     tradingViewSymbol: 'CBOE:VIX',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/CBOE-VIX/',
     source: 'Chicago Board Options Exchange (CBOE)'
   },
   {
@@ -156,6 +165,7 @@ const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
     whyItMovesMarket: 'Цените на акциите в дългосрочен план следват реалните печалби. Слабо Guidance движи целия сектор надолу.',
     marketReaction: 'Отчет над очакванията + силен Guidance → Ръст от 5% до 15% за акцията за ден.',
     tradingViewSymbol: 'NASDAQ:AAPL',
+    tradingViewUrl: 'https://www.tradingview.com/economic-calendar/',
     source: 'SEC Filings (10-Q / 10-K)'
   }
 ];
@@ -276,7 +286,7 @@ export default function WhatMovesTheMarket() {
             </h2>
           </div>
           <p className="text-xs text-ink-faint mt-1">
-            Икономически календар и 10-те основни макроикономически индикатора с живи таймери за отброяване до следващото публикуване (TradingView Feed).
+            Икономически календар и 10-те основни макроикономически индикатора с директни линкове към TradingView.
           </p>
         </div>
 
@@ -294,7 +304,7 @@ export default function WhatMovesTheMarket() {
 
       {/* Grid of 10 Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
-        {INDICATORS_DATA_RAW.map((ind) => (
+        {INDICATORS_DATA.map((ind) => (
           <div
             key={ind.id}
             className={`bg-bg/40 hover:bg-bg/80 border rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-200 group relative ${
@@ -328,20 +338,34 @@ export default function WhatMovesTheMarket() {
             </div>
 
             <div>
-              <div className="pt-2.5 border-t border-border/20 flex items-center justify-between gap-1 text-[10px] font-sans tabular-nums">
+              <div className="pt-2.5 border-t border-border/20 flex items-center justify-between gap-1.5 text-[10px] font-sans tabular-nums">
                 <span className="text-ink-faint flex items-center gap-1 font-semibold truncate">
                   <Calendar className="w-3 h-3 text-indigo-400 shrink-0" />
                   {ind.schedule.split('(')[0]}
                 </span>
 
-                {/* Info Icon (i) button */}
-                <button
-                  onClick={() => setSelectedIndicator(ind as any)}
-                  className="w-7 h-7 rounded-xl bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 justify-center transition-all cursor-pointer shrink-0 border border-indigo-500/30"
-                  title="Виж пълна информация за индикатора"
-                >
-                  <Info className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* Direct TradingView Link Button */}
+                  <a
+                    href={ind.tradingViewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2 py-1 rounded-xl bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white text-[10px] font-bold flex items-center gap-1 transition-all border border-indigo-500/30 cursor-pointer"
+                    title={`Отвори ${ind.englishTitle} в TradingView`}
+                  >
+                    <span>TradingView</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+
+                  {/* Info Icon (i) button */}
+                  <button
+                    onClick={() => setSelectedIndicator(ind)}
+                    className="w-7 h-7 rounded-xl bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center justify-center transition-all cursor-pointer border border-indigo-500/30"
+                    title="Виж пълна информация за индикатора"
+                  >
+                    <Info className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -417,9 +441,21 @@ export default function WhatMovesTheMarket() {
                 <p className="text-ink-muted">{selectedIndicator.marketReaction}</p>
               </div>
 
-              <div className="pt-2 flex items-center justify-between text-[11px] text-ink-faint border-t border-border/30">
-                <span>Източник на данните: <strong>{selectedIndicator.source}</strong></span>
-                <span className="text-indigo-400 font-bold">TradingView Feed</span>
+              {/* Bottom Action Footer with Direct TradingView Button */}
+              <div className="pt-3 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-[11px] text-ink-faint">
+                  Източник: <strong className="text-ink">{selectedIndicator.source}</strong>
+                </div>
+
+                <a
+                  href={selectedIndicator.tradingViewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-4 py-2 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                >
+                  <span>Отвори {selectedIndicator.englishTitle} в TradingView</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
               </div>
             </div>
           </div>
