@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter } from '../types';
-import { ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle, Info, Clock, ExternalLink, HelpCircle, X, Flame } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Info, Clock, ExternalLink, HelpCircle, X, Flame, AlertCircle } from 'lucide-react';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 
 interface Props {
@@ -43,7 +43,7 @@ export interface MarketIndicator {
 const INDICATORS_DATA: MarketIndicator[] = [
   {
     id: 1,
-    title: '1. Лихвени проценти (FOMC / Federal Funds Rate)',
+    title: '1. Лихвени проценти (FOMC Rate)',
     englishTitle: 'Fed Interest Rate Decision',
     schedule: 'На всеки 6 седмици (Сряда 21:00 ч. БГ време / 8 пъти годишно)',
     nextDateDesc: 'Следващо решение: Заседание на ФЕД (FOMC)',
@@ -58,7 +58,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
   },
   {
     id: 2,
-    title: '2. Данни за заетостта (Non-Farm Payrolls - NFP & Безработица)',
+    title: '2. Заетост & Безработица (NFP)',
     englishTitle: 'Non-Farm Payrolls & Unemployment Rate',
     schedule: 'Всеки първи петък от месеца (15:30 ч. БГ време)',
     nextDateDesc: 'Следващи данни: Доклад за заетостта в САЩ',
@@ -73,7 +73,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
   },
   {
     id: 3,
-    title: '3. Потребителска Инфлация (CPI - Consumer Price Index)',
+    title: '3. Потребителска Инфлация (CPI)',
     englishTitle: 'Consumer Price Index (CPI Inflation)',
     schedule: 'Всеки месец между 12-то и 14-то число (15:30 ч. БГ време)',
     nextDateDesc: 'Следващи данни: Индекс на потребителските цени',
@@ -88,7 +88,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
   },
   {
     id: 4,
-    title: '4. Инфлация на производителите (PPI - Producer Price Index)',
+    title: '4. Инфлация на едро (PPI)',
     englishTitle: 'Producer Price Index (PPI)',
     schedule: 'Всеки месец (1 ден след доклада за CPI)',
     nextDateDesc: 'Следващи данни: Инфлация на цените на едро',
@@ -103,7 +103,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
   },
   {
     id: 5,
-    title: '5. Брутен Вътрешен Продукт (GDP Growth Rate / БВП)',
+    title: '5. Брутен Вътрешен Продукт (БВП)',
     englishTitle: 'Gross Domestic Product (GDP)',
     schedule: 'Тримесечно (Advance, Second, Final - края на всеки месец)',
     nextDateDesc: 'Следващи данни: Тримесечен доклад за БВП',
@@ -118,7 +118,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
   },
   {
     id: 6,
-    title: '6. Продажби на дребно (Retail Sales)',
+    title: '6. Продажби на дребно (Retail)',
     englishTitle: 'Retail Sales',
     schedule: 'Всеки месец около 15-то число (15:30 ч. БГ време)',
     nextDateDesc: 'Следващи данни: Месечни продажби на дребно',
@@ -133,7 +133,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
   },
   {
     id: 7,
-    title: '7. Потребителско доверие (Consumer Confidence Index - CCI)',
+    title: '7. Потребителско доверие (CCI)',
     englishTitle: 'Consumer Confidence Index (CCI)',
     schedule: 'Последен вторник от месеца (17:00 ч. БГ време)',
     nextDateDesc: 'Следващи данни: Доклад за потребителското доверие',
@@ -148,7 +148,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
   },
   {
     id: 8,
-    title: '8. Пазар на имоти (Housing Starts & Building Permits)',
+    title: '8. Пазар на имоти (Permits)',
     englishTitle: 'Housing Starts & Building Permits',
     schedule: 'Всеки месец между 16-то и 19-то число',
     nextDateDesc: 'Следващи данни: Строителни разрешителни и започнати жилища',
@@ -163,7 +163,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
   },
   {
     id: 9,
-    title: '9. Индекс на страха (VIX - Volatility Index)',
+    title: '9. Индекс на страха (VIX Index)',
     englishTitle: 'CBOE Volatility Index (VIX)',
     schedule: 'В реално време (Всеки търговски ден при затваряне)',
     nextDateDesc: 'Следващо затваряне на борсата (NYSE / Nasdaq 23:00 ч.)',
@@ -178,7 +178,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
   },
   {
     id: 10,
-    title: '10. Корпоративни печалби (Earnings Reports & Guidance)',
+    title: '10. Корпоративни печалби (Earnings)',
     englishTitle: 'Corporate Earnings Season',
     schedule: 'Всяко тримесечие (Пик на Earnings Season)',
     nextDateDesc: 'Следващ пиков ден за отчети на технологичните гиганти',
@@ -201,11 +201,6 @@ interface TimeLeft {
 }
 
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
-  const [fngData, setFngData] = useState<CnnData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  
   const [fomcTimeLeft, setFomcTimeLeft] = useState<TimeLeft | null>(null);
   const [timersMap, setTimersMap] = useState<Record<number, TimeLeft>>({});
   const [selectedIndicator, setSelectedIndicator] = useState<MarketIndicator | null>(null);
@@ -261,32 +256,6 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     return () => clearInterval(interval);
   }, []);
 
-  const fetchFng = async () => {
-    try {
-      setRefreshing(true);
-      const res = await fetch('/api/fear-and-greed');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data && data.fear_and_greed) {
-        setFngData(data);
-        setError(null);
-      } else {
-        throw new Error('Невалидни данни от сървъра');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Грешка при зареждане');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchFng();
-    const interval = setInterval(fetchFng, 10 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   // Compute Top 15 Gainers and Losers
   const top15Gainers = [...stocks]
     .filter(s => typeof s.dailyChangePct === 'number' && !isNaN(s.dailyChangePct))
@@ -298,14 +267,42 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     .sort((a, b) => a.dailyChangePct - b.dailyChangePct)
     .slice(0, 15);
 
+  const getImpactBadge = (impact: MarketIndicator['impact']) => {
+    switch (impact) {
+      case 'CRITICAL':
+        return (
+          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-0.5 shrink-0">
+            <Flame className="w-2.5 h-2.5 text-rose-400" />
+            Критично
+          </span>
+        );
+      case 'HIGH':
+        return (
+          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-0.5 shrink-0">
+            <AlertCircle className="w-2.5 h-2.5 text-amber-400" />
+            Високо
+          </span>
+        );
+      case 'MEDIUM':
+        return (
+          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-blue-500/20 text-blue-400 border border-blue-500/30 shrink-0">
+            Средно
+          </span>
+        );
+    }
+  };
+
   const renderTimerBadge = (t: TimeLeft | undefined) => {
-    if (!t) return <span className="text-[10px] text-ink-faint">Зареждане...</span>;
+    if (!t) return <span className="text-[10px] text-ink-faint font-mono">--:--:--:--</span>;
     return (
-      <div className="flex items-center gap-1 font-sans tabular-nums text-xs font-extrabold text-ink">
-        <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-2xs">{String(t.d).padStart(2, '0')}d</div>:
-        <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-2xs">{String(t.h).padStart(2, '0')}h</div>:
-        <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-2xs">{String(t.m).padStart(2, '0')}m</div>:
-        <div className="bg-bg border border-border px-1.5 py-0.5 rounded shadow-2xs text-indigo-500">{String(t.s).padStart(2, '0')}s</div>
+      <div className="flex items-center gap-1 font-mono text-[11px] font-bold text-indigo-400 bg-bg/80 px-2 py-0.5 rounded-lg border border-indigo-500/30 shrink-0">
+        <span>{String(t.d).padStart(2, '0')}д</span>
+        <span className="text-ink-faint">:</span>
+        <span>{String(t.h).padStart(2, '0')}ч</span>
+        <span className="text-ink-faint">:</span>
+        <span>{String(t.m).padStart(2, '0')}м</span>
+        <span className="text-ink-faint">:</span>
+        <span className="text-rose-400 animate-pulse">{String(t.s).padStart(2, '0')}с</span>
       </div>
     );
   };
@@ -314,7 +311,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 font-sans">
       
       {/* 1. Top 15 Gainers Container */}
-      <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group md:col-span-1">
+      <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between transition-all duration-200 h-[410px] hover:shadow-md relative group md:col-span-1">
         <div className="flex items-center justify-between border-b border-border/50 pb-2.5 shrink-0">
           <div>
             <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
@@ -375,7 +372,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
       </div>
 
       {/* 2. Top 15 Losers Container */}
-      <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between transition-all duration-200 h-[305px] hover:shadow-md relative group md:col-span-1">
+      <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between transition-all duration-200 h-[410px] hover:shadow-md relative group md:col-span-1">
         <div className="flex items-center justify-between border-b border-border/50 pb-2.5 shrink-0">
           <div>
             <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
@@ -435,12 +432,12 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
         </div>
       </div>
 
-      {/* 3. Combined "Какво движи пазара & Полезни връзки" Container */}
-      <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col transition-all duration-200 h-[305px] hover:shadow-md relative group md:col-span-1">
+      {/* 3. Combined "Какво движи пазара & Полезни връзки" Container (Clear layout, no overlapping!) */}
+      <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col transition-all duration-200 h-[410px] hover:shadow-md relative group md:col-span-1">
         
-        <div className="flex flex-col h-full overflow-y-auto custom-mini-scroll pr-1 gap-2">
+        <div className="flex flex-col h-full overflow-y-auto custom-mini-scroll pr-1 gap-2.5">
           
-          <div className="flex items-center justify-between border-b border-border/50 pb-1.5 shrink-0 sticky top-0 bg-bg z-10">
+          <div className="flex items-center justify-between border-b border-border/50 pb-2 shrink-0 sticky top-0 bg-bg z-10">
             <h3 className="text-xs uppercase font-extrabold text-ink font-sans tracking-tight flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-indigo-400" />
               Какво движи пазара & Полезни връзки
@@ -452,24 +449,22 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             href="https://edition.cnn.com/markets/fear-and-greed" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center gap-3 p-2.5 rounded-xl border border-border/50 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer"
+            className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-border/50 bg-card/30 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer"
           >
-            <img 
-              src="https://www.google.com/s2/favicons?domain=cnn.com&sz=32" 
-              alt="CNN" 
-              className="w-5 h-5 rounded-md bg-white/10 p-0.5"
-            />
-            <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
-                Fear & Greed Index (Индекс на страха)
-              </span>
-              <span className="text-xs text-ink-faint font-sans tabular-nums truncate">
-                cnn.com
-              </span>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <img 
+                src="https://www.google.com/s2/favicons?domain=cnn.com&sz=32" 
+                alt="CNN" 
+                className="w-4 h-4 rounded shrink-0 bg-white/10 p-0.5"
+              />
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-extrabold text-ink group-hover:text-indigo-400 transition-colors truncate">
+                  Fear & Greed Index (Страх & Алчност)
+                </span>
+                <span className="text-[10px] text-ink-faint font-mono">cnn.com</span>
+              </div>
             </div>
-            <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
-              <ExternalLink className="w-3.5 h-3.5" />
-            </div>
+            <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0" />
           </a>
 
           {/* Useful Link 2: CME FedWatch Tool with FOMC Countdown */}
@@ -477,91 +472,93 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex flex-col p-2.5 rounded-xl border border-border/50 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer relative overflow-hidden"
+            className="flex flex-col p-2.5 rounded-xl border border-border/50 bg-card/30 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer relative"
           >
-            <div className="flex items-center gap-3 w-full">
-              <img 
-                src="https://www.google.com/s2/favicons?domain=cmegroup.com&sz=32" 
-                alt="CME" 
-                className="w-5 h-5 rounded-md bg-white/90 p-0.5"
-              />
-              <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
-                  CME FedWatch Tool
-                </span>
-                <span className="text-xs text-ink-faint font-sans tabular-nums truncate">
-                  cmegroup.com
-                </span>
+            <div className="flex items-center justify-between gap-2 w-full">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <img 
+                  src="https://www.google.com/s2/favicons?domain=cmegroup.com&sz=32" 
+                  alt="CME" 
+                  className="w-4 h-4 rounded shrink-0 bg-white/90 p-0.5"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-extrabold text-ink group-hover:text-indigo-400 transition-colors truncate">
+                    CME FedWatch Tool
+                  </span>
+                  <span className="text-[10px] text-ink-faint font-mono">cmegroup.com</span>
+                </div>
               </div>
-              <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
-                <ExternalLink className="w-3.5 h-3.5" />
-              </div>
+              <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0" />
             </div>
             
             {/* FOMC Countdown Strip */}
-            <div className="mt-2.5 pt-2 border-t border-border/30 flex items-center justify-between gap-2">
-              <span className="text-[10px] text-ink-faint font-sans uppercase font-bold tracking-wider truncate">
-                The next FOMC meeting is in:
+            <div className="mt-2 pt-2 border-t border-border/20 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <span className="text-[10px] text-ink-faint font-semibold uppercase tracking-wider shrink-0">
+                FOMC заседание:
               </span>
-              {renderTimerBadge(fomcTimeLeft || undefined)}
+              <div className="shrink-0">{renderTimerBadge(fomcTimeLeft || undefined)}</div>
             </div>
           </a>
 
           {/* Section Divider */}
           <div className="pt-2 border-t border-border/30">
-            <span className="text-[11px] font-extrabold uppercase text-indigo-400 tracking-wider block mb-2">
+            <span className="text-[11px] font-extrabold uppercase text-indigo-400 tracking-wider block mb-1">
               📊 10-те Макроикономически Индикатора (TradingView):
             </span>
           </div>
 
-          {/* Render All 10 Indicators formatted EXACTLY like CME FedWatch Tool */}
+          {/* Render All 10 Indicators formatted WITH ZERO OVERLAPPING */}
           {INDICATORS_DATA.map((ind) => (
             <a
               key={ind.id}
               href={ind.tradingViewUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col p-2.5 rounded-xl border border-border/50 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer relative overflow-hidden"
+              className="flex flex-col p-2.5 rounded-xl border border-border/50 bg-card/30 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer relative"
             >
-              <div className="flex items-center gap-3 w-full">
-                <img 
-                  src="https://www.google.com/s2/favicons?domain=tradingview.com&sz=32" 
-                  alt="TradingView" 
-                  className="w-5 h-5 rounded-md bg-white/90 p-0.5"
-                />
-                <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
+              {/* Line 1: Favicon + Title + Info Button + External Link */}
+              <div className="flex items-center justify-between gap-2 w-full">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <img 
+                    src="https://www.google.com/s2/favicons?domain=tradingview.com&sz=32" 
+                    alt="TradingView" 
+                    className="w-4 h-4 rounded shrink-0 bg-white/90 p-0.5"
+                  />
+                  <span className="text-xs font-extrabold text-ink group-hover:text-indigo-400 transition-colors truncate" title={ind.title}>
                     {ind.title}
-                  </span>
-                  <span className="text-xs text-ink-faint font-sans tabular-nums truncate">
-                    tradingview.com
                   </span>
                 </div>
 
-                {/* Info Button (i) */}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setSelectedIndicator(ind);
-                  }}
-                  className="w-6 h-6 rounded-lg bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center justify-center transition-all shrink-0 border border-indigo-500/30 mr-1"
-                  title="Виж пълна информация за индикатора"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {/* Info Button (i) */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedIndicator(ind);
+                    }}
+                    className="w-6 h-6 rounded-lg bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center justify-center transition-all border border-indigo-500/30 cursor-pointer"
+                    title="Виж подробности"
+                  >
+                    <Info className="w-3.5 h-3.5" />
+                  </button>
 
-                <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400" />
                 </div>
               </div>
 
-              {/* Countdown Timer Strip - Formatted EXACTLY like CME FedWatch Tool */}
-              <div className="mt-2.5 pt-2 border-t border-border/30 flex items-center justify-between gap-2">
-                <span className="text-[10px] text-ink-faint font-sans uppercase font-bold tracking-wider truncate">
-                  Оставащо време до доклада:
+              {/* Line 2: Subtitle / Source & Impact Badge */}
+              <div className="flex items-center justify-between gap-2 mt-1">
+                <span className="text-[10px] text-ink-faint font-mono">tradingview.com</span>
+                {getImpactBadge(ind.impact)}
+              </div>
+
+              {/* Line 3: Countdown Timer Strip */}
+              <div className="mt-2 pt-2 border-t border-border/20 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span className="text-[10px] text-ink-faint font-semibold uppercase tracking-wider shrink-0">
+                  До доклада:
                 </span>
-                {renderTimerBadge(timersMap[ind.id])}
+                <div className="shrink-0">{renderTimerBadge(timersMap[ind.id])}</div>
               </div>
             </a>
           ))}
@@ -571,24 +568,22 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             href="https://www.tradingview.com/heatmap/stock/#%7B%22dataSource%22%3A%22SPX500%22%2C%22blockColor%22%3A%22change%22%2C%22blockSize%22%3A%22market_cap_basic%22%2C%22grouping%22%3A%22sector%22%7D" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center gap-3 p-2.5 rounded-xl border border-border/50 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer"
+            className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-border/50 bg-card/30 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer"
           >
-            <img 
-              src="https://www.google.com/s2/favicons?domain=tradingview.com&sz=32" 
-              alt="TradingView" 
-              className="w-5 h-5 rounded-md bg-white/90 p-0.5"
-            />
-            <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-xs font-bold text-ink group-hover:text-indigo-500 transition-colors truncate">
-                TradingView Heat Map
-              </span>
-              <span className="text-xs text-ink-faint font-sans tabular-nums truncate">
-                tradingview.com
-              </span>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <img 
+                src="https://www.google.com/s2/favicons?domain=tradingview.com&sz=32" 
+                alt="TradingView" 
+                className="w-4 h-4 rounded shrink-0 bg-white/90 p-0.5"
+              />
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-extrabold text-ink group-hover:text-indigo-400 transition-colors truncate">
+                  TradingView Heat Map (Секторна карта)
+                </span>
+                <span className="text-[10px] text-ink-faint font-mono">tradingview.com</span>
+              </div>
             </div>
-            <div className="shrink-0 text-ink-faint group-hover:text-indigo-500 transition-colors">
-              <ExternalLink className="w-3.5 h-3.5" />
-            </div>
+            <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0" />
           </a>
 
           {/* Market Drivers Section: TradingView Economic Calendar Widget */}
