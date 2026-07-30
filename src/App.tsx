@@ -10,6 +10,7 @@ import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
+import WhatMovesTheMarket from './components/WhatMovesTheMarket';
 import { db } from './lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { 
@@ -1016,6 +1017,9 @@ export default function App() {
  </div>
  </div>
  </div>
+
+  {/* What Moves The Market (Какво движи пазара) Test Container */}
+  <WhatMovesTheMarket />
 
  </main>
 
