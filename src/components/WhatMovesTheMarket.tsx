@@ -7,6 +7,7 @@ export interface MarketIndicator {
   englishTitle: string;
   schedule: string;
   nextDateDesc: string;
+  targetDate: Date;
   impact: 'CRITICAL' | 'HIGH' | 'MEDIUM';
   shortSummary: string;
   description: string;
@@ -16,7 +17,7 @@ export interface MarketIndicator {
   source: string;
 }
 
-const INDICATORS_DATA: MarketIndicator[] = [
+const INDICATORS_DATA_RAW: Omit<MarketIndicator, 'targetDate'>[] = [
   {
     id: 1,
     title: '1. Лихвени проценти (FOMC / Federal Funds Rate)',
@@ -36,7 +37,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
     title: '2. Данни за заетостта (Non-Farm Payrolls - NFP & Безработица)',
     englishTitle: 'Non-Farm Payrolls & Unemployment Rate',
     schedule: 'Всеки първи петък от месеца (15:30 ч. БГ време)',
-    nextDateDesc: 'Следващи данни: Първият петък на месеца',
+    nextDateDesc: 'Следващи данни: Доклад за заетостта в САЩ',
     impact: 'CRITICAL',
     shortSummary: 'Месечен доклад за новите работни места в САЩ и процента безработица. Сърцето на икономиката.',
     description: 'NFP измерва колко нови работни места са създадени в икономиката на САЩ през изминалия месец (без селското стопанство и държавните служители). Безработицата показва процента търсещи работа.',
@@ -50,7 +51,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
     title: '3. Потребителска Инфлация (CPI - Consumer Price Index)',
     englishTitle: 'Consumer Price Index (CPI Inflation)',
     schedule: 'Всеки месец между 12-то и 14-то число (15:30 ч. БГ време)',
-    nextDateDesc: 'Следващи данни: Средата на месеца',
+    nextDateDesc: 'Следващи данни: Индекс на потребителските цени',
     impact: 'CRITICAL',
     shortSummary: 'Измерва промяната в цените на потребителските стоки и услуги. Главният показател за инфлация.',
     description: 'CPI проследява потребителската кошница (храна, горива, наеми, услуги). Главният индикатор, който Фед следи за определяне на лихвената си политика.',
@@ -64,7 +65,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
     title: '4. Инфлация на производителите (PPI - Producer Price Index)',
     englishTitle: 'Producer Price Index (PPI)',
     schedule: 'Всеки месец (1 ден след доклада за CPI)',
-    nextDateDesc: 'Следващи данни: 24 часа след CPI доклада',
+    nextDateDesc: 'Следващи данни: Инфлация на цените на едро',
     impact: 'HIGH',
     shortSummary: 'Измерва промяната в цените на едро. Водещ ранен индикатор за бъдещата потребителска инфлация.',
     description: 'PPI измерва цените, които производителите и фабриките получават за своите стоки. Покачването на техните разходи преминава към крайните потребители с закъснение от 1-2 месеца.',
@@ -78,7 +79,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
     title: '5. Брутен Вътрешен Продукт (GDP Growth Rate / БВП)',
     englishTitle: 'Gross Domestic Product (GDP)',
     schedule: 'Тримесечно (Advance, Second, Final - края на всеки месец)',
-    nextDateDesc: 'Следващи данни: Края на тримесечието',
+    nextDateDesc: 'Следващи данни: Тримесечен доклад за БВП',
     impact: 'HIGH',
     shortSummary: 'Измерва общия икономически растеж на страната. БВП = всичко произведено и продадено.',
     description: 'БВП е сумата от цялото производство, потребление и инвестиции в икономиката. Показна дали икономиката експандира или навлиза в рецесия (2 поредни тримесечия спад).',
@@ -92,7 +93,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
     title: '6. Продажби на дребно (Retail Sales)',
     englishTitle: 'Retail Sales',
     schedule: 'Всеки месец около 15-то число (15:30 ч. БГ време)',
-    nextDateDesc: 'Следващи данни: Средата на месеца',
+    nextDateDesc: 'Следващи данни: Месечни продажби на дребно',
     impact: 'HIGH',
     shortSummary: 'Потреблението е 70% от БВП на САЩ. Показва дали хората пазаруват или затягат коланите.',
     description: 'Retail Sales измерва общите продажби в магазини, бензиностанции, ресторанти и онлайн търговци (Amazon, Walmart, Target).',
@@ -106,7 +107,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
     title: '7. Потребителско доверие (Consumer Confidence Index - CCI)',
     englishTitle: 'Consumer Confidence Index (CCI)',
     schedule: 'Последен вторник от месеца (17:00 ч. БГ време)',
-    nextDateDesc: 'Следващи данни: Последният вторник на месеца',
+    nextDateDesc: 'Следващи данни: Доклад за потребителското доверие',
     impact: 'MEDIUM',
     shortSummary: 'Показва колко уверени са хората за икономиката и личните си финанси за следващите 6 месеца.',
     description: 'Анкета сред хиляди домакинства относно настоящото им състояние, перспективите за работа и бъдещите им планове за пазаруване.',
@@ -120,7 +121,7 @@ const INDICATORS_DATA: MarketIndicator[] = [
     title: '8. Пазар на имоти (Housing Starts & Building Permits)',
     englishTitle: 'Housing Starts & Building Permits',
     schedule: 'Всеки месец между 16-то и 19-то число',
-    nextDateDesc: 'Следващи данни: Втората половина на месеца',
+    nextDateDesc: 'Следващи данни: Строителни разрешителни и започнати жилища',
     impact: 'MEDIUM',
     shortSummary: 'Разрешителни за строеж и започнати жилища. Водещ икономически индикатор за циклите.',
     description: 'Показател за новозапочнатото строителство и издадените разрешителни за нови сгради. Строителството завлича банкови кредити, ипотеки, мебели и уреди.',
@@ -133,8 +134,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     id: 9,
     title: '9. Индекс на страха (VIX - Volatility Index)',
     englishTitle: 'CBOE Volatility Index (VIX)',
-    schedule: 'В реално време (Всеки търговски ден)',
-    nextDateDesc: 'Обновява се непрекъснато по време на сесията',
+    schedule: 'В реално време (Всеки търговски ден при затваряне)',
+    nextDateDesc: 'Следващо затваряне на борсата (NYSE / Nasdaq 23:00 ч.)',
     impact: 'HIGH',
     shortSummary: 'Измерва очакваната волатилност за следващите 30 дни от опциите върху S&P 500.',
     description: 'Когато инвеститорите панически купуват застрахователни PUT опции, VIX скача. Наричан е "Индексът на страха".',
@@ -147,8 +148,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     id: 10,
     title: '10. Корпоративни печалби (Earnings Reports & Guidance)',
     englishTitle: 'Corporate Earnings Season',
-    schedule: 'Всяко тримесечие (Януари, Април, Юли, Октомври)',
-    nextDateDesc: 'Пикът на сесията е по време на Earnings Season',
+    schedule: 'Всяко тримесечие (Пик на Earnings Season)',
+    nextDateDesc: 'Следващ пиков ден за отчети на технологичните гиганти',
     impact: 'CRITICAL',
     shortSummary: 'Тримесечните отчети на технологичните гиганти (Apple, Nvidia, Microsoft) и техните бъдещи прогнози.',
     description: 'Финансовите резултати за приходи, печалба на акция (EPS) и най-важното — прогнозата на мениджмънта за следващите тримесечия (Guidance).',
@@ -159,38 +160,58 @@ const INDICATORS_DATA: MarketIndicator[] = [
   }
 ];
 
+interface TimeLeft {
+  d: number;
+  h: number;
+  m: number;
+  s: number;
+}
+
 export default function WhatMovesTheMarket() {
   const [selectedIndicator, setSelectedIndicator] = useState<MarketIndicator | null>(null);
-  const [fomcTimeLeft, setFomcTimeLeft] = useState<{ d: number; h: number; m: number; s: number } | null>(null);
+  const [timersMap, setTimersMap] = useState<Record<number, TimeLeft>>({});
 
-  // FOMC Meetings Schedule Live Timer
   useEffect(() => {
-    const FOMC_MEETINGS = [
-      new Date('2026-09-16T18:00:00Z'),
-      new Date('2026-11-04T19:00:00Z'),
-      new Date('2026-12-16T19:00:00Z'),
-      new Date('2027-01-27T19:00:00Z'),
-      new Date('2027-03-17T18:00:00Z'),
-      new Date('2027-05-05T18:00:00Z')
-    ];
+    // Exact release target dates for all 10 economic indicators
+    const TARGET_DATES: Record<number, Date> = {
+      1: new Date('2026-09-16T18:00:00Z'), // FOMC Rate Decision
+      2: new Date('2026-08-07T12:30:00Z'), // NFP Employment Report
+      3: new Date('2026-08-12T12:30:00Z'), // CPI Inflation
+      4: new Date('2026-08-13T12:30:00Z'), // PPI Inflation
+      5: new Date('2026-08-27T12:30:00Z'), // GDP Growth Rate
+      6: new Date('2026-08-14T12:30:00Z'), // Retail Sales
+      7: new Date('2026-08-25T14:00:00Z'), // Consumer Confidence (CCI)
+      8: new Date('2026-08-18T12:30:00Z'), // Housing Starts & Permits
+      9: new Date('2026-07-31T20:00:00Z'), // VIX Market Close
+      10: new Date('2026-08-04T20:00:00Z'), // Big Tech Earnings Peak
+    };
 
-    const updateTimer = () => {
+    const updateAllTimers = () => {
       const now = new Date();
-      const target = FOMC_MEETINGS.find(date => date > now) || FOMC_MEETINGS[0];
-      const diff = target.getTime() - now.getTime();
-      
-      if (diff > 0) {
-        setFomcTimeLeft({
+      const newMap: Record<number, TimeLeft> = {};
+
+      Object.entries(TARGET_DATES).forEach(([idStr, target]) => {
+        const id = Number(idStr);
+        let diff = target.getTime() - now.getTime();
+        
+        // If passed, add 30 days rolling target
+        if (diff <= 0) {
+          diff = 30 * 24 * 3600 * 1000 + diff;
+        }
+
+        newMap[id] = {
           d: Math.floor(diff / (1000 * 60 * 60 * 24)),
           h: Math.floor((diff / (1000 * 60 * 60)) % 24),
           m: Math.floor((diff / 1000 / 60) % 60),
           s: Math.floor((diff / 1000) % 60)
-        });
-      }
+        };
+      });
+
+      setTimersMap(newMap);
     };
 
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
+    updateAllTimers();
+    const interval = setInterval(updateAllTimers, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -219,6 +240,31 @@ export default function WhatMovesTheMarket() {
     }
   };
 
+  const renderTimerBadge = (id: number) => {
+    const t = timersMap[id];
+    if (!t) return <span className="text-[10px] text-ink-faint">Зареждане...</span>;
+
+    return (
+      <div className="flex items-center gap-1 font-sans tabular-nums text-xs font-black text-indigo-400">
+        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded shadow-2xs">
+          {String(t.d).padStart(2, '0')}д
+        </div>
+        :
+        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded shadow-2xs">
+          {String(t.h).padStart(2, '0')}ч
+        </div>
+        :
+        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded shadow-2xs">
+          {String(t.m).padStart(2, '0')}м
+        </div>
+        :
+        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded shadow-2xs">
+          {String(t.s).padStart(2, '0')}с
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 mt-6 font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border/40 pb-4 mb-4">
@@ -230,7 +276,7 @@ export default function WhatMovesTheMarket() {
             </h2>
           </div>
           <p className="text-xs text-ink-faint mt-1">
-            Икономически календар и 10-те основни макроикономически индикатора, определящи посоката на световните борсови пазари (TradingView Feed).
+            Икономически календар и 10-те основни макроикономически индикатора с живи таймери за отброяване до следващото публикуване (TradingView Feed).
           </p>
         </div>
 
@@ -239,27 +285,16 @@ export default function WhatMovesTheMarket() {
           <Clock className="w-4 h-4 text-indigo-400 animate-spin-slow shrink-0" />
           <div className="flex flex-col">
             <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">
-              Следващо заседание на ФЕД (FOMC Rate Decision):
+              Следващо решение за лихвите (FOMC Rate Decision):
             </span>
-            <div className="flex items-center gap-1 font-sans tabular-nums text-xs font-black text-indigo-400">
-              {fomcTimeLeft ? (
-                <>
-                  <div className="bg-bg/90 border border-indigo-500/30 px-1.5 py-0.5 rounded shadow-2xs">{String(fomcTimeLeft.d).padStart(2, '0')}д</div>:
-                  <div className="bg-bg/90 border border-indigo-500/30 px-1.5 py-0.5 rounded shadow-2xs">{String(fomcTimeLeft.h).padStart(2, '0')}ч</div>:
-                  <div className="bg-bg/90 border border-indigo-500/30 px-1.5 py-0.5 rounded shadow-2xs">{String(fomcTimeLeft.m).padStart(2, '0')}м</div>:
-                  <div className="bg-bg/90 border border-indigo-500/30 px-1.5 py-0.5 rounded shadow-2xs">{String(fomcTimeLeft.s).padStart(2, '0')}с</div>
-                </>
-              ) : (
-                <span>Зареждане на таймера...</span>
-              )}
-            </div>
+            {renderTimerBadge(1)}
           </div>
         </div>
       </div>
 
       {/* Grid of 10 Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
-        {INDICATORS_DATA.map((ind) => (
+        {INDICATORS_DATA_RAW.map((ind) => (
           <div
             key={ind.id}
             className={`bg-bg/40 hover:bg-bg/80 border rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-200 group relative ${
@@ -282,27 +317,14 @@ export default function WhatMovesTheMarket() {
                 {ind.shortSummary}
               </div>
 
-              {/* Special Countdown Badge specifically for Indicator #1 (FOMC / Interest Rates) */}
-              {ind.id === 1 && (
-                <div className="my-2 p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex flex-col gap-1">
-                  <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-indigo-400 shrink-0" />
-                    Оставащо време до решението:
-                  </span>
-                  <div className="flex items-center gap-1 font-sans tabular-nums text-xs font-black text-indigo-400">
-                    {fomcTimeLeft ? (
-                      <>
-                        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded">{String(fomcTimeLeft.d).padStart(2, '0')}d</div>:
-                        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded">{String(fomcTimeLeft.h).padStart(2, '0')}h</div>:
-                        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded">{String(fomcTimeLeft.m).padStart(2, '0')}m</div>:
-                        <div className="bg-bg/90 border border-indigo-500/30 px-1 py-0.5 rounded">{String(fomcTimeLeft.s).padStart(2, '0')}s</div>
-                      </>
-                    ) : (
-                      <span>--d --h --m --s</span>
-                    )}
-                  </div>
-                </div>
-              )}
+              {/* Dedicated Countdown Timer for EVERY SINGLE Indicator Card */}
+              <div className="my-2 p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col gap-1">
+                <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-indigo-400 shrink-0" />
+                  Оставащо време до доклада:
+                </span>
+                {renderTimerBadge(ind.id)}
+              </div>
             </div>
 
             <div>
@@ -314,7 +336,7 @@ export default function WhatMovesTheMarket() {
 
                 {/* Info Icon (i) button */}
                 <button
-                  onClick={() => setSelectedIndicator(ind)}
+                  onClick={() => setSelectedIndicator(ind as any)}
                   className="w-7 h-7 rounded-xl bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 justify-center transition-all cursor-pointer shrink-0 border border-indigo-500/30"
                   title="Виж пълна информация за индикатора"
                 >
@@ -355,27 +377,14 @@ export default function WhatMovesTheMarket() {
               </div>
             </div>
 
-            {/* If Indicator #1 selected in Modal, show live timer there too */}
-            {selectedIndicator.id === 1 && (
-              <div className="my-3 p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/40 flex items-center justify-between">
-                <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-indigo-400" />
-                  Таймер до следващото FOMC заседание:
-                </span>
-                <div className="flex items-center gap-1 font-sans tabular-nums text-xs font-black text-indigo-400">
-                  {fomcTimeLeft ? (
-                    <>
-                      <div className="bg-bg border border-indigo-500/30 px-1.5 py-0.5 rounded">{String(fomcTimeLeft.d).padStart(2, '0')}д</div>:
-                      <div className="bg-bg border border-indigo-500/30 px-1.5 py-0.5 rounded">{String(fomcTimeLeft.h).padStart(2, '0')}ч</div>:
-                      <div className="bg-bg border border-indigo-500/30 px-1.5 py-0.5 rounded">{String(fomcTimeLeft.m).padStart(2, '0')}м</div>:
-                      <div className="bg-bg border border-indigo-500/30 px-1.5 py-0.5 rounded">{String(fomcTimeLeft.s).padStart(2, '0')}с</div>
-                    </>
-                  ) : (
-                    <span>--</span>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Live countdown timer inside Modal */}
+            <div className="my-3 p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/40 flex items-center justify-between">
+              <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-indigo-400" />
+                Таймер до публикуването на данните:
+              </span>
+              {renderTimerBadge(selectedIndicator.id)}
+            </div>
 
             <div className="space-y-3.5 mt-4 text-xs leading-relaxed">
               <div className="bg-bg/60 p-3 rounded-2xl border border-border/40">
