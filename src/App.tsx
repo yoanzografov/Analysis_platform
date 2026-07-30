@@ -15,20 +15,20 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import { 
   Save,
- Building2, 
- Download, 
- Bell, 
- Play, 
- Calendar,
- Square, 
- RefreshCw,
- Settings2,
- ChevronDown,
- Trash2,
- ArchiveRestore,
- Activity,
- Info,
- X
+  Building2, 
+  Download, 
+  Bell, 
+  Play, 
+  Calendar,
+  Square, 
+  RefreshCw,
+  Settings2,
+  ChevronDown,
+  ArchiveRestore,
+  Trash2,
+  Layers,
+  Info,
+  X
 } from 'lucide-react';
 
 export default function App() {
@@ -49,6 +49,7 @@ export default function App() {
  const [isFetchingLivePrices, setIsFetchingLivePrices] = useState(false);
  const [isAutoLiveRefresh, setIsAutoLiveRefresh] = useState(true);
  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+ const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
 
  // Price Alert targets
  const [alerts, setAlerts] = useState<PriceAlert[]>([]);
