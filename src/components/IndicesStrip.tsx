@@ -114,13 +114,18 @@ export default function IndicesStrip({ indices }: Props) {
     'European Markets',
     'Asian Markets',
     'Commodities',
-    'Currencies',
-    'Crypto',
-    'Bonds'
+    'Currencies (Само Валути)',
+    'Crypto (Само Криптовалути)',
+    'Bonds (Облигации)'
   ];
 
-  // Filter indices based on active category
-  const filteredIndices = indices.filter(idx => idx.category === selectedCategory);
+  // Filter indices based on active category (handles exact & prefix matches for Firestore data)
+  const filteredIndices = indices.filter(idx => {
+    if (selectedCategory.startsWith('Currencies')) return idx.category.startsWith('Currencies');
+    if (selectedCategory.startsWith('Crypto')) return idx.category.startsWith('Crypto');
+    if (selectedCategory.startsWith('Bonds')) return idx.category.startsWith('Bonds');
+    return idx.category === selectedCategory;
+  });
 
   // Pad to max 7 market index items + 1 Heat Map box on the right (Total = 8)
   const displayItems = [...filteredIndices].slice(0, 7);
@@ -128,8 +133,8 @@ export default function IndicesStrip({ indices }: Props) {
   const placeholders = Array.from({ length: Math.max(0, emptyCount) });
 
   const formatPrice = (val: number, name: string) => {
-    if (selectedCategory === 'Bonds') return `${val.toFixed(2)}%`;
-    if (name.includes('/') || selectedCategory === 'Currencies') {
+    if (selectedCategory.startsWith('Bonds')) return `${val.toFixed(2)}%`;
+    if (name.includes('/') || selectedCategory.startsWith('Currencies')) {
       if (val < 5) return val.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
       return val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
