@@ -262,13 +262,13 @@ export function parseCSVData(csvText: string): { stocks: Stock[]; indices: Marke
     { name: 'Platinum', value: 1600.65, changePct: 0.16, ticker: 'PL=F', changeVal: 2.55, category: 'Commodities' },
 
     // Currencies (Само Валути)
-    { name: 'EUR/USD', value: 1.09, changePct: 0.13, ticker: 'EURUSD=X', changeVal: 0.0014, category: 'Currencies (Само Валути)' },
-    { name: 'USD/JPY', value: 155.80, changePct: 0.03, ticker: 'JPY=X', changeVal: 0.05, category: 'Currencies (Само Валути)' },
-    { name: 'GBP/USD', value: 1.28, changePct: 0.22, ticker: 'GBPUSD=X', changeVal: 0.0028, category: 'Currencies (Само Валути)' },
-    { name: 'USD/CHF', value: 0.89, changePct: -0.15, ticker: 'USDCHF=X', changeVal: -0.0013, category: 'Currencies (Само Валути)' },
-    { name: 'USD/CAD', value: 1.36, changePct: -0.23, ticker: 'USDCAD=X', changeVal: -0.0031, category: 'Currencies (Само Валути)' },
-    { name: 'AUD/USD', value: 0.66, changePct: 0.20, ticker: 'AUDUSD=X', changeVal: 0.0013, category: 'Currencies (Само Валути)' },
-    { name: 'US Dollar Index (DXY)', value: 104.25, changePct: -0.18, ticker: 'DX-Y.NYB', changeVal: -0.19, category: 'Currencies (Само Валути)' },
+    { name: 'EUR/USD', value: 1.15, changePct: 0.06, ticker: 'EURUSD=X', changeVal: 0.00, category: 'Currencies (Само Валути)' },
+    { name: 'USD/JPY', value: 157.99, changePct: -1.01, ticker: 'JPY=X', changeVal: -1.62, category: 'Currencies (Само Валути)' },
+    { name: 'USD/GBP', value: 0.74, changePct: -0.17, ticker: 'GBP=X', changeVal: -0.00, category: 'Currencies (Само Валути)' },
+    { name: 'USD/AUD', value: 1.42, changePct: -0.19, ticker: 'USDAUD=X', changeVal: -0.00, category: 'Currencies (Само Валути)' },
+    { name: 'USD/CAD', value: 1.40, changePct: 0.05, ticker: 'USDCAD=X', changeVal: 0.00, category: 'Currencies (Само Валути)' },
+    { name: 'USD/MXN', value: 17.31, changePct: -0.10, ticker: 'USDMXN=X', changeVal: -0.02, category: 'Currencies (Само Валути)' },
+    { name: 'USD/HKD', value: 7.84, changePct: -0.01, ticker: 'USDHKD=X', changeVal: -0.00, category: 'Currencies (Само Валути)' },
 
     // Crypto (Само Криптовалути)
     { name: 'Bitcoin (BTC)', value: 62919.60, changePct: -2.79, ticker: 'BTC-USD', changeVal: -1804.43, category: 'Crypto (Само Криптовалути)' },

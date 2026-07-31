@@ -127,12 +127,12 @@ export default function IndicesStrip({ indices }: Props) {
   ];
 
   const FALLBACK_CURRENCIES: MarketIndex[] = [
-    { name: 'EUR/USD', value: 1.15, changePct: 0.01, ticker: 'EURUSD=X', changeVal: 0.00, category: 'Currencies (Само Валути)' },
-    { name: 'USD/JPY', value: 159.16, changePct: -0.28, ticker: 'JPY=X', changeVal: -0.45, category: 'Currencies (Само Валути)' },
-    { name: 'USD/GBP', value: 0.74, changePct: -0.09, ticker: 'GBP=X', changeVal: -0.00, category: 'Currencies (Само Валути)' },
-    { name: 'USD/AUD', value: 1.42, changePct: -0.14, ticker: 'USDAUD=X', changeVal: -0.00, category: 'Currencies (Само Валути)' },
+    { name: 'EUR/USD', value: 1.15, changePct: 0.06, ticker: 'EURUSD=X', changeVal: 0.00, category: 'Currencies (Само Валути)' },
+    { name: 'USD/JPY', value: 157.99, changePct: -1.01, ticker: 'JPY=X', changeVal: -1.62, category: 'Currencies (Само Валути)' },
+    { name: 'USD/GBP', value: 0.74, changePct: -0.17, ticker: 'GBP=X', changeVal: -0.00, category: 'Currencies (Само Валути)' },
+    { name: 'USD/AUD', value: 1.42, changePct: -0.19, ticker: 'USDAUD=X', changeVal: -0.00, category: 'Currencies (Само Валути)' },
     { name: 'USD/CAD', value: 1.40, changePct: 0.05, ticker: 'USDCAD=X', changeVal: 0.00, category: 'Currencies (Само Валути)' },
-    { name: 'USD/MXN', value: 17.32, changePct: -0.04, ticker: 'USDMXN=X', changeVal: -0.01, category: 'Currencies (Само Валути)' },
+    { name: 'USD/MXN', value: 17.31, changePct: -0.10, ticker: 'USDMXN=X', changeVal: -0.02, category: 'Currencies (Само Валути)' },
     { name: 'USD/HKD', value: 7.84, changePct: -0.01, ticker: 'USDHKD=X', changeVal: -0.00, category: 'Currencies (Само Валути)' },
   ];
 
