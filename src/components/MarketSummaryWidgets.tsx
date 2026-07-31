@@ -534,8 +534,8 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
           {/* Section Divider */}
           <div className="pt-2 border-t border-border/30">
-            <span className="text-[11px] font-extrabold uppercase text-indigo-400 tracking-wider block mb-1">
-              📊 10-те Макроикономически Индикатора (TradingView):
+            <span className="text-[11px] font-extrabold uppercase text-white tracking-wider block mb-1">
+              Макроикономически Индикатори
             </span>
           </div>
 
