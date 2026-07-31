@@ -234,7 +234,7 @@ export default function IndicesStrip({ indices }: Props) {
               <div key={`placeholder-${i}`} className="h-full bg-transparent hover:bg-card-hover transition-colors" />
             ))}
 
-            {/* 8th Box (Far Right): TradingView Heat Map (Секторна карта) */}
+            {/* 8th Box (Far Right): TradingView Heat Map */}
             <a
               href="https://www.tradingview.com/heatmap/stock/#%7B%22dataSource%22%3A%22SPX500%22%2C%22blockColor%22%3A%22change%22%2C%22blockSize%22%3A%22market_cap_basic%22%2C%22grouping%22%3A%22sector%22%7D"
               target="_blank"
@@ -242,20 +242,25 @@ export default function IndicesStrip({ indices }: Props) {
               className="group relative h-full flex flex-col justify-center px-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 transition-all duration-200 cursor-pointer"
               title="Отвори TradingView Stock Heat Map (Секторна карта)"
             >
-              <div className="flex items-center gap-1.5 mb-0.5 truncate">
-                <img 
-                  src="https://www.google.com/s2/favicons?domain=tradingview.com&sz=32" 
-                  alt="TradingView" 
-                  className="w-3.5 h-3.5 rounded shrink-0 bg-white/90 p-0.5"
-                />
+              <div className="flex items-center gap-2 mb-0.5 truncate">
+                {/* Colorful Heatmap Grid Icon */}
+                <div className="w-4 h-4 rounded bg-bg border border-border flex items-center justify-center shrink-0 p-0.5 shadow-2xs group-hover:scale-105 transition-transform">
+                  <div className="grid grid-cols-2 gap-0.5 w-full h-full">
+                    <div className="bg-emerald-500 rounded-[1px]" />
+                    <div className="bg-rose-500 rounded-[1px]" />
+                    <div className="bg-emerald-400 rounded-[1px]" />
+                    <div className="bg-amber-500 rounded-[1px]" />
+                  </div>
+                </div>
+
                 <span className="text-xs font-sans font-extrabold text-indigo-400 group-hover:text-indigo-300 tracking-tight truncate uppercase">
                   Heat Map ↗
                 </span>
               </div>
               <span className="text-xs font-sans font-black text-ink leading-tight tracking-tight truncate">
-                Секторна карта
+                Heat Map
               </span>
-              <span className="text-[10px] font-mono text-ink-faint leading-none mt-1">
+              <span className="text-[10px] font-mono text-ink-faint leading-none mt-0.5">
                 tradingview.com
               </span>
             </a>
