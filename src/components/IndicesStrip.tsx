@@ -144,45 +144,26 @@ export default function IndicesStrip({ indices }: Props) {
     { name: 'UK 10Y Yield', value: 4.16, changePct: -0.32, ticker: 'TMBMKGB-10Y', changeVal: -0.013, category: 'Bonds (Облигации)' },
   ];
 
-  // Filter indices based on active category with smart fallback
-  let filteredIndices = indices.filter(idx => {
-    const cat = idx.category ? idx.category.toLowerCase() : '';
-    const name = idx.name ? idx.name.toLowerCase() : '';
-    const ticker = idx.ticker ? idx.ticker.toUpperCase() : '';
+  // Filter indices based on active category with guaranteed item lists
+  let filteredIndices: MarketIndex[] = [];
 
-    if (selectedCategory.startsWith('Crypto')) {
-      return (
-        cat.includes('crypto') ||
-        ticker.endsWith('-USD') ||
-        ticker.includes('BTC') ||
-        ticker.includes('ETH') ||
-        ticker.includes('SOL') ||
-        name.includes('bitcoin') ||
-        name.includes('ethereum')
-      );
-    }
-    if (selectedCategory.startsWith('Currencies')) {
-      return (
-        (cat.includes('currenc') || cat.includes('валути') || name.includes('/') || ticker.endsWith('=X') || ticker.includes('DX-Y')) &&
-        !ticker.endsWith('-USD') &&
-        !ticker.includes('BTC') &&
-        !ticker.includes('ETH') &&
-        !ticker.includes('SOL') &&
-        !ticker.includes('BNB') &&
-        !name.includes('bitcoin') &&
-        !name.includes('ethereum')
-      );
-    }
-    if (selectedCategory.startsWith('Bonds')) {
-      return cat.includes('bond') || ticker.startsWith('^TNX') || ticker.startsWith('^IRX') || ticker.startsWith('^TYX') || name.includes('yield') || name.includes('bond');
-    }
-    return idx.category === selectedCategory;
-  });
-
-  if (filteredIndices.length === 0) {
-    if (selectedCategory.startsWith('Crypto')) filteredIndices = FALLBACK_CRYPTO;
-    else if (selectedCategory.startsWith('Currencies')) filteredIndices = FALLBACK_CURRENCIES;
-    else if (selectedCategory.startsWith('Bonds')) filteredIndices = FALLBACK_BONDS;
+  if (selectedCategory.startsWith('Crypto') || selectedCategory === 'Crypto') {
+    filteredIndices = FALLBACK_CRYPTO.map(fallback => {
+      const live = indices.find(i => i.ticker?.toUpperCase() === fallback.ticker?.toUpperCase());
+      return live ? { ...fallback, value: live.value, changePct: live.changePct, changeVal: live.changeVal } : fallback;
+    });
+  } else if (selectedCategory.startsWith('Currencies') || selectedCategory === 'Currencies') {
+    filteredIndices = FALLBACK_CURRENCIES.map(fallback => {
+      const live = indices.find(i => i.ticker?.toUpperCase() === fallback.ticker?.toUpperCase());
+      return live ? { ...fallback, value: live.value, changePct: live.changePct, changeVal: live.changeVal } : fallback;
+    });
+  } else if (selectedCategory.startsWith('Bonds') || selectedCategory === 'Bonds') {
+    filteredIndices = FALLBACK_BONDS.map(fallback => {
+      const live = indices.find(i => i.ticker?.toUpperCase() === fallback.ticker?.toUpperCase());
+      return live ? { ...fallback, value: live.value, changePct: live.changePct, changeVal: live.changeVal } : fallback;
+    });
+  } else {
+    filteredIndices = indices.filter(idx => idx.category === selectedCategory);
   }
 
   // Pad to max 7 market index items + 1 Heat Map box on the right (Total = 8)
