@@ -270,11 +270,11 @@ export function parseCSVData(csvText: string): { stocks: Stock[]; indices: Marke
     { name: 'USD/MXN', value: 17.31, changePct: -0.10, ticker: 'USDMXN=X', changeVal: -0.02, category: 'Currencies' },
     { name: 'USD/HKD', value: 7.84, changePct: -0.01, ticker: 'USDHKD=X', changeVal: -0.00, category: 'Currencies' },
 
-    // Crypto (Само Криптовалути)
-    { name: 'Bitcoin (BTC)', value: 62919.60, changePct: -2.79, ticker: 'BTC-USD', changeVal: -1804.43, category: 'Crypto (Само Криптовалути)' },
-    { name: 'Ethereum (ETH)', value: 3450.20, changePct: 1.85, ticker: 'ETH-USD', changeVal: 62.70, category: 'Crypto (Само Криптовалути)' },
-    { name: 'Solana (SOL)', value: 152.40, changePct: 4.12, ticker: 'SOL-USD', changeVal: 6.02, category: 'Crypto (Само Криптовалути)' },
-    { name: 'Binance Coin (BNB)', value: 575.80, changePct: 0.95, ticker: 'BNB-USD', changeVal: 5.40, category: 'Crypto (Само Криптовалути)' },
+    // Crypto
+    { name: 'Bitcoin (BTC)', value: 62919.60, changePct: -2.79, ticker: 'BTC-USD', changeVal: -1804.43, category: 'Crypto' },
+    { name: 'Ethereum (ETH)', value: 3450.20, changePct: 1.85, ticker: 'ETH-USD', changeVal: 62.70, category: 'Crypto' },
+    { name: 'Solana (SOL)', value: 152.40, changePct: 4.12, ticker: 'SOL-USD', changeVal: 6.02, category: 'Crypto' },
+    { name: 'Binance Coin (BNB)', value: 575.80, changePct: 0.95, ticker: 'BNB-USD', changeVal: 5.40, category: 'Crypto' },
 
     // Bonds (Облигации)
     { name: 'US 10Y Yield', value: 4.22, changePct: -0.85, ticker: '^TNX', changeVal: -0.036, category: 'Bonds (Облигации)' },
