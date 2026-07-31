@@ -58,6 +58,9 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     'USDCHF=X': 'OANDA:USDCHF',
     'USDCAD=X': 'OANDA:USDCAD',
     'AUDUSD=X': 'OANDA:AUDUSD',
+    'USDAUD=X': 'OANDA:USDAUD',
+    'USDMXN=X': 'OANDA:USDMXN',
+    'USDHKD=X': 'OANDA:USDHKD',
     'DX-Y.NYB': 'TVC:DXY',
 
     // Crypto
