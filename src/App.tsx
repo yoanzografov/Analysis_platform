@@ -818,10 +818,10 @@ export default function App() {
   {/* Save Button */}
   <button
     onClick={handleSaveToCloud}
-    className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+    className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
     title="Запази всички промени"
   >
-    <Save className="w-3 h-3" />
+    <Save className="w-3.5 h-3.5" />
     <span className="hidden sm:inline">Save</span>
   </button>
 
@@ -829,10 +829,10 @@ export default function App() {
   <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsSettingsMenuOpen(false); }}>
     <button
       onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
-      className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-border bg-bg text-ink hover:bg-white/10 uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+      className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
       title="Системни настройки и данни"
     >
-      <Settings2 className="w-3 h-3" />
+      <Settings2 className="w-3.5 h-3.5" />
       <span className="hidden sm:inline">Настройки</span>
       <ChevronDown className={`w-3 h-3 transition-transform ${isSettingsMenuOpen ? 'rotate-180' : ''}`} />
     </button>
