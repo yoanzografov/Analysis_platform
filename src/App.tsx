@@ -789,38 +789,7 @@ export default function App() {
   </div>
   </button>
 
-  {/* Simulation Engine Activator */}
-  <button
-  onClick={() => {
-  setIsSimulating(!isSimulating);
-  if (!isSimulating) {
-  setIsAutoLiveRefresh(false); 
-  }
-  }}
-  className={`text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
-  isSimulating 
-  ? 'bg-red-700 text-ink border-red-850 hover:bg-red-800 font-extrabold' 
-  : 'bg-bg text-ink border-border hover:bg-white/10 hover:text-ink'
-  }`}
-  >
-  {isSimulating ? (
-  <>
-  <Square className="w-3 h-3 fill-current" />
-  СПРИ СИМУЛАТОР
-  </>
-  ) : (
-  <>
-  <Play className="w-3 h-3 fill-current" />
-  СТАРТИРАЙ СИМУЛАТОР
-  </>
-  )}
-  <div className="group/info relative flex items-center">
-    <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-xs leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
-      Ръчно генериране на случайни пазарни колебания за тестване на филтри и лимити
-    </div>
-  </div>
-  </button>
+
 
   {/* Quick real live market quotes sync */}
   <button
