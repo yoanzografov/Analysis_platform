@@ -119,13 +119,69 @@ export default function IndicesStrip({ indices }: Props) {
     'Bonds (Облигации)'
   ];
 
-  // Filter indices based on active category (handles exact & prefix matches for Firestore data)
-  const filteredIndices = indices.filter(idx => {
-    if (selectedCategory.startsWith('Currencies')) return idx.category.startsWith('Currencies');
-    if (selectedCategory.startsWith('Crypto')) return idx.category.startsWith('Crypto');
-    if (selectedCategory.startsWith('Bonds')) return idx.category.startsWith('Bonds');
+  const FALLBACK_CRYPTO: MarketIndex[] = [
+    { name: 'Bitcoin (BTC)', value: 64250.00, changePct: 2.15, ticker: 'BTC-USD', changeVal: 1350.00, category: 'Crypto (Само Криптовалути)' },
+    { name: 'Ethereum (ETH)', value: 3450.20, changePct: 1.85, ticker: 'ETH-USD', changeVal: 62.70, category: 'Crypto (Само Криптовалути)' },
+    { name: 'Solana (SOL)', value: 152.40, changePct: 4.12, ticker: 'SOL-USD', changeVal: 6.02, category: 'Crypto (Само Криптовалути)' },
+    { name: 'Binance Coin (BNB)', value: 575.80, changePct: 0.95, ticker: 'BNB-USD', changeVal: 5.40, category: 'Crypto (Само Криптовалути)' },
+    { name: 'Ripple (XRP)', value: 0.61, changePct: -0.85, ticker: 'XRP-USD', changeVal: -0.005, category: 'Crypto (Само Криптовалути)' },
+    { name: 'Cardano (ADA)', value: 0.42, changePct: 1.12, ticker: 'ADA-USD', changeVal: 0.004, category: 'Crypto (Само Криптовалути)' },
+    { name: 'Dogecoin (DOGE)', value: 0.12, changePct: -1.05, ticker: 'DOGE-USD', changeVal: -0.001, category: 'Crypto (Само Криптовалути)' },
+  ];
+
+  const FALLBACK_CURRENCIES: MarketIndex[] = [
+    { name: 'EUR/USD', value: 1.09, changePct: 0.13, ticker: 'EURUSD=X', changeVal: 0.0014, category: 'Currencies (Само Валути)' },
+    { name: 'USD/JPY', value: 155.80, changePct: 0.03, ticker: 'JPY=X', changeVal: 0.05, category: 'Currencies (Само Валути)' },
+    { name: 'GBP/USD', value: 1.28, changePct: 0.22, ticker: 'GBPUSD=X', changeVal: 0.0028, category: 'Currencies (Само Валути)' },
+    { name: 'USD/CHF', value: 0.89, changePct: -0.15, ticker: 'USDCHF=X', changeVal: -0.0013, category: 'Currencies (Само Валути)' },
+    { name: 'USD/CAD', value: 1.36, changePct: -0.23, ticker: 'USDCAD=X', changeVal: -0.0031, category: 'Currencies (Само Валути)' },
+    { name: 'AUD/USD', value: 0.66, changePct: 0.20, ticker: 'AUDUSD=X', changeVal: 0.0013, category: 'Currencies (Само Валути)' },
+    { name: 'US Dollar Index (DXY)', value: 104.25, changePct: -0.18, ticker: 'DX-Y.NYB', changeVal: -0.19, category: 'Currencies (Само Валути)' },
+  ];
+
+  const FALLBACK_BONDS: MarketIndex[] = [
+    { name: 'US 10Y Yield', value: 4.22, changePct: -0.85, ticker: '^TNX', changeVal: -0.036, category: 'Bonds (Облигации)' },
+    { name: 'US 2Y Yield', value: 4.48, changePct: -0.62, ticker: '^IRX', changeVal: -0.028, category: 'Bonds (Облигации)' },
+    { name: 'US 30Y Yield', value: 4.45, changePct: -0.71, ticker: '^TYX', changeVal: -0.032, category: 'Bonds (Облигации)' },
+    { name: 'Germany 10Y Yield', value: 2.51, changePct: -0.40, ticker: 'TMBMKDE-10Y', changeVal: -0.01, category: 'Bonds (Облигации)' },
+    { name: 'UK 10Y Yield', value: 4.16, changePct: -0.32, ticker: 'TMBMKGB-10Y', changeVal: -0.013, category: 'Bonds (Облигации)' },
+  ];
+
+  // Filter indices based on active category with smart fallback
+  let filteredIndices = indices.filter(idx => {
+    const cat = idx.category ? idx.category.toLowerCase() : '';
+    const name = idx.name ? idx.name.toLowerCase() : '';
+    const ticker = idx.ticker ? idx.ticker.toUpperCase() : '';
+
+    if (selectedCategory.startsWith('Crypto')) {
+      return (
+        cat.includes('crypto') ||
+        ticker.endsWith('-USD') ||
+        ticker.includes('BTC') ||
+        ticker.includes('ETH') ||
+        ticker.includes('SOL') ||
+        name.includes('bitcoin') ||
+        name.includes('ethereum')
+      );
+    }
+    if (selectedCategory.startsWith('Currencies')) {
+      return (
+        (cat.includes('currenc') || name.includes('/') || ticker.endsWith('=X') || ticker.includes('DX-Y')) &&
+        !ticker.endsWith('-USD') &&
+        !cat.includes('crypto')
+      );
+    }
+    if (selectedCategory.startsWith('Bonds')) {
+      return cat.includes('bond') || ticker.startsWith('^TNX') || ticker.startsWith('^IRX') || ticker.startsWith('^TYX') || name.includes('yield') || name.includes('bond');
+    }
     return idx.category === selectedCategory;
   });
+
+  if (filteredIndices.length === 0) {
+    if (selectedCategory.startsWith('Crypto')) filteredIndices = FALLBACK_CRYPTO;
+    else if (selectedCategory.startsWith('Currencies')) filteredIndices = FALLBACK_CURRENCIES;
+    else if (selectedCategory.startsWith('Bonds')) filteredIndices = FALLBACK_BONDS;
+  }
 
   // Pad to max 7 market index items + 1 Heat Map box on the right (Total = 8)
   const displayItems = [...filteredIndices].slice(0, 7);

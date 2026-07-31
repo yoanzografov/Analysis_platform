@@ -66,6 +66,8 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     'SOL-USD': 'COINBASE:SOLUSD',
     'BNB-USD': 'BINANCE:BNBUSD',
     'XRP-USD': 'COINBASE:XRPUSD',
+    'ADA-USD': 'COINBASE:ADAUSD',
+    'DOGE-USD': 'COINBASE:DOGEUSD',
 
     // Bonds
     '^TNX': 'TVC:US10Y',
