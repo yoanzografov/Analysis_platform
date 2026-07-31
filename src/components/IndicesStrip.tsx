@@ -109,30 +109,32 @@ export default function IndicesStrip({ indices }: Props) {
  return () => window.removeEventListener('mousedown', handleOutsideClick);
  }, []);
 
- const CATEGORIES = [
- 'US Markets',
- 'European Markets',
- 'Asian Markets',
- 'Commodities',
- 'Currencies & Crypto'
- ];
+  const CATEGORIES = [
+    'US Markets',
+    'European Markets',
+    'Asian Markets',
+    'Commodities',
+    'Currencies',
+    'Crypto',
+    'Bonds'
+  ];
 
- // Filter indices based on active category
- const filteredIndices = indices.filter(idx => idx.category === selectedCategory);
+  // Filter indices based on active category
+  const filteredIndices = indices.filter(idx => idx.category === selectedCategory);
 
   // Pad to max 7 market index items + 1 Heat Map box on the right (Total = 8)
   const displayItems = [...filteredIndices].slice(0, 7);
   const emptyCount = 7 - displayItems.length;
   const placeholders = Array.from({ length: Math.max(0, emptyCount) });
 
- const formatPrice = (val: number, name: string) => {
- // Currencies or specific items
- if (name.includes('/') || selectedCategory === 'Currencies & Crypto') {
- if (val < 5) return val.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
- return val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
- }
- return val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
- };
+  const formatPrice = (val: number, name: string) => {
+    if (selectedCategory === 'Bonds') return `${val.toFixed(2)}%`;
+    if (name.includes('/') || selectedCategory === 'Currencies') {
+      if (val < 5) return val.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+      return val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
  return (
     <div className="w-full relative z-50 mb-4 mt-5">

@@ -261,15 +261,28 @@ export function parseCSVData(csvText: string): { stocks: Stock[]; indices: Marke
     { name: 'Natural Gas', value: 3.31, changePct: 1.53, ticker: 'NG=F', changeVal: 0.05, category: 'Commodities' },
     { name: 'Platinum', value: 1600.65, changePct: 0.16, ticker: 'PL=F', changeVal: 2.55, category: 'Commodities' },
 
-    // Currencies & Crypto
-    { name: 'EUR/USD', value: 1.14, changePct: 0.13, ticker: 'EURUSD=X', changeVal: 0.00, category: 'Currencies & Crypto' },
-    { name: 'USD/JPY', value: 161.80, changePct: 0.03, ticker: 'JPY=X', changeVal: 0.05, category: 'Currencies & Crypto' },
-    { name: 'USD/GBP', value: 0.76, changePct: -0.22, ticker: 'GBP=X', changeVal: -0.00, category: 'Currencies & Crypto' },
-    { name: 'USD/AUD', value: 1.45, changePct: -0.20, ticker: 'USDAUD=X', changeVal: -0.00, category: 'Currencies & Crypto' },
-    { name: 'USD/CAD', value: 1.42, changePct: -0.23, ticker: 'USDCAD=X', changeVal: -0.00, category: 'Currencies & Crypto' },
-    { name: 'USD/MXN', value: 17.52, changePct: -0.52, ticker: 'USDMXN=X', changeVal: -0.09, category: 'Currencies & Crypto' },
-    { name: 'USD/HKD', value: 7.84, changePct: 0.02, ticker: 'USDHKD=X', changeVal: 0.00, category: 'Currencies & Crypto' },
-    { name: 'Bitcoin USD', value: 59544.41, changePct: -2.36, ticker: 'BTC-USD', changeVal: -1439.02, category: 'Currencies & Crypto' },
+    // Currencies
+    { name: 'EUR/USD', value: 1.09, changePct: 0.13, ticker: 'EURUSD=X', changeVal: 0.0014, category: 'Currencies' },
+    { name: 'USD/JPY', value: 155.80, changePct: 0.03, ticker: 'JPY=X', changeVal: 0.05, category: 'Currencies' },
+    { name: 'GBP/USD', value: 1.28, changePct: 0.22, ticker: 'GBPUSD=X', changeVal: 0.0028, category: 'Currencies' },
+    { name: 'USD/CHF', value: 0.89, changePct: -0.15, ticker: 'USDCHF=X', changeVal: -0.0013, category: 'Currencies' },
+    { name: 'USD/CAD', value: 1.36, changePct: -0.23, ticker: 'USDCAD=X', changeVal: -0.0031, category: 'Currencies' },
+    { name: 'AUD/USD', value: 0.66, changePct: 0.20, ticker: 'AUDUSD=X', changeVal: 0.0013, category: 'Currencies' },
+    { name: 'US Dollar Index', value: 104.25, changePct: -0.18, ticker: 'DX-Y.NYB', changeVal: -0.19, category: 'Currencies' },
+
+    // Crypto
+    { name: 'Bitcoin (BTC)', value: 64250.00, changePct: 2.15, ticker: 'BTC-USD', changeVal: 1350.00, category: 'Crypto' },
+    { name: 'Ethereum (ETH)', value: 3450.20, changePct: 1.85, ticker: 'ETH-USD', changeVal: 62.70, category: 'Crypto' },
+    { name: 'Solana (SOL)', value: 152.40, changePct: 4.12, ticker: 'SOL-USD', changeVal: 6.02, category: 'Crypto' },
+    { name: 'Binance Coin (BNB)', value: 575.80, changePct: 0.95, ticker: 'BNB-USD', changeVal: 5.40, category: 'Crypto' },
+    { name: 'Ripple (XRP)', value: 0.61, changePct: -0.85, ticker: 'XRP-USD', changeVal: -0.005, category: 'Crypto' },
+
+    // Bonds
+    { name: 'US 10Y Yield', value: 4.22, changePct: -0.85, ticker: '^TNX', changeVal: -0.036, category: 'Bonds' },
+    { name: 'US 2Y Yield', value: 4.48, changePct: -0.62, ticker: '^IRX', changeVal: -0.028, category: 'Bonds' },
+    { name: 'US 30Y Yield', value: 4.45, changePct: -0.71, ticker: '^TYX', changeVal: -0.032, category: 'Bonds' },
+    { name: 'Germany 10Y Yield', value: 2.51, changePct: -0.40, ticker: 'TMBMKDE-10Y', changeVal: -0.01, category: 'Bonds' },
+    { name: 'UK 10Y Yield', value: 4.16, changePct: -0.32, ticker: 'TMBMKGB-10Y', changeVal: -0.013, category: 'Bonds' },
   ];
 
   let headerIndex = -1;

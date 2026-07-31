@@ -50,15 +50,29 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     'NG=F': 'TVC:NATURALGAS',
     'PL=F': 'TVC:PLATINUM',
 
-    // Currencies & Crypto
+    // Currencies
     'EURUSD=X': 'OANDA:EURUSD',
     'JPY=X': 'OANDA:USDJPY',
     'GBP=X': 'OANDA:GBPUSD',
-    'USDAUD=X': 'OANDA:USDAUD',
+    'GBPUSD=X': 'OANDA:GBPUSD',
+    'USDCHF=X': 'OANDA:USDCHF',
     'USDCAD=X': 'OANDA:USDCAD',
-    'USDMXN=X': 'OANDA:USDMXN',
-    'USDHKD=X': 'OANDA:USDHKD',
+    'AUDUSD=X': 'OANDA:AUDUSD',
+    'DX-Y.NYB': 'TVC:DXY',
+
+    // Crypto
     'BTC-USD': 'COINBASE:BTCUSD',
+    'ETH-USD': 'COINBASE:ETHUSD',
+    'SOL-USD': 'COINBASE:SOLUSD',
+    'BNB-USD': 'BINANCE:BNBUSD',
+    'XRP-USD': 'COINBASE:XRPUSD',
+
+    // Bonds
+    '^TNX': 'TVC:US10Y',
+    '^IRX': 'TVC:US02Y',
+    '^TYX': 'TVC:US30Y',
+    'TMBMKDE-10Y': 'TVC:DE10Y',
+    'TMBMKGB-10Y': 'TVC:GB10Y',
   };
 
   if (ticker && map[ticker]) return map[ticker];
