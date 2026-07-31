@@ -120,10 +120,10 @@ export default function IndicesStrip({ indices }: Props) {
  // Filter indices based on active category
  const filteredIndices = indices.filter(idx => idx.category === selectedCategory);
 
- // Pad to exactly 8 containers
- const displayItems = [...filteredIndices];
- const emptyCount = 8 - displayItems.length;
- const placeholders = Array.from({ length: Math.max(0, emptyCount) });
+  // Pad to max 7 market index items + 1 Heat Map box on the right (Total = 8)
+  const displayItems = [...filteredIndices].slice(0, 7);
+  const emptyCount = 7 - displayItems.length;
+  const placeholders = Array.from({ length: Math.max(0, emptyCount) });
 
  const formatPrice = (val: number, name: string) => {
  // Currencies or specific items
@@ -233,6 +233,32 @@ export default function IndicesStrip({ indices }: Props) {
             {placeholders.map((_, i) => (
               <div key={`placeholder-${i}`} className="h-full bg-transparent hover:bg-card-hover transition-colors" />
             ))}
+
+            {/* 8th Box (Far Right): TradingView Heat Map (Секторна карта) */}
+            <a
+              href="https://www.tradingview.com/heatmap/stock/#%7B%22dataSource%22%3A%22SPX500%22%2C%22blockColor%22%3A%22change%22%2C%22blockSize%22%3A%22market_cap_basic%22%2C%22grouping%22%3A%22sector%22%7D"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative h-full flex flex-col justify-center px-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 transition-all duration-200 cursor-pointer"
+              title="Отвори TradingView Stock Heat Map (Секторна карта)"
+            >
+              <div className="flex items-center gap-1.5 mb-0.5 truncate">
+                <img 
+                  src="https://www.google.com/s2/favicons?domain=tradingview.com&sz=32" 
+                  alt="TradingView" 
+                  className="w-3.5 h-3.5 rounded shrink-0 bg-white/90 p-0.5"
+                />
+                <span className="text-xs font-sans font-extrabold text-indigo-400 group-hover:text-indigo-300 tracking-tight truncate uppercase">
+                  Heat Map ↗
+                </span>
+              </div>
+              <span className="text-xs font-sans font-black text-ink leading-tight tracking-tight truncate">
+                Секторна карта
+              </span>
+              <span className="text-[10px] font-mono text-ink-faint leading-none mt-1">
+                tradingview.com
+              </span>
+            </a>
 
           </div>
         </div>

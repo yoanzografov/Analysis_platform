@@ -595,29 +595,6 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             </a>
           ))}
 
-          {/* Useful Link: TradingView Heat Map */}
-          <a 
-            href="https://www.tradingview.com/heatmap/stock/#%7B%22dataSource%22%3A%22SPX500%22%2C%22blockColor%22%3A%22change%22%2C%22blockSize%22%3A%22market_cap_basic%22%2C%22grouping%22%3A%22sector%22%7D" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-border/50 bg-card/30 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer"
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <img 
-                src="https://www.google.com/s2/favicons?domain=tradingview.com&sz=32" 
-                alt="TradingView" 
-                className="w-4 h-4 rounded shrink-0 bg-white/90 p-0.5"
-              />
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-extrabold text-ink group-hover:text-indigo-400 transition-colors truncate">
-                  TradingView Heat Map (Секторна карта)
-                </span>
-                <span className="text-[10px] text-ink-faint font-mono">tradingview.com</span>
-              </div>
-            </div>
-            <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0" />
-          </a>
-
         </div>
       </div>
 
