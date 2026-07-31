@@ -163,9 +163,14 @@ export default function IndicesStrip({ indices }: Props) {
     }
     if (selectedCategory.startsWith('Currencies')) {
       return (
-        (cat.includes('currenc') || name.includes('/') || ticker.endsWith('=X') || ticker.includes('DX-Y')) &&
+        (cat.includes('currenc') || cat.includes('валути') || name.includes('/') || ticker.endsWith('=X') || ticker.includes('DX-Y')) &&
         !ticker.endsWith('-USD') &&
-        !cat.includes('crypto')
+        !ticker.includes('BTC') &&
+        !ticker.includes('ETH') &&
+        !ticker.includes('SOL') &&
+        !ticker.includes('BNB') &&
+        !name.includes('bitcoin') &&
+        !name.includes('ethereum')
       );
     }
     if (selectedCategory.startsWith('Bonds')) {
