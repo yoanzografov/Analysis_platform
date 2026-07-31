@@ -43,153 +43,183 @@ export interface MarketIndicator {
 const INDICATORS_DATA: MarketIndicator[] = [
   {
     id: 1,
-    title: '1. Лихвени проценти (FOMC Rate)',
-    englishTitle: 'Fed Interest Rate Decision',
-    schedule: 'На всеки 6 седмици (Сряда 21:00 ч. БГ време / 8 пъти годишно)',
-    nextDateDesc: 'Следващо решение: Заседание на ФЕД (FOMC)',
+    title: '1. CPI (Consumer Price Index)',
+    englishTitle: 'Consumer Price Index (CPI Inflation)',
+    schedule: 'Всеки месец между 12-то и 14-то число (15:30 ч. БГ време)',
+    nextDateDesc: 'Следващ доклад за инфлацията (CPI)',
     impact: 'CRITICAL',
-    shortSummary: 'Централните банки (Фед/ЕЦБ) определят цената на парите. Основен двигател за оценката на целия фондов пазар.',
-    description: 'Лихвените проценти определят цената, на която банките и компаниите вземат заеми. Когато икономиката прегрява и инфлацията е висока → Фед повишава лихвите. Когато икономиката се охлажда → Фед понижава лихвите.',
-    whyItMovesMarket: 'По-високите лихви оскъпяват кредитите, намаляват корпоративните печалби и правят облигациите по-атрактивни спрямо акциите.',
-    marketReaction: 'Повишение на лихвите → Падане на акциите (особено технологични). Понижение на лихвите → Рали на борсите.',
+    shortSummary: 'Измерва средната промяна в цените на стоки и услуги, които потребителите купуват – храна, дрехи, транспорт, жилища, енергия и др.',
+    description: 'Измерва средната промяна в цените на стоки и услуги, които потребителите купуват – храна, дрехи, транспорт, жилища, енергия и др. Главният показател за потребителската инфлация.',
+    whyItMovesMarket: 'Ако CPI е по-висок от очакваното → инвеститорите се притесняват, че ФЕД ще задържи или ще вдигне лихвите → акциите падат. Ако CPI е по-нисък от очакваното → надежда за намаление на лихвите → пазарът скача.',
+    marketReaction: 'CPI над очакванията → спад на акциите и скок на щатския долар. CPI под очакванията → силно пазарно рали.',
+    tradingViewSymbol: 'FRED:CPIAUCSL',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-CPIAUCSL/',
+    source: 'US Bureau of Labor Statistics (BLS)'
+  },
+  {
+    id: 2,
+    title: '2. Core CPI (Основен CPI)',
+    englishTitle: 'Core Consumer Price Index',
+    schedule: 'Всеки месец (заедно с CPI)',
+    nextDateDesc: 'Следващ доклад за базовата инфлация',
+    impact: 'CRITICAL',
+    shortSummary: 'Същото като CPI, но изключва храни и енергия, защото са твърде волатилни и изкривяват общата картина.',
+    description: 'Същото като CPI, но изключва храни и енергия, защото те са твърде волатилни (цените им се променят бързо и понякога изкривяват общата картина). ФЕД следи Core CPI като по-надежден показател за трайната тенденция на инфлацията.',
+    whyItMovesMarket: 'Ако Core CPI остава висок → сигнал, че инфлацията е "вградена" в икономиката → ФЕД ще държи лихвите по-дълго високи.',
+    marketReaction: 'Core CPI над очакванията → спад в акциите, особено в технологичния сектор.',
+    tradingViewSymbol: 'FRED:CPILFESL',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-CPILFESL/',
+    source: 'US Bureau of Labor Statistics (BLS)'
+  },
+  {
+    id: 3,
+    title: '3. PCE (Лични разходи)',
+    englishTitle: 'Personal Consumption Expenditures (PCE)',
+    schedule: 'Всеки месец около 28-мо число (15:30 ч. БГ време)',
+    nextDateDesc: 'Следващ доклад за личните потребителски разходи',
+    impact: 'CRITICAL',
+    shortSummary: 'Алтернативна мярка за инфлацията, която се базира на реалните разходи на потребителите.',
+    description: 'Алтернативна мярка за инфлацията, базирана на реалните разходи. CPI гледа фиксирана кошница от стоки и услуги. PCE взема предвид, че хората променят поведението си, когато цените се покачват (например купуват пилешко вместо говеждо). Затова PCE обикновено показва по-ниска инфлация от CPI.',
+    whyItMovesMarket: 'PCE под очакванията = пазарен оптимизъм, защото ФЕД може да намали лихвите. PCE над очакванията = притеснение, че инфлацията остава висока.',
+    marketReaction: 'PCE под очакванията → рали на борсата. PCE над очакванията → притеснение и корекция.',
+    tradingViewSymbol: 'FRED:PCE',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PCE/',
+    source: 'US Bureau of Economic Analysis (BEA)'
+  },
+  {
+    id: 4,
+    title: '4. Core PCE (Основен PCE)',
+    englishTitle: 'Core PCE Price Index',
+    schedule: 'Всеки месец (заедно с PCE)',
+    nextDateDesc: 'Любимият индикатор на ФЕД (Цел: 2%)',
+    impact: 'CRITICAL',
+    shortSummary: 'Любимият индикатор на ФЕД за измерване на трайната инфлация (без храни и енергия). Търсят го да е 2%.',
+    description: 'Същото като PCE, но без храни и енергия, както при Core CPI. Това е любимият индикатор на ФЕД за измерване на трайната инфлация. Търсят го да е 2%. Core PCE отразява по-добре устойчивата тенденция в цените на услуги и заплати. Инвеститорите я приемат като „финален сигнал“ какво ще направи централната банка.',
+    whyItMovesMarket: 'ФЕД често споменава точно тази метрика в своите речи. Инвеститорите я приемат като „финален сигнал“ за лихвената политика.',
+    marketReaction: 'Ако Core PCE е близо до 2% → bullish сигнал за акциите. Ако Core PCE се задържа над 3% → bearish сигнал.',
+    tradingViewSymbol: 'FRED:PCEPILFE',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PCEPILFE/',
+    source: 'US Bureau of Economic Analysis (BEA)'
+  },
+  {
+    id: 5,
+    title: '5. Лихви на ФЕД (Fed Funds Rate)',
+    englishTitle: 'Federal Funds Rate & Dual Mandate',
+    schedule: 'На всеки 6 седмици (Сряда 21:00 ч. БГ време / 8 пъти годишно)',
+    nextDateDesc: 'Следващо заседание на ФЕД (FOMC)',
+    impact: 'CRITICAL',
+    shortSummary: 'Основната лихва, по която банките си отпускат пари. ФЕД има двойна цел: 1. Ценова стабилност (2%), 2. Пълна заетост.',
+    description: 'Основната лихва, по която банките си отпускат пари помежду си. Двойна цел на ФЕД („dual mandate“): 1. Ценова стабилност → инфлацията около 2%. 2. Пълна заетост → ниска безработица. Лихвите са основният инструмент: ако икономиката прегрява → повишават лихвите; ако се охлажда → понижават лихвите.',
+    whyItMovesMarket: 'По-високи лихви = по-скъп кредит, по-ниска потребителска активност и корпоративни печалби. Ниски лихви = евтини пари и растящи акции.',
+    marketReaction: 'Nasdaq и технологичните компании са най-чувствителни на промени в лихвите.',
     tradingViewSymbol: 'FRED:FEDFUNDS',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-FEDFUNDS/',
     source: 'Federal Reserve (Федерален резерв на САЩ)'
   },
   {
-    id: 2,
-    title: '2. Заетост & Безработица (NFP)',
-    englishTitle: 'Non-Farm Payrolls & Unemployment Rate',
+    id: 6,
+    title: '6. Данни за заетостта (NFP & Unemployment)',
+    englishTitle: 'Employment Situation Summary',
     schedule: 'Всеки първи петък от месеца (15:30 ч. БГ време)',
-    nextDateDesc: 'Следващи данни: Доклад за заетостта в САЩ',
+    nextDateDesc: 'Следващ месечен доклад за пазара на труда',
     impact: 'CRITICAL',
-    shortSummary: 'Месечен доклад за новите работни места в САЩ и процента безработица. Сърцето на икономиката.',
-    description: 'NFP измерва колко нови работни места са създадени в икономиката на САЩ през изминалия месец (без селското стопанство и държавните служители). Безработицата показва процента търсещи работа.',
-    whyItMovesMarket: 'Силният пазар на труда означава стабилно потребление, но и риск от инфлационен натиск и последващо вдигане на лихвите.',
-    marketReaction: '„Добрата новина може да е лоша новина“: Твърде много нови работни места плашат пазара от нови лихвени повишения.',
+    shortSummary: 'Месечен доклад за новите работни места и безработицата в САЩ.',
+    description: 'Месечен доклад за новите работни места и безработицата в САЩ. Силният пазар на труда = икономиката е стабилна, но и риск от инфлационен натиск → страх от повишение на лихвите.',
+    whyItMovesMarket: '„Добра новина“ може да е „лоша новина“: ако работните места растат твърде бързо, пазарът пада от страх за нови повишения на лихвите.',
+    marketReaction: 'Прекалено силна заетост → страх от лихвени повишения. Умерен ръст → стабилност.',
     tradingViewSymbol: 'FRED:PAYEMS',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PAYEMS/',
-    source: 'Bureau of Labor Statistics (BLS)'
+    source: 'US Bureau of Labor Statistics (BLS)'
   },
   {
-    id: 3,
-    title: '3. Потребителска Инфлация (CPI)',
-    englishTitle: 'Consumer Price Index (CPI Inflation)',
-    schedule: 'Всеки месец между 12-то и 14-то число (15:30 ч. БГ време)',
-    nextDateDesc: 'Следващи данни: Индекс на потребителските цени',
-    impact: 'CRITICAL',
-    shortSummary: 'Измерва промяната в цените на потребителските стоки и услуги. Главният показател за инфлация.',
-    description: 'CPI проследява потребителската кошница (храна, горива, наеми, услуги). Главният индикатор, който Фед следи за определяне на лихвената си политика.',
-    whyItMovesMarket: 'Високата инфлация намалява покупателната способност на хората и принуждава Фед да държи лихвите високи.',
-    marketReaction: 'CPI над очакванията → Спад на акциите и скок на щатския долар. CPI под очакванията → Силно пазарно рали.',
-    tradingViewSymbol: 'FRED:CPIAUCSL',
-    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-CPIAUCSL/',
-    source: 'US Bureau of Labor Statistics'
-  },
-  {
-    id: 4,
-    title: '4. Инфлация на едро (PPI)',
-    englishTitle: 'Producer Price Index (PPI)',
-    schedule: 'Всеки месец (1 ден след доклада за CPI)',
-    nextDateDesc: 'Следващи данни: Инфлация на цените на едро',
+    id: 7,
+    title: '7. Non-Farm Payrolls (NFP)',
+    englishTitle: 'Non-Farm Payrolls (NFP)',
+    schedule: 'Всеки първи петък от месеца (15:30 ч. БГ време)',
+    nextDateDesc: 'Нови работни места извън селското стопанство',
     impact: 'HIGH',
-    shortSummary: 'Измерва промяната в цените на едро. Водещ ранен индикатор за бъдещата потребителска инфлация.',
-    description: 'PPI измерва цените, които производителите и фабриките получават за своите стоки. Покачването на техните разходи преминава към крайните потребители с закъснение от 1-2 месеца.',
-    whyItMovesMarket: 'Дава ранен сигнал за това накъде ще се движи инфлацията при следващите CPI доклади.',
-    marketReaction: 'Висок PPI → Риск от бъдеща висока инфлация. Нисък PPI → Спокойствие за бизнеса.',
-    tradingViewSymbol: 'FRED:PPIACO',
-    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PPIACO/',
-    source: 'US Bureau of Labor Statistics'
+    shortSummary: 'Измерва новите работни места в частния сектор и индустрията — сърцето на икономиката.',
+    description: 'Измерва колко нови работни места са създадени в икономиката на САЩ през изминалия месец, без да включва: фермерите, държавните служители, домашните помощници и служителите в НПО. Показва реалната заетост в частния сектор и индустрията — сърцето на икономиката.',
+    whyItMovesMarket: 'Реалната заетост извън селското стопанство е основният двигател за потребителските разходи в САЩ.',
+    marketReaction: 'NFP над очакванията → скок на долара и притеснение за задържане на високи лихви.',
+    tradingViewSymbol: 'FRED:PAYEMS',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PAYEMS/',
+    source: 'US Bureau of Labor Statistics (BLS)'
   },
   {
-    id: 5,
-    title: '5. Брутен Вътрешен Продукт (БВП)',
+    id: 8,
+    title: '8. Unemployment Rate (Безработица)',
+    englishTitle: 'Unemployment Rate (U-3)',
+    schedule: 'Всеки първи петък от месеца (15:30 ч. БГ време)',
+    nextDateDesc: 'Процент на безработицата в САЩ',
+    impact: 'HIGH',
+    shortSummary: 'Процентът от работната сила, които нямат работа, но активно я търсят.',
+    description: 'Измерва процента от активната работна сила, които са без работа, но активно търсят такава. Един от основните стълбове в двойния мандат на ФЕД за пълна заетост.',
+    whyItMovesMarket: 'Силният пазар на труда и ниската безработица са знак за здрава икономика, но ако безработицата е твърде ниска (<3.5%), води до бърз ръст на заплатите и инфлация.',
+    marketReaction: 'Безработица над очакванията → риск от забавяне, но и натиск върху ФЕД за намаляване на лихвите.',
+    tradingViewSymbol: 'FRED:UNRATE',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-UNRATE/',
+    source: 'US Bureau of Labor Statistics (BLS)'
+  },
+  {
+    id: 9,
+    title: '9. Данни за БВП (GDP Growth Rate)',
     englishTitle: 'Gross Domestic Product (GDP)',
-    schedule: 'Тримесечно (Advance, Second, Final - края на всеки месец)',
-    nextDateDesc: 'Следващи данни: Тримесечен доклад за БВП',
+    schedule: 'Тримесечно (в края на всеки месец 15:30 ч. БГ време)',
+    nextDateDesc: 'Следващ доклад за растежа на БВП',
     impact: 'HIGH',
-    shortSummary: 'Измерва общия икономически растеж на страната. БВП = всичко произведено и продадено.',
-    description: 'БВП е сумата от цялото производство, потребление и инвестиции в икономиката. Показна дали икономиката експандира или навлиза в рецесия (2 поредни тримесечия спад).',
-    whyItMovesMarket: 'Умереният растеж е перфектен за акциите („Goldilocks economy“). Спадът сигнализира рецесия, а прекаленият растеж — прегряване.',
-    marketReaction: 'Стабилен БВП (2% - 3%) → Силна подкрепа за индексите S&P 500 и Dow Jones.',
+    shortSummary: 'Брутният вътрешен продукт измерва общата стойност на всички стоки и услуги. Всичко създадено, продадено и потребено.',
+    description: 'Брутният вътрешен продукт (Gross Domestic Product, GDP) измерва общата стойност на всички стоки и услуги, произведени в една икономика за даден период. БВП = всичко, което се създава, продава и потребява в рамките на страната. Измерва икономическия растеж.',
+    whyItMovesMarket: 'Бърз растеж = по-добри печалби за компаниите → пазарът расте. Но прекалено бърз растеж може да означава прегряване и бъдещо повишение на лихвите.',
+    marketReaction: 'Златната среда: Умерен растеж без висока инфлация е най-благоприятен за пазара.',
     tradingViewSymbol: 'FRED:GDP',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-GDP/',
     source: 'US Bureau of Economic Analysis (BEA)'
   },
   {
-    id: 6,
-    title: '6. Продажби на дребно (Retail)',
+    id: 10,
+    title: '10. Retail Sales (Продажби на дребно)',
     englishTitle: 'Retail Sales',
     schedule: 'Всеки месец около 15-то число (15:30 ч. БГ време)',
-    nextDateDesc: 'Следващи данни: Месечни продажби на дребно',
+    nextDateDesc: 'Следващ доклад за продажбите на дребно',
     impact: 'HIGH',
-    shortSummary: 'Потреблението е 70% от БВП на САЩ. Показва дали хората пазаруват или затягат коланите.',
-    description: 'Retail Sales измерва общите продажби в магазини, бензиностанции, ресторанти и онлайн търговци (Amazon, Walmart, Target).',
-    whyItMovesMarket: 'Изключително бърз реален индикатор за джоба на потребителя, излизащ преди тримесечните данни за БВП.',
-    marketReaction: 'Ръст на продажбите → По-високи печалби за потребителските компании.',
+    shortSummary: 'Потреблението = 70% от БВП на САЩ. Ранен индикатор в реално време за джоба на потребителя.',
+    description: 'Retail Sales измерва общия обем на продажбите в търговията на дребно в САЩ за даден месец – от големи търговски вериги до бензиностанции, ресторанти и онлайн магазини. Потреблението = 70% от БВП на САЩ. Ранен индикатор за джоба на потребителя, който предхожда данните за БВП.',
+    whyItMovesMarket: 'Ако продажбите растат силно → повече търсене → натиск върху цените → риск от ново покачване на лихвите. Ако се забавят → сигнал за охлаждане → ФЕД може да облекчи политиката.',
+    marketReaction: 'Ръст на продажбите → по-високи печалби за потребителските компании, но и риск за инфлация.',
     tradingViewSymbol: 'FRED:RSAFS',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-RSAFS/',
     source: 'US Census Bureau'
   },
   {
-    id: 7,
-    title: '7. Потребителско доверие (CCI)',
+    id: 11,
+    title: '11. Consumer Confidence (Потребителско доверие)',
     englishTitle: 'Consumer Confidence Index (CCI)',
     schedule: 'Последен вторник от месеца (17:00 ч. БГ време)',
-    nextDateDesc: 'Следващи данни: Доклад за потребителското доверие',
+    nextDateDesc: 'Индекс на потребителското доверие (CCI)',
     impact: 'MEDIUM',
-    shortSummary: 'Показва колко уверени са хората за икономиката и личните си финанси за следващите 6 месеца.',
-    description: 'Анкета сред хиляди домакинства относно настоящото им състояние, перспективите за работа и бъдещите им планове за пазаруване.',
+    shortSummary: 'Измерва колко уверени са потребителите относно икономиката, личните си финанси и следващите 6 месеца.',
+    description: 'Consumer Confidence Index (CCI) измерва колко уверени и оптимистично настроени са потребителите относно: настоящото състояние на икономиката, личните им финанси и перспективите за следващите 6 месеца.',
     whyItMovesMarket: 'Оптимистичните потребители харчат повече пари и вземат кредити. Песимизмът предвещава забавяне.',
-    marketReaction: 'Висок CCI index → Позитивно за търговията на дребно и автопроизводителите.',
+    marketReaction: 'Висок CCI → позитивно за търговците на дребно и автопроизводителите.',
     tradingViewSymbol: 'FRED:UMCSENT',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-UMCSENT/',
     source: 'The Conference Board / University of Michigan'
   },
   {
-    id: 8,
-    title: '8. Пазар на имоти (Permits)',
-    englishTitle: 'Housing Starts & Building Permits',
+    id: 12,
+    title: '12. Пазар на имоти (Housing Starts & Permits)',
+    englishTitle: 'Housing Starts, Building Permits, Mortgage Rates',
     schedule: 'Всеки месец между 16-то и 19-то число',
-    nextDateDesc: 'Следващи данни: Строителни разрешителни и започнати жилища',
+    nextDateDesc: 'Строителни разрешителни и ипотечни лихви',
     impact: 'MEDIUM',
-    shortSummary: 'Разрешителни за строеж и започнати жилища. Водещ икономически индикатор за циклите.',
-    description: 'Показател за новозапочнатото строителство и издадените разрешителни за нови сгради. Строителството завлича банкови кредити, ипотеки, мебели и уреди.',
-    whyItMovesMarket: 'Спадът в имотния сектор исторически изпреварва и сигнализира за наближаващи икономически спадове.',
-    marketReaction: 'Силно строителство → Подкрепа за ипотечните кредитори и строителните компании.',
+    shortSummary: 'Показатели за активността в жилищното строителство. Водещ индикатор — забавянето му сигнализира спад.',
+    description: 'Показатели за активността в жилищното строителство (Housing Starts, Building Permits, Mortgage Rates). Имотният сектор е водещ икономически индикатор – забавянето му често сигнализира икономически спад.',
+    whyItMovesMarket: 'Строителството завлича банкови кредити, ипотеки, мебели и уреди. Спадът в имотите изпреварва общите икономически спадове.',
+    marketReaction: 'Силно строителство → подкрепа за строителните компании и банките.',
     tradingViewSymbol: 'FRED:PERMIT',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PERMIT/',
     source: 'US Census Bureau / HUD'
-  },
-  {
-    id: 9,
-    title: '9. Индекс на страха (VIX Index)',
-    englishTitle: 'CBOE Volatility Index (VIX)',
-    schedule: 'В реално време (Всеки търговски ден при затваряне)',
-    nextDateDesc: 'Следващо затваряне на борсата (NYSE / Nasdaq 23:00 ч.)',
-    impact: 'HIGH',
-    shortSummary: 'Измерва очакваната волатилност за следващите 30 дни от опциите върху S&P 500.',
-    description: 'Когато инвеститорите панически купуват застрахователни PUT опции, VIX скача. Наричан е "Индексът на страха".',
-    whyItMovesMarket: 'VIX > 30 = Екстремен страх и паника на пазара. VIX < 15 = Спокойствие, самодоволство и алчност.',
-    marketReaction: 'Скок на VIX → Обикновено съвпада с остри разпродажби на S&P 500 и Nasdaq.',
-    tradingViewSymbol: 'CBOE:VIX',
-    tradingViewUrl: 'https://www.tradingview.com/symbols/CBOE-VIX/',
-    source: 'Chicago Board Options Exchange (CBOE)'
-  },
-  {
-    id: 10,
-    title: '10. Корпоративни печалби (Earnings)',
-    englishTitle: 'Corporate Earnings Season',
-    schedule: 'Всяко тримесечие (Пик на Earnings Season)',
-    nextDateDesc: 'Следващ пиков ден за отчети на технологичните гиганти',
-    impact: 'CRITICAL',
-    shortSummary: 'Тримесечните отчети на технологичните гиганти (Apple, Nvidia, Microsoft) и техните бъдещи прогнози.',
-    description: 'Финансовите резултати за приходи, печалба на акция (EPS) и най-важното — прогнозата на мениджмънта за следващите тримесечия (Guidance).',
-    whyItMovesMarket: 'Цените на акциите в дългосрочен план следват реалните печалби. Слабо Guidance движи целия сектор надолу.',
-    marketReaction: 'Отчет над очакванията + силен Guidance → Ръст от 5% до 15% за акцията за ден.',
-    tradingViewSymbol: 'NASDAQ:AAPL',
-    tradingViewUrl: 'https://www.tradingview.com/economic-calendar/',
-    source: 'SEC Filings (10-Q / 10-K)'
   }
 ];
 
@@ -207,17 +237,19 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
   // FOMC Timer & All Indicators Timers Engine
   useEffect(() => {
-    const TARGET_DATES: Record<number, Date> = {
-      1: new Date('2026-09-16T18:00:00Z'), // FOMC Rate Decision
-      2: new Date('2026-08-07T12:30:00Z'), // NFP Employment Report
-      3: new Date('2026-08-12T12:30:00Z'), // CPI Inflation
-      4: new Date('2026-08-13T12:30:00Z'), // PPI Inflation
-      5: new Date('2026-08-27T12:30:00Z'), // GDP Growth Rate
-      6: new Date('2026-08-14T12:30:00Z'), // Retail Sales
-      7: new Date('2026-08-25T14:00:00Z'), // Consumer Confidence (CCI)
-      8: new Date('2026-08-18T12:30:00Z'), // Housing Starts & Permits
-      9: new Date('2026-07-31T20:00:00Z'), // VIX Market Close
-      10: new Date('2026-08-04T20:00:00Z'), // Big Tech Earnings Peak
+        const TARGET_DATES: Record<number, Date> = {
+      1: new Date('2026-08-12T12:30:00Z'), // CPI
+      2: new Date('2026-08-12T12:30:00Z'), // Core CPI
+      3: new Date('2026-08-28T12:30:00Z'), // PCE
+      4: new Date('2026-08-28T12:30:00Z'), // Core PCE
+      5: new Date('2026-09-16T18:00:00Z'), // Fed Interest Rates (FOMC)
+      6: new Date('2026-08-07T12:30:00Z'), // Employment Situation
+      7: new Date('2026-08-07T12:30:00Z'), // NFP
+      8: new Date('2026-08-07T12:30:00Z'), // Unemployment Rate
+      9: new Date('2026-08-27T12:30:00Z'), // GDP Growth Rate
+      10: new Date('2026-08-14T12:30:00Z'), // Retail Sales
+      11: new Date('2026-08-25T14:00:00Z'), // Consumer Confidence (CCI)
+      12: new Date('2026-08-18T12:30:00Z'), // Housing Starts & Permits
     };
 
     const updateTimers = () => {
