@@ -271,11 +271,10 @@ export function parseCSVData(csvText: string): { stocks: Stock[]; indices: Marke
     { name: 'US Dollar Index (DXY)', value: 104.25, changePct: -0.18, ticker: 'DX-Y.NYB', changeVal: -0.19, category: 'Currencies (Само Валути)' },
 
     // Crypto (Само Криптовалути)
-    { name: 'Bitcoin (BTC)', value: 64250.00, changePct: 2.15, ticker: 'BTC-USD', changeVal: 1350.00, category: 'Crypto (Само Криптовалути)' },
+    { name: 'Bitcoin (BTC)', value: 62919.60, changePct: -2.79, ticker: 'BTC-USD', changeVal: -1804.43, category: 'Crypto (Само Криптовалути)' },
     { name: 'Ethereum (ETH)', value: 3450.20, changePct: 1.85, ticker: 'ETH-USD', changeVal: 62.70, category: 'Crypto (Само Криптовалути)' },
     { name: 'Solana (SOL)', value: 152.40, changePct: 4.12, ticker: 'SOL-USD', changeVal: 6.02, category: 'Crypto (Само Криптовалути)' },
     { name: 'Binance Coin (BNB)', value: 575.80, changePct: 0.95, ticker: 'BNB-USD', changeVal: 5.40, category: 'Crypto (Само Криптовалути)' },
-    { name: 'Ripple (XRP)', value: 0.61, changePct: -0.85, ticker: 'XRP-USD', changeVal: -0.005, category: 'Crypto (Само Криптовалути)' },
 
     // Bonds (Облигации)
     { name: 'US 10Y Yield', value: 4.22, changePct: -0.85, ticker: '^TNX', changeVal: -0.036, category: 'Bonds (Облигации)' },
