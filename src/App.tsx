@@ -28,7 +28,8 @@ import {
   Trash2,
   Layers,
   Info,
-  X
+  X,
+  ExternalLink
 } from 'lucide-react';
 
 export default function App() {
@@ -49,6 +50,7 @@ export default function App() {
  const [isFetchingLivePrices, setIsFetchingLivePrices] = useState(false);
  const [isAutoLiveRefresh, setIsAutoLiveRefresh] = useState(true);
  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+ const [isUsefulLinksMenuOpen, setIsUsefulLinksMenuOpen] = useState(false);
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
 
  // Price Alert targets
@@ -875,6 +877,31 @@ export default function App() {
     <span className="hidden sm:inline">Календар</span>
   </button>
 
+  {/* Useful Links Dropdown Button */}
+  <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsUsefulLinksMenuOpen(false); }}>
+    <button
+      onClick={() => setIsUsefulLinksMenuOpen(!isUsefulLinksMenuOpen)}
+      className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
+      title="Полезни връзки"
+    >
+      <ExternalLink className="w-3.5 h-3.5" />
+      <span className="hidden sm:inline">Полезни връзки</span>
+      <ChevronDown className={`w-3 h-3 transition-transform ${isUsefulLinksMenuOpen ? 'rotate-180' : ''}`} />
+    </button>
+
+    {isUsefulLinksMenuOpen && (
+      <div className="absolute right-0 top-full mt-2 w-64 bg-bg border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
+        <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
+          🔗 Полезни връзки
+        </div>
+        <div className="p-3 text-xs text-ink-faint italic text-center font-sans">
+          Очакване на линковете от вас...
+        </div>
+      </div>
+    )}
+  </div>
+
+  {/* Theme Toggle placed at the VERY FAR RIGHT */}
   <ThemeToggle />
 
   </div>
