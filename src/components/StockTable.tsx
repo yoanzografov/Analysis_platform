@@ -3,6 +3,7 @@ import { Stock, TableFilter, PriceAlert } from '../types';
 import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
+import EarningsModal from './EarningsModal';
 import PriceAlertPlanner from './PriceAlertPlanner';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
@@ -144,8 +145,9 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
 
  // Add stock modal state
  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
- const [activeChartStock, setActiveChartStock] = useState<Stock | null>(null);
- const [dividendModalStock, setDividendModalStock] = useState<Stock | null>(null);
+  const [activeChartStock, setActiveChartStock] = useState<Stock | null>(null);
+  const [dividendModalStock, setDividendModalStock] = useState<Stock | null>(null);
+  const [earningsModalStock, setEarningsModalStock] = useState<Stock | null>(null);
  const [newTicker, setNewTicker] = useState('');
  const [newCompanyName, setNewCompanyName] = useState('');
  const [newDate, setNewDate] = useState('');
@@ -750,15 +752,27 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
 
   {/* 4. STATISTICS */}
   <td className="py-3 px-4 text-ink whitespace-nowrap text-center">
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center gap-1.5">
       {stock.ticker && !stock.ticker.startsWith('^') && (
-        <button
-          onClick={() => setDividendModalStock(stock)}
-          className="text-indigo-400 hover:text-indigo-300 transition-colors p-0.5 shrink-0"
-          title="TradingView Financials & Statistics"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </button>
+        <>
+          {/* TradingView Earnings Badge [E] */}
+          <button
+            onClick={() => setEarningsModalStock(stock)}
+            className="w-5 h-5 rounded-full bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/30 font-black text-[10px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
+            title={`Earnings Date & Schedule: ${stock.earningsTimestamp ? new Date(stock.earningsTimestamp * 1000).toLocaleDateString('bg-BG') : 'Отвори TradingView отчети'}`}
+          >
+            E
+          </button>
+
+          {/* TradingView Dividend Badge [D] */}
+          <button
+            onClick={() => setDividendModalStock(stock)}
+            className="w-5 h-5 rounded-full bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 font-black text-[10px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
+            title={`Dividends & Financials: ${stock.dividend || 'TradingView'}`}
+          >
+            D
+          </button>
+        </>
       )}
     </div>
   </td>
@@ -1280,6 +1294,14 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  <DividendModal 
  stock={dividendModalStock} 
  onClose={() => setDividendModalStock(null)} 
+ />
+ )}
+
+ {/* Earnings Fundamental Data Modal */}
+ {earningsModalStock && (
+ <EarningsModal 
+ stock={earningsModalStock} 
+ onClose={() => setEarningsModalStock(null)} 
  />
  )}
  
