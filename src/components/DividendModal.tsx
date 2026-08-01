@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Stock } from '../types';
-import { X, ExternalLink, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { X, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { FundamentalData } from 'react-ts-tradingview-widgets';
 import { getTradingViewSymbol } from '../utils/tvSymbolMap';
 import { fetchTradingViewLiveDividend, TVLiveDividendData } from '../utils/tvFinancialsFetcher';
@@ -14,8 +14,7 @@ interface Props {
 
 export default function DividendModal({ stock, onClose }: Props) {
   const [showFullHistory, setShowFullHistory] = useState(false);
-  const [liveData, setLiveData] = useState<TVLiveDividendData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [liveData, setLiveData] = useState<TVLiveDividendData>(() => getStockDividendData(stock));
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -25,29 +24,15 @@ export default function DividendModal({ stock, onClose }: Props) {
 
   useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
+    setLiveData(getStockDividendData(stock));
 
     fetchTradingViewLiveDividend(stock.ticker, stock.companyName)
       .then(res => {
-        if (isMounted) {
-          if (res) {
-            setLiveData(res);
-          } else {
-            const fallback = getStockDividendData(stock);
-            setLiveData({
-              ticker: stock.ticker,
-              companyName: stock.companyName,
-              exDateStr: fallback.exDateStr,
-              amountStr: fallback.amountStr,
-              payDateStr: fallback.payDateStr
-            });
-          }
-          setIsLoading(false);
+        if (isMounted && res) {
+          setLiveData(res);
         }
       })
-      .catch(() => {
-        if (isMounted) setIsLoading(false);
-      });
+      .catch(() => {});
 
     return () => { isMounted = false; };
   }, [stock]);
@@ -70,7 +55,6 @@ export default function DividendModal({ stock, onClose }: Props) {
             </div>
             <h2 className="text-xl font-bold text-white tracking-tight leading-none flex items-center gap-2">
               Dividends
-              {isLoading && <Loader2 className="w-4 h-4 text-[#2962ff] animate-spin shrink-0" />}
             </h2>
           </div>
           
@@ -92,19 +76,19 @@ export default function DividendModal({ stock, onClose }: Props) {
             {/* Ex-dividend date */}
             <div className="flex items-center justify-between">
               <span className="text-stone-300 font-medium">Ex-dividend date</span>
-              <span className="font-bold text-white tabular-nums">{liveData?.exDateStr || "Fri 04 Sep '26"}</span>
+              <span className="font-bold text-white tabular-nums">{liveData.exDateStr}</span>
             </div>
 
             {/* Amount */}
             <div className="flex items-center justify-between">
               <span className="text-stone-300 font-medium">Amount</span>
-              <span className="font-bold text-white tabular-nums">{liveData?.amountStr || "0.22"}</span>
+              <span className="font-bold text-white tabular-nums">{liveData.amountStr}</span>
             </div>
 
             {/* Payment date */}
             <div className="flex items-center justify-between">
               <span className="text-stone-300 font-medium">Payment date</span>
-              <span className="font-bold text-white tabular-nums">{liveData?.payDateStr || "Mon 14 Sep '26"}</span>
+              <span className="font-bold text-white tabular-nums">{liveData.payDateStr}</span>
             </div>
 
           </div>
@@ -144,9 +128,8 @@ export default function DividendModal({ stock, onClose }: Props) {
             <ExternalLink size={13} />
             Пълна история в TradingView
           </a>
-          <span className="text-[11px] text-stone-400 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff] animate-ping" />
-            Живи данни от TradingView Scanner
+          <span className="text-[11px] text-stone-400">
+            {stock.companyName} ({stock.ticker})
           </span>
         </div>
 

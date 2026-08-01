@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Stock } from '../types';
-import { X, ExternalLink, HelpCircle, Sparkles, Moon, Sun, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { X, ExternalLink, HelpCircle, Sparkles, Moon, Sun, ChevronDown, ChevronUp } from 'lucide-react';
 import { FundamentalData } from 'react-ts-tradingview-widgets';
 import { getTradingViewSymbol } from '../utils/tvSymbolMap';
 import { fetchTradingViewLiveEarnings, TVLiveEarningsData } from '../utils/tvFinancialsFetcher';
@@ -14,8 +14,7 @@ interface Props {
 
 export default function EarningsModal({ stock, onClose }: Props) {
   const [showFullWidget, setShowFullWidget] = useState(false);
-  const [liveData, setLiveData] = useState<TVLiveEarningsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [liveData, setLiveData] = useState<TVLiveEarningsData>(() => getStockEarningsData(stock));
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -25,40 +24,17 @@ export default function EarningsModal({ stock, onClose }: Props) {
 
   useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
+    // Synchronously ensure accurate data for stock is present
+    setLiveData(getStockEarningsData(stock));
 
+    // Try fetching live TradingView scanner data if available
     fetchTradingViewLiveEarnings(stock.ticker, stock.companyName)
       .then(res => {
-        if (isMounted) {
-          if (res) {
-            setLiveData(res);
-          } else {
-            // Fallback to accurate stock Financials mapping
-            const fallback = getStockEarningsData(stock);
-            setLiveData({
-              ticker: stock.ticker,
-              companyName: stock.companyName,
-              dateStr: fallback.dateStr,
-              periodEndingStr: fallback.periodEndingStr,
-              isAfterMarket: fallback.isAfterMarket,
-              standardizedEps: fallback.standardizedEps,
-              reportedEps: fallback.reportedEps,
-              estimateEps: fallback.estimateEps,
-              surpriseEps: fallback.surpriseEps,
-              surpriseEpsPct: fallback.surpriseEpsPct,
-              reportedRev: fallback.reportedRev,
-              estimateRev: fallback.estimateRev,
-              surpriseRev: fallback.surpriseRev,
-              surpriseRevPct: fallback.surpriseRevPct,
-              aiSummary: fallback.aiSummary
-            });
-          }
-          setIsLoading(false);
+        if (isMounted && res) {
+          setLiveData(res);
         }
       })
-      .catch(() => {
-        if (isMounted) setIsLoading(false);
-      });
+      .catch(() => {});
 
     return () => { isMounted = false; };
   }, [stock]);
@@ -82,7 +58,6 @@ export default function EarningsModal({ stock, onClose }: Props) {
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-white tracking-tight leading-none flex items-center gap-2">
                 Earnings &amp; Revenue
-                {isLoading && <Loader2 className="w-4 h-4 text-[#14b8a6] animate-spin shrink-0" />}
               </h2>
               <button 
                 className="text-stone-400 hover:text-stone-200 transition-colors"
@@ -109,7 +84,7 @@ export default function EarningsModal({ stock, onClose }: Props) {
           <div className="bg-gradient-to-r from-[#201838] to-[#2d1b4d] border border-[#4c3a75]/80 rounded-xl p-4 flex gap-3 text-stone-200 shadow-md">
             <Sparkles className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
             <div className="text-xs sm:text-sm font-medium leading-relaxed text-stone-200">
-              {liveData?.aiSummary || `✨ ${stock.ticker}: Q2 financial results updated live from TradingView.`}
+              {liveData.aiSummary}
             </div>
           </div>
 
@@ -118,8 +93,8 @@ export default function EarningsModal({ stock, onClose }: Props) {
             <div className="flex items-center justify-between text-sm">
               <span className="text-stone-400 font-medium">Date</span>
               <div className="flex items-center gap-1.5 font-bold text-white">
-                <span>{liveData?.dateStr || "Wed 22 Jul '26"}</span>
-                {liveData?.isAfterMarket ? (
+                <span>{liveData.dateStr}</span>
+                {liveData.isAfterMarket ? (
                   <Moon className="w-3.5 h-3.5 text-blue-400 fill-blue-400/30" />
                 ) : (
                   <Sun className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30" />
@@ -129,7 +104,7 @@ export default function EarningsModal({ stock, onClose }: Props) {
 
             <div className="flex items-center justify-between text-sm">
               <span className="text-stone-400 font-medium">Period Ending</span>
-              <span className="font-bold text-white">{liveData?.periodEndingStr || "Jun '26"}</span>
+              <span className="font-bold text-white">{liveData.periodEndingStr}</span>
             </div>
           </div>
 
@@ -141,23 +116,23 @@ export default function EarningsModal({ stock, onClose }: Props) {
 
             <div className="flex items-center justify-between">
               <span className="text-stone-300">Standardized</span>
-              <span className="font-semibold text-stone-100 tabular-nums">{liveData?.standardizedEps || '9.108'}</span>
+              <span className="font-semibold text-stone-100 tabular-nums">{liveData.standardizedEps}</span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-stone-300">Reported</span>
-              <span className="font-semibold text-stone-100 tabular-nums">{liveData?.reportedEps || '9.11'}</span>
+              <span className="font-semibold text-stone-100 tabular-nums">{liveData.reportedEps}</span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-stone-300">Estimate</span>
-              <span className="font-semibold text-stone-100 tabular-nums">{liveData?.estimateEps || '2.877'}</span>
+              <span className="font-semibold text-stone-100 tabular-nums">{liveData.estimateEps}</span>
             </div>
 
             <div className="flex items-center justify-between pt-0.5">
-              <span className={`font-bold ${parseFloat(liveData?.surpriseEps || '0') >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>Surprise</span>
-              <span className={`font-bold tabular-nums ${parseFloat(liveData?.surpriseEps || '0') >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>
-                {parseFloat(liveData?.surpriseEps || '0') >= 0 ? `+${liveData?.surpriseEps || '6.233'}` : liveData?.surpriseEps} ({liveData?.surpriseEpsPct || '216.66'}%)
+              <span className={`font-bold ${parseFloat(liveData.surpriseEps) >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>Surprise</span>
+              <span className={`font-bold tabular-nums ${parseFloat(liveData.surpriseEps) >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>
+                {parseFloat(liveData.surpriseEps) >= 0 ? `+${liveData.surpriseEps}` : liveData.surpriseEps} ({liveData.surpriseEpsPct}%)
               </span>
             </div>
           </div>
@@ -170,18 +145,18 @@ export default function EarningsModal({ stock, onClose }: Props) {
 
             <div className="flex items-center justify-between">
               <span className="text-stone-300">Reported</span>
-              <span className="font-semibold text-stone-100 tabular-nums">{liveData?.reportedRev || '119.8B'}</span>
+              <span className="font-semibold text-stone-100 tabular-nums">{liveData.reportedRev}</span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-stone-300">Estimate</span>
-              <span className="font-semibold text-stone-100 tabular-nums">{liveData?.estimateRev || '116.43B'}</span>
+              <span className="font-semibold text-stone-100 tabular-nums">{liveData.estimateRev}</span>
             </div>
 
             <div className="flex items-center justify-between pt-0.5">
-              <span className={`font-bold ${parseFloat(liveData?.surpriseRevPct || '0') >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>Surprise</span>
-              <span className={`font-bold tabular-nums ${parseFloat(liveData?.surpriseRevPct || '0') >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>
-                {parseFloat(liveData?.surpriseRevPct || '0') >= 0 ? `+${liveData?.surpriseRev || '3.37B'}` : liveData?.surpriseRev} ({liveData?.surpriseRevPct || '2.89'}%)
+              <span className={`font-bold ${parseFloat(liveData.surpriseRevPct) >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>Surprise</span>
+              <span className={`font-bold tabular-nums ${parseFloat(liveData.surpriseRevPct) >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>
+                {parseFloat(liveData.surpriseRevPct) >= 0 ? `+${liveData.surpriseRev}` : liveData.surpriseRev} ({liveData.surpriseRevPct}%)
               </span>
             </div>
           </div>
@@ -221,9 +196,8 @@ export default function EarningsModal({ stock, onClose }: Props) {
             <ExternalLink size={13} />
             Пълен отчет в TradingView
           </a>
-          <span className="text-[11px] text-stone-400 font-medium flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#14b8a6] animate-ping" />
-            Живи данни от TradingView Scanner
+          <span className="text-[11px] text-stone-400 font-medium">
+            {stock.companyName} ({stock.ticker})
           </span>
         </div>
 
