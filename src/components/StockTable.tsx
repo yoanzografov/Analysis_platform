@@ -4,6 +4,7 @@ import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLi
 import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
 import EarningsModal from './EarningsModal';
+import FinancialsModal from './FinancialsModal';
 import PriceAlertPlanner from './PriceAlertPlanner';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
@@ -148,6 +149,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
   const [activeChartStock, setActiveChartStock] = useState<Stock | null>(null);
   const [dividendModalStock, setDividendModalStock] = useState<Stock | null>(null);
   const [earningsModalStock, setEarningsModalStock] = useState<Stock | null>(null);
+  const [financialsModalStock, setFinancialsModalStock] = useState<Stock | null>(null);
  const [newTicker, setNewTicker] = useState('');
  const [newCompanyName, setNewCompanyName] = useState('');
  const [newDate, setNewDate] = useState('');
@@ -757,7 +759,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
         <>
           {/* TradingView Financials Badge [$] */}
           <button
-            onClick={() => setDividendModalStock(stock)}
+            onClick={() => setFinancialsModalStock(stock)}
             className="w-5 h-5 rounded-full bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/30 font-black text-[11px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
             title="TradingView Financial Statements & Statistics ($)"
           >
@@ -1311,6 +1313,14 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  <EarningsModal 
  stock={earningsModalStock} 
  onClose={() => setEarningsModalStock(null)} 
+ />
+ )}
+
+ {/* Financials Statements Data Modal ($) */}
+ {financialsModalStock && (
+ <FinancialsModal 
+ stock={financialsModalStock} 
+ onClose={() => setFinancialsModalStock(null)} 
  />
  )}
  
