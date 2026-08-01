@@ -755,6 +755,15 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
     <div className="flex items-center justify-center gap-1.5">
       {stock.ticker && !stock.ticker.startsWith('^') && (
         <>
+          {/* TradingView Financials Badge [$] */}
+          <button
+            onClick={() => setDividendModalStock(stock)}
+            className="w-5 h-5 rounded-full bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/30 font-black text-[11px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
+            title="TradingView Financial Statements & Statistics ($)"
+          >
+            $
+          </button>
+
           {/* TradingView Earnings Badge [E] */}
           <button
             onClick={() => setEarningsModalStock(stock)}
@@ -771,15 +780,6 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
             title={`Dividends & Payment History: ${stock.dividend || 'TradingView'}`}
           >
             D
-          </button>
-
-          {/* TradingView Financials Badge [$] */}
-          <button
-            onClick={() => setDividendModalStock(stock)}
-            className="w-5 h-5 rounded-full bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/30 font-black text-[11px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
-            title="TradingView Financial Statements & Statistics ($)"
-          >
-            $
           </button>
         </>
       )}
