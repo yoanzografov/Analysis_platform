@@ -16,6 +16,15 @@ export default function EarningsModal({ stock, onClose }: Props) {
   const [showFullWidget, setShowFullWidget] = useState(false);
   const [liveData, setLiveData] = useState<TVLiveEarningsData>(() => getStockEarningsData(stock));
 
+  const formatRevB = (val: string | undefined): string => {
+    if (!val) return '0.00B';
+    const trimmed = val.trim();
+    if (trimmed.endsWith('B') || trimmed.endsWith('M')) return trimmed;
+    const num = parseFloat(trimmed);
+    if (!isNaN(num)) return `${num.toFixed(2)}B`;
+    return `${trimmed}B`;
+  };
+
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', fn);
@@ -145,18 +154,18 @@ export default function EarningsModal({ stock, onClose }: Props) {
 
             <div className="flex items-center justify-between">
               <span className="text-stone-300">Reported</span>
-              <span className="font-semibold text-stone-100 tabular-nums">{liveData.reportedRev}</span>
+              <span className="font-semibold text-stone-100 tabular-nums">{formatRevB(liveData.reportedRev)}</span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-stone-300">Estimate</span>
-              <span className="font-semibold text-stone-100 tabular-nums">{liveData.estimateRev}</span>
+              <span className="font-semibold text-stone-100 tabular-nums">{formatRevB(liveData.estimateRev)}</span>
             </div>
 
             <div className="flex items-center justify-between pt-0.5">
               <span className={`font-bold ${parseFloat(liveData.surpriseRevPct) >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>Surprise</span>
               <span className={`font-bold tabular-nums ${parseFloat(liveData.surpriseRevPct) >= 0 ? 'text-[#10b981]' : 'text-rose-400'}`}>
-                {parseFloat(liveData.surpriseRevPct) >= 0 ? `+${liveData.surpriseRev}` : liveData.surpriseRev} ({liveData.surpriseRevPct}%)
+                {parseFloat(liveData.surpriseRevPct) >= 0 ? `+${formatRevB(liveData.surpriseRev)}` : formatRevB(liveData.surpriseRev)} ({liveData.surpriseRevPct}%)
               </span>
             </div>
           </div>
