@@ -768,9 +768,18 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
           <button
             onClick={() => setDividendModalStock(stock)}
             className="w-5 h-5 rounded-full bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 font-black text-[10px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
-            title={`Dividends & Financials: ${stock.dividend || 'TradingView'}`}
+            title={`Dividends & Payment History: ${stock.dividend || 'TradingView'}`}
           >
             D
+          </button>
+
+          {/* TradingView Financials Badge [$] */}
+          <button
+            onClick={() => setDividendModalStock(stock)}
+            className="w-5 h-5 rounded-full bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/30 font-black text-[11px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
+            title="TradingView Financial Statements & Statistics ($)"
+          >
+            $
           </button>
         </>
       )}
