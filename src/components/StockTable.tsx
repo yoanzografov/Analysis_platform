@@ -5,6 +5,7 @@ import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
 import EarningsModal from './EarningsModal';
 import FinancialsModal from './FinancialsModal';
+import CompanyProfileModal from './CompanyProfileModal';
 import PriceAlertPlanner from './PriceAlertPlanner';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
@@ -150,6 +151,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
   const [dividendModalStock, setDividendModalStock] = useState<Stock | null>(null);
   const [earningsModalStock, setEarningsModalStock] = useState<Stock | null>(null);
   const [financialsModalStock, setFinancialsModalStock] = useState<Stock | null>(null);
+  const [companyProfileStock, setCompanyProfileStock] = useState<Stock | null>(null);
  const [newTicker, setNewTicker] = useState('');
  const [newCompanyName, setNewCompanyName] = useState('');
  const [newDate, setNewDate] = useState('');
@@ -783,6 +785,15 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
           >
             D
           </button>
+
+          {/* TradingView Company Profile Badge [i] */}
+          <button
+            onClick={() => setCompanyProfileStock(stock)}
+            className="w-5 h-5 rounded-full bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white border border-indigo-500/30 font-black text-[10px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
+            title={`Профил и Бизнес дейност на компанията (TradingView Info)`}
+          >
+            i
+          </button>
         </>
       )}
     </div>
@@ -1321,6 +1332,14 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  <FinancialsModal 
  stock={financialsModalStock} 
  onClose={() => setFinancialsModalStock(null)} 
+ />
+ )}
+
+ {/* Company Profile Data Modal (i) */}
+ {companyProfileStock && (
+ <CompanyProfileModal 
+ stock={companyProfileStock} 
+ onClose={() => setCompanyProfileStock(null)} 
  />
  )}
  
