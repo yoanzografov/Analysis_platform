@@ -5,6 +5,7 @@ export interface CompanyProfileData {
   ticker: string;
   companyName: string;
   description: string;
+  overviewParagraphs: string[];
   sector: string;
   industry: string;
   employees: string;
@@ -26,7 +27,12 @@ const KNOWN_PROFILES: Record<string, Partial<CompanyProfileData>> = {
     headquarters: 'Mountain View, California, USA',
     founded: '1998',
     website: 'https://abc.xyz',
-    description: 'Alphabet Inc. е глобален технологичен лидер и компания-майка на Google. Основната дейност включва интернет търсене (Google Search), дигитална реклама, онлайн видео платформата YouTube, облачни услуги (Google Cloud Platform), мобилната операционна система Android, хардуер (Pixel) и иновативни решения в областта на изкуствения интелект (Gemini, DeepMind).',
+    description: 'Alphabet Inc. е глобален технологичен лидер и компания-майка на Google.',
+    overviewParagraphs: [
+      '🏢 Alphabet Inc. е една от най-влиятелните технологични компании в света. Основният ѝ бизнес модел се основава на организирането на световната информация и правенето ѝ достъпна и полезна. Компанията генерира над 75% от приходите си чрез дигитална реклама през своята водеща търсачка Google Search и видео платформата YouTube.',
+      '📱 Продуктите на екосистемата включват операционната система Android (използвана от над 3 милиарда активни устройства), браузъра Google Chrome, услугите Gmail, Google Maps, Google Drive и хардуерната линия Pixel. Облачната ѝ платформа Google Cloud Platform (GCP) е вторият по големина облачен доставчик на инфраструктура за изкуствен интелект и анализи на данни.',
+      '🚀 Стратегията за растеж е концентрирана върху генеративния изкуствен интелект с мултимодалните AI модели Gemini, лабораторията за изследвания Google DeepMind, собствените силициеви чипове TPU (Tensor Processing Units) и автономните таксита Waymo, които вече изпълняват стотици хиляди платени курса седмично.'
+    ],
     businessSegments: ['Google Services (Search, YouTube, Ads, Play Store, Android)', 'Google Cloud (Enterprise AI & Infrastructure)', 'Other Bets (Waymo, Verily, CapitalG)'],
     competitors: ['Microsoft (MSFT)', 'Meta Platforms (META)', 'Amazon (AMZN)', 'Apple (AAPL)'],
     keyHighlights: [
@@ -43,7 +49,12 @@ const KNOWN_PROFILES: Record<string, Partial<CompanyProfileData>> = {
     headquarters: 'Mountain View, California, USA',
     founded: '1998',
     website: 'https://abc.xyz',
-    description: 'Alphabet Inc. (Класен дял A) е глобален технологичен гигант и компания-майка на Google. Основната дейност включва Google Search, YouTube, Google Cloud, Android, разработка на AI модели (Gemini) и автономни автомобили (Waymo).',
+    description: 'Alphabet Inc. (Класен дял A) е глобален технологичен гигант и компания-майка на Google.',
+    overviewParagraphs: [
+      '🏢 Alphabet Inc. (Класен дял A) е една от най-влиятелните технологични компании в света. Основният ѝ бизнес модел се основава на организирането на световната информация и правенето ѝ достъпна и полезна. Компанията генерира над 75% от приходите си чрез дигитална реклама през своята водеща търсачка Google Search и видео платформата YouTube.',
+      '📱 Продуктите на екосистемата включват операционната система Android (използвана от над 3 милиарда активни устройства), браузъра Google Chrome, услугите Gmail, Google Maps, Google Drive и хардуерната линия Pixel. Облачната ѝ платформа Google Cloud Platform (GCP) е вторият по големина облачен доставчик на инфраструктура за изкуствен интелект и анализи на данни.',
+      '🚀 Стратегията за растеж е концентрирана върху генеративния изкуствен интелект с мултимодалните AI модели Gemini, лабораторията за изследвания Google DeepMind, собствените силициеви чипове TPU (Tensor Processing Units) и автономните таксита Waymo, които вече изпълняват стотици хиляди платени курса седмично.'
+    ],
     businessSegments: ['Google Services (Search, YouTube, Ads, Play Store, Android)', 'Google Cloud (Enterprise AI & Infrastructure)', 'Other Bets (Waymo, Verily, CapitalG)'],
     competitors: ['Microsoft (MSFT)', 'Meta Platforms (META)', 'Amazon (AMZN)', 'Apple (AAPL)'],
     keyHighlights: [
@@ -60,7 +71,12 @@ const KNOWN_PROFILES: Record<string, Partial<CompanyProfileData>> = {
     headquarters: 'Cupertino, California, USA',
     founded: '1976',
     website: 'https://www.apple.com',
-    description: 'Apple Inc. проектира, произвежда и продава смартфони (iPhone), персонални компютри (Mac), таблети (iPad), носими устройства (Apple Watch, AirPods, Vision Pro) и аксесоари. Компанията предлага и богата гама от дигитални услуги включително App Store, Apple Music, Apple TV+, iCloud и Apple Pay.',
+    description: 'Apple Inc. проектира, произвежда и продава смартфони (iPhone), компютри и дигитални услуги.',
+    overviewParagraphs: [
+      '🏢 Apple Inc. е световен пионер в премиум потребителската електроника и вертикално интегрирания софтуер. Бизнес моделът комбинира прецизен премиум хардуер с уникална затворена екосистема от софтуер и дигитални абонаментни услуги.',
+      '📱 Продуктовата линия се оглавява от флагмана iPhone (носещ над половината от приходите), последван от персоналните компютри Mac с чиповете Apple Silicon, таблетите iPad, носима електроника (Apple Watch, AirPods) и революционния пространствен компютър Vision Pro. Сегментът Services включва App Store, Apple Pay, Apple Music, iCloud и Apple TV+.',
+      '🚀 Бъдещото развитие залага на Apple Intelligence — вградена AI система, фокусирана върху поверителността, разширяване на абонаментните приходи с висока маржиналност (>70%) и навлизане в здравни технологии и биометричен мониторинг.'
+    ],
     businessSegments: ['iPhone (52% от приходите)', 'Services (App Store, iCloud, Apple Pay - 26%)', 'Wearables, Home & Accessories (10%)', 'Mac (8%)', 'iPad (4%)'],
     competitors: ['Samsung Electronics', 'Microsoft (MSFT)', 'Google (GOOGL)', 'Sony'],
     keyHighlights: [
@@ -77,7 +93,12 @@ const KNOWN_PROFILES: Record<string, Partial<CompanyProfileData>> = {
     headquarters: 'Redmond, Washington, USA',
     founded: '1975',
     website: 'https://www.microsoft.com',
-    description: 'Microsoft Corporation е една от най-големите софтуерни и технологични компании в света. Основната ѝ дейност включва операционната система Windows, пакета за производителност Microsoft 365, облачната платформа Azure, конзолите Xbox, професионалната мрежа LinkedIn и мащабни инвестиции в изкуствен интелект (OpenAI/Copilot).',
+    description: 'Microsoft Corporation е глобален софтуерен и облачен лидер с мащабни AI интеграции.',
+    overviewParagraphs: [
+      '🏢 Microsoft Corporation е най-големият доставчик на софтуер за производителност и облачни решения за бизнеса. Бизнес моделът е фокусиран върху B2B абонаменти с висока предвидимост и повтарящи се приходи.',
+      '📱 Продуктовото портфолио включва облачната платформа Azure, операционната система Windows, пакета Microsoft 365 (Word, Excel, Teams), корпоративните ERP/CRM бази данни Dynamics 365, мрежата LinkedIn, гейминг дивизията Xbox (аквизитора на Activision Blizzard) и хардуера Surface.',
+      '🚀 Основен драйвер за растеж е лидерството в изкуствения интелект чрез близо 13 милиарда долара инвестиции в OpenAI. AI асистентът Microsoft Copilot се внедрява във всички корпоративни продукти, а Azure бързо печели дял при внедряването на облачни AI суперкомпютри.'
+    ],
     businessSegments: ['Intelligent Cloud (Azure, Server Products - 43%)', 'Productivity & Business Processes (Office, LinkedIn - 32%)', 'More Personal Computing (Windows, Xbox, Surface - 25%)'],
     competitors: ['Amazon Web Services (AMZN)', 'Google Cloud (GOOGL)', 'Oracle (ORCL)', 'Salesforce (CRM)'],
     keyHighlights: [
@@ -94,7 +115,12 @@ const KNOWN_PROFILES: Record<string, Partial<CompanyProfileData>> = {
     headquarters: 'Santa Clara, California, USA',
     founded: '1993',
     website: 'https://www.nvidia.com',
-    description: 'NVIDIA Corporation е световен лидер в графичните процесори (GPU) и ускорените изчислителни технологии. Компанията е пионер в хай-енд гейминга (GeForce), изкуствения интелект (H100, Blackwell), центровете за данни, роботиката и автономното шофиране.',
+    description: 'NVIDIA Corporation е световен лидер в графичните процесори и AI чиповете.',
+    overviewParagraphs: [
+      '🏢 NVIDIA Corporation е глобалният двигател на революцията в изкуствения интелект. Фирмата се трансформира от производител на графични чипове за гейминг в пълноценна платформа за ускорени изчисления и AI суперкомпютри.',
+      '📱 Бизнесът се движи от Data Center дивизията с флагманските AI ускорители H100, H200 и архитектурата от следващо поколение Blackwell. Софтуерната екосистема CUDA, архитектурата NVLink и супербързите мрежови суичове Mellanox създават неизбиваем технологичен ров.',
+      '🚀 Бъдещият растеж разчита на физически изкуствен интелект (роботика и Omniverse), автономно шофиране (NVIDIA DRIVE) и разширяване на AI инфраструктурата във всички държави и световни хиперскалиращи облаци.'
+    ],
     businessSegments: ['Data Center AI Chips (H100, H200, Blackwell - 87%)', 'Gaming & Graphics (GeForce RTX - 10%)', 'Professional Visualization & Automotive (3%)'],
     competitors: ['AMD (AMD)', 'Intel (INTC)', 'Broadcom (AVGO)', 'Custom ASICs (Google TPU, AWS Trainium)'],
     keyHighlights: [
@@ -111,7 +137,12 @@ const KNOWN_PROFILES: Record<string, Partial<CompanyProfileData>> = {
     headquarters: 'Seattle, Washington, USA',
     founded: '1994',
     website: 'https://www.amazon.com',
-    description: 'Amazon.com, Inc. е световен гигант в електронната търговия, облачните услуги (Amazon Web Services - AWS), онлайн стрийминга (Prime Video) и дигиталната реклама. Компанията е най-големият доставчик на облачна инфраструктура в света.',
+    description: 'Amazon.com, Inc. е световен гигант в e-commerce, облачните услуги AWS и дигиталната реклама.',
+    overviewParagraphs: [
+      '🏢 Amazon.com, Inc. е най-голямата платформа за електронна търговия и пионер в облачните изчисления в световен мащаб.',
+      '📱 Търговският бизнес комбинира директни продажби, маркетплейс за трети търговци и Prime абонаментната програма с над 200 милиона членове. Облачното ѝ подразделение Amazon Web Services (AWS) генерира над 60% от оперативната печалба на цялата корпорация.',
+      '🚀 Растежът се подкрепя от бързо растящия бизнес с дигитална реклама, автоматизацията на хамбарите с роботика, изграждането на собствни AI чипове (Trainium/Inferentia) и логистичната мрежа от ново поколение.'
+    ],
     businessSegments: ['North America Retail & E-commerce (60%)', 'Amazon Web Services (AWS Cloud - 17%, но носещ >60% от оперативната печалба)', 'International Retail (23%)'],
     competitors: ['Walmart (WMT)', 'Microsoft Azure (MSFT)', 'Google Cloud (GOOGL)', 'Shopify (SHOP)'],
     keyHighlights: [
@@ -128,7 +159,12 @@ const KNOWN_PROFILES: Record<string, Partial<CompanyProfileData>> = {
     headquarters: 'Austin, Texas, USA',
     founded: '2003',
     website: 'https://www.tesla.com',
-    description: 'Tesla, Inc. проектира, развива и произвежда електрически превозни средства (Model S, 3, X, Y, Cybertruck, Semi), системи за съхранение на енергия (Megapack, Powerwall), слънчеви покриви и разработва технологии за пълно автопилотно шофиране (FSD) и роботика (Optimus).',
+    description: 'Tesla, Inc. е лидер в електрическите превозни средства, съхранението на енергия и AI роботиката.',
+    overviewParagraphs: [
+      '🏢 Tesla, Inc. не е просто автомобилостроител, а вертикално интегрирана компания за чиста енергия, изкуствен интелект и роботика.',
+      '📱 Автомобилното портфолио включва масовите електромобили Model 3 и Model Y, премиум моделите S и X, Cybertruck и комерсиалния камион Semi. Енергийната дивизия произвежда мащабни батерии Megapack за електропреносни мрежи и домашни системи Powerwall.',
+      '🚀 Основната дългосрочна визия е доминиране на автономията чрез Full Self-Driving (FSD) и пускането на мрежа от Robotaxi, суперкомпютрите Dojo за обучение на невронни мрежи и хуманоидния робот Optimus.'
+    ],
     businessSegments: ['Automotive Sales & Regulatory Credits (82%)', 'Energy Generation & Storage (Megapack, Powerwall - 10%)', 'Services & Supercharging Network (8%)'],
     competitors: ['BYD Company', 'Rivian (RIVN)', 'General Motors (GM)', 'Ford (F)', 'NIO'],
     keyHighlights: [
@@ -145,7 +181,12 @@ const KNOWN_PROFILES: Record<string, Partial<CompanyProfileData>> = {
     headquarters: 'Menlo Park, California, USA',
     founded: '2004',
     website: 'https://about.meta.com',
-    description: 'Meta Platforms, Inc. управлява най-големите социални мрежи в света – Facebook, Instagram, WhatsApp, Messenger и Threads. Компанията се занимава и с разработка на хардтуер за виртуална и добавена реалност (Meta Quest) и отворени AI модели (Llama).',
+    description: 'Meta Platforms, Inc. управлява най-големите социални мрежи в света и AI модела Llama.',
+    overviewParagraphs: [
+      '🏢 Meta Platforms, Inc. притежава и управлява най-влиятелната социална екосистема в света с над 3.2 милиарда дневно активни потребители.',
+      '📱 Основният източник на приходи са таргетираните дигитални реклами във Facebook, Instagram, WhatsApp, Messenger и Threads. Подразделението Reality Labs разработва хардтуер за виртуална реалност Quest и интелигентните очила Ray-Ban Meta.',
+      '🚀 Стратегията за растеж стъпва върху AIRecommendation алгоритмите за краткото видео Reels, изграждането на водещия отворен AI модел Llama и развитието на бизнес монетизацията във WhatsApp.'
+    ],
     businessSegments: ['Family of Apps (Facebook, Instagram, WhatsApp Ads - 98%)', 'Reality Labs (VR/AR Quest & Smart Glasses - 2%)'],
     competitors: ['TikTok (ByteDance)', 'Google / YouTube (GOOGL)', 'Snapchat (SNAP)', 'Apple (AAPL)'],
     keyHighlights: [
@@ -178,6 +219,11 @@ export function getCompanyProfileData(stock: Stock): CompanyProfileData {
       founded: known.founded || '1990',
       website: known.website || `https://www.google.com/search?q=${encodeURIComponent(stock.companyName)}`,
       description: known.description || `${stock.companyName} (${stock.ticker}) е водеща световна компания в своя сектор, предлагаща високотехнологични продукти и услуги на глобалния пазар.`,
+      overviewParagraphs: known.overviewParagraphs || [
+        `🏢 ${stock.companyName} (${stock.ticker}) е една от ключовите компании на глобалния фондов пазар. Основният ѝ бизнес модел е ориентиран към предоставяне на иновативни решения в своя сектор.`,
+        `📱 Компанията разполага с богат портфейл от продукти и услуги, обслужващи милиони индивидуални и корпоративни клиенти по целия свят.`,
+        `🚀 Стратегическият ѝ растеж разчита на непрекъснати инвестиции в развойна дейност, дигитализация и разширяване на пазарния дял.`
+      ],
       businessSegments: known.businessSegments || ['Core Enterprise Products', 'Digital Services & Platforms', 'Global Infrastructure'],
       competitors: known.competitors || ['Sector Peer A', 'Sector Peer B', 'Global Competitor C'],
       keyHighlights: known.keyHighlights || [
@@ -202,6 +248,11 @@ export function getCompanyProfileData(stock: Stock): CompanyProfileData {
     founded: '1985',
     website: `https://www.google.com/search?q=${encodeURIComponent(stock.companyName)}+official+website`,
     description: `${stock.companyName} (${stock.ticker}) е публично търгувана компания, част от глобалния фондов пазар. Основната ѝ дейност включва разработването, производството и разпространението на ключови продукти и услуги в сектора ${sectorName}.`,
+    overviewParagraphs: [
+      `🏢 ${stock.companyName} (${stock.ticker}) е утвърдена публично търгувана компания с ключово място в сектора ${sectorName}.`,
+      `📱 Продуктовото ѝ портфолио включва висококачествени стоки и специализирани услуги за глобалните потребители.`,
+      `🚀 Бизнес стратегията на компанията е насочена към финансова стабилност, разширяване на оперативните маржини и внедряване на нови технологии.`
+    ],
     businessSegments: [`Основни продукти в сектор ${sectorName}`, 'Услуги и решения за корпоративни клиенти', 'Международна дистрибуция'],
     competitors: ['Конкурент A', 'Конкурент B', 'Глобален лидер C'],
     keyHighlights: [

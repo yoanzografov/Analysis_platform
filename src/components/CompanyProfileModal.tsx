@@ -116,15 +116,25 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
             </div>
           </div>
 
-          {/* Business Summary Card */}
-          <div className="flex flex-col gap-2 bg-gradient-to-r from-[#1e1e2e] to-[#252538] border border-[#3b3b54]/80 rounded-xl p-4 text-stone-200 shadow-sm">
-            <span className="text-xs font-extrabold uppercase text-indigo-400 tracking-wider flex items-center gap-1.5">
-              <Briefcase size={14} className="text-indigo-400" />
-              С какво се занимава компанията?
+          {/* Extended Business Summary Card */}
+          <div className="flex flex-col gap-3 bg-gradient-to-r from-[#1e1e2e] via-[#232338] to-[#282840] border border-[#3b3b54]/90 rounded-xl p-4 text-stone-200 shadow-md">
+            <span className="text-xs font-extrabold uppercase text-indigo-400 tracking-wider flex items-center gap-1.5 border-b border-[#3b3b54]/60 pb-2">
+              <Briefcase size={15} className="text-indigo-400" />
+              С какво се занимава компанията? (Подробен Бизнес Анализ)
             </span>
-            <p className="text-xs sm:text-sm font-normal leading-relaxed text-stone-200">
-              {profile.description}
-            </p>
+            <div className="flex flex-col gap-2.5 text-xs sm:text-sm font-normal leading-relaxed text-stone-200">
+              {profile.overviewParagraphs && profile.overviewParagraphs.length > 0 ? (
+                profile.overviewParagraphs.map((para, idx) => (
+                  <p key={idx} className="bg-black/20 p-2.5 rounded-lg border border-white/5 text-stone-200 leading-relaxed">
+                    {para}
+                  </p>
+                ))
+              ) : (
+                <p className="text-stone-200 leading-relaxed">
+                  {profile.description}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Business Segments & Revenue Breakdown */}
