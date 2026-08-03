@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter } from '../types';
 import { ArrowUpRight, ArrowDownRight, Info, Clock, ExternalLink, HelpCircle, X, Flame, AlertCircle } from 'lucide-react';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
+import CmeFedWatchModal, { getNextFomcMeeting } from './CmeFedWatchModal';
 
 interface Props {
   stocks: Stock[];
@@ -232,12 +233,14 @@ interface TimeLeft {
 
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
   const [fomcTimeLeft, setFomcTimeLeft] = useState<TimeLeft | null>(null);
+  const [nextFomcLabel, setNextFomcLabel] = useState<string>('');
+  const [showCmeModal, setShowCmeModal] = useState<boolean>(false);
   const [timersMap, setTimersMap] = useState<Record<number, TimeLeft>>({});
   const [selectedIndicator, setSelectedIndicator] = useState<MarketIndicator | null>(null);
 
   // FOMC Timer & All Indicators Timers Engine
   useEffect(() => {
-        const TARGET_DATES: Record<number, Date> = {
+    const TARGET_DATES: Record<number, Date> = {
       1: new Date('2026-08-12T12:30:00Z'), // CPI
       2: new Date('2026-08-12T12:30:00Z'), // Core CPI
       3: new Date('2026-08-28T12:30:00Z'), // PCE
@@ -255,9 +258,11 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     const updateTimers = () => {
       const now = new Date();
       
-      // FOMC Main Timer
-      const fomcTarget = TARGET_DATES[1];
-      const fomcDiff = fomcTarget.getTime() - now.getTime();
+      // Dynamic FOMC Meeting Timer Calculation
+      const nextFomc = getNextFomcMeeting(now);
+      setNextFomcLabel(nextFomc.label);
+
+      const fomcDiff = nextFomc.date.getTime() - now.getTime();
       if (fomcDiff > 0) {
         setFomcTimeLeft({
           d: Math.floor(fomcDiff / (1000 * 60 * 60 * 24)),
@@ -499,11 +504,9 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0" />
           </a>
 
-          {/* Useful Link 2: CME FedWatch Tool with FOMC Countdown */}
-          <a 
-            href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" 
-            target="_blank" 
-            rel="noopener noreferrer"
+          {/* Useful Link 2: CME FedWatch Tool with Dynamic FOMC Countdown */}
+          <div 
+            onClick={() => setShowCmeModal(true)}
             className="flex flex-col p-2.5 rounded-xl border border-border/50 bg-card/30 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer relative"
           >
             <div className="flex items-center justify-between gap-2 w-full">
@@ -520,17 +523,40 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                   <span className="text-[10px] text-ink-faint font-mono">cmegroup.com</span>
                 </div>
               </div>
-              <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0" />
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* Info Button (i) */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowCmeModal(true);
+                  }}
+                  className="p-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 transition-all"
+                  title="Подробен график на срещите на FOMC и вероятности"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+                <a
+                  href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1 rounded-lg hover:bg-white/10 text-ink-faint hover:text-indigo-400 transition-all"
+                  title="Отвори сайта на CME Group"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
             
             {/* FOMC Countdown Strip */}
             <div className="mt-2 pt-2 border-t border-border/20 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-              <span className="text-[10px] text-ink-faint font-semibold uppercase tracking-wider shrink-0">
-                FOMC заседание:
+              <span className="text-[10px] text-ink-faint font-semibold uppercase tracking-wider shrink-0" title={nextFomcLabel}>
+                FOMC ({nextFomcLabel}):
               </span>
               <div className="shrink-0">{renderTimerBadge(fomcTimeLeft || undefined)}</div>
             </div>
-          </a>
+          </div>
 
           {/* Section Divider */}
           <div className="pt-2 border-t border-border/30">
@@ -687,6 +713,10 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
         </div>
       )}
 
+      {/* CME FedWatch Modal with Full Schedule of Meetings (срещите след доста дни) */}
+      {showCmeModal && (
+        <CmeFedWatchModal onClose={() => setShowCmeModal(false)} />
+      )}
     </div>
   );
 }
