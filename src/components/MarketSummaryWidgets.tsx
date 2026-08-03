@@ -231,6 +231,95 @@ interface TimeLeft {
   s: number;
 }
 
+function getNextIndicatorDate(id: number, now: Date = new Date()): Date {
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  switch (id) {
+    case 1: // CPI
+    case 2: // Core CPI
+    {
+      let date = new Date(Date.UTC(currentYear, currentMonth, 12, 12, 30, 0));
+      if (date.getTime() <= now.getTime()) {
+        date = new Date(Date.UTC(currentYear, currentMonth + 1, 12, 12, 30, 0));
+      }
+      return date;
+    }
+    case 3: // PCE
+    case 4: // Core PCE
+    {
+      let date = new Date(Date.UTC(currentYear, currentMonth, 28, 12, 30, 0));
+      if (date.getTime() <= now.getTime()) {
+        date = new Date(Date.UTC(currentYear, currentMonth + 1, 28, 12, 30, 0));
+      }
+      return date;
+    }
+    case 5: // FOMC Fed Rates
+    {
+      return getNextFomcMeeting(now).date;
+    }
+    case 6: // Employment Situation
+    case 7: // NFP
+    case 8: // Unemployment Rate
+    {
+      const getFirstFriday = (y: number, m: number) => {
+        let d = new Date(Date.UTC(y, m, 1, 12, 30, 0));
+        while (d.getUTCDay() !== 5) {
+          d.setUTCDate(d.getUTCDate() + 1);
+        }
+        return d;
+      };
+      let date = getFirstFriday(currentYear, currentMonth);
+      if (date.getTime() <= now.getTime()) {
+        date = getFirstFriday(currentYear, currentMonth + 1);
+      }
+      return date;
+    }
+    case 9: // GDP Growth Rate
+    {
+      const gdpMonths = [0, 3, 6, 9];
+      for (const m of gdpMonths) {
+        const date = new Date(Date.UTC(currentYear, m, 27, 12, 30, 0));
+        if (date.getTime() > now.getTime()) return date;
+      }
+      return new Date(Date.UTC(currentYear + 1, 0, 27, 12, 30, 0));
+    }
+    case 10: // Retail Sales
+    {
+      let date = new Date(Date.UTC(currentYear, currentMonth, 14, 12, 30, 0));
+      if (date.getTime() <= now.getTime()) {
+        date = new Date(Date.UTC(currentYear, currentMonth + 1, 14, 12, 30, 0));
+      }
+      return date;
+    }
+    case 11: // Consumer Confidence (CCI)
+    {
+      const getLastTuesday = (y: number, m: number) => {
+        let d = new Date(Date.UTC(y, m + 1, 0, 14, 0, 0));
+        while (d.getUTCDay() !== 2) {
+          d.setUTCDate(d.getUTCDate() - 1);
+        }
+        return d;
+      };
+      let date = getLastTuesday(currentYear, currentMonth);
+      if (date.getTime() <= now.getTime()) {
+        date = getLastTuesday(currentYear, currentMonth + 1);
+      }
+      return date;
+    }
+    case 12: // Housing Starts & Permits
+    {
+      let date = new Date(Date.UTC(currentYear, currentMonth, 18, 12, 30, 0));
+      if (date.getTime() <= now.getTime()) {
+        date = new Date(Date.UTC(currentYear, currentMonth + 1, 18, 12, 30, 0));
+      }
+      return date;
+    }
+    default:
+      return new Date(now.getTime() + 30 * 24 * 3600 * 1000);
+  }
+}
+
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
   const [fomcTimeLeft, setFomcTimeLeft] = useState<TimeLeft | null>(null);
   const [nextFomcLabel, setNextFomcLabel] = useState<string>('');
@@ -240,21 +329,6 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
   // FOMC Timer & All Indicators Timers Engine
   useEffect(() => {
-    const TARGET_DATES: Record<number, Date> = {
-      1: new Date('2026-08-12T12:30:00Z'), // CPI
-      2: new Date('2026-08-12T12:30:00Z'), // Core CPI
-      3: new Date('2026-08-28T12:30:00Z'), // PCE
-      4: new Date('2026-08-28T12:30:00Z'), // Core PCE
-      5: new Date('2026-09-16T18:00:00Z'), // Fed Interest Rates (FOMC)
-      6: new Date('2026-08-07T12:30:00Z'), // Employment Situation
-      7: new Date('2026-08-07T12:30:00Z'), // NFP
-      8: new Date('2026-08-07T12:30:00Z'), // Unemployment Rate
-      9: new Date('2026-08-27T12:30:00Z'), // GDP Growth Rate
-      10: new Date('2026-08-14T12:30:00Z'), // Retail Sales
-      11: new Date('2026-08-25T14:00:00Z'), // Consumer Confidence (CCI)
-      12: new Date('2026-08-18T12:30:00Z'), // Housing Starts & Permits
-    };
-
     const updateTimers = () => {
       const now = new Date();
       
@@ -272,13 +346,12 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
         });
       }
 
-      // All 10 Indicators Timers
+      // Dynamic calculation for all 12 Macroeconomic Indicators
       const newMap: Record<number, TimeLeft> = {};
-      Object.entries(TARGET_DATES).forEach(([idStr, target]) => {
-        const id = Number(idStr);
-        let diff = target.getTime() - now.getTime();
-        if (diff <= 0) diff = 30 * 24 * 3600 * 1000 + diff;
-        newMap[id] = {
+      INDICATORS_DATA.forEach((ind) => {
+        const target = getNextIndicatorDate(ind.id, now);
+        const diff = Math.max(0, target.getTime() - now.getTime());
+        newMap[ind.id] = {
           d: Math.floor(diff / (1000 * 60 * 60 * 24)),
           h: Math.floor((diff / (1000 * 60 * 60)) % 24),
           m: Math.floor((diff / 1000 / 60) % 60),
