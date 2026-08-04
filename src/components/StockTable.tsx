@@ -670,27 +670,27 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  <option value="Not interesting">Not interesting</option>
  </select>
  ) : stock.watch === 'Attn' || stock.watch === 'Atten' ? (
- <span className="bg-amber-500 text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
+ <span className="inline-block w-20 text-center bg-amber-500 text-white font-extrabold py-0.5 text-xs uppercase rounded-full shadow-sm">
  Attn
  </span>
  ) : stock.watch === 'Watch' ? (
- <span className="bg-indigo-500 text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
+ <span className="inline-block w-20 text-center bg-indigo-500 text-white font-extrabold py-0.5 text-xs uppercase rounded-full shadow-sm">
  Watch
  </span>
  ) : stock.watch === 'Sell' ? (
- <span className="bg-[#f43f5e] text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
+ <span className="inline-block w-20 text-center bg-[#f43f5e] text-white font-extrabold py-0.5 text-xs uppercase rounded-full shadow-sm">
  Sell
  </span>
  ) : stock.watch === 'Buy' ? (
- <span className="bg-[#10b981] text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
+ <span className="inline-block w-20 text-center bg-[#10b981] text-white font-extrabold py-0.5 text-xs uppercase rounded-full shadow-sm">
  Buy
  </span>
  ) : stock.watch === 'Interesting' ? (
- <span className="bg-purple-500 text-white font-extrabold px-1 text-xs uppercase rounded-md shadow-sm">
+ <span className="inline-block w-24 text-center bg-purple-500 text-white font-extrabold py-0.5 text-xs uppercase rounded-full shadow-sm">
  Interesting
  </span>
  ) : stock.watch === 'Not interesting' ? (
- <span className="bg-white/10 text-ink-muted font-bold px-1 border border-border text-xs uppercase rounded-md">
+ <span className="inline-block w-24 text-center bg-white/10 text-ink-muted font-bold py-0.5 border border-border text-xs uppercase rounded-full">
  Not interesting
  </span>
  ) : (
