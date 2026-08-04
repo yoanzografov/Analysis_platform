@@ -40,13 +40,28 @@ export default function FinancialsModal({ stock, onClose }: Props) {
             </div>
           </div>
           
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-white/5 rounded-full transition-colors text-ink-faint hover:text-ink cursor-pointer"
-            title="Затвори"
-          >
-            <X size={24} />
-          </button>
+          {/* Current Price + Close Button */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-right">
+              <div className="text-xs text-stone-400 font-semibold uppercase tracking-wide">Текуща цена</div>
+              <div className="text-2xl font-black font-mono text-emerald-400 leading-tight">
+                ${stock.currentPrice.toFixed(2)}
+              </div>
+              {stock.dailyChangePct !== undefined && (
+                <div className={`text-xs font-bold mt-0.5 ${stock.dailyChangePct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {stock.dailyChangePct >= 0 ? '+' : ''}{stock.dailyChangePct.toFixed(2)}%
+                </div>
+              )}
+            </div>
+            <div className="w-px h-10 bg-stone-700" />
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-white/5 rounded-full transition-colors text-ink-faint hover:text-ink cursor-pointer"
+              title="Затвори"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Content (TradingView Fundamental Data Widget) */}
