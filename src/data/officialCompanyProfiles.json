@@ -1,0 +1,927 @@
+{
+  "AAPL": {
+    "ticker": "AAPL",
+    "companyName": "Apple Inc",
+    "officialDescription": "An apple is the round, edible fruit of an apple tree. Fruit trees of the orchard or domestic apple, the most widely grown in the genus, are cultivated worldwide. The tree originated in Central Asia, where its wild ancestor, Malus sieversii, is still found. Apples have been grown for thousands of years in Eurasia before they were introduced to North America by European colonists. Apples have cultural significance in many mythologies and religions."
+  },
+  "ABBV": {
+    "ticker": "ABBV",
+    "companyName": "AbbVie Common Stock",
+    "officialDescription": "AbbVie Inc., also known as AbbVie, is an American pharmaceutical company headquartered in North Chicago, Illinois. AbbVie produces drugs to treat a wide range of medical issues."
+  },
+  "ABNB": {
+    "ticker": "ABNB",
+    "companyName": "Airbnb Inc",
+    "officialDescription": "Airbnb, Inc. is an American company operating an online marketplace for short-and-long-term homestays, experiences and services in various countries and regions. It acts as a broker and charges a commission from each booking. Airbnb was founded in 2008 by Brian Chesky, Nathan Blecharczyk, and Joe Gebbia."
+  },
+  "ABT": {
+    "ticker": "ABT",
+    "companyName": "Abbott Laboratories",
+    "officialDescription": "Abbott Laboratories, commonly known as Abbott, is an American multinational medical devices and health care company founded in Chicago with headquarters in Abbott Park, Illinois. The company produces pharmaceuticals for sale outside the United States, diagnostic products, nutritional products, and medical devices."
+  },
+  "ACIW": {
+    "ticker": "ACIW",
+    "companyName": "ACI Worldwide Inc",
+    "officialDescription": "ACI Worldwide is a digital payments software company headquartered in Elkhorn, Nebraska, that processes billions of transactions daily equating to trillions of U.S. dollars for customers in 94 countries. Banks, financial institutions, merchants, billers, acquirers, issuers, and other third-party payment service providers use its intelligent solutions to deploy secure payment rails across all channels."
+  },
+  "ACN": {
+    "ticker": "ACN",
+    "companyName": "Accenture Plc",
+    "officialDescription": "Accenture plc is an Irish domiciled technology consulting company headquartered in Dublin, Ireland for tax purposes. Founded in 1989 in the United States, Accenture provides information technology and management consulting services across 120 countries globally."
+  },
+  "ADBE": {
+    "ticker": "ADBE",
+    "companyName": "Adobe Inc",
+    "officialDescription": "Adobe is a building material made from loam and organic materials. Adobe is Spanish for mudbrick. In some English-speaking regions of Spanish heritage, such as the Southwestern United States, the term is used to refer to any kind of earthen construction, or various architectural styles like Pueblo Revival or Territorial Revival. Most adobe buildings are similar in appearance to cob and rammed earth buildings. Adobe is among the earliest building materials, and is used throughout the world."
+  },
+  "ADI": {
+    "ticker": "ADI",
+    "companyName": "Analog Devices Inc",
+    "officialDescription": "Analog Devices, Inc. (ADI), also known simply as Analog, is an American multinational semiconductor company specializing in data conversion, signal processing, and power management technology, headquartered in Wilmington, Massachusetts."
+  },
+  "ADM": {
+    "ticker": "ADM",
+    "companyName": "Archer-Daniels-Midland Co",
+    "officialDescription": "The Archer-Daniels-Midland Company, commonly known as ADM, is an American multinational food processing and commodities trading corporation founded in 1902 and headquartered in Chicago, Illinois. The company operates more than 270 plants and 420 crop procurement facilities worldwide, where cereal grains and oilseeds are processed into products used in food, beverage, nutraceutical, industrial, and animal feed markets worldwide."
+  },
+  "ADP": {
+    "ticker": "ADP",
+    "companyName": "Automatic Data Processing Inc",
+    "officialDescription": "Automatic Data Processing, Inc. (ADP) is an American multinational provider of cloud-based human resources management, payroll processing, and professional employer organization (PEO) services, headquartered in Roseland, New Jersey."
+  },
+  "ALB": {
+    "ticker": "ALB",
+    "companyName": "Albemarle Corp",
+    "officialDescription": "Albemarle Corp (ALB) is a major publicly traded corporation listed on global stock exchanges."
+  },
+  "AMAT": {
+    "ticker": "AMAT",
+    "companyName": "Applied Materials Inc",
+    "officialDescription": "Applied Materials, Inc. is an American corporation that supplies equipment, services and software for the manufacture of semiconductor chips for electronics, flat panel displays for computers, smartphones, televisions, and solar products. The company also supplies equipment to produce coatings for flexible electronics, packaging and other applications. The company is headquartered in Santa Clara, California, and is the second largest supplier of semiconductor equipment in the world based on revenue behind Dutch company ASML."
+  },
+  "AMD": {
+    "ticker": "AMD",
+    "companyName": "Advanced Micro Devices Inc",
+    "officialDescription": "Advanced Micro Devices, Inc. (AMD) is an American multinational semiconductor company headquartered in Santa Clara, California. It develops central processing units (CPUs), graphics processing units (GPUs), field-programmable gate arrays (FPGAs), system-on-chips (SoCs), and high-performance computer components. AMD serves a wide range of business and consumer markets, including personal computers (PCs), gaming, data centers, and embedded systems."
+  },
+  "AMGN": {
+    "ticker": "AMGN",
+    "companyName": "Amgen Inc",
+    "officialDescription": "Amgen Inc. is an American multinational biopharmaceutical company headquartered in Thousand Oaks, California. The company is ranked 18th on the list of largest biomedical companies by revenue. The name \"AMGen\" is a portmanteau of the company's original name, Applied Molecular Genetics."
+  },
+  "AMPH": {
+    "ticker": "AMPH",
+    "companyName": "Amphastar Pharmaceuticals",
+    "officialDescription": "Amphastar Pharmaceuticals is a publicly traded American speciality pharmaceutical company. It was incorporated in May 2004 and primarily develops, manufactures, and sells inhalation and intranasal products."
+  },
+  "AMZN": {
+    "ticker": "AMZN",
+    "companyName": "Amazon.com Inc",
+    "officialDescription": "Amazon.com, Inc. is an American multinational technology company engaged in e-commerce, cloud computing, online advertising, digital streaming, entertainment, and artificial intelligence. Founded in 1994 by Jeff Bezos in Bellevue, Washington, the company started as an online book marketplace that gradually expanded to include virtually all consumer product as well as many other categories, positioned as \"The Everything Store\"."
+  },
+  "ANET": {
+    "ticker": "ANET",
+    "companyName": "Arista Networks Inc",
+    "officialDescription": "Arista Networks, Inc. is an American provider of client to cloud networking services for large data center/AI, campus and routing environments."
+  },
+  "APH": {
+    "ticker": "APH",
+    "companyName": "Amphenol Corp",
+    "officialDescription": "Amphenol Corporation is an American producer of electronic and fiber optic connectors, cable and interconnect systems such as coaxial cables. Amphenol is a portmanteau from the corporation's original name, American Phenolic Corp."
+  },
+  "ASML": {
+    "ticker": "ASML",
+    "companyName": "ASML Holding NV",
+    "officialDescription": "ASML Holding N.V. is a Dutch multinational corporation that develops and manufactures photolithography machines, which are used to produce integrated circuits. It is the largest supplier for the semiconductor industry, as well as the most advanced producer of extreme ultraviolet lithography (EUV) machines, which are required to manufacture the most advanced chips. As of January 2026, its market capitalization was approximately $527 billion, making it Europe's largest technology company and one of its most valuable firms overall."
+  },
+  "AVGO": {
+    "ticker": "AVGO",
+    "companyName": "Broadcom Inc",
+    "officialDescription": "Broadcom Inc. is an American multinational designer, developer, manufacturer, and global supplier of a wide range of semiconductor and infrastructure software products. Broadcom's product offerings serve the data center, networking, software, broadband, wireless, storage, and industrial markets. As of 2026, Broadcom is one of the largest companies globally."
+  },
+  "AWK": {
+    "ticker": "AWK",
+    "companyName": "American Water Works Co Inc",
+    "officialDescription": "American Water Works Company, Inc. is an American public utility company that, through its subsidiaries, provides water and wastewater services in the United States."
+  },
+  "AZN": {
+    "ticker": "AZN",
+    "companyName": "AstraZeneca PLC (US)",
+    "officialDescription": "AstraZeneca plc (AZ) is a Swedish–British multinational pharmaceutical and biotechnology company with its headquarters at the Cambridge Biomedical Campus in Cambridge, England. It has a portfolio of products for major diseases in areas including oncology, cardiovascular, gastrointestinal, infection, neuroscience, respiratory, and inflammation."
+  },
+  "BBY": {
+    "ticker": "BBY",
+    "companyName": "Best Buy Co Inc",
+    "officialDescription": "Best Buy Co., Inc. is an American multinational consumer electronics retailer headquartered in Richfield, Minnesota. Originally founded by Richard M. Schulze and James Wheeler in 1966 as an audio specialty store called Sound of Music, it was rebranded under its current name with an emphasis on consumer electronics in 1983."
+  },
+  "BKNG": {
+    "ticker": "BKNG",
+    "companyName": "Booking Holdings Inc",
+    "officialDescription": "Booking may refer to:Making an appointment for a meeting or gathering, as part of event planning/scheduling\nThe intake or admission process into a prison or psychiatric facility\nBooking (manhwa), a Korean comics anthology magazine published by Haksan\nBooking, the laying out of the plot before a professional wrestling match\nAn accounting system a.k.a. double-entry bookkeeping system\nBooking (clubbing), the practise of forced socialisation in South Korean clubs\nBooking Holdings, American company\nBooking.com, a website for arranging hotel reservations\nBooking, scheduling services performed by a talent agent\nIn professional sports, the noting of a player's name in a referee's book, the player having been shown a penalty card"
+  },
+  "BMY": {
+    "ticker": "BMY",
+    "companyName": "Bristol-Myers Squibb Co",
+    "officialDescription": "Bristol-Myers Squibb Company, doing business as Bristol Myers Squibb, is an American multinational pharmaceutical company headquartered in Princeton, New Jersey. The company's primary products are apixaban (Eliquis) for people with atrial fibrillation ; nivolumab (Opdivo), used to treat certain types of cancer ; lenalidomide (Revlimid), used to treat multiple myeloma, smoldering myeloma, and myelodysplastic syndromes ; abatacept (Orencia), used to treat autoimmune diseases such as rheumatoid arthritis ; pomalidomide (Pomalyst/Imnovid), an anti-cancer medication used for the treatment of multiple myeloma and AIDS-related Kaposi sarcoma ; ipilimumab (Yervoy), to treat cancer ; and luspatercept (Reblozyl) for the treatment of anemia in beta thalassemia and myelodysplastic syndromes. In 2025, 69% of the company's revenues came from the United States."
+  },
+  "BRBY": {
+    "ticker": "BRBY",
+    "companyName": "Burberry Group plc",
+    "officialDescription": "Burberry Group plc is a British luxury fashion house established in 1856 by Thomas Burberry and headquartered in London, England. It designs and distributes ready to wear, including trench coats, leather accessories, and footwear. It is listed on the London Stock Exchange and is a constituent of the FTSE 100 Index."
+  },
+  "BTI": {
+    "ticker": "BTI",
+    "companyName": "British American Tobacco P.l.c",
+    "officialDescription": "British American Tobacco p.l.c. (BAT) is a British-American multinational company that manufactures and sells cigarettes, tobacco and other nicotine products including electronic cigarettes. The company, established in 1902, is headquartered in London, England. As of 2025, it is the second-largest tobacco company in the world based on net sales."
+  },
+  "CALM": {
+    "ticker": "CALM",
+    "companyName": "Cal-Maine Foods Inc",
+    "officialDescription": "Cal-Maine Foods, Inc. is an American fresh egg producer based in Ridgeland, Mississippi. As of 2024, it was the largest egg producer in the United States. Its eggs are sold under several different brand names, including Egg-Land's Best, Land O'Lakes, Farmhouse Eggs, Sunups, Sunny Meadow, and 4-Grain. The company was founded in 1957 by Fred R. Adams, Jr., whose family owns a controlling interest in the company, which is publicly traded on the NASDAQ stock exchange."
+  },
+  "CAT": {
+    "ticker": "CAT",
+    "companyName": "Caterpillar Inc",
+    "officialDescription": "Caterpillars are the larval stage of members of the order Lepidoptera. In common speech, any caterpillar-shaped insect larva such as of a sawfly is often called a caterpillar."
+  },
+  "CEG": {
+    "ticker": "CEG",
+    "companyName": "Constellation Energy Corp",
+    "officialDescription": "Constellation Energy Corporation is an American energy company headquartered in Baltimore, Maryland. The company provides electric power, natural gas, and energy management services. It has approximately two million customers across the continental United States."
+  },
+  "CHD": {
+    "ticker": "CHD",
+    "companyName": "Church & Dwight Co Inc",
+    "officialDescription": "Church & Dwight Co., Inc. is an American consumer packaged goods company headquartered in Ewing Township, New Jersey. It manufactures and markets household, personal-care and specialty products in the United States and internationally. The company is best known for Arm & Hammer, whose baking soda and related products trace their origins to a business established by John Dwight and Austin Church in 1846. As of 2026, other major brands include Trojan, OxiClean, Nair, First Response, Orajel, Waterpik, Batiste, TheraBreath, Hero Cosmetics and Touchland."
+  },
+  "CHTR": {
+    "ticker": "CHTR",
+    "companyName": "Charter Communications Inc",
+    "officialDescription": "Charter Communications, Inc., is an American telecommunications and mass media company with services branded as Spectrum. The company is headquartered in Stamford, Connecticut."
+  },
+  "CL": {
+    "ticker": "CL",
+    "companyName": "Colgate-Palmolive Co",
+    "officialDescription": "The Colgate-Palmolive Company, commonly known as Colgate-Palmolive, is an American multinational consumer products company headquartered on Park Avenue in Midtown Manhattan, New York City. The company specializes in the production, distribution, and provision of household, health care, personal care, and veterinary products."
+  },
+  "CMCSA": {
+    "ticker": "CMCSA",
+    "companyName": "Comcast Corp",
+    "officialDescription": "Comcast Corporation, formerly known as Comcast Holdings, is an American multinational mass media, telecommunications, and entertainment conglomerate. Comcast's corporate headquarters is at the Comcast Center in Philadelphia, while NBCUniversal, Comcast's New York operations and other major Comcast assets are headquartered at 30 Rockefeller Plaza in Midtown Manhattan in New York City. The company was ranked 51st in the Forbes Global 2000 in 2023. It is the fourth-largest telecommunications company by worldwide revenue, after AT&T, Verizon, and China Mobile. Comcast is the third-largest pay-TV company, the second-largest cable TV company by subscribers, and the largest home Internet service provider in the United States."
+  },
+  "CMG": {
+    "ticker": "CMG",
+    "companyName": "Chipotle Mexican Grill Inc",
+    "officialDescription": "Chipotle Mexican Grill, Inc., also known simply as Chipotle, is an American multinational chain of fast casual restaurants specializing in bowls, tacos, and Mission burritos made to order in front of the customer. As of December 2025, Chipotle has 4,000 locations. Its name derives from chipotle, the Nahuatl name for a smoked and dried jalapeño chili pepper."
+  },
+  "COST": {
+    "ticker": "COST",
+    "companyName": "Costco Wholesale Corp",
+    "officialDescription": "Costco Wholesale Corporation is an American multinational corporation that operates a chain of membership-only big-box warehouse club retail stores. As of 2021, Costco is the third-largest retailer in the world, and as of August 2024, the world's largest retailer of beef, poultry, organic produce, and wine, with just under a third of American consumers regularly shopping at Costco warehouses. As of 2025, Costco is ranked 12th on the Fortune 500 rankings of the largest United States corporations by total revenue, and is also ranked as the largest grocery retailer in Canada."
+  },
+  "CPRX": {
+    "ticker": "CPRX",
+    "companyName": "Catalyst Pharmaceuticals Inc",
+    "officialDescription": "Catalyst Pharmaceuticals, Inc. is a biopharmaceutical company based in Coral Gables, Florida, United States. The company develops medicines for rare diseases, including the phosphate salt of amifampridine for the treatment of Lambert–Eaton myasthenic syndrome (LEMS). The drug is referred to under the trade name Firdapse, which was approved by the FDA for approved use in children 6 years and older with LEMS in addition to the prior approval for use in adults with LEMS on November 28, 2018. Firdapse commercially launched in January 2019."
+  },
+  "CRM": {
+    "ticker": "CRM",
+    "companyName": "Salesforce Inc",
+    "officialDescription": "Salesforce, Inc. is an American cloud-based software company headquartered in San Francisco, California. It is primarily known for its customer relationship management software and related applications which it delivers through a software as a service subscription business model. It also provides software for sales, customer service, marketing automation, e-commerce, analytics, artificial intelligence, agentic AI, and application development."
+  },
+  "CROX": {
+    "ticker": "CROX",
+    "companyName": "Crocs Inc",
+    "officialDescription": "Crocs, Inc. is an American footwear company based in Broomfield, Colorado which manufactures and markets the Crocs brand of foam footwear. Crocs, Inc. terms these \"clogs,\" but they do not contain wood like traditional clogs. In 2021, they acquired the Italian footwear brand HEYDUDE for $2.5 billion. In 2025, Crocs revenue stood at $3.3 billion, an increase of 1.5% from the previous year."
+  },
+  "CRWD": {
+    "ticker": "CRWD",
+    "companyName": "Crowdstrike Holdings Inc",
+    "officialDescription": "CrowdStrike Holdings, Inc. is an American cybersecurity technology company based in Austin, Texas. It provides endpoint security, threat intelligence, and cyberattack response services. The company was co-founded in 2011 by George Kurtz, Dmitri Alperovitch, and Gregg Marston. Kurtz serves as the CEO. CrowdStrike went public on the Nasdaq in 2019 and joined the S&P 500 index in 2024."
+  },
+  "CSCO": {
+    "ticker": "CSCO",
+    "companyName": "Cisco Systems Inc",
+    "officialDescription": "Cisco Systems, Inc., doing business as Cisco, is an American multinational technology conglomerate corporation that develops, manufactures, and sells hardware, software, telecommunications equipment and other high-technology services and products focused on networking, cybersecurity and AI. Cisco specializes in specific tech markets, such as the Internet of things (IoT), domain security, videoconferencing, and energy management, including products such as Webex, OpenDNS, Jabber, and Jasper. The company is headquartered in San Jose, California, and, as of June 29, 2026, has a market capitalization of $461 billion."
+  },
+  "CSV": {
+    "ticker": "CSV",
+    "companyName": "Carriage Services Inc",
+    "officialDescription": "A mobile network operator (MNO), also known as a mobile network provider, mobile network carrier, mobile, wireless service provider, wireless carrier, wireless operator, wireless telco, or cellular company, is a telecommunications provider of services that sells, delivers and maintains mobile telephony services to end users."
+  },
+  "CVS": {
+    "ticker": "CVS",
+    "companyName": "CVS Health Corp",
+    "officialDescription": "CVS Health Corporation is an American multinational healthcare company that owns CVS Pharmacy, a retail pharmacy chain; CVS Caremark, a pharmacy benefits manager; and Aetna, a health insurance provider, among many other brands. The company is the world's second largest healthcare company, behind UnitedHealth Group. In 2023, the company was ranked 64th in the Forbes Global 2000. CVS started in Lowell, Massachusetts by brothers Stanley and Sidney Goldstein and their partner Ralph Hoagland. The name stood for Consumer Value Stores."
+  },
+  "CVX": {
+    "ticker": "CVX",
+    "companyName": "Chevron Corp",
+    "officialDescription": "Chevron Corp (CVX) is a major publicly traded corporation listed on global stock exchanges."
+  },
+  "D": {
+    "ticker": "D",
+    "companyName": "Dominion Energy Inc",
+    "officialDescription": "Dominion Energy, Inc., commonly referred to as Dominion, is an American energy company headquartered in Richmond, Virginia that supplies electricity in parts of Virginia, North Carolina, and South Carolina and supplies natural gas to parts of Utah, Idaho and Wyoming, West Virginia, Ohio, Pennsylvania, North Carolina, South Carolina, and Georgia. Dominion also has generation facilities in Indiana, Illinois, Connecticut, and Rhode Island."
+  },
+  "DECK": {
+    "ticker": "DECK",
+    "companyName": "Deckers Outdoor Corp",
+    "officialDescription": "Deckers Outdoor Corporation, doing business as Deckers Brands, is an American footwear designer and distributor founded in 1973 and based in Goleta, California. The company's portfolio of brands includes UGG, Teva, and Hoka. It was founded by Doug Otto and Karl F. Lopker."
+  },
+  "DELL": {
+    "ticker": "DELL",
+    "companyName": "Dell Technologies Inc",
+    "officialDescription": "Dell Technologies Inc. is an American multinational technology company that has been headquartered in Round Rock, Texas, since 1994. It was formed as a result of the September 2016 merger of Dell and EMC Corporation. Dell Technologies ranked 48th on the 2024 Fortune 500 rankings of the largest United States corporations based on its 2023 revenue; its products include personal computers, servers, monitors, computer software, computer security and network security, as well as information security services."
+  },
+  "DEO": {
+    "ticker": "DEO",
+    "companyName": "Diageo PLC",
+    "officialDescription": "Diageo plc is a British multinational alcoholic beverage company headquartered in London, England. It operates from 132 sites in nearly 180 countries. With brands such as Guinness, Johnnie Walker and Smirnoff, it is a major distributor of Scotch whisky and other spirits, with distilleries producing 40% of all Scotch whisky with over 24 brands. Diageo is a publicly traded company listed on both the London Stock Exchange where it is a constituent of the FTSE 100 Index, and the New York Stock Exchange as American depositary receipts."
+  },
+  "DG": {
+    "ticker": "DG",
+    "companyName": "Dollar General Corp",
+    "officialDescription": "Dollar General Corporation is an American chain of dollar stores headquartered in Goodlettsville, Tennessee. As of January 8, 2024, Dollar General operated 20,388 stores in the contiguous United States and Mexico."
+  },
+  "DHI": {
+    "ticker": "DHI",
+    "companyName": "D.R. Horton Inc",
+    "officialDescription": "D.R. Horton, Inc. is an American home construction company based in Arlington, Texas. Since 2002, the company has been the largest homebuilder by volume in the United States. The company ranked number 120 on the 2024 Fortune 500 list of the largest United States corporations by revenue. The company operates in 125 markets across 36 states."
+  },
+  "DIS": {
+    "ticker": "DIS",
+    "companyName": "Walt Disney Co",
+    "officialDescription": "Walter Elias Disney was an American animator, film producer, voice actor, and entrepreneur. A pioneer of the American animation industry, he introduced several developments in the production of cartoons. As a film producer, he holds the record for most Academy Awards won (22) and nominations (59) by an individual. He was presented with two Golden Globe Special Achievement Awards and an Emmy Award, among other honors. Several of his films are included in the National Film Registry by the Library of Congress and have also been named as some of the best by the American Film Institute."
+  },
+  "DKS": {
+    "ticker": "DKS",
+    "companyName": "DICK'S Sporting Goods Inc",
+    "officialDescription": "Dick's Sporting Goods, Inc. is an American chain of sporting goods stores founded in 1948 by Richard \"Dick\" Stack. It is the largest sporting goods retailer in the United States and is listed on the Fortune 500."
+  },
+  "DLTR": {
+    "ticker": "DLTR",
+    "companyName": "Dollar Tree Inc",
+    "officialDescription": "Dollar Tree, Inc., formerly known as Dollar Tree Stores, Inc., is an American multi-price-point chain of discount variety stores. Headquartered in Chesapeake, Virginia, it is a Fortune 500 company and operates 15,115 stores throughout the 48 contiguous U.S. states and Canada. Its stores are supported by a nationwide logistics network of 24 distribution centers."
+  },
+  "DOV": {
+    "ticker": "DOV",
+    "companyName": "Dover Corp",
+    "officialDescription": "Dover is a town, major ferry port and civil parish in Kent, England. It faces France across the Strait of Dover, the narrowest part of the English Channel at 33 kilometres (21 mi) from Cap Gris-Nez in France. It lies southeast of Canterbury and east of Maidstone. The town is the administrative centre of the Dover District and home of the Port of Dover. In 2024 it had an estimated population of 44,209."
+  },
+  "DOX": {
+    "ticker": "DOX",
+    "companyName": "Amdocs Ltd",
+    "officialDescription": "Amdocs Limited is a multinational telecommunications technology and Software company headquartered in Chesterfield, Missouri. The company specializes in software and services for communications, media, digital enterprises, and financial services providers. Amdocs was founded in 1982 and is publicly traded on the Nasdaq stock exchange."
+  },
+  "DPZ": {
+    "ticker": "DPZ",
+    "companyName": "Domino's Pizza Inc",
+    "officialDescription": "Domino's Pizza, Inc., trading as Domino's, is an American multinational pizza restaurant chain founded in 1960. The corporation is Delaware-domiciled and headquartered at the Domino's Farms office park in Ann Arbor Township near Ann Arbor, Michigan. As of 2018, Domino's had approximately 15,000 stores, with 5,649 in the United States, 1,500 in India, and 1,249 in the United Kingdom. Domino's has stores in more than 83 countries and 5,701 cities worldwide."
+  },
+  "DRI": {
+    "ticker": "DRI",
+    "companyName": "Darden Restaurants Inc",
+    "officialDescription": "Darden Restaurants, Inc. is an American multi-brand restaurant operator headquartered in Orlando, Florida. Darden has more than 2,100 restaurant locations and more than 200,000 employees, making it the world's largest full-service restaurant company. The company began as an extension of Red Lobster, founded by William Darden and initially backed by General Mills. Red Lobster was later sold in July 2014."
+  },
+  "DUK": {
+    "ticker": "DUK",
+    "companyName": "Duke Energy Corp",
+    "officialDescription": "Duke Energy Corporation is an American electric power and natural gas holding company headquartered in Charlotte, North Carolina. The company serves over 7 million customers in the eastern United States. In 2024, it ranked as the 141st largest company in the United States, its highest-ever placement on the Fortune 500 list."
+  },
+  "DUOL": {
+    "ticker": "DUOL",
+    "companyName": "Duolingo Inc",
+    "officialDescription": "Duolingo, Inc. is an American educational technology company that produces learning apps and provides language certification. Duolingo offers courses on 42 languages, ranging from English, French, and Spanish to less commonly studied languages such as Hawaiian, Māori, and Navajo, and even constructed languages such as Esperanto and Klingon. It also offers courses on music, math, and chess. The learning method incorporates gamification to motivate users with points, rewards and interactive lessons featuring spaced repetition. The app promotes short, daily lessons for consistent, phased practice."
+  },
+  "ECL": {
+    "ticker": "ECL",
+    "companyName": "Ecolab Inc",
+    "officialDescription": "Ecolab Inc., headquartered in Saint Paul, Minnesota, provides products related to water treatment, sanitation, and hygiene, primarily to commercial and industrial customers. The company is ranked 274th on the Fortune 500 and 569th on the Forbes Global 2000."
+  },
+  "EL": {
+    "ticker": "EL",
+    "companyName": "Estee Lauder Companies Inc",
+    "officialDescription": "The Estée Lauder Companies Inc. is an American multinational cosmetics company, a manufacturer and marketer of makeup, skincare, perfume, and hair care products, based in Midtown Manhattan, New York City. It is the second largest cosmetics company in the world after L'Oréal. The company owns a diverse portfolio of brands, including La Mer, Jo Malone London, Clinique and Tom Ford Beauty, among many more, distributed internationally through both digital commerce and retail channels."
+  },
+  "ELF": {
+    "ticker": "ELF",
+    "companyName": "elf Beauty Inc",
+    "officialDescription": "e.l.f. Beauty, Inc. is an American cosmetics brand based in Oakland, California. It was founded by Joseph Shamah and Scott Vincent Borba in 2004. The company sells bath and skin-care products, mineral-based makeup, professional tools, eyeliners, lipstick, glosses, blushes, bronzers, brushes and mascara. Its products are sold in 18 countries and in several stores, including Target, CVS, Sephora, and Walmart. Over half the company's sales come from its website, which is also as a social networking site with over two million members."
+  },
+  "ENB": {
+    "ticker": "ENB",
+    "companyName": "Enbridge Inc",
+    "officialDescription": "Enbridge Inc. is a Canadian pipeline and energy company headquartered in Calgary, Alberta, Canada. Enbridge owns and operates pipelines throughout Canada and the United States, transporting crude oil, natural gas, and natural gas liquids, and also generates renewable energy. Enbridge's pipeline system is the longest in North America and the largest oil export pipeline network in the world. Its crude oil system consists of 28,661 kilometres of pipelines. Its 38,300 kilometre natural gas pipeline system connects multiple Canadian provinces, several US states, and the Gulf of Mexico. The company was formed by Imperial Oil in 1949 as the Interprovincial Pipe Line Company Limited to transport Alberta oil to refineries. Over time, it has grown through acquisition of other existing pipeline companies and the expansion of their projects."
+  },
+  "ENPH": {
+    "ticker": "ENPH",
+    "companyName": "Enphase Energy Inc",
+    "officialDescription": "Enphase Energy, Inc. is an American energy technology company headquartered in Fremont, California, that develops and manufactures solar micro-inverters, battery energy storage, and EV charging stations primarily for residential customers. Enphase was established in 2006 and is the first company to successfully commercialize solar micro-inverters, which convert the direct current (DC) power generated by solar panels into grid-compatible alternating current (AC) for use or export. The company has shipped more than 48 million microinverters to 2.5 million solar systems in more than 140 countries."
+  },
+  "ENVX": {
+    "ticker": "ENVX",
+    "companyName": "Enovix Corp",
+    "officialDescription": "An environment variable is a user-definable value that can affect the way running processes will behave on a computer. Environment variables are part of the environment in which a process runs. For example, a running process can query the value of the TEMP environment variable to discover a suitable location to store temporary files, or the HOME or USERPROFILE variable to find the directory structure owned by the user running the process."
+  },
+  "EPAM": {
+    "ticker": "EPAM",
+    "companyName": "EPAM Systems Inc",
+    "officialDescription": "Epic Systems Corporation is an American privately held healthcare software company based in Verona, Wisconsin. Founded in 1979, it develops large-scale software systems for electronic health records. It is the largest electronic health records vendor by market share. According to the company, more than 325 million patients have an electronic record in Epic."
+  },
+  "FAST": {
+    "ticker": "FAST",
+    "companyName": "Fastenal Co",
+    "officialDescription": "Fastenal Company is an American publicly traded company based in Winona, Minnesota, founded in 1967. Fastenal is a major distributor of industrial and construction supplies, and the largest fastener distributor in North America. Fastenal provides supply chain solutions including bin stock, vending machines, inventory management, and logistics services. Fastenal placed 479 in the 2021 Fortune 500 based on its 2020 revenues, and its stock is a component of the Nasdaq 100 and S&P 500 stock market indices. Fastenal had 3,334 in-market locations as of March 2023."
+  },
+  "FDS": {
+    "ticker": "FDS",
+    "companyName": "Factset Research Systems Inc",
+    "officialDescription": "FactSet Research Systems Inc., trading as FactSet, is an American financial data and software company headquartered in Norwalk, Connecticut, United States. The company provides integrated data and software. For fiscal year 2024, FactSet's total ASV and professional services revenues were $2.2 billion. FactSet's total market value is approximately $17 billion."
+  },
+  "FDX": {
+    "ticker": "FDX",
+    "companyName": "FedEx Corp",
+    "officialDescription": "FedEx Corporation, originally known as Federal Express Corporation, is an American multinational conglomerate holding company specializing in transportation, e-commerce, and business services. The company is headquartered in Memphis, Tennessee. The name \"FedEx\" is a syllabic abbreviation of its original air division, Federal Express, which operated under this name from 1973 until 1994."
+  },
+  "FISV": {
+    "ticker": "FISV",
+    "companyName": "Fiserv Inc",
+    "officialDescription": "Fiserv, Inc. is an American multinational financial technology company headquartered in Milwaukee, Wisconsin. The company processes debit and credit card transactions, loyalty programs, loans, electronic bill pay, wires and ACH transfers, check deposits, and ATM transactions on behalf of banking institutions. The company also produces debit and credit cards and point of sale terminals."
+  },
+  "FLO": {
+    "ticker": "FLO",
+    "companyName": "Flowers Foods Inc",
+    "officialDescription": "Flowers Foods, Inc., headquartered in Thomasville, Georgia, is a producer and marketer of packaged bakery foods in the United States. The company operates 44 bakeries across 19 states that produce a variety of products, including bread, buns, snack cakes, rolls, tortillas and pastries. As of February 2013, Flowers Foods had grown to be the \"second-largest baking company in the United States.\""
+  },
+  "FMC": {
+    "ticker": "FMC",
+    "companyName": "FMC Corp",
+    "officialDescription": "FMC Corp (FMC) is a major publicly traded corporation listed on global stock exchanges."
+  },
+  "FTNT": {
+    "ticker": "FTNT",
+    "companyName": "Fortinet Inc",
+    "officialDescription": "Fortinet, Inc. is an American cybersecurity company headquartered in Sunnyvale, California. It develops and sells security products including firewalls, endpoint security and intrusion detection systems. Fortinet has offices in the US, Canada, and UK."
+  },
+  "GIS": {
+    "ticker": "GIS",
+    "companyName": "General Mills Inc",
+    "officialDescription": "General Mills, Inc. is an American multinational manufacturer and marketer of branded consumer foods sold through retail stores. Founded on the banks of the Mississippi River at Saint Anthony Falls in Minneapolis, the company originally gained fame for being a large flour miller. It is headquartered in Golden Valley, Minnesota, a suburb of Minneapolis."
+  },
+  "GOOGL": {
+    "ticker": "GOOGL",
+    "companyName": "Alphabet Inc Class A",
+    "officialDescription": "\n\n\n\nAn alphabet is a writing system that uses a standard set of symbols, called letters, to more or less represent particular sounds in a spoken language. Specifically, letters largely correspond to phonemes as the smallest sound segments that can distinguish one word from another in a given language. Not all writing systems represent language in this way: a syllabary assigns symbols to spoken syllables, while logographies assign symbols to words, morphemes, or other semantic units."
+  },
+  "GPC": {
+    "ticker": "GPC",
+    "companyName": "Genuine Parts Co",
+    "officialDescription": "Genuine Parts Company (GPC) is an American automotive and industrial parts distributor based in Atlanta, Georgia. Established by brothers Carlyle and Malcolm Fraser in 1928, the company has approximately 60,000 employees. In addition to the United States, GPC has operated in Australasia, Belgium, Canada, France, Germany, Mexico, the Netherlands, Poland, and the United Kingdom. GPC's subsidiaries include industrial parts distributor Motion as well as NAPA Auto Parts, which primarily sells parts in North America."
+  },
+  "GPN": {
+    "ticker": "GPN",
+    "companyName": "Global Payments Inc",
+    "officialDescription": "Global Payments Inc. is an American multinational financial technology company that provides payment technology to merchants, issuers and consumers. In June 2021, the company was named to the Fortune 500. The company processes payments made through credit cards, debit cards, and digital and contactless payments."
+  },
+  "GRMN": {
+    "ticker": "GRMN",
+    "companyName": "Garmin Ltd",
+    "officialDescription": "Garmin Ltd. is an American multinational technology company based in Olathe, Kansas. The company designs, develops, manufactures, markets, and distributes GPS-enabled products and other navigation, communication, sensor-based, and information products to the automotive, aviation, marine, outdoors, and sport markets."
+  },
+  "HALO": {
+    "ticker": "HALO",
+    "companyName": "Halozyme Therapeutics",
+    "officialDescription": "Halozyme Therapeutics, Inc. is an American biotechnology company. It develops oncology therapies designed to target the tumor microenvironment."
+  },
+  "HD": {
+    "ticker": "HD",
+    "companyName": "Home Depot Inc",
+    "officialDescription": "The Home Depot, Inc. is an American multinational home improvement retail corporation which sells tools, construction products, appliances, and services including fuel and transportation rentals. Home Depot is the largest home improvement retailer in the United States. In fiscal 2024, the company reported $159.5 billion in revenue and approximately 470,100 associates. The company is headquartered in Cobb County, Georgia, with an Atlanta mailing address."
+  },
+  "HEI.A": {
+    "ticker": "HEI.A",
+    "companyName": "Heico Corp Class A",
+    "officialDescription": "HEICO Corporation is an American aerospace and electronics company headquartered in Hollywood, Florida. The company designs, manufactures, and distributes components and systems for a range of industries including aviation, defense, space, medical, and telecommunications. HEICO operates through two main business segments: the Flight Support Group (FSG) and the Electronic Technologies Group (ETG)."
+  },
+  "HIMS": {
+    "ticker": "HIMS",
+    "companyName": "Hims & Hers Health Inc",
+    "officialDescription": "Hims & Hers Health, Inc., doing business as hims, is an American telehealth company headquartered in San Francisco. It provides prescription medications, over-the-counter medications, and personal care products through a direct-to-consumer subscription model."
+  },
+  "HSY": {
+    "ticker": "HSY",
+    "companyName": "Hershey Co",
+    "officialDescription": "Hershey Co (HSY) is a major publicly traded corporation listed on global stock exchanges."
+  },
+  "IBM": {
+    "ticker": "IBM",
+    "companyName": "IBM Common Stock",
+    "officialDescription": "International Business Machines Corporation, doing business as IBM, is an American multinational technology company headquartered in Armonk, New York, and present in over 175 countries. It is a publicly traded company and one of the 30 companies in the Dow Jones Industrial Average. IBM is the largest industrial research organization in the world, with 19 research facilities across a dozen countries; for 29 consecutive years, from 1993 to 2021, it held the record for most annual U.S. patents generated by a business."
+  },
+  "INGR": {
+    "ticker": "INGR",
+    "companyName": "Ingredion Inc",
+    "officialDescription": "Ingredion Inc. is an American food and beverage ingredient provider based in Westchester, Illinois, producing mainly starches, non-GMO sweeteners, stevia, and pea protein. The company turns corn, tapioca, potatoes, plant-based stevia, grains, fruits, gums and other vegetables into ingredients for the food, beverage, brewing, and pharmaceutical industries and numerous industrial sectors. As of June 2026, it has about 11,000 employees, and customers in excess of 120 countries."
+  },
+  "INTC": {
+    "ticker": "INTC",
+    "companyName": "Intel Corp",
+    "officialDescription": "Intel Corporation is an American multinational technology company headquartered in Santa Clara, California. It designs, manufactures, and sells computer components such as central processing units (CPUs) and related products for business and consumer markets. Intel was the world's third-largest semiconductor chip manufacturer by revenue in 2024 and has been included in the Fortune 500 list of the largest United States corporations by revenue since 2007. It was one of the first companies listed on Nasdaq."
+  },
+  "IREN": {
+    "ticker": "IREN",
+    "companyName": "IREN Ltd",
+    "officialDescription": "IREN Ltd is an Australian company headquartered in Sydney, New South Wales. IREN operates data centers that are supplied entirely with renewable energy. Its infrastructure is optimized for both cryptocurrency mining and artificial intelligence (AI) cloud services. The company’s activities include the operation of its own Bitcoin proof-of-work mining facilities, the development of GPU cloud and colocation services, and customized data center projects for large customers. IREN has been listed on the Nasdaq since its initial public offering in November 2021."
+  },
+  "IT": {
+    "ticker": "IT",
+    "companyName": "Gartner Inc",
+    "officialDescription": "Gartner, Inc. is an American research and advisory firm focusing on business and technology topics. Gartner provides its products and services through research reports, conferences, and consulting. Its clients include large corporations, government agencies, technology companies, and investment firms."
+  },
+  "ITW": {
+    "ticker": "ITW",
+    "companyName": "Illinois Tool Works Inc",
+    "officialDescription": "Illinois Tool Works Inc. (ITW) is an American Fortune 500 company that produces engineered fasteners and components, equipment and consumable systems, and specialty products. It was founded in 1912 by Byron L. Smith and has built its growth on a \"small-wins strategy\" based on decentralization, simplicity, customer-focused innovation, and acquisitions."
+  },
+  "JNJ": {
+    "ticker": "JNJ",
+    "companyName": "Johnson & Johnson",
+    "officialDescription": "Johnson & Johnson (J&J) is an American multinational pharmaceutical, biotechnology, and medical technologies corporation headquartered in New Brunswick, New Jersey. The company is ranked No. 48 on the 2025 Fortune 500 list of the largest United States corporations. In 2025, the company was ranked 42nd in the Forbes Global 2000. Along with Microsoft, Johnson & Johnson is one of only two U.S.-based companies that has a prime credit rating of AAA from S&P Global."
+  },
+  "KHC": {
+    "ticker": "KHC",
+    "companyName": "Kraft Heinz Co",
+    "officialDescription": "The Kraft Heinz Company, commonly known as Kraft Heinz, is an American multinational food company formed on July 2, 2015, through the merger of Kraft Foods Group and the H.J. Heinz Company. It is co-headquartered in Chicago and Pittsburgh and manufactures and markets packaged foods and beverages under brands including Kraft, Heinz, Oscar Mayer, Philadelphia, Lunchables, Velveeta, Maxwell House, and Jell-O. In fiscal 2025, the company reported net sales of US$24.9 billion and employed approximately 35,000 people in 40 countries."
+  },
+  "KO": {
+    "ticker": "KO",
+    "companyName": "Coca-Cola Co",
+    "officialDescription": "Coca-Cola, or Coke, is a cola soft drink manufactured by the Coca-Cola Company. In 2013, Coke products were sold in over 200 countries and territories worldwide, with consumers drinking more than 1.8 billion company beverage servings each day. Coca-Cola ranked No. 94 in the 2024 Fortune 500 list of the largest United States corporations by revenue. Based on Interbrand's \"best global brand\" study of 2023, Coca-Cola was the world's sixth most valuable brand."
+  },
+  "KR": {
+    "ticker": "KR",
+    "companyName": "Kroger Co",
+    "officialDescription": "The Kroger Co. is an American retail corporation headquartered in Cincinnati, Ohio. It operates supermarkets and multi-department stores throughout the United States."
+  },
+  "LAMR": {
+    "ticker": "LAMR",
+    "companyName": "Lamar Advertising Co",
+    "officialDescription": "Lamar Advertising Company is an American advertising company which operates billboards, logo signs, and transit displays in the United States and Canada and focused on outdoor advertising. The company was founded in 1902 by Charles W. Lamar and J.M. Coe, and is headquartered in Baton Rouge, Louisiana. The company has over 200 locations in the United States and Canada. They have reportedly more than 363,000 displays across the USA. Lamar Advertising Company became a real estate investment trust in 2014."
+  },
+  "LEG": {
+    "ticker": "LEG",
+    "companyName": "Leggett & Platt Inc",
+    "officialDescription": "Leggett & Platt (L&P), based in Carthage, Missouri, is an American diversified manufacturer that designs and produces various engineered components and products that can be found in homes and automobiles. The firm was founded in 1883, and consists of 15 business units, 20,000 employee-partners, and 135 manufacturing facilities located in 18 countries."
+  },
+  "LKQ": {
+    "ticker": "LKQ",
+    "companyName": "LKQ Corp",
+    "officialDescription": "LKQ Corporation is an American provider of alternative and speciality parts to repair and accessorize automobiles and other vehicles. LKQ has operations in North America, Europe and Taiwan. LKQ sells replacement systems, components, equipment and parts to repair and accessorize automobiles, trucks, and recreational and performance vehicles."
+  },
+  "LLY": {
+    "ticker": "LLY",
+    "companyName": "Eli Lilly And Co",
+    "officialDescription": "Eli Lilly and Company, doing business as Lilly, is an American multinational pharmaceutical company headquartered in Indianapolis, Indiana, with offices in 18 countries. Its products are sold in approximately 125 countries. The company was founded in 1876 by Eli Lilly, a pharmaceutical chemist and Union army veteran during the American Civil War for whom the company was later named."
+  },
+  "LNTH": {
+    "ticker": "LNTH",
+    "companyName": "Lantheus Holdings Inc",
+    "officialDescription": "Lantheus, headquartered in Billerica, Massachusetts, is a company in the radiopharmaceuticals business. It has strategic partnerships with Bayer, Novartis, Regeneron as well as GE Healthcare and Siemens Healthineers."
+  },
+  "LOGI": {
+    "ticker": "LOGI",
+    "companyName": "Logitech International SA",
+    "officialDescription": "Logitech International S.A. is a Swiss multinational manufacturer of computer peripherals and software. Headquartered in Lausanne, Switzerland, with an important operational headquarters in San Jose, California, the company has offices throughout Europe, Asia, Oceania, and the Americas. It is a component of the Swiss Market Index, and is listed on the Nasdaq."
+  },
+  "LOW": {
+    "ticker": "LOW",
+    "companyName": "Lowe's Companies Inc",
+    "officialDescription": "Lowe's Companies, Inc. is an American retail company specializing in home improvement. Headquartered in Mooresville, North Carolina, the company operates a chain of retail stores in the United States. As of October 28, 2022, Lowe's and its related businesses operated 2,181 home improvement and hardware stores in North America."
+  },
+  "LRCX": {
+    "ticker": "LRCX",
+    "companyName": "Lam Research Corp",
+    "officialDescription": "Lam Research Corporation is an American supplier of wafer-fabrication equipment and related services to the semiconductor industry. Its products are used primarily in front-end wafer processing, which involves the steps that create the active components of semiconductor devices and their wiring (interconnects). The company also builds equipment for back-end wafer-level packaging (WLP) and for related manufacturing markets such as for microelectromechanical systems (MEMS)."
+  },
+  "LULU": {
+    "ticker": "LULU",
+    "companyName": "Lululemon Athletica Inc",
+    "officialDescription": "Lululemon, commonly styled as lululemon, is a Canadian-American multinational athletic apparel retailer headquartered in Vancouver, British Columbia, and incorporated in Delaware, United States, as Lululemon Athletica Inc. It was founded in 1998 as a retailer of yoga pants and other yoga wear, and has expanded to also sell sportswear, lifestyle apparel, shoes, accessories and personal care products. The company has 767 stores and also processes sales online through its website."
+  },
+  "LW": {
+    "ticker": "LW",
+    "companyName": "Lamb Weston Holdings Inc",
+    "officialDescription": "Lamb Weston Holdings, Inc. is an American food processing company that is one of the world's largest producers and processors of frozen french fries, waffle fries, and other frozen potato products. It is headquartered in Eagle, Idaho, a suburb of Boise."
+  },
+  "MA": {
+    "ticker": "MA",
+    "companyName": "Mastercard Inc",
+    "officialDescription": "Mastercard Inc. is an American multinational payment card services corporation headquartered in Purchase, New York. It provides payment transaction processing and other related-payment services, including travel-related payments and bookings). Its principal business globally is to process payments between the banks of merchants and the card-issuing banks or credit unions of purchasers who use its branded debit, credit and prepaid cards to make purchases. Mastercard has been publicly traded since 2006."
+  },
+  "MCD": {
+    "ticker": "MCD",
+    "companyName": "McDonald's Corp",
+    "officialDescription": "McDonald's Corporation is an American multinational fast-food restaurant chain. Founded in 1940 as a restaurant operated by brothers Richard and Maurice McDonald in San Bernardino, California, the company has grown into one of the world's largest restaurant chains. At the end of 2025, the McDonald's system comprised 45,356 restaurants in more than 100 countries, approximately 95% of which were operated by franchisees."
+  },
+  "MDLZ": {
+    "ticker": "MDLZ",
+    "companyName": "MONDELEZ INTERNATIONAL INC Common Stock",
+    "officialDescription": "Mondelez International, Inc. is an American multinational confectionery, food, holding, beverage, and snack food company based in Chicago. Mondelez has an annual revenue of about $38.5 billion and operates in approximately 160 countries. It ranked No. 108 in the 2021 Fortune 500 list of the largest United States corporations by total revenue."
+  },
+  "MDT": {
+    "ticker": "MDT",
+    "companyName": "Medtronic PLC",
+    "officialDescription": "Medtronic plc is an American-Irish medical device company. The company's legal and executive headquarters are in Ireland, while its operational headquarters are in Minneapolis, Minnesota. Medtronic rebased to Ireland following its acquisition of Irish-based Covidien in 2015. While it primarily operates in the United States, it operates in more than 150 countries and employs over 90,000 people. It develops and manufactures healthcare technologies and therapies. It is one of the biggest medical tech companies in the world and is currently the largest medical device company in the world by revenue."
+  },
+  "MEDP": {
+    "ticker": "MEDP",
+    "companyName": "Medpace Holdings Inc",
+    "officialDescription": "Medpace Holdings, Inc. is a global clinical research organization (CRO) based in Cincinnati, Ohio, employing approximately 6,000 people. Operating under a full-service model, the company also offers global central laboratory, imaging core laboratory, and bioanalytical laboratory services, as well as a Phase I unit located on its headquarters and clinical research campus in Cincinnati, Ohio."
+  },
+  "MELI": {
+    "ticker": "MELI",
+    "companyName": "MercadoLibre Inc",
+    "officialDescription": "MercadoLibre, Inc., known as Mercado Livre in Brazil, literally meaning \"free market\" in both languages, is a company of Argentine origin headquartered in Montevideo, Uruguay and incorporated in Delaware in the United States that operates online marketplaces dedicated to e-commerce and online auctions. As of 2016, Mercado Libre had 174.2 million users in Latin America, making it the region's most popular e-commerce site by number of visitors."
+  },
+  "META": {
+    "ticker": "META",
+    "companyName": "Meta Platforms Inc",
+    "officialDescription": "Meta Platforms, Inc. is an American multinational technology company headquartered in Menlo Park, California. Meta owns and operates several prominent social media platforms and communication services, including Facebook, Instagram, WhatsApp, Messenger, and Threads. The company also operates an advertising network for its own sites and third parties; as of 2023, advertising accounted for 97.8 percent of its total revenue. Meta has been described as a part of Big Tech, which refers to the largest six tech companies in the United States, Alphabet (Google), Amazon, Apple, Meta (Facebook), Microsoft, and Nvidia, which are also the largest companies in the world by market capitalization."
+  },
+  "MKC": {
+    "ticker": "MKC",
+    "companyName": "McCormick & Company Inc",
+    "officialDescription": "McCormick & Company, Incorporated is an American food company that manufactures, markets, and distributes spices, seasoning mixes, condiments, and other flavoring products to retail outlets, food manufacturers, and food service businesses."
+  },
+  "MMM": {
+    "ticker": "MMM",
+    "companyName": "3M Co",
+    "officialDescription": "The 3M Company is an American multinational conglomerate operating in the fields of industry, worker safety, and consumer goods. Based in the Saint Paul suburb of Maplewood, the company produces over 60,000 products, including adhesives, abrasives, laminates, passive fire protection, personal protective equipment, window films, paint protection film, electrical, electronic connecting, insulating materials, car-care products, electronic circuits, and optical films. Among its best-known consumer brands are Scotch Tape, Scotchgard surface protectants, Post-it notes, and Nexcare adhesive bandages. 3M's stock ticker symbol is MMM and is listed on the New York Stock Exchange, Inc. (NYSE), and the SIX Swiss Exchange."
+  },
+  "MNST": {
+    "ticker": "MNST",
+    "companyName": "Monster Beverage Corp",
+    "officialDescription": "Monster Beverage Corporation is an American beverage company that manufactures energy drinks including Monster Energy, Relentless, Reign and Burn. The company was originally founded as Hansen's in 1935 in Southern California, originally selling juice products. The company renamed itself as Monster Beverage in 2012."
+  },
+  "MO": {
+    "ticker": "MO",
+    "companyName": "Altria Group Inc",
+    "officialDescription": "Altria Group, Inc. is an American corporation and one of the world's largest producers and marketers of tobacco, cigarettes, and medical products in the treatment of illnesses caused by tobacco. It operates worldwide and is headquartered in the city of Richmond, Virginia."
+  },
+  "MRK": {
+    "ticker": "MRK",
+    "companyName": "Merck & Co Inc",
+    "officialDescription": "Merck & Co., Inc. is an American multinational pharmaceutical company headquartered in Rahway, New Jersey. The company does business as Merck Sharp & Dohme or MSD outside the United States and Canada. The company is ranked fifth on the list of largest biomedical companies by revenue."
+  },
+  "MSFT": {
+    "ticker": "MSFT",
+    "companyName": "Microsoft Corp",
+    "officialDescription": "Microsoft Corporation is an American multinational technology company headquartered in Redmond, Washington. The company became influential in the rise of personal computers through software like Windows and has since expanded into areas such as Internet services, cloud computing, artificial intelligence, video gaming, and more. A Big Tech company, Microsoft is the largest software company by revenue, one of the most valuable public companies, and one of the most valuable brands globally."
+  },
+  "MU": {
+    "ticker": "MU",
+    "companyName": "Micron Technology Inc",
+    "officialDescription": "Micron Technology, Inc. is an American multinational semiconductor company that manufactures computer memory and computer data storage products, including dynamic random-access memory (DRAM), flash memory, High Bandwidth Memory (HBM), and solid-state drives (SSDs). Founded in 1978 in Boise, Idaho, Micron is the only major American computer memory manufacturer. It is one of the \"Big Three\" computer memory manufacturers, along with the South Korean companies Samsung Electronics and SK Hynix."
+  },
+  "NBIS": {
+    "ticker": "NBIS",
+    "companyName": "Nebius Group NV",
+    "officialDescription": "Nebius Group N.V., headquartered in Amsterdam, is a technology company that provides artificial intelligence infrastructure. The company also owns Avride and TripleTen, as well as stakes in Toloka and Clickhouse. It is headquartered in Amsterdam with offices in Israel and the United States."
+  },
+  "NEE": {
+    "ticker": "NEE",
+    "companyName": "NextEra Energy Inc",
+    "officialDescription": "NextEra Energy, Inc. is an American energy company that is the world's largest electric utility holding company by market capitalization, with a valuation of over $187 billion as of July 2026. NextEra Energy had revenues of $24.8 billion and 16,700 employees throughout the US and Canada in 2024. It has a current generating capacity of 73 gigawatts. Its subsidiaries include Florida Power & Light (FPL), NextEra Energy Resources (NEER), XPLR Energy Partners, and NextEra Energy Services."
+  },
+  "NFLX": {
+    "ticker": "NFLX",
+    "companyName": "Netflix Inc",
+    "officialDescription": "Netflix is an American subscription video on-demand over-the-top streaming television service. The service primarily distributes original and acquired films and television shows from various genres. It is available internationally in multiple languages."
+  },
+  "NKE": {
+    "ticker": "NKE",
+    "companyName": "Nike Inc",
+    "officialDescription": "Nike often refers to:Nike, Inc., a major American producer of athletic shoes, apparel, and sports equipment\nNike (mythology), a Greek goddess who personifies victory"
+  },
+  "NVDA": {
+    "ticker": "NVDA",
+    "companyName": "NVIDIA Corp",
+    "officialDescription": "Nvidia Corporation is an American multinational technology company headquartered in Santa Clara, California. The company develops graphics processing units (GPUs), systems on chips (SoCs), and application programming interfaces (APIs) for data science, high-performance computing, artificial intelligence (AI), and mobile and automotive applications. Founded in 1993 by Jensen Huang, Chris Malachowsky, and Curtis Priem, Nvidia has been widely described as a Big Tech company."
+  },
+  "NVO": {
+    "ticker": "NVO",
+    "companyName": "Novo Nordisk A/S",
+    "officialDescription": "Novo Nordisk A/S is a Danish multinational pharmaceutical company headquartered in Bagsværd. Novo Nordisk is controlled by majority shareholder Novo Holdings A/S which holds approximately 28.1% of its shares and a majority (77.1%) of its voting shares."
+  },
+  "NVR": {
+    "ticker": "NVR",
+    "companyName": "NVR Inc",
+    "officialDescription": "NVR Inc (NVR) is a major publicly traded corporation listed on global stock exchanges."
+  },
+  "NXST": {
+    "ticker": "NXST",
+    "companyName": "Nexstar Media Group Inc",
+    "officialDescription": "Nexstar Media Group, Inc., is an American multimedia conglomerate headquartered in Irving, Texas, with operational headquarters in Midtown Manhattan and an additional office in Chicago. Founded on June 17, 1996, Nexstar is the largest television broadcasting company in the United States, owning 265 television stations—most of which are affiliated with the four major American television networks and MyNetworkTV—in markets as large as New York City and as small as San Angelo, Texas, and operating additional stations through local marketing agreements with certain affiliates such as Mission Broadcasting and Vaughan Media to satisfy existing regulations set in place by the Federal Communications Commission."
+  },
+  "OKTA": {
+    "ticker": "OKTA",
+    "companyName": "Okta Inc",
+    "officialDescription": "In meteorology, an okta is a scale of measurement used to describe the amount of cloud cover at any given location such as a weather station. Sky conditions are estimated in terms of how many eighths of the sky are covered in cloud, ranging from 0 oktas through to 8 oktas. In addition, in the SYNOP code there is an extra cloud cover indicator '9' indicating that the sky is totally obscured, usually due to dense fog or heavy snow."
+  },
+  "ON": {
+    "ticker": "ON",
+    "companyName": "ON Semiconductor Corp",
+    "officialDescription": "ON Semiconductor Corporation is an American semiconductor supplier company, based in Scottsdale, Arizona. Products include power and signal management, logic, discrete, and custom devices for automotive, communications, computing, consumer, industrial, LED lighting, medical, military/aerospace and power applications. onsemi runs a network of manufacturing facilities, sales offices and design centers in North America, Europe, and the Asia Pacific regions. Based on its 2016 revenues of $3.907 billion, onsemi ranked among the worldwide top 20 semiconductor sales leaders, and was ranked No. 483 on the 2022 Fortune 500 based on its 2021 sales."
+  },
+  "ONON": {
+    "ticker": "ONON",
+    "companyName": "On Holding AG",
+    "officialDescription": "On Holding AG is a Swiss athletic shoe and performance sportswear company that designs and markets sports clothing and running shoes."
+  },
+  "ORCL": {
+    "ticker": "ORCL",
+    "companyName": "Oracle Corp",
+    "officialDescription": "An oracle is a person or thing considered to provide insight, wise counsel or prophetic predictions, most notably including precognition of the future, inspired by deities. If done through occultic means, it is a form of divination."
+  },
+  "PANW": {
+    "ticker": "PANW",
+    "companyName": "Palo Alto Networks Inc",
+    "officialDescription": "Palo Alto Networks, Inc. is an American multinational cybersecurity company with headquarters in Santa Clara, California. The core product is a platform that includes advanced firewalls and cloud-based offerings that extend those firewalls to cover other aspects of security. The company serves over 70,000 organizations in over 150 countries, including 85 of the Fortune 100. It is home to the Unit 42 threat research team and hosts the Ignite cybersecurity conference. It is a partner organization of the World Economic Forum."
+  },
+  "PAYC": {
+    "ticker": "PAYC",
+    "companyName": "Paycom Software Inc",
+    "officialDescription": "Paycom Software, Inc., known simply as Paycom, is an online payroll and human resource software provider based in Oklahoma City, Oklahoma, with offices throughout the United States. It is attributed with being one of the first fully online payroll providers. Founded in 1998, it reported annual revenue of $2.052 billion for 2025, up from $1.883 billion for 2024."
+  },
+  "PEP": {
+    "ticker": "PEP",
+    "companyName": "PepsiCo Inc",
+    "officialDescription": "PepsiCo, Inc. is an American multinational food and beverage corporation headquartered in Harrison, New York, in the hamlet of Purchase. PepsiCo's business encompasses all aspects of the food and beverage market. It oversees the manufacturing, distribution, and marketing of its products. PepsiCo was formed in 1965 with the merger of the Pepsi-Cola Company and Frito-Lay, Inc., PepsiCo has since expanded from its namesake product Pepsi to a diversified range of food and beverage brands. Significant acquisitions include Tropicana Products in 1998, the Quaker Oats Company in 2001, which added the Gatorade brand to the Pepsi portfolio, and Pioneer Foods in 2020 for US$1.7 billion."
+  },
+  "PFE": {
+    "ticker": "PFE",
+    "companyName": "Pfizer Inc",
+    "officialDescription": "Pfizer Inc. is an American multinational pharmaceutical and biotechnology corporation headquartered at The Spiral in Manhattan, New York City. Founded in 1849 in New York by German entrepreneurs Charles Pfizer and Charles F. Erhart, Pfizer is one of the oldest pharmaceutical companies in North America."
+  },
+  "PG": {
+    "ticker": "PG",
+    "companyName": "Procter & Gamble Co",
+    "officialDescription": "The Procter & Gamble Company (P&G) is an American multinational consumer goods corporation incorporated and headquartered in Cincinnati, Ohio. The company was founded in 1837 by William Procter and James Gamble."
+  },
+  "PM": {
+    "ticker": "PM",
+    "companyName": "Philip Morris International Inc.",
+    "officialDescription": "Philip Morris International Inc. (PMI) is a tobacco company, with products sold in over 180 countries. Marlboro is PMI’s most recognized brand, but in the last quarter of 2023, Iqos generated the greatest revenue. Philip Morris International is often referred to as one of the companies comprising Big Tobacco. The company ranked No. 121 in the 2025 Fortune 500 list of the largest US corporations by total revenue."
+  },
+  "POOL": {
+    "ticker": "POOL",
+    "companyName": "Pool Corp",
+    "officialDescription": "Pool Corp (POOL) is a major publicly traded corporation listed on global stock exchanges."
+  },
+  "PYPL": {
+    "ticker": "PYPL",
+    "companyName": "PayPal Holdings Inc",
+    "officialDescription": "PayPal Holdings, Inc. is an American multinational financial technology company operating an online payments system in the majority of countries that support online money transfers; it serves as an electronic alternative to traditional paper methods such as checks and money orders. The company operates as a payment processor for online vendors, auction sites and many other commercial and company user, which involve a fee."
+  },
+  "QCOM": {
+    "ticker": "QCOM",
+    "companyName": "Qualcomm Inc",
+    "officialDescription": "Qualcomm Incorporated is an American multinational technology corporation headquartered in San Diego, California. The company develops and designs technologies for global communications and computing, including next-generation mobile networks, smart devices, and semiconductors — such as mobile processors and artificial intelligence chips. The company holds essential patents for global mobile communication standards including 5G, 4G, CDMA2000, TD-SCDMA and WCDMA."
+  },
+  "QLYS": {
+    "ticker": "QLYS",
+    "companyName": "Qualys Inc",
+    "officialDescription": "Qualys, Inc. is an American technology firm based in Foster City, California, specializing in cloud security, compliance and related services."
+  },
+  "RACE": {
+    "ticker": "RACE",
+    "companyName": "Ferrari NV",
+    "officialDescription": "Ferrari S.p.A. is an Italian luxury sports car manufacturer based in Maranello, Italy. Founded in 1939 by Enzo Ferrari (1898–1988), the company built its first car in 1940, adopted its current name in 1945, and began to produce its current line of road cars in 1947. Ferrari became a public company in 1960, and from 1963 to 2014, it was a subsidiary of Fiat S.p.A. It was spun off from Fiat's successor entity, Fiat Chrysler Automobiles, in 2016. The company currently offers a large model range which includes several supercars, grand tourers, and one SUV. Many early Ferraris, dating to the 1950s and 1960s, were counted amongst one of the most expensive cars ever sold at auction."
+  },
+  "SBUX": {
+    "ticker": "SBUX",
+    "companyName": "Starbucks Corp",
+    "officialDescription": "Starbucks Corporation is an American multinational chain of coffeehouses and roastery reserves headquartered in Seattle, Washington. It was founded in 1971 by Jerry Baldwin, Zev Siegl, and Gordon Bowker at Seattle's Pike Place Market initially as a coffee bean wholesaler. Starbucks was converted into a coffee shop serving espresso-based drinks under the ownership of Howard Schultz, who was chief executive officer from 1986 to 2000 and led the aggressive expansion of the franchise across the West Coast of the United States."
+  },
+  "SCI": {
+    "ticker": "SCI",
+    "companyName": "Service Corporation International",
+    "officialDescription": "Service Corporation International (SCI) is a major publicly traded corporation listed on global stock exchanges."
+  },
+  "SEDG": {
+    "ticker": "SEDG",
+    "companyName": "Solaredge Technologies Inc",
+    "officialDescription": "SolarEdge Technologies, Inc. is an Israeli company that produces DC optimized inverter systems."
+  },
+  "SFM": {
+    "ticker": "SFM",
+    "companyName": "Sprouts Farmers Market Inc",
+    "officialDescription": "Sprouts Farmers Market, Inc., is a supermarket chain headquartered in Phoenix, Arizona, offering natural and organic foods, including fresh produce, bulk foods, packaged groceries, meat, poultry, seafood, deli, baked goods, dairy products, and frozen foods. They also sell vitamins and supplements, natural body care, and household items. Sprouts employs 35,000 workers and operates more than 400 stores in 24 states."
+  },
+  "SIRI": {
+    "ticker": "SIRI",
+    "companyName": "Sirius XM Holdings Inc",
+    "officialDescription": "Sirius XM Holdings Inc., commonly referred to as SiriusXM, is an American broadcasting corporation headquartered in Midtown Manhattan, New York City, that provides satellite radio and online radio services operating in the United States. The company was formed by the 2008 merger of Sirius Satellite Radio and XM Satellite Radio, merging them into SiriusXM Radio. The company also has a 70% equity interest in SiriusXM Canada, an affiliate company that provides Sirius and XM service in Canada. On May 21, 2013, SiriusXM Holdings, Inc. was incorporated, and in January 2020, SiriusXM reorganized their corporate structure, which made Sirius XM Radio Inc. a direct, wholly owned subsidiary of SiriusXM Holdings, Inc."
+  },
+  "SMCI": {
+    "ticker": "SMCI",
+    "companyName": "Super Micro Computer Inc",
+    "officialDescription": "Super Micro Computer, Inc., doing business as Supermicro, is an American information technology company based in San Jose, California. The company is one of the largest producers of high-performance and high-efficiency servers, while also providing server management software, and storage systems for various markets, including enterprise data centers, cloud computing, artificial intelligence, 5G, and edge computing. Supermicro was founded in 1993, and has manufacturing operations in Silicon Valley, the Netherlands, and in Taiwan at its Science and Technology Park."
+  },
+  "SNA": {
+    "ticker": "SNA",
+    "companyName": "Snap-On Inc",
+    "officialDescription": "Snap-on Incorporated is a United States designer, manufacturer, and marketer of high-end tools and equipment for professional use in the transportation industry, including the automotive, heavy duty, equipment, marine, aviation, and railroad industries. Headquartered in Kenosha, Wisconsin, since 1930, Snap-on also distributes lower-end tools under the brand name Blue-Point. Their primary competitors include Matco, Mac Tools, and Cornwell Tools."
+  },
+  "SOFI": {
+    "ticker": "SOFI",
+    "companyName": "SoFi Technologies Inc",
+    "officialDescription": "SoFi Technologies, Inc. is an American financial technology company. It was founded in 2011 to refinance student loans for Stanford University graduates. SoFi operates as a direct bank serving retail customers and businesses, and is the largest U.S.-based online lender. It has nearly 16 million customers as of 2026."
+  },
+  "STMPA": {
+    "ticker": "STMPA",
+    "companyName": "STMicroelectronics NV",
+    "officialDescription": "STMicroelectronics NV is a European multinational semiconductor contract manufacturing and design company. It is the largest of such companies in Europe. The company is incorporated in the Netherlands and headquartered in Plan-les-Ouates, Switzerland. It manufactures a wide range of microelectronics, including the widely-used STM8 and STM32 microcontrollers."
+  },
+  "STZ": {
+    "ticker": "STZ",
+    "companyName": "Constellation Brands Inc",
+    "officialDescription": "Constellation Brands, Inc. is an American producer and marketer of beer, wine, and spirits. A Fortune 500 company, Constellation is the largest beer import company in the US, measured by sales, and has the third-largest market share of all major beer suppliers. It also has sizable investments in medical and recreational cannabis through its association with Canopy Growth. Based in Rochester, New York, Constellation has about 40 facilities and approximately 9,000 employees."
+  },
+  "SYY": {
+    "ticker": "SYY",
+    "companyName": "Sysco Corp",
+    "officialDescription": "Sysco is an American multinational corporation that sells, markets, and distributes food products to restaurants, healthcare and educational facilities, sports stadiums, and other venues that serve food. It also sells foodservice supplies and equipment. The company is headquartered in the Energy Corridor district of Houston, Texas."
+  },
+  "TER": {
+    "ticker": "TER",
+    "companyName": "Teradyne Inc",
+    "officialDescription": "Teradyne, Inc. is an American automatic test equipment (ATE) designer and manufacturer based in North Reading, Massachusetts. Its high-profile customers include Samsung, Qualcomm, Intel, Analog Devices, Texas Instruments and IBM."
+  },
+  "TGT": {
+    "ticker": "TGT",
+    "companyName": "Target Corp",
+    "officialDescription": "Target Corp (TGT) is a major publicly traded corporation listed on global stock exchanges."
+  },
+  "TMO": {
+    "ticker": "TMO",
+    "companyName": "Thermo Fisher Scientific Inc",
+    "officialDescription": "Thermo Fisher Scientific Inc. is an American life science and clinical research company. It is a global supplier of analytical instruments, clinical development solutions, specialty diagnostics, laboratory, pharmaceutical and biotechnology services. Based in Waltham, Massachusetts, Thermo Fisher was formed through the merger of Thermo Electron and Fisher Scientific in 2006. Thermo Fisher Scientific has acquired other reagent, consumable, instrumentation, and service providers, including Life Technologies Corporation (2013), Alfa Aesar (2015), Affymetrix (2016), FEI Company (2016), BD Advanced Bioprocessing (2018), and PPD (2021)."
+  },
+  "TSLA": {
+    "ticker": "TSLA",
+    "companyName": "Tesla Inc",
+    "officialDescription": "Tesla most commonly refers to:Nikola Tesla (1856–1943), Serbian-American electrical engineer and inventor\nTesla, Inc., an American electric vehicle and clean energy company, formerly Tesla Motors, Inc.\nTesla (unit), the SI-derived unit of magnetic flux density"
+  },
+  "TSM": {
+    "ticker": "TSM",
+    "companyName": "Taiwan Semicndctr Mnufctrng Co Ltd",
+    "officialDescription": "Taiwan Semicndctr Mnufctrng Co Ltd (TSM) is a major publicly traded corporation listed on global stock exchanges."
+  },
+  "TXN": {
+    "ticker": "TXN",
+    "companyName": "Texas Instruments Inc",
+    "officialDescription": "Texas Instruments Incorporated (TI) is an American multinational semiconductor company headquartered in Dallas, Texas. It is one of the top 10 semiconductor companies worldwide based on sales volume. The company's focus is on developing analog chips and embedded processors, which account for more than 80% of its revenue. TI also produces digital light processing (DLP) technology and education technology products including calculators, microcontrollers, and multi-core processors."
+  },
+  "UBER": {
+    "ticker": "UBER",
+    "companyName": "Uber Technologies Inc",
+    "officialDescription": "Uber Technologies, Inc. is an American multinational transportation company that provides ride-hailing services, courier services, food delivery, and freight transport. It is headquartered in San Francisco, California, and operates in approximately 70 countries and 15,000 cities worldwide. It is the largest ridesharing company worldwide with over 202 million monthly active users and 10 million active drivers and couriers. It coordinates an average of 42 million trips and delivery orders per day, and has coordinated 72 billion trips and delivery orders since its inception in 2010. In the fourth quarter of 2025, the company had a take rate of 29.9% for mobility services and 19.2% for food delivery."
+  },
+  "UL": {
+    "ticker": "UL",
+    "companyName": "Unilever PLC",
+    "officialDescription": "Unilever PLC is a British multinational consumer packaged goods company headquartered in London, England. It was founded in 1930 following the merger of Dutch margarine producer Margarine Unie with British soap maker Lever Brothers."
+  },
+  "ULTA": {
+    "ticker": "ULTA",
+    "companyName": "Ulta Beauty Inc",
+    "officialDescription": "Ulta Beauty, Inc., formerly known as Ulta Salon, Cosmetics & Fragrance Inc. and before 2000 as Ulta3, is an American chain of cosmetic stores headquartered in Bolingbrook, Illinois. Ulta Beauty carries both high- and low-end cosmetics, fragrances, nail products, bath and body products, beauty tools and haircare products. Each location has a beauty salon available to the public."
+  },
+  "UNH": {
+    "ticker": "UNH",
+    "companyName": "UnitedHealth Group Inc",
+    "officialDescription": "UnitedHealth Group Incorporated is an American multinational for-profit company based in Eden Prairie, Minnesota, specializing in health insurance and health care services. Selling insurance products under UnitedHealthcare, and health care services under the Optum brand, it is the world's seventh-largest company by revenue and the largest health care company by revenue. The company is ranked seventh on the 2025 Fortune Global 500."
+  },
+  "UPS": {
+    "ticker": "UPS",
+    "companyName": "United Parcel Service Inc",
+    "officialDescription": "United Parcel Service, Inc. (UPS) is an American multinational shipping-and-receiving and supply chain management company founded in 1907. Originally known as the American Messenger Company specializing in telegraphs, UPS has expanded to become a Fortune 500 company and one of the world's largest shipping couriers. UPS today is primarily known for its ground shipping services as well as the UPS Store, a retail chain which assists UPS shipments and provides tools for small businesses. UPS offers air shipping on an overnight or two-day basis and delivers to post office boxes through UPS Mail Innovations and UPS Ground Saver."
+  },
+  "V": {
+    "ticker": "V",
+    "companyName": "Visa Inc",
+    "officialDescription": "Visa most commonly refers to:Travel visa, a document allowing entry to a foreign country\nWork visa, a document granting permission to work in a foreign country\nVisa Inc., a US multinational financial and payment cards company\nVisa Debit card issued by the above company\nVisa Plus, an interbank network\nVisa Electron, a debit card"
+  },
+  "VC": {
+    "ticker": "VC",
+    "companyName": "Visteon Corp",
+    "officialDescription": "Visteon Corporation (VC) is an American global automotive electronics technology company headquartered in Van Buren Township, Michigan. Visteon designs, engineers, and manufactures vehicle cockpit electronics products, connected car services and electrification products for global automotive manufacturers. Visteon operates engineering and manufacturing facilities across the Americas, Europe and Asia."
+  },
+  "VST": {
+    "ticker": "VST",
+    "companyName": "Vistra Corp",
+    "officialDescription": "Vistra may refer to either of two companies:Vistra, a corporate services company based in Singapore\nVistra Corp, an energy company based in Texas"
+  },
+  "VZ": {
+    "ticker": "VZ",
+    "companyName": "Verizon Communications Inc",
+    "officialDescription": "Verizon Communications Inc. is an American telecommunications company headquartered in New York City. It is the world's second-largest telecommunications company by revenue and its mobile network is the largest wireless carrier in the United States, with 146.8 million subscribers as of March 31, 2026."
+  },
+  "WBD": {
+    "ticker": "WBD",
+    "companyName": "Warner Bros Discovery Inc",
+    "officialDescription": "Warner Bros. Discovery, Inc. is an American multinational mass media and entertainment conglomerate headquartered in New York City. It was formed through the spin-off of WarnerMedia by AT&T, and its merger with Discovery, Inc. on April 8, 2022. On April 23, 2026, the company agreed to be sold to Paramount Skydance in a US$110 billion transaction, subject to approval by U.S. regulators. On June 12, 2026, the Paramount-WBD deal was approved by the U.S. Department of Justice. However, on July 24, 2026, the proposed merger, which is facing widespread anti-trust legal action, would be delayed until June 1, 2027."
+  },
+  "WHR": {
+    "ticker": "WHR",
+    "companyName": "Whirlpool Corp",
+    "officialDescription": "A whirlpool is a body of rotating water produced by opposing currents or a current running into an obstacle. Miniature whirlpools form when a bath or a sink is draining. More powerful ones formed in seas or oceans may be called maelstroms. Vortex is the proper term for a whirlpool that has a downdraft."
+  },
+  "WM": {
+    "ticker": "WM",
+    "companyName": "Waste Management Inc",
+    "officialDescription": "Waste management or waste disposal includes the processes and actions required to manage waste from its inception to its final disposal. This includes the collection, transport, treatment, and disposal of waste, together with monitoring and regulation of the waste management process and waste-related laws, technologies, and economic mechanisms."
+  },
+  "WMT": {
+    "ticker": "WMT",
+    "companyName": "Walmart Inc",
+    "officialDescription": "Walmart Inc. is an American multinational omnichannel retail corporation that operates a chain of hypermarkets, discount department stores, grocery stores, pharmacies, and gas stations in the United States and 19 other countries. It is headquartered in Bentonville, Arkansas. The company was founded in 1962 by brothers Sam Walton and James \"Bud\" Walton in nearby Rogers, Arkansas. It also owns and operates Sam's Club retail warehouses."
+  },
+  "WSM": {
+    "ticker": "WSM",
+    "companyName": "Williams-Sonoma Inc",
+    "officialDescription": "Williams Sonoma is an American retailer of cookware, appliances, and home furnishings. It is owned by Williams-Sonoma, Inc., and was founded by Charles E. (Chuck) Williams in 1956."
+  },
+  "WSO": {
+    "ticker": "WSO",
+    "companyName": "Watsco Inc",
+    "officialDescription": "Watsco, Inc. is a distributor of air conditioning, heating and refrigeration equipment, and related parts and supplies (HVAC/R) in the United States. Watsco was founded more than 60 years ago as a manufacturer of parts, components, and tools used in the HVAC/R industry. In 1989, the company shifted from manufacturing to distribution, by acquiring Gemaire Distributors Inc., a South Florida-based Rheem distributor."
+  },
+  "XOM": {
+    "ticker": "XOM",
+    "companyName": "Exxon Mobil Corp",
+    "officialDescription": "ExxonMobil Holdings Corporation is an American multinational oil and gas corporation headquartered in Spring, Texas, a suburb of Houston. Founded as the largest direct successor of John D. Rockefeller's Standard Oil, the company was formed in 1999, with the merger of Exxon and Mobil. It is vertically integrated across the entire oil and gas industry, as well as within its chemicals division, which produces plastic, synthetic rubber, and other chemical products. As the largest U.S.-based oil and gas company, ExxonMobil is the eighth-largest company by revenue in the U.S. and 13th-largest in the world. It is also the largest investor-owned oil company in the world."
+  },
+  "ZETA": {
+    "ticker": "ZETA",
+    "companyName": "Zeta Global Holdings Corp",
+    "officialDescription": "Zeta Global Holdings Corp. is an American marketing technology company which was founded in 2007. Zeta offers companies a suite of multichannel marketing tools focused on creating, maintaining, and monetizing customer relationships. The company went public on the New York Stock Exchange on June 10, 2021, at a US$1.7 billion valuation."
+  },
+  "ZTS": {
+    "ticker": "ZTS",
+    "companyName": "Zoetis Inc",
+    "officialDescription": "Zoetis Inc. (/zō-EH-tis/) is an American drug company, the world's largest producer of medicine and vaccinations for pets and livestock. The company was a subsidiary of Pfizer, the world's largest drug maker, but with Pfizer's spinoff of its 83% interest in the firm it is now a completely independent company. The company directly markets its products in approximately 45 countries, and sells them in more than 100 countries. Operations outside the United States accounted for 50% of the total revenue. Contemporaneous with the spinoff in June 2013 S&P Dow Jones Indices announced that Zoetis would replace First Horizon National Corporation in the S&P 500 stock market index."
+  },
+  "IONQ": {
+    "ticker": "IONQ",
+    "companyName": "IONQ Inc",
+    "officialDescription": "IonQ, Inc. is an American quantum computing hardware and software company headquartered in College Park, Maryland. The company develops general-purpose trapped ion quantum computers and accompanying software to generate, optimize, and execute quantum circuits."
+  },
+  "RGTI": {
+    "ticker": "RGTI",
+    "companyName": "Rigetti Computing Inc",
+    "officialDescription": "Rigetti Computing, Inc. is an American developer of superconducting quantum integrated circuits used for quantum computers. Rigetti, which is based in Berkeley, California, also develops a cloud platform called Forest that enables programmers to execute quantum algorithms."
+  },
+  "QBTS": {
+    "ticker": "QBTS",
+    "companyName": "D-Wave Quantum Inc",
+    "officialDescription": "D-Wave Quantum Inc. is a quantum computing company with locations in Palo Alto, California and Burnaby, British Columbia. D-Wave claims to be the world's first company to sell computers that exploit quantum effects in their operation. D-Wave's early customers include Lockheed Martin, the University of Southern California, Google/NASA, and Los Alamos National Laboratory."
+  },
+  "ISRG": {
+    "ticker": "ISRG",
+    "companyName": "Intuitive Surgical Inc",
+    "officialDescription": "Intuitive Surgical, Inc. is an American biotechnology company that develops, manufactures, and markets robotic products designed to improve clinical outcomes of patients through minimally invasive surgery, most notably with the da Vinci Surgical System. The company is part of the Nasdaq-100, S&P 100 and S&P 500. As of 31 December 2021, Intuitive Surgical had an installed base of 6,730 da Vinci Surgical Systems, including 4,139 in the U.S., 1,199 in Europe, 1,050 in Asia, and 342 in the rest of the world."
+  },
+  "NOW": {
+    "ticker": "NOW",
+    "companyName": "ServiceNow Inc",
+    "officialDescription": "ServiceNow, Inc. is an American software company that supplies cloud computing platforms for the creation and management of automated business workflows. The company was founded in Santa Clara, California, United States, in 2003 by Fred Luddy. It is listed on the New York Stock Exchange and is a constituent of the S&P 100 and S&P 500 indices."
+  },
+  "OPRA": {
+    "ticker": "OPRA",
+    "companyName": "Opera Ltd",
+    "officialDescription": "Opera is a form of Western theatre in which music is a fundamental component and dramatic roles are taken by singers. Such a \"work\" is typically a collaboration between a composer and a librettist and incorporates a number of the performing arts, such as acting, scenery, costume, and sometimes dance or ballet. The performance is typically given in an opera house, accompanied by an orchestra or smaller musical ensemble, which since the early 19th century has been led by a conductor. Although musical theatre is closely related to opera, the two are considered to be distinct from one another."
+  },
+  "ADSK": {
+    "ticker": "ADSK",
+    "companyName": "Autodesk Inc",
+    "officialDescription": "Autodesk, Inc. is an American multinational software corporation that provides software products and services for the architecture, engineering, construction, manufacturing, media, education, and entertainment industries. Autodesk is headquartered in San Francisco, California, and has offices worldwide. Its U.S. offices are located in the states of California, Oregon, Colorado, Texas, Michigan, New Hampshire and Massachusetts. Its Canadian offices are located in the provinces of Ontario, Quebec, Alberta, and British Columbia."
+  },
+  "INTU": {
+    "ticker": "INTU",
+    "companyName": "Intuit Inc",
+    "officialDescription": "Intuit Inc. is an American multinational business software company that specializes in financial software. Headquartered in Mountain View, California, the company is led by CEO Sasan Goodarzi. Intuit's products include the tax preparation application TurboTax, the small business accounting software QuickBooks, the credit monitoring and personal finance service Credit Karma, and the email marketing platform Mailchimp. As of 2019, more than 95% of its revenue and earnings originated from its operations within the United States. Intuit is listed on the Nasdaq stock exchange and is a component of the Nasdaq-100, S&P 100, and S&P 500 stock market indices."
+  },
+  "EXPE": {
+    "ticker": "EXPE",
+    "companyName": "Expedia Group Inc",
+    "officialDescription": "Expedia Inc. is an American online travel agency owned by Expedia Group, which is headquartered in Seattle, Washington. When Microsoft Corporation launched Expedia on the Microsoft Network in October 1996, it was the first online travel service to be offered by a major technology company, allowing consumers to make air, car, and hotel reservations online and to browse a library of multimedia travel guides. Expedia was founded on October 22, 1996, inside Microsoft in Redmond, Washington, led by Richard (Rich) Barton and a small team who saw an opportunity to bring transparent airfare, hotel, and car booking directly to consumers without travel agents."
+  },
+  "HRB": {
+    "ticker": "HRB",
+    "companyName": "H & R Block Inc",
+    "officialDescription": "H&R Block, Inc., or H&R Block, is an American tax preparation company operating in Canada, the United States, and Australia. The company was founded in 1955 in Kansas City, Missouri, by brothers Henry W. Bloch and Richard Bloch."
+  }
+}
