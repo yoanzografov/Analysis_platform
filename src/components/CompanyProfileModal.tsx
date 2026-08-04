@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Stock } from '../types';
-import { X, ExternalLink, Globe, Building2, TrendingUp, DollarSign, Activity, Users, UserCheck, Calendar, MapPin, Award } from 'lucide-react';
+import { X, ExternalLink, Globe, Building2, TrendingUp, Radio } from 'lucide-react';
 import { getTradingViewSymbol } from '../utils/tvSymbolMap';
 import { getCompanyProfileData } from '../utils/tvCompanyProfiles';
 
@@ -39,14 +39,13 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md font-sans text-stone-100"
     >
-      {/* Exact TradingView Details Modal Layout */}
+      {/* Clean Modal Container matching Google Finance & TradingView layout */}
       <div className="w-full max-w-[880px] bg-[#131722] border border-[#2a2e39] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150 text-stone-200">
         
-        {/* TradingView Symbol Header */}
+        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2e39] bg-[#131722] shrink-0">
           <div className="flex items-center gap-3">
-            {/* Ticker Icon Circle */}
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 border border-indigo-400/40 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-inner uppercase">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-700 border border-indigo-400/40 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-inner uppercase">
               {stock.ticker.slice(0, 3)}
             </div>
             <div>
@@ -61,7 +60,10 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
               <div className="flex items-center gap-2 mt-1 text-xs text-stone-400">
                 <span className="bg-[#1a1e29] border border-[#2a2e39] px-2 py-0.5 rounded-md text-stone-300 font-medium">{profile.sector}</span>
                 <span>•</span>
-                <span className="text-stone-400">{profile.industry}</span>
+                <span className="text-stone-400 flex items-center gap-1">
+                  <Radio size={11} className="text-emerald-400 animate-pulse" />
+                  Google Finance / Official Profile
+                </span>
               </div>
             </div>
           </div>
@@ -78,16 +80,14 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
         {/* Modal Scrollable Body */}
         <div className="p-6 overflow-y-auto flex flex-col gap-6 font-sans">
           
-          {/* TradingView Key Financial Details Cards Grid */}
+          {/* Key Financial Details Grid */}
           <div>
             <h3 className="text-xs font-black uppercase text-stone-400 tracking-wider mb-3 flex items-center gap-1.5">
               <TrendingUp size={14} className="text-indigo-400" />
-              TradingView Key Details &amp; Metrics
+              Google Finance &amp; Market Details
             </h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              
-              {/* Market Cap */}
               <div className="bg-[#1e222d] border border-[#2a2e39] p-3 rounded-xl flex flex-col justify-between">
                 <span className="text-[11px] font-semibold text-stone-400 uppercase">Market Cap</span>
                 <span className="text-sm sm:text-base font-extrabold text-white font-mono mt-1">
@@ -95,7 +95,6 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
                 </span>
               </div>
 
-              {/* Current Price */}
               <div className="bg-[#1e222d] border border-[#2a2e39] p-3 rounded-xl flex flex-col justify-between">
                 <span className="text-[11px] font-semibold text-stone-400 uppercase">Current Price</span>
                 <span className="text-sm sm:text-base font-extrabold text-emerald-400 font-mono mt-1">
@@ -103,7 +102,6 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
                 </span>
               </div>
 
-              {/* EPS */}
               <div className="bg-[#1e222d] border border-[#2a2e39] p-3 rounded-xl flex flex-col justify-between">
                 <span className="text-[11px] font-semibold text-stone-400 uppercase">Basic EPS (TTM)</span>
                 <span className="text-sm sm:text-base font-extrabold text-white font-mono mt-1">
@@ -111,17 +109,15 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
                 </span>
               </div>
 
-              {/* Dividend Yield */}
               <div className="bg-[#1e222d] border border-[#2a2e39] p-3 rounded-xl flex flex-col justify-between">
                 <span className="text-[11px] font-semibold text-stone-400 uppercase">Dividend Yield</span>
                 <span className="text-sm sm:text-base font-extrabold text-indigo-300 font-mono mt-1">
                   {stock.dividend || 'N/A'}
                 </span>
               </div>
-
             </div>
 
-            {/* 52-Week Range Bar (TradingView Details Style) */}
+            {/* 52-Week Range Bar */}
             <div className="bg-[#1e222d] border border-[#2a2e39] p-3.5 rounded-xl mt-3 flex flex-col gap-2">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-stone-400 font-semibold uppercase text-[10px]">52-Week Range</span>
@@ -138,36 +134,36 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
             </div>
           </div>
 
-          {/* 2-Column Section: About Company (Left) + Detailed Info Table (Right) */}
+          {/* 2-Column Section: Google Finance Official Description + Facts */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* Left Column: TradingView About Section (Native DOM HTML for 1-click Browser Auto-Translation) */}
+            {/* Left Column: Official Description (Standard DOM HTML for 1-Click Browser Auto-Translation) */}
             <div className="lg:col-span-7 flex flex-col gap-3">
               <h3 className="text-sm font-extrabold text-white border-b border-[#2a2e39] pb-2 flex items-center gap-2">
                 <Building2 size={16} className="text-indigo-400" />
-                About {stock.companyName}
+                About {stock.companyName} (Google Finance / SEC Profile)
               </h3>
 
               <div className="flex flex-col gap-3 text-stone-300 leading-relaxed text-xs sm:text-sm">
                 {profile.overviewParagraphs && profile.overviewParagraphs.length > 0 ? (
                   profile.overviewParagraphs.map((para, idx) => (
-                    <p key={idx} className="text-stone-300 leading-relaxed">
+                    <p key={idx} className="text-stone-200 leading-relaxed">
                       {para}
                     </p>
                   ))
                 ) : (
-                  <p className="text-stone-300 leading-relaxed">
+                  <p className="text-stone-200 leading-relaxed">
                     {profile.description}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Right Column: TradingView Details Info Table */}
+            {/* Right Column: Key Company Information */}
             <div className="lg:col-span-5 flex flex-col gap-4">
               <div className="bg-[#1e222d] border border-[#2a2e39] rounded-xl p-4 flex flex-col gap-3">
                 <h4 className="text-xs font-black text-stone-400 uppercase tracking-wider border-b border-[#2a2e39] pb-2">
-                  Company Information
+                  Company Details
                 </h4>
 
                 <table className="w-full text-xs">
@@ -226,17 +222,28 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
 
         </div>
 
-        {/* Clean Footer Link */}
+        {/* Clean Footer Links */}
         <div className="px-6 py-3.5 border-t border-[#2a2e39] bg-[#131722] shrink-0 flex justify-between items-center text-xs">
-          <a
-            href={`https://www.tradingview.com/symbols/${tvSymbol.replace(':', '-')}/`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-bold no-underline"
-          >
-            <ExternalLink size={13} />
-            Open Details on TradingView.com
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href={`https://www.google.com/finance/quote/${stock.ticker}:${stock.ticker.startsWith('^') ? 'INDEX' : 'NASDAQ'}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-bold no-underline"
+            >
+              <ExternalLink size={13} />
+              Google Finance
+            </a>
+            <span className="text-stone-600">•</span>
+            <a
+              href={`https://www.tradingview.com/symbols/${tvSymbol.replace(':', '-')}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-300 font-bold no-underline"
+            >
+              TradingView Profile
+            </a>
+          </div>
           <span className="text-[11px] text-stone-400">
             {stock.companyName} ({stock.ticker})
           </span>
