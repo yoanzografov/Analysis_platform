@@ -678,9 +678,14 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 </div>
               </div>
 
-              {/* Line 2: Subtitle / Source & Impact Badge */}
+              {/* Short summary — makes each indicator visually distinct */}
+              <p className="text-[10px] text-ink-faint leading-relaxed mt-1 line-clamp-2">
+                {ind.shortSummary}
+              </p>
+
+              {/* Line 2: Source & Impact Badge */}
               <div className="flex items-center justify-between gap-2 mt-1">
-                <span className="text-[10px] text-ink-faint font-mono">tradingview.com</span>
+                <span className="text-[10px] text-ink-faint font-mono">{ind.source}</span>
                 {getImpactBadge(ind.impact)}
               </div>
 
