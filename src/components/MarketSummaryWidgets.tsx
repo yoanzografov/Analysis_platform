@@ -320,12 +320,21 @@ function getNextIndicatorDate(id: number, now: Date = new Date()): Date {
   }
 }
 
+interface CpiStats {
+  actual: string;    // YoY %
+  previous: string;  // previous month YoY %
+  releaseDate: string; // e.g. "Jun 2026"
+  loading: boolean;
+}
+
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
   const [fomcTimeLeft, setFomcTimeLeft] = useState<TimeLeft | null>(null);
   const [nextFomcLabel, setNextFomcLabel] = useState<string>('');
   const [showCmeModal, setShowCmeModal] = useState<boolean>(false);
   const [timersMap, setTimersMap] = useState<Record<number, TimeLeft>>({});
   const [selectedIndicator, setSelectedIndicator] = useState<MarketIndicator | null>(null);
+  const [cpiData, setCpiData] = useState<CpiStats>({ actual: '—', previous: '—', releaseDate: '—', loading: true });
+  const [coreCpiData, setCoreCpiData] = useState<CpiStats>({ actual: '—', previous: '—', releaseDate: '—', loading: true });
 
   // FOMC Timer & All Indicators Timers Engine
   useEffect(() => {
@@ -364,6 +373,58 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     updateTimers();
     const interval = setInterval(updateTimers, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Fetch real CPI & Core CPI data from BLS public API (no key needed)
+  useEffect(() => {
+    const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const fetchBls = async () => {
+      try {
+        const res = await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            seriesid: ['CUSR0000SA0', 'CUSR0000SA0L1E'],
+            startyear: String(new Date().getFullYear() - 1),
+            endyear: String(new Date().getFullYear())
+          })
+        });
+        const json = await res.json();
+        const series: { seriesID: string; data: { year: string; period: string; periodName: string; value: string; latest?: string }[] }[] = json?.Results?.series ?? [];
+
+        for (const s of series) {
+          const sorted = [...s.data].sort((a, b) => {
+            if (a.year !== b.year) return Number(b.year) - Number(a.year);
+            return Number(b.period.replace('M','')) - Number(a.period.replace('M',''));
+          });
+          const latest = sorted[0];
+          const prevYear = sorted.find(d => d.year === String(Number(latest.year) - 1) && d.period === latest.period);
+          const prev1m = sorted[1];
+          if (!latest || !prevYear) continue;
+
+          const yoy = ((Number(latest.value) - Number(prevYear.value)) / Number(prevYear.value) * 100);
+          const prev1mYoy = prev1m && sorted.find(d => d.year === String(Number(prev1m.year)-1) && d.period === prev1m.period)
+            ? ((Number(prev1m.value) - Number(sorted.find(d => d.year === String(Number(prev1m.year)-1) && d.period === prev1m.period)!.value)) / Number(sorted.find(d => d.year === String(Number(prev1m.year)-1) && d.period === prev1m.period)!.value) * 100)
+            : null;
+
+          const mIdx = Number(latest.period.replace('M','')) - 1;
+          const releaseDate = `${MONTH_NAMES[mIdx]} ${latest.year}`;
+          const stats: CpiStats = {
+            actual: yoy.toFixed(1) + '%',
+            previous: prev1mYoy !== null ? prev1mYoy.toFixed(1) + '%' : '—',
+            releaseDate,
+            loading: false
+          };
+
+          if (s.seriesID === 'CUSR0000SA0') setCpiData(stats);
+          if (s.seriesID === 'CUSR0000SA0L1E') setCoreCpiData(stats);
+        }
+      } catch {
+        setCpiData(prev => ({ ...prev, loading: false }));
+        setCoreCpiData(prev => ({ ...prev, loading: false }));
+      }
+    };
+    fetchBls();
   }, []);
 
   // Compute Top 15 Gainers and Losers
@@ -678,18 +739,50 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 </div>
               </div>
 
-              {/* Short summary — makes each indicator visually distinct */}
+              {/* Short summary */}
               <p className="text-[10px] text-ink-faint leading-relaxed mt-1 line-clamp-2">
                 {ind.shortSummary}
               </p>
 
-              {/* Line 2: Source & Impact Badge */}
+              {/* CPI / Core CPI real data strip — only for id 1 and 2 */}
+              {(ind.id === 1 || ind.id === 2) && (() => {
+                const d = ind.id === 1 ? cpiData : coreCpiData;
+                const actualNum = parseFloat(d.actual);
+                const prevNum = parseFloat(d.previous);
+                const isUp = !isNaN(actualNum) && !isNaN(prevNum) && actualNum > prevNum;
+                const isDown = !isNaN(actualNum) && !isNaN(prevNum) && actualNum < prevNum;
+                return (
+                  <div className="mt-2 grid grid-cols-3 gap-1 bg-bg/60 rounded-lg border border-border/30 px-2 py-1.5" onClick={e => e.preventDefault()}>
+                    <div className="flex flex-col items-center">
+                      <span className="text-[9px] text-ink-faint uppercase tracking-wide font-bold">Latest</span>
+                      <span className="text-[9px] text-ink-faint font-mono">{d.releaseDate}</span>
+                    </div>
+                    <div className="flex flex-col items-center border-x border-border/30">
+                      <span className="text-[9px] text-ink-faint uppercase tracking-wide font-bold">Actual</span>
+                      <span className={`text-xs font-black font-mono ${
+                        d.loading ? 'text-ink-faint animate-pulse' :
+                        isDown ? 'text-emerald-400' : isUp ? 'text-red-400' : 'text-white'
+                      }`}>
+                        {d.loading ? '···' : d.actual}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-[9px] text-ink-faint uppercase tracking-wide font-bold">Previous</span>
+                      <span className="text-xs font-black font-mono text-ink-faint">
+                        {d.loading ? '···' : d.previous}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Source & Impact Badge */}
               <div className="flex items-center justify-between gap-2 mt-1">
                 <span className="text-[10px] text-ink-faint font-mono">{ind.source}</span>
                 {getImpactBadge(ind.impact)}
               </div>
 
-              {/* Line 3: Countdown Timer Strip */}
+              {/* Countdown Timer Strip */}
               <div className="mt-2 pt-2 border-t border-border/20 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <span className="text-[10px] text-ink-faint font-semibold uppercase tracking-wider shrink-0">
                   До доклада:
