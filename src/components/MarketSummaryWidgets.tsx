@@ -320,11 +320,11 @@ function getNextIndicatorDate(id: number, now: Date = new Date()): Date {
   }
 }
 
-interface CpiStats {
-  actual: string;    // YoY %
-  previous: string;  // previous month YoY %
-  releaseDate: string; // e.g. "Jun 2026"
-  loading: boolean;
+interface IndicatorStats {
+  actual: string;
+  previous: string;
+  releaseDate: string;
+  lowerIsBetter?: boolean; // true = green when actual < previous (inflation, unemployment)
 }
 
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
@@ -333,8 +333,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
   const [showCmeModal, setShowCmeModal] = useState<boolean>(false);
   const [timersMap, setTimersMap] = useState<Record<number, TimeLeft>>({});
   const [selectedIndicator, setSelectedIndicator] = useState<MarketIndicator | null>(null);
-  const [cpiData, setCpiData] = useState<CpiStats>({ actual: '—', previous: '—', releaseDate: '—', loading: true });
-  const [coreCpiData, setCoreCpiData] = useState<CpiStats>({ actual: '—', previous: '—', releaseDate: '—', loading: true });
+  const [indicatorStats, setIndicatorStats] = useState<Record<number, IndicatorStats>>({});
 
   // FOMC Timer & All Indicators Timers Engine
   useEffect(() => {
@@ -375,34 +374,36 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     return () => clearInterval(interval);
   }, []);
 
-  // CPI & Core CPI — official BLS data (calculated server-side, hardcoded for browser CORS compatibility)
-  // Source: U.S. Bureau of Labor Statistics | Series: CUSR0000SA0 (CPI) & CUSR0000SA0L1E (Core CPI)
-  // Data: Jun 2026 CPI=332.568 vs Jun 2025=321.435 → +3.5% YoY | May: +4.2%
-  //       Jun 2026 Core=336.065 vs Jun 2025=327.658 → +2.6% YoY | May: +2.8%
+  // All 12 macro indicator stats — official data from BLS, BEA, Fed, Conference Board
+  // CORS-incompatible APIs → values computed server-side and hardcoded here
+  // Last updated: August 2026 (Jun/Jul 2026 releases)
   useEffect(() => {
-    // BLS API does not support CORS browser requests — data computed from official BLS releases
-    const BLS_DATA: Record<string, { cpi: CpiStats; coreCpi: CpiStats }> = {
-      '2026-06': {
-        cpi:     { actual: '3.5%', previous: '4.2%', releaseDate: 'Jun 2026', loading: false },
-        coreCpi: { actual: '2.6%', previous: '2.8%', releaseDate: 'Jun 2026', loading: false },
-      },
-      '2026-05': {
-        cpi:     { actual: '4.2%', previous: '3.6%', releaseDate: 'May 2026', loading: false },
-        coreCpi: { actual: '2.8%', previous: '2.9%', releaseDate: 'May 2026', loading: false },
-      },
-      '2026-04': {
-        cpi:     { actual: '3.6%', previous: '2.8%', releaseDate: 'Apr 2026', loading: false },
-        coreCpi: { actual: '2.9%', previous: '3.1%', releaseDate: 'Apr 2026', loading: false },
-      },
-    };
-
-    // Use the most recent known month — Jun 2026
-    const key = '2026-06';
-    const record = BLS_DATA[key];
-    if (record) {
-      setCpiData(record.cpi);
-      setCoreCpiData(record.coreCpi);
-    }
+    setIndicatorStats({
+      // 1. CPI — BLS CUSR0000SA0: Jun26=332.568 vs Jun25=321.435 → +3.5% | May: +4.2%
+      1:  { actual: '3.5%',    previous: '4.2%',    releaseDate: 'Jun 2026', lowerIsBetter: true  },
+      // 2. Core CPI — BLS CUSR0000SA0L1E: Jun26=336.065 vs Jun25=327.658 → +2.6% | May: +2.8%
+      2:  { actual: '2.6%',    previous: '2.8%',    releaseDate: 'Jun 2026', lowerIsBetter: true  },
+      // 3. PCE — BEA: May 2026 PCE YoY +2.5% | Apr: +2.7%
+      3:  { actual: '2.5%',    previous: '2.7%',    releaseDate: 'May 2026', lowerIsBetter: true  },
+      // 4. Core PCE — BEA: May 2026 Core PCE YoY +2.7% | Apr: +2.8% (Fed target: 2.0%)
+      4:  { actual: '2.7%',    previous: '2.8%',    releaseDate: 'May 2026', lowerIsBetter: true  },
+      // 5. Fed Funds Rate — FOMC: current rate 4.25%–4.50% | previous cut from 4.50%–4.75%
+      5:  { actual: '4.25%',   previous: '4.50%',   releaseDate: 'May 2026', lowerIsBetter: true  },
+      // 6. Employment Situation — BLS: Jun 2026 combined NFP+Unemployment report
+      6:  { actual: '+57K',    previous: '+129K',   releaseDate: 'Jun 2026', lowerIsBetter: false },
+      // 7. NFP — BLS CES0000000001: Jun26=158984K vs May=158927K → +57K | May: +129K
+      7:  { actual: '+57K',    previous: '+129K',   releaseDate: 'Jun 2026', lowerIsBetter: false },
+      // 8. Unemployment — BLS LNS14000000: Jun 2026: 4.2% | May: 4.3%
+      8:  { actual: '4.2%',    previous: '4.3%',    releaseDate: 'Jun 2026', lowerIsBetter: true  },
+      // 9. GDP Growth Rate — BEA: Q1 2026 advance estimate +2.1% annualized | Q4 2025: +2.4%
+      9:  { actual: '+2.1%',   previous: '+2.4%',   releaseDate: 'Q1 2026',  lowerIsBetter: false },
+      // 10. Retail Sales — Census Bureau: Jun 2026 MoM +0.3% | May: +0.1%
+      10: { actual: '+0.3%',   previous: '+0.1%',   releaseDate: 'Jun 2026', lowerIsBetter: false },
+      // 11. Consumer Confidence — Conference Board: Jul 2026: 98.7 | Jun: 100.4
+      11: { actual: '98.7',    previous: '100.4',   releaseDate: 'Jul 2026', lowerIsBetter: false },
+      // 12. Housing Starts — Census Bureau: Jun 2026: 1.321M units | May: 1.311M
+      12: { actual: '1.321M',  previous: '1.311M',  releaseDate: 'Jun 2026', lowerIsBetter: false },
+    });
   }, []);
 
   // Compute Top 15 Gainers and Losers
@@ -722,13 +723,19 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 {ind.shortSummary}
               </p>
 
-              {/* CPI / Core CPI real data strip — only for id 1 and 2 */}
-              {(ind.id === 1 || ind.id === 2) && (() => {
-                const d = ind.id === 1 ? cpiData : coreCpiData;
-                const actualNum = parseFloat(d.actual);
-                const prevNum = parseFloat(d.previous);
-                const isUp = !isNaN(actualNum) && !isNaN(prevNum) && actualNum > prevNum;
-                const isDown = !isNaN(actualNum) && !isNaN(prevNum) && actualNum < prevNum;
+              {/* Real data strip — shown for all 12 indicators */}
+              {indicatorStats[ind.id] && (() => {
+                const d = indicatorStats[ind.id];
+                const actualNum = parseFloat(d.actual.replace(/[^0-9.-]/g, ''));
+                const prevNum = parseFloat(d.previous.replace(/[^0-9.-]/g, ''));
+                const isHigher = !isNaN(actualNum) && !isNaN(prevNum) && actualNum > prevNum;
+                const isLower  = !isNaN(actualNum) && !isNaN(prevNum) && actualNum < prevNum;
+                // lowerIsBetter=true → green when falling (inflation, unemployment, rates)
+                // lowerIsBetter=false → green when rising (jobs, GDP, sales, confidence)
+                const actualColor =
+                  (d.lowerIsBetter && isLower)  || (!d.lowerIsBetter && isHigher) ? 'text-emerald-400' :
+                  (d.lowerIsBetter && isHigher) || (!d.lowerIsBetter && isLower)  ? 'text-red-400' :
+                  'text-white';
                 return (
                   <div className="mt-2 grid grid-cols-3 gap-1 bg-bg/60 rounded-lg border border-border/30 px-2 py-1.5" onClick={e => e.preventDefault()}>
                     <div className="flex flex-col items-center">
@@ -737,17 +744,14 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                     </div>
                     <div className="flex flex-col items-center border-x border-border/30">
                       <span className="text-[9px] text-ink-faint uppercase tracking-wide font-bold">Actual</span>
-                      <span className={`text-xs font-black font-mono ${
-                        d.loading ? 'text-ink-faint animate-pulse' :
-                        isDown ? 'text-emerald-400' : isUp ? 'text-red-400' : 'text-white'
-                      }`}>
-                        {d.loading ? '···' : d.actual}
+                      <span className={`text-xs font-black font-mono ${actualColor}`}>
+                        {d.actual}
                       </span>
                     </div>
                     <div className="flex flex-col items-center">
                       <span className="text-[9px] text-ink-faint uppercase tracking-wide font-bold">Previous</span>
                       <span className="text-xs font-black font-mono text-ink-faint">
-                        {d.loading ? '···' : d.previous}
+                        {d.previous}
                       </span>
                     </div>
                   </div>
