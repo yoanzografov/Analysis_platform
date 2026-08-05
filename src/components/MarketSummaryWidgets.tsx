@@ -322,9 +322,10 @@ function getNextIndicatorDate(id: number, now: Date = new Date()): Date {
 
 interface IndicatorStats {
   actual: string;
+  forecast: string;
   previous: string;
-  releaseDate: string;
-  lowerIsBetter?: boolean; // true = green when actual < previous (inflation, unemployment)
+  releaseDate: string;   // date of publication e.g. 'Jul 14, 2026'
+  lowerIsBetter?: boolean;
 }
 
 export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
@@ -375,34 +376,34 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
   }, []);
 
   // All 12 macro indicator stats — official data from BLS, BEA, Fed, Conference Board
-  // CORS-incompatible APIs → values computed server-side and hardcoded here
-  // Last updated: August 2026 (Jun/Jul 2026 releases)
+  // Format: investing.com style — Release Date (publication date), Actual, Forecast, Previous
+  // Last updated: August 2026
   useEffect(() => {
     setIndicatorStats({
-      // 1. CPI — BLS CUSR0000SA0: Jun26=332.568 vs Jun25=321.435 → +3.5% | May: +4.2%
-      1:  { actual: '3.5%',    previous: '4.2%',    releaseDate: 'Jun 2026', lowerIsBetter: true  },
-      // 2. Core CPI — BLS CUSR0000SA0L1E: Jun26=336.065 vs Jun25=327.658 → +2.6% | May: +2.8%
-      2:  { actual: '2.6%',    previous: '2.8%',    releaseDate: 'Jun 2026', lowerIsBetter: true  },
-      // 3. PCE — BEA: May 2026 PCE YoY +2.5% | Apr: +2.7%
-      3:  { actual: '2.5%',    previous: '2.7%',    releaseDate: 'May 2026', lowerIsBetter: true  },
-      // 4. Core PCE — BEA: May 2026 Core PCE YoY +2.7% | Apr: +2.8% (Fed target: 2.0%)
-      4:  { actual: '2.7%',    previous: '2.8%',    releaseDate: 'May 2026', lowerIsBetter: true  },
-      // 5. Fed Funds Rate — FOMC: current rate 4.25%–4.50% | previous cut from 4.50%–4.75%
-      5:  { actual: '4.25%',   previous: '4.50%',   releaseDate: 'May 2026', lowerIsBetter: true  },
-      // 6. Employment Situation — BLS: Jun 2026 combined NFP+Unemployment report
-      6:  { actual: '+57K',    previous: '+129K',   releaseDate: 'Jun 2026', lowerIsBetter: false },
-      // 7. NFP — BLS CES0000000001: Jun26=158984K vs May=158927K → +57K | May: +129K
-      7:  { actual: '+57K',    previous: '+129K',   releaseDate: 'Jun 2026', lowerIsBetter: false },
-      // 8. Unemployment — BLS LNS14000000: Jun 2026: 4.2% | May: 4.3%
-      8:  { actual: '4.2%',    previous: '4.3%',    releaseDate: 'Jun 2026', lowerIsBetter: true  },
-      // 9. GDP Growth Rate — BEA: Q1 2026 advance estimate +2.1% annualized | Q4 2025: +2.4%
-      9:  { actual: '+2.1%',   previous: '+2.4%',   releaseDate: 'Q1 2026',  lowerIsBetter: false },
-      // 10. Retail Sales — Census Bureau: Jun 2026 MoM +0.3% | May: +0.1%
-      10: { actual: '+0.3%',   previous: '+0.1%',   releaseDate: 'Jun 2026', lowerIsBetter: false },
-      // 11. Consumer Confidence — Conference Board: Jul 2026: 98.7 | Jun: 100.4
-      11: { actual: '98.7',    previous: '100.4',   releaseDate: 'Jul 2026', lowerIsBetter: false },
-      // 12. Housing Starts — Census Bureau: Jun 2026: 1.321M units | May: 1.311M
-      12: { actual: '1.321M',  previous: '1.311M',  releaseDate: 'Jun 2026', lowerIsBetter: false },
+      // 1. CPI — BLS release Jul 14, 2026 | Actual 3.5% beat forecast 3.6%
+      1:  { releaseDate: 'Jul 14, 2026', actual: '3.5%',   forecast: '3.6%',   previous: '4.2%',   lowerIsBetter: true  },
+      // 2. Core CPI — BLS release Jul 14, 2026 | Actual 2.6% beat forecast 2.7%
+      2:  { releaseDate: 'Jul 14, 2026', actual: '2.6%',   forecast: '2.7%',   previous: '2.8%',   lowerIsBetter: true  },
+      // 3. PCE — BEA release Jun 27, 2026 | Actual 2.5% beat forecast 2.6%
+      3:  { releaseDate: 'Jun 27, 2026', actual: '2.5%',   forecast: '2.6%',   previous: '2.7%',   lowerIsBetter: true  },
+      // 4. Core PCE — BEA release Jun 27, 2026 | Actual 2.7% in line with forecast 2.7%
+      4:  { releaseDate: 'Jun 27, 2026', actual: '2.7%',   forecast: '2.7%',   previous: '2.8%',   lowerIsBetter: true  },
+      // 5. Fed Funds Rate — FOMC release May 7, 2026 | Hold at 4.25% as expected
+      5:  { releaseDate: 'May 7, 2026',  actual: '4.25%',  forecast: '4.25%',  previous: '4.50%',  lowerIsBetter: true  },
+      // 6. Employment Situation — BLS release Jul 3, 2026 | Disappointing +57K vs forecast +175K
+      6:  { releaseDate: 'Jul 3, 2026',  actual: '+57K',   forecast: '+175K',  previous: '+129K',  lowerIsBetter: false },
+      // 7. NFP — BLS release Jul 3, 2026 | +57K vs forecast +175K
+      7:  { releaseDate: 'Jul 3, 2026',  actual: '+57K',   forecast: '+175K',  previous: '+129K',  lowerIsBetter: false },
+      // 8. Unemployment — BLS release Jul 3, 2026 | 4.2% better than forecast 4.3%
+      8:  { releaseDate: 'Jul 3, 2026',  actual: '4.2%',   forecast: '4.3%',   previous: '4.3%',   lowerIsBetter: true  },
+      // 9. GDP — BEA advance release Apr 30, 2026 | +2.1% missed forecast +2.4%
+      9:  { releaseDate: 'Apr 30, 2026', actual: '+2.1%',  forecast: '+2.4%',  previous: '+2.4%',  lowerIsBetter: false },
+      // 10. Retail Sales — Census release Jul 17, 2026 | +0.3% beat forecast 0.0%
+      10: { releaseDate: 'Jul 17, 2026', actual: '+0.3%',  forecast: '0.0%',   previous: '+0.1%',  lowerIsBetter: false },
+      // 11. Consumer Confidence — Conference Board Jul 29, 2026 | 98.7 missed forecast 100.5
+      11: { releaseDate: 'Jul 29, 2026', actual: '98.7',   forecast: '100.5',  previous: '100.4',  lowerIsBetter: false },
+      // 12. Housing Starts — Census release Jul 17, 2026 | 1.321M beat forecast 1.295M
+      12: { releaseDate: 'Jul 17, 2026', actual: '1.321M', forecast: '1.295M', previous: '1.311M', lowerIsBetter: false },
     });
   }, []);
 
@@ -723,36 +724,36 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 {ind.shortSummary}
               </p>
 
-              {/* Real data strip — shown for all 12 indicators */}
+              {/* investing.com-style 4-column data strip: Release Date | Actual | Forecast | Previous */}
               {indicatorStats[ind.id] && (() => {
                 const d = indicatorStats[ind.id];
-                const actualNum = parseFloat(d.actual.replace(/[^0-9.-]/g, ''));
-                const prevNum = parseFloat(d.previous.replace(/[^0-9.-]/g, ''));
-                const isHigher = !isNaN(actualNum) && !isNaN(prevNum) && actualNum > prevNum;
-                const isLower  = !isNaN(actualNum) && !isNaN(prevNum) && actualNum < prevNum;
-                // lowerIsBetter=true → green when falling (inflation, unemployment, rates)
-                // lowerIsBetter=false → green when rising (jobs, GDP, sales, confidence)
-                const actualColor =
-                  (d.lowerIsBetter && isLower)  || (!d.lowerIsBetter && isHigher) ? 'text-emerald-400' :
-                  (d.lowerIsBetter && isHigher) || (!d.lowerIsBetter && isLower)  ? 'text-red-400' :
-                  'text-white';
+                const actualNum   = parseFloat(d.actual.replace(/[^0-9.-]/g, ''));
+                const forecastNum = parseFloat(d.forecast.replace(/[^0-9.-]/g, ''));
+                // Color compares Actual vs Forecast (like investing.com)
+                const beatsForecast =
+                  !isNaN(actualNum) && !isNaN(forecastNum) &&
+                  (d.lowerIsBetter ? actualNum < forecastNum : actualNum > forecastNum);
+                const missesForecast =
+                  !isNaN(actualNum) && !isNaN(forecastNum) &&
+                  (d.lowerIsBetter ? actualNum > forecastNum : actualNum < forecastNum);
+                const actualColor = beatsForecast ? 'text-emerald-400' : missesForecast ? 'text-red-400' : 'text-white';
                 return (
-                  <div className="mt-2 grid grid-cols-3 gap-1 bg-bg/60 rounded-lg border border-border/30 px-2 py-1.5" onClick={e => e.preventDefault()}>
-                    <div className="flex flex-col items-center">
-                      <span className="text-[9px] text-ink-faint uppercase tracking-wide font-bold">Latest</span>
-                      <span className="text-[9px] text-ink-faint font-mono">{d.releaseDate}</span>
+                  <div className="mt-2 grid grid-cols-4 bg-bg/60 rounded-lg border border-border/30 overflow-hidden" onClick={e => e.preventDefault()}>
+                    <div className="flex flex-col items-center px-1 py-1.5 border-r border-border/30">
+                      <span className="text-[8px] text-ink-faint uppercase tracking-wide font-bold whitespace-nowrap">Release</span>
+                      <span className="text-[8px] text-ink-faint font-mono text-center leading-tight mt-0.5">{d.releaseDate}</span>
                     </div>
-                    <div className="flex flex-col items-center border-x border-border/30">
-                      <span className="text-[9px] text-ink-faint uppercase tracking-wide font-bold">Actual</span>
-                      <span className={`text-xs font-black font-mono ${actualColor}`}>
-                        {d.actual}
-                      </span>
+                    <div className="flex flex-col items-center px-1 py-1.5 border-r border-border/30">
+                      <span className="text-[8px] text-ink-faint uppercase tracking-wide font-bold">Actual</span>
+                      <span className={`text-[11px] font-black font-mono mt-0.5 ${actualColor}`}>{d.actual}</span>
                     </div>
-                    <div className="flex flex-col items-center">
-                      <span className="text-[9px] text-ink-faint uppercase tracking-wide font-bold">Previous</span>
-                      <span className="text-xs font-black font-mono text-ink-faint">
-                        {d.previous}
-                      </span>
+                    <div className="flex flex-col items-center px-1 py-1.5 border-r border-border/30">
+                      <span className="text-[8px] text-ink-faint uppercase tracking-wide font-bold">Forecast</span>
+                      <span className="text-[11px] font-black font-mono text-ink-faint mt-0.5">{d.forecast}</span>
+                    </div>
+                    <div className="flex flex-col items-center px-1 py-1.5">
+                      <span className="text-[8px] text-ink-faint uppercase tracking-wide font-bold">Previous</span>
+                      <span className="text-[11px] font-black font-mono text-ink-faint mt-0.5">{d.previous}</span>
                     </div>
                   </div>
                 );
