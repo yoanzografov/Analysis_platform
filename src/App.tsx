@@ -910,6 +910,18 @@ export default function App() {
  onSetActiveFilter={setActiveFilter}
  />
 
+  {/* Bento Board: Analytics charts, Distribution */}
+  <BentoCharts 
+  stocks={stocks} 
+  activeFilter={activeFilter}
+  onSetActiveFilter={setActiveFilter}
+  buyThreshold={buyThreshold}
+  sellThreshold={sellThreshold}
+  onUpdateThresholds={handleUpdateThresholds}
+  signalThreshold={signalThreshold}
+  onUpdateSignalThreshold={handleUpdateSignalThreshold}
+  />
+
   {/* Main Section Tabs Switcher: Интерактивна таблица vs Планиране на персонализирани известия за цена */}
   <div className="space-y-3" id="stock-table-section">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-2">
@@ -989,17 +1001,6 @@ export default function App() {
     )}
   </div>
 
-  {/* Bento Board: Analytics charts, Distribution */}
-  <BentoCharts 
-  stocks={stocks} 
-  activeFilter={activeFilter}
-  onSetActiveFilter={setActiveFilter}
-  buyThreshold={buyThreshold}
-  sellThreshold={sellThreshold}
-  onUpdateThresholds={handleUpdateThresholds}
-  signalThreshold={signalThreshold}
-  onUpdateSignalThreshold={handleUpdateSignalThreshold}
-  />
 
 
  {/* Verified Business & Stock News Feed */}
