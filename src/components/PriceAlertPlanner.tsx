@@ -93,10 +93,10 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
 
   return (
     <div className="w-full bg-bg rounded-2xl border border-border overflow-hidden shadow-xs font-sans">
-      {/* Top Form Toolbar — styled matching StockTable toolbar */}
-      <div className="p-3 bg-bg border-b border-border flex flex-wrap items-center justify-between gap-3">
-        <form onSubmit={handleCreateOrUpdateAlert} className="flex flex-wrap items-end gap-2.5 w-full">
-          <div className="w-24">
+      {/* Top Form Toolbar — styled matching StockTable toolbar with mobile responsiveness */}
+      <div className="p-3 bg-bg border-b border-border">
+        <form onSubmit={handleCreateOrUpdateAlert} className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-2.5 w-full">
+          <div className="col-span-1 sm:w-28">
             <label className="block text-[9px] text-ink-faint font-semibold uppercase mb-0.5">ТИКЕР</label>
             <input
               type="text"
@@ -107,7 +107,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
             />
           </div>
 
-          <div className="w-32">
+          <div className="col-span-1 sm:w-36">
             <label className="block text-[9px] text-ink-faint font-semibold uppercase mb-0.5">СИГНАЛ ПРИ</label>
             <select
               value={criteria}
@@ -119,7 +119,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
             </select>
           </div>
 
-          <div className="w-28">
+          <div className="col-span-2 sm:col-span-1 sm:w-32">
             <label className="block text-[9px] text-ink-faint font-semibold uppercase mb-0.5">ТАРГЕТ ЦЕНА ($)</label>
             <input
               type="number"
@@ -131,10 +131,10 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
             />
           </div>
 
-          <div className="flex items-center gap-1.5 ml-auto">
+          <div className="col-span-2 sm:col-span-1 flex items-center justify-end gap-1.5 sm:ml-auto w-full sm:w-auto">
             <button
               type="submit"
-              className={`px-3 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0 h-[28px] ${
+              className={`w-full sm:w-auto px-3 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center justify-center gap-1 cursor-pointer shrink-0 h-[28px] ${
                 editingAlertId
                   ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-400/50 shadow-md'
                   : ''
@@ -147,7 +147,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-red-500/40 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0 h-[28px]"
+                className="w-full sm:w-auto px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-red-500/40 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center gap-1 cursor-pointer shrink-0 h-[28px]"
               >
                 <XCircle className="w-3.5 h-3.5" />
                 Отказ
@@ -163,17 +163,17 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
 
       {/* Content Section: Active Triggers List */}
       <div className="p-3">
-        <div className="flex items-center justify-between mb-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-1 mb-2.5">
           <h4 className="text-[10px] font-extrabold text-ink flex items-center gap-1.5 uppercase tracking-wide">
             <BellRing className="w-3.5 h-3.5 text-indigo-400" />
             АКТИВНИ ТРИГЕРИ ({alerts.length}):
           </h4>
           <span className="text-[9px] text-ink-faint font-normal normal-case">
-            (кликнете за редакция, показват се един под друг - макс 10 реда)
+            (кликнете за редакция, макс 10 реда)
           </span>
         </div>
 
-        <div className="overflow-y-auto max-h-[300px] pr-1 custom-mini-scroll">
+        <div className="overflow-y-auto max-h-[340px] pr-1 custom-mini-scroll">
           {alerts.length > 0 ? (
             <div className="flex flex-col gap-1.5">
               {alerts.map(alert => {
@@ -203,15 +203,15 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                   <div
                     key={alert.id}
                     onClick={() => handleStartEdit(alert)}
-                    className={`rounded-xl border px-3 py-2 text-xs flex items-center justify-between gap-3 font-sans tabular-nums cursor-pointer transition-all group ${badgeStyle}`}
+                    className={`rounded-xl border px-3 py-2 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-sans tabular-nums cursor-pointer transition-all group ${badgeStyle}`}
                     title="Кликнете за редакция на тригера"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <StockLogo ticker={alert.ticker} />
                       <span className="font-extrabold text-ink min-w-[50px] flex items-center gap-1.5">
                         <span>{alert.ticker}</span>
                         {matchingStock?.companyName && (
-                          <span className="text-[11px] font-medium text-ink-muted hidden sm:inline">
+                          <span className="text-[11px] font-medium text-ink-muted">
                             · {matchingStock.companyName}
                           </span>
                         )}
@@ -236,7 +236,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center justify-between sm:justify-end gap-2.5 pt-1 sm:pt-0 border-t sm:border-t-0 border-border/30 w-full sm:w-auto">
                       {curPrice > 0 && (
                         <span className="text-[10px] text-ink-faint font-mono">
                           (Текуща: ${curPrice.toFixed(2)})

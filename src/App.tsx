@@ -923,7 +923,7 @@ export default function App() {
   {/* Main Section Tabs Switcher: Интерактивна таблица vs Планиране на персонализирани известия за цена */}
   <div className="space-y-3" id="stock-table-section">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-2">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 shrink-0">
         <button
           onClick={() => setActiveMainTab('table')}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border ${
