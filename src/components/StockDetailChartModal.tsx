@@ -128,8 +128,38 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
             <div className="text-xs sm:text-xs text-ink-muted mt-0.5 font-medium">
               {stock.companyName}
             </div>
-            <div className="text-xs sm:text-xs text-ink-faint mt-1">
-              {exch} · {ccy}
+            <div className="text-xs sm:text-xs text-ink-faint mt-1 flex flex-wrap items-center gap-2">
+              <span>{exch} · {ccy}</span>
+              {stock.fairPrice != null && (
+                <>
+                  <span className="text-border/40">•</span>
+                  <span className="font-semibold text-indigo-400">
+                    Fair Price: <span className="font-bold font-mono">{fp(stock.fairPrice)}</span>
+                  </span>
+                </>
+              )}
+              {stock.difference != null && (
+                <>
+                  <span className="text-border/40">•</span>
+                  <span className={`font-semibold font-mono ${stock.difference < 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    ({stock.difference >= 0 ? '+' : ''}{stock.difference.toFixed(2)}%)
+                  </span>
+                </>
+              )}
+              {stock.buySell && (
+                <>
+                  <span className="text-border/40">•</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wide uppercase inline-flex items-center justify-center border ${
+                    stock.buySell.toUpperCase() === 'UNDERVALUED'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                      : stock.buySell.toUpperCase() === 'OVERVALUED'
+                      ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                      : 'bg-bg border-border text-ink-faint'
+                  }`}>
+                    {stock.buySell}
+                  </span>
+                </>
+              )}
             </div>
           </div>
           
