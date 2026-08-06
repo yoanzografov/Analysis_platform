@@ -10,6 +10,27 @@ interface Props {
   onDeleteAlert: (id: string) => void;
 }
 
+const StockLogo = ({ ticker }: { ticker: string }) => {
+  const [error, setError] = useState(false);
+  
+  if (error) {
+    return (
+      <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-ink-muted border border-white/20 shrink-0">
+        {ticker.charAt(0)}
+      </div>
+    );
+  }
+  
+  return (
+    <img 
+      src={`https://financialmodelingprep.com/image-stock/${ticker.toUpperCase()}.png`} 
+      alt={ticker}
+      onError={() => setError(true)}
+      className="w-5 h-5 rounded-full bg-white/10 shrink-0 object-contain"
+    />
+  );
+};
+
 export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdateAlert, onDeleteAlert }: Props) {
   const [editingAlertId, setEditingAlertId] = useState<string | null>(null);
   const [newTicker, setNewTicker] = useState('');
@@ -190,8 +211,9 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                     className={`rounded-xl border px-3 py-1.5 text-xs flex items-center justify-between gap-3 font-sans tabular-nums cursor-pointer transition-all group ${badgeStyle}`}
                     title="Кликнете за редакция на тригера"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="font-black text-indigo-400 w-14 flex items-center gap-1">
+                    <div className="flex items-center gap-2">
+                      <StockLogo ticker={alert.ticker} />
+                      <span className="font-black text-indigo-400 min-w-[50px] flex items-center gap-1">
                         {alert.ticker}
                         <Edit3 className="w-3 h-3 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </span>
