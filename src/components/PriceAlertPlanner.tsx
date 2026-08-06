@@ -236,10 +236,16 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       {curPrice > 0 && (
                         <span className="text-[10px] text-ink-faint font-mono">
                           (Текуща: ${curPrice.toFixed(2)})
+                        </span>
+                      )}
+
+                      {matchingStock?.fairPrice !== undefined && matchingStock?.fairPrice !== null && (
+                        <span className="text-[10px] text-indigo-400 font-mono font-bold bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                          Fair Price: ${matchingStock.fairPrice.toFixed(2)}
                         </span>
                       )}
                       <button
