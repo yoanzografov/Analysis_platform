@@ -536,10 +536,10 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  setNewFairPrice('');
  setIsAddModalOpen(true);
  }}
- className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-400/50 bg-indigo-500 hover:bg-indigo-400 text-ink flex items-center gap-1 cursor-pointer shrink-0"
+ className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
  title="Добави нова акция в таблицата"
  >
- <Plus className="w-3 h-3 text-ink" />
+ <Plus className="w-3.5 h-3.5" />
  Добавяне
  </button>
 
@@ -550,7 +550,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
       className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
       title="Запази всички промени"
     >
-      <Save className="w-3 h-3" />
+      <Save className="w-3.5 h-3.5" />
       Save
     </button>
   )}
@@ -559,7 +559,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
           href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-xl border border-indigo-400/50 bg-indigo-50/5 hover:bg-indigo-500 hover:text-ink text-indigo-400 flex items-center gap-1 cursor-pointer shrink-0 h-[26px]"
+          className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
           title="Отвори калкулатора в Google Sheets"
         >
           <Calculator className="w-3.5 h-3.5" />
