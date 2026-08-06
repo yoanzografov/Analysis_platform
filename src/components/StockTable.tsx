@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter, PriceAlert } from '../types';
-import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator } from 'lucide-react';
+import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
 import EarningsModal from './EarningsModal';
@@ -19,6 +19,7 @@ interface Props {
  onDeleteStock: (ticker: string) => void;
  onSelectStockForAi: (stock: Stock) => void;
  onAddStock: (newStock: Stock) => void;
+ onSave?: () => void;
  activeFilter: TableFilter;
  onSetActiveFilter: (filter: TableFilter) => void;
  buyThreshold: number;
@@ -137,7 +138,7 @@ const StockLogo = ({ ticker }: { ticker: string }) => {
   );
 };
 
-export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, onDeleteAlert, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold }: Props) {
+export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, onDeleteAlert, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, onSave, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold }: Props) {
  // Search state
  const [search, setSearch] = useState('');
 
@@ -523,6 +524,18 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  <Plus className="w-3 h-3 text-ink" />
  Добавяне
  </button>
+
+  {/* Save Button — до Добавяне */}
+  {onSave && (
+    <button
+      onClick={onSave}
+      className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
+      title="Запази всички промени"
+    >
+      <Save className="w-3 h-3" />
+      Save
+    </button>
+  )}
         <select
           value={`${activeFilter.type}|${activeFilter.value}`}
           onChange={(e) => {

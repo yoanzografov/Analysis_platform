@@ -813,18 +813,6 @@ export default function App() {
   </div>
   </button>
 
-  <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
-
-  {/* Save Button */}
-  <button
-    onClick={handleSaveToCloud}
-    className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
-    title="Запази всички промени"
-  >
-    <Save className="w-3.5 h-3.5" />
-    <span className="hidden sm:inline">Save</span>
-  </button>
-
   {/* System Settings Dropdown */}
   <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsSettingsMenuOpen(false); }}>
     <button
@@ -966,6 +954,7 @@ export default function App() {
  };
  setLogs(prev => [newLog, ...prev]);
  }}
+  onSave={handleSaveToCloud}
   />
   </div>
 
