@@ -14,6 +14,7 @@ import { db } from './lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import { 
+  Table,
   Save,
   Building2, 
   Download, 
@@ -60,6 +61,7 @@ export default function App() {
 
  // Filter state for the Stock Table, customizable by Bento charts
  const [activeFilter, setActiveFilter] = useState<TableFilter>({ type: 'all', value: 'all' });
+ const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts'>('table');
 
  // Selected Stock for deep AI Analyst drawer and News Container
  const [selectedStockForAi, setSelectedStockForAi] = useState<Stock | null>(null);
@@ -908,6 +910,85 @@ export default function App() {
  onSetActiveFilter={setActiveFilter}
  />
 
+  {/* Main Section Tabs Switcher: Интерактивна таблица vs Планиране на персонализирани известия за цена */}
+  <div className="space-y-3" id="stock-table-section">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-2">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setActiveMainTab('table')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border ${
+            activeMainTab === 'table'
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+              : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
+          }`}
+        >
+          <Table className="w-3.5 h-3.5" />
+          Интерактивна таблица ({stocks.length})
+        </button>
+
+        <button
+          onClick={() => setActiveMainTab('alerts')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border ${
+            activeMainTab === 'alerts'
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+              : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
+          }`}
+        >
+          <Bell className="w-3.5 h-3.5" />
+          Планиране на известия
+          {alerts.length > 0 && (
+            <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-500/30 text-white">
+              {alerts.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      <p className="text-xs text-ink-faint hidden md:block font-sans">
+        {activeMainTab === 'table' 
+          ? 'Управление и анализ на портфолиото от акции' 
+          : 'Конфигуриране и следене на ценови тригери'}
+      </p>
+    </div>
+
+    {activeMainTab === 'table' ? (
+      <StockTable 
+        stocks={stocks} 
+        alerts={alerts}
+        onAddAlert={handleAddAlert}
+        onUpdateAlert={handleUpdateAlert}
+        onDeleteAlert={handleDeleteAlert}
+        onUpdateStock={handleUpdateStock} 
+        onDeleteStock={handleDeleteStock}
+        onSelectStockForAi={setSelectedStockForAi} 
+        activeFilter={activeFilter}
+        onSetActiveFilter={setActiveFilter}
+        buyThreshold={buyThreshold}
+        sellThreshold={sellThreshold}
+        onAddStock={(newStock) => {
+          setStocks(prev => [...prev, newStock]);
+          const newLog = {
+            id: `${Date.now()}-${Math.random()}`,
+            timestamp: new Date().toLocaleTimeString(),
+            ticker: newStock.ticker,
+            message: `Добавен нов актив: ${newStock.companyName || newStock.ticker} (${newStock.ticker})`,
+            type: 'success' as const
+          };
+          setLogs(prev => [newLog, ...prev]);
+        }}
+        onSave={handleSaveToCloud}
+      />
+    ) : (
+      <PriceAlertPlanner
+        stocks={stocks}
+        alerts={alerts}
+        onAddAlert={handleAddAlert}
+        onUpdateAlert={handleUpdateAlert}
+        onDeleteAlert={handleDeleteAlert}
+      />
+    )}
+  </div>
+
   {/* Bento Board: Analytics charts, Distribution */}
   <BentoCharts 
   stocks={stocks} 
@@ -920,65 +1001,6 @@ export default function App() {
   onUpdateSignalThreshold={handleUpdateSignalThreshold}
   />
 
- {/* Main Grid stock table database */}
- <div className="space-y-2" id="stock-table-section">
- <div className="flex items-center justify-between">
- <div>
- <h2 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight">
- Интерактивна таблица
- </h2>
- </div>
- </div>
- 
- <StockTable 
- stocks={stocks} 
- alerts={alerts}
- onAddAlert={handleAddAlert}
- onUpdateAlert={handleUpdateAlert}
- onDeleteAlert={handleDeleteAlert}
- onUpdateStock={handleUpdateStock} 
- onDeleteStock={handleDeleteStock}
-  onSelectStockForAi={setSelectedStockForAi} 
-  activeFilter={activeFilter}
-  onSetActiveFilter={setActiveFilter}
-  buyThreshold={buyThreshold}
-  sellThreshold={sellThreshold}
-  onAddStock={(newStock) => {
- setStocks(prev => [...prev, newStock]);
- const newLog = {
- id: `${Date.now()}-${Math.random()}`,
- timestamp: new Date().toLocaleTimeString(),
- ticker: newStock.ticker,
- message: `Добавен нов актив: ${newStock.companyName || newStock.ticker} (${newStock.ticker})`,
- type: 'success' as const
- };
- setLogs(prev => [newLog, ...prev]);
- }}
-  onSave={handleSaveToCloud}
-  />
-  </div>
-
-  {/* Planning custom price alerts container (placed below table) */}
-  <div className="space-y-2 mt-6" id="price-alerts-section">
-    <div className="flex items-center justify-between">
-      <div>
-        <h2 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight">
-          Планиране на персонализирани известия за цена
-        </h2>
-        <p className="text-xs text-ink-faint mt-0.5 font-sans">
-          Конфигурирайте известия при пресичане на таргета.
-        </p>
-      </div>
-    </div>
-
-    <PriceAlertPlanner
-      stocks={stocks}
-      alerts={alerts}
-      onAddAlert={handleAddAlert}
-      onUpdateAlert={handleUpdateAlert}
-      onDeleteAlert={handleDeleteAlert}
-    />
-  </div>
 
  {/* Verified Business & Stock News Feed */}
  <CompanyNewsContainer
