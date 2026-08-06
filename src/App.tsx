@@ -333,6 +333,12 @@ export default function App() {
   }, [isLoaded]);
 
   const handleSaveToCloud = async () => {
+    const pin = window.prompt('Въведете Admin PIN код за запазване в облака:');
+    if (pin !== '1234') {
+      if (pin !== null) alert('Грешен PIN код! Промените НЕ са запазени в облака.');
+      return;
+    }
+
     try {
       const payload = { stocks, indices, alerts, settings: { buyThreshold, sellThreshold } };
       const currentDataString = JSON.stringify(payload);
@@ -348,6 +354,7 @@ export default function App() {
       };
       // @ts-ignore
       setLogs(prev => [newLog, ...prev]);
+      alert('Промените бяха запазени успешно в облака!');
     } catch (err) {
       console.error("Firebase Manual Save Error:", err);
       const newLog = {
@@ -362,17 +369,8 @@ export default function App() {
     }
   };
 
-  // Persistence save hooks (to Firebase)
-  useEffect(() => {
-    if (isLoaded) {
-      const payload = { stocks, indices, alerts, settings: { buyThreshold, sellThreshold } };
-      const currentDataString = JSON.stringify(payload);
-      if (lastSavedRef.current !== currentDataString) {
-        lastSavedRef.current = currentDataString;
-        setDoc(doc(db, "portfolio", "default"), JSON.parse(JSON.stringify(payload)), { merge: true }).catch(err => console.error("Firebase Save Error:", err));
-      }
-    }
-  }, [stocks, indices, alerts, buyThreshold, sellThreshold, isLoaded]);
+  // Note: Automatic cloud save disabled to protect database from visitor edits.
+  // Only manual save with Admin PIN (1234) can update the cloud database.
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
