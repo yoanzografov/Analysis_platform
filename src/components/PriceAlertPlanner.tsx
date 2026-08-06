@@ -208,9 +208,14 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                   >
                     <div className="flex items-center gap-2">
                       <StockLogo ticker={alert.ticker} />
-                      <span className="font-black text-indigo-400 min-w-[50px] flex items-center gap-1">
-                        {alert.ticker}
-                        <Edit3 className="w-3 h-3 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <span className="font-extrabold text-ink min-w-[50px] flex items-center gap-1.5">
+                        <span>{alert.ticker}</span>
+                        {matchingStock?.companyName && (
+                          <span className="text-[11px] font-medium text-ink-muted hidden sm:inline">
+                            · {matchingStock.companyName}
+                          </span>
+                        )}
+                        <Edit3 className="w-3 h-3 text-ink-faint opacity-0 group-hover:opacity-100 transition-opacity" />
                       </span>
 
                       {isTriggered ? (
