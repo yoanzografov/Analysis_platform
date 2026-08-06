@@ -959,13 +959,26 @@ export default function App() {
   </div>
 
   {/* Planning custom price alerts container (placed below table) */}
-  <PriceAlertPlanner
-    stocks={stocks}
-    alerts={alerts}
-    onAddAlert={handleAddAlert}
-    onUpdateAlert={handleUpdateAlert}
-    onDeleteAlert={handleDeleteAlert}
-  />
+  <div className="space-y-2 mt-6" id="price-alerts-section">
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight">
+          Планиране на персонализирани известия за цена
+        </h2>
+        <p className="text-xs text-ink-faint mt-0.5 font-sans">
+          Конфигурирайте известия при пресичане на таргета.
+        </p>
+      </div>
+    </div>
+
+    <PriceAlertPlanner
+      stocks={stocks}
+      alerts={alerts}
+      onAddAlert={handleAddAlert}
+      onUpdateAlert={handleUpdateAlert}
+      onDeleteAlert={handleDeleteAlert}
+    />
+  </div>
 
  {/* Verified Business & Stock News Feed */}
  <CompanyNewsContainer

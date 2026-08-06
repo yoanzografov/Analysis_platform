@@ -92,43 +92,34 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
   };
 
   return (
-    <div className="bg-card rounded-2xl border border-border p-3.5 mt-5 font-sans">
-      {/* Top Bar: Title & Inline Form on the same level */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-border/30">
-        <div className="shrink-0">
-          <h3 className="text-xs uppercase font-extrabold text-ink tracking-tight flex items-center gap-1.5">
-            Планиране на персонализирани известия за цена
-          </h3>
-          <p className="text-[10px] text-ink-faint mt-0.5">
-            Конфигурирайте известия при пресичане на таргета.
-          </p>
-        </div>
-
-        <form onSubmit={handleCreateOrUpdateAlert} className="flex flex-wrap items-end gap-2 bg-bg/40 p-1.5 rounded-xl border border-border">
-          <div className="w-20">
+    <div className="w-full bg-bg rounded-2xl border border-border overflow-hidden shadow-xs font-sans">
+      {/* Top Form Toolbar — styled matching StockTable toolbar */}
+      <div className="p-3 bg-bg border-b border-border flex flex-wrap items-center justify-between gap-3">
+        <form onSubmit={handleCreateOrUpdateAlert} className="flex flex-wrap items-end gap-2.5 w-full">
+          <div className="w-24">
             <label className="block text-[9px] text-ink-faint font-semibold uppercase mb-0.5">ТИКЕР</label>
             <input
               type="text"
               placeholder="AAPL..."
               value={newTicker}
               onChange={e => setNewTicker(e.target.value)}
-              className="w-full bg-card rounded-lg border border-border px-2 py-0.5 text-xs text-ink uppercase font-bold focus:outline-none"
+              className="w-full bg-bg rounded-xl border border-border px-2 py-1 text-xs text-ink uppercase font-bold focus:outline-none focus:border-indigo-500 font-sans tabular-nums"
             />
           </div>
 
-          <div className="w-28">
+          <div className="w-32">
             <label className="block text-[9px] text-ink-faint font-semibold uppercase mb-0.5">СИГНАЛ ПРИ</label>
             <select
               value={criteria}
               onChange={e => setCriteria(e.target.value as any)}
-              className="w-full bg-card rounded-lg border border-border px-1 py-0.5 text-xs text-ink font-extrabold focus:outline-none"
+              className="w-full bg-bg rounded-xl border border-border px-2 py-1 text-xs text-ink font-extrabold focus:outline-none focus:border-indigo-500 h-[28px]"
             >
               <option value="ABOVE">ЦЕНА НАД (▲)</option>
               <option value="BELOW">ЦЕНА ПОД (▼)</option>
             </select>
           </div>
 
-          <div className="w-24">
+          <div className="w-28">
             <label className="block text-[9px] text-ink-faint font-semibold uppercase mb-0.5">ТАРГЕТ ЦЕНА ($)</label>
             <input
               type="number"
@@ -136,47 +127,51 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
               placeholder="400.00"
               value={targetVal}
               onChange={e => setTargetVal(e.target.value)}
-              className="w-full bg-card rounded-lg border border-border px-2 py-0.5 text-xs text-ink font-sans tabular-nums focus:outline-none"
+              className="w-full bg-bg rounded-xl border border-border px-2 py-1 text-xs text-ink font-sans tabular-nums focus:outline-none focus:border-indigo-500"
             />
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 ml-auto">
             <button
               type="submit"
-              className={`font-extrabold text-[10px] px-3 h-[24px] border rounded-lg flex items-center gap-0.5 transition-all uppercase cursor-pointer ${
+              className={`px-3 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0 h-[28px] ${
                 editingAlertId
                   ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-400/50 shadow-md'
-                  : 'bg-indigo-500/10 hover:bg-indigo-500 border-indigo-500/40 text-indigo-400 hover:text-white'
+                  : ''
               }`}
             >
+              <PlusCircle className="w-3.5 h-3.5" />
               {editingAlertId ? 'Редактирай' : 'Добави'}
             </button>
             {editingAlertId && (
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="bg-bg hover:bg-red-500/20 text-red-400 font-extrabold text-[10px] px-2 h-[24px] border border-red-500/30 rounded-lg flex items-center gap-0.5 transition-all uppercase cursor-pointer"
+                className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-red-500/40 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0 h-[28px]"
               >
+                <XCircle className="w-3.5 h-3.5" />
                 Отказ
               </button>
             )}
           </div>
         </form>
+
+        {formError && (
+          <p className="text-[10px] text-red-500 font-bold w-full mt-1">{formError}</p>
+        )}
       </div>
 
-      {formError && (
-        <p className="text-[10px] text-red-700 font-bold mt-1.5">{formError}</p>
-      )}
-
-      {/* Active Triggers Section — Listed vertically one under another (max 10 rows visible) */}
-      <div className="mt-3">
-        <h4 className="text-[10px] font-extrabold text-ink mb-2 flex items-center gap-1.5 uppercase shrink-0">
-          <BellRing className="w-3.5 h-3.5 text-indigo-400" />
-          АКТИВНИ ТРИГЕРИ ({alerts.length}):
-          <span className="text-[9px] text-ink-faint font-normal normal-case ml-1">
-            (кликнете за редакция, макс. 10 реда)
+      {/* Content Section: Active Triggers List */}
+      <div className="p-3">
+        <div className="flex items-center justify-between mb-2.5">
+          <h4 className="text-[10px] font-extrabold text-ink flex items-center gap-1.5 uppercase tracking-wide">
+            <BellRing className="w-3.5 h-3.5 text-indigo-400" />
+            АКТИВНИ ТРИГЕРИ ({alerts.length}):
+          </h4>
+          <span className="text-[9px] text-ink-faint font-normal normal-case">
+            (кликнете за редакция, показват се един под друг - макс 10 реда)
           </span>
-        </h4>
+        </div>
 
         <div className="overflow-y-auto max-h-[300px] pr-1 custom-mini-scroll">
           {alerts.length > 0 ? (
@@ -208,7 +203,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                   <div
                     key={alert.id}
                     onClick={() => handleStartEdit(alert)}
-                    className={`rounded-xl border px-3 py-1.5 text-xs flex items-center justify-between gap-3 font-sans tabular-nums cursor-pointer transition-all group ${badgeStyle}`}
+                    className={`rounded-xl border px-3 py-2 text-xs flex items-center justify-between gap-3 font-sans tabular-nums cursor-pointer transition-all group ${badgeStyle}`}
                     title="Кликнете за редакция на тригера"
                   >
                     <div className="flex items-center gap-2">
@@ -262,7 +257,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
               })}
             </div>
           ) : (
-            <div className="text-center text-xs text-ink-faint py-3">
+            <div className="text-center text-xs text-ink-faint py-4">
               Няма активни известия за цена.
             </div>
           )}
