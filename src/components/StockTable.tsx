@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter, PriceAlert } from '../types';
-import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save } from 'lucide-react';
+import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
 import EarningsModal from './EarningsModal';
@@ -148,6 +148,11 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
 
  // Add stock modal state
  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isQuickAlertOpen, setIsQuickAlertOpen] = useState(false);
+  const [alertModalTicker, setAlertModalTicker] = useState('AAPL');
+  const [alertModalCriteria, setAlertModalCriteria] = useState<'ABOVE' | 'BELOW'>('ABOVE');
+  const [alertModalTargetPrice, setAlertModalTargetPrice] = useState('400.00');
+
   const [activeChartStock, setActiveChartStock] = useState<Stock | null>(null);
   const [dividendModalStock, setDividendModalStock] = useState<Stock | null>(null);
   const [earningsModalStock, setEarningsModalStock] = useState<Stock | null>(null);
@@ -555,6 +560,21 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
     </button>
   )}
 
+   {/* Price Alert Button */}
+   <button
+     onClick={() => {
+       setAlertModalTicker('AAPL');
+       setAlertModalCriteria('ABOVE');
+       setAlertModalTargetPrice('400.00');
+       setIsQuickAlertOpen(true);
+     }}
+     className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
+     title="Планиране на персонализирани известия за цена"
+   >
+     <Bell className="w-3.5 h-3.5" />
+     Известие
+   </button>
+
         <a
           href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
           target="_blank"
@@ -802,6 +822,20 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
           </button>
 
 
+          {/* Quick Price Alert Badge [🔔] */}
+          <button
+            onClick={() => {
+              setAlertModalTicker(stock.ticker);
+              setAlertModalCriteria('ABOVE');
+              const defaultVal = stock.currentPrice || stock.priceOfCalc || 400;
+              setAlertModalTargetPrice(defaultVal.toFixed(2));
+              setIsQuickAlertOpen(true);
+            }}
+            className="w-5 h-5 rounded-full bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white border border-indigo-500/30 font-black text-[10px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
+            title="Заложи персонализирано известие за цена за тази акция"
+          >
+            🔔
+          </button>
         </>
       )}
     </div>
@@ -1343,7 +1377,101 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  />
  )}
 
+ {/* Quick Price Alert Planner Modal */}
+ {isQuickAlertOpen && (
+ <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn font-sans">
+ <div className="bg-bg border border-border rounded-2xl p-5 max-w-md w-full shadow-2xl relative">
+ <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
+ <h3 className="text-xs uppercase font-extrabold text-ink tracking-tight flex items-center gap-2">
+ <Bell className="w-4 h-4 text-indigo-400" />
+ Планиране на персонализирани известия за цена
+ </h3>
+ <button
+ onClick={() => setIsQuickAlertOpen(false)}
+ className="text-ink-faint hover:text-ink transition-colors p-1 cursor-pointer"
+ >
+ <X className="w-4 h-4" />
+ </button>
+ </div>
 
+ <p className="text-xs text-ink-faint mb-4">
+ Конфигурирайте известия при пресичане на таргета.
+ </p>
+
+ <form
+ onSubmit={(e) => {
+ e.preventDefault();
+ if (!alertModalTicker.trim() || !alertModalTargetPrice) return;
+ if (onAddAlert) {
+ onAddAlert(alertModalTicker.trim().toUpperCase(), alertModalCriteria, Number(alertModalTargetPrice));
+ }
+ setIsQuickAlertOpen(false);
+ }}
+ className="space-y-4"
+ >
+ <div>
+ <label className="block text-[10px] text-ink-faint font-bold uppercase mb-1">
+ ТИКЕР
+ </label>
+ <input
+ type="text"
+ placeholder="AAPL..."
+ value={alertModalTicker}
+ onChange={e => setAlertModalTicker(e.target.value.toUpperCase())}
+ className="w-full bg-card rounded-xl border border-border px-3 py-2 text-xs text-ink uppercase font-bold focus:outline-none focus:border-indigo-500 font-sans tabular-nums"
+ required
+ />
+ </div>
+
+ <div>
+ <label className="block text-[10px] text-ink-faint font-bold uppercase mb-1">
+ СИГНАЛ ПРИ
+ </label>
+ <select
+ value={alertModalCriteria}
+ onChange={e => setAlertModalCriteria(e.target.value as any)}
+ className="w-full bg-card rounded-xl border border-border px-3 py-2 text-xs font-extrabold text-ink focus:outline-none focus:border-indigo-500"
+ >
+ <option value="ABOVE">ЦЕНА НАД (▲)</option>
+ <option value="BELOW">ЦЕНА ПОД (▼)</option>
+ </select>
+ </div>
+
+ <div>
+ <label className="block text-[10px] text-ink-faint font-bold uppercase mb-1">
+ ТАРГЕТ ЦЕНА ($)
+ </label>
+ <input
+ type="number"
+ step="0.01"
+ placeholder="400.00"
+ value={alertModalTargetPrice}
+ onChange={e => setAlertModalTargetPrice(e.target.value)}
+ className="w-full bg-card rounded-xl border border-border px-3 py-2 text-xs text-ink font-sans tabular-nums font-bold focus:outline-none focus:border-indigo-500"
+ required
+ />
+ </div>
+
+ <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+ <button
+ type="button"
+ onClick={() => setIsQuickAlertOpen(false)}
+ className="px-3.5 py-1.5 rounded-xl border border-border text-xs font-bold uppercase text-ink-muted hover:bg-white/5 transition-all cursor-pointer"
+ >
+ Отказ
+ </button>
+ <button
+ type="submit"
+ className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+ >
+ <Plus className="w-4 h-4" />
+ Добави известие
+ </button>
+ </div>
+ </form>
+ </div>
+ </div>
+ )}
  
  </div>
  );
