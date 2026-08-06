@@ -507,6 +507,24 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  />
  </div>
 
+        <select
+          value={`${activeFilter.type}|${activeFilter.value}`}
+          onChange={(e) => {
+            const [type, value] = e.target.value.split('|');
+            onSetActiveFilter({ type: type as any, value });
+            setCurrentPage(1);
+          }}
+          className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-xl border border-border-hover bg-bg text-ink cursor-pointer focus:outline-none focus:border-indigo-500 h-[26px]"
+        >
+          <option value="all|all">Всички ({stocks.length})</option>
+          <option value="watch|Buy">Buy ({stocks.filter(s => s.watch === 'Buy').length})</option>
+          <option value="watch|Sell">Sell ({stocks.filter(s => s.watch === 'Sell').length})</option>
+          <option value="watch|Watch">Watch ({stocks.filter(s => s.watch === 'Watch').length})</option>
+          <option value="watch|Attn">Attn ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten').length})</option>
+          <option value="watch|Interesting">Interesting ({stocks.filter(s => s.watch === 'Interesting').length})</option>
+          <option value="watch|Not interesting">Not interesting ({stocks.filter(s => s.watch === 'Not interesting').length})</option>
+        </select>
+
  <button
  onClick={() => {
  // Pre-fill today's ISO date
@@ -525,7 +543,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  Добавяне
  </button>
 
-  {/* Save Button — до Добавяне */}
+  {/* Save Button */}
   {onSave && (
     <button
       onClick={onSave}
@@ -536,23 +554,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
       Save
     </button>
   )}
-        <select
-          value={`${activeFilter.type}|${activeFilter.value}`}
-          onChange={(e) => {
-            const [type, value] = e.target.value.split('|');
-            onSetActiveFilter({ type: type as any, value });
-            setCurrentPage(1);
-          }}
-          className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-xl border border-border-hover bg-bg text-ink cursor-pointer focus:outline-none focus:border-indigo-500 h-[26px]"
-        >
-          <option value="all|all">Всички ({stocks.length})</option>
-          <option value="watch|Buy">Buy ({stocks.filter(s => s.watch === 'Buy').length})</option>
-          <option value="watch|Sell">Sell ({stocks.filter(s => s.watch === 'Sell').length})</option>
-          <option value="watch|Watch">Watch ({stocks.filter(s => s.watch === 'Watch').length})</option>
-          <option value="watch|Attn">Attn ({stocks.filter(s => s.watch === 'Attn' || s.watch === 'Atten').length})</option>
-          <option value="watch|Interesting">Interesting ({stocks.filter(s => s.watch === 'Interesting').length})</option>
-          <option value="watch|Not interesting">Not interesting ({stocks.filter(s => s.watch === 'Not interesting').length})</option>
-        </select>
+
         <a
           href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
           target="_blank"
