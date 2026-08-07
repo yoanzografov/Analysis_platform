@@ -655,6 +655,8 @@ export default function App() {
       type: 'info'
     };
     setLogs(prev => [newLog, ...prev]);
+    setActiveAlertToast(`🔔 Сигналът за ${ticker} (${criteria === 'ABOVE' ? 'над' : 'под'} $${targetPrice}) беше добавен успешно!`);
+    setActiveMainTab('alerts');
   };
 
   const handleUpdateAlert = (id: string, ticker: string, criteria: 'ABOVE' | 'BELOW', targetPrice: number) => {
