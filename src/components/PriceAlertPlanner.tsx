@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Stock, PriceAlert } from '../types';
-import { BellRing, Ban, PlusCircle, CheckCircle, XCircle, Edit3, Flame, AlertTriangle } from 'lucide-react';
+import { BellRing, Ban, PlusCircle, CheckCircle, XCircle, Edit3, Flame, AlertTriangle, Check } from 'lucide-react';
 
 interface Props {
   stocks: Stock[];
@@ -131,23 +131,33 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
             />
           </div>
 
-          <div className="col-span-2 sm:col-span-1 flex items-center justify-end gap-1.5 sm:ml-auto w-full sm:w-auto">
+          <div className="col-span-2 sm:col-span-1 flex flex-wrap items-center justify-end gap-1.5 sm:ml-auto w-full sm:w-auto">
             <button
               type="submit"
-              className={`w-full sm:w-auto px-3 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center justify-center gap-1 cursor-pointer shrink-0 h-[28px] ${
+              className={`w-full sm:w-auto px-3.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border flex items-center justify-center gap-1 cursor-pointer shrink-0 h-[30px] ${
                 editingAlertId
-                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-400/50 shadow-md'
-                  : ''
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/50 shadow-md ring-1 ring-emerald-400/30'
+                  : 'border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white'
               }`}
             >
-              <PlusCircle className="w-3.5 h-3.5" />
-              {editingAlertId ? 'Редактирай' : 'Добави'}
+              {editingAlertId ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  Запази промяната
+                </>
+              ) : (
+                <>
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  Запази сигнала
+                </>
+              )}
             </button>
+
             {editingAlertId && (
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="w-full sm:w-auto px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-red-500/40 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center gap-1 cursor-pointer shrink-0 h-[28px]"
+                className="w-full sm:w-auto px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-red-500/40 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center gap-1 cursor-pointer shrink-0 h-[30px]"
               >
                 <XCircle className="w-3.5 h-3.5" />
                 Отказ
