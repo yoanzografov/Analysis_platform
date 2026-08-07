@@ -670,9 +670,13 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
      setSelectedRow(stock.ticker);
    }
  }}
- className={`hover:bg-white/5 transition-colors duration-75 group cursor-pointer ${
- isEditing ? 'bg-bg rounded-2xl/10' : ''
- } ${selectedRow === stock.ticker ? 'bg-indigo-500/10 outline-double outline-1 outline-indigo-500/50' : ''}`}
+ className={`transition-all duration-150 group cursor-pointer ${
+    isEditing ? 'bg-bg' : ''
+  } ${
+    selectedRow === stock.ticker 
+      ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold' 
+      : 'hover:bg-indigo-500/10'
+  }`}
  onKeyDown={isEditing ? (e) => {
  if (e.key === 'Enter') {
  handleSaveClick(stock.ticker);
