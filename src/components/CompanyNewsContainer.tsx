@@ -251,20 +251,56 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  setError('');
  
  try {
- const endpoint = selectedStock ? `/api/news?ticker=${encodeURIComponent(selectedStock.ticker)}` : `/api/global-news`;
- const response = await fetch(endpoint);
- if (!response.ok) throw new Error('Network error');
- 
- const data = await response.json();
- const parsedNews: NewsArticle[] = data.news ? data.news : data;
- 
- if (Array.isArray(parsedNews) && parsedNews.length > 0) {
- setNews(parsedNews);
- } else if (Array.isArray(parsedNews) && parsedNews.length === 0) {
- setNews([]);
- } else {
- throw new Error('Невалиден формат на новините.');
- }
+    let rssUrl = 'https://finance.yahoo.com/news/rssindex';
+    if (selectedStock) {
+      rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(selectedStock.ticker + ' stock finance')}&hl=en-US`;
+    }
+
+    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+    const response = await fetch(apiUrl);
+    if (!response.ok) throw new Error('Network error');
+
+    const data = await response.json();
+    if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
+      const parsedNews: NewsArticle[] = data.items.map((item: any) => {
+        const rawDesc = item.description || item.content || '';
+        const cleanDesc = rawDesc.replace(/<[^>]*>?/gm, '').trim();
+
+        const text = (item.title + ' ' + cleanDesc).toLowerCase();
+        let impact: 'Positive' | 'Negative' | 'Neutral' = 'Neutral';
+        if (text.match(/surge|soar|gain|beat|high|growth|profit|record|up|jump|buy|bull|rall|top/)) {
+          impact = 'Positive';
+        } else if (text.match(/fall|drop|loss|cut|risk|down|warn|decline|sink|bear|sell|plunge|crash/)) {
+          impact = 'Negative';
+        }
+
+        let formattedTime = 'Преди малко';
+        if (item.pubDate) {
+          const diffMinutes = Math.floor((Date.now() - new Date(item.pubDate).getTime()) / (1000 * 60));
+          if (diffMinutes < 60) {
+            formattedTime = `Преди ${Math.max(1, diffMinutes)} мин.`;
+          } else if (diffMinutes < 1440) {
+            formattedTime = `Преди ${Math.floor(diffMinutes / 60)} ч.`;
+          } else {
+            formattedTime = `Преди ${Math.floor(diffMinutes / 1440)} дни`;
+          }
+        }
+
+        return {
+          title: item.title || 'Yahoo Finance Новини',
+          source: item.author || (selectedStock ? 'Yahoo Finance / Market News' : 'Yahoo Finance RSS'),
+          time: formattedTime,
+          summary: cleanDesc.length > 220 ? cleanDesc.slice(0, 220) + '...' : cleanDesc,
+          impact,
+          url: item.link || (selectedStock ? `https://finance.yahoo.com/quote/${selectedStock.ticker}` : 'https://finance.yahoo.com'),
+          image: item.thumbnail || item.enclosure?.link
+        };
+      });
+
+      setNews(parsedNews);
+    } else {
+      throw new Error('No RSS items returned');
+    }
  } catch (err: any) {
  console.error("Error fetching news:", err);
  setError('Неуспешна връзка със сървъра. Използваме сигурен резервен поток.');
@@ -400,8 +436,8 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  {selectedStock ? `Най-важни новини за ${selectedStock.companyName} (${selectedStock.ticker})` : 'Глобални финансови & пазарни новини'}
  </h3>
  <p className="text-xs text-ink-faint mt-0.5">
- Актуални и изключително проверени новини от Financial Modeling Prep API и Yahoo Finance.
- </p>
+  Актуални световни финансови новини в реално време от Yahoo Finance Live RSS поток.
+  </p>
  </div>
 
  <div className="flex flex-wrap items-center gap-2.5">
