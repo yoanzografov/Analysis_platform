@@ -1069,12 +1069,14 @@ export default function App() {
 
 
 
- {/* Verified Business & Stock News Feed */}
- <CompanyNewsContainer
- stocks={stocks}
- selectedStock={selectedStockForAi}
- onSelectStock={setSelectedStockForAi}
- />
+ {/* Verified Business & Stock News Feed (Table tab only) */}
+ {activeMainTab === 'table' && (
+   <CompanyNewsContainer
+     stocks={stocks}
+     selectedStock={selectedStockForAi}
+     onSelectStock={setSelectedStockForAi}
+   />
+ )}
 
  {/* Sync with files grid: CSV Uploader and Real-time Notification Logs monitor side by side (moved below the table) */}
  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
