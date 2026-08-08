@@ -305,7 +305,7 @@ export default function PortfolioTracker({
       {/* ======================================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Card 1: СТОЙНОСТ */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
               СТОЙНОСТ
@@ -326,7 +326,7 @@ export default function PortfolioTracker({
         </div>
 
         {/* Card 2: ИНВЕСТИРАНА СУМА */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
               ИНВЕСТИРАНА СУМА
@@ -346,7 +346,7 @@ export default function PortfolioTracker({
         </div>
 
         {/* Card 3: ДОХОДНОСТ (с див.) */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
               ДОХОДНОСТ (с див.)
@@ -379,7 +379,7 @@ export default function PortfolioTracker({
         </div>
 
         {/* Card 4: РЕАЛИЗИРАНА П/З */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
               РЕАЛИЗИРАНА П/З
@@ -399,7 +399,7 @@ export default function PortfolioTracker({
         </div>
 
         {/* Card 5: CAGR ЛИХВА */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
               CAGR ЛИХВА
@@ -407,7 +407,7 @@ export default function PortfolioTracker({
             <select
               value={cagrHorizon}
               onChange={e => setCagrHorizon(e.target.value as any)}
-              className="bg-[#121c38] text-xs font-bold text-ink border border-border px-1.5 py-0.5 rounded-lg focus:outline-none"
+              className="bg-bg text-xs font-bold text-ink border border-border px-1.5 py-0.5 rounded-lg focus:outline-none"
             >
               <option value="1г.">1г.</option>
               <option value="2г.">2г.</option>
@@ -432,8 +432,8 @@ export default function PortfolioTracker({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
         
         {/* Widget 1: Invest vs Return Bar Chart */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2">
             <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
               <Layers className="w-3.5 h-3.5 text-indigo-400" />
               Invest vs Return
@@ -456,14 +456,14 @@ export default function PortfolioTracker({
               <span>Дивиденти:</span>
               <span>+${totalDivEarned.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between border-t border-white/10 pt-1.5 font-extrabold text-ink">
+            <div className="flex justify-between border-t border-border/40 pt-1.5 font-extrabold text-ink">
               <span>Обща Стойност:</span>
               <span className="text-indigo-400">${(totalCurrentValue + totalDivEarned).toLocaleString('en-US')}</span>
             </div>
           </div>
 
           {/* Graphical Bar Comparison */}
-          <div className="flex items-end justify-center gap-6 h-28 pt-2 bg-card/20 rounded-xl border border-white/5">
+          <div className="flex items-end justify-center gap-6 h-28 pt-2 bg-card/20 rounded-xl border border-border/40">
             <div className="flex flex-col items-center gap-1">
               <span className="text-[9px] text-ink-faint font-bold">${(totalCostBasis / 1000).toFixed(1)}k</span>
               <div className="w-8 bg-gray-600/60 rounded-t-md transition-all" style={{ height: '55%' }}></div>
@@ -478,8 +478,8 @@ export default function PortfolioTracker({
         </div>
 
         {/* Widget 2: Разпределение на активите (Donut Chart) */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2">
             <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
               <Coins className="w-3.5 h-3.5 text-indigo-400" />
               Разпределение на активите
@@ -492,7 +492,7 @@ export default function PortfolioTracker({
             <div className="relative w-28 h-28 rounded-full border-8 border-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/10" style={{
               background: `conic-gradient(#6366f1 0% 65%, #3b82f6 65% 100%)`
             }}>
-              <div className="w-20 h-20 rounded-full bg-[#0b1329] flex items-center justify-center flex-col text-center">
+              <div className="w-20 h-20 rounded-full bg-bg flex items-center justify-center flex-col text-center">
                 <span className="text-[10px] font-extrabold text-ink">PORTFOLIO</span>
                 <span className="text-[9px] text-indigo-400 font-bold">100%</span>
               </div>
@@ -518,8 +518,8 @@ export default function PortfolioTracker({
         </div>
 
         {/* Widget 3: Бенчмарк сравнение */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2 border-b border-white/5 pb-2">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-2 border-b border-border/40 pb-2">
             <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
               Бенчмарк сравнение
@@ -530,24 +530,24 @@ export default function PortfolioTracker({
           </div>
 
           <div className="grid grid-cols-3 gap-1.5 text-center my-2">
-            <div className="bg-card/40 p-1.5 rounded-xl border border-white/5">
+            <div className="bg-card/40 p-1.5 rounded-xl border border-border/40">
               <span className="text-[9px] text-ink-faint font-bold block">Моят Портфе...</span>
               <span className="text-xs font-black text-emerald-400">+62.42%</span>
               <span className="text-[8px] text-ink-faint block">Днес: -0.12%</span>
             </div>
-            <div className="bg-card/40 p-1.5 rounded-xl border border-white/5">
+            <div className="bg-card/40 p-1.5 rounded-xl border border-border/40">
               <span className="text-[9px] text-ink-faint font-bold block">S&P 500 (SPY)</span>
               <span className="text-xs font-black text-emerald-400">+0.61%</span>
               <span className="text-[8px] text-ink-faint block">Дневно движ...</span>
             </div>
-            <div className="bg-card/40 p-1.5 rounded-xl border border-white/5">
+            <div className="bg-card/40 p-1.5 rounded-xl border border-border/40">
               <span className="text-[9px] text-ink-faint font-bold block">Nasdaq-100 (QQQ)</span>
               <span className="text-xs font-black text-emerald-400">+1.17%</span>
               <span className="text-[8px] text-ink-faint block">Технологичен ...</span>
             </div>
           </div>
 
-          <div className="bg-card/20 p-2 rounded-xl border border-white/5 space-y-1.5">
+          <div className="bg-card/20 p-2 rounded-xl border border-border/40 space-y-1.5">
             <span className="text-[9px] text-ink-faint font-bold flex items-center gap-1">
               <Sparkles className="w-2.5 h-2.5 text-amber-400" />
               Кой води в състезанието днес? (Дневно движение)
@@ -579,9 +579,9 @@ export default function PortfolioTracker({
         </div>
 
         {/* Widget 4: AI Инвестиционен Одит (Gemini AI Audit) */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+            <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2">
               <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                 AI Инвестиционен Одит
@@ -608,9 +608,9 @@ export default function PortfolioTracker({
       {/* ======================================================================== */}
       {/* ROW 3: СНД: Списък с Активи (Main Portfolio Table - Image 2)              */}
       {/* ======================================================================== */}
-      <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-bg border border-border rounded-2xl overflow-hidden shadow-xs">
         {/* Table Header Controls */}
-        <div className="p-3 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h3 className="text-xs uppercase font-extrabold text-ink font-sans tracking-wide flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-indigo-400" />
@@ -798,11 +798,13 @@ export default function PortfolioTracker({
       {/* ======================================================================== */}
       {/* ROW 4: ИСТОРИЯ НА ТРАНЗАКЦИИТЕ & ПАЗАРНИ ТЕНДЕНЦИИ (Image 1)              */}
       {/* ======================================================================== */}
+      {/* ROW 4: ТРАНЗАКЦИИ И УПРАВЛЕНИЕ НА КЕША                                   */}
+      {/* ======================================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         
         {/* Left Side: История на транзакциите (2 Cols) */}
-        <div className="lg:col-span-2 bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3 border-b border-white/5 pb-2">
+        <div className="lg:col-span-2 bg-bg border border-border rounded-2xl p-4 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3 border-b border-border/40 pb-2">
             <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
               <History className="w-4 h-4 text-indigo-400" />
               История на транзакциите
@@ -815,14 +817,14 @@ export default function PortfolioTracker({
                 type="date"
                 value={historyFromDate}
                 onChange={e => setHistoryFromDate(e.target.value)}
-                className="bg-[#121c38] text-ink text-[11px] font-bold border border-border px-2 py-0.5 rounded-lg focus:outline-none"
+                className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-0.5 rounded-lg focus:outline-none"
               />
               <span className="text-[10px] font-bold text-ink-faint">ДО:</span>
               <input
                 type="date"
                 value={historyToDate}
                 onChange={e => setHistoryToDate(e.target.value)}
-                className="bg-[#121c38] text-ink text-[11px] font-bold border border-border px-2 py-0.5 rounded-lg focus:outline-none"
+                className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-0.5 rounded-lg focus:outline-none"
               />
             </div>
           </div>
@@ -830,7 +832,7 @@ export default function PortfolioTracker({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse font-sans tabular-nums text-xs">
               <thead>
-                <tr className="border-b border-white/10 text-[9px] font-extrabold uppercase text-ink-faint">
+                <tr className="border-b border-border/40 text-[9px] font-extrabold uppercase text-ink-faint">
                   <th className="py-2 px-3">ДАТА</th>
                   <th className="py-2 px-3">ТИКЕР</th>
                   <th className="py-2 px-3 text-center">ТИП</th>
@@ -841,9 +843,9 @@ export default function PortfolioTracker({
                   <th className="py-2 px-3 text-right">П/З (%)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-ink">
+              <tbody className="divide-y divide-border/40 text-ink">
                 {filteredHistory.map(tx => (
-                  <tr key={tx.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={tx.id} className="hover:bg-indigo-500/10 transition-colors">
                     <td className="py-2 px-3 text-ink-faint font-mono text-[10px]">{tx.date}</td>
                     <td className="py-2 px-3 font-extrabold">{tx.ticker}</td>
                     <td className="py-2 px-3 text-center">
@@ -866,8 +868,8 @@ export default function PortfolioTracker({
         </div>
 
         {/* Right Side: Управление на Кеша (1 Col) */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm space-y-3">
-          <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase border-b border-white/5 pb-2">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs space-y-3">
+          <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase border-b border-border/40 pb-2">
             <Coins className="w-4 h-4 text-emerald-400" />
             Управление на Кеша
           </h4>
@@ -884,7 +886,7 @@ export default function PortfolioTracker({
                   setCashInput(e.target.value);
                   if (onUpdateCash) onUpdateCash(parseFloat(e.target.value) || 0);
                 }}
-                className="w-full bg-[#121c38] text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none font-mono text-sm"
+                className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none font-mono text-sm"
               />
             </div>
 
@@ -896,7 +898,7 @@ export default function PortfolioTracker({
               Запази кеш
             </button>
 
-            <div className="bg-card/30 p-2.5 rounded-xl border border-white/5 text-[11px] text-ink-faint space-y-1">
+            <div className="bg-card/40 p-2.5 rounded-xl border border-border/40 text-[11px] text-ink-faint space-y-1">
               <div className="flex justify-between">
                 <span>Общо в портфейла:</span>
                 <span className="font-extrabold text-ink">${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -917,8 +919,8 @@ export default function PortfolioTracker({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         
         {/* Form Col 1: Добавяне на Нов Актив */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm space-y-3">
-          <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase border-b border-white/5 pb-2">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs space-y-3">
+          <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase border-b border-border/40 pb-2">
             <PlusCircle className="w-4 h-4 text-emerald-400" />
             Добавяне на Нов Актив
           </h4>
@@ -929,7 +931,7 @@ export default function PortfolioTracker({
               <select
                 value={txType}
                 onChange={e => setTxType(e.target.value as any)}
-                className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
+                className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
               >
                 <option value="Покупка">Покупка</option>
                 <option value="Продажба">Продажба</option>
@@ -944,7 +946,7 @@ export default function PortfolioTracker({
                   placeholder="напр. AAPL"
                   value={ticker}
                   onChange={e => handleTickerChange(e.target.value)}
-                  className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none uppercase"
+                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none uppercase"
                   required
                 />
               </div>
@@ -955,7 +957,7 @@ export default function PortfolioTracker({
                   placeholder="напр. Apple Inc."
                   value={companyName}
                   onChange={e => setCompanyName(e.target.value)}
-                  className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
+                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
                 />
               </div>
             </div>
@@ -968,7 +970,7 @@ export default function PortfolioTracker({
                 placeholder="напр. 1.50"
                 value={fee}
                 onChange={e => setFee(e.target.value)}
-                className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
+                className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
               />
             </div>
 
@@ -981,7 +983,7 @@ export default function PortfolioTracker({
                   placeholder="напр. 15"
                   value={shares}
                   onChange={e => setShares(e.target.value)}
-                  className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
+                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
                   required
                 />
               </div>
@@ -991,7 +993,7 @@ export default function PortfolioTracker({
                   type="date"
                   value={buyDate}
                   onChange={e => setBuyDate(e.target.value)}
-                  className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
+                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
                 />
               </div>
             </div>
@@ -1004,7 +1006,7 @@ export default function PortfolioTracker({
                 placeholder="напр. 1.25"
                 value={annualDiv}
                 onChange={e => setAnnualDiv(e.target.value)}
-                className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none text-emerald-400"
+                className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none text-emerald-400"
               />
             </div>
 
@@ -1017,7 +1019,7 @@ export default function PortfolioTracker({
                   placeholder="0.00"
                   value={buyPrice}
                   onChange={e => setBuyPrice(e.target.value)}
-                  className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
+                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
                 />
               </div>
               <div>
@@ -1027,7 +1029,7 @@ export default function PortfolioTracker({
                   placeholder="Автоматично"
                   readOnly
                   value={buyPrice ? `$${buyPrice}` : ''}
-                  className="w-full bg-[#121c38]/50 text-ink-muted font-bold border border-border/50 px-2.5 py-1.5 rounded-xl focus:outline-none"
+                  className="w-full bg-bg/50 text-ink-muted font-bold border border-border/50 px-2.5 py-1.5 rounded-xl focus:outline-none"
                 />
               </div>
             </div>
@@ -1047,8 +1049,8 @@ export default function PortfolioTracker({
 
 
         {/* Form Col 3: Получени Дивиденти (Мини Леджър) */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm space-y-3">
-          <div className="flex items-center justify-between border-b border-white/5 pb-2">
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
             <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
               <Coins className="w-4 h-4 text-emerald-400" />
               Получени Дивиденти (Мини Леджър)
@@ -1065,7 +1067,7 @@ export default function PortfolioTracker({
               placeholder="Ticker"
               value={divTicker}
               onChange={e => setDivTicker(e.target.value)}
-              className="w-20 bg-[#121c38] text-ink font-bold border border-border px-2 py-1 rounded-xl text-xs uppercase focus:outline-none"
+              className="w-20 bg-bg text-ink font-bold border border-border px-2 py-1 rounded-xl text-xs uppercase focus:outline-none"
               required
             />
             <input
@@ -1074,14 +1076,14 @@ export default function PortfolioTracker({
               placeholder="Сума $"
               value={divAmount}
               onChange={e => setDivAmount(e.target.value)}
-              className="w-24 bg-[#121c38] text-ink font-bold border border-border px-2 py-1 rounded-xl text-xs focus:outline-none"
+              className="w-24 bg-bg text-ink font-bold border border-border px-2 py-1 rounded-xl text-xs focus:outline-none"
               required
             />
             <input
               type="date"
               value={divDate}
               onChange={e => setDivDate(e.target.value)}
-              className="w-28 bg-[#121c38] text-ink text-[10px] font-bold border border-border px-1.5 py-1 rounded-xl focus:outline-none"
+              className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-1.5 py-1 rounded-xl focus:outline-none"
             />
             <button
               type="submit"
@@ -1094,7 +1096,7 @@ export default function PortfolioTracker({
 
           {/* Dividend History List */}
           <div className="space-y-1.5 mt-2 max-h-[300px] overflow-y-auto pr-1 custom-mini-scroll">
-            <div className="flex items-center justify-between text-[10px] font-bold text-ink-faint border-b border-white/5 pb-1 uppercase">
+            <div className="flex items-center justify-between text-[10px] font-bold text-ink-faint border-b border-border/40 pb-1 uppercase">
               <span>📋 История ({divRecords.length})</span>
               <span>СУМА</span>
             </div>
@@ -1126,7 +1128,7 @@ export default function PortfolioTracker({
       {/* ======================================================================== */}
       {isAiAuditOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0b1329] border border-indigo-500/40 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-bg border border-border rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-400" />
