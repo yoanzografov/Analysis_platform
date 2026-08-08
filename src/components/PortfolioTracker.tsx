@@ -865,69 +865,56 @@ export default function PortfolioTracker({
           </div>
         </div>
 
-        {/* Right Side: Пазарни Тенденции & Офлайн Сигурност (1 Col) */}
-        <div className="space-y-3">
-          {/* Market Sentiment Badges */}
-          <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm">
-            <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              Пазарни Тенденции
-            </h4>
-            <div className="grid grid-cols-2 gap-2 text-center">
-              <div className="bg-emerald-950/40 border border-emerald-500/30 p-2.5 rounded-xl cursor-pointer hover:bg-emerald-900/40 transition-all">
-                <span className="text-xs font-black text-emerald-400 flex items-center justify-center gap-1">
-                  <TrendingUp className="w-3.5 h-3.5" /> БИЧИ ТРЕНД
-                </span>
-                <span className="text-[10px] text-emerald-300 font-bold block">+10%</span>
-              </div>
+        {/* Right Side: Управление на Кеша (1 Col) */}
+        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm space-y-3">
+          <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase border-b border-white/5 pb-2">
+            <Coins className="w-4 h-4 text-emerald-400" />
+            Управление на Кеша
+          </h4>
 
-              <div className="bg-rose-950/40 border border-rose-500/30 p-2.5 rounded-xl cursor-pointer hover:bg-rose-900/40 transition-all">
-                <span className="text-xs font-black text-rose-400 flex items-center justify-center gap-1">
-                  <TrendingDown className="w-3.5 h-3.5" /> КОРЕКЦИЯ
-                </span>
-                <span className="text-[10px] text-rose-300 font-bold block">-8%</span>
-              </div>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">НАЛИЧЕН КЕШ ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Наличен кеш $"
+                value={cashInput}
+                onChange={e => {
+                  setCashInput(e.target.value);
+                  if (onUpdateCash) onUpdateCash(parseFloat(e.target.value) || 0);
+                }}
+                className="w-full bg-[#121c38] text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none font-mono text-sm"
+              />
+            </div>
 
-              <div className="bg-purple-950/40 border border-purple-500/30 p-2.5 rounded-xl cursor-pointer hover:bg-purple-900/40 transition-all">
-                <span className="text-xs font-black text-purple-300 flex items-center justify-center gap-1">
-                  <Coins className="w-3.5 h-3.5" /> КРИПТО РАЛИ
-                </span>
-                <span className="text-[10px] text-purple-200 font-bold block">+25%</span>
-              </div>
+            <button
+              type="button"
+              onClick={() => alert(`Кеш наличността ($${cashInput}) беше запазена успешно!`)}
+              className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
+            >
+              Запази кеш
+            </button>
 
-              <div className="bg-card/40 border border-white/10 p-2.5 rounded-xl cursor-pointer hover:bg-card/60 transition-all">
-                <span className="text-xs font-black text-ink-muted flex items-center justify-center gap-1">
-                  <RefreshCw className="w-3.5 h-3.5" /> НУЛИРАНЕ
-                </span>
-                <span className="text-[10px] text-ink-faint block">Стандартни</span>
+            <div className="bg-card/30 p-2.5 rounded-xl border border-white/5 text-[11px] text-ink-faint space-y-1">
+              <div className="flex justify-between">
+                <span>Общо в портфейла:</span>
+                <span className="font-extrabold text-ink">${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Свободен кеш:</span>
+                <span className="font-extrabold text-emerald-400">${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
-          </div>
-
-          {/* Cloud & Local Security Banner */}
-          <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm">
-            <h4 className="text-xs font-extrabold text-indigo-400 flex items-center gap-1.5 uppercase mb-1">
-              <ShieldCheck className="w-4 h-4 text-indigo-400" />
-              ОФЛАЙН ЛОКАЛНА СИГУРНОСТ & ОБЛАК
-            </h4>
-            <p className="text-[11px] text-ink-faint leading-relaxed mt-2">
-              Данните за Вашия портфейл са защитени с вашия Admin PIN (1234) и криптирани в облака Firebase. 
-            </p>
-            <button 
-              onClick={() => alert("Вашите данни са напълно криптирани в облака с PIN код 1234!")}
-              className="mt-3 text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
-            >
-              Виж подробно упътване <ChevronRight className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
 
       </div>
 
       {/* ======================================================================== */}
-      {/* ROW 5: FORMS GRID (Image 4 - 3 Columns Side-by-Side)                     */}
+      {/* ROW 5: FORMS GRID (2 Columns Side-by-Side: Add Asset & Dividend Ledger)  */}
       {/* ======================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         
         {/* Form Col 1: Добавяне на Нов Актив */}
         <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm space-y-3">
@@ -1099,81 +1086,7 @@ export default function PortfolioTracker({
           </div>
         </div>
 
-        {/* Form Col 2: Управление на Кеша & API Ключове */}
-        <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm space-y-4">
-          {/* Cash Management */}
-          <div>
-            <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase border-b border-white/5 pb-2 mb-3">
-              <Coins className="w-4 h-4 text-emerald-400" />
-              Управление на Кеша
-            </h4>
 
-            <div className="space-y-2">
-              <label className="block text-[10px] text-ink-faint font-extrabold uppercase">НАЛИЧЕН КЕШ ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Наличен кеш $"
-                value={cashInput}
-                onChange={e => {
-                  setCashInput(e.target.value);
-                  if (onUpdateCash) onUpdateCash(parseFloat(e.target.value) || 0);
-                }}
-                className="w-full bg-[#121c38] text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none font-mono"
-              />
-
-              <button
-                type="button"
-                onClick={() => alert(`Кеш наличността ($${cashInput}) беше запазена успешно!`)}
-                className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
-              >
-                Запази кеш
-              </button>
-            </div>
-          </div>
-
-          {/* API Keys Settings */}
-          <div className="pt-3 border-t border-white/5">
-            <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase mb-3">
-              <Lock className="w-4 h-4 text-amber-400" />
-              Настройки на API Ключове
-            </h4>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ФИНАНСОВ API КЛЮЧ (TWELVE DATA / FMP)</label>
-                <input
-                  type="password"
-                  value="********************************"
-                  readOnly
-                  className="w-full bg-[#121c38]/50 text-ink-faint font-mono border border-border/50 px-3 py-1.5 rounded-xl focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">GEMINI API КЛЮЧ</label>
-                <input
-                  type="password"
-                  value="********************************"
-                  readOnly
-                  className="w-full bg-[#121c38]/50 text-ink-faint font-mono border border-border/50 px-3 py-1.5 rounded-xl focus:outline-none"
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => alert("API ключовете са конфигурирани и активни.")}
-                className="w-full py-2 px-3 rounded-xl bg-[#121c38] hover:bg-card border border-border text-ink font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                Запази API Ключове
-              </button>
-
-              <p className="text-[9px] text-ink-faint leading-tight">
-                Финансовият ключ се използва за автоматични цени, а Gemini ключът - за живия AI Инвестиционен Одит.
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Form Col 3: Получени Дивиденти (Мини Леджър) */}
         <div className="bg-[#0b1329] border border-indigo-500/20 rounded-2xl p-4 shadow-sm space-y-3">
