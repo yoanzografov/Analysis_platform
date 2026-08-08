@@ -11,6 +11,7 @@ import {
   Sparkles, 
   Calendar,
   Check,
+  X,
   XCircle,
   Coins,
   History,
@@ -114,8 +115,9 @@ export default function PortfolioTracker({
     ]
   );
 
-  // AI Audit Modal state
+  // AI Audit Modal & Add Position Modal state
   const [isAiAuditOpen, setIsAiAuditOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [cagrHorizon, setCagrHorizon] = useState<'1г.' | '2г.' | '3г.' | '5г.'>('2г.');
 
   // Date filters for transaction history
@@ -230,6 +232,7 @@ export default function PortfolioTracker({
     setAnnualDiv(pos.annualDivPerShare ? pos.annualDivPerShare.toString() : '');
     setBuyTarget(pos.buyTarget ? pos.buyTarget.toString() : '');
     setSellTarget(pos.sellTarget ? pos.sellTarget.toString() : '');
+    setIsAddModalOpen(true);
   };
 
   const handleAddDividendRecord = (e: React.FormEvent) => {
@@ -618,6 +621,23 @@ export default function PortfolioTracker({
             </h3>
 
             <button 
+              onClick={() => {
+                setEditingId(null);
+                setTicker('');
+                setCompanyName('');
+                setShares('');
+                setBuyPrice('');
+                setFee('0.00');
+                setBuyDate(new Date().toISOString().split('T')[0]);
+                setIsAddModalOpen(true);
+              }}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Добавяне на Нов Актив
+            </button>
+
+            <button 
               onClick={() => window.location.reload()}
               className="bg-card/60 hover:bg-card border border-border text-ink-muted hover:text-ink px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
             >
@@ -914,143 +934,10 @@ export default function PortfolioTracker({
       </div>
 
       {/* ======================================================================== */}
-      {/* ROW 5: FORMS GRID (2 Columns Side-by-Side: Add Asset & Dividend Ledger)  */}
+      {/* ROW 5: DIVIDEND LEDGER                                                   */}
       {/* ======================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        
-        {/* Form Col 1: Добавяне на Нов Актив */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs space-y-3">
-          <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase border-b border-border/40 pb-2">
-            <PlusCircle className="w-4 h-4 text-emerald-400" />
-            Добавяне на Нов Актив
-          </h4>
-
-          <form onSubmit={handleSubmitPosition} className="space-y-2.5 text-xs">
-            <div>
-              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТИП ТРАНЗАЦИЯ</label>
-              <select
-                value={txType}
-                onChange={e => setTxType(e.target.value as any)}
-                className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
-              >
-                <option value="Покупка">Покупка</option>
-                <option value="Продажба">Продажба</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТИКЕР</label>
-                <input
-                  type="text"
-                  placeholder="напр. AAPL"
-                  value={ticker}
-                  onChange={e => handleTickerChange(e.target.value)}
-                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none uppercase"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ИМЕ НА АКТИВА</label>
-                <input
-                  type="text"
-                  placeholder="напр. Apple Inc."
-                  value={companyName}
-                  onChange={e => setCompanyName(e.target.value)}
-                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ПЛАТЕНА ТАКСА ($ fee)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="напр. 1.50"
-                value={fee}
-                onChange={e => setFee(e.target.value)}
-                className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">БРОЙ АКЦИИ</label>
-                <input
-                  type="number"
-                  step="any"
-                  placeholder="напр. 15"
-                  value={shares}
-                  onChange={e => setShares(e.target.value)}
-                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ДАТА НА СДЕЛКАТА</label>
-                <input
-                  type="date"
-                  value={buyDate}
-                  onChange={e => setBuyDate(e.target.value)}
-                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ГОДИШЕН ДИВИДЕНТ ЗА 1 АКЦИЯ ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="напр. 1.25"
-                value={annualDiv}
-                onChange={e => setAnnualDiv(e.target.value)}
-                className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none text-emerald-400"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">СР. ЦЕНА ЗАКУПУВАНЕ ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={buyPrice}
-                  onChange={e => setBuyPrice(e.target.value)}
-                  className="w-full bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТЕКУЩА ПАЗАРНА ЦЕНА ($)</label>
-                <input
-                  type="text"
-                  placeholder="Автоматично"
-                  readOnly
-                  value={buyPrice ? `$${buyPrice}` : ''}
-                  className="w-full bg-bg/50 text-ink-muted font-bold border border-border/50 px-2.5 py-1.5 rounded-xl focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer mt-3"
-            >
-              <PlusCircle className="w-4 h-4" />
-              {txType === 'Покупка' ? 'Купи актив' : 'Продай актив'}
-            </button>
-          </form>
-
-
-        </div>
-
-
-
-        {/* Form Col 3: Получени Дивиденти (Мини Леджър) */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+      <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-border/40 pb-2">
             <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
               <Coins className="w-4 h-4 text-emerald-400" />
               Получени Дивиденти (Мини Леджър)
@@ -1121,7 +1008,154 @@ export default function PortfolioTracker({
           </div>
         </div>
 
-      </div>
+      {/* ======================================================================== */}
+      {/* ADD / EDIT ASSET MODAL DIALOG                                            */}
+      {/* ======================================================================== */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-bg border border-border rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
+                <PlusCircle className="w-5 h-5 text-emerald-400" />
+                {editingId ? 'Редактиране на Актив' : 'Добавяне на Нов Актив'}
+              </h3>
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
+                {formError}
+              </div>
+            )}
+
+            <form onSubmit={(e) => {
+              handleSubmitPosition(e);
+              setIsAddModalOpen(false);
+            }} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТИП ТРАНЗАЦИЯ</label>
+                <select
+                  value={txType}
+                  onChange={e => setTxType(e.target.value as any)}
+                  className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                >
+                  <option value="Покупка">Покупка</option>
+                  <option value="Продажба">Продажба</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТИКЕР</label>
+                  <input
+                    type="text"
+                    placeholder="напр. AAPL"
+                    value={ticker}
+                    onChange={e => handleTickerChange(e.target.value)}
+                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none uppercase"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ИМЕ НА АКТИВА</label>
+                  <input
+                    type="text"
+                    placeholder="напр. Apple Inc."
+                    value={companyName}
+                    onChange={e => setCompanyName(e.target.value)}
+                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ПЛАТЕНА ТАКСА ($ fee)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={fee}
+                  onChange={e => setFee(e.target.value)}
+                  className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">БРОЙ АКЦИИ</label>
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="напр. 15"
+                    value={shares}
+                    onChange={e => setShares(e.target.value)}
+                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ДАТА НА СДЕЛКАТА</label>
+                  <input
+                    type="date"
+                    value={buyDate}
+                    onChange={e => setBuyDate(e.target.value)}
+                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ГОДИШЕН ДИВИДЕНТ ЗА 1 АКЦИЯ ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="напр. 1.25"
+                  value={annualDiv}
+                  onChange={e => setAnnualDiv(e.target.value)}
+                  className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none text-emerald-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">СР. ЦЕНА ЗАКУПУВАНЕ ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={buyPrice}
+                    onChange={e => setBuyPrice(e.target.value)}
+                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТЕКУЩА ПАЗАРНА ЦЕНА ($)</label>
+                  <input
+                    type="text"
+                    placeholder="Автоматично"
+                    readOnly
+                    value={buyPrice ? `$${buyPrice}` : ''}
+                    className="w-full bg-bg/50 text-ink-muted font-bold border border-border/50 px-3 py-2 rounded-xl focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer mt-4"
+              >
+                <PlusCircle className="w-4 h-4" />
+                {editingId ? 'Запази промяната' : (txType === 'Покупка' ? 'Купи актив' : 'Продай актив')}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ======================================================================== */}
       {/* GEMINI AI AUDIT MODAL DIALOG                                              */}
