@@ -115,9 +115,10 @@ export default function PortfolioTracker({
     ]
   );
 
-  // AI Audit Modal & Add Position Modal state
+  // AI Audit Modal, Add Position Modal & Cash Modal state
   const [isAiAuditOpen, setIsAiAuditOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [cagrHorizon, setCagrHorizon] = useState<'1г.' | '2г.' | '3г.' | '5г.'>('2г.');
 
   // Date filters for transaction history
@@ -638,6 +639,14 @@ export default function PortfolioTracker({
             </button>
 
             <button 
+              onClick={() => setIsCashModalOpen(true)}
+              className="bg-card/60 hover:bg-card border border-border text-emerald-400 font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            >
+              <Coins className="w-4 h-4 text-emerald-400" />
+              Кеш: ${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </button>
+
+            <button 
               onClick={() => window.location.reload()}
               className="bg-card/60 hover:bg-card border border-border text-ink-muted hover:text-ink px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
             >
@@ -887,62 +896,14 @@ export default function PortfolioTracker({
           </div>
         </div>
 
-        {/* Right Side: Управление на Кеша (1 Col) */}
+        {/* Right Side: Получени Дивиденти (Мини Леджър) (1 Col) */}
         <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs space-y-3">
-          <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase border-b border-border/40 pb-2">
-            <Coins className="w-4 h-4 text-emerald-400" />
-            Управление на Кеша
-          </h4>
-
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">НАЛИЧЕН КЕШ ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Наличен кеш $"
-                value={cashInput}
-                onChange={e => {
-                  setCashInput(e.target.value);
-                  if (onUpdateCash) onUpdateCash(parseFloat(e.target.value) || 0);
-                }}
-                className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none font-mono text-sm"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => alert(`Кеш наличността ($${cashInput}) беше запазена успешно!`)}
-              className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
-            >
-              Запази кеш
-            </button>
-
-            <div className="bg-card/40 p-2.5 rounded-xl border border-border/40 text-[11px] text-ink-faint space-y-1">
-              <div className="flex justify-between">
-                <span>Общо в портфейла:</span>
-                <span className="font-extrabold text-ink">${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Свободен кеш:</span>
-                <span className="font-extrabold text-emerald-400">${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* ======================================================================== */}
-      {/* ROW 5: DIVIDEND LEDGER                                                   */}
-      {/* ======================================================================== */}
-      <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-border/40 pb-2">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
             <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
               <Coins className="w-4 h-4 text-emerald-400" />
               Получени Дивиденти (Мини Леджър)
             </h4>
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
               Общо: ${totalDivEarned.toFixed(2)}
             </span>
           </div>
@@ -1007,6 +968,10 @@ export default function PortfolioTracker({
             ))}
           </div>
         </div>
+
+      </div>
+
+
 
       {/* ======================================================================== */}
       {/* ADD / EDIT ASSET MODAL DIALOG                                            */}
@@ -1153,6 +1118,67 @@ export default function PortfolioTracker({
                 {editingId ? 'Запази промяната' : (txType === 'Покупка' ? 'Купи актив' : 'Продай актив')}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================== */}
+      {/* CASH MANAGEMENT MODAL DIALOG                                              */}
+      {/* ======================================================================== */}
+      {isCashModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-bg border border-border rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
+                <Coins className="w-5 h-5 text-emerald-400" />
+                Управление на Кеша
+              </h3>
+              <button 
+                onClick={() => setIsCashModalOpen(false)}
+                className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">НАЛИЧЕН КЕШ ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={cashInput}
+                  onChange={e => {
+                    setCashInput(e.target.value);
+                    if (onUpdateCash) onUpdateCash(parseFloat(e.target.value) || 0);
+                  }}
+                  className="w-full bg-bg text-ink font-bold border border-border px-3.5 py-2.5 rounded-xl focus:outline-none font-mono text-base"
+                />
+              </div>
+
+              <div className="bg-card/40 p-3 rounded-2xl border border-border/40 text-xs text-ink-faint space-y-1.5">
+                <div className="flex justify-between">
+                  <span>Обща стойност на портфейла:</span>
+                  <span className="font-extrabold text-ink">${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Свободен кеш:</span>
+                  <span className="font-extrabold text-emerald-400">${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  alert(`Кеш наличността ($${cashInput}) беше запазена успешно!`);
+                  setIsCashModalOpen(false);
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+              >
+                Запази кеш
+              </button>
+            </div>
           </div>
         </div>
       )}
