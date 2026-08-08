@@ -56,9 +56,34 @@ export interface TableFilter {
 export interface PortfolioPosition {
   id: string;
   ticker: string;
+  companyName?: string;
   shares: number;
   buyPrice: number;
+  fee?: number;
   buyDate?: string;
+  fairPrice?: number;
+  annualDivPerShare?: number;
+  buyTarget?: number;
+  sellTarget?: number;
   notes?: string;
+}
+
+export interface PortfolioTransaction {
+  id: string;
+  date: string;
+  ticker: string;
+  type: 'Покупка' | 'Продажба';
+  shares: number;
+  buyPrice: number;
+  sellPrice?: number;
+  pnlVal?: number;
+  pnlPct?: number;
+}
+
+export interface PortfolioDividendRecord {
+  id: string;
+  ticker: string;
+  amount: number;
+  date: string;
 }
 
