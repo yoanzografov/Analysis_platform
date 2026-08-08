@@ -1041,49 +1041,7 @@ export default function PortfolioTracker({
             </button>
           </form>
 
-          {/* Quick Test Assets Buttons */}
-          <div className="pt-2 border-t border-white/5">
-            <span className="text-[10px] font-extrabold uppercase text-amber-400 flex items-center gap-1 mb-2">
-              <Sparkles className="w-3 h-3" /> Бързи тестови активи
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button 
-                type="button"
-                onClick={() => handleQuickAsset('TSLA', 'Tesla, Inc.', 180, 220)}
-                className="bg-card/40 hover:bg-indigo-500/20 border border-white/10 p-2 rounded-xl text-left transition-all"
-              >
-                <span className="text-xs font-black text-ink block">TSLA</span>
-                <span className="text-[9px] text-ink-faint block">Tesla, Inc. • $180</span>
-              </button>
 
-              <button 
-                type="button"
-                onClick={() => handleQuickAsset('MSFT', 'Microsoft Corp.', 420, 460)}
-                className="bg-card/40 hover:bg-indigo-500/20 border border-white/10 p-2 rounded-xl text-left transition-all"
-              >
-                <span className="text-xs font-black text-ink block">MSFT</span>
-                <span className="text-[9px] text-ink-faint block">Microsoft Corp. • $420</span>
-              </button>
-
-              <button 
-                type="button"
-                onClick={() => handleQuickAsset('GOOGL', 'Alphabet Inc.', 175, 200)}
-                className="bg-card/40 hover:bg-indigo-500/20 border border-white/10 p-2 rounded-xl text-left transition-all"
-              >
-                <span className="text-xs font-black text-ink block">GOOGL</span>
-                <span className="text-[9px] text-ink-faint block">Alphabet Inc. • $175</span>
-              </button>
-
-              <button 
-                type="button"
-                onClick={() => handleQuickAsset('SOL', 'Solana', 155, 190)}
-                className="bg-card/40 hover:bg-indigo-500/20 border border-white/10 p-2 rounded-xl text-left transition-all"
-              >
-                <span className="text-xs font-black text-ink block">SOL</span>
-                <span className="text-[9px] text-ink-faint block">Solana • $155</span>
-              </button>
-            </div>
-          </div>
         </div>
 
 
