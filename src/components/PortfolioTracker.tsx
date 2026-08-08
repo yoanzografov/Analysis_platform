@@ -115,10 +115,12 @@ export default function PortfolioTracker({
     ]
   );
 
-  // AI Audit Modal, Add Position Modal & Cash Modal state
+  // AI Audit Modal, Add Position Modal, Cash Modal, History & Dividend Modal state
   const [isAiAuditOpen, setIsAiAuditOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isDividendsModalOpen, setIsDividendsModalOpen] = useState(false);
   const [cagrHorizon, setCagrHorizon] = useState<'1г.' | '2г.' | '3г.' | '5г.'>('2г.');
 
   // Date filters for transaction history
@@ -639,6 +641,22 @@ export default function PortfolioTracker({
             </button>
 
             <button 
+              onClick={() => setIsHistoryModalOpen(true)}
+              className="bg-card/60 hover:bg-card border border-border text-indigo-400 font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            >
+              <History className="w-4 h-4 text-indigo-400" />
+              История на транзакциите ({filteredHistory.length})
+            </button>
+
+            <button 
+              onClick={() => setIsDividendsModalOpen(true)}
+              className="bg-card/60 hover:bg-card border border-border text-emerald-400 font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            >
+              <Coins className="w-4 h-4 text-emerald-400" />
+              Получени дивиденти (${totalDivEarned.toFixed(2)})
+            </button>
+
+            <button 
               onClick={() => setIsCashModalOpen(true)}
               className="bg-card/60 hover:bg-card border border-border text-emerald-400 font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
             >
@@ -840,152 +858,7 @@ export default function PortfolioTracker({
         </div>
       </div>
 
-      {/* ======================================================================== */}
-      {/* ROW 4: ИСТОРИЯ НА ТРАНЗАКЦИИТЕ & ПАЗАРНИ ТЕНДЕНЦИИ (Image 1)              */}
-      {/* ======================================================================== */}
-      {/* ROW 4: ТРАНЗАКЦИИ И УПРАВЛЕНИЕ НА КЕША                                   */}
-      {/* ======================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        
-        {/* Left Side: История на транзакциите (2 Cols) */}
-        <div className="lg:col-span-2 bg-bg border border-border rounded-2xl p-4 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3 border-b border-border/40 pb-2">
-            <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
-              <History className="w-4 h-4 text-indigo-400" />
-              История на транзакциите
-            </h4>
 
-            {/* Date Filters */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-[10px] font-bold text-ink-faint">ОТ:</span>
-              <input
-                type="date"
-                value={historyFromDate}
-                onChange={e => setHistoryFromDate(e.target.value)}
-                className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-0.5 rounded-lg focus:outline-none"
-              />
-              <span className="text-[10px] font-bold text-ink-faint">ДО:</span>
-              <input
-                type="date"
-                value={historyToDate}
-                onChange={e => setHistoryToDate(e.target.value)}
-                className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-0.5 rounded-lg focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse font-sans tabular-nums text-xs">
-              <thead>
-                <tr className="border-b border-border/40 text-[9px] font-extrabold uppercase text-ink-faint">
-                  <th className="py-2 px-3">ДАТА</th>
-                  <th className="py-2 px-3">ТИКЕР</th>
-                  <th className="py-2 px-3 text-center">ТИП</th>
-                  <th className="py-2 px-3 text-right">АКЦИИ</th>
-                  <th className="py-2 px-3 text-right">ПОК. ЦЕНА</th>
-                  <th className="py-2 px-3 text-right">ПРОД. ЦЕНА</th>
-                  <th className="py-2 px-3 text-right">П/З ($)</th>
-                  <th className="py-2 px-3 text-right">П/З (%)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40 text-ink">
-                {filteredHistory.map(tx => (
-                  <tr key={tx.id} className="hover:bg-indigo-500/10 transition-colors">
-                    <td className="py-2 px-3 text-ink-faint font-mono text-[10px]">{tx.date}</td>
-                    <td className="py-2 px-3 font-extrabold">{tx.ticker}</td>
-                    <td className="py-2 px-3 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
-                        tx.type === 'Покупка' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
-                      }`}>
-                        ⊕ {tx.type}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3 text-right font-extrabold">{tx.shares}</td>
-                    <td className="py-2 px-3 text-right font-mono">${tx.buyPrice.toFixed(2)}</td>
-                    <td className="py-2 px-3 text-right font-mono text-ink-faint">{tx.sellPrice ? `$${tx.sellPrice.toFixed(2)}` : '-'}</td>
-                    <td className="py-2 px-3 text-right font-mono text-ink-faint">{(tx.pnlVal || 0).toFixed(2)}</td>
-                    <td className="py-2 px-3 text-right font-mono text-ink-faint">{(tx.pnlPct || 0).toFixed(0)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Right Side: Получени Дивиденти (Мини Леджър) (1 Col) */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-border/40 pb-2">
-            <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
-              <Coins className="w-4 h-4 text-emerald-400" />
-              Получени Дивиденти (Мини Леджър)
-            </h4>
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              Общо: ${totalDivEarned.toFixed(2)}
-            </span>
-          </div>
-
-          {/* Add Dividend Form */}
-          <form onSubmit={handleAddDividendRecord} className="flex items-center gap-1.5">
-            <input
-              type="text"
-              placeholder="Ticker"
-              value={divTicker}
-              onChange={e => setDivTicker(e.target.value)}
-              className="w-20 bg-bg text-ink font-bold border border-border px-2 py-1 rounded-xl text-xs uppercase focus:outline-none"
-              required
-            />
-            <input
-              type="number"
-              step="0.01"
-              placeholder="Сума $"
-              value={divAmount}
-              onChange={e => setDivAmount(e.target.value)}
-              className="w-24 bg-bg text-ink font-bold border border-border px-2 py-1 rounded-xl text-xs focus:outline-none"
-              required
-            />
-            <input
-              type="date"
-              value={divDate}
-              onChange={e => setDivDate(e.target.value)}
-              className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-1.5 py-1 rounded-xl focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="p-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold transition-all cursor-pointer shrink-0"
-              title="Добави дивидент"
-            >
-              <PlusCircle className="w-4 h-4" />
-            </button>
-          </form>
-
-          {/* Dividend History List */}
-          <div className="space-y-1.5 mt-2 max-h-[300px] overflow-y-auto pr-1 custom-mini-scroll">
-            <div className="flex items-center justify-between text-[10px] font-bold text-ink-faint border-b border-border/40 pb-1 uppercase">
-              <span>📋 История ({divRecords.length})</span>
-              <span>СУМА</span>
-            </div>
-
-            {divRecords.map(rec => (
-              <div key={rec.id} className="flex items-center justify-between p-2 rounded-xl bg-card/30 border border-white/5 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-ink">{rec.ticker}</span>
-                  <span className="text-[9px] text-ink-faint font-mono">{rec.date}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-extrabold text-emerald-400">+${rec.amount.toFixed(2)}</span>
-                  <button 
-                    onClick={() => setDivRecords(prev => prev.filter(r => r.id !== rec.id))}
-                    className="text-ink-faint hover:text-red-400"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
 
 
 
@@ -1194,6 +1067,171 @@ export default function PortfolioTracker({
               >
                 Запази кеш
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================== */}
+      {/* TRANSACTION HISTORY MODAL DIALOG                                         */}
+      {/* ======================================================================== */}
+      {isHistoryModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-bg border border-border rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex flex-wrap items-center justify-between border-b border-border/40 pb-3 gap-2">
+              <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
+                <History className="w-5 h-5 text-indigo-400" />
+                История на транзакциите
+              </h3>
+
+              {/* Date Filters */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-[10px] font-bold text-ink-faint">ОТ:</span>
+                <input
+                  type="date"
+                  value={historyFromDate}
+                  onChange={e => setHistoryFromDate(e.target.value)}
+                  className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none"
+                />
+                <span className="text-[10px] font-bold text-ink-faint">ДО:</span>
+                <input
+                  type="date"
+                  value={historyToDate}
+                  onChange={e => setHistoryToDate(e.target.value)}
+                  className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none"
+                />
+              </div>
+
+              <button 
+                onClick={() => setIsHistoryModalOpen(false)}
+                className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-x-auto max-h-[450px] overflow-y-auto pr-1 custom-mini-scroll">
+              <table className="w-full text-left border-collapse font-sans tabular-nums text-xs">
+                <thead>
+                  <tr className="border-b border-border/40 text-[9px] font-extrabold uppercase text-ink-faint sticky top-0 bg-bg z-10">
+                    <th className="py-2.5 px-3">ДАТА</th>
+                    <th className="py-2.5 px-3">ТИКЕР</th>
+                    <th className="py-2.5 px-3 text-center">ТИП</th>
+                    <th className="py-2.5 px-3 text-right">АКЦИИ</th>
+                    <th className="py-2.5 px-3 text-right">ПОК. ЦЕНА</th>
+                    <th className="py-2.5 px-3 text-right">ПРОД. ЦЕНА</th>
+                    <th className="py-2.5 px-3 text-right">П/З ($)</th>
+                    <th className="py-2.5 px-3 text-right">П/З (%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40 text-ink">
+                  {filteredHistory.map(tx => (
+                    <tr key={tx.id} className="hover:bg-indigo-500/10 transition-colors">
+                      <td className="py-2.5 px-3 text-ink-faint font-mono text-[10px]">{tx.date}</td>
+                      <td className="py-2.5 px-3 font-extrabold">{tx.ticker}</td>
+                      <td className="py-2.5 px-3 text-center">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                          tx.type === 'Покупка' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                        }`}>
+                          ⊕ {tx.type}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-extrabold">{tx.shares}</td>
+                      <td className="py-2.5 px-3 text-right font-mono">${tx.buyPrice.toFixed(2)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono text-ink-faint">{tx.sellPrice ? `$${tx.sellPrice.toFixed(2)}` : '-'}</td>
+                      <td className="py-2.5 px-3 text-right font-mono text-ink-faint">{(tx.pnlVal || 0).toFixed(2)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono text-ink-faint">{(tx.pnlPct || 0).toFixed(0)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================== */}
+      {/* DIVIDEND LEDGER MODAL DIALOG                                             */}
+      {/* ======================================================================== */}
+      {isDividendsModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-bg border border-border rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
+                <Coins className="w-5 h-5 text-emerald-400" />
+                Получени Дивиденти (Мини Леджър)
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                  Общо: ${totalDivEarned.toFixed(2)}
+                </span>
+                <button 
+                  onClick={() => setIsDividendsModalOpen(false)}
+                  className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Add Dividend Form */}
+            <form onSubmit={handleAddDividendRecord} className="flex items-center gap-2 bg-card/40 p-3 rounded-2xl border border-border/40">
+              <input
+                type="text"
+                placeholder="Ticker"
+                value={divTicker}
+                onChange={e => setDivTicker(e.target.value)}
+                className="w-20 bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl text-xs uppercase focus:outline-none"
+                required
+              />
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Сума $"
+                value={divAmount}
+                onChange={e => setDivAmount(e.target.value)}
+                className="w-24 bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl text-xs focus:outline-none"
+                required
+              />
+              <input
+                type="date"
+                value={divDate}
+                onChange={e => setDivDate(e.target.value)}
+                className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-2 py-1.5 rounded-xl focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold transition-all cursor-pointer shrink-0"
+                title="Добави дивидент"
+              >
+                <PlusCircle className="w-4 h-4" />
+              </button>
+            </form>
+
+            {/* Dividend History List */}
+            <div className="space-y-1.5 mt-2 max-h-[350px] overflow-y-auto pr-1 custom-mini-scroll">
+              <div className="flex items-center justify-between text-[10px] font-bold text-ink-faint border-b border-border/40 pb-1 uppercase">
+                <span>📋 История ({divRecords.length})</span>
+                <span>СУМА</span>
+              </div>
+
+              {divRecords.map(rec => (
+                <div key={rec.id} className="flex items-center justify-between p-2.5 rounded-xl bg-card/30 border border-white/5 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-ink">{rec.ticker}</span>
+                    <span className="text-[10px] text-ink-faint font-mono">{rec.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-extrabold text-emerald-400">+${rec.amount.toFixed(2)}</span>
+                    <button 
+                      onClick={() => setDivRecords(prev => prev.filter(r => r.id !== rec.id))}
+                      className="text-ink-faint hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
