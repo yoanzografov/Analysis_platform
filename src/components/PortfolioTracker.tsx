@@ -669,28 +669,32 @@ export default function PortfolioTracker({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse font-sans tabular-nums text-xs">
             <thead>
-              <tr className="border-b border-white/10 bg-card/40 text-[9px] font-extrabold uppercase text-ink-faint tracking-wider">
-                <th className="py-2.5 px-3">АКТИВ</th>
-                <th className="py-2.5 px-3 text-right">СР. ЦЕНА</th>
-                <th className="py-2.5 px-3 text-right">ТАКСА</th>
-                <th className="py-2.5 px-3 text-right">БАЗА</th>
-                <th className="py-2.5 px-3 text-center">КУПЕНО НА</th>
-                <th className="py-2.5 px-3 text-center">ДНЕВНА %</th>
-                <th className="py-2.5 px-3 text-right">ТЕКУЩА ЦЕНА</th>
-                <th className="py-2.5 px-3 text-right">($) FAIR PRICE</th>
-                <th className="py-2.5 px-3 text-center">РАЗЛИКА %</th>
-                <th className="py-2.5 px-3 text-center">ДЕЙСТВИЕ</th>
-                <th className="py-2.5 px-3 text-right">П/З %</th>
-                <th className="py-2.5 px-3 text-right">НЕОСЪЩЕСТВЕНА П/З $</th>
-                <th className="py-2.5 px-3 text-right">СТОЙНОСТ</th>
-                <th className="py-2.5 px-3 text-right">ДИВИДЕНТ</th>
+              <tr className="border-b border-border/40 bg-card/40 text-[9px] font-extrabold uppercase text-ink-faint tracking-wider">
+                <th className="py-2.5 px-3">TICKER</th>
+                <th className="py-2.5 px-3">COMPANY NAME</th>
+                <th className="py-2.5 px-3 text-right">% OF PORTFOLIO</th>
+                <th className="py-2.5 px-3 text-right">SHARES</th>
+                <th className="py-2.5 px-3 text-right">AVG. PRICE</th>
+                <th className="py-2.5 px-3 text-right">FEE</th>
+                <th className="py-2.5 px-3 text-right">COST BASIS</th>
+                <th className="py-2.5 px-3 text-center">DATE OF PURCHASE</th>
+                <th className="py-2.5 px-3 text-center">DAILY CHANGE %</th>
+                <th className="py-2.5 px-3 text-right">CURRENT PRICE</th>
+                <th className="py-2.5 px-3 text-right">FAIR PRICE</th>
+                <th className="py-2.5 px-3 text-center">DIFFERENCE</th>
+                <th className="py-2.5 px-3 text-center">BUY / SELL</th>
+                <th className="py-2.5 px-3 text-right">PROFIT / LOSS %</th>
+                <th className="py-2.5 px-3 text-right">UNRLZD P&L ($)</th>
+                <th className="py-2.5 px-3 text-right">VALUE</th>
+                <th className="py-2.5 px-3 text-right">DIVIDEND</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-ink">
+            <tbody className="divide-y divide-border/40 text-ink">
               {enrichedHoldings.map(pos => {
                 const isPosProfit = pos.pnlVal >= 0;
                 const isFairUndervalued = pos.diffVsFair > 0;
                 const isDailyUp = (pos.matching?.dailyChangePct || 0) >= 0;
+                const shareOfPortfolioPct = totalCurrentValue > 0 ? (pos.currentVal / totalCurrentValue) * 100 : 0;
 
                 return (
                   <tr 
@@ -698,38 +702,50 @@ export default function PortfolioTracker({
                     className="hover:bg-indigo-500/10 transition-colors duration-150 group cursor-pointer"
                     onClick={() => handleStartEdit(pos)}
                   >
-                    {/* Ticker & Logo */}
+                    {/* 1. Ticker */}
                     <td className="py-3 px-3 first:rounded-l-xl">
                       <div className="flex items-center gap-2">
                         <StockLogo ticker={pos.ticker} />
-                        <div>
-                          <span className="font-extrabold text-ink block">{pos.ticker}</span>
-                          <span className="text-[9px] text-ink-faint block truncate max-w-[100px]">{pos.companyName || pos.ticker}</span>
-                        </div>
+                        <span className="font-extrabold text-ink">{pos.ticker}</span>
                       </div>
                     </td>
 
-                    {/* Avg Price */}
+                    {/* 2. Company Name */}
+                    <td className="py-3 px-3 text-ink-muted font-bold text-xs truncate max-w-[130px]">
+                      {pos.companyName || pos.ticker}
+                    </td>
+
+                    {/* 3. % of Portfolio */}
+                    <td className="py-3 px-3 text-right font-mono font-bold text-indigo-400">
+                      {shareOfPortfolioPct.toFixed(1)}%
+                    </td>
+
+                    {/* 4. Shares */}
+                    <td className="py-3 px-3 text-right font-extrabold text-ink">
+                      {pos.shares}
+                    </td>
+
+                    {/* 5. Avg. Price */}
                     <td className="py-3 px-3 text-right font-mono text-ink-faint">
                       ${pos.buyPrice.toFixed(2)}
                     </td>
 
-                    {/* Fee */}
+                    {/* 6. Fee */}
                     <td className="py-3 px-3 text-right font-mono text-ink-faint">
                       ${(pos.fee || 0).toFixed(2)}
                     </td>
 
-                    {/* Cost Basis */}
+                    {/* 7. Cost Basis */}
                     <td className="py-3 px-3 text-right font-mono font-bold text-ink">
                       ${pos.costBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
 
-                    {/* Bought On Date */}
+                    {/* 8. Date of Purchase */}
                     <td className="py-3 px-3 text-center text-ink-faint text-[10px]">
                       {pos.buyDate || '-'}
                     </td>
 
-                    {/* Daily Change % */}
+                    {/* 9. Daily Change % */}
                     <td className="py-3 px-3 text-center">
                       <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-extrabold ${
                         isDailyUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
@@ -738,17 +754,17 @@ export default function PortfolioTracker({
                       </span>
                     </td>
 
-                    {/* Current Price */}
+                    {/* 10. Current Price */}
                     <td className="py-3 px-3 text-right font-mono font-black text-ink">
                       ${pos.curPrice.toFixed(2)}
                     </td>
 
-                    {/* Fair Price */}
+                    {/* 11. Fair Price */}
                     <td className="py-3 px-3 text-right font-mono text-indigo-400 font-bold">
                       ${pos.fPrice > 0 ? pos.fPrice.toFixed(2) : '-'}
                     </td>
 
-                    {/* Difference % vs Fair Price */}
+                    {/* 12. Difference % vs Fair Price */}
                     <td className="py-3 px-3 text-center">
                       {pos.fPrice > 0 ? (
                         <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
@@ -761,7 +777,7 @@ export default function PortfolioTracker({
                       )}
                     </td>
 
-                    {/* Quick Action Buttons: BUY / SELL */}
+                    {/* 13. BUY/SELL Buttons */}
                     <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-1">
                         <button
@@ -786,7 +802,7 @@ export default function PortfolioTracker({
                       </div>
                     </td>
 
-                    {/* P/L % */}
+                    {/* 14. Profit / Loss % */}
                     <td className="py-3 px-3 text-right">
                       <span className={`font-mono font-black text-[11px] ${
                         isPosProfit ? 'text-emerald-400' : 'text-rose-400'
@@ -795,19 +811,19 @@ export default function PortfolioTracker({
                       </span>
                     </td>
 
-                    {/* Unrealized P/L $ */}
+                    {/* 15. Unrlzd P&L $ */}
                     <td className="py-3 px-3 text-right font-mono font-extrabold">
                       <span className={isPosProfit ? 'text-emerald-400' : 'text-rose-400'}>
                         {isPosProfit ? '+' : ''}${pos.pnlVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </td>
 
-                    {/* Market Value */}
+                    {/* 16. Value */}
                     <td className="py-3 px-3 text-right font-mono font-black text-ink">
                       ${pos.currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
 
-                    {/* Dividend */}
+                    {/* 17. Dividend */}
                     <td className="py-3 px-3 text-right last:rounded-r-xl">
                       <span className="font-mono text-emerald-400 font-extrabold block">
                         ${((pos.annualDivPerShare || 0) * pos.shares).toFixed(2)}
