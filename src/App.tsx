@@ -938,12 +938,14 @@ export default function App() {
     isSimulating={isSimulating} 
    />
 
- {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
- <MarketSummaryWidgets 
- stocks={stocks}
- activeFilter={activeFilter}
- onSetActiveFilter={setActiveFilter}
- />
+  {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
+  {activeMainTab === 'table' && (
+    <>
+      <MarketSummaryWidgets 
+        stocks={stocks}
+        activeFilter={activeFilter}
+        onSetActiveFilter={setActiveFilter}
+      />
 
   {/* Bento Board: Analytics charts, Distribution */}
   <BentoCharts 
@@ -956,6 +958,8 @@ export default function App() {
   signalThreshold={signalThreshold}
   onUpdateSignalThreshold={handleUpdateSignalThreshold}
   />
+  </>
+  )}
 
   {/* Main Section Tabs Switcher: Интерактивна таблица vs Планиране на персонализирани известия за цена */}
   <div className="space-y-3" id="stock-table-section">
