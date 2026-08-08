@@ -24,7 +24,8 @@ import {
   Layers,
   Lock,
   ArrowUpRight,
-  ExternalLink
+  ExternalLink,
+  PieChart
 } from 'lucide-react';
 
 interface Props {
@@ -483,43 +484,76 @@ export default function PortfolioTracker({
           </div>
         </div>
 
-        {/* Widget 2: Разпределение на активите (Donut Chart) */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2">
-            <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
-              <Coins className="w-3.5 h-3.5 text-indigo-400" />
-              Разпределение на активите
-            </h4>
-            <span className="text-[10px] text-ink-faint">Активи: {enrichedHoldings.length}</span>
-          </div>
+        {/* Widget 2: Portfolio Allocation Holding Breakdown */}
+        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2 border-b border-border/40 pb-2">
+              <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
+                <PieChart className="w-3.5 h-3.5 text-indigo-400" />
+                Portfolio Allocation Holding Breakdown
+              </h4>
+              <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+                {enrichedHoldings.length} актива
+              </span>
+            </div>
 
-          <div className="flex items-center justify-center py-2">
-            {/* Visual CSS Donut */}
-            <div className="relative w-28 h-28 rounded-full border-8 border-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/10" style={{
-              background: `conic-gradient(#6366f1 0% 65%, #3b82f6 65% 100%)`
-            }}>
-              <div className="w-20 h-20 rounded-full bg-bg flex items-center justify-center flex-col text-center">
-                <span className="text-[10px] font-extrabold text-ink">PORTFOLIO</span>
-                <span className="text-[9px] text-indigo-400 font-bold">100%</span>
+            {/* Visual Conic Donut + Legend */}
+            <div className="flex items-center gap-3 my-2">
+              {/* CSS Donut */}
+              <div className="relative w-20 h-20 shrink-0 rounded-full flex items-center justify-center shadow-md shadow-indigo-500/10" style={{
+                background: `conic-gradient(#6366f1 0% 65%, #3b82f6 65% 85%, #10b981 85% 100%)`
+              }}>
+                <div className="w-14 h-14 rounded-full bg-bg flex items-center justify-center flex-col text-center">
+                  <span className="text-[8px] font-extrabold text-ink">TOTAL</span>
+                  <span className="text-[9px] text-indigo-400 font-extrabold">100%</span>
+                </div>
+              </div>
+
+              {/* Progress Bars for Holdings */}
+              <div className="flex-1 space-y-1.5 max-h-[140px] overflow-y-auto pr-1 custom-mini-scroll">
+                {enrichedHoldings.map((h, i) => {
+                  const sharePct = totalCurrentValue > 0 ? (h.currentVal / totalCurrentValue) * 100 : 0;
+                  const barColors = ['bg-indigo-500', 'bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-cyan-500'];
+                  const barColor = barColors[i % barColors.length];
+
+                  return (
+                    <div key={h.id} className="space-y-0.5">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <div className="flex items-center gap-1.5 truncate max-w-[110px]">
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${barColor}`}></span>
+                          <span className="font-extrabold text-ink">{h.ticker}</span>
+                          <span className="text-ink-faint text-[9px] truncate">{h.companyName}</span>
+                        </div>
+                        <span className="font-mono font-bold text-ink text-[10px]">
+                          {sharePct.toFixed(1)}% <span className="text-ink-faint">(${Math.round(h.currentVal)})</span>
+                        </span>
+                      </div>
+                      <div className="w-full bg-card/60 h-1.5 rounded-full overflow-hidden">
+                        <div className={`h-full ${barColor} transition-all duration-300`} style={{ width: `${Math.min(100, Math.max(2, sharePct))}%` }}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Cash Allocation Line */}
+                {parseFloat(cashInput) > 0 && (
+                  <div className="space-y-0.5 border-t border-border/40 pt-1">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full shrink-0 bg-emerald-400"></span>
+                        <span className="font-extrabold text-emerald-400">Свободен Кеш</span>
+                      </div>
+                      <span className="font-mono font-bold text-emerald-400 text-[10px]">
+                        {((parseFloat(cashInput) / (totalCurrentValue + parseFloat(cashInput))) * 100).toFixed(1)}% <span className="text-ink-faint">(${Math.round(parseFloat(cashInput))})</span>
+                      </span>
+                    </div>
+                    <div className="w-full bg-card/60 h-1.5 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-400 transition-all duration-300" style={{ width: `${Math.min(100, Math.max(2, (parseFloat(cashInput) / (totalCurrentValue + parseFloat(cashInput))) * 100))}%` }}></div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-
-          <div className="space-y-1.5 mt-2">
-            {enrichedHoldings.slice(0, 3).map((h, i) => {
-              const sharePct = totalCurrentValue > 0 ? ((h.currentVal / totalCurrentValue) * 100).toFixed(1) : '0';
-              const dotColor = i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-blue-500' : 'bg-purple-500';
-              return (
-                <div key={h.id} className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${dotColor}`}></span>
-                    <span className="font-extrabold text-ink">{h.ticker}</span>
-                    <span className="text-ink-faint text-[10px] truncate max-w-[80px]">{h.companyName}</span>
-                  </div>
-                  <span className="font-bold text-ink">{sharePct}% <span className="text-ink-faint">(${Math.round(h.currentVal)})</span></span>
-                </div>
-              );
-            })}
           </div>
         </div>
 
