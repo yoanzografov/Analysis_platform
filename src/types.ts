@@ -53,3 +53,12 @@ export interface TableFilter {
   value: string;
 }
 
+export interface PortfolioPosition {
+  id: string;
+  ticker: string;
+  shares: number;
+  buyPrice: number;
+  buyDate?: string;
+  notes?: string;
+}
+

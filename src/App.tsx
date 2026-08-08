@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Stock, MarketIndex, PriceAlert, NotificationLog, TableFilter } from './types';
+import { Stock, MarketIndex, PriceAlert, NotificationLog, TableFilter, PortfolioPosition } from './types';
 import { RAW_SPREADSHEET_CSV, parseCSVData } from './data/initialStocks';
 import IndicesStrip from './components/IndicesStrip';
 import { getSectorForStock, formatDividend } from './utils/sectorHelper';
 import CsvUploader from './components/CsvUploader';
 import BentoCharts from './components/BentoCharts';
 import PriceAlertPlanner from './components/PriceAlertPlanner';
+import PortfolioTracker from './components/PortfolioTracker';
 import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
@@ -19,6 +20,7 @@ import {
   Building2, 
   Download, 
   Bell, 
+  Briefcase,
   Play, 
   Calendar,
   Square, 
@@ -56,12 +58,15 @@ export default function App() {
 
  // Price Alert targets
  const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+ const [positions, setPositions] = useState<PortfolioPosition[]>([
+   { id: '1', ticker: 'AAPL', shares: 10, buyPrice: 180.00, buyDate: '2026-02-01', notes: 'Първоначална позиция' }
+ ]);
  const [logs, setLogs] = useState<NotificationLog[]>([]);
  const [activeAlertToast, setActiveAlertToast] = useState<string | null>(null);
 
  // Filter state for the Stock Table, customizable by Bento charts
  const [activeFilter, setActiveFilter] = useState<TableFilter>({ type: 'all', value: 'all' });
- const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts'>('table');
+ const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio'>('table');
 
  // Selected Stock for deep AI Analyst drawer and News Container
  const [selectedStockForAi, setSelectedStockForAi] = useState<Stock | null>(null);
@@ -283,6 +288,7 @@ export default function App() {
           }
           if (data.indices) setIndices(data.indices);
           if (data.alerts) setAlerts(data.alerts);
+          if (data.positions) setPositions(data.positions);
           if (data.settings?.buyThreshold !== undefined) setBuyThreshold(data.settings.buyThreshold);
           else if (data.settings?.buySellThreshold !== undefined) setBuyThreshold(data.settings.buySellThreshold);
           
@@ -314,7 +320,7 @@ export default function App() {
         setAlerts(defaultAlerts);
         setIsLoaded(true);
         
-        const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts, settings: { buyThreshold: 10, sellThreshold: 10 } };
+        const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts, positions: [], settings: { buyThreshold: 10, sellThreshold: 10 } };
         lastSavedRef.current = JSON.stringify(initialData);
         
         setDoc(doc(db, "portfolio", "default"), JSON.parse(JSON.stringify(initialData)))
@@ -340,7 +346,7 @@ export default function App() {
     }
 
     try {
-      const payload = { stocks, indices, alerts, settings: { buyThreshold, sellThreshold } };
+      const payload = { stocks, indices, alerts, positions, settings: { buyThreshold, sellThreshold } };
       const currentDataString = JSON.stringify(payload);
       lastSavedRef.current = currentDataString;
       await setDoc(doc(db, "portfolio", "default"), JSON.parse(JSON.stringify(payload)), { merge: true });
@@ -672,9 +678,38 @@ export default function App() {
     setLogs(prev => [newLog, ...prev]);
   };
 
- const handleDeleteAlert = (id: string) => {
- setAlerts(prev => prev.filter(a => a.id !== id));
- };
+  const handleDeleteAlert = (id: string) => {
+    setAlerts(prev => prev.filter(a => a.id !== id));
+  };
+
+  // Position management controllers for Portfolio Tracker
+  const handleAddPosition = (pos: Omit<PortfolioPosition, 'id'>) => {
+    const newPos: PortfolioPosition = {
+      ...pos,
+      id: `${Date.now()}-${Math.random()}`
+    };
+    setPositions(prev => [newPos, ...prev]);
+
+    const newLog: NotificationLog = {
+      id: `${Date.now()}-${Math.random()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      ticker: pos.ticker,
+      message: `Добавена нова позиция в портфолиото: ${pos.shares} бр. @ $${pos.buyPrice}.`,
+      type: 'success'
+    };
+    setLogs(prev => [newLog, ...prev]);
+    setActiveAlertToast(`💼 Успешно добавена позиция за ${pos.ticker}!`);
+  };
+
+  const handleUpdatePosition = (id: string, updatedPos: Omit<PortfolioPosition, 'id'>) => {
+    setPositions(prev => prev.map(p => p.id === id ? { ...updatedPos, id } : p));
+    setActiveAlertToast(`💼 Обновена позиция за ${updatedPos.ticker}!`);
+  };
+
+  const handleDeletePosition = (id: string) => {
+    setPositions(prev => prev.filter(p => p.id !== id));
+    setActiveAlertToast(`💼 Позицията беше изтрита.`);
+  };
 
  // Export updated stocks table database back as a clean structured CSV spreadsheet
  const exportCSVFile = () => {
@@ -954,12 +989,31 @@ export default function App() {
             </span>
           )}
         </button>
+
+        <button
+          onClick={() => setActiveMainTab('portfolio')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border ${
+            activeMainTab === 'portfolio'
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+              : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
+          }`}
+        >
+          <Briefcase className="w-3.5 h-3.5" />
+          Portfolio Tracker
+          {positions.length > 0 && (
+            <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-500/30 text-white">
+              {positions.length}
+            </span>
+          )}
+        </button>
       </div>
 
       <p className="text-xs text-ink-faint hidden md:block font-sans">
         {activeMainTab === 'table' 
-          ? 'Управление и анализ на портфолиото от акции' 
-          : 'Конфигуриране и следене на ценови тригери'}
+          ? 'Управление и анализ на базата от 200 акции' 
+          : activeMainTab === 'alerts'
+          ? 'Конфигуриране и следене на ценови тригери'
+          : 'Следене на личните закупени акции и портфейл'}
       </p>
     </div>
 
@@ -990,13 +1044,21 @@ export default function App() {
         }}
         onSave={handleSaveToCloud}
       />
-    ) : (
+    ) : activeMainTab === 'alerts' ? (
       <PriceAlertPlanner
         stocks={stocks}
         alerts={alerts}
         onAddAlert={handleAddAlert}
         onUpdateAlert={handleUpdateAlert}
         onDeleteAlert={handleDeleteAlert}
+      />
+    ) : (
+      <PortfolioTracker
+        stocks={stocks}
+        positions={positions}
+        onAddPosition={handleAddPosition}
+        onUpdatePosition={handleUpdatePosition}
+        onDeletePosition={handleDeletePosition}
       />
     )}
   </div>
