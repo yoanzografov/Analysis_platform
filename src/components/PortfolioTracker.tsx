@@ -973,29 +973,16 @@ export default function PortfolioTracker({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ПЛАТЕНА ТАКСА ($ fee)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="напр. 1.50"
-                  value={fee}
-                  onChange={e => setFee(e.target.value)}
-                  className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">FAIR PRICE ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="напр. 195.00"
-                  value={fairPrice}
-                  onChange={e => setFairPrice(e.target.value)}
-                  className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none text-indigo-400"
-                />
-              </div>
+            <div>
+              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ПЛАТЕНА ТАКСА ($ fee)</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="напр. 1.50"
+                value={fee}
+                onChange={e => setFee(e.target.value)}
+                className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -1032,31 +1019,6 @@ export default function PortfolioTracker({
                 onChange={e => setAnnualDiv(e.target.value)}
                 className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none text-emerald-400"
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">🔔 ЦЕЛ ЗА ПОКУПКА ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="напр. 140.00"
-                  value={buyTarget}
-                  onChange={e => setBuyTarget(e.target.value)}
-                  className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">🔔 ЦЕЛ ЗА ПРОДАЖБА ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="напр. 210.00"
-                  value={sellTarget}
-                  onChange={e => setSellTarget(e.target.value)}
-                  className="w-full bg-[#121c38] text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none"
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
