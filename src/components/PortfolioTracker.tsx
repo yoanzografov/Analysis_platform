@@ -162,6 +162,11 @@ export default function PortfolioTracker({
   const [isDividendsModalOpen, setIsDividendsModalOpen] = useState(false);
   const [cagrHorizon, setCagrHorizon] = useState<'1г.' | '2г.' | '3г.' | '5г.'>('2г.');
 
+  // Selected clicked row marker & 10 rows per page pagination
+  const [selectedPosId, setSelectedPosId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Privacy mode & Backup Export/Import logic
   const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => {
     try {
@@ -401,6 +406,10 @@ export default function PortfolioTracker({
       diffVsFair
     };
   });
+
+  // 10 items per page pagination
+  const totalPages = Math.ceil(enrichedHoldings.length / itemsPerPage) || 1;
+  const paginatedHoldings = enrichedHoldings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const totalPortfolioValue = totalCurrentValue + (parseFloat(cashInput) || 0);
   const totalReturnVal = totalCurrentValue - totalCostBasis;
@@ -884,17 +893,25 @@ export default function PortfolioTracker({
                   </td>
                 </tr>
               ) : (
-                enrichedHoldings.map(pos => {
+                paginatedHoldings.map(pos => {
                   const isPosProfit = pos.pnlVal >= 0;
                   const isFairUndervalued = pos.diffVsFair > 0;
                   const isDailyUp = (pos.matching?.dailyChangePct || 0) >= 0;
                   const shareOfPortfolioPct = totalCurrentValue > 0 ? (pos.currentVal / totalCurrentValue) * 100 : 0;
+                  const isSelected = selectedPosId === pos.id;
 
                   return (
                     <tr 
                       key={pos.id}
-                      className="hover:bg-indigo-500/10 transition-colors duration-150 group cursor-pointer"
-                      onClick={() => handleStartEdit(pos)}
+                      className={`transition-all duration-150 group cursor-pointer ${
+                        isSelected 
+                          ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold' 
+                          : 'hover:bg-indigo-500/10'
+                      }`}
+                      onClick={() => {
+                        setSelectedPosId(pos.id);
+                        handleStartEdit(pos);
+                      }}
                     >
                       {/* 1. Ticker */}
                       <td className="py-3 px-4 first:rounded-l-xl">
@@ -902,12 +919,26 @@ export default function PortfolioTracker({
                       </td>
 
                       {/* 2. Company Name */}
-                      <td className="py-3 px-4 min-w-[220px]">
-                        <div className="flex items-center gap-2">
-                          <StockLogo ticker={pos.ticker} />
-                          <span className="text-ink font-bold text-xs whitespace-nowrap">
-                            {pos.companyName || pos.matching?.companyName || pos.ticker}
-                          </span>
+                      <td className="py-3 px-4 min-w-[240px]">
+                        <div className="flex items-center justify-between gap-2 w-full">
+                          <div className="flex items-center gap-2">
+                            <StockLogo ticker={pos.ticker} />
+                            <span className="text-ink font-bold text-xs whitespace-nowrap">
+                              {pos.companyName || pos.matching?.companyName || pos.ticker}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPosId(pos.id);
+                              handleStartEdit(pos);
+                            }}
+                            className="p-1 rounded-md text-indigo-400 opacity-70 group-hover:opacity-100 hover:text-indigo-300 hover:bg-indigo-500/20 transition-all cursor-pointer shrink-0"
+                            title="Редактирай позицията"
+                          >
+                            <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+                          </button>
                         </div>
                       </td>
 
@@ -1059,6 +1090,49 @@ export default function PortfolioTracker({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Table Footer & 10 Rows per Page Pagination */}
+        <div className="p-3 bg-card/40 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans tabular-nums text-xs text-ink/90 gap-2">
+          <div className="flex items-center gap-2">
+            <span>
+              Показване на <span className="font-extrabold text-indigo-400">{enrichedHoldings.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, enrichedHoldings.length)}</span> от <span className="font-extrabold text-ink">{enrichedHoldings.length}</span> позиции
+            </span>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5 self-center sm:self-auto">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                className="px-2.5 py-1 rounded-lg border border-border bg-card/60 hover:bg-card disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-ink transition-all cursor-pointer"
+              >
+                ❮ Предишна
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                    currentPage === page
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-500'
+                      : 'border border-border bg-card/60 hover:bg-card text-ink-muted hover:text-ink'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                className="px-2.5 py-1 rounded-lg border border-border bg-card/60 hover:bg-card disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-ink transition-all cursor-pointer"
+              >
+                Следваща ❯
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
