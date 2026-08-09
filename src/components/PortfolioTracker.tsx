@@ -716,24 +716,24 @@ export default function PortfolioTracker({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse font-sans tabular-nums text-xs">
             <thead>
-              <tr className="border-b border-border/40 bg-card/40 text-[9px] font-extrabold uppercase text-ink-faint tracking-wider">
-                <th className="py-2.5 px-3">TICKER</th>
-                <th className="py-2.5 px-3">COMPANY NAME</th>
-                <th className="py-2.5 px-3 text-right">% OF PORTFOLIO</th>
-                <th className="py-2.5 px-3 text-right">SHARES</th>
-                <th className="py-2.5 px-3 text-right">AVG. PRICE</th>
-                <th className="py-2.5 px-3 text-right">FEE</th>
-                <th className="py-2.5 px-3 text-right">COST BASIS</th>
-                <th className="py-2.5 px-3 text-center">DATE OF PURCHASE</th>
-                <th className="py-2.5 px-3 text-center">DAILY CHANGE %</th>
-                <th className="py-2.5 px-3 text-right">CURRENT PRICE</th>
-                <th className="py-2.5 px-3 text-right">FAIR PRICE</th>
-                <th className="py-2.5 px-3 text-center">DIFFERENCE</th>
-                <th className="py-2.5 px-3 text-center">BUY / SELL</th>
-                <th className="py-2.5 px-3 text-right">PROFIT / LOSS %</th>
-                <th className="py-2.5 px-3 text-right">UNRLZD P&L ($)</th>
-                <th className="py-2.5 px-3 text-right">VALUE</th>
-                <th className="py-2.5 px-3 text-right">DIVIDEND</th>
+              <tr className="border-b-2 border-border bg-card/40 text-xs font-semibold uppercase text-ink/90 tracking-wider">
+                <th className="py-3 px-4 whitespace-nowrap">TICKER</th>
+                <th className="py-3 px-4 whitespace-nowrap">COMPANY NAME</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">% OF PORTFOLIO</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">SHARES</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">AVG. PRICE</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">FEE</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">COST BASIS</th>
+                <th className="py-3 px-4 text-center whitespace-nowrap">DATE OF PURCHASE</th>
+                <th className="py-3 px-4 text-center whitespace-nowrap">DAILY CHANGE %</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">CURRENT PRICE</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">FAIR PRICE</th>
+                <th className="py-3 px-4 text-center whitespace-nowrap">DIFFERENCE</th>
+                <th className="py-3 px-4 text-center whitespace-nowrap">BUY / SELL</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">PROFIT / LOSS %</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">UNRLZD P&L ($)</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">VALUE</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">DIVIDEND</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40 text-ink">
