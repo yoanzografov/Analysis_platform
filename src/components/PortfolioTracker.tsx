@@ -654,7 +654,7 @@ export default function PortfolioTracker({
           <div className="flex items-center gap-3">
             <h3 className="text-xs uppercase font-extrabold text-ink font-sans tracking-wide flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-indigo-400" />
-              СНД: Списък с Активи
+              АКТИВИ
             </h3>
 
             <button 
