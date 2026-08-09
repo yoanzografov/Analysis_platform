@@ -758,7 +758,7 @@ export default function PortfolioTracker({
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
                         <StockLogo ticker={pos.ticker} />
-                        <span className="text-ink-muted font-bold text-xs truncate max-w-[160px]">
+                        <span className="text-ink-muted font-bold text-xs whitespace-nowrap">
                           {pos.companyName || pos.ticker}
                         </span>
                       </div>
