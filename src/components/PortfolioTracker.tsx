@@ -407,9 +407,7 @@ export default function PortfolioTracker({
     };
   });
 
-  // 10 items per page pagination
-  const totalPages = Math.ceil(enrichedHoldings.length / itemsPerPage) || 1;
-  const paginatedHoldings = enrichedHoldings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
 
   const totalPortfolioValue = totalCurrentValue + (parseFloat(cashInput) || 0);
   const totalReturnVal = totalCurrentValue - totalCostBasis;
@@ -896,7 +894,7 @@ export default function PortfolioTracker({
                   </td>
                 </tr>
               ) : (
-                paginatedHoldings.map(pos => {
+                enrichedHoldings.map(pos => {
                   const isPosProfit = pos.pnlVal >= 0;
                   const isFairUndervalued = pos.diffVsFair > 0;
                   const isDailyUp = (pos.matching?.dailyChangePct || 0) >= 0;
@@ -1094,47 +1092,14 @@ export default function PortfolioTracker({
           </table>
         </div>
 
-        {/* Table Footer & 10 Rows per Page Pagination */}
+        {/* Table Status Footer */}
         <div className="p-3 bg-card/40 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans tabular-nums text-xs text-ink/90 gap-2">
-          <div className="flex items-center gap-2">
-            <span>
-              Показване на <span className="font-extrabold text-indigo-400">{enrichedHoldings.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, enrichedHoldings.length)}</span> от <span className="font-extrabold text-ink">{enrichedHoldings.length}</span> позиции
-            </span>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1.5 self-center sm:self-auto">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className="px-2.5 py-1 rounded-lg border border-border bg-card/60 hover:bg-card disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-ink transition-all cursor-pointer"
-              >
-                ❮ Предишна
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
-                    currentPage === page
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-500'
-                      : 'border border-border bg-card/60 hover:bg-card text-ink-muted hover:text-ink'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className="px-2.5 py-1 rounded-lg border border-border bg-card/60 hover:bg-card disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-ink transition-all cursor-pointer"
-              >
-                Следваща ❯
-              </button>
-            </div>
-          )}
+          <span>
+            Показване на всички <span className="font-extrabold text-indigo-400">{enrichedHoldings.length}</span> позиции в портфейла
+          </span>
+          <span className="text-xs text-ink-faint italic">
+            Използвайте скрола за нагоре и надолу за преглед на целия списък
+          </span>
         </div>
       </div>
 
