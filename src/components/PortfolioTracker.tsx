@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Stock, PortfolioPosition, PortfolioTransaction, PortfolioDividendRecord } from '../types';
 import { 
   Briefcase, 
@@ -90,32 +90,64 @@ export default function PortfolioTracker({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState('');
 
-  // Cash management state
-  const [cashInput, setCashInput] = useState(cashBalance.toString());
+  // Cash management state with localStorage persistence
+  const [cashInput, setCashInput] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_cash');
+      if (saved !== null) return saved;
+    } catch (e) {}
+    return cashBalance.toString();
+  });
 
-  // Dividend ledger form state
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_cash', cashInput);
+    } catch (e) {}
+  }, [cashInput]);
+
+  // Dividend ledger form state with localStorage persistence
   const [divTicker, setDivTicker] = useState('AAPL');
   const [divAmount, setDivAmount] = useState('24.58');
   const [divDate, setDivDate] = useState(new Date().toISOString().split('T')[0]);
-  const [divRecords, setDivRecords] = useState<PortfolioDividendRecord[]>(
-    dividends.length > 0 ? dividends : [
+  const [divRecords, setDivRecords] = useState<PortfolioDividendRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_dividends');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return dividends.length > 0 ? dividends : [
       { id: 'd1', ticker: 'AAPL', amount: 24.58, date: '2026-05-01' },
       { id: 'd2', ticker: 'NVDA', amount: 12.00, date: '2026-04-10' },
       { id: 'd3', ticker: 'AAPL', amount: 24.58, date: '2026-03-15' },
-    ]
-  );
+    ];
+  });
 
-  // Transactions History
-  const [history, setHistory] = useState<PortfolioTransaction[]>(
-    transactions.length > 0 ? transactions : [
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_dividends', JSON.stringify(divRecords));
+    } catch (e) {}
+  }, [divRecords]);
+
+  // Transactions History with localStorage persistence
+  const [history, setHistory] = useState<PortfolioTransaction[]>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_transactions');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return transactions.length > 0 ? transactions : [
       { id: 't1', date: '2026-05-29', ticker: 'SXR8', type: 'Покупка', shares: 10, buyPrice: 500.00, pnlVal: 0, pnlPct: 0 },
       { id: 't2', date: '2026-05-29', ticker: 'QCOM', type: 'Покупка', shares: 10, buyPrice: 150.00, pnlVal: 178.70, pnlPct: 11.91 },
       { id: 't3', date: '2026-01-10', ticker: 'AAPL', type: 'Покупка', shares: 10, buyPrice: 150.00, pnlVal: 1633.00, pnlPct: 108.87 },
       { id: 't4', date: '2026-02-15', ticker: 'NVDA', type: 'Покупка', shares: 15, buyPrice: 90.00, pnlVal: 0, pnlPct: 0 },
       { id: 't5', date: '2026-03-20', ticker: 'BTC', type: 'Покупка', shares: 0.5, buyPrice: 48000.00, pnlVal: 0, pnlPct: 0 },
       { id: 't6', date: '2026-04-05', ticker: 'ETH', type: 'Покупка', shares: 2.2, buyPrice: 2200.00, pnlVal: 0, pnlPct: 0 },
-    ]
-  );
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_transactions', JSON.stringify(history));
+    } catch (e) {}
+  }, [history]);
 
   // AI Audit Modal, Add Position Modal, Cash Modal, History & Dividend Modal state
   const [isAiAuditOpen, setIsAiAuditOpen] = useState(false);

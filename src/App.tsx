@@ -56,11 +56,45 @@ export default function App() {
  const [isUsefulLinksMenuOpen, setIsUsefulLinksMenuOpen] = useState(false);
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
 
- // Price Alert targets
- const [alerts, setAlerts] = useState<PriceAlert[]>([]);
- const [positions, setPositions] = useState<PortfolioPosition[]>([
-   { id: '1', ticker: 'AAPL', shares: 10, buyPrice: 180.00, buyDate: '2026-02-01', notes: 'Първоначална позиция' }
- ]);
+  // Price Alert targets & Portfolio Positions persisted to localStorage
+  const [alerts, setAlerts] = useState<PriceAlert[]>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_alerts');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Error loading alerts from localStorage', e);
+    }
+    return [];
+  });
+
+  const [positions, setPositions] = useState<PortfolioPosition[]>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_positions');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Error loading positions from localStorage', e);
+    }
+    return [
+      { id: '1', ticker: 'AAPL', companyName: 'Apple Inc.', shares: 10, buyPrice: 150.00, fee: 0, buyDate: '2026-01-10', fairPrice: 180, annualDivPerShare: 1.00 },
+      { id: '2', ticker: 'QCOM', companyName: 'QUALCOMM Inc.', shares: 10, buyPrice: 150.00, fee: 0, buyDate: '2026-05-29', fairPrice: 180, annualDivPerShare: 3.40 }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_positions', JSON.stringify(positions));
+    } catch (e) {
+      console.error('Error saving positions to localStorage', e);
+    }
+  }, [positions]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_alerts', JSON.stringify(alerts));
+    } catch (e) {
+      console.error('Error saving alerts to localStorage', e);
+    }
+  }, [alerts]);
  const [logs, setLogs] = useState<NotificationLog[]>([]);
  const [activeAlertToast, setActiveAlertToast] = useState<string | null>(null);
 
