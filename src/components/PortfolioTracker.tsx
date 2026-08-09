@@ -281,6 +281,7 @@ export default function PortfolioTracker({
 
     return {
       ...pos,
+      companyName: matching?.companyName || pos.companyName || pos.ticker,
       matching,
       curPrice,
       costBasis,
@@ -714,7 +715,7 @@ export default function PortfolioTracker({
 
         {/* Main Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse font-sans tabular-nums text-xs">
+          <table className="w-full text-left border-collapse font-sans tabular-nums text-xs min-w-[1600px]">
             <thead>
               <tr className="border-b-2 border-border bg-card/40 text-xs font-semibold uppercase text-ink/90 tracking-wider">
                 <th className="py-3 px-4 whitespace-nowrap">TICKER</th>
@@ -750,16 +751,16 @@ export default function PortfolioTracker({
                     onClick={() => handleStartEdit(pos)}
                   >
                     {/* 1. Ticker */}
-                    <td className="py-3 px-3 first:rounded-l-xl">
+                    <td className="py-3 px-4 first:rounded-l-xl">
                       <span className="font-extrabold text-ink">{pos.ticker}</span>
                     </td>
 
                     {/* 2. Company Name */}
-                    <td className="py-3 px-3">
+                    <td className="py-3 px-4 min-w-[220px]">
                       <div className="flex items-center gap-2">
                         <StockLogo ticker={pos.ticker} />
-                        <span className="text-ink-muted font-bold text-xs whitespace-nowrap">
-                          {pos.companyName || pos.ticker}
+                        <span className="text-ink font-bold text-xs whitespace-nowrap">
+                          {pos.companyName || pos.matching?.companyName || pos.ticker}
                         </span>
                       </div>
                     </td>
