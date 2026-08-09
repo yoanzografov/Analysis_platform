@@ -25,7 +25,11 @@ import {
   Lock,
   ArrowUpRight,
   ExternalLink,
-  PieChart
+  PieChart,
+  Eye,
+  EyeOff,
+  Download,
+  Upload
 } from 'lucide-react';
 
 interface Props {
@@ -157,6 +161,67 @@ export default function PortfolioTracker({
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDividendsModalOpen, setIsDividendsModalOpen] = useState(false);
   const [cagrHorizon, setCagrHorizon] = useState<'1г.' | '2г.' | '3г.' | '5г.'>('2г.');
+
+  // Privacy mode & Backup Export/Import logic
+  const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('user_portfolio_privacy') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const togglePrivacyMode = () => {
+    setIsPrivacyMode(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('user_portfolio_privacy', next.toString());
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  const handleExportBackup = () => {
+    const backupData = {
+      positions,
+      history,
+      divRecords,
+      cashInput,
+      exportDate: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `portfolio-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed.positions && Array.isArray(parsed.positions)) {
+          if (window.confirm(`Искате ли да импортирате ${parsed.positions.length} актива от резервния файл?`)) {
+            localStorage.setItem('user_portfolio_positions', JSON.stringify(parsed.positions));
+            if (parsed.history) localStorage.setItem('user_portfolio_transactions', JSON.stringify(parsed.history));
+            if (parsed.divRecords) localStorage.setItem('user_portfolio_dividends', JSON.stringify(parsed.divRecords));
+            if (parsed.cashInput) localStorage.setItem('user_portfolio_cash', parsed.cashInput);
+            window.location.reload();
+          }
+        } else {
+          alert('Невалиден резервен файл на портфолиото.');
+        }
+      } catch (err) {
+        alert('Грешка при четене на файла.');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   // Date filters for transaction history
   const [historyFromDate, setHistoryFromDate] = useState('');
@@ -368,12 +433,12 @@ export default function PortfolioTracker({
           </div>
           <div className="mt-2">
             <span className="text-xl font-extrabold text-ink font-sans tabular-nums">
-              ${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {isPrivacyMode ? '••••••••' : `$${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
           <p className="text-[10px] text-ink-faint mt-1 flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            Вкл. ${parseFloat(cashInput) || 0}.00 свободен кеш
+            Вкл. {isPrivacyMode ? '•••••' : `$${parseFloat(cashInput) || 0}.00`} свободен кеш
           </p>
         </div>
 
@@ -389,7 +454,7 @@ export default function PortfolioTracker({
           </div>
           <div className="mt-2">
             <span className="text-xl font-extrabold text-ink font-sans tabular-nums">
-              ${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {isPrivacyMode ? '••••••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
           <p className="text-[10px] text-ink-faint mt-1">
@@ -415,14 +480,14 @@ export default function PortfolioTracker({
             <span className={`text-xl font-extrabold font-sans tabular-nums ${
               isOverallProfit ? 'text-emerald-400' : 'text-rose-400'
             }`}>
-              {isOverallProfit ? '+' : ''}${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {isPrivacyMode ? '••••••••' : `${isOverallProfit ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
             <span className={`text-xs font-bold px-1.5 py-0.5 rounded-md border ${
               isOverallProfit 
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
                 : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
             }`}>
-              ▲ {totalReturnPct.toFixed(2)}%
+              {isPrivacyMode ? '•••••' : `▲ ${totalReturnPct.toFixed(2)}%`}
             </span>
           </div>
           <p className="text-[10px] text-ink-faint mt-1">
@@ -442,11 +507,11 @@ export default function PortfolioTracker({
           </div>
           <div className="mt-2">
             <span className="text-xl font-extrabold text-emerald-400 font-sans tabular-nums">
-              +$0.00
+              {isPrivacyMode ? '••••••••' : '+$0.00'}
             </span>
           </div>
           <p className="text-[10px] text-ink-faint mt-1">
-            Прогн. див: ${totalDivEarned.toFixed(2)} / 12м
+            Прогн. див: {isPrivacyMode ? '•••••' : `$${totalDivEarned.toFixed(2)}`} / 12м
           </p>
         </div>
 
@@ -750,6 +815,36 @@ export default function PortfolioTracker({
               <RefreshCw className="w-4 h-4 text-indigo-400" />
               Обнови цените в реално време
             </button>
+
+            {/* Privacy Mode Toggle */}
+            <button 
+              onClick={togglePrivacyMode}
+              title={isPrivacyMode ? "Покажи финансовите суми" : "Скрий финансовите суми"}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs border ${
+                isPrivacyMode 
+                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' 
+                  : 'bg-card/60 hover:bg-card border-border text-ink-muted hover:text-ink'
+              }`}
+            >
+              {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-indigo-400" />}
+              {isPrivacyMode ? 'Сумите са скрити' : 'Скрий суми'}
+            </button>
+
+            {/* Export / Import Backup */}
+            <button 
+              onClick={handleExportBackup}
+              title="Свали резервно копие на вашето портфолио"
+              className="bg-card/60 hover:bg-card border border-border text-ink-muted hover:text-ink px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            >
+              <Download className="w-4 h-4 text-emerald-400" />
+              Експорт
+            </button>
+
+            <label title="Възстанови резервно копие на портфолиото" className="bg-card/60 hover:bg-card border border-border text-ink-muted hover:text-ink px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs">
+              <Upload className="w-4 h-4 text-indigo-400" />
+              Импорт
+              <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
+            </label>
           </div>
 
           <span className="text-[10px] text-ink-faint font-extrabold uppercase bg-card/40 px-2.5 py-1 rounded-xl border border-white/5">
@@ -823,22 +918,22 @@ export default function PortfolioTracker({
 
                       {/* 4. Shares */}
                       <td className="py-3 px-3 text-right font-extrabold text-ink">
-                        {pos.shares}
+                        {isPrivacyMode ? '••••' : pos.shares}
                       </td>
 
                       {/* 5. Avg. Price */}
                       <td className="py-3 px-3 text-right font-mono text-ink-faint">
-                        ${pos.buyPrice.toFixed(2)}
+                        {isPrivacyMode ? '••••' : `$${pos.buyPrice.toFixed(2)}`}
                       </td>
 
                       {/* 6. Fee */}
                       <td className="py-3 px-3 text-right font-mono text-ink-faint">
-                        ${(pos.fee || 0).toFixed(2)}
+                        {isPrivacyMode ? '••••' : `$${(pos.fee || 0).toFixed(2)}`}
                       </td>
 
                       {/* 7. Cost Basis */}
                       <td className="py-3 px-3 text-right font-mono font-bold text-ink">
-                        ${pos.costBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {isPrivacyMode ? '••••••••' : `$${pos.costBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </td>
 
                       {/* 8. Date of Purchase */}
@@ -858,7 +953,7 @@ export default function PortfolioTracker({
                       {/* 10. Current Price */}
                       <td className="py-3 px-3 text-right font-mono font-black text-ink">
                         <div className="flex items-center justify-end gap-1.5">
-                          <span>${pos.curPrice.toFixed(2)}</span>
+                          <span>{isPrivacyMode ? '•••••' : `$${pos.curPrice.toFixed(2)}`}</span>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -933,26 +1028,26 @@ export default function PortfolioTracker({
                         <span className={`font-mono font-black text-[11px] ${
                           isPosProfit ? 'text-emerald-400' : 'text-rose-400'
                         }`}>
-                          {isPosProfit ? '▲' : '▼'} {pos.pnlPct.toFixed(2)}%
+                          {isPrivacyMode ? '••••' : `${isPosProfit ? '▲' : '▼'} ${pos.pnlPct.toFixed(2)}%`}
                         </span>
                       </td>
 
                       {/* 15. Unrealized P/L $ */}
                       <td className="py-3 px-3 text-right font-mono font-extrabold">
                         <span className={isPosProfit ? 'text-emerald-400' : 'text-rose-400'}>
-                          {isPosProfit ? '+' : ''}${pos.pnlVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {isPrivacyMode ? '••••••••' : `${isPosProfit ? '+' : ''}$${pos.pnlVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </span>
                       </td>
 
                       {/* 16. Value */}
                       <td className="py-3 px-3 text-right font-mono font-black text-ink">
-                        ${pos.currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {isPrivacyMode ? '••••••••' : `$${pos.currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </td>
 
                       {/* 17. Dividend */}
                       <td className="py-3 px-3 text-right last:rounded-r-xl">
                         <span className="font-mono text-emerald-400 font-extrabold block">
-                          ${((pos.annualDivPerShare || 0) * pos.shares).toFixed(2)}
+                          {isPrivacyMode ? '••••' : `$${((pos.annualDivPerShare || 0) * pos.shares).toFixed(2)}`}
                         </span>
                         <span className="text-[9px] text-ink-faint block">
                           FY: {pos.matching?.dividend || '0.00%'}

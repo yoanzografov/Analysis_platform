@@ -74,10 +74,7 @@ export default function App() {
     } catch (e) {
       console.error('Error loading positions from localStorage', e);
     }
-    return [
-      { id: '1', ticker: 'AAPL', companyName: 'Apple Inc.', shares: 10, buyPrice: 150.00, fee: 0, buyDate: '2026-01-10', fairPrice: 180, annualDivPerShare: 1.00 },
-      { id: '2', ticker: 'QCOM', companyName: 'QUALCOMM Inc.', shares: 10, buyPrice: 150.00, fee: 0, buyDate: '2026-05-29', fairPrice: 180, annualDivPerShare: 3.40 }
-    ];
+    return [];
   });
 
   useEffect(() => {
