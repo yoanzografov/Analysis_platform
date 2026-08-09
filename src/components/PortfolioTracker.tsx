@@ -751,15 +751,17 @@ export default function PortfolioTracker({
                   >
                     {/* 1. Ticker */}
                     <td className="py-3 px-3 first:rounded-l-xl">
-                      <div className="flex items-center gap-2">
-                        <StockLogo ticker={pos.ticker} />
-                        <span className="font-extrabold text-ink">{pos.ticker}</span>
-                      </div>
+                      <span className="font-extrabold text-ink">{pos.ticker}</span>
                     </td>
 
                     {/* 2. Company Name */}
-                    <td className="py-3 px-3 text-ink-muted font-bold text-xs truncate max-w-[130px]">
-                      {pos.companyName || pos.ticker}
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2">
+                        <StockLogo ticker={pos.ticker} />
+                        <span className="text-ink-muted font-bold text-xs truncate max-w-[160px]">
+                          {pos.companyName || pos.ticker}
+                        </span>
+                      </div>
                     </td>
 
                     {/* 3. % of Portfolio */}
