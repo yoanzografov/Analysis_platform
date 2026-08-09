@@ -861,11 +861,14 @@ export default function PortfolioTracker({
           </span>
         </div>
 
-        {/* Main Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse font-sans tabular-nums text-xs min-w-[1600px]">
-            <thead>
-              <tr className="border-b-2 border-border bg-card/40 text-xs font-semibold uppercase text-ink/90 tracking-wider">
+        {/* Main Table Container with Sticky Header & Smooth Scroll */}
+        <div 
+          className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <table className="w-full text-left border-collapse font-sans tabular-nums text-xs min-w-[1600px] table-auto">
+            <thead className="sticky top-0 z-20 bg-bg rounded-2xl">
+              <tr className="bg-bg text-ink/90 border-b-2 border-border text-xs uppercase font-semibold tracking-wider">
                 <th className="py-3 px-4 whitespace-nowrap">TICKER</th>
                 <th className="py-3 px-4 whitespace-nowrap">COMPANY NAME</th>
                 <th className="py-3 px-4 text-right whitespace-nowrap">% OF PORTFOLIO</th>
@@ -910,7 +913,6 @@ export default function PortfolioTracker({
                       }`}
                       onClick={() => {
                         setSelectedPosId(pos.id);
-                        handleStartEdit(pos);
                       }}
                     >
                       {/* 1. Ticker */}
