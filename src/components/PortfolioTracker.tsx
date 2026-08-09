@@ -74,7 +74,8 @@ export default function PortfolioTracker({
   onAddDividend,
   onUpdateCash
 }: Props) {
-  // Main form state
+  // Main form state & currency
+  const [positionCurrency, setPositionCurrency] = useState<'USD' | 'EUR'>('USD');
   const [txType, setTxType] = useState<'Покупка' | 'Продажба'>('Покупка');
   const [ticker, setTicker] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -180,11 +181,14 @@ export default function PortfolioTracker({
       return;
     }
 
+    // Auto-convert price to USD base if entered in EUR
+    const priceInUsd = positionCurrency === 'EUR' ? priceNum * eurUsdRate : priceNum;
+
     const payload = {
       ticker: ticker.trim().toUpperCase(),
       companyName: companyName.trim(),
       shares: sharesNum,
-      buyPrice: priceNum,
+      buyPrice: priceInUsd,
       fee: parseFloat(fee) || 0,
       buyDate: buyDate || new Date().toISOString().split('T')[0],
       fairPrice: parseFloat(fairPrice) || undefined,
@@ -258,6 +262,10 @@ export default function PortfolioTracker({
 
   // Active holdings directly from positions state
   const activeHoldings = positions;
+
+  // Live EUR/USD exchange rate
+  const eurUsdStock = stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
+  const eurUsdRate = eurUsdStock?.currentPrice || eurUsdStock?.priceOfCalc || 1.08;
 
   // Portfolio Dashboard Calculations
   let totalCostBasis = 0;
@@ -1038,27 +1046,67 @@ export default function PortfolioTracker({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">СР. ЦЕНА ЗАКУПУВАНЕ ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={buyPrice}
-                    onChange={e => setBuyPrice(e.target.value)}
-                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
-                  />
+              {/* Currency Selector & Live Exchange Rate Auto-converter */}
+              <div className="p-3 bg-bg/50 rounded-2xl border border-border/50 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-ink-faint font-extrabold uppercase">ВАЛУТА НА АКТИВА</label>
+                  <span className="text-[10px] text-indigo-400 font-bold">
+                    Курс: 1 EUR = ${eurUsdRate.toFixed(4)} USD
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТЕКУЩА ПАЗАРНА ЦЕНА ($)</label>
-                  <input
-                    type="text"
-                    placeholder="Автоматично"
-                    readOnly
-                    value={buyPrice ? `$${buyPrice}` : ''}
-                    className="w-full bg-bg/50 text-ink-muted font-bold border border-border/50 px-3 py-2 rounded-xl focus:outline-none"
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPositionCurrency('USD')}
+                    className={`py-1.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      positionCurrency === 'USD'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-400'
+                        : 'bg-bg text-ink-muted border border-border hover:text-ink'
+                    }`}
+                  >
+                    🇺🇸 USD ($)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPositionCurrency('EUR')}
+                    className={`py-1.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      positionCurrency === 'EUR'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-400'
+                        : 'bg-bg text-ink-muted border border-border hover:text-ink'
+                    }`}
+                  >
+                    🇪🇺 EUR (€)
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                      ЦЕНА ЗАКУПУВАНЕ ({positionCurrency === 'USD' ? '$' : '€'})
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={buyPrice}
+                      onChange={e => setBuyPrice(e.target.value)}
+                      className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                      ПРЕИЗЧИСЛЕНА В {positionCurrency === 'USD' ? 'EUR (€)' : 'USD ($)'}
+                    </label>
+                    <div className="w-full bg-card/60 text-emerald-400 font-extrabold border border-border/50 px-3 py-2 rounded-xl text-xs flex items-center h-[38px]">
+                      {buyPrice && !isNaN(parseFloat(buyPrice)) ? (
+                        positionCurrency === 'USD'
+                          ? `€${(parseFloat(buyPrice) / eurUsdRate).toFixed(2)} EUR`
+                          : `$${(parseFloat(buyPrice) * eurUsdRate).toFixed(2)} USD`
+                      ) : (
+                        positionCurrency === 'USD' ? '€0.00 EUR' : '$0.00 USD'
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
