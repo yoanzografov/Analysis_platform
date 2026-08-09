@@ -76,8 +76,25 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     '^TNX': 'TVC:US10Y',
     '^IRX': 'TVC:US02Y',
     '^TYX': 'TVC:US30Y',
-    'TMBMKDE-10Y': 'TVC:DE10Y',
-    'TMBMKGB-10Y': 'TVC:GB10Y',
+    // Popular European ETFs & Stocks
+    'SXR8': 'XETR:SXR8',
+    'SXR8.DE': 'XETR:SXR8',
+    'EUNL': 'XETR:EUNL',
+    'EUNL.DE': 'XETR:EUNL',
+    'VWCE': 'XETR:VWCE',
+    'VWCE.DE': 'XETR:VWCE',
+    'QDVE': 'XETR:QDVE',
+    'QDVE.DE': 'XETR:QDVE',
+    'IS3N': 'XETR:IS3N',
+    'IS3N.DE': 'XETR:IS3N',
+    'CSPX': 'LSE:CSPX',
+    'CSPX.L': 'LSE:CSPX',
+    'VUSA': 'XETR:VUSA',
+    'VUSA.DE': 'XETR:VUSA',
+    'MEUD': 'EURONEXT:MEUD',
+    'MEUD.PA': 'EURONEXT:MEUD',
+    '4GLD': 'XETR:4GLD',
+    '4GLD.DE': 'XETR:4GLD',
   };
 
   if (ticker && map[ticker]) return map[ticker];

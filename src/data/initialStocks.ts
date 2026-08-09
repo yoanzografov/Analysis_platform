@@ -216,7 +216,8 @@ Watch,ISRG,Intuitive Surgical Inc,,27.01.2026 г.,526.00$,▲ +1.14%,406.78$,1
 ,ADSK,Autodesk Inc,,19.03.2026 г.,247.00$,▲ +0.39%,193.82$,164.00$,-15.39%,SELL,40896022,28.35,6.84$,Линк,,Buy,190.86$,329.09$,
 Watch,INTU,Intuit Inc,,28.04.2026 г.,401.00$,▼ -0.77%,267.00$,370.00$,38.58%,BUY,73034379,16.17,16.51$,,,Buy,259.23$,813.48$,
 ,EXPE,Expedia Group Inc,,05.05.2026 г.,247.00$,▲ +0.60%,240.90$,318.00$,32.00%,BUY,28913299,21.22,11.35$,,,Hold,160.00$,303.80$,
-,HRB,H & R Block Inc,,05.05.2026 г.,36.00$,▼ -2.66%,34.38$,43.00$,25.07%,BUY,4358012,6.09,5.65$,,,Hold,28.16$,57.55$,`;
+,HRB,H & R Block Inc,,05.05.2026 г.,36.00$,▼ -2.66%,34.38$,43.00$,25.07%,BUY,4358012,6.09,5.65$,,,Hold,28.16$,57.55$,
+,SXR8,iShares Core S&P 500 UCITS ETF,,09.08.2026 г.,500.00$,▲ +0.50%,540.00$,580.00$,7.41%,BUY,75000000,-,12.50$,Линк,,Buy,480.00$,560.00$,`;
 
 // Helper to parse a single column value safely, removing quotes and currency symbols if numerical parsing is expected
 function cleanNum(val: string): number | null {

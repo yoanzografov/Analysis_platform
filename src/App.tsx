@@ -162,37 +162,53 @@ export default function App() {
     }));
   };
 
- // Live direct quotes sync from Yahoo Finance backend proxy
- const fetchRealStockPricesDirect = async (stocksList?: Stock[]) => {
- const targetList = stocksList || stocks;
- if (!targetList || targetList.length === 0) return;
+  // Yahoo Finance Ticker Mapping for European & Global ETFs/Stocks
+  const TICKER_YAHOO_MAP: Record<string, string> = {
+    'SXR8': 'SXR8.DE',
+    'EUNL': 'EUNL.DE',
+    'VWCE': 'VWCE.DE',
+    'QDVE': 'QDVE.DE',
+    'IS3N': 'IS3N.DE',
+    'CSPX': 'CSPX.L',
+    'VUSA': 'VUSA.DE',
+    'MEUD': 'MEUD.PA',
+    '4GLD': '4GLD.DE'
+  };
 
- setIsFetchingLivePrices(true);
- try {
- const stockTickers = targetList.map(s => s.ticker).filter(Boolean);
- const defaultIndexTickers = [
- '^GSPC', '^NDX', '^IXIC', '^DJI', '^VIX',
- '^FTSE', '^FCHI', '^GDAXI', '^N100', '^STOXX50E',
- '000001.SS', '^N225', '^HSI', '^AXJO', '^KS11',
- 'CL=F', 'BZ=F', 'GC=F', 'SI=F', 'HG=F', 'NG=F', 'PL=F',
- 'EURUSD=X', 'JPY=X', 'GBP=X', 'USDAUD=X', 'USDCAD=X', 'USDMXN=X', 'USDHKD=X', 'BTC-USD'
- ];
- const indexTickers = indices.length > 0
- ? (indices.map(idx => idx.ticker).filter(Boolean) as string[])
- : defaultIndexTickers;
- const allSymbols = Array.from(new Set([...stockTickers, ...indexTickers]));
+  // Live direct quotes sync from Yahoo Finance backend proxy
+  const fetchRealStockPricesDirect = async (stocksList?: Stock[]) => {
+    const targetList = stocksList || stocks;
+    if (!targetList || targetList.length === 0) return;
 
- const response = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(allSymbols.join(','))}`, { cache: 'no-store' });
- if (!response.ok) {
- throw new Error('Грешка при комуникация със сървъра за котировки');
- }
+    setIsFetchingLivePrices(true);
+    try {
+      const stockTickers = targetList.map(s => s.ticker).filter(Boolean);
+      const mappedStockTickers = stockTickers.map(t => TICKER_YAHOO_MAP[t.trim().toUpperCase()] || t);
+      const defaultIndexTickers = [
+        '^GSPC', '^NDX', '^IXIC', '^DJI', '^VIX',
+        '^FTSE', '^FCHI', '^GDAXI', '^N100', '^STOXX50E',
+        '000001.SS', '^N225', '^HSI', '^AXJO', '^KS11',
+        'CL=F', 'BZ=F', 'GC=F', 'SI=F', 'HG=F', 'NG=F', 'PL=F',
+        'EURUSD=X', 'JPY=X', 'GBP=X', 'USDAUD=X', 'USDCAD=X', 'USDMXN=X', 'USDHKD=X', 'BTC-USD'
+      ];
+      const indexTickers = indices.length > 0
+        ? (indices.map(idx => idx.ticker).filter(Boolean) as string[])
+        : defaultIndexTickers;
+      const allSymbols = Array.from(new Set([...stockTickers, ...mappedStockTickers, ...indexTickers]));
 
- const data = await response.json();
- if (data && data.quotes) {
- setStocks(prevStocks => {
- return prevStocks.map(stock => {
- const quote = data.quotes[stock.ticker.trim().toUpperCase()];
- if (quote) {
+      const response = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(allSymbols.join(','))}`, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error('Грешка при комуникация със сървъра за котировки');
+      }
+
+      const data = await response.json();
+      if (data && data.quotes) {
+        setStocks(prevStocks => {
+          return prevStocks.map(stock => {
+            const sym = stock.ticker.trim().toUpperCase();
+            const mappedSym = TICKER_YAHOO_MAP[sym] || sym;
+            const quote = data.quotes[sym] || data.quotes[mappedSym];
+            if (quote) {
  const nextPrice = quote.currentPrice;
  let difference = stock.difference;
  if (stock.fairPrice !== null && nextPrice > 0) {
@@ -723,6 +739,39 @@ export default function App() {
       id: `${Date.now()}-${Math.random()}`
     };
     setPositions(prev => [newPos, ...prev]);
+
+    // Ensure stock exists in tracking database for real-time price fetching
+    const tickerUpper = pos.ticker.trim().toUpperCase();
+    setStocks(prev => {
+      if (prev.some(s => s.ticker === tickerUpper)) return prev;
+      const newStock: Stock = {
+        watch: '',
+        ticker: tickerUpper,
+        companyName: pos.companyName || tickerUpper,
+        date: new Date().toLocaleDateString(),
+        priceOfCalc: pos.buyPrice,
+        dailyChangePct: 0,
+        currentPrice: pos.buyPrice,
+        fairPrice: pos.fairPrice || null,
+        difference: null,
+        buySell: 'HOLD',
+        marketCap: null,
+        peRatio: null,
+        eps: null,
+        profileLink: '',
+        dividend: pos.annualDivPerShare ? `${pos.annualDivPerShare}$` : '',
+        signal: 'Hold',
+        low52: null,
+        high52: null,
+        aiAnalysis: ''
+      };
+      return [...prev, newStock];
+    });
+
+    // Refresh live prices for new ticker
+    setTimeout(() => {
+      fetchRealStockPricesDirect();
+    }, 150);
 
     const newLog: NotificationLog = {
       id: `${Date.now()}-${Math.random()}`,
