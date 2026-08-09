@@ -118,6 +118,7 @@ export default function PortfolioTracker({
 
   // AI Audit Modal, Add Position Modal, Cash Modal, History & Dividend Modal state
   const [isAiAuditOpen, setIsAiAuditOpen] = useState(false);
+  const [tvModalTicker, setTvModalTicker] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -810,7 +811,21 @@ export default function PortfolioTracker({
 
                       {/* 10. Current Price */}
                       <td className="py-3 px-3 text-right font-mono font-black text-ink">
-                        ${pos.curPrice.toFixed(2)}
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span>${pos.curPrice.toFixed(2)}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTvModalTicker(pos.ticker);
+                            }}
+                            className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-sans font-bold transition-all border border-indigo-500/20 flex items-center gap-0.5 cursor-pointer shadow-xs"
+                            title={`Отвори TradingView НА ЖИВО графика за ${pos.ticker}`}
+                          >
+                            <TrendingUp className="w-2.5 h-2.5 text-indigo-400" />
+                            TV
+                          </button>
+                        </div>
                       </td>
 
                       {/* 11. Fair Price */}
@@ -1327,6 +1342,38 @@ export default function PortfolioTracker({
               >
                 Затвори Одита
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TradingView Live Chart Modal Popup */}
+      {tvModalTicker && (
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 bg-bg/80 backdrop-blur-md font-sans"
+          onClick={(e) => { if (e.target === e.currentTarget) setTvModalTicker(null); }}
+        >
+          <div className="w-full max-w-4xl bg-card border-2 border-indigo-500/40 rounded-3xl p-5 shadow-2xl relative h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-sm font-extrabold uppercase text-ink">
+                  TradingView НА ЖИВО Графика — {tvModalTicker}
+                </h3>
+              </div>
+              <button
+                onClick={() => setTvModalTicker(null)}
+                className="p-1.5 rounded-full hover:bg-card/60 text-ink-muted hover:text-ink transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 w-full h-full rounded-2xl overflow-hidden bg-bg">
+              <iframe
+                title={`TradingView Chart for ${tvModalTicker}`}
+                src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_1&symbol=${tvModalTicker}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC`}
+                className="w-full h-full border-0 rounded-2xl"
+              />
             </div>
           </div>
         </div>
