@@ -10,11 +10,35 @@ const EXCHANGE_MAP: Record<string, string> = {
   "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO"
 };
 
+// Known plain European/International ticker to Yahoo Finance symbol mapping
+const PLAIN_EUROPEAN_MAP: Record<string, string> = {
+  "SXR8": "SXR8.DE",
+  "EUNL": "EUNL.DE",
+  "VWCE": "VWCE.DE",
+  "QDVE": "QDVE.DE",
+  "IS3N": "IS3N.DE",
+  "CSPX": "CSPX.L",
+  "CSSPX": "CSSPX.MI",
+  "VUSA": "VUSA.DE",
+  "MEUD": "MEUD.PA",
+  "4GLD": "4GLD.DE",
+  "IWDA": "IWDA.AS",
+  "EMIM": "EMIM.L",
+  "INRG": "INRG.L",
+  "RBOT": "RBOT.L",
+  "IUIT": "IUIT.L",
+  "SX8P": "SX8P.DE"
+};
+
 function toYahooSymbol(ticker: string): string {
-  if (!ticker.includes(":")) return ticker;
-  const colonIdx = ticker.indexOf(":");
-  const prefix = ticker.slice(0, colonIdx);
-  let raw = ticker.slice(colonIdx + 1);
+  const upper = ticker.trim().toUpperCase();
+  if (PLAIN_EUROPEAN_MAP[upper]) {
+    return PLAIN_EUROPEAN_MAP[upper];
+  }
+  if (!upper.includes(":")) return upper;
+  const colonIdx = upper.indexOf(":");
+  const prefix = upper.slice(0, colonIdx);
+  let raw = upper.slice(colonIdx + 1);
   // Known ticker remaps
   if (prefix === "ETR" && raw === "DHL") raw = "DPW";
   return EXCHANGE_MAP[prefix] ? raw + EXCHANGE_MAP[prefix] : raw + "." + prefix;

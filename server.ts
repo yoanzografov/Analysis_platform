@@ -1521,7 +1521,28 @@ app.get("/api/stock-quotes", async (req, res) => {
         "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO"
       };
 
-      if (t.includes(":")) {
+      const plainEuropeanMap: Record<string, string> = {
+        "SXR8": "SXR8.DE",
+        "EUNL": "EUNL.DE",
+        "VWCE": "VWCE.DE",
+        "QDVE": "QDVE.DE",
+        "IS3N": "IS3N.DE",
+        "CSPX": "CSPX.L",
+        "CSSPX": "CSSPX.MI",
+        "VUSA": "VUSA.DE",
+        "MEUD": "MEUD.PA",
+        "4GLD": "4GLD.DE",
+        "IWDA": "IWDA.AS",
+        "EMIM": "EMIM.L",
+        "INRG": "INRG.L",
+        "RBOT": "RBOT.L",
+        "IUIT": "IUIT.L",
+        "SX8P": "SX8P.DE"
+      };
+
+      if (plainEuropeanMap[t]) {
+        ySym = plainEuropeanMap[t];
+      } else if (t.includes(":")) {
         const parts = t.split(":");
         const prefix = parts[0];
         let raw = parts[1];
