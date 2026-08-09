@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter, PriceAlert } from '../types';
-import { Search, Sparkles, TrendingUp, TrendingDown, Edit2, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell } from 'lucide-react';
+import { Search, Sparkles, TrendingUp, TrendingDown, Edit3, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
 import EarningsModal from './EarningsModal';
@@ -765,7 +765,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
   </td>
 
   {/* 3. COMPANY NAME */}
-  <td className="py-3 px-4 text-ink font-sans font-medium hover:text-ink transition-colors overflow-hidden text-ellipsis whitespace-nowrap">
+  <td className="py-3 px-4 text-ink font-sans font-medium hover:text-ink transition-colors overflow-hidden text-ellipsis whitespace-nowrap min-w-[220px]">
   {isEditing ? (
   <div className="flex items-center gap-2">
     <StockLogo ticker={stock.ticker} />
@@ -777,18 +777,21 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
     />
   </div>
   ) : (
-  <div className="flex items-center gap-2 group/cell">
-    <StockLogo ticker={stock.ticker} />
-    <div className="flex items-center justify-between gap-1 w-full overflow-hidden">
+  <div className="flex items-center justify-between gap-2 w-full">
+    <div className="flex items-center gap-2 min-w-0">
+      <StockLogo ticker={stock.ticker} />
       <span className="truncate">{stock.companyName}</span>
-      <button
-      onClick={() => startInlineEdit(stock)}
-      className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
-      title="Редактирай име"
-      >
-      <Edit2 className="w-2.5 h-2.5" />
-      </button>
     </div>
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        startInlineEdit(stock);
+      }}
+      className="p-1 rounded-md text-indigo-400 opacity-70 group-hover:opacity-100 hover:text-indigo-300 hover:bg-indigo-500/20 transition-all cursor-pointer shrink-0"
+      title="Редактирай ред"
+    >
+      <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+    </button>
   </div>
   )}
   </td>
@@ -866,16 +869,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  className="w-full bg-bg rounded-2xl text-left font-sans tabular-nums text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none cursor-pointer"
  />
  ) : (
- <div className="flex items-center justify-between gap-1 group/cell">
- <span className="truncate">{stock.date || '-'}</span>
- <button
- onClick={() => startInlineEdit(stock)}
- className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
- title="Редактирай дата"
- >
- <Edit2 className="w-2.5 h-2.5" />
- </button>
- </div>
+ <span>{stock.date || '-'}</span>
  )}
  </td>
 
@@ -890,16 +884,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  placeholder="-"
  />
  ) : (
- <div className="flex items-center justify-end gap-1 group/cell">
  <span>{stock.priceOfCalc !== null ? `$${stock.priceOfCalc.toFixed(2)}` : '-'}</span>
- <button
- onClick={() => startInlineEdit(stock)}
- className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
- title="Редактирай калк. цена"
- >
- <Edit2 className="w-2.5 h-2.5" />
- </button>
- </div>
  )}
  </td>
 
@@ -944,16 +929,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  placeholder="-"
  />
  ) : (
- <div className="flex items-center justify-end gap-1 group/cell">
  <span>{stock.fairPrice !== null ? `$${stock.fairPrice.toFixed(2)}` : 'N/A'}</span>
- <button
- onClick={() => startInlineEdit(stock)}
- className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-[#10b981] hover:text-ink transition-opacity p-0.5 shrink-0"
- title="Редактирай справедлива цена"
- >
- <Edit2 className="w-2.5 h-2.5" />
- </button>
- </div>
  )}
  </td>
 
@@ -1026,21 +1002,12 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  className="w-full bg-bg rounded-2xl text-left font-sans tabular-nums text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
  />
  ) : (
- <div className="flex items-center justify-between gap-1 group/cell">
  <span className="truncate font-semibold text-xs uppercase">
     {stock.signal?.trim().toLowerCase() === 'buy' ? 'КУПУВАЙ' : 
      stock.signal?.trim().toLowerCase() === 'sell' ? 'ПРОДАВАЙ' : 
      stock.signal?.trim().toLowerCase() === 'hold' ? 'ИЗЧАКАЙ' : 
      (stock.signal || '-')}
   </span>
- <button
- onClick={() => startInlineEdit(stock)}
- className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
- title="Редактирай сигнал"
- >
- <Edit2 className="w-2.5 h-2.5" />
- </button>
- </div>
  )}
  </td>
 
@@ -1055,16 +1022,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  placeholder="-"
  />
  ) : (
- <div className="flex items-center justify-end gap-1 group/cell">
  <span>{stock.low52 !== null ? `$${stock.low52.toFixed(2)}` : '-'}</span>
- <button
- onClick={() => startInlineEdit(stock)}
- className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
- title="Редактирай 52W Low"
- >
- <Edit2 className="w-2.5 h-2.5" />
- </button>
- </div>
  )}
  </td>
 
@@ -1086,7 +1044,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
  title="Редактирай 52W High"
  >
- <Edit2 className="w-2.5 h-2.5" />
+  <span />
  </button>
  </div>
  )}
