@@ -161,7 +161,16 @@ export default function App() {
 
   // Yahoo Finance Ticker Mapping for European & Global ETFs/Stocks
   const TICKER_YAHOO_MAP: Record<string, string> = {
+    'XNAS': 'XNAS.DE',
+    'XNAS.DE': 'XNAS.DE',
+    'VHYL': 'VHYL.AS',
+    'VHYL.DE': 'VHYL.AS',
+    'VGWD': 'VGWD.DE',
+    'VGWD.DE': 'VGWD.DE',
+    'JGPI': 'JGPI.DE',
+    'JGPI.DE': 'JGPI.DE',
     'SXR8': 'SXR8.DE',
+    'SXR8.DE': 'SXR8.DE',
     'EUNL': 'EUNL.DE',
     'VWCE': 'VWCE.DE',
     'QDVE': 'QDVE.DE',
@@ -204,7 +213,8 @@ export default function App() {
           return prevStocks.map(stock => {
             const sym = stock.ticker.trim().toUpperCase();
             const mappedSym = TICKER_YAHOO_MAP[sym] || sym;
-            const quote = data.quotes[sym] || data.quotes[mappedSym];
+            const baseSym = sym.split('.')[0].split(':')[1] || sym.split('.')[0];
+            const quote = data.quotes[sym] || data.quotes[mappedSym] || data.quotes[baseSym] || data.quotes[`${baseSym}.DE`] || data.quotes[`${baseSym}.AS`];
             if (quote) {
  const nextPrice = quote.currentPrice;
  let difference = stock.difference;

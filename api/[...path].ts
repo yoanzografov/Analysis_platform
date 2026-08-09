@@ -12,7 +12,16 @@ const EXCHANGE_MAP: Record<string, string> = {
 
 // Known plain European/International ticker to Yahoo Finance symbol mapping
 const PLAIN_EUROPEAN_MAP: Record<string, string> = {
+  "XNAS": "XNAS.DE",
+  "XNAS.DE": "XNAS.DE",
+  "VHYL": "VHYL.AS",
+  "VHYL.DE": "VHYL.AS",
+  "VGWD": "VGWD.DE",
+  "VGWD.DE": "VGWD.DE",
+  "JGPI": "JGPI.DE",
+  "JGPI.DE": "JGPI.DE",
   "SXR8": "SXR8.DE",
+  "SXR8.DE": "SXR8.DE",
   "EUNL": "EUNL.DE",
   "VWCE": "VWCE.DE",
   "QDVE": "QDVE.DE",
@@ -166,29 +175,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const built = buildResult(q);
       if (built) {
         results[orig] = built;
-        const baseSym = orig.split('.')[0];
+        const baseSym = orig.split('.')[0].split(':')[1] || orig.split('.')[0];
         results[baseSym] = built;
         results[`${baseSym}.DE`] = built;
+        results[`${baseSym}.AS`] = built;
       }
     }
 
-    // --- Step 2: v8 fallback for any still-missing tickers (like SXR8.DE) ---
+    // --- Step 2: v8 fallback for any still-missing tickers (like SXR8.DE, VHYL, XNAS) ---
     const missing = tickers.filter(t => !results[t] || !results[t].currentPrice);
     if (missing.length > 0) {
       await Promise.allSettled(missing.map(async (t) => {
-        const ySym = originalToYahoo[t] || (t.includes('.') ? t : `${t}.DE`);
-        try {
-          const q = await fetchYahooV8Single(ySym);
-          if (q) {
-            const built = buildResult({ ...q, symbol: ySym });
-            if (built) {
-              results[t] = built;
-              const baseSym = t.split('.')[0];
-              results[baseSym] = built;
-              results[`${baseSym}.DE`] = built;
+        const baseSym = t.split('.')[0].split(':')[1] || t.split('.')[0];
+        const candidates = [
+          originalToYahoo[t],
+          t,
+          `${baseSym}.DE`,
+          `${baseSym}.AS`,
+          `${baseSym}.L`,
+          t === 'VHYL' || t === 'VHYL.DE' ? 'VGWD.DE' : null
+        ].filter((c): c is string => Boolean(c));
+
+        const uniqueCandidates = [...new Set(candidates)];
+        for (const candidate of uniqueCandidates) {
+          try {
+            const q = await fetchYahooV8Single(candidate);
+            if (q && q.regularMarketPrice != null) {
+              const built = buildResult({ ...q, symbol: candidate });
+              if (built) {
+                results[t] = built;
+                results[baseSym] = built;
+                results[`${baseSym}.DE`] = built;
+                results[`${baseSym}.AS`] = built;
+                break;
+              }
             }
-          }
-        } catch {}
+          } catch {}
+        }
       }));
     }
 
