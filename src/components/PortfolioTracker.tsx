@@ -705,11 +705,6 @@ export default function PortfolioTracker({
               <RefreshCw className="w-3 h-3 text-indigo-400" />
               Обнови цените в реално време
             </button>
-
-            <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 hidden sm:inline-flex">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Пазарите са активни (НА ЖИВО през Yahoo Finance)
-            </span>
           </div>
 
           <span className="text-[10px] text-ink-faint font-extrabold uppercase bg-card/40 px-2.5 py-1 rounded-xl border border-white/5">
