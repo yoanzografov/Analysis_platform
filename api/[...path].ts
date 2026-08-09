@@ -164,19 +164,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const qSym = q.symbol.toUpperCase();
       const orig = yahooToOriginal[qSym] || qSym;
       const built = buildResult(q);
-      if (built) results[orig] = built;
+      if (built) {
+        results[orig] = built;
+        const baseSym = orig.split('.')[0];
+        results[baseSym] = built;
+        results[`${baseSym}.DE`] = built;
+      }
     }
 
-    // --- Step 2: v8 fallback for any still-missing tickers ---
-    const missing = tickers.filter(t => !results[t]);
+    // --- Step 2: v8 fallback for any still-missing tickers (like SXR8.DE) ---
+    const missing = tickers.filter(t => !results[t] || !results[t].currentPrice);
     if (missing.length > 0) {
       await Promise.allSettled(missing.map(async (t) => {
-        const ySym = originalToYahoo[t];
+        const ySym = originalToYahoo[t] || (t.includes('.') ? t : `${t}.DE`);
         try {
           const q = await fetchYahooV8Single(ySym);
           if (q) {
             const built = buildResult({ ...q, symbol: ySym });
-            if (built) results[t] = built;
+            if (built) {
+              results[t] = built;
+              const baseSym = t.split('.')[0];
+              results[baseSym] = built;
+              results[`${baseSym}.DE`] = built;
+            }
           }
         } catch {}
       }));

@@ -1510,6 +1510,25 @@ app.get("/api/stock-quotes", async (req, res) => {
     const originalToYahoo: Record<string, string> = {};
     const yahooToOriginal: Record<string, string> = {};
 
+    const plainEuropeanMap: Record<string, string> = {
+      "SXR8": "SXR8.DE",
+      "EUNL": "EUNL.DE",
+      "VWCE": "VWCE.DE",
+      "QDVE": "QDVE.DE",
+      "IS3N": "IS3N.DE",
+      "CSPX": "CSPX.L",
+      "CSSPX": "CSSPX.MI",
+      "VUSA": "VUSA.DE",
+      "MEUD": "MEUD.PA",
+      "4GLD": "4GLD.DE",
+      "IWDA": "IWDA.AS",
+      "EMIM": "EMIM.L",
+      "INRG": "INRG.L",
+      "RBOT": "RBOT.L",
+      "IUIT": "IUIT.L",
+      "SX8P": "SX8P.DE"
+    };
+
     for (const t of tickers) {
       let ySym = t;
       const googleToYahooMap: Record<string, string> = {
@@ -1519,25 +1538,6 @@ app.get("/api/stock-quotes", async (req, res) => {
         "ATH": ".AT", "IST": ".IS", "WSE": ".WA", "PRG": ".PR", "TSE": ".T",
         "HKG": ".HK", "BSE": ".BO", "NSE": ".NS", "TPE": ".TW", "ASX": ".AX",
         "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO"
-      };
-
-      const plainEuropeanMap: Record<string, string> = {
-        "SXR8": "SXR8.DE",
-        "EUNL": "EUNL.DE",
-        "VWCE": "VWCE.DE",
-        "QDVE": "QDVE.DE",
-        "IS3N": "IS3N.DE",
-        "CSPX": "CSPX.L",
-        "CSSPX": "CSSPX.MI",
-        "VUSA": "VUSA.DE",
-        "MEUD": "MEUD.PA",
-        "4GLD": "4GLD.DE",
-        "IWDA": "IWDA.AS",
-        "EMIM": "EMIM.L",
-        "INRG": "INRG.L",
-        "RBOT": "RBOT.L",
-        "IUIT": "IUIT.L",
-        "SX8P": "SX8P.DE"
       };
 
       if (plainEuropeanMap[t]) {
@@ -1600,7 +1600,7 @@ app.get("/api/stock-quotes", async (req, res) => {
         }
 
         if (currentPrice !== undefined && currentPrice !== null) {
-          results[originalTicker] = {
+          const quoteObj = {
             currentPrice: parseFloat(currentPrice.toFixed(2)),
             dailyChangePct: parseFloat((dailyChangePct || 0).toFixed(2)),
             changeVal: changeVal !== undefined && changeVal !== null ? parseFloat(changeVal.toFixed(2)) : 0,
@@ -1614,15 +1614,55 @@ app.get("/api/stock-quotes", async (req, res) => {
             dividendYield: q.dividendYield !== undefined ? q.dividendYield : q.trailingAnnualDividendYield,
             earningsTimestamp: q.earningsTimestamp ?? undefined,
           };
+          results[originalTicker] = quoteObj;
+          const baseSym = originalTicker.split('.')[0];
+          results[baseSym] = quoteObj;
+          results[`${baseSym}.DE`] = quoteObj;
           serverPriceCache[originalTicker] = currentPrice;
         }
       }
     }
 
-    // Still missing (e.g. unrecognized tickers)? Fallback to simulation to avoid empty rows
-    const stillMissingTickers = tickers.filter(t => !results[t]);
+    // Still missing (e.g. European .DE tickers)? Fetch Yahoo v8 chart API fallback
+    const stillMissingTickers = tickers.filter(t => !results[t] || !results[t].currentPrice);
     if (stillMissingTickers.length > 0) {
-      const fallbackQuotes = generateFallbackQuotes(stillMissingTickers);
+      await Promise.allSettled(stillMissingTickers.map(async (t) => {
+        const ySym = plainEuropeanMap[t] || (t.includes('.') ? t : `${t}.DE`);
+        try {
+          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ySym)}?interval=1d&range=2d`, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Accept": "application/json"
+            }
+          });
+          if (!res.ok) return;
+          const json = await res.json() as any;
+          const meta = json?.chart?.result?.[0]?.meta;
+          if (meta && typeof meta.regularMarketPrice === 'number' && meta.regularMarketPrice > 0) {
+            const price = meta.regularMarketPrice;
+            const prevClose = meta.previousClose ?? meta.chartPreviousClose;
+            const changePct = (price != null && prevClose != null && prevClose > 0) ? ((price - prevClose) / prevClose) * 100 : 0;
+            const item = {
+              currentPrice: parseFloat(price.toFixed(2)),
+              dailyChangePct: parseFloat(changePct.toFixed(2)),
+              changeVal: prevClose ? parseFloat((price - prevClose).toFixed(2)) : 0,
+              companyName: meta.longName || meta.shortName || t,
+              low52: meta.fiftyTwoWeekLow ? parseFloat(meta.fiftyTwoWeekLow.toFixed(2)) : undefined,
+              high52: meta.fiftyTwoWeekHigh ? parseFloat(meta.fiftyTwoWeekHigh.toFixed(2)) : undefined
+            };
+            results[t] = item;
+            const baseSym = t.split('.')[0];
+            results[baseSym] = item;
+            results[`${baseSym}.DE`] = item;
+          }
+        } catch {}
+      }));
+    }
+
+    // Missing non-stock tickers: fallback simulation
+    const finalMissing = tickers.filter(t => !results[t]);
+    if (finalMissing.length > 0) {
+      const fallbackQuotes = generateFallbackQuotes(finalMissing);
       for (const [t, mockQuote] of Object.entries(fallbackQuotes)) {
         results[t] = mockQuote;
       }

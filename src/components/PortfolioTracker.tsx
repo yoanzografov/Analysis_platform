@@ -305,7 +305,13 @@ export default function PortfolioTracker({
   let totalDivEarned = divRecords.reduce((acc, r) => acc + r.amount, 0);
 
   const enrichedHoldings = activeHoldings.map(pos => {
-    const matching = stocks.find(s => s.ticker === pos.ticker);
+    const cleanTicker = pos.ticker.trim().toUpperCase();
+    const baseTicker = cleanTicker.split('.')[0].split(':')[1] || cleanTicker.split('.')[0];
+    const matching = stocks.find(s => {
+      const sClean = s.ticker.trim().toUpperCase();
+      const sBase = sClean.split('.')[0].split(':')[1] || sClean.split('.')[0];
+      return sClean === cleanTicker || sBase === baseTicker;
+    });
     const curPrice = matching?.currentPrice || matching?.priceOfCalc || pos.buyPrice;
     const costBasis = (pos.shares * pos.buyPrice) + (pos.fee || 0);
     const currentVal = pos.shares * curPrice;
