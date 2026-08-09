@@ -823,18 +823,17 @@ export default function PortfolioTracker({
               Обнови цените в реално време
             </button>
 
-            {/* Privacy Mode Toggle */}
+            {/* Privacy Mode Toggle (Icon only) */}
             <button 
               onClick={togglePrivacyMode}
               title={isPrivacyMode ? "Покажи финансовите суми" : "Скрий финансовите суми"}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs border ${
+              className={`p-2 rounded-xl transition-all cursor-pointer shadow-xs border flex items-center justify-center ${
                 isPrivacyMode 
                   ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' 
                   : 'bg-card/60 hover:bg-card border-border text-ink-muted hover:text-ink'
               }`}
             >
               {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-indigo-400" />}
-              {isPrivacyMode ? 'Сумите са скрити' : 'Скрий суми'}
             </button>
 
             {/* Export / Import Backup */}
