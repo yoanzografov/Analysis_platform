@@ -700,9 +700,9 @@ export default function PortfolioTracker({
 
             <button 
               onClick={() => window.location.reload()}
-              className="bg-card/60 hover:bg-card border border-border text-ink-muted hover:text-ink px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              className="bg-card/60 hover:bg-card border border-border text-ink-muted hover:text-ink px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
             >
-              <RefreshCw className="w-3 h-3 text-indigo-400" />
+              <RefreshCw className="w-4 h-4 text-indigo-400" />
               Обнови цените в реално време
             </button>
           </div>
