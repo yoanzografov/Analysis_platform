@@ -596,61 +596,61 @@ export default function PortfolioTracker({
     <div className="space-y-4 font-sans text-ink">
       
       {/* ======================================================================== */}
-      {/* ROW 1: TOP 9-CARD METRIC GRID (Premium Glassmorphic Modern Layout)        */}
+      {/* ROW 1: TOP 9-CARD METRIC GRID (Ultra-Sleek Modern Dashboard Design)       */}
       {/* ======================================================================== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
         {/* ==================== COLUMN 1: FINANCIAL TOTALS ==================== */}
-        <div className="space-y-3.5">
-          {/* Card 1: Total Invested */}
-          <div className="bg-gradient-to-br from-card/90 via-card/60 to-bg border border-border/80 border-l-4 border-l-indigo-500 rounded-2xl p-4 shadow-md backdrop-blur-sm relative overflow-hidden group hover:border-indigo-500/50 transition-all">
+        <div className="space-y-4">
+          {/* Card 1: TOTAL INVESTED */}
+          <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-indigo-500 rounded-2xl p-4 shadow-lg backdrop-blur-md relative overflow-hidden transition-all group">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
                 <DollarSign className="w-3.5 h-3.5 text-indigo-400" />
                 TOTAL INVESTED
               </span>
-              <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+              <span className="text-[10px] font-extrabold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/30">
                 Вложени
               </span>
             </div>
-            <div className="mt-2.5">
-              <span className="text-2xl font-black text-ink font-sans tabular-nums tracking-tight">
+            <div className="mt-3">
+              <span className="text-2xl sm:text-3xl font-black text-ink font-sans tabular-nums tracking-tight">
                 {isPrivacyMode ? '••••••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
           </div>
 
-          {/* Card 2: Total Returns */}
-          <div className="bg-gradient-to-br from-card/90 via-card/60 to-bg border border-border/80 border-l-4 border-l-emerald-500 rounded-2xl p-4 shadow-md backdrop-blur-sm relative overflow-hidden group hover:border-emerald-500/50 transition-all">
+          {/* Card 2: TOTAL RETURNS */}
+          <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-emerald-500 rounded-2xl p-4 shadow-lg backdrop-blur-md relative overflow-hidden transition-all group">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                 TOTAL RETURNS
               </span>
-              <span className={`text-xs font-black px-2 py-0.5 rounded-full border ${totalReturnVal >= 0 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border-rose-500/30'}`}>
+              <span className={`text-xs font-black px-2.5 py-0.5 rounded-full border ${totalReturnVal >= 0 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-xs shadow-emerald-500/20' : 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-xs shadow-rose-500/20'}`}>
                 {isPrivacyMode ? '••••' : `${totalReturnPct >= 0 ? '▲' : '▼'} ${totalReturnPct.toFixed(2)}%`}
               </span>
             </div>
-            <div className="mt-2.5 flex items-baseline gap-2">
-              <span className={`text-2xl font-black font-sans tabular-nums tracking-tight ${totalReturnVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className="mt-3">
+              <span className={`text-2xl sm:text-3xl font-black font-sans tabular-nums tracking-tight ${totalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.3)]'}`}>
                 {isPrivacyMode ? '••••••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
           </div>
 
-          {/* Card 3: Total Realized P/L */}
-          <div className="bg-gradient-to-br from-card/90 via-card/60 to-bg border border-border/80 border-l-4 border-l-amber-500 rounded-2xl p-4 shadow-md backdrop-blur-sm relative overflow-hidden group hover:border-amber-500/50 transition-all">
+          {/* Card 3: TOTAL REALIZED P/L */}
+          <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-amber-500 rounded-2xl p-4 shadow-lg backdrop-blur-md relative overflow-hidden transition-all group">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
                 <Coins className="w-3.5 h-3.5 text-amber-400" />
                 TOTAL REALIZED P/L
               </span>
-              <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+              <span className="text-[10px] font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">
                 Затворени
               </span>
             </div>
-            <div className="mt-2.5">
-              <span className={`text-2xl font-black font-sans tabular-nums tracking-tight ${realizedPnLSum >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className="mt-3">
+              <span className={`text-2xl sm:text-3xl font-black font-sans tabular-nums tracking-tight ${realizedPnLSum >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-rose-400'}`}>
                 {isPrivacyMode ? '••••••••' : `${realizedPnLSum >= 0 ? '+' : ''}$${realizedPnLSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
@@ -658,25 +658,28 @@ export default function PortfolioTracker({
         </div>
 
         {/* ==================== COLUMN 2: PROFIT / LOSS COUNTERS ==================== */}
-        <div className="space-y-3.5">
+        <div className="space-y-4">
           {/* Card 4: UNREALIZED PROFIT/LOSS */}
-          <div className="bg-card/70 border border-border/80 rounded-2xl overflow-hidden shadow-md backdrop-blur-sm">
-            <div className="bg-indigo-500/10 border-b border-border/40 px-4 py-2 flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase text-indigo-300 tracking-wider">
+          <div className="bg-card/70 border border-border/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md">
+            <div className="bg-indigo-500/10 border-b border-border/40 px-4 py-2.5 flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase text-indigo-300 tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                 UNREALIZED PROFIT/LOSS
               </span>
-              <span className="text-[9px] font-extrabold text-indigo-400 bg-indigo-500/20 px-1.5 py-0.5 rounded uppercase">Активни</span>
+              <span className="text-[9px] font-extrabold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/30 uppercase">
+                Активни
+              </span>
             </div>
-            <div className="p-3.5 grid grid-cols-2 gap-2 text-center">
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2">
-                <span className="text-[9px] font-extrabold uppercase text-emerald-400/80 block mb-0.5">Profit</span>
-                <span className="text-lg font-black text-emerald-400 flex items-center justify-center gap-1 font-mono">
+            <div className="p-3.5 grid grid-cols-2 gap-3 text-center">
+              <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-2.5 shadow-inner">
+                <span className="text-[9px] font-extrabold uppercase text-emerald-400/90 block mb-1">Profit</span>
+                <span className="text-xl font-black text-emerald-400 flex items-center justify-center gap-1 font-mono">
                   ▲ {unrealizedProfitCount}
                 </span>
               </div>
-              <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-2">
-                <span className="text-[9px] font-extrabold uppercase text-rose-400/80 block mb-0.5">Loss</span>
-                <span className="text-lg font-black text-rose-400 flex items-center justify-center gap-1 font-mono">
+              <div className="bg-rose-500/15 border border-rose-500/30 rounded-xl p-2.5 shadow-inner">
+                <span className="text-[9px] font-extrabold uppercase text-rose-400/90 block mb-1">Loss</span>
+                <span className="text-xl font-black text-rose-400 flex items-center justify-center gap-1 font-mono">
                   ▼ {unrealizedLossCount}
                 </span>
               </div>
@@ -684,23 +687,26 @@ export default function PortfolioTracker({
           </div>
 
           {/* Card 5: REALIZED PROFIT/LOSS */}
-          <div className="bg-card/70 border border-border/80 rounded-2xl overflow-hidden shadow-md backdrop-blur-sm">
-            <div className="bg-purple-500/10 border-b border-border/40 px-4 py-2 flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase text-purple-300 tracking-wider">
+          <div className="bg-card/70 border border-border/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md">
+            <div className="bg-purple-500/10 border-b border-border/40 px-4 py-2.5 flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase text-purple-300 tracking-wider flex items-center gap-1.5">
+                <History className="w-3.5 h-3.5 text-purple-400" />
                 REALIZED PROFIT/LOSS
               </span>
-              <span className="text-[9px] font-extrabold text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded uppercase">История</span>
+              <span className="text-[9px] font-extrabold text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded-md border border-purple-500/30 uppercase">
+                История
+              </span>
             </div>
-            <div className="p-3.5 grid grid-cols-2 gap-2 text-center">
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2">
-                <span className="text-[9px] font-extrabold uppercase text-emerald-400/80 block mb-0.5">Profit</span>
-                <span className="text-lg font-black text-emerald-400 flex items-center justify-center gap-1 font-mono">
+            <div className="p-3.5 grid grid-cols-2 gap-3 text-center">
+              <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-2.5 shadow-inner">
+                <span className="text-[9px] font-extrabold uppercase text-emerald-400/90 block mb-1">Profit</span>
+                <span className="text-xl font-black text-emerald-400 flex items-center justify-center gap-1 font-mono">
                   ▲ {realizedProfitCount}
                 </span>
               </div>
-              <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-2">
-                <span className="text-[9px] font-extrabold uppercase text-rose-400/80 block mb-0.5">Loss</span>
-                <span className="text-lg font-black text-rose-400 flex items-center justify-center gap-1 font-mono">
+              <div className="bg-rose-500/15 border border-rose-500/30 rounded-xl p-2.5 shadow-inner">
+                <span className="text-[9px] font-extrabold uppercase text-rose-400/90 block mb-1">Loss</span>
+                <span className="text-xl font-black text-rose-400 flex items-center justify-center gap-1 font-mono">
                   ▼ {realizedLossCount}
                 </span>
               </div>
@@ -708,23 +714,26 @@ export default function PortfolioTracker({
           </div>
 
           {/* Card 6: PROFIT/LOSS */}
-          <div className="bg-card/70 border border-border/80 rounded-2xl overflow-hidden shadow-md backdrop-blur-sm">
-            <div className="bg-amber-500/10 border-b border-border/40 px-4 py-2 flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase text-amber-300 tracking-wider">
+          <div className="bg-card/70 border border-border/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md">
+            <div className="bg-amber-500/10 border-b border-border/40 px-4 py-2.5 flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase text-amber-300 tracking-wider flex items-center gap-1.5">
+                <Flame className="w-3.5 h-3.5 text-amber-400" />
                 PROFIT/LOSS
               </span>
-              <span className="text-[9px] font-extrabold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded uppercase">Общо</span>
+              <span className="text-[9px] font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30 uppercase">
+                Общо
+              </span>
             </div>
-            <div className="p-3.5 grid grid-cols-2 gap-2 text-center">
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2">
-                <span className="text-[9px] font-extrabold uppercase text-emerald-400/80 block mb-0.5">Profit</span>
-                <span className="text-lg font-black text-emerald-400 flex items-center justify-center gap-1 font-mono">
+            <div className="p-3.5 grid grid-cols-2 gap-3 text-center">
+              <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-2.5 shadow-inner">
+                <span className="text-[9px] font-extrabold uppercase text-emerald-400/90 block mb-1">Profit</span>
+                <span className="text-xl font-black text-emerald-400 flex items-center justify-center gap-1 font-mono">
                   ▲ {unrealizedProfitCount + realizedProfitCount}
                 </span>
               </div>
-              <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-2">
-                <span className="text-[9px] font-extrabold uppercase text-rose-400/80 block mb-0.5">Loss</span>
-                <span className="text-lg font-black text-rose-400 flex items-center justify-center gap-1 font-mono">
+              <div className="bg-rose-500/15 border border-rose-500/30 rounded-xl p-2.5 shadow-inner">
+                <span className="text-[9px] font-extrabold uppercase text-rose-400/90 block mb-1">Loss</span>
+                <span className="text-xl font-black text-rose-400 flex items-center justify-center gap-1 font-mono">
                   ▼ {unrealizedLossCount + realizedLossCount}
                 </span>
               </div>
@@ -733,50 +742,56 @@ export default function PortfolioTracker({
         </div>
 
         {/* ==================== COLUMN 3: PORTFOLIO STATS ==================== */}
-        <div className="space-y-3.5">
+        <div className="space-y-4">
           {/* Card 7: AVERAGE COST BASIS */}
-          <div className="bg-gradient-to-br from-card/90 via-card/60 to-bg border border-border/80 rounded-2xl overflow-hidden shadow-md backdrop-blur-sm">
-            <div className="bg-card/90 border-b border-border/40 px-4 py-2 flex items-center justify-between">
+          <div className="bg-card/70 hover:bg-card/90 border border-border/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md transition-all group">
+            <div className="bg-card/90 border-b border-border/40 px-4 py-2.5 flex items-center justify-between">
               <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 AVERAGE COST BASIS
               </span>
-              <span className="text-[9px] font-extrabold text-ink-faint">Средна цена</span>
+              <span className="text-[10px] font-extrabold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/30">
+                Средна цена
+              </span>
             </div>
             <div className="p-4 text-center">
-              <span className="text-2xl font-black text-ink font-sans tabular-nums tracking-tight">
+              <span className="text-2xl sm:text-3xl font-black text-ink font-sans tabular-nums tracking-tight">
                 {isPrivacyMode ? '••••••••' : `$${avgCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
           </div>
 
           {/* Card 8: STOCK HOLDINGS */}
-          <div className="bg-gradient-to-br from-card/90 via-card/60 to-bg border border-border/80 rounded-2xl overflow-hidden shadow-md backdrop-blur-sm">
-            <div className="bg-card/90 border-b border-border/40 px-4 py-2 flex items-center justify-between">
+          <div className="bg-card/70 hover:bg-card/90 border border-border/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md transition-all group">
+            <div className="bg-card/90 border-b border-border/40 px-4 py-2.5 flex items-center justify-between">
               <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
                 <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
                 STOCK HOLDINGS
               </span>
-              <span className="text-[9px] font-extrabold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">Позиции</span>
+              <span className="text-[10px] font-extrabold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/30">
+                Позиции
+              </span>
             </div>
             <div className="p-4 text-center">
-              <span className="text-2xl font-black text-indigo-400 font-sans tabular-nums tracking-tight">
+              <span className="text-2xl sm:text-3xl font-black text-indigo-400 font-sans tabular-nums tracking-tight">
                 {enrichedHoldings.length}
               </span>
             </div>
           </div>
 
           {/* Card 9: CURRENT MARKET VALUE */}
-          <div className="bg-gradient-to-br from-card/90 via-card/60 to-bg border border-border/80 rounded-2xl overflow-hidden shadow-md backdrop-blur-sm">
-            <div className="bg-card/90 border-b border-border/40 px-4 py-2 flex items-center justify-between">
+          <div className="bg-card/70 hover:bg-card/90 border border-border/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md transition-all group">
+            <div className="bg-card/90 border-b border-border/40 px-4 py-2.5 flex items-center justify-between">
               <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 CURRENT MARKET VALUE
               </span>
-              <span className="text-[9px] font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">Пазарна</span>
+              <span className="text-[10px] font-extrabold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                Пазарна
+              </span>
             </div>
             <div className="p-4 text-center">
-              <span className="text-2xl font-black text-emerald-400 font-sans tabular-nums tracking-tight">
+              <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-sans tabular-nums tracking-tight drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]">
                 {isPrivacyMode ? '••••••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
