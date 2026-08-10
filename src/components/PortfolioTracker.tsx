@@ -577,6 +577,14 @@ export default function PortfolioTracker({
   const totalReturnPct = totalCostBasis > 0 ? (totalReturnVal / totalCostBasis) * 100 : 0;
   const isOverallProfit = totalReturnVal >= 0;
 
+  // Additional metric calculations for the 9-Card KPI Grid & Charts
+  const realizedPnLSum = history.reduce((acc, h) => acc + (h.pnlVal || 0), 0);
+  const unrealizedProfitCount = enrichedHoldings.filter(h => h.pnlVal >= 0).length;
+  const unrealizedLossCount = enrichedHoldings.filter(h => h.pnlVal < 0).length;
+  const realizedProfitCount = history.filter(h => (h.pnlVal || 0) > 0).length;
+  const realizedLossCount = history.filter(h => (h.pnlVal || 0) < 0).length;
+  const avgCostBasis = enrichedHoldings.length > 0 ? totalCostBasis / enrichedHoldings.length : 0;
+
   // Filtered History
   const filteredHistory = history.filter(h => {
     if (historyFromDate && h.date < historyFromDate) return false;
@@ -588,212 +596,256 @@ export default function PortfolioTracker({
     <div className="space-y-4 font-sans text-ink">
       
       {/* ======================================================================== */}
-      {/* ROW 1: TOP DASHBOARD METRIC CARDS (Exact match to User Image 3 & 4)      */}
+      {/* ROW 1: TOP 9-CARD METRIC GRID (Exact layout from User Reference Image)   */}
       {/* ======================================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        {/* Card 1: СТОЙНОСТ */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
-              СТОЙНОСТ
-            </span>
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Briefcase className="w-4 h-4" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        {/* ==================== COLUMN 1 ==================== */}
+        <div className="space-y-3">
+          {/* Card 1: Total Invested */}
+          <div className="bg-card/70 border border-border border-l-4 border-l-indigo-500 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider">
+                Total Invested
+              </span>
+              <DollarSign className="w-4 h-4 text-indigo-400" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-black text-ink font-sans tabular-nums">
+                {isPrivacyMode ? '••••••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
             </div>
           </div>
-          <div className="mt-2">
-            <span className="text-xl font-extrabold text-ink font-sans tabular-nums">
-              {isPrivacyMode ? '••••••••' : `$${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            </span>
-          </div>
-          <p className="text-[10px] text-ink-faint mt-1 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            Вкл. {isPrivacyMode ? '•••••' : `$${parseFloat(cashInput) || 0}.00`} свободен кеш
-          </p>
-        </div>
 
-        {/* Card 2: ИНВЕСТИРАНА СУМА */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
-              ИНВЕСТИРАНА СУМА
-            </span>
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <DollarSign className="w-4 h-4" />
+          {/* Card 2: Total Returns */}
+          <div className="bg-card/70 border border-border border-l-4 border-l-emerald-500 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider">
+                Total Returns
+              </span>
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className={`text-2xl font-black font-sans tabular-nums ${totalReturnVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {isPrivacyMode ? '••••••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
+              <span className={`text-xs font-bold px-1.5 py-0.5 rounded-md border ${totalReturnVal >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}`}>
+                {isPrivacyMode ? '••••' : `${totalReturnPct >= 0 ? '▲' : '▼'} ${totalReturnPct.toFixed(2)}%`}
+              </span>
             </div>
           </div>
-          <div className="mt-2">
-            <span className="text-xl font-extrabold text-ink font-sans tabular-nums">
-              {isPrivacyMode ? '••••••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            </span>
-          </div>
-          <p className="text-[10px] text-ink-faint mt-1">
-            Първоначално внесен портфейлен капитал
-          </p>
-        </div>
 
-        {/* Card 3: ДОХОДНОСТ (с див.) */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
-              ДОХОДНОСТ (с див.)
-            </span>
-            <div className={`p-2 rounded-xl border ${
-              isOverallProfit 
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-            }`}>
-              {isOverallProfit ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          {/* Card 3: Total Realized P/L */}
+          <div className="bg-card/70 border border-border border-l-4 border-l-amber-500 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider">
+                Total Realized P/L
+              </span>
+              <Coins className="w-4 h-4 text-amber-400" />
+            </div>
+            <div className="mt-3">
+              <span className={`text-2xl font-black font-sans tabular-nums ${realizedPnLSum >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {isPrivacyMode ? '••••••••' : `${realizedPnLSum >= 0 ? '+' : ''}$${realizedPnLSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className={`text-xl font-extrabold font-sans tabular-nums ${
-              isOverallProfit ? 'text-emerald-400' : 'text-rose-400'
-            }`}>
-              {isPrivacyMode ? '••••••••' : `${isOverallProfit ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            </span>
-            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-md border ${
-              isOverallProfit 
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
-                : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-            }`}>
-              {isPrivacyMode ? '•••••' : `▲ ${totalReturnPct.toFixed(2)}%`}
-            </span>
-          </div>
-          <p className="text-[10px] text-ink-faint mt-1">
-            Дневен дял: -0.12%
-          </p>
         </div>
 
-        {/* Card 4: РЕАЛИЗИРАНА П/З */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
-              РЕАЛИЗИРАНА П/З
-            </span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <TrendingUp className="w-4 h-4" />
+        {/* ==================== COLUMN 2 ==================== */}
+        <div className="space-y-3">
+          {/* Card 4: UNREALIZED PROFIT/LOSS */}
+          <div className="bg-card/70 border border-border rounded-2xl overflow-hidden shadow-xs">
+            <div className="bg-slate-700/60 border-b border-border/40 px-4 py-2 text-center">
+              <span className="text-[11px] font-black uppercase text-slate-200 tracking-wider">
+                UNREALIZED PROFIT/LOSS
+              </span>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-2 divide-x divide-border/40 text-center">
+              <div className="pr-2">
+                <span className="text-[10px] font-extrabold uppercase text-ink-muted block mb-1">Profit</span>
+                <span className="text-xl font-black text-emerald-400 flex items-center justify-center gap-1">
+                  ▲ {unrealizedProfitCount}
+                </span>
+              </div>
+              <div className="pl-2">
+                <span className="text-[10px] font-extrabold uppercase text-ink-muted block mb-1">Loss</span>
+                <span className="text-xl font-black text-rose-400 flex items-center justify-center gap-1">
+                  ▼ {unrealizedLossCount}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="mt-2">
-            <span className="text-xl font-extrabold text-emerald-400 font-sans tabular-nums">
-              {isPrivacyMode ? '••••••••' : '+$0.00'}
-            </span>
+
+          {/* Card 5: REALIZED PROFIT/LOSS */}
+          <div className="bg-card/70 border border-border rounded-2xl overflow-hidden shadow-xs">
+            <div className="bg-slate-700/60 border-b border-border/40 px-4 py-2 text-center">
+              <span className="text-[11px] font-black uppercase text-slate-200 tracking-wider">
+                REALIZED PROFIT/LOSS
+              </span>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-2 divide-x divide-border/40 text-center">
+              <div className="pr-2">
+                <span className="text-[10px] font-extrabold uppercase text-ink-muted block mb-1">Profit</span>
+                <span className="text-xl font-black text-emerald-400 flex items-center justify-center gap-1">
+                  ▲ {realizedProfitCount}
+                </span>
+              </div>
+              <div className="pl-2">
+                <span className="text-[10px] font-extrabold uppercase text-ink-muted block mb-1">Loss</span>
+                <span className="text-xl font-black text-rose-400 flex items-center justify-center gap-1">
+                  ▼ {realizedLossCount}
+                </span>
+              </div>
+            </div>
           </div>
-          <p className="text-[10px] text-ink-faint mt-1">
-            Прогн. див: {isPrivacyMode ? '•••••' : `$${totalDivEarned.toFixed(2)}`} / 12м
-          </p>
+
+          {/* Card 6: PROFIT/LOSS */}
+          <div className="bg-card/70 border border-border rounded-2xl overflow-hidden shadow-xs">
+            <div className="bg-slate-700/60 border-b border-border/40 px-4 py-2 text-center">
+              <span className="text-[11px] font-black uppercase text-slate-200 tracking-wider">
+                PROFIT/LOSS
+              </span>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-2 divide-x divide-border/40 text-center">
+              <div className="pr-2">
+                <span className="text-[10px] font-extrabold uppercase text-ink-muted block mb-1">Profit</span>
+                <span className="text-xl font-black text-emerald-400 flex items-center justify-center gap-1">
+                  ▲ {unrealizedProfitCount + realizedProfitCount}
+                </span>
+              </div>
+              <div className="pl-2">
+                <span className="text-[10px] font-extrabold uppercase text-ink-muted block mb-1">Loss</span>
+                <span className="text-xl font-black text-rose-400 flex items-center justify-center gap-1">
+                  ▼ {unrealizedLossCount + realizedLossCount}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Card 5: CAGR ЛИХВА */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase text-ink-faint tracking-wider">
-              CAGR ЛИХВА
-            </span>
-            <select
-              value={cagrHorizon}
-              onChange={e => setCagrHorizon(e.target.value as any)}
-              className="bg-bg text-xs font-bold text-ink border border-border px-1.5 py-0.5 rounded-lg focus:outline-none"
-            >
-              <option value="1г.">1г.</option>
-              <option value="2г.">2г.</option>
-              <option value="3г.">3г.</option>
-              <option value="5г.">5г.</option>
-            </select>
+        {/* ==================== COLUMN 3 ==================== */}
+        <div className="space-y-3">
+          {/* Card 7: AVERAGE COST BASIS */}
+          <div className="bg-card/70 border border-border rounded-2xl overflow-hidden shadow-xs">
+            <div className="bg-card/90 border-b border-border/40 px-4 py-2 text-center">
+              <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider">
+                AVERAGE COST BASIS
+              </span>
+            </div>
+            <div className="p-4 text-center">
+              <span className="text-2xl font-black text-ink font-sans tabular-nums">
+                {isPrivacyMode ? '••••••••' : `$${avgCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
+            </div>
           </div>
-          <div className="mt-2">
-            <span className="text-xl font-extrabold text-emerald-400 font-sans tabular-nums">
-              +27.45% <span className="text-xs text-ink-faint font-normal">/ год.</span>
-            </span>
+
+          {/* Card 8: STOCK HOLDINGS */}
+          <div className="bg-card/70 border border-border rounded-2xl overflow-hidden shadow-xs">
+            <div className="bg-card/90 border-b border-border/40 px-4 py-2 text-center">
+              <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider">
+                STOCK HOLDINGS
+              </span>
+            </div>
+            <div className="p-4 text-center">
+              <span className="text-2xl font-black text-indigo-400 font-sans tabular-nums">
+                {enrichedHoldings.length}
+              </span>
+            </div>
           </div>
-          <p className="text-[10px] text-ink-faint mt-1">
-            Годишен хоризонт за {cagrHorizon}
-          </p>
+
+          {/* Card 9: CURRENT MARKET VALUE */}
+          <div className="bg-card/70 border border-border rounded-2xl overflow-hidden shadow-xs">
+            <div className="bg-card/90 border-b border-border/40 px-4 py-2 text-center">
+              <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider">
+                CURRENT MARKET VALUE
+              </span>
+            </div>
+            <div className="p-4 text-center">
+              <span className="text-2xl font-black text-emerald-400 font-sans tabular-nums">
+                {isPrivacyMode ? '••••••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
+            </div>
+          </div>
         </div>
+
       </div>
 
       {/* ======================================================================== */}
-      {/* ROW 2: CHARTS & ANALYTICS WIDGETS (Exact match to User Image 3)          */}
+      {/* ROW 2: 3 VISUAL CHARTS SECTION (Exact match to User Reference Image 2)   */}
       {/* ======================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2">
         
-        {/* Widget 1: Invest vs Return Bar Chart */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2">
-            <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
-              <Layers className="w-3.5 h-3.5 text-indigo-400" />
-              Invest vs Return
-            </h4>
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              +${totalReturnVal.toFixed(0)} (▲ {totalReturnPct.toFixed(1)}%)
+        {/* Chart 1: INVESTED Vs RETURNS */}
+        <div className="bg-card/70 border border-border rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between">
+          <div className="bg-card/90 border-b border-border/40 px-4 py-2 text-center">
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider">
+              INVESTED Vs RETURNS
             </span>
           </div>
 
-          <div className="space-y-2 text-xs mb-3">
-            <div className="flex justify-between text-ink-faint">
-              <span>Вложени:</span>
-              <span className="font-extrabold text-ink">${totalCostBasis.toLocaleString('en-US')}</span>
+          {enrichedHoldings.length === 0 ? (
+            <div className="p-8 text-center text-ink-faint font-semibold text-xs leading-relaxed flex items-center justify-center min-h-[160px]">
+              Добавете поредица, за да започнете да визуализирате данните си
             </div>
-            <div className="flex justify-between text-ink-faint">
-              <span>Пазарна Оценка:</span>
-              <span className="font-extrabold text-ink">${totalCurrentValue.toLocaleString('en-US')}</span>
-            </div>
-            <div className="flex justify-between text-emerald-400 font-bold">
-              <span>Дивиденти:</span>
-              <span>+${totalDivEarned.toFixed(0)}</span>
-            </div>
-            <div className="flex justify-between border-t border-border/40 pt-1.5 font-extrabold text-ink">
-              <span>Обща Стойност:</span>
-              <span className="text-indigo-400">${(totalCurrentValue + totalDivEarned).toLocaleString('en-US')}</span>
-            </div>
-          </div>
+          ) : (
+            <div className="p-5 space-y-4">
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between text-ink-faint">
+                  <span>Вложени:</span>
+                  <span className="font-extrabold text-ink">{isPrivacyMode ? '••••' : `$${totalCostBasis.toLocaleString('en-US')}`}</span>
+                </div>
+                <div className="flex justify-between text-ink-faint">
+                  <span>Пазарна Оценка:</span>
+                  <span className="font-extrabold text-ink">{isPrivacyMode ? '••••' : `$${totalCurrentValue.toLocaleString('en-US')}`}</span>
+                </div>
+                <div className="flex justify-between text-emerald-400 font-bold border-t border-border/40 pt-2">
+                  <span>Нереализирана Доходност:</span>
+                  <span>{isPrivacyMode ? '••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US')} (${totalReturnPct.toFixed(2)}%)`}</span>
+                </div>
+              </div>
 
-          {/* Graphical Bar Comparison */}
-          <div className="flex items-end justify-center gap-6 h-28 pt-2 bg-card/20 rounded-xl border border-border/40">
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-[9px] text-ink-faint font-bold">${(totalCostBasis / 1000).toFixed(1)}k</span>
-              <div className="w-8 bg-gray-600/60 rounded-t-md transition-all" style={{ height: '55%' }}></div>
-              <span className="text-[9px] text-ink-faint uppercase font-bold">Вложени</span>
+              {/* Visual Comparison Bar */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between text-[10px] text-ink-faint font-bold">
+                  <span>Инвестирани (${(totalCostBasis / 1000).toFixed(1)}k)</span>
+                  <span>Текущи (${(totalCurrentValue / 1000).toFixed(1)}k)</span>
+                </div>
+                <div className="w-full bg-card h-3 rounded-full overflow-hidden border border-border/60 flex">
+                  <div className="bg-indigo-500 h-full transition-all duration-500" style={{ width: `${totalCurrentValue > 0 ? Math.min(100, (totalCostBasis / (totalCostBasis + Math.max(0, totalReturnVal))) * 100) : 50}%` }}></div>
+                  <div className="bg-emerald-400 h-full transition-all duration-500" style={{ width: `${totalCurrentValue > 0 ? Math.max(0, 100 - (totalCostBasis / (totalCostBasis + Math.max(0, totalReturnVal))) * 100) : 50}%` }}></div>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-[9px] text-emerald-400 font-bold">${((totalCurrentValue + totalDivEarned) / 1000).toFixed(1)}k</span>
-              <div className="w-8 bg-emerald-500 rounded-t-md transition-all shadow-md shadow-emerald-500/20" style={{ height: '88%' }}></div>
-              <span className="text-[9px] text-emerald-400 uppercase font-bold">Общо</span>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Widget 2: Portfolio Allocation Holding Breakdown */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2 border-b border-border/40 pb-2">
-              <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
-                <PieChart className="w-3.5 h-3.5 text-indigo-400" />
-                Portfolio Allocation Holding Breakdown
-              </h4>
-              <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
-                {enrichedHoldings.length} актива
-              </span>
-            </div>
+        {/* Chart 2: HOLDINGS BREAKDOWN */}
+        <div className="bg-card/70 border border-border rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between">
+          <div className="bg-card/90 border-b border-border/40 px-4 py-2 text-center">
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider">
+              HOLDINGS BREAKDOWN
+            </span>
+          </div>
 
-            {/* Visual Conic Donut + Legend */}
-            <div className="flex items-center gap-3 my-2">
-              {/* CSS Donut */}
+          {enrichedHoldings.length === 0 ? (
+            <div className="p-8 text-center text-ink-faint font-semibold text-xs leading-relaxed flex items-center justify-center min-h-[160px]">
+              Добавете поредица, за да започнете да визуализирате данните си
+            </div>
+          ) : (
+            <div className="p-5 flex items-center gap-4">
               <div className="relative w-20 h-20 shrink-0 rounded-full flex items-center justify-center shadow-md shadow-indigo-500/10" style={{
-                background: `conic-gradient(#6366f1 0% 65%, #3b82f6 65% 85%, #10b981 85% 100%)`
+                background: `conic-gradient(#6366f1 0% 60%, #3b82f6 60% 85%, #10b981 85% 100%)`
               }}>
                 <div className="w-14 h-14 rounded-full bg-bg flex items-center justify-center flex-col text-center">
-                  <span className="text-[8px] font-extrabold text-ink">TOTAL</span>
+                  <span className="text-[8px] font-extrabold text-ink">ОБЩО</span>
                   <span className="text-[9px] text-indigo-400 font-extrabold">100%</span>
                 </div>
               </div>
 
-              {/* Progress Bars for Holdings */}
-              <div className="flex-1 space-y-1.5 max-h-[140px] overflow-y-auto pr-1 custom-mini-scroll">
-                {enrichedHoldings.map((h, i) => {
+              <div className="flex-1 space-y-2 max-h-[150px] overflow-y-auto pr-1">
+                {enrichedHoldings.slice(0, 5).map((h, i) => {
                   const sharePct = totalCurrentValue > 0 ? (h.currentVal / totalCurrentValue) * 100 : 0;
-                  const barColors = ['bg-indigo-500', 'bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-cyan-500'];
+                  const barColors = ['bg-indigo-500', 'bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500'];
                   const barColor = barColors[i % barColors.length];
 
                   return (
@@ -802,125 +854,75 @@ export default function PortfolioTracker({
                         <div className="flex items-center gap-1.5 truncate max-w-[110px]">
                           <span className={`w-2 h-2 rounded-full shrink-0 ${barColor}`}></span>
                           <span className="font-extrabold text-ink">{h.ticker}</span>
-                          <span className="text-ink-faint text-[9px] truncate">{h.companyName}</span>
                         </div>
                         <span className="font-mono font-bold text-ink text-[10px]">
-                          {sharePct.toFixed(1)}% <span className="text-ink-faint">(${Math.round(h.currentVal)})</span>
+                          {sharePct.toFixed(1)}%
                         </span>
                       </div>
                       <div className="w-full bg-card/60 h-1.5 rounded-full overflow-hidden">
-                        <div className={`h-full ${barColor} transition-all duration-300`} style={{ width: `${Math.min(100, Math.max(2, sharePct))}%` }}></div>
+                        <div className={`h-full ${barColor} transition-all duration-300`} style={{ width: `${Math.min(100, Math.max(4, sharePct))}%` }}></div>
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+        </div>
 
-                {/* Cash Allocation Line */}
-                {parseFloat(cashInput) > 0 && (
-                  <div className="space-y-0.5 border-t border-border/40 pt-1">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full shrink-0 bg-emerald-400"></span>
-                        <span className="font-extrabold text-emerald-400">Свободен Кеш</span>
-                      </div>
-                      <span className="font-mono font-bold text-emerald-400 text-[10px]">
-                        {((parseFloat(cashInput) / (totalCurrentValue + parseFloat(cashInput))) * 100).toFixed(1)}% <span className="text-ink-faint">(${Math.round(parseFloat(cashInput))})</span>
-                      </span>
-                    </div>
-                    <div className="w-full bg-card/60 h-1.5 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-400 transition-all duration-300" style={{ width: `${Math.min(100, Math.max(2, (parseFloat(cashInput) / (totalCurrentValue + parseFloat(cashInput))) * 100))}%` }}></div>
-                    </div>
+        {/* Chart 3: STOCK DIVERSIFICATION */}
+        <div className="bg-card/70 border border-border rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between">
+          <div className="bg-card/90 border-b border-border/40 px-4 py-2 text-center">
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider">
+              STOCK DIVERSIFICATION
+            </span>
+          </div>
+
+          {enrichedHoldings.length === 0 ? (
+            <div className="p-8 text-center text-ink-faint font-semibold text-xs leading-relaxed flex items-center justify-center min-h-[160px]">
+              Добавете поредица, за да започнете да визуализирате данните си
+            </div>
+          ) : (
+            <div className="p-5 space-y-2.5">
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-ink-faint font-bold">ETF & Индекси</span>
+                  <span className="font-mono font-bold text-indigo-400">
+                    {((enrichedHoldings.filter(h => h.ticker.includes('SXR8') || h.ticker.includes('VHYL') || h.ticker.includes('JGPI') || h.ticker.includes('XNAS')).reduce((acc, h) => acc + h.currentVal, 0) / (totalCurrentValue || 1)) * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <div className="w-full bg-card h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-indigo-500 h-full" style={{ width: `${Math.min(100, Math.max(5, (enrichedHoldings.filter(h => h.ticker.includes('SXR8') || h.ticker.includes('VHYL') || h.ticker.includes('JGPI') || h.ticker.includes('XNAS')).reduce((acc, h) => acc + h.currentVal, 0) / (totalCurrentValue || 1)) * 100))}%` }}></div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-ink-faint font-bold">Технологии & Акции</span>
+                  <span className="font-mono font-bold text-emerald-400">
+                    {((enrichedHoldings.filter(h => !h.ticker.includes('SXR8') && !h.ticker.includes('VHYL') && !h.ticker.includes('JGPI') && !h.ticker.includes('XNAS')).reduce((acc, h) => acc + h.currentVal, 0) / (totalCurrentValue || 1)) * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <div className="w-full bg-card h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-emerald-400 h-full" style={{ width: `${Math.min(100, Math.max(5, (enrichedHoldings.filter(h => !h.ticker.includes('SXR8') && !h.ticker.includes('VHYL') && !h.ticker.includes('JGPI') && !h.ticker.includes('XNAS')).reduce((acc, h) => acc + h.currentVal, 0) / (totalCurrentValue || 1)) * 100))}%` }}></div>
+                </div>
+              </div>
+
+              {parseFloat(cashInput) > 0 && (
+                <div className="space-y-1 border-t border-border/40 pt-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-amber-400 font-bold">Свободен Кеш</span>
+                    <span className="font-mono font-bold text-amber-400">
+                      {((parseFloat(cashInput) / totalPortfolioValue) * 100).toFixed(1)}%
+                    </span>
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Widget 3: Бенчмарк сравнение */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-2 border-b border-border/40 pb-2">
-            <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-              Бенчмарк сравнение
-            </h4>
-            <span className="text-[9px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-              ✨ Лидер днес: Nasdaq-100 (QQQ)
-            </span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-1.5 text-center my-2">
-            <div className="bg-card/40 p-1.5 rounded-xl border border-border/40">
-              <span className="text-[9px] text-ink-faint font-bold block">Моят Портфе...</span>
-              <span className="text-xs font-black text-emerald-400">+62.42%</span>
-              <span className="text-[8px] text-ink-faint block">Днес: -0.12%</span>
-            </div>
-            <div className="bg-card/40 p-1.5 rounded-xl border border-border/40">
-              <span className="text-[9px] text-ink-faint font-bold block">S&P 500 (SPY)</span>
-              <span className="text-xs font-black text-emerald-400">+0.61%</span>
-              <span className="text-[8px] text-ink-faint block">Дневно движ...</span>
-            </div>
-            <div className="bg-card/40 p-1.5 rounded-xl border border-border/40">
-              <span className="text-[9px] text-ink-faint font-bold block">Nasdaq-100 (QQQ)</span>
-              <span className="text-xs font-black text-emerald-400">+1.17%</span>
-              <span className="text-[8px] text-ink-faint block">Технологичен ...</span>
-            </div>
-          </div>
-
-          <div className="bg-card/20 p-2 rounded-xl border border-border/40 space-y-1.5">
-            <span className="text-[9px] text-ink-faint font-bold flex items-center gap-1">
-              <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-              Кой води в състезанието днес? (Дневно движение)
-            </span>
-            <div className="space-y-1 text-[10px]">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-ink">Моят Портфейл</span>
-                <div className="w-24 bg-gray-700 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-rose-500 h-full w-[15%]"></div>
+                  <div className="w-full bg-card h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-amber-400 h-full" style={{ width: `${((parseFloat(cashInput) / totalPortfolioValue) * 100).toFixed(1)}%` }}></div>
+                  </div>
                 </div>
-                <span className="text-rose-400 font-bold text-[9px]">-0.12%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-ink">S&P 500 (SPY)</span>
-                <div className="w-24 bg-gray-700 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-emerald-400 h-full w-[60%]"></div>
-                </div>
-                <span className="text-emerald-400 font-bold text-[9px]">+0.61%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-ink">Nasdaq-100 (QQQ)</span>
-                <div className="w-24 bg-gray-700 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-emerald-400 h-full w-[85%]"></div>
-                </div>
-                <span className="text-emerald-400 font-bold text-[9px]">+1.17%</span>
-              </div>
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Widget 4: AI Инвестиционен Одит (Gemini AI Audit) */}
-        <div className="bg-bg border border-border rounded-2xl p-4 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2">
-              <h4 className="text-xs font-extrabold text-ink flex items-center gap-1.5 uppercase">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                AI Инвестиционен Одит
-                <span className="bg-indigo-500/20 text-indigo-300 text-[9px] font-black px-1.5 py-0.2 rounded border border-indigo-500/30">GEMINI</span>
-              </h4>
-            </div>
-
-            <p className="text-xs text-ink-faint text-center my-4">
-              Готови ли сте за професионален AI одит и преглед на диверсификацията?
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsAiAuditOpen(true)}
-            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 transition-all cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4" />
-            Стартирай AI Инвестиционен Одит
-          </button>
+          )}
         </div>
 
       </div>
