@@ -525,8 +525,8 @@ export default function PortfolioTracker({
     setDivAmount('');
   };
 
-  // Active holdings directly from positions state
-  const activeHoldings = positions;
+  // Active holdings (ensure shares > 0)
+  const activeHoldings = positions.filter(pos => pos.shares > 0);
 
   // Live EUR/USD exchange rate
   const eurUsdStock = stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
@@ -535,7 +535,7 @@ export default function PortfolioTracker({
   // Portfolio Dashboard Calculations
   let totalCostBasis = 0;
   let totalCurrentValue = 0;
-  let totalDivEarned = divRecords.reduce((acc, r) => acc + r.amount, 0);
+  let totalDivEarned = divRecords.reduce((acc, r) => acc + (r.amount || 0), 0);
 
   const enrichedHoldings = activeHoldings.map(pos => {
     const cleanTicker = pos.ticker.trim().toUpperCase();
@@ -545,7 +545,11 @@ export default function PortfolioTracker({
       const sBase = sClean.split('.')[0].split(':')[1] || sClean.split('.')[0];
       return sClean === cleanTicker || sBase === baseTicker;
     });
-    const curPrice = matching?.currentPrice || matching?.priceOfCalc || pos.buyPrice;
+
+    const curPrice = (matching?.currentPrice && matching.currentPrice > 0) 
+      ? matching.currentPrice 
+      : ((matching?.priceOfCalc && matching.priceOfCalc > 0) ? matching.priceOfCalc : pos.buyPrice);
+
     const costBasis = (pos.shares * pos.buyPrice) + (pos.fee || 0);
     const currentVal = pos.shares * curPrice;
     const pnlVal = currentVal - costBasis;
@@ -570,27 +574,26 @@ export default function PortfolioTracker({
     };
   });
 
-
-
-  const totalPortfolioValue = totalCurrentValue + (parseFloat(cashInput) || 0);
+  const parsedCash = parseFloat(cashInput) || 0;
+  const totalPortfolioValue = totalCurrentValue + parsedCash;
   const totalReturnVal = totalCurrentValue - totalCostBasis;
   const totalReturnPct = totalCostBasis > 0 ? (totalReturnVal / totalCostBasis) * 100 : 0;
   const isOverallProfit = totalReturnVal >= 0;
 
-  // Additional metric calculations for the 9-Card KPI Grid & Charts
-  const realizedPnLSum = history.reduce((acc, h) => acc + (h.pnlVal || 0), 0);
-  const unrealizedProfitCount = enrichedHoldings.filter(h => h.pnlVal >= 0).length;
-  const unrealizedLossCount = enrichedHoldings.filter(h => h.pnlVal < 0).length;
-  const realizedProfitCount = history.filter(h => (h.pnlVal || 0) > 0).length;
-  const realizedLossCount = history.filter(h => (h.pnlVal || 0) < 0).length;
-  const avgCostBasis = enrichedHoldings.length > 0 ? totalCostBasis / enrichedHoldings.length : 0;
-
-  // Filtered History
+  // Filtered History (supports date range filters)
   const filteredHistory = history.filter(h => {
     if (historyFromDate && h.date < historyFromDate) return false;
     if (historyToDate && h.date > historyToDate) return false;
     return true;
   });
+
+  // Additional metric calculations for the 9-Card KPI Grid & Charts
+  const realizedPnLSum = filteredHistory.reduce((acc, h) => acc + (h.pnlVal || 0), 0);
+  const unrealizedProfitCount = enrichedHoldings.filter(h => h.pnlVal >= 0).length;
+  const unrealizedLossCount = enrichedHoldings.filter(h => h.pnlVal < 0).length;
+  const realizedProfitCount = filteredHistory.filter(h => (h.pnlVal || 0) > 0).length;
+  const realizedLossCount = filteredHistory.filter(h => (h.pnlVal || 0) < 0).length;
+  const avgCostBasis = enrichedHoldings.length > 0 ? totalCostBasis / enrichedHoldings.length : 0;
 
   return (
     <div className="space-y-4 font-sans text-ink">
