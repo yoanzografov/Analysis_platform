@@ -1196,6 +1196,7 @@ export default function App() {
         onAddPosition={handleAddPosition}
         onUpdatePosition={handleUpdatePosition}
         onDeletePosition={handleDeletePosition}
+        onSetAllPositions={(newPositions) => setPositions(newPositions)}
       />
     )}
   </div>

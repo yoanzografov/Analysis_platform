@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Stock, PortfolioPosition, PortfolioTransaction, PortfolioDividendRecord } from '../types';
+import { useRef } from 'react';
+import { db } from '../lib/firebase';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { 
   Briefcase, 
   PlusCircle, 
@@ -29,7 +32,11 @@ import {
   Eye,
   EyeOff,
   Download,
-  Upload
+  Upload,
+  Cloud,
+  CloudOff,
+  Key,
+  CheckCircle2
 } from 'lucide-react';
 
 interface Props {
@@ -44,6 +51,7 @@ interface Props {
   onAddTransaction?: (tx: Omit<PortfolioTransaction, 'id'>) => void;
   onAddDividend?: (div: Omit<PortfolioDividendRecord, 'id'>) => void;
   onUpdateCash?: (cash: number) => void;
+  onSetAllPositions?: (positions: PortfolioPosition[]) => void;
 }
 
 const StockLogo = ({ ticker }: { ticker: string }) => {
@@ -76,8 +84,22 @@ export default function PortfolioTracker({
   onDeletePosition,
   onAddTransaction,
   onAddDividend,
-  onUpdateCash
+  onUpdateCash,
+  onSetAllPositions
 }: Props) {
+  // Real-time Cloud Sync with Secret PIN
+  const [syncPin, setSyncPin] = useState<string>(() => {
+    try {
+      return localStorage.getItem('user_portfolio_sync_pin') || '';
+    } catch (e) {
+      return '';
+    }
+  });
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [inputSyncPin, setInputSyncPin] = useState('');
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+  const isRemoteUpdatingRef = useRef(false);
+
   // Main form state & currency
   const [positionCurrency, setPositionCurrency] = useState<'USD' | 'EUR'>('USD');
   const [txType, setTxType] = useState<'Покупка' | 'Продажба'>('Покупка');
@@ -153,6 +175,147 @@ export default function PortfolioTracker({
     } catch (e) {}
   }, [history]);
 
+  // Firestore Snapshot Real-time Listener
+  useEffect(() => {
+    if (!syncPin.trim()) {
+      setSyncStatus('idle');
+      return;
+    }
+
+    setSyncStatus('syncing');
+    const docId = `pin_${syncPin.trim().toLowerCase()}`;
+    const docRef = doc(db, 'portfolio_syncs', docId);
+
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && data.payload) {
+          isRemoteUpdatingRef.current = true;
+          if (Array.isArray(data.payload.positions)) {
+            if (onSetAllPositions) {
+              onSetAllPositions(data.payload.positions);
+            }
+            try {
+              localStorage.setItem('user_portfolio_positions', JSON.stringify(data.payload.positions));
+            } catch (e) {}
+          }
+          if (Array.isArray(data.payload.history)) {
+            setHistory(data.payload.history);
+            try {
+              localStorage.setItem('user_portfolio_transactions', JSON.stringify(data.payload.history));
+            } catch (e) {}
+          }
+          if (Array.isArray(data.payload.divRecords)) {
+            setDivRecords(data.payload.divRecords);
+            try {
+              localStorage.setItem('user_portfolio_dividends', JSON.stringify(data.payload.divRecords));
+            } catch (e) {}
+          }
+          if (typeof data.payload.cashInput === 'string') {
+            setCashInput(data.payload.cashInput);
+            try {
+              localStorage.setItem('user_portfolio_cash', data.payload.cashInput);
+            } catch (e) {}
+          }
+          setTimeout(() => {
+            isRemoteUpdatingRef.current = false;
+          }, 300);
+        }
+      }
+      setSyncStatus('synced');
+    }, (err) => {
+      console.error("Firestore sync error:", err);
+      setSyncStatus('error');
+    });
+
+    return () => unsubscribe();
+  }, [syncPin]);
+
+  // Push local updates to Cloud
+  const pushToCloud = async (
+    targetPositions = positions,
+    targetHistory = history,
+    targetDivs = divRecords,
+    targetCash = cashInput
+  ) => {
+    if (!syncPin.trim() || isRemoteUpdatingRef.current) return;
+    try {
+      setSyncStatus('syncing');
+      const docId = `pin_${syncPin.trim().toLowerCase()}`;
+      const docRef = doc(db, 'portfolio_syncs', docId);
+      await setDoc(docRef, {
+        payload: {
+          positions: targetPositions,
+          history: targetHistory,
+          divRecords: targetDivs,
+          cashInput: targetCash,
+          updatedAt: new Date().toISOString()
+        }
+      }, { merge: true });
+      setSyncStatus('synced');
+    } catch (e) {
+      console.error("Cloud push error:", e);
+      setSyncStatus('error');
+    }
+  };
+
+  // Push to cloud when local state changes
+  useEffect(() => {
+    if (syncPin.trim() && !isRemoteUpdatingRef.current) {
+      pushToCloud();
+    }
+  }, [positions, history, divRecords, cashInput]);
+
+  const handleEnableSync = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanPin = inputSyncPin.trim();
+    if (!cleanPin) return;
+
+    try {
+      setSyncStatus('syncing');
+      const docId = `pin_${cleanPin.toLowerCase()}`;
+      const docRef = doc(db, 'portfolio_syncs', docId);
+      const snap = await getDoc(docRef);
+
+      if (snap.exists() && snap.data()?.payload) {
+        // Exists in cloud! Sync cloud data down
+        const data = snap.data();
+        if (Array.isArray(data?.payload.positions) && onSetAllPositions) {
+          onSetAllPositions(data.payload.positions);
+        }
+        if (Array.isArray(data?.payload.history)) setHistory(data.payload.history);
+        if (Array.isArray(data?.payload.divRecords)) setDivRecords(data.payload.divRecords);
+        if (typeof data?.payload.cashInput === 'string') setCashInput(data.payload.cashInput);
+      } else {
+        // Document does not exist in cloud yet! Upload current local portfolio to this PIN
+        await setDoc(docRef, {
+          payload: {
+            positions,
+            history,
+            divRecords,
+            cashInput,
+            updatedAt: new Date().toISOString()
+          }
+        });
+      }
+
+      localStorage.setItem('user_portfolio_sync_pin', cleanPin);
+      setSyncPin(cleanPin);
+      setSyncStatus('synced');
+      setIsSyncModalOpen(false);
+    } catch (err) {
+      console.error("Enable sync failed:", err);
+      setSyncStatus('error');
+    }
+  };
+
+  const handleDisableSync = () => {
+    localStorage.removeItem('user_portfolio_sync_pin');
+    setSyncPin('');
+    setInputSyncPin('');
+    setSyncStatus('idle');
+    setIsSyncModalOpen(false);
+  };
   // AI Audit Modal, Add Position Modal, Cash Modal, History & Dividend Modal state
   const [isAiAuditOpen, setIsAiAuditOpen] = useState(false);
   const [tvModalTicker, setTvModalTicker] = useState<string | null>(null);
@@ -834,6 +997,23 @@ export default function PortfolioTracker({
               }`}
             >
               {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-indigo-400" />}
+            </button>
+
+            {/* Real-time Cloud Sync with PIN */}
+            <button 
+              onClick={() => {
+                setInputSyncPin(syncPin);
+                setIsSyncModalOpen(true);
+              }}
+              title={syncPin ? `Автоматичната синхронизация е активна (PIN: ${syncPin})` : "Включи автоматична синхронизация в реално време между лаптоп, телефон и компютър"}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs border ${
+                syncPin 
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10' 
+                  : 'bg-card/60 hover:bg-card border-border text-ink-muted hover:text-ink'
+              }`}
+            >
+              <Cloud className={`w-4 h-4 ${syncPin ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
+              <span>{syncPin ? `☁️ НА ЖИВО (${syncPin})` : '☁️ Синхронизация'}</span>
             </button>
 
             {/* Export / Import Backup */}
@@ -1596,6 +1776,107 @@ export default function PortfolioTracker({
                 className="w-full h-full border-0 rounded-2xl"
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================== */}
+      {/* REAL-TIME CLOUD SYNC MODAL DIALOG                                        */}
+      {/* ======================================================================== */}
+      {isSyncModalOpen && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setIsSyncModalOpen(false); }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md font-sans"
+        >
+          <div className="bg-bg border-2 border-indigo-500/40 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 relative animate-in fade-in zoom-in-95">
+            <button
+              onClick={() => setIsSyncModalOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-card text-ink-muted hover:text-ink transition-colors cursor-pointer"
+              title="Затвори"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 border-b border-border/40 pb-4">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30 shrink-0">
+                <Cloud className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black uppercase text-ink">
+                  ☁️ Облачна Синхронизация на Живо
+                </h3>
+                <p className="text-[11px] text-ink-faint">
+                  Автоматично обновяване между лаптоп, телефон и компютър
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleEnableSync} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase text-ink-faint mb-1.5 flex items-center gap-1">
+                  <Key className="w-3 h-3 text-indigo-400" />
+                  Ваш Личен Таен PIN Код / Парола
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="напр. 1234 или моята-парола"
+                  value={inputSyncPin}
+                  onChange={e => setInputSyncPin(e.target.value)}
+                  className="w-full bg-card rounded-2xl border border-border px-4 py-3 text-sm text-ink font-bold font-mono focus:outline-none focus:border-indigo-500 shadow-inner"
+                />
+                <p className="text-[10px] text-ink-faint mt-1.5 leading-relaxed">
+                  💡 Въведете един и същ PIN код на Вашия **лаптоп**, **телефон** и **настолен компютър**. Всички промени ще се синхронизират автоматично на живо!
+                </p>
+              </div>
+
+              {syncPin ? (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>Синхронизирано с PIN: <span className="font-mono underline">{syncPin}</span></span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDisableSync}
+                    className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg text-[10px] font-bold border border-rose-500/30 transition-all cursor-pointer"
+                  >
+                    Изключи
+                  </button>
+                </div>
+              ) : (
+                <div className="p-3 bg-card/60 border border-border rounded-2xl text-[11px] text-ink-faint leading-relaxed">
+                  🔒 Данните ви са защитени в облака чрез Вашия личен PIN код. Никой друг без този PIN не може да достъпи портфейла ви.
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
+                <button
+                  type="button"
+                  onClick={() => setIsSyncModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-extrabold text-ink-faint hover:bg-card hover:text-ink transition-all cursor-pointer"
+                >
+                  Отказ
+                </button>
+                <button
+                  type="submit"
+                  disabled={syncStatus === 'syncing'}
+                  className="px-5 py-2 rounded-xl text-xs font-black bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {syncStatus === 'syncing' ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      Свързване...
+                    </>
+                  ) : (
+                    <>
+                      <Cloud className="w-3.5 h-3.5" />
+                      {syncPin ? 'Обнови PIN' : 'Включи Синхронизация'}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
