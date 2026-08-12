@@ -94,6 +94,8 @@ export const AuthModal: React.FC<Props> = ({
         setError('Грешно потребителско име/имейл или парола!');
       } else if (err.code === 'auth/invalid-email') {
         setError('Невалиден формат на имейла!');
+      } else if (err.code === 'auth/configuration-not-found') {
+        setError('Моля активирайте "Email/Password" във Firebase Console (Authentication -> Sign-in method -> Enable) или ползвайте бързия PIN.');
       } else {
         setError(err.message || 'Грешка при вход. Опитайте отново!');
       }
@@ -153,6 +155,8 @@ export const AuthModal: React.FC<Props> = ({
         setError('Този имейл/потребителско име вече е регистриран!');
       } else if (err.code === 'auth/weak-password') {
         setError('Паролата е прекалено слаба (поне 6 символа).');
+      } else if (err.code === 'auth/configuration-not-found') {
+        setError('Моля активирайте "Email/Password" във Firebase Console (Authentication -> Sign-in method -> Enable).');
       } else {
         setError(err.message || 'Грешка при регистрация.');
       }
