@@ -986,10 +986,10 @@ export default function App() {
   <button
     onClick={() => setShowEconomicCalendarModal(true)}
     className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
-    title="Отвори Икономически Календар"
+    title="Economic Calendar"
   >
     <Calendar className="w-3.5 h-3.5" />
-    <span className="hidden sm:inline">Календар</span>
+    <span className="hidden sm:inline">Calendar</span>
   </button>
 
   {/* Useful Links Dropdown Button */}
@@ -997,20 +997,20 @@ export default function App() {
     <button
       onClick={() => setIsUsefulLinksMenuOpen(!isUsefulLinksMenuOpen)}
       className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
-      title="Полезни връзки"
+      title="Useful Links"
     >
       <ExternalLink className="w-3.5 h-3.5" />
-      <span className="hidden sm:inline">Полезни връзки</span>
+      <span className="hidden sm:inline">Useful Links</span>
       <ChevronDown className={`w-3 h-3 transition-transform ${isUsefulLinksMenuOpen ? 'rotate-180' : ''}`} />
     </button>
 
     {isUsefulLinksMenuOpen && (
       <div className="absolute right-0 top-full mt-2 w-64 bg-bg border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
         <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
-          🔗 Полезни връзки
+          🔗 Useful Links
         </div>
         <div className="p-3 text-xs text-ink-faint italic text-center font-sans">
-          Очакване на линковете от вас...
+          Awaiting your links...
         </div>
       </div>
     )}
