@@ -13,8 +13,7 @@ import {
   ShieldCheck,
   Eye,
   EyeOff,
-  Send,
-  HelpCircle
+  Send
 } from 'lucide-react';
 import { 
   signInWithEmailAndPassword, 
@@ -136,7 +135,7 @@ export const AuthModal: React.FC<Props> = ({
       if (isRealEmail(emailOrUsername)) {
         try {
           await sendEmailVerification(userCred.user);
-          setSuccess('Акаунтът е създаден! Изпратихме потвърдителен имейл. Проверете пощата си!');
+          setSuccess('Акаунтът е създаден! Изпратихме имейл за потвърждение.');
         } catch (emailErr) {
           console.warn("Could not send email verification:", emailErr);
           setSuccess('Акаунтът е създаден успешно!');
@@ -195,7 +194,7 @@ export const AuthModal: React.FC<Props> = ({
       setLoading(true);
       setError('');
       await sendEmailVerification(currentUser);
-      setSuccess('Потвърдителният имейл е изпратен отново! Проверете входящата си поща.');
+      setSuccess('Потвърдителният имейл е изпратен отново! Проверете пощата си.');
     } catch (err: any) {
       console.error("Resend verification error:", err);
       setError('Грешка при изпращане на писмото.');
@@ -244,10 +243,10 @@ export const AuthModal: React.FC<Props> = ({
             </div>
             <div>
               <h2 className="text-base font-black text-ink tracking-tight">
-                {currentUser ? 'Моят Акаунт & Синхронизация' : 'Вход / Регистрация в Платформата'}
+                {currentUser ? 'Моят Акаунт & Синхронизация' : 'Вход с Имейл & Парола'}
               </h2>
               <p className="text-[11px] font-semibold text-ink-muted">
-                Синхронизирайте портфолиото си на всички устройства (компютър, лаптоп, телефон)
+                Синхронизирайте портфолиото си на всички ваши устройства
               </p>
             </div>
           </div>
@@ -326,40 +325,29 @@ export const AuthModal: React.FC<Props> = ({
           </div>
         ) : (
           <>
-            {/* Tabs */}
+            {/* Primary Login / Register Tabs */}
             <div className="flex border-b border-border/40 my-4 text-xs font-black">
               <button
                 onClick={() => { setActiveTab('login'); setError(''); setSuccess(''); }}
                 className={`flex-1 py-2.5 text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
-                  activeTab === 'login'
-                    ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-lg'
-                    : 'border-transparent text-ink-muted hover:text-ink'
+                  activeTab === 'login' || activeTab === 'forgot'
+                    ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-lg font-black'
+                    : 'border-transparent text-ink-muted hover:text-ink font-bold'
                 }`}
               >
-                <LogIn className="w-3.5 h-3.5" />
-                Вход
+                <LogIn className="w-4 h-4" />
+                Вход с Имейл
               </button>
               <button
                 onClick={() => { setActiveTab('register'); setError(''); setSuccess(''); }}
                 className={`flex-1 py-2.5 text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === 'register'
-                    ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-lg'
-                    : 'border-transparent text-ink-muted hover:text-ink'
+                    ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-lg font-black'
+                    : 'border-transparent text-ink-muted hover:text-ink font-bold'
                 }`}
               >
-                <UserPlus className="w-3.5 h-3.5" />
-                Регистрация
-              </button>
-              <button
-                onClick={() => { setActiveTab('pin'); setError(''); setSuccess(''); }}
-                className={`flex-1 py-2.5 text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
-                  activeTab === 'pin'
-                    ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-lg'
-                    : 'border-transparent text-ink-muted hover:text-ink'
-                }`}
-              >
-                <Cloud className="w-3.5 h-3.5" />
-                Бърз PIN
+                <UserPlus className="w-4 h-4" />
+                Нова Регистрация
               </button>
             </div>
 
@@ -382,13 +370,13 @@ export const AuthModal: React.FC<Props> = ({
               <form onSubmit={handleLogin} className="space-y-3.5 py-1">
                 <div>
                   <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
-                    Потребителско име или Имейл
+                    Имейл или Потребителско име
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3 top-3 text-ink-muted" />
                     <input
                       type="text"
-                      placeholder="напр. yoan или yoan@example.com"
+                      placeholder="напр. yoan@gmail.com или yoan"
                       value={emailOrUsername}
                       onChange={(e) => setEmailOrUsername(e.target.value)}
                       className="w-full bg-card/60 border border-border/70 rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
@@ -505,13 +493,13 @@ export const AuthModal: React.FC<Props> = ({
 
                 <div>
                   <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
-                    Потребителско име или Имейл *
+                    Имейл адрес или Потребителско име *
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3 top-3 text-ink-muted" />
                     <input
                       type="text"
-                      placeholder="напр. yoan или yoan@gmail.com"
+                      placeholder="напр. yoan@gmail.com или yoan"
                       value={emailOrUsername}
                       onChange={(e) => setEmailOrUsername(e.target.value)}
                       className="w-full bg-card/60 border border-border/70 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
@@ -572,7 +560,7 @@ export const AuthModal: React.FC<Props> = ({
               </form>
             )}
 
-            {/* QUICK PIN TAB */}
+            {/* QUICK PIN FALLBACK TAB */}
             {activeTab === 'pin' && (
               <form onSubmit={handlePinSubmit} className="space-y-4 py-2">
                 <div>
@@ -614,6 +602,29 @@ export const AuthModal: React.FC<Props> = ({
                   )}
                 </div>
               </form>
+            )}
+
+            {/* Subtle PIN Footer Link */}
+            {activeTab !== 'pin' ? (
+              <div className="text-center pt-3 border-t border-border/40 mt-2">
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('pin'); setError(''); setSuccess(''); }}
+                  className="text-[10px] font-bold text-ink-muted hover:text-indigo-400 transition-colors"
+                >
+                  ☁️ Имате стар анонимен PIN код? Кликнете тук
+                </button>
+              </div>
+            ) : (
+              <div className="text-center pt-3 border-t border-border/40 mt-2">
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('login'); setError(''); setSuccess(''); }}
+                  className="text-[10px] font-bold text-indigo-400 hover:underline transition-colors"
+                >
+                  ← Назад към Вход с Имейл и Парола
+                </button>
+              </div>
             )}
           </>
         )}
