@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Stock, PortfolioPosition, PortfolioTransaction, PortfolioDividendRecord } from '../types';
 import { useRef } from 'react';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { AuthModal } from './AuthModal';
 import { 
   Briefcase, 
   PlusCircle, 
@@ -87,7 +89,18 @@ export default function PortfolioTracker({
   onUpdateCash,
   onSetAllPositions
 }: Props) {
-  // Real-time Cloud Sync with Secret PIN
+  // Firebase Auth User & Account Sync
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsub();
+  }, []);
+
+  // Real-time Cloud Sync with Secret PIN or User Account
   const [syncPin, setSyncPin] = useState<string>(() => {
     try {
       return localStorage.getItem('user_portfolio_sync_pin') || '';
@@ -175,16 +188,20 @@ export default function PortfolioTracker({
     } catch (e) {}
   }, [history]);
 
-  // Firestore Snapshot Real-time Listener
+  // Firestore Snapshot Real-time Listener (User Account primary, PIN secondary)
   useEffect(() => {
-    if (!syncPin.trim()) {
+    let docRef;
+    if (currentUser) {
+      docRef = doc(db, 'user_portfolios', currentUser.uid);
+    } else if (syncPin.trim()) {
+      const docId = `pin_${syncPin.trim().toLowerCase()}`;
+      docRef = doc(db, 'portfolio_syncs', docId);
+    } else {
       setSyncStatus('idle');
       return;
     }
 
     setSyncStatus('syncing');
-    const docId = `pin_${syncPin.trim().toLowerCase()}`;
-    const docRef = doc(db, 'portfolio_syncs', docId);
 
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -221,6 +238,9 @@ export default function PortfolioTracker({
             isRemoteUpdatingRef.current = false;
           }, 300);
         }
+      } else if (currentUser) {
+        // Initial cloud upload for new user account
+        pushToCloud();
       }
       setSyncStatus('synced');
     }, (err) => {
@@ -229,7 +249,7 @@ export default function PortfolioTracker({
     });
 
     return () => unsubscribe();
-  }, [syncPin]);
+  }, [currentUser, syncPin]);
 
   // Push local updates to Cloud
   const pushToCloud = async (
@@ -238,11 +258,13 @@ export default function PortfolioTracker({
     targetDivs = divRecords,
     targetCash = cashInput
   ) => {
-    if (!syncPin.trim() || isRemoteUpdatingRef.current) return;
+    if ((!currentUser && !syncPin.trim()) || isRemoteUpdatingRef.current) return;
     try {
       setSyncStatus('syncing');
-      const docId = `pin_${syncPin.trim().toLowerCase()}`;
-      const docRef = doc(db, 'portfolio_syncs', docId);
+      const docRef = currentUser 
+        ? doc(db, 'user_portfolios', currentUser.uid)
+        : doc(db, 'portfolio_syncs', `pin_${syncPin.trim().toLowerCase()}`);
+
       await setDoc(docRef, {
         payload: {
           positions: targetPositions,
@@ -261,10 +283,10 @@ export default function PortfolioTracker({
 
   // Push to cloud when local state changes
   useEffect(() => {
-    if (syncPin.trim() && !isRemoteUpdatingRef.current) {
+    if ((currentUser || syncPin.trim()) && !isRemoteUpdatingRef.current) {
       pushToCloud();
     }
-  }, [positions, history, divRecords, cashInput]);
+  }, [positions, history, divRecords, cashInput, currentUser, syncPin]);
 
   const handleEnableSync = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1010,21 +1032,24 @@ export default function PortfolioTracker({
               {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-indigo-400" />}
             </button>
 
-            {/* Real-time Cloud Sync with PIN */}
+            {/* Real-time Cloud Sync with User Account / PIN */}
             <button 
-              onClick={() => {
-                setInputSyncPin(syncPin);
-                setIsSyncModalOpen(true);
-              }}
-              title={syncPin ? `Автоматичната синхронизация е активна (PIN: ${syncPin})` : "Включи автоматична синхронизация в реално време между лаптоп, телефон и компютър"}
+              onClick={() => setIsAuthModalOpen(true)}
+              title={currentUser ? `Влезли сте като ${currentUser.email}. Натиснете за управление на акаунта.` : syncPin ? `Автоматичната синхронизация е активна (PIN: ${syncPin})` : "Влезте в акаунт или въведете PIN за синхронизация в реално време"}
               className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs border ${
-                syncPin 
+                currentUser || syncPin
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10' 
                   : 'bg-card/60 hover:bg-card border-border text-ink-muted hover:text-ink'
               }`}
             >
-              <Cloud className={`w-4 h-4 ${syncPin ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
-              <span>{syncPin ? `☁️ НА ЖИВО (${syncPin})` : '☁️ Синхронизация'}</span>
+              <Cloud className={`w-4 h-4 ${currentUser || syncPin ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
+              <span>
+                {currentUser 
+                  ? `👤 ${currentUser.displayName || currentUser.email?.split('@')[0]} (🟢 НА ЖИВО)`
+                  : syncPin 
+                    ? `☁️ PIN (${syncPin})` 
+                    : '🔑 Вход / Синхронизация'}
+              </span>
             </button>
 
             {/* Export / Import Backup */}
@@ -1891,6 +1916,22 @@ export default function PortfolioTracker({
           </div>
         </div>
       )}
+
+      {/* User Account & Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        currentUser={currentUser}
+        syncPin={syncPin}
+        onEnablePinSync={(pin) => {
+          setSyncPin(pin);
+          localStorage.setItem('user_portfolio_sync_pin', pin);
+        }}
+        onDisablePinSync={() => {
+          setSyncPin('');
+          localStorage.removeItem('user_portfolio_sync_pin');
+        }}
+      />
 
     </div>
   );
