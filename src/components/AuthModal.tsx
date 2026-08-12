@@ -12,12 +12,16 @@ import {
   Cloud, 
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  Send,
+  HelpCircle
 } from 'lucide-react';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   updateProfile,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signOut,
   User as FirebaseUser
 } from 'firebase/auth';
@@ -40,7 +44,7 @@ export const AuthModal: React.FC<Props> = ({
   onEnablePinSync,
   onDisablePinSync
 }) => {
-  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'pin'>(currentUser ? 'login' : 'login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot' | 'pin'>(currentUser ? 'login' : 'login');
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -60,6 +64,11 @@ export const AuthModal: React.FC<Props> = ({
     if (!trimmed) return '';
     if (trimmed.includes('@')) return trimmed;
     return `${trimmed.toLowerCase()}@stocktracker.app`;
+  };
+
+  const isRealEmail = (input: string) => {
+    const formatted = formatEmail(input);
+    return formatted.includes('@') && !formatted.endsWith('@stocktracker.app');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -123,10 +132,22 @@ export const AuthModal: React.FC<Props> = ({
         await updateProfile(userCred.user, { displayName: displayName.trim() });
       }
 
-      setSuccess('Акаунтът е създаден успешно! Влязохте в профила си.');
+      // Send verification email if it's a real email address
+      if (isRealEmail(emailOrUsername)) {
+        try {
+          await sendEmailVerification(userCred.user);
+          setSuccess('Акаунтът е създаден! Изпратихме потвърдителен имейл. Проверете пощата си!');
+        } catch (emailErr) {
+          console.warn("Could not send email verification:", emailErr);
+          setSuccess('Акаунтът е създаден успешно!');
+        }
+      } else {
+        setSuccess('Акаунтът е създаден успешно! Влязохте в профила си.');
+      }
+
       setTimeout(() => {
         onClose();
-      }, 1200);
+      }, 1800);
     } catch (err: any) {
       console.error("Register error:", err);
       if (err.code === 'auth/email-already-in-use') {
@@ -136,6 +157,48 @@ export const AuthModal: React.FC<Props> = ({
       } else {
         setError(err.message || 'Грешка при регистрация.');
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    const formattedEmail = formatEmail(emailOrUsername);
+    if (!formattedEmail) {
+      setError('Моля въведете Вашия имейл!');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await sendPasswordResetEmail(auth, formattedEmail);
+      setSuccess('Изпратихме ви имейл с инструкции за възстановяване на паролата!');
+    } catch (err: any) {
+      console.error("Password reset error:", err);
+      if (err.code === 'auth/user-not-found') {
+        setError('Не открихме акаунт с този имейл.');
+      } else {
+        setError('Грешка при изпращане на имейла.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendVerificationEmail = async () => {
+    if (!currentUser) return;
+    try {
+      setLoading(true);
+      setError('');
+      await sendEmailVerification(currentUser);
+      setSuccess('Потвърдителният имейл е изпратен отново! Проверете входящата си поща.');
+    } catch (err: any) {
+      console.error("Resend verification error:", err);
+      setError('Грешка при изпращане на писмото.');
     } finally {
       setLoading(false);
     }
@@ -211,8 +274,44 @@ export const AuthModal: React.FC<Props> = ({
                 <p className="text-[11px] text-emerald-400/90 font-medium mt-0.5">
                   🟢 Автоматичната синхронизация работи в реално време на всички ваши устройства.
                 </p>
+                {currentUser.email && !currentUser.email.endsWith('@stocktracker.app') && (
+                  <div className="mt-2.5 pt-2 border-t border-emerald-500/20 text-[11px]">
+                    {currentUser.emailVerified ? (
+                      <span className="text-emerald-300 font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        Имейлът е потвърден
+                      </span>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-amber-300 font-medium">Очаква потвърждение</span>
+                        <button
+                          type="button"
+                          onClick={handleResendVerificationEmail}
+                          disabled={loading}
+                          className="px-2 py-0.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold border border-amber-500/30 transition-all text-[10px] flex items-center gap-1"
+                        >
+                          <Send className="w-3 h-3" />
+                          Изпрати имейл за потвърждение
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
+
+            {error && (
+              <div className="bg-rose-500/15 border border-rose-500/30 text-rose-300 p-3 rounded-xl text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+            {success && (
+              <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 p-3 rounded-xl text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{success}</span>
+              </div>
+            )}
 
             <div className="pt-2 flex flex-col gap-2">
               <button
@@ -299,9 +398,18 @@ export const AuthModal: React.FC<Props> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
-                    Парола
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider">
+                      Парола
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('forgot'); setError(''); setSuccess(''); }}
+                      className="text-[10px] font-bold text-indigo-400 hover:underline"
+                    >
+                      Забравена парола?
+                    </button>
+                  </div>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3 top-3 text-ink-muted" />
                     <input
@@ -330,6 +438,49 @@ export const AuthModal: React.FC<Props> = ({
                   <LogIn className="w-4 h-4" />
                   {loading ? 'Влизане...' : 'Влез в Акаунта'}
                 </button>
+              </form>
+            )}
+
+            {/* FORGOT PASSWORD FORM */}
+            {activeTab === 'forgot' && (
+              <form onSubmit={handleForgotPassword} className="space-y-3.5 py-1">
+                <div>
+                  <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
+                    Вашият Имейл адрес
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 absolute left-3 top-3 text-ink-muted" />
+                    <input
+                      type="email"
+                      placeholder="напр. yoan@gmail.com"
+                      value={emailOrUsername}
+                      onChange={(e) => setEmailOrUsername(e.target.value)}
+                      className="w-full bg-card/60 border border-border/70 rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
+                      required
+                    />
+                  </div>
+                  <p className="text-[10px] text-ink-faint mt-1">
+                    Ще ви изпратим линк за смяна на паролата в пощата.
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('login')}
+                    className="py-2.5 px-3 bg-card border border-border text-ink-muted font-bold text-xs rounded-xl hover:text-ink"
+                  >
+                    Назад
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    {loading ? 'Изпращане...' : 'Изпрати линк'}
+                  </button>
+                </div>
               </form>
             )}
 
