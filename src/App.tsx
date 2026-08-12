@@ -11,8 +11,10 @@ import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
-import { db } from './lib/firebase';
+import { db, auth } from './lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { AuthModal } from './components/AuthModal';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import { 
   Table,
@@ -32,7 +34,8 @@ import {
   Layers,
   Info,
   X,
-  ExternalLink
+  ExternalLink,
+  Cloud
 } from 'lucide-react';
 
 export default function App() {
@@ -55,6 +58,24 @@ export default function App() {
  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
  const [isUsefulLinksMenuOpen, setIsUsefulLinksMenuOpen] = useState(false);
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
+
+  // User Auth & Cloud Sync State
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [syncPin, setSyncPin] = useState<string>(() => {
+    try {
+      return localStorage.getItem('user_portfolio_sync_pin') || '';
+    } catch (e) {
+      return '';
+    }
+  });
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsub();
+  }, []);
 
   // Price Alert targets & Portfolio Positions persisted to localStorage
   const [alerts, setAlerts] = useState<PriceAlert[]>(() => {
@@ -982,6 +1003,26 @@ export default function App() {
     )}
   </div>
 
+  {/* Header button for Cloud Sync / Account Auth (PIN / Email Login) */}
+  <button
+    onClick={() => setIsAuthModalOpen(true)}
+    className={`text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs ${
+      currentUser || syncPin
+        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10'
+        : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500 hover:text-white uppercase'
+    }`}
+    title={currentUser ? `Logged in as ${currentUser.email}` : syncPin ? `PIN: ${syncPin}` : 'Sign In / Cloud Sync'}
+  >
+    <Cloud className={`w-3.5 h-3.5 ${currentUser || syncPin ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
+    <span>
+      {currentUser 
+        ? `👤 ${currentUser.displayName || currentUser.email?.split('@')[0]} (🟢 ON)`
+        : syncPin 
+          ? `☁️ PIN (${syncPin})` 
+          : '🔑 Sign In / PIN'}
+    </span>
+  </button>
+
   {/* Header button for TradingView Economic Calendar Modal */}
   <button
     onClick={() => setShowEconomicCalendarModal(true)}
@@ -1296,6 +1337,22 @@ export default function App() {
       </div>
     </div>
   )}
+
+  {/* Global Auth / Cloud Sync Modal */}
+  <AuthModal
+    isOpen={isAuthModalOpen}
+    onClose={() => setIsAuthModalOpen(false)}
+    currentUser={currentUser}
+    syncPin={syncPin}
+    onEnablePinSync={(pin) => {
+      setSyncPin(pin);
+      localStorage.setItem('user_portfolio_sync_pin', pin);
+    }}
+    onDisablePinSync={() => {
+      setSyncPin('');
+      localStorage.removeItem('user_portfolio_sync_pin');
+    }}
+  />
  </main>
 
 
