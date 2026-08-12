@@ -1064,7 +1064,7 @@ export default function App() {
           }`}
         >
           <Table className="w-3.5 h-3.5" />
-          Интерактивна таблица ({stocks.length})
+          Interactive Table ({stocks.length})
         </button>
 
         <button
@@ -1076,7 +1076,7 @@ export default function App() {
           }`}
         >
           <Bell className="w-3.5 h-3.5" />
-          Планиране на известия
+          Price Alerts Schedule
           {alerts.length > 0 && (
             <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-500/30 text-white">
               {alerts.length}
@@ -1104,10 +1104,10 @@ export default function App() {
 
       <p className="text-xs text-ink-faint hidden md:block font-sans">
         {activeMainTab === 'table' 
-          ? 'Управление и анализ на базата от 200 акции' 
+          ? 'Interactive Table: Comprehensive 200 Stock Market Analysis' 
           : activeMainTab === 'alerts'
-          ? 'Конфигуриране и следене на ценови тригери'
-          : 'Следене на личните закупени акции и портфейл'}
+          ? 'Price Alerts Schedule: Configurable Target Price Triggers'
+          : 'Portfolio Tracker: Personal Asset & Holding Analytics'}
       </p>
     </div>
 
