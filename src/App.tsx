@@ -1092,54 +1092,66 @@ export default function App() {
   </>
   )}
 
-  {/* Main Section Tabs Switcher: Интерактивна таблица vs Планиране на персонализирани известия за цена */}
+  {/* Main Section Tabs Switcher: Interactive Table vs Price Alerts vs Portfolio Tracker */}
   <div className="space-y-3" id="stock-table-section">
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-2">
-      <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 shrink-0">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-2">
+      <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto pb-1 shrink-0">
+        
+        {/* Tab 1: Interactive Table */}
         <button
           onClick={() => setActiveMainTab('table')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border ${
+          className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
             activeMainTab === 'table'
               ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
               : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
           }`}
         >
-          <Table className="w-3.5 h-3.5" />
-          Interactive Table ({stocks.length})
+          <Table className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate hidden sm:inline">Interactive Table</span>
+          <span className="sm:hidden">Table</span>
+          <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
+            activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
+          }`}>
+            {stocks.length}
+          </span>
         </button>
 
+        {/* Tab 2: Price Alerts Schedule */}
         <button
           onClick={() => setActiveMainTab('alerts')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border ${
+          className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
             activeMainTab === 'alerts'
               ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
               : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
           }`}
         >
-          <Bell className="w-3.5 h-3.5" />
-          Price Alerts Schedule
-          {alerts.length > 0 && (
-            <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-500/30 text-white">
-              {alerts.length}
-            </span>
-          )}
+          <Bell className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate hidden sm:inline">Price Alerts Schedule</span>
+          <span className="sm:hidden">Alerts</span>
+          <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
+            activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
+          }`}>
+            {alerts.length}
+          </span>
         </button>
 
+        {/* Tab 3: Portfolio Tracker */}
         <button
           onClick={() => setActiveMainTab('portfolio')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border ${
+          className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
             activeMainTab === 'portfolio'
               ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
               : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
           }`}
         >
-          <Briefcase className="w-3.5 h-3.5" />
-          Portfolio Tracker
-          {positions.length > 0 && (
-            <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-500/30 text-white">
-              {positions.length}
-            </span>
-          )}
+          <Briefcase className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate hidden sm:inline">Portfolio Tracker</span>
+          <span className="sm:hidden">Portfolio</span>
+          <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
+            activeMainTab === 'portfolio' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
+          }`}>
+            {positions.length}
+          </span>
         </button>
       </div>
 
