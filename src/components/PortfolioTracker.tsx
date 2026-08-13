@@ -1287,13 +1287,16 @@ export default function PortfolioTracker({
       {(activeSubTab === 'overview' || activeSubTab === 'holdings') && (
         <div className="bg-bg border border-border rounded-2xl overflow-hidden shadow-xs">
         {/* Table Header Controls */}
-        <div className="p-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <h3 className="text-xs uppercase font-extrabold text-ink font-sans tracking-wide flex items-center gap-2">
+        <div className="p-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2 bg-card/40">
+          <div className="flex flex-wrap items-center gap-2 overflow-x-auto">
+            
+            {/* 1. Header Badge: АКТИВИ */}
+            <div className="px-3 py-2 rounded-xl text-xs font-black uppercase text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 flex items-center gap-1.5 h-9 shrink-0">
               <Briefcase className="w-4 h-4 text-indigo-400" />
-              АКТИВИ
-            </h3>
+              <span>АКТИВИ</span>
+            </div>
 
+            {/* 2. Добавяне на Нов Актив */}
             <button 
               onClick={() => {
                 setEditingId(null);
@@ -1305,65 +1308,70 @@ export default function PortfolioTracker({
                 setBuyDate(new Date().toISOString().split('T')[0]);
                 setIsAddModalOpen(true);
               }}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+              className="px-3 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500 flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer h-9 shrink-0"
             >
               <PlusCircle className="w-4 h-4" />
-              Добавяне на Нов Актив
+              <span>Добавяне на Нов Актив</span>
             </button>
 
+            {/* 3. История на транзакциите */}
             <button 
               onClick={() => setIsHistoryModalOpen(true)}
-              className="bg-card/60 hover:bg-card border border-border text-indigo-400 font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-indigo-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <History className="w-4 h-4 text-indigo-400" />
-              История на транзакциите ({filteredHistory.length})
+              <span>История на транзакциите ({filteredHistory.length})</span>
             </button>
 
+            {/* 4. Получени дивиденти */}
             <button 
               onClick={() => setIsDividendsModalOpen(true)}
-              className="bg-card/60 hover:bg-card border border-border text-emerald-400 font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-emerald-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <Coins className="w-4 h-4 text-emerald-400" />
-              Получени дивиденти (${totalDivEarned.toFixed(2)})
+              <span>Получени дивиденти (${totalDivEarned.toFixed(2)})</span>
             </button>
 
+            {/* 5. Кеш */}
             <button 
               onClick={() => setIsCashModalOpen(true)}
-              className="bg-card/60 hover:bg-card border border-border text-emerald-400 font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-amber-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
-              <Coins className="w-4 h-4 text-emerald-400" />
-              Кеш: ${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <Coins className="w-4 h-4 text-amber-400" />
+              <span>Кеш: ${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
             </button>
 
+            {/* 6. Обнови цените в реално време */}
             <button 
               onClick={() => window.location.reload()}
-              className="bg-card/60 hover:bg-card border border-border text-ink-muted hover:text-ink px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <RefreshCw className="w-4 h-4 text-indigo-400" />
-              Обнови цените в реално време
+              <span>Обнови цените в реално време</span>
             </button>
 
-            {/* Privacy Mode Toggle (Icon only) */}
+            {/* 7. Privacy Mode Toggle */}
             <button 
               onClick={togglePrivacyMode}
               title={isPrivacyMode ? "Покажи финансовите суми" : "Скрий финансовите суми"}
-              className={`p-2 rounded-xl transition-all cursor-pointer shadow-xs border flex items-center justify-center ${
+              className={`px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs border flex items-center gap-1.5 h-9 shrink-0 ${
                 isPrivacyMode 
                   ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' 
-                  : 'bg-card/60 hover:bg-card border-border text-ink-muted hover:text-ink'
+                  : 'bg-card/70 hover:bg-card border-border text-ink-muted hover:text-ink'
               }`}
             >
               {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-indigo-400" />}
+              <span>{isPrivacyMode ? 'Скрити' : 'Видими'}</span>
             </button>
 
-            {/* Real-time Cloud Sync with User Account / PIN */}
+            {/* 8. User Account / PIN Sync Status */}
             <button 
               onClick={() => setIsAuthModalOpen(true)}
               title={currentUser ? `Влезли сте като ${currentUser.email}. Натиснете за управление на акаунта.` : syncPin ? `Автоматичната синхронизация е активна (PIN: ${syncPin})` : "Влезте в акаунт или въведете PIN за синхронизация в реално време"}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs border ${
+              className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shadow-xs border h-9 shrink-0 ${
                 currentUser || syncPin
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10' 
-                  : 'bg-card/60 hover:bg-card border-border text-ink-muted hover:text-ink'
+                  : 'bg-card/70 hover:bg-card border-border text-ink-muted hover:text-ink'
               }`}
             >
               <Cloud className={`w-4 h-4 ${currentUser || syncPin ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
@@ -1376,24 +1384,25 @@ export default function PortfolioTracker({
               </span>
             </button>
 
-            {/* Export / Import Backup */}
+            {/* 9. Експорт */}
             <button 
               onClick={handleExportBackup}
               title="Свали резервно копие на вашето портфолио"
-              className="bg-card/60 hover:bg-card border border-border text-ink-muted hover:text-ink px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <Download className="w-4 h-4 text-emerald-400" />
-              Експорт
+              <span>Експорт</span>
             </button>
 
-            <label title="Възстанови резервно копие на портфолиото" className="bg-card/60 hover:bg-card border border-border text-ink-muted hover:text-ink px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs">
+            {/* 10. Импорт */}
+            <label title="Възстанови резервно копие на портфолиото" className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0">
               <Upload className="w-4 h-4 text-indigo-400" />
-              Импорт
+              <span>Импорт</span>
               <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
             </label>
           </div>
 
-          <span className="text-[10px] text-ink-faint font-extrabold uppercase bg-card/40 px-2.5 py-1 rounded-xl border border-white/5">
+          <span className="text-[10px] text-ink-faint font-extrabold uppercase bg-card/40 px-2.5 py-1 rounded-xl border border-white/5 shrink-0">
             ОБЩО ПОЗИЦИИ: {enrichedHoldings.length}
           </span>
         </div>
