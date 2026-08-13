@@ -47,6 +47,8 @@ interface Props {
   transactions?: PortfolioTransaction[];
   dividends?: PortfolioDividendRecord[];
   cashBalance?: number;
+  currentUser?: FirebaseUser | null;
+  syncPin?: string;
   onAddPosition: (pos: Omit<PortfolioPosition, 'id'>) => void;
   onUpdatePosition: (id: string, pos: Omit<PortfolioPosition, 'id'>) => void;
   onDeletePosition: (id: string) => void;
@@ -81,6 +83,8 @@ export default function PortfolioTracker({
   transactions = [], 
   dividends = [], 
   cashBalance = 0,
+  currentUser: propCurrentUser,
+  syncPin: propSyncPin,
   onAddPosition, 
   onUpdatePosition, 
   onDeletePosition,
@@ -90,24 +94,36 @@ export default function PortfolioTracker({
   onSetAllPositions
 }: Props) {
   // Firebase Auth User & Account Sync
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(propCurrentUser ?? null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-    });
-    return () => unsub();
-  }, []);
+    if (propCurrentUser !== undefined) {
+      setCurrentUser(propCurrentUser);
+    } else {
+      const unsub = onAuthStateChanged(auth, (user) => {
+        setCurrentUser(user);
+      });
+      return () => unsub();
+    }
+  }, [propCurrentUser]);
 
   // Real-time Cloud Sync with Secret PIN or User Account
-  const [syncPin, setSyncPin] = useState<string>(() => {
+  const [syncPin, setSyncPin] = useState<string>(propSyncPin ?? (() => {
     try {
       return localStorage.getItem('user_portfolio_sync_pin') || '';
     } catch (e) {
       return '';
     }
-  });
+  }));
+
+  useEffect(() => {
+    if (propSyncPin !== undefined) {
+      setSyncPin(propSyncPin);
+    }
+  }, [propSyncPin]);
+
+  const isInitialCloudSyncedRef = useRef(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [inputSyncPin, setInputSyncPin] = useState('');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
@@ -190,6 +206,7 @@ export default function PortfolioTracker({
 
   // Firestore Snapshot Real-time Listener (User Account primary, PIN secondary)
   useEffect(() => {
+    isInitialCloudSyncedRef.current = false;
     let docRef;
     if (currentUser) {
       docRef = doc(db, 'user_portfolios', currentUser.uid);
@@ -234,12 +251,14 @@ export default function PortfolioTracker({
               localStorage.setItem('user_portfolio_cash', data.payload.cashInput);
             } catch (e) {}
           }
+          isInitialCloudSyncedRef.current = true;
           setTimeout(() => {
             isRemoteUpdatingRef.current = false;
           }, 300);
         }
       } else if (currentUser) {
         // Initial cloud upload for new user account
+        isInitialCloudSyncedRef.current = true;
         pushToCloud();
       }
       setSyncStatus('synced');
@@ -283,10 +302,10 @@ export default function PortfolioTracker({
 
   // Push to cloud when local state changes
   useEffect(() => {
-    if ((currentUser || syncPin.trim()) && !isRemoteUpdatingRef.current) {
+    if ((currentUser || syncPin.trim()) && !isRemoteUpdatingRef.current && isInitialCloudSyncedRef.current) {
       pushToCloud();
     }
-  }, [positions, history, divRecords, cashInput, currentUser, syncPin]);
+  }, [positions, history, divRecords, cashInput]);
 
   const handleEnableSync = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1230,16 +1230,21 @@ export default function App() {
         onUpdateAlert={handleUpdateAlert}
         onDeleteAlert={handleDeleteAlert}
       />
-    ) : (
+    ) : null}
+
+    {/* PortfolioTracker is ALWAYS mounted so its real-time Firestore sync stays alive 24/7 */}
+    <div className={activeMainTab === 'portfolio' ? 'block' : 'hidden'}>
       <PortfolioTracker
         stocks={stocks}
         positions={positions}
+        currentUser={currentUser}
+        syncPin={syncPin}
         onAddPosition={handleAddPosition}
         onUpdatePosition={handleUpdatePosition}
         onDeletePosition={handleDeletePosition}
         onSetAllPositions={(newPositions) => setPositions(newPositions)}
       />
-    )}
+    </div>
   </div>
 
 
