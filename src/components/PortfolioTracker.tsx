@@ -40,7 +40,8 @@ import {
   Cloud,
   CloudOff,
   Key,
-  CheckCircle2
+  CheckCircle2,
+  Info
 } from 'lucide-react';
 
 interface Props {
@@ -368,6 +369,7 @@ export default function PortfolioTracker({
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDividendsModalOpen, setIsDividendsModalOpen] = useState(false);
   const [cagrHorizon, setCagrHorizon] = useState<'1г.' | '2г.' | '3г.' | '5г.'>('2г.');
+  const [showAssetAllocationInfo, setShowAssetAllocationInfo] = useState(false);
 
   // Selected clicked row marker & 10 rows per page pagination
   const [selectedPosId, setSelectedPosId] = useState<string | null>(null);
@@ -929,186 +931,144 @@ export default function PortfolioTracker({
       </div>
 
       {/* ======================================================================== */}
-      {/* ROW 2: 3 VISUAL CHARTS SECTION (Premium Glassmorphic Design)             */}
+      {/* ROW 2: ALL HOLDINGS DONUT CHART & ALLOCATION INFO SUITE                  */}
       {/* ======================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2">
+      <div className="bg-card/70 border border-border/80 rounded-2xl p-5 shadow-md backdrop-blur-sm space-y-4">
         
-        {/* Chart 1: INVESTED Vs RETURNS */}
-        <div className="bg-card/70 border border-border/80 rounded-2xl overflow-hidden shadow-md backdrop-blur-sm flex flex-col justify-between">
-          <div className="bg-card/90 border-b border-border/40 px-4 py-2.5 flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-indigo-400" />
-              TOTAL PORTFOLIO GAIN
-            </span>
-            <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              +{grandTotalReturnPct.toFixed(2)}% С ДИВИДЕНТИ
-            </span>
+        {/* Card Header with Title and 'i' Info Button */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
+          <div className="flex items-center gap-2">
+            <PieChart className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-sm font-black uppercase tracking-wide text-ink flex items-center gap-2">
+              Всички активи (All holdings)
+            </h3>
+
+            {/* 'i' Info Button with Dot */}
+            <button
+              onClick={() => setShowAssetAllocationInfo(!showAssetAllocationInfo)}
+              title="Натиснете за информация относно следенето на резултатите и алокацията на активи"
+              className={`w-6 h-6 rounded-full flex items-center justify-center font-serif font-black text-xs transition-all cursor-pointer border ${
+                showAssetAllocationInfo 
+                  ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-500/30' 
+                  : 'bg-card hover:bg-card/90 text-indigo-400 border-indigo-500/30 hover:border-indigo-400'
+              }`}
+            >
+              ⓘ
+            </button>
           </div>
 
-          {enrichedHoldings.length === 0 ? (
-            <div className="p-8 text-center text-ink-faint font-semibold text-xs leading-relaxed flex items-center justify-center min-h-[160px]">
-              Добавете поредица, за да започнете да визуализирате данните си
-            </div>
-          ) : (
-            <div className="p-4 space-y-3">
-              <div className="space-y-1.5 text-xs">
-                <div className="flex justify-between text-ink-faint">
-                  <span>Вложени пари:</span>
-                  <span className="font-extrabold text-ink">{isPrivacyMode ? '••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}</span>
-                </div>
-                <div className="flex justify-between text-ink-faint">
-                  <span>Пазарна оценка:</span>
-                  <span className="font-extrabold text-ink">{isPrivacyMode ? '••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}</span>
-                </div>
-                <div className="flex justify-between text-emerald-400/90 font-semibold">
-                  <span>Нереализирана (Пазарна):</span>
-                  <span>{isPrivacyMode ? '••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}</span>
-                </div>
-                {realizedPnLSum !== 0 && (
-                  <div className="flex justify-between text-purple-400/90 font-semibold">
-                    <span>Реализирана P/L (Затворени):</span>
-                    <span>{isPrivacyMode ? '••••' : `${realizedPnLSum >= 0 ? '+' : ''}$${realizedPnLSum.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-amber-400/90 font-semibold">
-                  <span>Получени дивиденти:</span>
-                  <span>{isPrivacyMode ? '••••' : `+$${totalDividendsSum.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}</span>
-                </div>
-                <div className="flex justify-between text-emerald-400 font-extrabold border-t border-border/40 pt-2 text-sm">
-                  <span>Общо с дивиденти:</span>
-                  <span className="drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]">{isPrivacyMode ? '••••' : `${grandTotalReturnVal >= 0 ? '+' : ''}$${grandTotalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${grandTotalReturnPct.toFixed(2)}%)`}</span>
-                </div>
-              </div>
-
-              {/* Visual Comparison Bar */}
-              <div className="space-y-1 pt-1">
-                <div className="flex justify-between text-[10px] text-ink-faint font-bold">
-                  <span>Инвестирани (${(totalCostBasis / 1000).toFixed(1)}k)</span>
-                  <span>С Дивиденти (${((totalCostBasis + grandTotalReturnVal) / 1000).toFixed(1)}k)</span>
-                </div>
-                <div className="w-full bg-card h-2.5 rounded-full overflow-hidden border border-border/60 flex shadow-inner">
-                  <div className="bg-indigo-500 h-full transition-all duration-500" style={{ width: `${totalCostBasis > 0 ? Math.min(100, (totalCostBasis / (totalCostBasis + Math.max(0, grandTotalReturnVal))) * 100) : 50}%` }}></div>
-                  <div className="bg-emerald-400 h-full transition-all duration-500" style={{ width: `${totalCostBasis > 0 ? Math.max(0, 100 - (totalCostBasis / (totalCostBasis + Math.max(0, grandTotalReturnVal))) * 100) : 50}%` }}></div>
-                </div>
-              </div>
-            </div>
-          )}
+          <span className="text-xs font-extrabold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+            {enrichedHoldings.length} Актива в Портфейла
+          </span>
         </div>
 
-        {/* Chart 2: HOLDINGS BREAKDOWN */}
-        <div className="bg-card/70 border border-border/80 rounded-2xl overflow-hidden shadow-md backdrop-blur-sm flex flex-col justify-between">
-          <div className="bg-card/90 border-b border-border/40 px-4 py-2.5 flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
-              <PieChart className="w-3.5 h-3.5 text-indigo-400" />
-              HOLDINGS BREAKDOWN
-            </span>
-            <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
-              {enrichedHoldings.length} актива
-            </span>
-          </div>
-
-          {enrichedHoldings.length === 0 ? (
-            <div className="p-8 text-center text-ink-faint font-semibold text-xs leading-relaxed flex items-center justify-center min-h-[160px]">
-              Добавете поредица, за да започнете да визуализирате данните си
+        {/* Bulgarian Explanation Banner (Toggled by 'i' icon) */}
+        {showAssetAllocationInfo && (
+          <div className="bg-indigo-950/50 border border-indigo-500/40 rounded-xl p-4 text-xs space-y-3 text-indigo-100/90 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="flex items-center gap-2 font-black text-indigo-300 text-sm border-b border-indigo-500/30 pb-2">
+              <Info className="w-4 h-4 text-indigo-400" />
+              <span>Следене на резултатите и управление на алокацията на активите</span>
             </div>
-          ) : (
-            <div className="p-5 flex items-center gap-4">
-              <div className="relative w-20 h-20 shrink-0 rounded-full flex items-center justify-center shadow-md shadow-indigo-500/20" style={{
-                background: `conic-gradient(#6366f1 0% 60%, #3b82f6 60% 85%, #10b981 85% 100%)`
-              }}>
-                <div className="w-14 h-14 rounded-full bg-bg flex items-center justify-center flex-col text-center shadow-inner">
-                  <span className="text-[8px] font-extrabold text-ink">ОБЩО</span>
-                  <span className="text-[9px] text-indigo-400 font-extrabold">100%</span>
-                </div>
+            
+            <p className="leading-relaxed">
+              Следенето на представянето на портфейла от акции изисква своевременна информация за цените на акциите, сделките и друга съществена информация. Получаването на актуализации в реално време може да бъде предизвикателство, особено когато се разчита на остарели методи като ръчно въвеждане на данни или периодични извлечения. Без ясна представа за портфейла, инвеститорите могат да пропуснат критични пазарни движения или да не реагират своевременно на променящите се пазарни условия.
+            </p>
+            
+            <p className="leading-relaxed border-t border-indigo-500/20 pt-2">
+              Също така, правилното разпределение на активите е от решаващо значение за диверсификацията на портфейла и управлението на риска. Управлението на алокацията става все по-сложно с нарастването на портфейла и включването на различни класове активи, сектори или географски региони. Ръчното проследяване и ребалансиране отнема време, а без цялостен преглед инвеститорите могат да пренебрегнат дисбаланси или разминавания в своята инвестиционна стратегия.
+            </p>
+          </div>
+        )}
+
+        {/* Donut Chart & Holdings Legend Section */}
+        {enrichedHoldings.length === 0 ? (
+          <div className="py-12 text-center text-ink-faint font-semibold text-xs leading-relaxed">
+            Няма въведени акции в портфейла. Добавете позиция, за да визуализирате алокацията.
+          </div>
+        ) : (
+          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 pt-2">
+            
+            {/* SVG Donut Chart */}
+            <div className="relative w-52 h-52 sm:w-64 sm:h-64 shrink-0 flex items-center justify-center">
+              <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                {(() => {
+                  let accumulatedPct = 0;
+                  const radius = 38;
+                  const circumference = 2 * Math.PI * radius; // ~238.76
+
+                  const colors = [
+                    '#8b5cf6', '#06b6d4', '#3b82f6', '#d946ef', '#10b981',
+                    '#0284c7', '#a855f7', '#f59e0b', '#ef4444', '#ec4899',
+                    '#6366f1', '#14b8a6', '#38bdf8', '#84cc16', '#64748b'
+                  ];
+
+                  return holdingsByWeight.map((pos, idx) => {
+                    const pct = pos.weightPct;
+                    const strokeDasharray = `${(pct / 100) * circumference} ${circumference}`;
+                    const strokeDashoffset = -((accumulatedPct / 100) * circumference);
+                    accumulatedPct += pct;
+                    const color = colors[idx % colors.length];
+
+                    return (
+                      <circle
+                        key={pos.id}
+                        cx="50"
+                        cy="50"
+                        r={radius}
+                        fill="transparent"
+                        stroke={color}
+                        strokeWidth="15"
+                        strokeDasharray={strokeDasharray}
+                        strokeDashoffset={strokeDashoffset}
+                        className="transition-all duration-500 hover:opacity-80 cursor-pointer"
+                      >
+                        <title>{`${pos.ticker}: ${pct.toFixed(2)}%`}</title>
+                      </circle>
+                    );
+                  });
+                })()}
+              </svg>
+
+              {/* Inner Donut Center Text */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider">ОБЩО</span>
+                <span className="text-base sm:text-lg font-black text-indigo-400 font-sans">
+                  {isPrivacyMode ? '••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+                </span>
+                <span className="text-[10px] font-extrabold text-emerald-400">100%</span>
               </div>
+            </div>
 
-              <div className="flex-1 space-y-2 max-h-[150px] overflow-y-auto pr-1">
-                {enrichedHoldings.slice(0, 5).map((h, i) => {
-                  const sharePct = totalCurrentValue > 0 ? (h.currentVal / totalCurrentValue) * 100 : 0;
-                  const barColors = ['bg-indigo-500', 'bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500'];
-                  const barColor = barColors[i % barColors.length];
+            {/* Holdings Legend List (Sorted by weight %, 2-column or 3-column) */}
+            <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 max-h-[320px] overflow-y-auto pr-1">
+              {holdingsByWeight.map((pos, idx) => {
+                const colors = [
+                  '#8b5cf6', '#06b6d4', '#3b82f6', '#d946ef', '#10b981',
+                  '#0284c7', '#a855f7', '#f59e0b', '#ef4444', '#ec4899',
+                  '#6366f1', '#14b8a6', '#38bdf8', '#84cc16', '#64748b'
+                ];
+                const color = colors[idx % colors.length];
 
-                  return (
-                    <div key={h.id} className="space-y-0.5">
-                      <div className="flex items-center justify-between text-[10px]">
-                        <div className="flex items-center gap-1.5 truncate max-w-[110px]">
-                          <span className={`w-2 h-2 rounded-full shrink-0 ${barColor}`}></span>
-                          <span className="font-extrabold text-ink">{h.ticker}</span>
-                        </div>
-                        <span className="font-mono font-bold text-ink text-[10px]">
-                          {sharePct.toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-card/60 h-1.5 rounded-full overflow-hidden">
-                        <div className={`h-full ${barColor} transition-all duration-300`} style={{ width: `${Math.min(100, Math.max(4, sharePct))}%` }}></div>
+                return (
+                  <div key={pos.id} className="flex items-center justify-between p-2 rounded-xl bg-card/40 border border-border/30 hover:bg-card/70 transition-all text-xs">
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: color }}></span>
+                      <StockLogo ticker={pos.ticker} />
+                      <div className="truncate">
+                        <span className="font-black text-ink block truncate">{pos.ticker}</span>
+                        <span className="text-[10px] text-ink-muted truncate block">{pos.companyName || pos.ticker}</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Chart 3: STOCK DIVERSIFICATION */}
-        <div className="bg-card/70 border border-border/80 rounded-2xl overflow-hidden shadow-md backdrop-blur-sm flex flex-col justify-between">
-          <div className="bg-card/90 border-b border-border/40 px-4 py-2.5 flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              STOCK DIVERSIFICATION
-            </span>
-            <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-              Сектори
-            </span>
-          </div>
-
-          {enrichedHoldings.length === 0 ? (
-            <div className="p-8 text-center text-ink-faint font-semibold text-xs leading-relaxed flex items-center justify-center min-h-[160px]">
-              Добавете поредица, за да започнете да визуализирате данните си
-            </div>
-          ) : (
-            <div className="p-5 space-y-2.5">
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-ink-faint font-bold">ETF & Индекси</span>
-                  <span className="font-mono font-bold text-indigo-400">
-                    {((enrichedHoldings.filter(h => h.ticker.includes('SXR8') || h.ticker.includes('VHYL') || h.ticker.includes('JGPI') || h.ticker.includes('XNAS')).reduce((acc, h) => acc + h.currentVal, 0) / (totalCurrentValue || 1)) * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="w-full bg-card h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-indigo-500 h-full" style={{ width: `${Math.min(100, Math.max(5, (enrichedHoldings.filter(h => h.ticker.includes('SXR8') || h.ticker.includes('VHYL') || h.ticker.includes('JGPI') || h.ticker.includes('XNAS')).reduce((acc, h) => acc + h.currentVal, 0) / (totalCurrentValue || 1)) * 100))}%` }}></div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-ink-faint font-bold">Технологии & Акции</span>
-                  <span className="font-mono font-bold text-emerald-400">
-                    {((enrichedHoldings.filter(h => !h.ticker.includes('SXR8') && !h.ticker.includes('VHYL') && !h.ticker.includes('JGPI') && !h.ticker.includes('XNAS')).reduce((acc, h) => acc + h.currentVal, 0) / (totalCurrentValue || 1)) * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="w-full bg-card h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-emerald-400 h-full" style={{ width: `${Math.min(100, Math.max(5, (enrichedHoldings.filter(h => !h.ticker.includes('SXR8') && !h.ticker.includes('VHYL') && !h.ticker.includes('JGPI') && !h.ticker.includes('XNAS')).reduce((acc, h) => acc + h.currentVal, 0) / (totalCurrentValue || 1)) * 100))}%` }}></div>
-                </div>
-              </div>
-
-              {parseFloat(cashInput) > 0 && (
-                <div className="space-y-1 border-t border-border/40 pt-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-amber-400 font-bold">Свободен Кеш</span>
-                    <span className="font-mono font-bold text-amber-400">
-                      {((parseFloat(cashInput) / totalPortfolioValue) * 100).toFixed(1)}%
+                    <span className="font-mono font-black text-indigo-400 shrink-0 ml-2">
+                      {pos.weightPct.toFixed(2)}%
                     </span>
                   </div>
-                  <div className="w-full bg-card h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-amber-400 h-full" style={{ width: `${((parseFloat(cashInput) / totalPortfolioValue) * 100).toFixed(1)}%` }}></div>
-                  </div>
-                </div>
-              )}
+                );
+              })}
             </div>
-          )}
-        </div>
 
+          </div>
+        )}
       </div>
         </>
       )}
