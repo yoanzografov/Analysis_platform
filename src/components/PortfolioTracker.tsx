@@ -5,9 +5,11 @@ import { db, auth } from '../lib/firebase';
 import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { AuthModal } from './AuthModal';
+import { getSectorForStock } from '../utils/sectorHelper';
 import { 
   Briefcase, 
   PlusCircle, 
+  Plus,
   Trash2, 
   Edit3, 
   TrendingUp, 
@@ -358,6 +360,7 @@ export default function PortfolioTracker({
     setIsSyncModalOpen(false);
   };
   // AI Audit Modal, Add Position Modal, Cash Modal, History & Dividend Modal state
+  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'diversification' | 'dividends' | 'holdings' | 'transactions'>('overview');
   const [isAiAuditOpen, setIsAiAuditOpen] = useState(false);
   const [tvModalTicker, setTvModalTicker] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -640,13 +643,144 @@ export default function PortfolioTracker({
   const grandTotalReturnVal = totalReturnVal + realizedPnLSum + totalDividendsSum;
   const grandTotalReturnPct = totalCostBasis > 0 ? (grandTotalReturnVal / totalCostBasis) * 100 : 0;
 
+  // Sector Diversification breakdown (Snowball Analytics style)
+  const sectorMap: { [sector: string]: number } = {};
+  enrichedHoldings.forEach(h => {
+    const sec = getSectorForStock(h.ticker) || 'Other';
+    sectorMap[sec] = (sectorMap[sec] || 0) + h.currentVal;
+  });
+  const sectorList = Object.entries(sectorMap)
+    .map(([sector, val]) => ({
+      sector,
+      val,
+      pct: totalCurrentValue > 0 ? (val / totalCurrentValue) * 100 : 0
+    }))
+    .sort((a, b) => b.val - a.val);
+
+  // Position Weight Concentration breakdown
+  const holdingsByWeight = [...enrichedHoldings]
+    .map(h => ({
+      ...h,
+      weightPct: totalCurrentValue > 0 ? (h.currentVal / totalCurrentValue) * 100 : 0
+    }))
+    .sort((a, b) => b.currentVal - a.currentVal);
+
+  // Annual projected dividends sum & Yield on Cost %
+  const totalAnnualDivIncome = enrichedHoldings.reduce((acc, h) => {
+    const divPerShare = h.annualDivPerShare || 0;
+    return acc + (divPerShare * h.shares);
+  }, 0);
+  const divYieldOnCost = totalCostBasis > 0 ? (totalAnnualDivIncome / totalCostBasis) * 100 : 0;
+
+  // Monthly 12-month forward dividend projection (Jan - Dec)
+  const monthlyProjection = [
+    { month: 'Jan', val: totalAnnualDivIncome * 0.07 },
+    { month: 'Feb', val: totalAnnualDivIncome * 0.08 },
+    { month: 'Mar', val: totalAnnualDivIncome * 0.10 },
+    { month: 'Apr', val: totalAnnualDivIncome * 0.07 },
+    { month: 'May', val: totalAnnualDivIncome * 0.08 },
+    { month: 'Jun', val: totalAnnualDivIncome * 0.11 },
+    { month: 'Jul', val: totalAnnualDivIncome * 0.07 },
+    { month: 'Aug', val: totalAnnualDivIncome * 0.08 },
+    { month: 'Sep', val: totalAnnualDivIncome * 0.10 },
+    { month: 'Oct', val: totalAnnualDivIncome * 0.07 },
+    { month: 'Nov', val: totalAnnualDivIncome * 0.08 },
+    { month: 'Dec', val: totalAnnualDivIncome * 0.09 },
+  ];
+
   return (
     <div className="space-y-4 font-sans text-ink">
       
       {/* ======================================================================== */}
-      {/* ROW 1: TOP METRIC GRID (8-Card Layout with Total Gain Inc. Dividends)     */}
+      {/* SNOWBALL ANALYTICS SUB-TAB NAVIGATION BAR                                */}
       {/* ======================================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 items-stretch">
+      <div className="bg-card/80 border border-border/80 rounded-2xl p-2 shadow-md backdrop-blur-md flex flex-wrap items-center justify-between gap-2 overflow-x-auto">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0 text-xs font-black">
+          <button
+            onClick={() => setActiveSubTab('overview')}
+            className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              activeSubTab === 'overview'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+            }`}
+          >
+            <PieChart className="w-4 h-4 text-indigo-300" />
+            Overview
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('diversification')}
+            className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              activeSubTab === 'diversification'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+            }`}
+          >
+            <Layers className="w-4 h-4 text-cyan-300" />
+            Diversification
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('dividends')}
+            className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              activeSubTab === 'dividends'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+            }`}
+          >
+            <Flame className="w-4 h-4 text-emerald-400" />
+            Dividend Calendar
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('holdings')}
+            className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              activeSubTab === 'holdings'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+            }`}
+          >
+            <Briefcase className="w-4 h-4 text-blue-300" />
+            Holdings ({enrichedHoldings.length})
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('transactions')}
+            className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              activeSubTab === 'transactions'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+            }`}
+          >
+            <Newspaper className="w-4 h-4 text-purple-300" />
+            Transactions ({history.length})
+          </button>
+        </div>
+
+        {/* Quick Action Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={togglePrivacyMode}
+            className="p-2 bg-card border border-border/80 text-ink-muted hover:text-ink rounded-xl text-xs font-bold transition-all"
+            title={isPrivacyMode ? "Покажи сумите" : "Скрий сумите"}
+          >
+            {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4" />}
+          </button>
+
+          <button
+            onClick={() => { setEditingId(null); setIsAddModalOpen(true); }}
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Добави Позиция</span>
+          </button>
+        </div>
+      </div>
+
+      {/* SUB-TAB 1: OVERVIEW */}
+      {activeSubTab === 'overview' && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 items-stretch">
         
         {/* Card 1: TOTAL INVESTED */}
         <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-indigo-500 rounded-xl p-2.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[72px]">
@@ -976,11 +1110,182 @@ export default function PortfolioTracker({
         </div>
 
       </div>
+        </>
+      )}
 
-      {/* ======================================================================== */}
-      {/* ROW 3: СНД: Списък с Активи (Main Portfolio Table - Image 2)              */}
-      {/* ======================================================================== */}
-      <div className="bg-bg border border-border rounded-2xl overflow-hidden shadow-xs">
+      {/* SUB-TAB 2: DIVERSIFICATION */}
+      {activeSubTab === 'diversification' && (
+        <div className="space-y-4 animate-in fade-in duration-150">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            {/* Sector Diversification */}
+            <div className="bg-card/70 border border-border/80 rounded-2xl p-5 shadow-md backdrop-blur-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                <div className="flex items-center gap-2">
+                  <PieChart className="w-5 h-5 text-indigo-400" />
+                  <h3 className="text-sm font-black uppercase tracking-wide text-ink">
+                    Секторна Диверсификация (Sector Breakdown)
+                  </h3>
+                </div>
+                <span className="text-xs font-extrabold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
+                  {sectorList.length} Сектора
+                </span>
+              </div>
+
+              {sectorList.length === 0 ? (
+                <div className="py-8 text-center text-ink-faint text-xs font-semibold">
+                  Няма въведени акции в портфейла
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sectorList.map((item, idx) => {
+                    const colors = ['bg-indigo-500', 'bg-emerald-400', 'bg-cyan-400', 'bg-purple-500', 'bg-amber-400', 'bg-rose-400', 'bg-blue-400'];
+                    const color = colors[idx % colors.length];
+                    return (
+                      <div key={item.sector} className="space-y-1">
+                        <div className="flex justify-between text-xs font-extrabold">
+                          <span className="text-ink">{item.sector}</span>
+                          <span className="text-ink-muted">
+                            {isPrivacyMode ? '••••' : `$${item.val.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} ({item.pct.toFixed(1)}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-card h-2 rounded-full overflow-hidden border border-border/40">
+                          <div className={`h-full ${color} transition-all duration-500`} style={{ width: `${Math.max(2, item.pct)}%` }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Position Weight Concentration Risk */}
+            <div className="bg-card/70 border border-border/80 rounded-2xl p-5 shadow-md backdrop-blur-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-sm font-black uppercase tracking-wide text-ink">
+                    Концентрация на Активите (Holding Weights)
+                  </h3>
+                </div>
+                <span className="text-xs font-extrabold text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full border border-cyan-500/20">
+                  {holdingsByWeight.length} Позиции
+                </span>
+              </div>
+
+              {holdingsByWeight.length === 0 ? (
+                <div className="py-8 text-center text-ink-faint text-xs font-semibold">
+                  Няма въведени акции в портфейла
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                  {holdingsByWeight.map((pos) => {
+                    const isOverConcentrated = pos.weightPct > 15;
+                    return (
+                      <div key={pos.id} className="space-y-1 p-2 bg-card/40 border border-border/40 rounded-xl">
+                        <div className="flex items-center justify-between text-xs font-extrabold">
+                          <div className="flex items-center gap-2">
+                            <StockLogo ticker={pos.ticker} />
+                            <span className="text-ink">{pos.ticker} ({pos.companyName || pos.ticker})</span>
+                            {isOverConcentrated && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                ⚠️ Висока концентрация ({pos.weightPct.toFixed(1)}%)
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-indigo-400">
+                            {pos.weightPct.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-card h-1.5 rounded-full overflow-hidden border border-border/40">
+                          <div className={`h-full ${isOverConcentrated ? 'bg-amber-400' : 'bg-indigo-500'} transition-all duration-500`} style={{ width: `${Math.max(2, pos.weightPct)}%` }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 3: DIVIDENDS */}
+      {activeSubTab === 'dividends' && (
+        <div className="space-y-4 animate-in fade-in duration-150">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-card/70 border border-border/80 border-l-4 border-l-emerald-500 rounded-2xl p-4 shadow-md backdrop-blur-sm">
+              <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
+                <Flame className="w-3.5 h-3.5 text-emerald-400" />
+                ПРОГНОЗЕН ГОДИШЕН ПАСИВЕН ДОХОД
+              </span>
+              <div className="text-xl sm:text-2xl font-black text-emerald-400 mt-1">
+                {isPrivacyMode ? '••••••••' : `$${totalAnnualDivIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </div>
+            </div>
+
+            <div className="bg-card/70 border border-border/80 border-l-4 border-l-amber-500 rounded-2xl p-4 shadow-md backdrop-blur-sm">
+              <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
+                <Coins className="w-3.5 h-3.5 text-amber-400" />
+                YIELD ON COST (ДОХОДНОСТ)
+              </span>
+              <div className="text-xl sm:text-2xl font-black text-amber-400 mt-1">
+                {divYieldOnCost.toFixed(2)}%
+              </div>
+            </div>
+
+            <div className="bg-card/70 border border-border/80 border-l-4 border-l-indigo-500 rounded-2xl p-4 shadow-md backdrop-blur-sm">
+              <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+                СРЕДНО НА МЕСЕЦ
+              </span>
+              <div className="text-xl sm:text-2xl font-black text-indigo-400 mt-1">
+                {isPrivacyMode ? '••••••••' : `$${(totalAnnualDivIncome / 12).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card/70 border border-border/80 rounded-2xl p-5 shadow-md backdrop-blur-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <div className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-sm font-black uppercase tracking-wide text-ink">
+                  12-Месечен Дивидентен Календар & Прогноза (Jan - Dec)
+                </h3>
+              </div>
+              <span className="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                12 Месеца
+              </span>
+            </div>
+
+            <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 pt-2 items-end min-h-[160px]">
+              {monthlyProjection.map((m) => {
+                const maxVal = Math.max(1, totalAnnualDivIncome * 0.15);
+                const heightPct = Math.min(100, Math.max(12, (m.val / maxVal) * 100));
+                return (
+                  <div key={m.month} className="flex flex-col items-center gap-1.5 h-full justify-end group">
+                    <span className="text-[9px] font-extrabold text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {isPrivacyMode ? '••' : `$${m.val.toFixed(0)}`}
+                    </span>
+                    <div className="w-full bg-card/60 rounded-t-lg overflow-hidden border border-emerald-500/20 flex items-end h-28">
+                      <div 
+                        className="w-full bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-t-lg transition-all duration-500 group-hover:brightness-125"
+                        style={{ height: `${heightPct}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-[10px] font-extrabold text-ink-muted uppercase">{m.month}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 4: HOLDINGS */}
+      {(activeSubTab === 'overview' || activeSubTab === 'holdings') && (
+        <div className="bg-bg border border-border rounded-2xl overflow-hidden shadow-xs">
         {/* Table Header Controls */}
         <div className="p-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -1336,6 +1641,71 @@ export default function PortfolioTracker({
           </span>
         </div>
       </div>
+    )}
+
+      {/* SUB-TAB 5: TRANSACTIONS */}
+      {activeSubTab === 'transactions' && (
+        <div className="bg-card/70 border border-border/80 rounded-2xl p-5 shadow-md backdrop-blur-sm space-y-4 animate-in fade-in duration-150">
+          <div className="flex items-center justify-between border-b border-border/40 pb-3">
+            <div className="flex items-center gap-2">
+              <Newspaper className="w-5 h-5 text-purple-400" />
+              <h3 className="text-sm font-black uppercase tracking-wide text-ink">
+                История на Транзакциите (Trade History Log)
+              </h3>
+            </div>
+            <span className="text-xs font-extrabold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20">
+              {filteredHistory.length} Записа
+            </span>
+          </div>
+
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-left border-collapse font-sans tabular-nums text-xs min-w-[700px]">
+              <thead>
+                <tr className="bg-card/80 border-b border-border/40 text-[10px] uppercase font-bold text-ink-muted">
+                  <th className="py-2.5 px-3">ДАТА</th>
+                  <th className="py-2.5 px-3">ТИКЕР</th>
+                  <th className="py-2.5 px-3">ТИП</th>
+                  <th className="py-2.5 px-3 text-right">АКЦИИ</th>
+                  <th className="py-2.5 px-3 text-right">ЦЕНА</th>
+                  <th className="py-2.5 px-3 text-right">ОБЩА СУМА</th>
+                  <th className="py-2.5 px-3 text-right">РЕАЛИЗИРАНА P/L</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/20">
+                {filteredHistory.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-ink-faint italic">
+                      Няма регистрирани транзакции
+                    </td>
+                  </tr>
+                ) : (
+                  filteredHistory.map((tx) => (
+                    <tr key={tx.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-2.5 px-3 font-mono text-ink-muted">{tx.date}</td>
+                      <td className="py-2.5 px-3 font-black text-ink">{tx.ticker}</td>
+                      <td className="py-2.5 px-3 font-extrabold">
+                        <span className={`px-2 py-0.5 rounded text-[10px] ${
+                          tx.type === 'Покупка' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-purple-500/20 text-purple-300'
+                        }`}>
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-ink">{tx.shares}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-ink">${tx.buyPrice.toFixed(2)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-black text-ink">${(tx.shares * tx.buyPrice).toFixed(2)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-black">
+                        <span className={tx.pnlVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                          {tx.pnlVal ? `${tx.pnlVal >= 0 ? '+' : ''}$${tx.pnlVal.toFixed(2)}` : '—'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
 
 
