@@ -694,8 +694,8 @@ export default function PortfolioTracker({
       {/* ======================================================================== */}
       {/* SNOWBALL ANALYTICS SUB-TAB NAVIGATION BAR                                */}
       {/* ======================================================================== */}
-      <div className="bg-card/80 border border-border/80 rounded-2xl p-2 shadow-md backdrop-blur-md flex flex-wrap items-center justify-between gap-2 overflow-x-auto">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0 text-xs font-black">
+      <div className="bg-card/80 border border-border/80 rounded-2xl p-2 shadow-md backdrop-blur-md flex items-center justify-between gap-2 overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0 text-xs font-black shrink-0">
           <button
             onClick={() => setActiveSubTab('overview')}
             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
@@ -1287,8 +1287,8 @@ export default function PortfolioTracker({
       {(activeSubTab === 'overview' || activeSubTab === 'holdings') && (
         <div className="bg-bg border border-border rounded-2xl overflow-hidden shadow-xs">
         {/* Table Header Controls */}
-        <div className="p-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2 bg-card/40">
-          <div className="flex flex-wrap items-center gap-2 overflow-x-auto">
+        <div className="p-2.5 border-b border-border/40 flex items-center justify-between gap-2 bg-card/40 overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
+          <div className="flex items-center gap-2 shrink-0">
             
             {/* 1. Header Badge: АКТИВИ */}
             <div className="px-3 py-2 rounded-xl text-xs font-black uppercase text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 flex items-center gap-1.5 h-9 shrink-0">
