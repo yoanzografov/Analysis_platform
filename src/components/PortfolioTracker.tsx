@@ -376,6 +376,23 @@ export default function PortfolioTracker({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Sorting state for the table
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      if (sortOrder === 'asc') {
+        setSortOrder('desc');
+      } else {
+        setSortField(null);
+      }
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
   // Privacy mode & Backup Export/Import logic
   const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => {
     try {
@@ -666,6 +683,32 @@ export default function PortfolioTracker({
       weightPct: totalCurrentValue > 0 ? (h.currentVal / totalCurrentValue) * 100 : 0
     }))
     .sort((a, b) => b.currentVal - a.currentVal);
+
+  // Sorted Holdings for the table rendering
+  const sortedHoldings = !sortField 
+    ? enrichedHoldings 
+    : [...enrichedHoldings].sort((a, b) => {
+        let valA: any = a[sortField as keyof typeof a];
+        let valB: any = b[sortField as keyof typeof b];
+
+        // Handle special columns
+        if (sortField === 'dailyChangePct') {
+          valA = a.matching?.dailyChangePct ?? 0;
+          valB = b.matching?.dailyChangePct ?? 0;
+        } else if (sortField === 'weightPct') {
+          valA = a.currentVal;
+          valB = b.currentVal;
+        }
+
+        if (valA === undefined || valA === null) return sortOrder === 'asc' ? 1 : -1;
+        if (valB === undefined || valB === null) return sortOrder === 'asc' ? -1 : 1;
+
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+
+        return sortOrder === 'asc' ? valA - valB : valB - valA;
+      });
 
   // Annual projected dividends sum & Yield on Cost %
   const totalAnnualDivIncome = enrichedHoldings.reduce((acc, h) => {
@@ -1515,22 +1558,52 @@ export default function PortfolioTracker({
           <table className="w-full text-left border-collapse font-sans tabular-nums text-xs min-w-[1600px] table-auto">
             <thead className="sticky top-0 z-20 bg-bg rounded-2xl">
               <tr className="bg-bg text-ink/90 border-b-2 border-border text-xs uppercase font-semibold tracking-wider">
-                <th className="py-3 px-4 whitespace-nowrap">TICKER</th>
-                <th className="py-3 px-4 whitespace-nowrap">COMPANY NAME</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">% OF PORTFOLIO</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">SHARES</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">AVG. PRICE</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">FEE</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">COST BASIS</th>
-                <th className="py-3 px-4 text-center whitespace-nowrap">DATE OF PURCHASE</th>
-                <th className="py-3 px-4 text-center whitespace-nowrap">DAILY CHANGE %</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">CURRENT PRICE</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">FAIR PRICE</th>
-                <th className="py-3 px-4 text-center whitespace-nowrap">DIFFERENCE</th>
+                <th onClick={() => handleSort('ticker')} className="py-3 px-4 whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  TICKER{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('companyName')} className="py-3 px-4 whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  COMPANY NAME{sortField === 'companyName' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('weightPct')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  % OF PORTFOLIO{sortField === 'weightPct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('shares')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  SHARES{sortField === 'shares' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('buyPrice')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  AVG. PRICE{sortField === 'buyPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('fee')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  FEE{sortField === 'fee' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('costBasis')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  COST BASIS{sortField === 'costBasis' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('buyDate')} className="py-3 px-4 text-center whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  DATE OF PURCHASE{sortField === 'buyDate' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('dailyChangePct')} className="py-3 px-4 text-center whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  DAILY CHANGE %{sortField === 'dailyChangePct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('curPrice')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  CURRENT PRICE{sortField === 'curPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('fPrice')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  FAIR PRICE{sortField === 'fPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('diffVsFair')} className="py-3 px-4 text-center whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  DIFFERENCE{sortField === 'diffVsFair' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
                 <th className="py-3 px-4 text-center whitespace-nowrap">BUY / SELL</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">PROFIT / LOSS %</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">UNRLZD P&L ($)</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">VALUE</th>
+                <th onClick={() => handleSort('pnlPct')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  PROFIT / LOSS %{sortField === 'pnlPct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('pnlVal')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  UNRLZD P&L ($){sortField === 'pnlVal' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
+                <th onClick={() => handleSort('weightPct')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  VALUE{sortField === 'weightPct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
                 <th className="py-3 px-4 text-right whitespace-nowrap">DIVIDEND</th>
               </tr>
             </thead>
@@ -1542,7 +1615,7 @@ export default function PortfolioTracker({
                   </td>
                 </tr>
               ) : (
-                enrichedHoldings.map(pos => {
+                sortedHoldings.map(pos => {
                   const isPosProfit = pos.pnlVal >= 0;
                   const isFairUndervalued = pos.diffVsFair > 0;
                   const isDailyUp = (pos.matching?.dailyChangePct || 0) >= 0;
