@@ -942,9 +942,17 @@ export default function PortfolioTracker({
               <TrendingUp className="w-4 h-4 text-emerald-400" />
               STOCK INVESTED VS RETURNS
             </span>
-            <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              Общо представяне
-            </span>
+            <button
+              onClick={() => setShowAssetAllocationInfo(!showAssetAllocationInfo)}
+              title="Натиснете за информация относно следенето на резултатите и алокацията на активи"
+              className={`w-5 h-5 rounded-full flex items-center justify-center font-serif font-black text-[11px] transition-all cursor-pointer border ${
+                showAssetAllocationInfo 
+                  ? 'bg-indigo-600 text-white border-indigo-400 shadow-md' 
+                  : 'bg-card hover:bg-card/90 text-indigo-400 border-indigo-500/30'
+              }`}
+            >
+              ⓘ
+            </button>
           </div>
 
           <div className="space-y-3 font-sans tabular-nums text-xs">
@@ -1185,87 +1193,23 @@ export default function PortfolioTracker({
 
       </div>
 
-      {/* Bulgarian Explanation Banner & Full Holdings List */}
-      <div className="bg-card/70 border border-border/80 rounded-2xl p-5 shadow-md backdrop-blur-sm space-y-4">
-        
-        {/* Card Header with Title and 'i' Info Button */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
-          <div className="flex items-center gap-2">
-            <PieChart className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-sm font-black uppercase tracking-wide text-ink flex items-center gap-2">
-              Активи в портфейла (Holdings details)
-            </h3>
-
-            {/* 'i' Info Button with Dot */}
-            <button
-              onClick={() => setShowAssetAllocationInfo(!showAssetAllocationInfo)}
-              title="Натиснете за информация относно следенето на резултатите и алокацията на активи"
-              className={`w-6 h-6 rounded-full flex items-center justify-center font-serif font-black text-xs transition-all cursor-pointer border ${
-                showAssetAllocationInfo 
-                  ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-500/30' 
-                  : 'bg-card hover:bg-card/90 text-indigo-400 border-indigo-500/30 hover:border-indigo-400'
-              }`}
-            >
-              ⓘ
-            </button>
+      {/* Bulgarian Explanation Banner (Toggled by 'i' icon inside Bento 1) */}
+      {showAssetAllocationInfo && (
+        <div className="bg-indigo-950/50 border border-indigo-500/40 rounded-xl p-4 text-xs space-y-3 text-indigo-100/90 backdrop-blur-md animate-in fade-in duration-200 mt-2">
+          <div className="flex items-center gap-2 font-black text-indigo-300 text-sm border-b border-indigo-500/30 pb-2">
+            <Info className="w-4 h-4 text-indigo-400" />
+            <span>Следене на резултатите и управление на алокацията на активите</span>
           </div>
-
-          <span className="text-xs font-extrabold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
-            {enrichedHoldings.length} Активни позиции
-          </span>
+          
+          <p className="leading-relaxed">
+            Следенето на представянето на портфейла от акции изисква своевременна информация за цените на акциите, сделките и друга съществена информация. Получаването на актуализации в реално време може да бъде предизвикателство, особено когато се разчита на остарели методи като ръчно въвеждане на данни или периодични извлечения. Без ясна представа за портфейла, инвеститорите могат да пропуснат критични пазарни движения или да не реагират своевременно на променящите се пазарни условия.
+          </p>
+          
+          <p className="leading-relaxed border-t border-indigo-500/20 pt-2">
+            Също така, правилното разпределение на активите е от решаващо значение за диверсификацията на портфейла и управлението на риска. Управлението на алокацията става все по-сложно с нарастването на портфейла и включването на различни класове активи, сектори или географски региони. Ръчното проследяване и ребалансиране отнема време, а без цялостен преглед инвеститорите могат да пренебрегнат дисбаланси или разминавания в своята инвестиционна стратегия.
+          </p>
         </div>
-
-        {/* Bulgarian Explanation Banner (Toggled by 'i' icon) */}
-        {showAssetAllocationInfo && (
-          <div className="bg-indigo-950/50 border border-indigo-500/40 rounded-xl p-4 text-xs space-y-3 text-indigo-100/90 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="flex items-center gap-2 font-black text-indigo-300 text-sm border-b border-indigo-500/30 pb-2">
-              <Info className="w-4 h-4 text-indigo-400" />
-              <span>Следене на резултатите и управление на алокацията на активите</span>
-            </div>
-            
-            <p className="leading-relaxed">
-              Следенето на представянето на портфейла от акции изисква своевременна информация за цените на акциите, сделките и друга съществена информация. Получаването на актуализации в реално време може да бъде предизвикателство, особено когато се разчита на остарели методи като ръчно въвеждане на данни или периодични извлечения. Без ясна представа за портфейла, инвеститорите могат да пропуснат критични пазарни движения или да не реагират своевременно на променящите се пазарни условия.
-            </p>
-            
-            <p className="leading-relaxed border-t border-indigo-500/20 pt-2">
-              Също така, правилното разпределение на активите е от решаващо значение за диверсификацията на портфейла и управлението на риска. Управлението на алокацията става все по-сложно с нарастването на портфейла и включването на различни класове активи, сектори или географски региони. Ръчното проследяване и ребалансиране отнема време, а без цялостен преглед инвеститорите могат да пренебрегнат дисбаланси или разминавания в своята инвестиционна стратегия.
-            </p>
-          </div>
-        )}
-
-        {/* Full Legend List Grid */}
-        {enrichedHoldings.length === 0 ? (
-          <div className="py-8 text-center text-ink-faint font-semibold text-xs leading-relaxed">
-            Няма въведени акции.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 pt-2">
-            {holdingsByWeight.map((pos, idx) => {
-              const colors = [
-                '#8b5cf6', '#06b6d4', '#3b82f6', '#d946ef', '#10b981',
-                '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6'
-              ];
-              const color = colors[idx % colors.length];
-
-              return (
-                <div key={pos.id} className="flex items-center justify-between p-2.5 rounded-xl bg-card/40 border border-border/30 hover:bg-card/70 transition-all text-xs">
-                  <div className="flex items-center gap-2 truncate">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: color }}></span>
-                    <StockLogo ticker={pos.ticker} />
-                    <div className="truncate">
-                      <span className="font-black text-ink block truncate">{pos.ticker}</span>
-                      <span className="text-[10px] text-ink-muted truncate block">{pos.companyName || pos.ticker}</span>
-                    </div>
-                  </div>
-                  <span className="font-mono font-black text-indigo-400 shrink-0 ml-2">
-                    {pos.weightPct.toFixed(2)}%
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      )}
         </>
       )}
 
