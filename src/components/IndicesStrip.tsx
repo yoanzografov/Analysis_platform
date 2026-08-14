@@ -181,7 +181,7 @@ export default function IndicesStrip({ indices }: Props) {
   };
 
  return (
-    <div className="w-full relative z-50 mb-4 mt-5">
+    <div className="w-full relative z-50 mb-2 mt-4">
       <div className="w-full bg-bg rounded-2xl border border-border shadow-sm flex items-center h-16 divide-x divide-border">
           
         {/* Category selector */}
