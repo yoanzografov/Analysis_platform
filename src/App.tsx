@@ -1063,106 +1063,106 @@ export default function App() {
   </div>
  </div>
 
-   {/* Dynamic indices banner strip */}
-   <IndicesStrip 
-    indices={indices} 
-    isSimulating={isSimulating} 
-   />
+    {/* Dynamic indices banner strip */}
+    <IndicesStrip 
+     indices={indices} 
+     isSimulating={isSimulating} 
+    />
 
-  {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
-  {activeMainTab === 'table' && (
-    <>
-      <MarketSummaryWidgets 
-        stocks={stocks}
-        activeFilter={activeFilter}
-        onSetActiveFilter={setActiveFilter}
-      />
+    {/* Main Section Tabs Switcher: Interactive Table vs Price Alerts vs Portfolio Tracker */}
+    <div className="space-y-3 pt-1" id="stock-table-section">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-2">
+        <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto pb-1 shrink-0">
+          
+          {/* Tab 1: Interactive Table */}
+          <button
+            onClick={() => setActiveMainTab('table')}
+            className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
+              activeMainTab === 'table'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
+            }`}
+          >
+            <Table className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate hidden sm:inline">Interactive Table</span>
+            <span className="sm:hidden">Table</span>
+            <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
+              activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
+            }`}>
+              {stocks.length}
+            </span>
+          </button>
 
-  {/* Bento Board: Analytics charts, Distribution */}
-  <BentoCharts 
-  stocks={stocks} 
-  activeFilter={activeFilter}
-  onSetActiveFilter={setActiveFilter}
-  buyThreshold={buyThreshold}
-  sellThreshold={sellThreshold}
-  onUpdateThresholds={handleUpdateThresholds}
-  signalThreshold={signalThreshold}
-  onUpdateSignalThreshold={handleUpdateSignalThreshold}
-  />
-  </>
-  )}
+          {/* Tab 2: Price Alerts Schedule */}
+          <button
+            onClick={() => setActiveMainTab('alerts')}
+            className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
+              activeMainTab === 'alerts'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
+            }`}
+          >
+            <Bell className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate hidden sm:inline">Price Alerts Schedule</span>
+            <span className="sm:hidden">Alerts</span>
+            <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
+              activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
+            }`}>
+              {alerts.length}
+            </span>
+          </button>
 
-  {/* Main Section Tabs Switcher: Interactive Table vs Price Alerts vs Portfolio Tracker */}
-  <div className="space-y-3" id="stock-table-section">
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-2">
-      <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto pb-1 shrink-0">
-        
-        {/* Tab 1: Interactive Table */}
-        <button
-          onClick={() => setActiveMainTab('table')}
-          className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
-            activeMainTab === 'table'
-              ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-              : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
-          }`}
-        >
-          <Table className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate hidden sm:inline">Interactive Table</span>
-          <span className="sm:hidden">Table</span>
-          <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
-            activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
-          }`}>
-            {stocks.length}
-          </span>
-        </button>
+          {/* Tab 3: Portfolio Tracker */}
+          <button
+            onClick={() => setActiveMainTab('portfolio')}
+            className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
+              activeMainTab === 'portfolio'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
+            }`}
+          >
+            <Briefcase className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate hidden sm:inline">Portfolio Tracker</span>
+            <span className="sm:hidden">Portfolio</span>
+            <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
+              activeMainTab === 'portfolio' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
+            }`}>
+              {positions.length}
+            </span>
+          </button>
+        </div>
 
-        {/* Tab 2: Price Alerts Schedule */}
-        <button
-          onClick={() => setActiveMainTab('alerts')}
-          className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
-            activeMainTab === 'alerts'
-              ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-              : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
-          }`}
-        >
-          <Bell className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate hidden sm:inline">Price Alerts Schedule</span>
-          <span className="sm:hidden">Alerts</span>
-          <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
-            activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
-          }`}>
-            {alerts.length}
-          </span>
-        </button>
-
-        {/* Tab 3: Portfolio Tracker */}
-        <button
-          onClick={() => setActiveMainTab('portfolio')}
-          className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
-            activeMainTab === 'portfolio'
-              ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-              : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
-          }`}
-        >
-          <Briefcase className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate hidden sm:inline">Portfolio Tracker</span>
-          <span className="sm:hidden">Portfolio</span>
-          <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
-            activeMainTab === 'portfolio' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
-          }`}>
-            {positions.length}
-          </span>
-        </button>
+        <p className="text-xs text-ink-faint hidden md:block font-sans font-bold">
+          {activeMainTab === 'table' 
+            ? 'Interactive Table: Comprehensive 200 Stock Market Analysis' 
+            : activeMainTab === 'alerts'
+            ? 'Price Alerts Schedule: Configurable Target Price Triggers'
+            : 'Portfolio Tracker: Personal Asset & Holding Analytics'}
+        </p>
       </div>
 
-      <p className="text-xs text-ink-faint hidden md:block font-sans">
-        {activeMainTab === 'table' 
-          ? 'Interactive Table: Comprehensive 200 Stock Market Analysis' 
-          : activeMainTab === 'alerts'
-          ? 'Price Alerts Schedule: Configurable Target Price Triggers'
-          : 'Portfolio Tracker: Personal Asset & Holding Analytics'}
-      </p>
-    </div>
+      {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
+      {activeMainTab === 'table' && (
+        <>
+          <MarketSummaryWidgets 
+            stocks={stocks}
+            activeFilter={activeFilter}
+            onSetActiveFilter={setActiveFilter}
+          />
+
+          {/* Bento Board: Analytics charts, Distribution */}
+          <BentoCharts 
+            stocks={stocks} 
+            activeFilter={activeFilter}
+            onSetActiveFilter={setActiveFilter}
+            buyThreshold={buyThreshold}
+            sellThreshold={sellThreshold}
+            onUpdateThresholds={handleUpdateThresholds}
+            signalThreshold={signalThreshold}
+            onUpdateSignalThreshold={handleUpdateSignalThreshold}
+          />
+        </>
+      )}
 
     {activeMainTab === 'table' ? (
       <>
