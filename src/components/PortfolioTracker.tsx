@@ -133,6 +133,7 @@ export default function PortfolioTracker({
   const [inputSyncPin, setInputSyncPin] = useState('');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const isRemoteUpdatingRef = useRef(false);
+  const lastCloudPayloadRef = useRef<string>('');
 
   // Main form state & currency
   const [positionCurrency, setPositionCurrency] = useState<'USD' | 'EUR'>('USD');
@@ -229,6 +230,12 @@ export default function PortfolioTracker({
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data && data.payload) {
+          lastCloudPayloadRef.current = JSON.stringify({
+            positions: data.payload.positions || [],
+            history: data.payload.history || [],
+            divRecords: data.payload.divRecords || [],
+            cashInput: data.payload.cashInput || ""
+          });
           isRemoteUpdatingRef.current = true;
           if (Array.isArray(data.payload.positions)) {
             if (onSetAllPositions) {
@@ -261,10 +268,10 @@ export default function PortfolioTracker({
             isRemoteUpdatingRef.current = false;
           }, 300);
         }
-      } else if (currentUser) {
-        // Initial cloud upload for new user account
+      } else {
+        // Initial cloud upload for new user account or new PIN sync
         isInitialCloudSyncedRef.current = true;
-        pushToCloud();
+        pushToCloud(positions, history, divRecords, cashInput);
       }
       setSyncStatus('synced');
     }, (err) => {
@@ -283,21 +290,57 @@ export default function PortfolioTracker({
     targetCash = cashInput
   ) => {
     if ((!currentUser && !syncPin.trim()) || isRemoteUpdatingRef.current) return;
+
+    // Check if the target data actually differs from the last saved/loaded cloud state
+    const compPayload = {
+      positions: targetPositions,
+      history: targetHistory,
+      divRecords: targetDivs,
+      cashInput: targetCash
+    };
+
+    if (lastCloudPayloadRef.current) {
+      try {
+        const lastPayload = JSON.parse(lastCloudPayloadRef.current);
+        const lastComp = {
+          positions: lastPayload.positions || [],
+          history: lastPayload.history || [],
+          divRecords: lastPayload.divRecords || [],
+          cashInput: lastPayload.cashInput || ""
+        };
+
+        if (JSON.stringify(compPayload) === JSON.stringify(lastComp)) {
+          // Data is identical to what is in the cloud, skip saving to prevent loops
+          return;
+        }
+      } catch (e) {
+        console.error("Comparison parse error", e);
+      }
+    }
+
     try {
       setSyncStatus('syncing');
       const docRef = currentUser 
         ? doc(db, 'user_portfolios', currentUser.uid)
         : doc(db, 'portfolio_syncs', `pin_${syncPin.trim().toLowerCase()}`);
 
-      await setDoc(docRef, {
-        payload: {
-          positions: targetPositions,
-          history: targetHistory,
-          divRecords: targetDivs,
-          cashInput: targetCash,
-          updatedAt: new Date().toISOString()
-        }
-      }, { merge: true });
+      const payload = {
+        positions: targetPositions,
+        history: targetHistory,
+        divRecords: targetDivs,
+        cashInput: targetCash,
+        updatedAt: new Date().toISOString()
+      };
+
+      // Store in ref to prevent duplicate push from incoming snapshots
+      lastCloudPayloadRef.current = JSON.stringify({
+        positions: targetPositions,
+        history: targetHistory,
+        divRecords: targetDivs,
+        cashInput: targetCash
+      });
+
+      await setDoc(docRef, { payload }, { merge: true });
       setSyncStatus('synced');
     } catch (e) {
       console.error("Cloud push error:", e);
