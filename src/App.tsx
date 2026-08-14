@@ -106,6 +106,21 @@ export default function App() {
     }
   }, [positions]);
 
+  const [portfolioPrices, setPortfolioPrices] = useState<Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string }>>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_prices');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_prices', JSON.stringify(portfolioPrices));
+    } catch (e) {}
+  }, [portfolioPrices]);
+
   useEffect(() => {
     try {
       localStorage.setItem('user_portfolio_alerts', JSON.stringify(alerts));
@@ -210,7 +225,9 @@ export default function App() {
     setIsFetchingLivePrices(true);
     try {
       const stockTickers = targetList.map(s => s.ticker).filter(Boolean);
-      const mappedStockTickers = stockTickers.map(t => TICKER_YAHOO_MAP[t.trim().toUpperCase()] || t);
+      const portfolioTickers = positions.map(p => p.ticker).filter(Boolean);
+      const combinedTickers = Array.from(new Set([...stockTickers, ...portfolioTickers]));
+      const mappedStockTickers = combinedTickers.map(t => TICKER_YAHOO_MAP[t.trim().toUpperCase()] || t);
       const defaultIndexTickers = [
         '^GSPC', '^NDX', '^IXIC', '^DJI', '^VIX',
         '^FTSE', '^FCHI', '^GDAXI', '^N100', '^STOXX50E',
@@ -221,7 +238,7 @@ export default function App() {
       const indexTickers = indices.length > 0
         ? (indices.map(idx => idx.ticker).filter(Boolean) as string[])
         : defaultIndexTickers;
-      const allSymbols = Array.from(new Set([...stockTickers, ...mappedStockTickers, ...indexTickers]));
+      const allSymbols = Array.from(new Set([...combinedTickers, ...mappedStockTickers, ...indexTickers]));
 
       const response = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(allSymbols.join(','))}`, { cache: 'no-store' });
       if (!response.ok) {
@@ -230,6 +247,17 @@ export default function App() {
 
       const data = await response.json();
       if (data && data.quotes) {
+        // Also update portfolioPrices for all fetched quotes
+        const newPrices: Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string }> = {};
+        for (const [sym, quote] of Object.entries(data.quotes) as [string, any][]) {
+          newPrices[sym.trim().toUpperCase()] = {
+            currentPrice: quote.currentPrice,
+            dailyChangePct: quote.dailyChangePct || 0,
+            companyName: quote.companyName
+          };
+        }
+        setPortfolioPrices(prev => ({ ...prev, ...newPrices }));
+
         setStocks(prevStocks => {
           return prevStocks.map(stock => {
             const sym = stock.ticker.trim().toUpperCase();
@@ -1243,6 +1271,7 @@ export default function App() {
         onUpdatePosition={handleUpdatePosition}
         onDeletePosition={handleDeletePosition}
         onSetAllPositions={(newPositions) => setPositions(newPositions)}
+        portfolioPrices={portfolioPrices}
       />
     </div>
 

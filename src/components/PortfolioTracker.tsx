@@ -59,6 +59,7 @@ interface Props {
   onAddDividend?: (div: Omit<PortfolioDividendRecord, 'id'>) => void;
   onUpdateCash?: (cash: number) => void;
   onSetAllPositions?: (positions: PortfolioPosition[]) => void;
+  portfolioPrices?: Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string }>;
 }
 
 const StockLogo = ({ ticker }: { ticker: string }) => {
@@ -94,7 +95,8 @@ export default function PortfolioTracker({
   onAddTransaction,
   onAddDividend,
   onUpdateCash,
-  onSetAllPositions
+  onSetAllPositions,
+  portfolioPrices = {}
 }: Props) {
   // Firebase Auth User & Account Sync
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(propCurrentUser ?? null);
@@ -609,9 +611,13 @@ export default function PortfolioTracker({
       return sClean === cleanTicker || sBase === baseTicker;
     });
 
+    const quote = portfolioPrices[cleanTicker] || portfolioPrices[baseTicker];
+
     const curPrice = (matching?.currentPrice && matching.currentPrice > 0) 
       ? matching.currentPrice 
-      : ((matching?.priceOfCalc && matching.priceOfCalc > 0) ? matching.priceOfCalc : pos.buyPrice);
+      : (quote?.currentPrice && quote.currentPrice > 0)
+        ? quote.currentPrice
+        : ((matching?.priceOfCalc && matching.priceOfCalc > 0) ? matching.priceOfCalc : pos.buyPrice);
 
     const costBasis = (pos.shares * pos.buyPrice) + (pos.fee || 0);
     const currentVal = pos.shares * curPrice;
@@ -623,10 +629,32 @@ export default function PortfolioTracker({
     totalCostBasis += costBasis;
     totalCurrentValue += currentVal;
 
+    // Synthesize a matching object if we have a live quote but no stock in the main interactive table
+    const synthMatching: Stock | undefined = matching || (quote ? {
+      watch: '',
+      ticker: pos.ticker,
+      companyName: quote.companyName || pos.companyName || pos.ticker,
+      date: '',
+      priceOfCalc: null,
+      dailyChangePct: quote.dailyChangePct || 0,
+      currentPrice: quote.currentPrice,
+      fairPrice: pos.fairPrice || null,
+      difference: null,
+      buySell: 'ДРУГИ',
+      marketCap: null,
+      peRatio: null,
+      eps: null,
+      profileLink: '',
+      dividend: '',
+      signal: 'Hold',
+      low52: null,
+      high52: null
+    } : undefined);
+
     return {
       ...pos,
-      companyName: matching?.companyName || pos.companyName || pos.ticker,
-      matching,
+      companyName: matching?.companyName || quote?.companyName || pos.companyName || pos.ticker,
+      matching: synthMatching,
       curPrice,
       costBasis,
       currentVal,
