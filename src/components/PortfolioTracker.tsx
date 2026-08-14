@@ -466,14 +466,14 @@ export default function PortfolioTracker({
     const upper = val.trim().toUpperCase();
     const found = stocks.find(s => s.ticker === upper);
     if (found) {
-      if (!companyName) setCompanyName(found.companyName);
-      if (!buyPrice && (found.currentPrice || found.priceOfCalc)) {
+      setCompanyName(found.companyName);
+      if (found.currentPrice || found.priceOfCalc) {
         setBuyPrice((found.currentPrice || found.priceOfCalc || 0).toFixed(2));
       }
-      if (!fairPrice && found.fairPrice) {
+      if (found.fairPrice) {
         setFairPrice(found.fairPrice.toFixed(2));
       }
-      if (!annualDiv && found.dividend) {
+      if (found.dividend) {
         const match = found.dividend.match(/([\d.]+)/);
         if (match) setAnnualDiv(match[1]);
       }

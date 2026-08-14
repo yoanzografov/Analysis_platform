@@ -393,8 +393,16 @@ export default function App() {
             setStocks(migratedStocks);
           }
           if (data.indices) setIndices(data.indices);
-          if (data.alerts) setAlerts(data.alerts);
-          if (data.positions) setPositions(data.positions);
+          
+          // Only load default alerts and positions on startup if they don't already exist locally
+          if (!isLoaded) {
+            const hasLocalAlerts = localStorage.getItem('user_portfolio_alerts');
+            if (!hasLocalAlerts && data.alerts) setAlerts(data.alerts);
+
+            const hasLocalPositions = localStorage.getItem('user_portfolio_positions');
+            if (!hasLocalPositions && data.positions) setPositions(data.positions);
+          }
+          
           if (data.settings?.buyThreshold !== undefined) setBuyThreshold(data.settings.buyThreshold);
           else if (data.settings?.buySellThreshold !== undefined) setBuyThreshold(data.settings.buySellThreshold);
           
@@ -796,34 +804,6 @@ export default function App() {
     };
     setPositions(prev => [newPos, ...prev]);
 
-    // Ensure stock exists in tracking database for real-time price fetching
-    const tickerUpper = pos.ticker.trim().toUpperCase();
-    setStocks(prev => {
-      if (prev.some(s => s.ticker === tickerUpper)) return prev;
-      const newStock: Stock = {
-        watch: '',
-        ticker: tickerUpper,
-        companyName: pos.companyName || tickerUpper,
-        date: new Date().toLocaleDateString(),
-        priceOfCalc: pos.buyPrice,
-        dailyChangePct: 0,
-        currentPrice: pos.buyPrice,
-        fairPrice: pos.fairPrice || null,
-        difference: null,
-        buySell: 'HOLD',
-        marketCap: null,
-        peRatio: null,
-        eps: null,
-        profileLink: '',
-        dividend: pos.annualDivPerShare ? `${pos.annualDivPerShare}$` : '',
-        signal: 'Hold',
-        low52: null,
-        high52: null,
-        aiAnalysis: ''
-      };
-      return [...prev, newStock];
-    });
-
     // Refresh live prices for new ticker
     setTimeout(() => {
       fetchRealStockPricesDirect();
@@ -843,6 +823,9 @@ export default function App() {
   const handleUpdatePosition = (id: string, updatedPos: Omit<PortfolioPosition, 'id'>) => {
     setPositions(prev => prev.map(p => p.id === id ? { ...updatedPos, id } : p));
     setActiveAlertToast(`💼 Обновена позиция за ${updatedPos.ticker}!`);
+    setTimeout(() => {
+      fetchRealStockPricesDirect();
+    }, 150);
   };
 
   const handleDeletePosition = (id: string) => {
