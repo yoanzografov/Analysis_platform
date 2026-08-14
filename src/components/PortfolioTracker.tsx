@@ -482,6 +482,11 @@ export default function PortfolioTracker({
     // Auto-convert price to USD base if entered in EUR
     const priceInUsd = positionCurrency === 'EUR' ? priceNum * eurUsdRate : priceNum;
 
+    const parseOptionalFloat = (val: string) => {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? undefined : parsed;
+    };
+
     const payload = {
       ticker: ticker.trim().toUpperCase(),
       companyName: companyName.trim(),
@@ -489,10 +494,10 @@ export default function PortfolioTracker({
       buyPrice: priceInUsd,
       fee: parseFloat(fee) || 0,
       buyDate: buyDate || new Date().toISOString().split('T')[0],
-      fairPrice: parseFloat(fairPrice) || undefined,
-      annualDivPerShare: parseFloat(annualDiv) || undefined,
-      buyTarget: parseFloat(buyTarget) || undefined,
-      sellTarget: parseFloat(sellTarget) || undefined
+      fairPrice: parseOptionalFloat(fairPrice),
+      annualDivPerShare: parseOptionalFloat(annualDiv),
+      buyTarget: parseOptionalFloat(buyTarget),
+      sellTarget: parseOptionalFloat(sellTarget)
     };
 
     if (editingId) {
@@ -515,7 +520,7 @@ export default function PortfolioTracker({
       setHistory(prev => [newTx, ...prev]);
     }
 
-    // Reset form
+    // Reset form and close modal
     setTicker('');
     setCompanyName('');
     setShares('');
@@ -525,6 +530,22 @@ export default function PortfolioTracker({
     setAnnualDiv('');
     setBuyTarget('');
     setSellTarget('');
+    setIsAddModalOpen(false);
+  };
+
+  const handleCloseAddModal = () => {
+    setEditingId(null);
+    setTicker('');
+    setCompanyName('');
+    setShares('');
+    setBuyPrice('');
+    setFee('0.00');
+    setFairPrice('');
+    setAnnualDiv('');
+    setBuyTarget('');
+    setSellTarget('');
+    setFormError('');
+    setIsAddModalOpen(false);
   };
 
   const handleStartEdit = (pos: PortfolioPosition) => {
@@ -539,6 +560,23 @@ export default function PortfolioTracker({
     setAnnualDiv(pos.annualDivPerShare ? pos.annualDivPerShare.toString() : '');
     setBuyTarget(pos.buyTarget ? pos.buyTarget.toString() : '');
     setSellTarget(pos.sellTarget ? pos.sellTarget.toString() : '');
+    setIsAddModalOpen(true);
+  };
+
+  const handleStartTransaction = (pos: any, type: 'Покупка' | 'Продажба') => {
+    setEditingId(null);
+    setTxType(type);
+    setTicker(pos.ticker);
+    setCompanyName(pos.companyName || '');
+    setShares('');
+    setBuyPrice(pos.curPrice ? pos.curPrice.toFixed(2) : '');
+    setFee('0.00');
+    setBuyDate(new Date().toISOString().split('T')[0]);
+    setFairPrice('');
+    setAnnualDiv(pos.annualDivPerShare ? pos.annualDivPerShare.toString() : '');
+    setBuyTarget('');
+    setSellTarget('');
+    setFormError('');
     setIsAddModalOpen(true);
   };
 
@@ -1716,7 +1754,7 @@ export default function PortfolioTracker({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleStartEdit(pos);
+                              handleStartTransaction(pos, 'Покупка');
                             }}
                             className="px-2 py-0.5 bg-emerald-600/80 hover:bg-emerald-500 text-white font-extrabold text-[10px] rounded uppercase transition-all cursor-pointer"
                           >
@@ -1725,7 +1763,7 @@ export default function PortfolioTracker({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleStartEdit(pos);
+                              handleStartTransaction(pos, 'Продажба');
                             }}
                             className="px-2 py-0.5 bg-amber-600/80 hover:bg-amber-500 text-white font-extrabold text-[10px] rounded uppercase transition-all cursor-pointer"
                           >
@@ -1876,7 +1914,7 @@ export default function PortfolioTracker({
                 {editingId ? 'Редактиране на Актив' : 'Добавяне на Нов Актив'}
               </h3>
               <button 
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={handleCloseAddModal}
                 className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -1889,10 +1927,7 @@ export default function PortfolioTracker({
               </div>
             )}
 
-            <form onSubmit={(e) => {
-              handleSubmitPosition(e);
-              setIsAddModalOpen(false);
-            }} className="space-y-3 text-xs">
+            <form onSubmit={handleSubmitPosition} className="space-y-3 text-xs">
               <div>
                 <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТИП ТРАНЗАЦИЯ</label>
                 <select

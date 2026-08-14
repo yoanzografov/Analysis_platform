@@ -212,14 +212,15 @@ export default function App() {
   };
 
   // Live direct quotes sync from Yahoo Finance backend proxy
-  const fetchRealStockPricesDirect = async (stocksList?: Stock[]) => {
+  const fetchRealStockPricesDirect = async (stocksList?: Stock[], positionsList?: PortfolioPosition[]) => {
     const targetList = stocksList || stocks;
     if (!targetList || targetList.length === 0) return;
 
     setIsFetchingLivePrices(true);
     try {
       const stockTickers = targetList.map(s => s.ticker).filter(Boolean);
-      const portfolioTickers = positions.map(p => p.ticker).filter(Boolean);
+      const targetPositions = positionsList || positions;
+      const portfolioTickers = targetPositions.map(p => p.ticker).filter(Boolean);
       const combinedTickers = Array.from(new Set([...stockTickers, ...portfolioTickers]));
       const mappedStockTickers = combinedTickers.map(t => TICKER_YAHOO_MAP[t.trim().toUpperCase()] || t);
       const defaultIndexTickers = [
@@ -796,12 +797,13 @@ export default function App() {
       ...pos,
       id: `${Date.now()}-${Math.random()}`
     };
-    setPositions(prev => [newPos, ...prev]);
-
-    // Refresh live prices for new ticker
-    setTimeout(() => {
-      fetchRealStockPricesDirect();
-    }, 150);
+    setPositions(prev => {
+      const next = [newPos, ...prev];
+      setTimeout(() => {
+        fetchRealStockPricesDirect(stocks, next);
+      }, 150);
+      return next;
+    });
 
     const newLog: NotificationLog = {
       id: `${Date.now()}-${Math.random()}`,
@@ -815,15 +817,24 @@ export default function App() {
   };
 
   const handleUpdatePosition = (id: string, updatedPos: Omit<PortfolioPosition, 'id'>) => {
-    setPositions(prev => prev.map(p => p.id === id ? { ...updatedPos, id } : p));
+    setPositions(prev => {
+      const next = prev.map(p => p.id === id ? { ...updatedPos, id } : p);
+      setTimeout(() => {
+        fetchRealStockPricesDirect(stocks, next);
+      }, 150);
+      return next;
+    });
     setActiveAlertToast(`💼 Обновена позиция за ${updatedPos.ticker}!`);
-    setTimeout(() => {
-      fetchRealStockPricesDirect();
-    }, 150);
   };
 
   const handleDeletePosition = (id: string) => {
-    setPositions(prev => prev.filter(p => p.id !== id));
+    setPositions(prev => {
+      const next = prev.filter(p => p.id !== id);
+      setTimeout(() => {
+        fetchRealStockPricesDirect(stocks, next);
+      }, 150);
+      return next;
+    });
     setActiveAlertToast(`💼 Позицията беше изтрита.`);
   };
 
