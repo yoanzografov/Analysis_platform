@@ -197,21 +197,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ].filter((c): c is string => Boolean(c));
 
         const uniqueCandidates = [...new Set(candidates)];
-        for (const candidate of uniqueCandidates) {
-          try {
-            const q = await fetchYahooV8Single(candidate);
-            if (q && q.regularMarketPrice != null) {
-              const built = buildResult({ ...q, symbol: candidate });
-              if (built) {
-                results[t] = built;
-                results[baseSym] = built;
-                results[`${baseSym}.DE`] = built;
-                results[`${baseSym}.AS`] = built;
-                break;
-              }
-            }
-          } catch {}
-        }
+        const fetchCandidate = async (candidate: string) => {
+          const q = await fetchYahooV8Single(candidate);
+          if (q && q.regularMarketPrice != null) {
+            const built = buildResult({ ...q, symbol: candidate });
+            if (built) return { built, candidate };
+          }
+          throw new Error("Invalid candidate");
+        };
+
+        try {
+          const success = await Promise.any(uniqueCandidates.map(c => fetchCandidate(c)));
+          if (success) {
+            const { built } = success;
+            results[t] = built;
+            results[baseSym] = built;
+            results[`${baseSym}.DE`] = built;
+            results[`${baseSym}.AS`] = built;
+          }
+        } catch {}
       }));
     }
 

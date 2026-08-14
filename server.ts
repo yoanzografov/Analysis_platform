@@ -1647,37 +1647,43 @@ app.get("/api/stock-quotes", async (req, res) => {
         ].filter((c): c is string => Boolean(c));
 
         const uniqueCandidates = [...new Set(candidates)];
-        for (const candidate of uniqueCandidates) {
-          try {
-            const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(candidate)}?interval=1d&range=2d`, {
-              headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "application/json"
-              }
-            });
-            if (!res.ok) continue;
-            const json = await res.json() as any;
-            const meta = json?.chart?.result?.[0]?.meta;
-            if (meta && typeof meta.regularMarketPrice === 'number' && meta.regularMarketPrice > 0) {
-              const price = meta.regularMarketPrice;
-              const prevClose = meta.previousClose ?? meta.chartPreviousClose;
-              const changePct = (price != null && prevClose != null && prevClose > 0) ? ((price - prevClose) / prevClose) * 100 : 0;
-              const item = {
-                currentPrice: parseFloat(price.toFixed(2)),
-                dailyChangePct: parseFloat(changePct.toFixed(2)),
-                changeVal: prevClose ? parseFloat((price - prevClose).toFixed(2)) : 0,
-                companyName: meta.longName || meta.shortName || t,
-                low52: meta.fiftyTwoWeekLow ? parseFloat(meta.fiftyTwoWeekLow.toFixed(2)) : undefined,
-                high52: meta.fiftyTwoWeekHigh ? parseFloat(meta.fiftyTwoWeekHigh.toFixed(2)) : undefined
-              };
-              results[t] = item;
-              results[baseSym] = item;
-              results[`${baseSym}.DE`] = item;
-              results[`${baseSym}.AS`] = item;
-              break;
+        const fetchCandidate = async (candidate: string) => {
+          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(candidate)}?interval=1d&range=2d`, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Accept": "application/json"
             }
-          } catch {}
-        }
+          });
+          if (!res.ok) throw new Error("Not found");
+          const json = await res.json() as any;
+          const meta = json?.chart?.result?.[0]?.meta;
+          if (meta && typeof meta.regularMarketPrice === 'number' && meta.regularMarketPrice > 0) {
+            return { meta, candidate };
+          }
+          throw new Error("Invalid");
+        };
+
+        try {
+          const success = await Promise.any(uniqueCandidates.map(c => fetchCandidate(c)));
+          if (success) {
+            const { meta } = success;
+            const price = meta.regularMarketPrice;
+            const prevClose = meta.previousClose ?? meta.chartPreviousClose;
+            const changePct = (price != null && prevClose != null && prevClose > 0) ? ((price - prevClose) / prevClose) * 100 : 0;
+            const item = {
+              currentPrice: parseFloat(price.toFixed(2)),
+              dailyChangePct: parseFloat(changePct.toFixed(2)),
+              changeVal: prevClose ? parseFloat((price - prevClose).toFixed(2)) : 0,
+              companyName: meta.longName || meta.shortName || t,
+              low52: meta.fiftyTwoWeekLow ? parseFloat(meta.fiftyTwoWeekLow.toFixed(2)) : undefined,
+              high52: meta.fiftyTwoWeekHigh ? parseFloat(meta.fiftyTwoWeekHigh.toFixed(2)) : undefined
+            };
+            results[t] = item;
+            results[baseSym] = item;
+            results[`${baseSym}.DE`] = item;
+            results[`${baseSym}.AS`] = item;
+          }
+        } catch {}
       }));
     }
 
