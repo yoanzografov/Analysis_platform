@@ -1063,30 +1063,29 @@ export default function App() {
   </div>
  </div>
 
-    {/* Dynamic indices banner strip */}
+    {/* Dynamic indices banner strip (Index Markets) */}
     <IndicesStrip 
      indices={indices} 
      isSimulating={isSimulating} 
     />
 
     {/* Main Section Tabs Switcher: Interactive Table vs Price Alerts vs Portfolio Tracker */}
-    <div className="space-y-3 pt-1" id="stock-table-section">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-2">
-        <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto pb-1 shrink-0">
+    <div className="bg-card/90 border border-border rounded-2xl p-2.5 shadow-lg backdrop-blur-md my-3.5" id="stock-table-section">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 max-w-full touch-pan-x scroll-smooth no-scrollbar shrink-0">
           
           {/* Tab 1: Interactive Table */}
           <button
             onClick={() => setActiveMainTab('table')}
-            className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-2 border h-10 shrink-0 ${
               activeMainTab === 'table'
-                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
             }`}
           >
-            <Table className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate hidden sm:inline">Interactive Table</span>
-            <span className="sm:hidden">Table</span>
-            <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
+            <Table className="w-4 h-4 shrink-0 text-indigo-300" />
+            <span>Interactive Table</span>
+            <span className={`px-2 py-0.5 rounded-lg text-xs font-extrabold shrink-0 ${
               activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
             }`}>
               {stocks.length}
@@ -1096,16 +1095,15 @@ export default function App() {
           {/* Tab 2: Price Alerts Schedule */}
           <button
             onClick={() => setActiveMainTab('alerts')}
-            className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-2 border h-10 shrink-0 ${
               activeMainTab === 'alerts'
-                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
             }`}
           >
-            <Bell className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate hidden sm:inline">Price Alerts Schedule</span>
-            <span className="sm:hidden">Alerts</span>
-            <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
+            <Bell className="w-4 h-4 shrink-0 text-amber-300" />
+            <span>Price Alerts Schedule</span>
+            <span className={`px-2 py-0.5 rounded-lg text-xs font-extrabold shrink-0 ${
               activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
             }`}>
               {alerts.length}
@@ -1115,16 +1113,15 @@ export default function App() {
           {/* Tab 3: Portfolio Tracker */}
           <button
             onClick={() => setActiveMainTab('portfolio')}
-            className={`px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[38px] ${
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-center gap-2 border h-10 shrink-0 ${
               activeMainTab === 'portfolio'
-                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
             }`}
           >
-            <Briefcase className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate hidden sm:inline">Portfolio Tracker</span>
-            <span className="sm:hidden">Portfolio</span>
-            <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
+            <Briefcase className="w-4 h-4 shrink-0 text-blue-300" />
+            <span>Portfolio Tracker</span>
+            <span className={`px-2 py-0.5 rounded-lg text-xs font-extrabold shrink-0 ${
               activeMainTab === 'portfolio' ? 'bg-white/20 text-white' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
             }`}>
               {positions.length}
