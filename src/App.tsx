@@ -909,8 +909,72 @@ export default function App() {
     </div>
   )}
 
+    {/* Dynamic indices banner strip (Index Markets / US Markets) */}
+    <IndicesStrip 
+     indices={indices} 
+     isSimulating={isSimulating} 
+    />
+
+    {/* Main Section Tabs Switcher: Sleek Capsule Buttons directly under Index Markets / US Markets */}
+    <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full touch-pan-x scroll-smooth no-scrollbar mb-5 mt-1" id="stock-table-section">
+      
+      {/* Tab 1: INTERACTIVE TABLE */}
+      <button
+        onClick={() => setActiveMainTab('table')}
+        className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
+          activeMainTab === 'table'
+            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+            : 'bg-card/70 hover:bg-card text-ink-muted hover:text-ink border-border/80 font-bold'
+        }`}
+      >
+        <Table className="w-4 h-4 shrink-0" />
+        <span>INTERACTIVE TABLE</span>
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+          activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
+        }`}>
+          {stocks.length}
+        </span>
+      </button>
+
+      {/* Tab 2: PRICE ALERTS SCHEDULE */}
+      <button
+        onClick={() => setActiveMainTab('alerts')}
+        className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
+          activeMainTab === 'alerts'
+            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+            : 'bg-card/70 hover:bg-card text-ink-muted hover:text-ink border-border/80 font-bold'
+        }`}
+      >
+        <Bell className="w-4 h-4 shrink-0" />
+        <span>PRICE ALERTS SCHEDULE</span>
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+          activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
+        }`}>
+          {alerts.length}
+        </span>
+      </button>
+
+      {/* Tab 3: PORTFOLIO TRACKER */}
+      <button
+        onClick={() => setActiveMainTab('portfolio')}
+        className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
+          activeMainTab === 'portfolio'
+            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+            : 'bg-card/70 hover:bg-card text-ink-muted hover:text-ink border-border/80 font-bold'
+        }`}
+      >
+        <Briefcase className="w-4 h-4 shrink-0" />
+        <span>PORTFOLIO TRACKER</span>
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+          activeMainTab === 'portfolio' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
+        }`}>
+          {positions.length}
+        </span>
+      </button>
+    </div>
+
   {/* Dashboard Header Bar */}
-  <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-[100]">
+  <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-[100] mb-4">
       <div className="flex items-center gap-2 max-w-full">
         <Building2 className="w-5 h-5 text-ink shrink-0" />
         <h1 className="text-lg sm:text-2xl font-extrabold text-ink font-sans tabular-nums tracking-tight uppercase leading-tight">
@@ -1062,70 +1126,6 @@ export default function App() {
 
   </div>
  </div>
-
-    {/* Dynamic indices banner strip (Index Markets) */}
-    <IndicesStrip 
-     indices={indices} 
-     isSimulating={isSimulating} 
-    />
-
-    {/* Main Section Tabs Switcher: Sleek Capsule Buttons directly under Index Markets / US Markets */}
-    <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full touch-pan-x scroll-smooth no-scrollbar mb-4 mt-2" id="stock-table-section">
-      
-      {/* Tab 1: INTERACTIVE TABLE */}
-      <button
-        onClick={() => setActiveMainTab('table')}
-        className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
-          activeMainTab === 'table'
-            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-            : 'bg-card/70 hover:bg-card text-ink-muted hover:text-ink border-border/80 font-bold'
-        }`}
-      >
-        <Table className="w-4 h-4 shrink-0" />
-        <span>INTERACTIVE TABLE</span>
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-          activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-        }`}>
-          {stocks.length}
-        </span>
-      </button>
-
-      {/* Tab 2: PRICE ALERTS SCHEDULE */}
-      <button
-        onClick={() => setActiveMainTab('alerts')}
-        className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
-          activeMainTab === 'alerts'
-            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-            : 'bg-card/70 hover:bg-card text-ink-muted hover:text-ink border-border/80 font-bold'
-        }`}
-      >
-        <Bell className="w-4 h-4 shrink-0" />
-        <span>PRICE ALERTS SCHEDULE</span>
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-          activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-        }`}>
-          {alerts.length}
-        </span>
-      </button>
-
-      {/* Tab 3: PORTFOLIO TRACKER */}
-      <button
-        onClick={() => setActiveMainTab('portfolio')}
-        className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
-          activeMainTab === 'portfolio'
-            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-            : 'bg-card/70 hover:bg-card text-ink-muted hover:text-ink border-border/80 font-bold'
-        }`}
-      >
-        <Briefcase className="w-4 h-4 shrink-0" />
-        <span>PORTFOLIO TRACKER</span>
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-          activeMainTab === 'portfolio' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-        }`}>
-          {positions.length}
-        </span>
-      </button>
-    </div>
 
       {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
       {activeMainTab === 'table' && (
