@@ -1616,12 +1616,6 @@ export default function PortfolioTracker({
                 <th onClick={() => handleSort('curPrice')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
                   CURRENT PRICE{sortField === 'curPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
                 </th>
-                <th onClick={() => handleSort('fPrice')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
-                  FAIR PRICE{sortField === 'fPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
-                </th>
-                <th onClick={() => handleSort('diffVsFair')} className="py-3 px-4 text-center whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
-                  DIFFERENCE{sortField === 'diffVsFair' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
-                </th>
                 <th className="py-3 px-4 text-center whitespace-nowrap">BUY / SELL</th>
                 <th onClick={() => handleSort('pnlPct')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
                   PROFIT / LOSS %{sortField === 'pnlPct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
@@ -1638,14 +1632,13 @@ export default function PortfolioTracker({
             <tbody className="divide-y divide-border/40 text-ink">
               {enrichedHoldings.length === 0 ? (
                 <tr>
-                  <td colSpan={17} className="py-8 text-center text-ink-faint font-bold text-xs">
+                  <td colSpan={15} className="py-8 text-center text-ink-faint font-bold text-xs">
                     Няма намерени или добавени активи в портфейла. Кликнете на <span className="text-emerald-400 font-extrabold">＋ Добавяне на Нов Актив</span> за да добавите първата си позиция.
                   </td>
                 </tr>
               ) : (
                 sortedHoldings.map(pos => {
                   const isPosProfit = pos.pnlVal >= 0;
-                  const isFairUndervalued = pos.diffVsFair > 0;
                   const isDailyUp = (pos.matching?.dailyChangePct || 0) >= 0;
                   const shareOfPortfolioPct = totalCurrentValue > 0 ? (pos.currentVal / totalCurrentValue) * 100 : 0;
                   const isSelected = selectedPosId === pos.id;
@@ -1749,23 +1742,7 @@ export default function PortfolioTracker({
                         </div>
                       </td>
 
-                      {/* 11. Fair Price */}
-                      <td className="py-3 px-3 text-right font-mono text-indigo-400 font-bold">
-                        ${pos.fPrice > 0 ? pos.fPrice.toFixed(2) : '-'}
-                      </td>
 
-                      {/* 12. Difference % vs Fair Price */}
-                      <td className="py-3 px-3 text-center">
-                        {pos.fPrice > 0 ? (
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                            isFairUndervalued ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
-                          }`}>
-                            {pos.diffVsFair > 0 ? '+' : ''}{pos.diffVsFair.toFixed(1)}%
-                          </span>
-                        ) : (
-                          <span className="text-ink-faint">-</span>
-                        )}
-                      </td>
 
                       {/* 13. BUY/SELL Buttons & Trash2 Delete */}
                       <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
