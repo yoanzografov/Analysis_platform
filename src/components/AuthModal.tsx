@@ -30,26 +30,19 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   currentUser: FirebaseUser | null;
-  syncPin: string;
-  onEnablePinSync: (pin: string) => void;
-  onDisablePinSync: () => void;
 }
 
 export const AuthModal: React.FC<Props> = ({
   isOpen,
   onClose,
-  currentUser,
-  syncPin,
-  onEnablePinSync,
-  onDisablePinSync
+  currentUser
 }) => {
-  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot' | 'pin'>(currentUser ? 'login' : 'login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>(currentUser ? 'login' : 'login');
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [pinInput, setPinInput] = useState(syncPin);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -222,18 +215,6 @@ export const AuthModal: React.FC<Props> = ({
     }
   };
 
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pinInput.trim()) {
-      setError('Моля въведете PIN код!');
-      return;
-    }
-    onEnablePinSync(pinInput.trim());
-    setSuccess(`Синхронизацията с PIN (${pinInput.trim()}) е активна!`);
-    setTimeout(() => {
-      onClose();
-    }, 1000);
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
@@ -564,72 +545,8 @@ export const AuthModal: React.FC<Props> = ({
               </form>
             )}
 
-            {/* QUICK PIN FALLBACK TAB */}
-            {activeTab === 'pin' && (
-              <form onSubmit={handlePinSubmit} className="space-y-4 py-2">
-                <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
-                    Личен таен PIN код (напр. 1234)
-                  </label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 absolute left-3 top-3 text-ink-muted" />
-                    <input
-                      type="text"
-                      placeholder="Въведете PIN (напр. 1234)"
-                      value={pinInput}
-                      onChange={(e) => setPinInput(e.target.value)}
-                      className="w-full bg-card/60 border border-border/70 rounded-xl py-2.5 pl-9 pr-3 text-xs font-extrabold font-mono text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
-                      required
-                    />
-                  </div>
-                  <p className="text-[10px] text-ink-faint mt-1.5 leading-relaxed">
-                    С бързия PIN синхронизирате анонимно между устройства без парола.
-                  </p>
-                </div>
 
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <Cloud className="w-4 h-4" />
-                    Включи PIN Синхрон
-                  </button>
-                  {syncPin && (
-                    <button
-                      type="button"
-                      onClick={() => { onDisablePinSync(); onClose(); }}
-                      className="py-2.5 px-3 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs rounded-xl border border-rose-500/40 transition-colors"
-                    >
-                      Изключи PIN
-                    </button>
-                  )}
-                </div>
-              </form>
-            )}
 
-            {/* Subtle PIN Footer Link */}
-            {activeTab !== 'pin' ? (
-              <div className="text-center pt-3 border-t border-border/40 mt-2">
-                <button
-                  type="button"
-                  onClick={() => { setActiveTab('pin'); setError(''); setSuccess(''); }}
-                  className="text-[10px] font-bold text-ink-muted hover:text-indigo-400 transition-colors"
-                >
-                  ☁️ Имате стар анонимен PIN код? Кликнете тук
-                </button>
-              </div>
-            ) : (
-              <div className="text-center pt-3 border-t border-border/40 mt-2">
-                <button
-                  type="button"
-                  onClick={() => { setActiveTab('login'); setError(''); setSuccess(''); }}
-                  className="text-[10px] font-bold text-indigo-400 hover:underline transition-colors"
-                >
-                  ← Назад към Вход с Имейл и Парола
-                </button>
-              </div>
-            )}
           </>
         )}
 

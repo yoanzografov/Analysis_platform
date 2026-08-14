@@ -62,13 +62,7 @@ export default function App() {
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [syncPin, setSyncPin] = useState<string>(() => {
-    try {
-      return localStorage.getItem('user_portfolio_sync_pin') || '';
-    } catch (e) {
-      return '';
-    }
-  });
+
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -1016,23 +1010,21 @@ export default function App() {
     )}
   </div>
 
-  {/* Header button for Cloud Sync / Account Auth (PIN / Email Login) */}
+  {/* Header button for Cloud Sync / Account Auth (Email Login) */}
   <button
     onClick={() => setIsAuthModalOpen(true)}
     className={`text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs ${
-      currentUser || syncPin
+      currentUser
         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10'
         : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500 hover:text-white uppercase'
     }`}
-    title={currentUser ? `Logged in as ${currentUser.email}` : syncPin ? `PIN: ${syncPin}` : 'Sign In / Cloud Sync'}
+    title={currentUser ? `Влезли сте като ${currentUser.email}` : 'Вход / Синхронизация'}
   >
-    <Cloud className={`w-3.5 h-3.5 ${currentUser || syncPin ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
+    <Cloud className={`w-3.5 h-3.5 ${currentUser ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
     <span>
       {currentUser 
         ? `👤 ${currentUser.displayName || currentUser.email?.split('@')[0]} (🟢 ON)`
-        : syncPin 
-          ? `☁️ PIN (${syncPin})` 
-          : '🔑 Sign In / PIN'}
+        : '🔑 Вход / Синхронизация'}
     </span>
   </button>
 
@@ -1249,7 +1241,6 @@ export default function App() {
         stocks={stocks}
         positions={positions}
         currentUser={currentUser}
-        syncPin={syncPin}
         onAddPosition={handleAddPosition}
         onUpdatePosition={handleUpdatePosition}
         onDeletePosition={handleDeletePosition}
@@ -1359,15 +1350,6 @@ export default function App() {
     isOpen={isAuthModalOpen}
     onClose={() => setIsAuthModalOpen(false)}
     currentUser={currentUser}
-    syncPin={syncPin}
-    onEnablePinSync={(pin) => {
-      setSyncPin(pin);
-      localStorage.setItem('user_portfolio_sync_pin', pin);
-    }}
-    onDisablePinSync={() => {
-      setSyncPin('');
-      localStorage.removeItem('user_portfolio_sync_pin');
-    }}
   />
  </main>
 
