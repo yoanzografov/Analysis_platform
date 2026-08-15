@@ -376,12 +376,11 @@ export default function App() {
         
         // Only update state if data is actually different from our last local save
         if (lastSavedRef.current !== incomingDataString) {
-          lastSavedRef.current = incomingDataString;
-          if (data.stocks) {
-            const migratedStocks = data.stocks.map((s: any) => ({
+          let migratedStocks = data.stocks || [];
+          if (data.stocks && Array.isArray(data.stocks)) {
+            migratedStocks = data.stocks.map((s: any) => ({
               ...s,
               watch: s.watch === 'UNDERVALUED' ? 'Buy' : s.watch === 'OVERVALUED' ? 'Sell' : s.watch,
-              // Normalize signal back to proper casing if it was altered
               signal: s.signal === 'UNDERVALUED' ? 'Buy' : s.signal === 'OVERVALUED' ? 'Sell' : s.signal,
               buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
             }));
@@ -389,32 +388,39 @@ export default function App() {
           }
           if (data.indices) setIndices(data.indices);
           
-          // Load alerts and positions reliably from cloud or fallback to local storage
-          if (!isLoaded) {
+          // Real-time multi-device sync for positions & alerts
+          if (Array.isArray(data.alerts)) {
+            setAlerts(data.alerts);
+          } else if (!isLoaded) {
             const localAlertsRaw = localStorage.getItem('user_portfolio_alerts');
-            const localAlerts = localAlertsRaw ? JSON.parse(localAlertsRaw) : [];
-            const fbAlerts = data.alerts || [];
-            if (Array.isArray(fbAlerts) && fbAlerts.length > 0) {
-              setAlerts(fbAlerts);
-            } else if (localAlerts.length > 0) {
-              setAlerts(localAlerts);
-            }
+            if (localAlertsRaw) try { setAlerts(JSON.parse(localAlertsRaw)); } catch (e) {}
+          }
 
+          if (Array.isArray(data.positions)) {
+            setPositions(data.positions);
+          } else if (!isLoaded) {
             const localPosRaw = localStorage.getItem('user_portfolio_positions');
-            const localPos = localPosRaw ? JSON.parse(localPosRaw) : [];
-            const fbPos = data.positions || [];
-            if (Array.isArray(fbPos) && fbPos.length > 0) {
-              setPositions(fbPos);
-            } else if (localPos.length > 0) {
-              setPositions(localPos);
-            }
+            if (localPosRaw) try { setPositions(JSON.parse(localPosRaw)); } catch (e) {}
           }
           
-          if (data.settings?.buyThreshold !== undefined) setBuyThreshold(data.settings.buyThreshold);
-          else if (data.settings?.buySellThreshold !== undefined) setBuyThreshold(data.settings.buySellThreshold);
-          
-          if (data.settings?.sellThreshold !== undefined) setSellThreshold(data.settings.sellThreshold);
-          else if (data.settings?.buySellThreshold !== undefined) setSellThreshold(data.settings.buySellThreshold);
+          const currentBuyThreshold = data.settings?.buyThreshold ?? data.settings?.buySellThreshold ?? 10;
+          const currentSellThreshold = data.settings?.sellThreshold ?? data.settings?.buySellThreshold ?? 10;
+          if (data.settings?.buyThreshold !== undefined || data.settings?.buySellThreshold !== undefined) {
+            setBuyThreshold(currentBuyThreshold);
+          }
+          if (data.settings?.sellThreshold !== undefined || data.settings?.buySellThreshold !== undefined) {
+            setSellThreshold(currentSellThreshold);
+          }
+
+          // Normalize lastSavedRef to prevent echo loops
+          const normalizedPayload = {
+            stocks: migratedStocks,
+            indices: data.indices || [],
+            alerts: Array.isArray(data.alerts) ? data.alerts : [],
+            positions: Array.isArray(data.positions) ? data.positions : [],
+            settings: { buyThreshold: currentBuyThreshold, sellThreshold: currentSellThreshold }
+          };
+          lastSavedRef.current = JSON.stringify(normalizedPayload);
         }
         
         if (!isLoaded) {
