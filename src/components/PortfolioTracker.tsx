@@ -1363,23 +1363,6 @@ export default function PortfolioTracker({
               <Coins className="w-4 h-4 text-amber-400" />
               <span>Кеш: ${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
             </button>
-
-            {/* 6. Експорт */}
-            <button 
-              onClick={handleExportBackup}
-              title="Свали резервно копие на вашето портфолио"
-              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
-            >
-              <Download className="w-4 h-4 text-emerald-400" />
-              <span>Експорт</span>
-            </button>
-
-            {/* 7. Импорт */}
-            <label title="Възстанови резервно копие на портфолиото" className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0">
-              <Upload className="w-4 h-4 text-indigo-400" />
-              <span>Импорт</span>
-              <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
-            </label>
           </div>
 
           <span className="text-[10px] text-ink-faint font-extrabold uppercase bg-card/40 px-2.5 py-1 rounded-xl border border-white/5 shrink-0">
@@ -1634,14 +1617,35 @@ export default function PortfolioTracker({
           </table>
         </div>
 
-        {/* Table Status Footer */}
-        <div className="p-3 bg-card/40 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans tabular-nums text-xs text-ink/90 gap-2">
-          <span>
-            Показване на всички <span className="font-extrabold text-indigo-400">{enrichedHoldings.length}</span> позиции в портфейла
-          </span>
-          <span className="text-xs text-ink-faint italic">
-            Използвайте скрола за нагоре и надолу за преглед на целия списък
-          </span>
+        {/* Table Status Footer with Export & Import Controls */}
+        <div className="p-3 bg-card/40 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans tabular-nums text-xs text-ink/90 gap-3">
+          <div className="flex items-center gap-2">
+            <span>
+              Показване на всички <span className="font-extrabold text-indigo-400">{enrichedHoldings.length}</span> позиции в портфейла
+            </span>
+            <span className="text-xs text-ink-faint italic hidden md:inline">
+              (Използвайте скрола за нагоре и надолу за преглед на целия списък)
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Експорт */}
+            <button 
+              onClick={handleExportBackup}
+              title="Свали резервно копие на вашето портфолио"
+              className="px-3 py-1.5 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
+            >
+              <Download className="w-4 h-4 text-emerald-400" />
+              <span>Експорт</span>
+            </button>
+
+            {/* Импорт */}
+            <label title="Възстанови резервно копие на портфолиото" className="px-3 py-1.5 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0">
+              <Upload className="w-4 h-4 text-indigo-400" />
+              <span>Импорт</span>
+              <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
+            </label>
+          </div>
         </div>
       </div>
     )}
