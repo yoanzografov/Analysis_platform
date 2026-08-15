@@ -1364,48 +1364,7 @@ export default function PortfolioTracker({
               <span>Кеш: ${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
             </button>
 
-            {/* 6. Обнови цените в реално време */}
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
-            >
-              <RefreshCw className="w-4 h-4 text-indigo-400" />
-              <span>Обнови цените в реално време</span>
-            </button>
-
-            {/* 7. Privacy Mode Toggle */}
-            <button 
-              onClick={togglePrivacyMode}
-              title={isPrivacyMode ? "Покажи финансовите суми" : "Скрий финансовите суми"}
-              className={`px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs border flex items-center gap-1.5 h-9 shrink-0 ${
-                isPrivacyMode 
-                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' 
-                  : 'bg-card/70 hover:bg-card border-border text-ink-muted hover:text-ink'
-              }`}
-            >
-              {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-indigo-400" />}
-              <span>{isPrivacyMode ? 'Скрити' : 'Видими'}</span>
-            </button>
-
-            {/* 8. User Account Sync Status */}
-            <button 
-              onClick={() => setIsAuthModalOpen(true)}
-              title={currentUser ? `Влезли сте като ${currentUser.email}. Натиснете за управление на акаунта.` : "Влезте в акаунт за синхронизация в реално време"}
-              className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shadow-xs border h-9 shrink-0 ${
-                currentUser
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10' 
-                  : 'bg-card/70 hover:bg-card border-border text-ink-muted hover:text-ink'
-              }`}
-            >
-              <Cloud className={`w-4 h-4 ${currentUser ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
-              <span>
-                {currentUser 
-                  ? `👤 ${currentUser.displayName || currentUser.email?.split('@')[0]} (🟢 НА ЖИВО)`
-                  : '🔑 Вход / Синхронизация'}
-              </span>
-            </button>
-
-            {/* 9. Експорт */}
+            {/* 6. Експорт */}
             <button 
               onClick={handleExportBackup}
               title="Свали резервно копие на вашето портфолио"
@@ -1415,7 +1374,7 @@ export default function PortfolioTracker({
               <span>Експорт</span>
             </button>
 
-            {/* 10. Импорт */}
+            {/* 7. Импорт */}
             <label title="Възстанови резервно копие на портфолиото" className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0">
               <Upload className="w-4 h-4 text-indigo-400" />
               <span>Импорт</span>
