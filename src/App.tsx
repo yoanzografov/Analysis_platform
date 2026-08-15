@@ -214,14 +214,14 @@ export default function App() {
   // Live direct quotes sync from Yahoo Finance backend proxy
   const fetchRealStockPricesDirect = async (stocksList?: Stock[], positionsList?: PortfolioPosition[]) => {
     const targetList = stocksList || stocks;
-    if (!targetList || targetList.length === 0) return;
+    const targetPositions = positionsList || positions;
+    const stockTickers = targetList ? targetList.map(s => s.ticker).filter(Boolean) : [];
+    const portfolioTickers = targetPositions ? targetPositions.map(p => p.ticker).filter(Boolean) : [];
+    const combinedTickers = Array.from(new Set([...stockTickers, ...portfolioTickers]));
+    if (combinedTickers.length === 0 && (!indices || indices.length === 0)) return;
 
     setIsFetchingLivePrices(true);
     try {
-      const stockTickers = targetList.map(s => s.ticker).filter(Boolean);
-      const targetPositions = positionsList || positions;
-      const portfolioTickers = targetPositions.map(p => p.ticker).filter(Boolean);
-      const combinedTickers = Array.from(new Set([...stockTickers, ...portfolioTickers]));
       const mappedStockTickers = combinedTickers.map(t => TICKER_YAHOO_MAP[t.trim().toUpperCase()] || t);
       const defaultIndexTickers = [
         '^GSPC', '^NDX', '^IXIC', '^DJI', '^VIX',
