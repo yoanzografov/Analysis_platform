@@ -688,34 +688,10 @@ export default function PortfolioTracker({
             <Flame className="w-4 h-4 text-emerald-400" />
             Dividend Calendar
           </button>
-
-          <button
-            onClick={() => setActiveSubTab('holdings')}
-            className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-              activeSubTab === 'holdings'
-                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
-            }`}
-          >
-            <Briefcase className="w-4 h-4 text-blue-300" />
-            Holdings ({enrichedHoldings.length})
-          </button>
-
-          <button
-            onClick={() => setActiveSubTab('transactions')}
-            className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-              activeSubTab === 'transactions'
-                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
-            }`}
-          >
-            <Newspaper className="w-4 h-4 text-purple-300" />
-            Transactions ({history.length})
-          </button>
         </div>
 
         {/* Quick Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={togglePrivacyMode}
             className="p-2 bg-card border border-border/80 text-ink-muted hover:text-ink rounded-xl text-xs font-bold transition-all"
@@ -729,7 +705,7 @@ export default function PortfolioTracker({
             className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Добави Позиция</span>
+            <span>Добави Позиция</span>
           </button>
         </div>
       </div>
