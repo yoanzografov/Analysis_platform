@@ -191,146 +191,7 @@ export default function PortfolioTracker({
     } catch (e) {}
   }, [history]);
 
-  // Firestore Snapshot Real-time Listener (User Account only)
-  useEffect(() => {
-    isInitialCloudSyncedRef.current = false;
-    if (!currentUser) {
-      setSyncStatus('idle');
-      return;
-    }
-
-    const docRef = doc(db, 'user_portfolios', currentUser.uid);
-    setSyncStatus('syncing');
-
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        if (data && data.payload) {
-          lastCloudPayloadRef.current = JSON.stringify({
-            positions: data.payload.positions || [],
-            history: data.payload.history || [],
-            divRecords: data.payload.divRecords || [],
-            cashInput: data.payload.cashInput || ""
-          });
-          isRemoteUpdatingRef.current = true;
-          if (Array.isArray(data.payload.positions)) {
-            if (onSetAllPositions) {
-              onSetAllPositions(data.payload.positions);
-            }
-            try {
-              localStorage.setItem('user_portfolio_positions', JSON.stringify(data.payload.positions));
-            } catch (e) {}
-          }
-          if (Array.isArray(data.payload.history)) {
-            setHistory(data.payload.history);
-            try {
-              localStorage.setItem('user_portfolio_transactions', JSON.stringify(data.payload.history));
-            } catch (e) {}
-          }
-          if (Array.isArray(data.payload.divRecords)) {
-            setDivRecords(data.payload.divRecords);
-            try {
-              localStorage.setItem('user_portfolio_dividends', JSON.stringify(data.payload.divRecords));
-            } catch (e) {}
-          }
-          if (typeof data.payload.cashInput === 'string') {
-            setCashInput(data.payload.cashInput);
-            try {
-              localStorage.setItem('user_portfolio_cash', data.payload.cashInput);
-            } catch (e) {}
-          }
-          isInitialCloudSyncedRef.current = true;
-          setTimeout(() => {
-            isRemoteUpdatingRef.current = false;
-          }, 300);
-        }
-      } else {
-        // Initial cloud upload for new user account or new PIN sync
-        isInitialCloudSyncedRef.current = true;
-        pushToCloud(positions, history, divRecords, cashInput);
-      }
-      setSyncStatus('synced');
-    }, (err) => {
-      console.error("Firestore sync error:", err);
-      setSyncStatus('error');
-    });
-
-    return () => unsubscribe();
-  }, [currentUser]);
-
-  // Push local updates to Cloud
-  const pushToCloud = async (
-    targetPositions = positions,
-    targetHistory = history,
-    targetDivs = divRecords,
-    targetCash = cashInput
-  ) => {
-    if (!currentUser || isRemoteUpdatingRef.current) return;
-
-    // Check if the target data actually differs from the last saved/loaded cloud state
-    const compPayload = {
-      positions: targetPositions,
-      history: targetHistory,
-      divRecords: targetDivs,
-      cashInput: targetCash
-    };
-
-    if (lastCloudPayloadRef.current) {
-      try {
-        const lastPayload = JSON.parse(lastCloudPayloadRef.current);
-        const lastComp = {
-          positions: lastPayload.positions || [],
-          history: lastPayload.history || [],
-          divRecords: lastPayload.divRecords || [],
-          cashInput: lastPayload.cashInput || ""
-        };
-
-        if (JSON.stringify(compPayload) === JSON.stringify(lastComp)) {
-          // Data is identical to what is in the cloud, skip saving to prevent loops
-          return;
-        }
-      } catch (e) {
-        console.error("Comparison parse error", e);
-      }
-    }
-
-    try {
-      setSyncStatus('syncing');
-      const docRef = doc(db, 'user_portfolios', currentUser.uid);
-
-      const payload = {
-        positions: targetPositions,
-        history: targetHistory,
-        divRecords: targetDivs,
-        cashInput: targetCash,
-        updatedAt: new Date().toISOString()
-      };
-
-      // Store in ref to prevent duplicate push from incoming snapshots
-      lastCloudPayloadRef.current = JSON.stringify({
-        positions: targetPositions,
-        history: targetHistory,
-        divRecords: targetDivs,
-        cashInput: targetCash
-      });
-
-      await setDoc(docRef, { payload }, { merge: true });
-      setSyncStatus('synced');
-    } catch (e) {
-      console.error("Cloud push error:", e);
-      setSyncStatus('error');
-    }
-  };
-
-  // Push to cloud when local state changes
-  useEffect(() => {
-    if (currentUser && !isRemoteUpdatingRef.current && isInitialCloudSyncedRef.current) {
-      pushToCloud();
-    }
-  }, [positions, history, divRecords, cashInput]);
-
-
-  // AI Audit Modal, Add Position Modal, Cash Modal, History & Dividend Modal state
+  // Privacy mode & Backup Export/Import logic
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'diversification' | 'dividends' | 'holdings' | 'transactions'>('overview');
   const [isAiAuditOpen, setIsAiAuditOpen] = useState(false);
   const [tvModalTicker, setTvModalTicker] = useState<string | null>(null);
@@ -1966,7 +1827,9 @@ export default function PortfolioTracker({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТИКЕР</label>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                    ТИКЕР <span className="text-rose-400 font-black">* (Задължително)</span>
+                  </label>
                   <input
                     type="text"
                     placeholder="напр. AAPL или SAP.DE"
@@ -1976,11 +1839,13 @@ export default function PortfolioTracker({
                     required
                   />
                   <span className="text-[9px] text-indigo-400 mt-1 block leading-tight">
-                    Поддържа САЩ (AAPL), Германия (.DE), Амстердам (.AS), Лондон (.L) и др.
+                    САЩ (AAPL), Германия (.DE), Амстердам (.AS) и др.
                   </span>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ИМЕ НА АКТИВА</label>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                    ИМЕ НА АКТИВА <span className="text-ink-muted text-[9px]">(По желание)</span>
+                  </label>
                   <input
                     type="text"
                     placeholder="напр. Apple Inc."
@@ -1992,7 +1857,9 @@ export default function PortfolioTracker({
               </div>
 
               <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ПЛАТЕНА ТАКСА ($ fee)</label>
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                  ПЛАТЕНА ТАКСА ($ fee) <span className="text-ink-muted text-[9px]">(По желание)</span>
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -2005,7 +1872,9 @@ export default function PortfolioTracker({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">БРОЙ АКЦИИ</label>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                    БРОЙ АКЦИИ <span className="text-rose-400 font-black">* (Задължително)</span>
+                  </label>
                   <input
                     type="number"
                     step="any"
@@ -2017,7 +1886,9 @@ export default function PortfolioTracker({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ДАТА НА СДЕЛКАТА</label>
+                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                    ДАТА НА СДЕЛКАТА <span className="text-ink-muted text-[9px]">(По желание)</span>
+                  </label>
                   <input
                     type="date"
                     value={buyDate}
@@ -2028,7 +1899,9 @@ export default function PortfolioTracker({
               </div>
 
               <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ГОДИШЕН ДИВИДЕНТ ЗА 1 АКЦИЯ ($)</label>
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                  ГОДИШЕН ДИВИДЕНТ ЗА 1 АКЦИЯ ($) <span className="text-ink-muted text-[9px]">(По желание)</span>
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -2075,7 +1948,7 @@ export default function PortfolioTracker({
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <div>
                     <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
-                      ЦЕНА ЗАКУПУВАНЕ ({positionCurrency === 'USD' ? '$' : '€'})
+                      ЦЕНА ЗАКУПУВАНЕ ({positionCurrency === 'USD' ? '$' : '€'}) <span className="text-rose-400 font-black">* (Задължително)</span>
                     </label>
                     <input
                       type="number"
@@ -2084,6 +1957,7 @@ export default function PortfolioTracker({
                       value={buyPrice}
                       onChange={e => setBuyPrice(e.target.value)}
                       className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                      required
                     />
                   </div>
                   <div>

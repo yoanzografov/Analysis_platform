@@ -389,13 +389,25 @@ export default function App() {
           }
           if (data.indices) setIndices(data.indices);
           
-          // Only load default alerts and positions on startup if they don't already exist locally
+          // Load alerts and positions reliably from cloud or fallback to local storage
           if (!isLoaded) {
-            const hasLocalAlerts = localStorage.getItem('user_portfolio_alerts');
-            if (!hasLocalAlerts && data.alerts) setAlerts(data.alerts);
+            const localAlertsRaw = localStorage.getItem('user_portfolio_alerts');
+            const localAlerts = localAlertsRaw ? JSON.parse(localAlertsRaw) : [];
+            const fbAlerts = data.alerts || [];
+            if (Array.isArray(fbAlerts) && fbAlerts.length > 0) {
+              setAlerts(fbAlerts);
+            } else if (localAlerts.length > 0) {
+              setAlerts(localAlerts);
+            }
 
-            const hasLocalPositions = localStorage.getItem('user_portfolio_positions');
-            if (!hasLocalPositions && data.positions) setPositions(data.positions);
+            const localPosRaw = localStorage.getItem('user_portfolio_positions');
+            const localPos = localPosRaw ? JSON.parse(localPosRaw) : [];
+            const fbPos = data.positions || [];
+            if (Array.isArray(fbPos) && fbPos.length > 0) {
+              setPositions(fbPos);
+            } else if (localPos.length > 0) {
+              setPositions(localPos);
+            }
           }
           
           if (data.settings?.buyThreshold !== undefined) setBuyThreshold(data.settings.buyThreshold);
@@ -448,11 +460,19 @@ export default function App() {
   }, [isLoaded]);
 
   // Automatic Cloud Sync
+  const isInitialAutoSave = useRef(true);
   useEffect(() => {
     if (!isLoaded) return;
+    
     const payload = { stocks, indices, alerts, positions, settings: { buyThreshold, sellThreshold } };
     const currentDataString = JSON.stringify(payload);
     
+    if (isInitialAutoSave.current) {
+      isInitialAutoSave.current = false;
+      lastSavedRef.current = currentDataString;
+      return;
+    }
+
     // Auto-save to cloud only if there's an actual change to prevent loop with snapshot listener
     if (lastSavedRef.current !== currentDataString) {
       lastSavedRef.current = currentDataString;
