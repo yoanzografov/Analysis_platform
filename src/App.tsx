@@ -100,7 +100,7 @@ export default function App() {
     }
   }, [positions]);
 
-  const [portfolioPrices, setPortfolioPrices] = useState<Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string }>>(() => {
+  const [portfolioPrices, setPortfolioPrices] = useState<Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string; currency?: string }>>(() => {
     try {
       const saved = localStorage.getItem('user_portfolio_prices');
       return saved ? JSON.parse(saved) : {};
@@ -502,16 +502,16 @@ export default function App() {
  // Stable stringified representation of stocks list to safely prevent redundant renders and infinite loops
  const tickersString = stocks.map(s => s.ticker).join(',');
 
- // Automatic live update interval background runner (runs loop every 45s)
- useEffect(() => {
- if (!isAutoLiveRefresh) return;
+  // Automatic live update interval background runner (runs loop every 90s)
+  useEffect(() => {
+    if (!isAutoLiveRefresh) return;
 
- const interval = setInterval(() => {
- fetchRealStockPricesDirect();
- }, 45000);
+    const interval = setInterval(() => {
+      fetchRealStockPricesDirect();
+    }, 90000);
 
- return () => clearInterval(interval);
- }, [isAutoLiveRefresh, tickersString]);
+    return () => clearInterval(interval);
+  }, [isAutoLiveRefresh, tickersString]);
 
  // CSV sync data updater callback
  const handleSheetSynced = (csvText: string) => {

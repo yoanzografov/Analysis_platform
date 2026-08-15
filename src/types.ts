@@ -20,6 +20,7 @@ export interface Stock {
   aiAnalysis?: string;
   calcLink?: string; // Link to Google Sheets calculation
   earningsTimestamp?: number;
+  currency?: string;
 }
 
 export interface MarketIndex {

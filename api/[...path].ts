@@ -63,7 +63,7 @@ const YAHOO_HEADERS = {
 
 // Yahoo Finance v7 quote API (no auth required)
 async function fetchYahooV7(symbols: string[]): Promise<any[]> {
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols.join(","))}&fields=regularMarketPrice,regularMarketChangePercent,regularMarketPreviousClose,fiftyTwoWeekLow,fiftyTwoWeekHigh,trailingPE,forwardPE,epsTrailingTwelveMonths,epsForward,marketCap,dividendRate,trailingAnnualDividendRate,dividendYield,trailingAnnualDividendYield,longName,shortName,sector,industry,earningsTimestamp`;
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols.join(","))}&fields=regularMarketPrice,regularMarketChangePercent,regularMarketPreviousClose,fiftyTwoWeekLow,fiftyTwoWeekHigh,trailingPE,forwardPE,epsTrailingTwelveMonths,epsForward,marketCap,dividendRate,trailingAnnualDividendRate,dividendYield,trailingAnnualDividendYield,longName,shortName,sector,industry,earningsTimestamp,currency`;
   const res = await fetch(url, { headers: YAHOO_HEADERS });
   if (!res.ok) throw new Error(`Yahoo v7 HTTP ${res.status}`);
   const json = await res.json();
@@ -93,6 +93,7 @@ async function fetchYahooV8Single(symbol: string): Promise<any | null> {
     fiftyTwoWeekLow: meta.fiftyTwoWeekLow,
     fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh,
     longName: meta.longName ?? meta.shortName,
+    currency: meta.currency,
   };
 }
 
@@ -118,6 +119,7 @@ function buildResult(q: any) {
     dailyChangePct: parseFloat((changePct ?? 0).toFixed(2)),
     changeVal: changeVal != null ? parseFloat(changeVal.toFixed(2)) : 0,
     companyName: q.longName || q.shortName || undefined,
+    currency: q.currency || undefined,
     low52: q.fiftyTwoWeekLow != null ? parseFloat(q.fiftyTwoWeekLow.toFixed(2)) : undefined,
     high52: q.fiftyTwoWeekHigh != null ? parseFloat(q.fiftyTwoWeekHigh.toFixed(2)) : undefined,
     peRatio: pe != null ? parseFloat(pe.toFixed(2)) : undefined,
@@ -133,7 +135,7 @@ function buildResult(q: any) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Cache-Control", "no-store, max-age=0");
+  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=120");
 
   if (req.method === "OPTIONS") return res.status(200).end();
 

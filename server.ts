@@ -1622,6 +1622,7 @@ app.get("/api/stock-quotes", async (req, res) => {
             dividend: q.dividendRate !== undefined ? q.dividendRate : q.trailingAnnualDividendRate,
             dividendYield: q.dividendYield !== undefined ? q.dividendYield : q.trailingAnnualDividendYield,
             earningsTimestamp: q.earningsTimestamp ?? undefined,
+            currency: q.currency || undefined,
           };
           results[originalTicker] = quoteObj;
           const baseSym = originalTicker.split('.')[0];
@@ -1675,6 +1676,7 @@ app.get("/api/stock-quotes", async (req, res) => {
               dailyChangePct: parseFloat(changePct.toFixed(2)),
               changeVal: prevClose ? parseFloat((price - prevClose).toFixed(2)) : 0,
               companyName: meta.longName || meta.shortName || t,
+              currency: meta.currency || undefined,
               low52: meta.fiftyTwoWeekLow ? parseFloat(meta.fiftyTwoWeekLow.toFixed(2)) : undefined,
               high52: meta.fiftyTwoWeekHigh ? parseFloat(meta.fiftyTwoWeekHigh.toFixed(2)) : undefined
             };

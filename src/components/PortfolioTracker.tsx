@@ -58,7 +58,7 @@ interface Props {
   onAddDividend?: (div: Omit<PortfolioDividendRecord, 'id'>) => void;
   onUpdateCash?: (cash: number) => void;
   onSetAllPositions?: (positions: PortfolioPosition[]) => void;
-  portfolioPrices?: Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string }>;
+  portfolioPrices?: Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string; currency?: string }>;
 }
 
 const StockLogo = ({ ticker }: { ticker: string }) => {
@@ -554,6 +554,7 @@ export default function PortfolioTracker({
     setCompanyName(pos.companyName || '');
     setShares(pos.shares.toString());
     setBuyPrice(pos.buyPrice.toString());
+    setPositionCurrency('USD'); // Stored values are always in USD base
     setFee((pos.fee || 0).toString());
     setBuyDate(pos.buyDate || new Date().toISOString().split('T')[0]);
     setFairPrice(pos.fairPrice ? pos.fairPrice.toString() : '');
@@ -569,7 +570,9 @@ export default function PortfolioTracker({
     setTicker(pos.ticker);
     setCompanyName(pos.companyName || '');
     setShares('');
-    setBuyPrice(pos.curPrice ? pos.curPrice.toFixed(2) : '');
+    const origCurrency = pos.quoteCurrency === 'EUR' ? 'EUR' : 'USD';
+    setPositionCurrency(origCurrency);
+    setBuyPrice(pos.originalPrice ? pos.originalPrice.toFixed(2) : (pos.curPrice ? pos.curPrice.toFixed(2) : ''));
     setFee('0.00');
     setBuyDate(new Date().toISOString().split('T')[0]);
     setFairPrice('');
@@ -625,12 +628,24 @@ export default function PortfolioTracker({
         ? quote.currentPrice
         : ((matching?.priceOfCalc && matching.priceOfCalc > 0) ? matching.priceOfCalc : pos.buyPrice);
 
+    const quoteCurrency = quote?.currency || matching?.currency || (cleanTicker.endsWith('.DE') || cleanTicker.endsWith('.PA') || cleanTicker.endsWith('.AS') || cleanTicker.includes('ETR:') || cleanTicker.includes('EPA:') || cleanTicker.includes('AMS:') ? 'EUR' : 'USD');
+
+    let curPriceInUsd = curPrice;
+    if (quoteCurrency === 'EUR') {
+      curPriceInUsd = curPrice * eurUsdRate;
+    } else if (quoteCurrency === 'GBP' || quoteCurrency === 'GBp' || cleanTicker.endsWith('.L') || cleanTicker.includes('LON:')) {
+      const gbpUsdRate = portfolioPrices['GBPUSD=X']?.currentPrice || portfolioPrices['GBP=X']?.currentPrice || 1.27;
+      const isPence = quoteCurrency === 'GBp' || cleanTicker.endsWith('.L');
+      const priceInGbp = isPence ? curPrice / 100 : curPrice;
+      curPriceInUsd = priceInGbp * gbpUsdRate;
+    }
+
     const costBasis = (pos.shares * pos.buyPrice) + (pos.fee || 0);
-    const currentVal = pos.shares * curPrice;
+    const currentVal = pos.shares * curPriceInUsd;
     const pnlVal = currentVal - costBasis;
     const pnlPct = costBasis > 0 ? (pnlVal / costBasis) * 100 : 0;
     const fPrice = pos.fairPrice || matching?.fairPrice || 0;
-    const diffVsFair = fPrice > 0 ? ((curPrice - fPrice) / fPrice) * 100 : 0;
+    const diffVsFair = fPrice > 0 ? ((curPriceInUsd - fPrice) / fPrice) * 100 : 0;
 
     totalCostBasis += costBasis;
     totalCurrentValue += currentVal;
@@ -661,7 +676,9 @@ export default function PortfolioTracker({
       ...pos,
       companyName: matching?.companyName || quote?.companyName || pos.companyName || pos.ticker,
       matching: synthMatching,
-      curPrice,
+      curPrice: curPriceInUsd,
+      originalPrice: curPrice,
+      quoteCurrency,
       costBasis,
       currentVal,
       pnlVal,
@@ -1661,7 +1678,14 @@ export default function PortfolioTracker({
                     >
                       {/* 1. Ticker */}
                       <td className="py-3 px-4 first:rounded-l-xl">
-                        <span className="font-extrabold text-ink">{pos.ticker}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-extrabold text-ink">{pos.ticker}</span>
+                          {pos.quoteCurrency && pos.quoteCurrency !== 'USD' && (
+                            <span className="px-1 py-0.5 rounded text-[8px] font-black bg-indigo-500/10 text-indigo-400 uppercase">
+                              {pos.quoteCurrency}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* 2. Company Name */}
@@ -1945,12 +1969,15 @@ export default function PortfolioTracker({
                   <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТИКЕР</label>
                   <input
                     type="text"
-                    placeholder="напр. AAPL"
+                    placeholder="напр. AAPL или SAP.DE"
                     value={ticker}
                     onChange={e => handleTickerChange(e.target.value)}
                     className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none uppercase"
                     required
                   />
+                  <span className="text-[9px] text-indigo-400 mt-1 block leading-tight">
+                    Поддържа САЩ (AAPL), Германия (.DE), Амстердам (.AS), Лондон (.L) и др.
+                  </span>
                 </div>
                 <div>
                   <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ИМЕ НА АКТИВА</label>
