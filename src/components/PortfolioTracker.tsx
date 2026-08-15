@@ -705,147 +705,147 @@ export default function PortfolioTracker({
       {/* SUB-TAB 1: OVERVIEW */}
       {activeSubTab === 'overview' && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch my-3">
         
         {/* Card 1: TOTAL INVESTED */}
-        <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-indigo-500 rounded-xl p-2.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[72px]">
+        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-indigo-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
-              <DollarSign className="w-3 h-3 text-indigo-400" />
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+              <DollarSign className="w-3.5 h-3.5 text-indigo-400" />
               TOTAL INVESTED
             </span>
-            <span className="text-[8.5px] font-extrabold text-indigo-300 bg-indigo-500/20 px-1.5 py-0.5 rounded border border-indigo-500/30">
+            <span className="text-[9.5px] font-extrabold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/30">
               Вложени
             </span>
           </div>
           <div className="mt-1 flex items-baseline">
-            <span className="text-lg sm:text-xl font-black text-ink font-sans tabular-nums tracking-tight">
+            <span className="text-xl sm:text-2xl font-black text-ink font-sans tabular-nums tracking-tight">
               {isPrivacyMode ? '••••••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 2: UNREALIZED RETURNS */}
-        <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-emerald-500 rounded-xl p-2.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[72px]">
+        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-emerald-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
-              <TrendingUp className="w-3 h-3 text-emerald-400" />
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
               UNREALIZED P/L
             </span>
-            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full border ${totalReturnVal >= 0 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40'}`}>
+            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${totalReturnVal >= 0 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40'}`}>
               {isPrivacyMode ? '••••' : `${totalReturnPct >= 0 ? '▲' : '▼'} ${totalReturnPct.toFixed(2)}%`}
             </span>
           </div>
           <div className="mt-1 flex items-baseline">
-            <span className={`text-lg sm:text-xl font-black font-sans tabular-nums tracking-tight ${totalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]' : 'text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.3)]'}`}>
+            <span className={`text-xl sm:text-2xl font-black font-sans tabular-nums tracking-tight ${totalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]' : 'text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.3)]'}`}>
               {isPrivacyMode ? '••••••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 3: REALIZED P/L */}
-        <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-purple-500 rounded-xl p-2.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[72px]">
+        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-purple-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
-              <Coins className="w-3 h-3 text-purple-400" />
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+              <Coins className="w-3.5 h-3.5 text-purple-400" />
               REALIZED P/L
             </span>
-            <span className="text-[8.5px] font-extrabold text-purple-300 bg-purple-500/20 px-1.5 py-0.5 rounded border border-purple-500/30">
+            <span className="text-[9.5px] font-extrabold text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded-md border border-purple-500/30">
               Затворени
             </span>
           </div>
           <div className="mt-1 flex items-baseline">
-            <span className={`text-lg sm:text-xl font-black font-sans tabular-nums tracking-tight ${realizedPnLSum >= 0 ? 'text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]' : 'text-rose-400'}`}>
+            <span className={`text-xl sm:text-2xl font-black font-sans tabular-nums tracking-tight ${realizedPnLSum >= 0 ? 'text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]' : 'text-rose-400'}`}>
               {isPrivacyMode ? '••••••••' : `${realizedPnLSum >= 0 ? '+' : ''}$${realizedPnLSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 4: TOTAL DIVIDENDS EARNED */}
-        <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-amber-500 rounded-xl p-2.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[72px]">
+        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-amber-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
-              <Coins className="w-3 h-3 text-amber-400" />
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+              <Coins className="w-3.5 h-3.5 text-amber-400" />
               DIVIDENDS EARNED
             </span>
-            <span className="text-[8.5px] font-extrabold text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+            <span className="text-[9.5px] font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">
               Дивиденти
             </span>
           </div>
           <div className="mt-1 flex items-baseline">
-            <span className="text-lg sm:text-xl font-black text-amber-400 font-sans tabular-nums tracking-tight drop-shadow-[0_0_6px_rgba(251,191,36,0.3)]">
+            <span className="text-xl sm:text-2xl font-black text-amber-400 font-sans tabular-nums tracking-tight drop-shadow-[0_0_6px_rgba(251,191,36,0.3)]">
               {isPrivacyMode ? '••••••••' : `+$${totalDividendsSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 5: GRAND TOTAL RETURN (WITH DIVIDENDS) ⭐ */}
-        <div className="bg-gradient-to-r from-emerald-950/40 via-card/80 to-card/70 hover:bg-card/90 border border-emerald-500/40 border-l-4 border-l-emerald-400 rounded-xl p-2.5 shadow-lg shadow-emerald-500/10 backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[72px]">
+        <div className="bg-gradient-to-r from-emerald-950/40 via-card/80 to-card/75 hover:bg-card/90 border border-emerald-500/40 border-l-4 border-l-emerald-400 rounded-2xl p-3.5 shadow-lg shadow-emerald-500/10 backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase text-emerald-300 tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
+            <span className="text-[11px] font-black uppercase text-emerald-300 tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
               TOTAL GAIN (W/ DIVIDENDS)
             </span>
-            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full border ${grandTotalReturnVal >= 0 ? 'bg-emerald-500/30 text-emerald-300 border-emerald-400' : 'bg-rose-500/30 text-rose-300 border-rose-400'}`}>
+            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${grandTotalReturnVal >= 0 ? 'bg-emerald-500/30 text-emerald-300 border-emerald-400' : 'bg-rose-500/30 text-rose-300 border-rose-400'}`}>
               {isPrivacyMode ? '••••' : `${grandTotalReturnPct >= 0 ? '▲' : '▼'} ${grandTotalReturnPct.toFixed(2)}%`}
             </span>
           </div>
           <div className="mt-1 flex items-baseline">
-            <span className={`text-lg sm:text-xl font-black font-sans tabular-nums tracking-tight ${grandTotalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]' : 'text-rose-400'}`}>
+            <span className={`text-xl sm:text-2xl font-black font-sans tabular-nums tracking-tight ${grandTotalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]' : 'text-rose-400'}`}>
               {isPrivacyMode ? '••••••••' : `${grandTotalReturnVal >= 0 ? '+' : ''}$${grandTotalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 6: CURRENT MARKET VALUE */}
-        <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-emerald-400 rounded-xl p-2.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[72px]">
+        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-emerald-400 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-emerald-400" />
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               CURRENT MARKET VALUE
             </span>
-            <span className="text-[8.5px] font-extrabold text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30">
+            <span className="text-[9.5px] font-extrabold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">
               Пазарна
             </span>
           </div>
           <div className="mt-1 flex items-baseline">
-            <span className="text-lg sm:text-xl font-black text-emerald-400 font-sans tabular-nums tracking-tight drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]">
+            <span className="text-xl sm:text-2xl font-black text-emerald-400 font-sans tabular-nums tracking-tight drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]">
               {isPrivacyMode ? '••••••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 7: AVERAGE COST BASIS */}
-        <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-cyan-500 rounded-xl p-2.5 shadow-md backdrop-blur-md transition-all group flex flex-col justify-between min-h-[72px]">
+        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-cyan-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md transition-all group flex flex-col justify-between min-h-[86px]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
-              <Layers className="w-3 h-3 text-cyan-400" />
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
               AVERAGE COST BASIS
             </span>
-            <span className="text-[8.5px] font-extrabold text-cyan-300 bg-cyan-500/20 px-1.5 py-0.5 rounded border border-cyan-500/30">
+            <span className="text-[9.5px] font-extrabold text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded-md border border-cyan-500/30">
               Средна цена
             </span>
           </div>
           <div className="mt-1 flex items-baseline">
-            <span className="text-lg sm:text-xl font-black text-ink font-sans tabular-nums tracking-tight">
+            <span className="text-xl sm:text-2xl font-black text-ink font-sans tabular-nums tracking-tight">
               {isPrivacyMode ? '••••••••' : `$${avgCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 8: STOCK HOLDINGS */}
-        <div className="bg-card/70 hover:bg-card/90 border border-border/80 border-l-4 border-l-blue-500 rounded-xl p-2.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[72px]">
+        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-blue-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
-              <Briefcase className="w-3 h-3 text-blue-400" />
+            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+              <Briefcase className="w-3.5 h-3.5 text-blue-400" />
               STOCK HOLDINGS
             </span>
-            <span className="text-[8.5px] font-extrabold text-blue-300 bg-blue-500/20 px-1.5 py-0.5 rounded border border-blue-500/30">
+            <span className="text-[9.5px] font-extrabold text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-md border border-blue-500/30">
               Позиции
             </span>
           </div>
           <div className="mt-1 flex items-baseline">
-            <span className="text-lg sm:text-xl font-black text-blue-400 font-sans tabular-nums tracking-tight">
+            <span className="text-xl sm:text-2xl font-black text-blue-400 font-sans tabular-nums tracking-tight">
               {enrichedHoldings.length}
             </span>
           </div>
