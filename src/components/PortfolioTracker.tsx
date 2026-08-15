@@ -1311,7 +1311,7 @@ export default function PortfolioTracker({
           <div className="flex items-center gap-2 shrink-0">
             
             {/* 1. Header Badge: АКТИВИ */}
-            <div className="px-3 py-2 rounded-xl text-xs font-black uppercase text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 flex items-center gap-1.5 h-9 shrink-0">
+            <div className="px-3.5 py-2 rounded-xl text-xs font-black uppercase text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 flex items-center gap-1.5 h-9 shrink-0">
               <Briefcase className="w-4 h-4 text-indigo-400" />
               <span>АКТИВИ</span>
             </div>
@@ -1328,7 +1328,7 @@ export default function PortfolioTracker({
                 setBuyDate(new Date().toISOString().split('T')[0]);
                 setIsAddModalOpen(true);
               }}
-              className="px-3 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500 flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer h-9 shrink-0"
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500 flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer h-9 shrink-0"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Добавяне на Нов Актив</span>
@@ -1337,7 +1337,7 @@ export default function PortfolioTracker({
             {/* 3. История на транзакциите */}
             <button 
               onClick={() => setIsHistoryModalOpen(true)}
-              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-indigo-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-indigo-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <History className="w-4 h-4 text-indigo-400" />
               <span>История на транзакциите ({filteredHistory.length})</span>
@@ -1346,7 +1346,7 @@ export default function PortfolioTracker({
             {/* 4. Получени дивиденти */}
             <button 
               onClick={() => setIsDividendsModalOpen(true)}
-              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-emerald-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-emerald-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <Coins className="w-4 h-4 text-emerald-400" />
               <span>Получени дивиденти (${totalDivEarned.toFixed(2)})</span>
@@ -1355,16 +1355,17 @@ export default function PortfolioTracker({
             {/* 5. Кеш */}
             <button 
               onClick={() => setIsCashModalOpen(true)}
-              className="px-3 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-amber-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-amber-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <Coins className="w-4 h-4 text-amber-400" />
               <span>Кеш: ${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
             </button>
           </div>
 
-          <span className="text-[10px] text-ink-faint font-extrabold uppercase bg-card/40 px-2.5 py-1 rounded-xl border border-white/5 shrink-0">
-            ОБЩО ПОЗИЦИИ: {enrichedHoldings.length}
-          </span>
+          {/* 6. ОБЩО ПОЗИЦИИ */}
+          <div className="px-3.5 py-2 rounded-xl text-xs font-black uppercase text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 flex items-center gap-1.5 h-9 shrink-0">
+            <span>ОБЩО ПОЗИЦИИ: {enrichedHoldings.length}</span>
+          </div>
         </div>
 
         {/* Main Table Container with Sticky Header & Smooth Scroll */}
