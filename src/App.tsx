@@ -447,45 +447,19 @@ export default function App() {
     return () => unsub();
   }, [isLoaded]);
 
-  const handleSaveToCloud = async () => {
-    const pin = window.prompt('Въведете Admin PIN код за запазване в облака:');
-    if (pin !== '1234') {
-      if (pin !== null) alert('Грешен PIN код! Промените НЕ са запазени в облака.');
-      return;
-    }
-
-    try {
-      const payload = { stocks, indices, alerts, positions, settings: { buyThreshold, sellThreshold } };
-      const currentDataString = JSON.stringify(payload);
+  // Automatic Cloud Sync
+  useEffect(() => {
+    if (!isLoaded) return;
+    const payload = { stocks, indices, alerts, positions, settings: { buyThreshold, sellThreshold } };
+    const currentDataString = JSON.stringify(payload);
+    
+    // Auto-save to cloud only if there's an actual change to prevent loop with snapshot listener
+    if (lastSavedRef.current !== currentDataString) {
       lastSavedRef.current = currentDataString;
-      await setDoc(doc(db, "portfolio", "default"), JSON.parse(JSON.stringify(payload)), { merge: true });
-      
-      const newLog = {
-        id: `${Date.now()}-${Math.random()}`,
-        timestamp: new Date().toLocaleTimeString(),
-        ticker: 'SYS',
-        message: 'Промените са запазени успешно на всички устройства!',
-        type: 'success'
-      };
-      // @ts-ignore
-      setLogs(prev => [newLog, ...prev]);
-      alert('Промените бяха запазени успешно в облака!');
-    } catch (err) {
-      console.error("Firebase Manual Save Error:", err);
-      const newLog = {
-        id: `${Date.now()}-${Math.random()}`,
-        timestamp: new Date().toLocaleTimeString(),
-        ticker: 'SYS',
-        message: 'Възникна грешка при запазването.',
-        type: 'error'
-      };
-      // @ts-ignore
-      setLogs(prev => [newLog, ...prev]);
+      setDoc(doc(db, "portfolio", "default"), JSON.parse(currentDataString), { merge: true })
+        .catch(err => console.error("Firebase Auto Save Error:", err));
     }
-  };
-
-  // Note: Automatic cloud save disabled to protect database from visitor edits.
-  // Only manual save with Admin PIN (1234) can update the cloud database.
+  }, [stocks, indices, alerts, positions, buyThreshold, sellThreshold, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
@@ -1192,7 +1166,6 @@ export default function App() {
             };
             setLogs(prev => [newLog, ...prev]);
           }}
-          onSave={handleSaveToCloud}
         />
         
         {/* Sync with files grid: CSV Uploader and Real-time Notification Logs monitor side by side (Table tab only) */}

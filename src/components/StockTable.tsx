@@ -18,8 +18,7 @@ interface Props {
  onUpdateStock: (oldTicker: string, updatedStock: Stock) => void;
  onDeleteStock: (ticker: string) => void;
  onSelectStockForAi: (stock: Stock) => void;
- onAddStock: (newStock: Stock) => void;
- onSave?: () => void;
+ onAddStock: (stock: Stock) => void;
  activeFilter: TableFilter;
  onSetActiveFilter: (filter: TableFilter) => void;
  buyThreshold: number;
@@ -138,7 +137,7 @@ const StockLogo = ({ ticker }: { ticker: string }) => {
   );
 };
 
-export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, onDeleteAlert, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, onSave, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold }: Props) {
+export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, onDeleteAlert, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold }: Props) {
  // Search state
  const [search, setSearch] = useState('');
 
@@ -547,18 +546,6 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  <Plus className="w-3.5 h-3.5" />
  Добавяне
  </button>
-
-  {/* Save Button */}
-  {onSave && (
-    <button
-      onClick={onSave}
-      className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
-      title="Запази всички промени"
-    >
-      <Save className="w-3.5 h-3.5" />
-      Save
-    </button>
-  )}
 
    {/* Price Alert Button */}
    <button
