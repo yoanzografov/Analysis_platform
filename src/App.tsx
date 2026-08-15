@@ -258,60 +258,65 @@ export default function App() {
             const sym = stock.ticker.trim().toUpperCase();
             const mappedSym = TICKER_YAHOO_MAP[sym] || sym;
             const baseSym = sym.split('.')[0].split(':')[1] || sym.split('.')[0];
-            const quote = data.quotes[sym] || data.quotes[mappedSym] || data.quotes[baseSym] || data.quotes[`${baseSym}.DE`] || data.quotes[`${baseSym}.AS`];
+            const quote = data.quotes[sym] || data.quotes[mappedSym] || (data.quotes[baseSym] && !data.quotes[baseSym]?.companyName?.includes('ETP') ? data.quotes[baseSym] : undefined);
             if (quote) {
- const nextPrice = quote.currentPrice;
- let difference = stock.difference;
- if (stock.fairPrice !== null && nextPrice > 0) {
- difference = parseFloat((((stock.fairPrice - nextPrice) / nextPrice) * 100).toFixed(2));
- }
- let buySell = 'OVERVALUED';
- if (stock.fairPrice !== null && nextPrice > 0) {
- const dev = ((nextPrice - stock.fairPrice) / stock.fairPrice) * 100;
- if (dev < -buyThresholdRef.current) {
- buySell = 'UNDERVALUED';
- } else if (dev > sellThresholdRef.current) {
- buySell = 'OVERVALUED';
- } else {
- buySell = 'ДРУГИ';
- }
- }
- // Replace the hardcoded signal logic
-        let signal = stock.signal || 'Hold';
-        const l52 = quote ? (quote.low52 !== undefined ? quote.low52 : stock.low52) : stock.low52;
-        const h52 = quote ? (quote.high52 !== undefined ? quote.high52 : stock.high52) : stock.high52;
-        
-        if (nextPrice > 0 && typeof l52 === 'number' && typeof h52 === 'number') {
-          const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
-          const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
-          if (nextPrice <= buyLimit) signal = 'Buy';
-          else if (nextPrice >= sellLimit) signal = 'Sell';
-          else signal = 'Hold';
-        } else {
-          signal = '-';
-        }
+              const nextPrice = quote.currentPrice;
+              let difference = stock.difference;
+              if (stock.fairPrice !== null && nextPrice > 0) {
+                difference = parseFloat((((stock.fairPrice - nextPrice) / nextPrice) * 100).toFixed(2));
+              }
+              let buySell = 'OVERVALUED';
+              if (stock.fairPrice !== null && nextPrice > 0) {
+                const dev = ((nextPrice - stock.fairPrice) / stock.fairPrice) * 100;
+                if (dev < -buyThresholdRef.current) {
+                  buySell = 'UNDERVALUED';
+                } else if (dev > sellThresholdRef.current) {
+                  buySell = 'OVERVALUED';
+                } else {
+                  buySell = 'ДРУГИ';
+                }
+              }
+              
+              let signal = stock.signal || 'Hold';
+              const l52 = quote ? (quote.low52 !== undefined ? quote.low52 : stock.low52) : stock.low52;
+              const h52 = quote ? (quote.high52 !== undefined ? quote.high52 : stock.high52) : stock.high52;
+              
+              if (nextPrice > 0 && typeof l52 === 'number' && typeof h52 === 'number') {
+                const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
+                const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
+                if (nextPrice <= buyLimit) signal = 'Buy';
+                else if (nextPrice >= sellLimit) signal = 'Sell';
+                else signal = 'Hold';
+              } else {
+                signal = '-';
+              }
 
- return {
- ...stock,
- currentPrice: nextPrice,
- companyName: quote.companyName || stock.companyName,
- dailyChangePct: quote.dailyChangePct,
- low52: quote.low52 !== undefined ? quote.low52 : stock.low52,
- high52: quote.high52 !== undefined ? quote.high52 : stock.high52,
- peRatio: quote.peRatio !== undefined ? quote.peRatio : stock.peRatio,
- eps: quote.eps !== undefined ? quote.eps : stock.eps,
- marketCap: quote.marketCap !== undefined ? quote.marketCap : stock.marketCap,
- dividend: quote.dividend !== undefined 
- ? quote.dividend.toString()
- : stock.dividend,
- difference,
- buySell,
- signal,
- earningsTimestamp: quote.earningsTimestamp !== undefined ? quote.earningsTimestamp : stock.earningsTimestamp
- };
- }
- return stock;
- });
+              const isEtpName = quote.companyName && (quote.companyName.includes('ETP') || quote.companyName.includes('Tracker') || quote.companyName.includes('Leverage Shares'));
+              const finalCompanyName = (isEtpName && stock.companyName && !stock.companyName.includes('ETP'))
+                ? stock.companyName
+                : (quote.companyName || stock.companyName);
+
+              return {
+                ...stock,
+                currentPrice: nextPrice,
+                companyName: finalCompanyName,
+                dailyChangePct: quote.dailyChangePct,
+                low52: quote.low52 !== undefined ? quote.low52 : stock.low52,
+                high52: quote.high52 !== undefined ? quote.high52 : stock.high52,
+                peRatio: quote.peRatio !== undefined ? quote.peRatio : stock.peRatio,
+                eps: quote.eps !== undefined ? quote.eps : stock.eps,
+                marketCap: quote.marketCap !== undefined ? quote.marketCap : stock.marketCap,
+                dividend: quote.dividend !== undefined 
+                  ? quote.dividend.toString() 
+                  : stock.dividend,
+                difference,
+                buySell,
+                signal,
+                earningsTimestamp: quote.earningsTimestamp !== undefined ? quote.earningsTimestamp : stock.earningsTimestamp
+              };
+            }
+            return stock;
+          });
  });
 
  // Set indexes to real financial values 

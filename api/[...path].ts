@@ -177,10 +177,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const built = buildResult(q);
       if (built) {
         results[orig] = built;
+        results[qSym] = built;
         const baseSym = orig.split('.')[0].split(':')[1] || orig.split('.')[0];
-        results[baseSym] = built;
-        results[`${baseSym}.DE`] = built;
-        results[`${baseSym}.AS`] = built;
+        if (!results[baseSym]) {
+          results[baseSym] = built;
+        }
       }
     }
 
@@ -194,7 +195,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           t,
           `${baseSym}.DE`,
           `${baseSym}.AS`,
-          `${baseSym}.L`,
           t === 'VHYL' || t === 'VHYL.DE' ? 'VGWD.DE' : null
         ].filter((c): c is string => Boolean(c));
 
@@ -213,9 +213,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (success) {
             const { built } = success;
             results[t] = built;
-            results[baseSym] = built;
-            results[`${baseSym}.DE`] = built;
-            results[`${baseSym}.AS`] = built;
+            if (!results[baseSym]) {
+              results[baseSym] = built;
+            }
           }
         } catch {}
       }));
