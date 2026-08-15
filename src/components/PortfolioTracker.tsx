@@ -859,16 +859,16 @@ export default function PortfolioTracker({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-4 relative z-40">
         
         {/* Bento 1: STOCK INVESTED VS RETURNS */}
-        <div className="bg-card/70 border border-border/80 rounded-2xl p-5 shadow-md backdrop-blur-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-3">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+        <div className="bg-card/75 border border-border/80 rounded-2xl p-6 shadow-md backdrop-blur-md flex flex-col justify-between hover:border-border transition-all">
+          <div className="flex items-center justify-between border-b border-border/40 pb-3.5 mb-4">
+            <span className="text-xs sm:text-sm font-black uppercase text-ink tracking-wider flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-400" />
               STOCK INVESTED VS RETURNS
             </span>
             <button
               onClick={() => setShowAssetAllocationInfo(!showAssetAllocationInfo)}
               title="Натиснете за информация относно следенето на резултатите и алокацията на активи"
-              className={`w-5 h-5 rounded-full flex items-center justify-center font-serif font-black text-[11px] transition-all cursor-pointer border ${
+              className={`w-6 h-6 rounded-full flex items-center justify-center font-serif font-black text-xs transition-all cursor-pointer border ${
                 showAssetAllocationInfo 
                   ? 'bg-indigo-600 text-white border-indigo-400 shadow-md' 
                   : 'bg-card hover:bg-card/90 text-indigo-400 border-indigo-500/30'
@@ -878,52 +878,52 @@ export default function PortfolioTracker({
             </button>
           </div>
 
-          <div className="space-y-3 font-sans tabular-nums text-xs">
+          <div className="space-y-3 font-sans tabular-nums">
             {/* Вложени пари */}
-            <div className="flex items-center justify-between">
-              <span className="text-ink-muted font-medium">Вложени пари (Cost Basis):</span>
-              <span className="font-black text-ink">
+            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
+              <span className="text-xs sm:text-sm text-ink-muted font-bold">Вложени пари (Cost Basis):</span>
+              <span className="text-xs sm:text-sm font-black text-ink">
                 {isPrivacyMode ? '••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
             {/* Пазарна оценка */}
-            <div className="flex items-center justify-between">
-              <span className="text-ink-muted font-medium">Пазарна оценка:</span>
-              <span className="font-black text-emerald-400">
+            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
+              <span className="text-xs sm:text-sm text-ink-muted font-bold">Пазарна оценка:</span>
+              <span className="text-xs sm:text-sm font-black text-emerald-400">
                 {isPrivacyMode ? '••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
-            {/* Нереализирана (Пазарна) */}
-            <div className="flex items-center justify-between border-t border-border/20 pt-2.5">
-              <span className="text-ink-muted font-medium">Нереализирана P/L:</span>
-              <span className={`font-black flex items-center gap-1 ${totalReturnVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {totalReturnVal >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+            {/* Нереализирана P/L */}
+            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
+              <span className="text-xs sm:text-sm text-ink-muted font-bold">Нереализирана P/L:</span>
+              <span className={`text-xs sm:text-sm font-black flex items-center gap-1 ${totalReturnVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {totalReturnVal >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
                 {isPrivacyMode ? '••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${totalReturnVal >= 0 ? '+' : ''}${totalReturnPct.toFixed(2)}%)`}
               </span>
             </div>
 
             {/* Реализирана P/L */}
-            <div className="flex items-center justify-between">
-              <span className="text-ink-muted font-medium">Реализирана P/L (Затворени):</span>
-              <span className={`font-black ${realizedPnLSum >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
+              <span className="text-xs sm:text-sm text-ink-muted font-bold">Реализирана P/L (Затворени):</span>
+              <span className={`text-xs sm:text-sm font-black ${realizedPnLSum >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {isPrivacyMode ? '••••' : `${realizedPnLSum >= 0 ? '+' : ''}$${realizedPnLSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
             {/* Получени дивиденти */}
-            <div className="flex items-center justify-between">
-              <span className="text-ink-muted font-medium">Получени дивиденти:</span>
-              <span className="font-black text-amber-400">
+            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
+              <span className="text-xs sm:text-sm text-ink-muted font-bold">Получени дивиденти:</span>
+              <span className="text-xs sm:text-sm font-black text-amber-400">
                 {isPrivacyMode ? '••••' : `+$${totalDividendsSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
             {/* Общо с дивиденти */}
-            <div className="flex items-center justify-between border-t border-border/40 pt-2.5 text-xs">
-              <span className="text-ink font-bold uppercase tracking-tight">Общо с дивиденти:</span>
-              <span className={`font-black ${grandTotalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-rose-400'}`}>
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
+              <span className="text-xs sm:text-sm text-ink font-black uppercase tracking-tight">Общо с дивиденти:</span>
+              <span className={`text-sm sm:text-base font-black ${grandTotalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-rose-400'}`}>
                 {isPrivacyMode ? '••••' : `${grandTotalReturnVal >= 0 ? '+' : ''}$${grandTotalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${grandTotalReturnVal >= 0 ? '+' : ''}${grandTotalReturnPct.toFixed(2)}%)`}
               </span>
             </div>
@@ -931,25 +931,25 @@ export default function PortfolioTracker({
         </div>
 
         {/* Bento 2: STOCK DIVERSIFICATION */}
-        <div className="bg-card/70 border border-border/80 rounded-2xl p-5 shadow-md backdrop-blur-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-3">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+        <div className="bg-card/75 border border-border/80 rounded-2xl p-6 shadow-md backdrop-blur-md flex flex-col justify-between hover:border-border transition-all">
+          <div className="flex items-center justify-between border-b border-border/40 pb-3.5 mb-4">
+            <span className="text-xs sm:text-sm font-black uppercase text-ink tracking-wider flex items-center gap-2">
               <PieChart className="w-4 h-4 text-indigo-400" />
               STOCK DIVERSIFICATION
             </span>
-            <span className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
-              Сектори
+            <span className="text-[10px] font-black text-indigo-400 bg-indigo-500/15 px-2.5 py-1 rounded-full border border-indigo-500/30">
+              {sectorList.length} Сектора
             </span>
           </div>
 
           {sectorList.length === 0 ? (
-            <div className="py-8 text-center text-ink-faint text-xs font-semibold">
+            <div className="py-12 text-center text-ink-faint text-sm font-semibold">
               Няма данни за сектори.
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row items-center gap-4 pt-1">
+            <div className="flex flex-col sm:flex-row items-center gap-5 pt-1">
               {/* Left Side: SVG Donut Chart for Sectors */}
-              <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+              <div className="relative w-32 h-32 sm:w-36 sm:h-36 shrink-0 flex items-center justify-center">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                   {(() => {
                     let accumulatedPct = 0;
@@ -987,58 +987,59 @@ export default function PortfolioTracker({
                     });
                   })()}
                 </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none font-sans">
+                  <span className="text-[9px] font-black uppercase text-ink-faint tracking-wider">СЕКТОРИ</span>
+                  <span className="text-sm font-black text-indigo-400">
+                    {sectorList.length}
+                  </span>
+                </div>
               </div>
 
               {/* Right Side: Legend List */}
-              <div className="flex-1 w-full space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
-                {sectorList.slice(0, 4).map((sec, idx) => {
+              <div className="flex-1 w-full space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
+                {sectorList.map((sec, idx) => {
                   const colors = [
                     '#10b981', '#3b82f6', '#8b5cf6', '#d946ef', '#f59e0b',
                     '#06b6d4', '#ef4444', '#ec4899', '#6366f1', '#14b8a6'
                   ];
                   const color = colors[idx % colors.length];
                   return (
-                    <div key={sec.sector} className="flex items-center justify-between text-[11px]">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                        <span className="text-ink-muted truncate font-medium">{sec.sector}</span>
+                    <div key={sec.sector} className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-bg/30 border border-white/5">
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: color }} />
+                        <span className="text-ink font-bold truncate">{sec.sector}</span>
                       </div>
-                      <span className="font-bold text-ink shrink-0 ml-1">
+                      <span className="font-black text-indigo-400 shrink-0 ml-2">
                         {sec.pct.toFixed(1)}%
                       </span>
                     </div>
                   );
                 })}
-                {sectorList.length > 4 && (
-                  <div className="text-[10px] text-ink-faint italic font-semibold text-right pt-0.5">
-                    + още {sectorList.length - 4} сектори
-                  </div>
-                )}
               </div>
             </div>
           )}
         </div>
 
         {/* Bento 3: HOLDINGS BREAKDOWN */}
-        <div className="bg-card/70 border border-border/80 rounded-2xl p-5 shadow-md backdrop-blur-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-3">
-            <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
-              <PieChart className="w-4 h-4 text-indigo-400" />
+        <div className="bg-card/75 border border-border/80 rounded-2xl p-6 shadow-md backdrop-blur-md flex flex-col justify-between hover:border-border transition-all">
+          <div className="flex items-center justify-between border-b border-border/40 pb-3.5 mb-4">
+            <span className="text-xs sm:text-sm font-black uppercase text-ink tracking-wider flex items-center gap-2">
+              <PieChart className="w-4 h-4 text-cyan-400" />
               HOLDINGS BREAKDOWN
             </span>
-            <span className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+            <span className="text-[10px] font-black text-cyan-400 bg-cyan-500/15 px-2.5 py-1 rounded-full border border-cyan-500/30">
               {enrichedHoldings.length} Актива
             </span>
           </div>
 
           {holdingsByWeight.length === 0 ? (
-            <div className="py-8 text-center text-ink-faint text-xs font-semibold">
+            <div className="py-12 text-center text-ink-faint text-sm font-semibold">
               Няма въведени акции.
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row items-center gap-4 pt-1">
+            <div className="flex flex-col sm:flex-row items-center gap-5 pt-1">
               {/* Left Side: SVG Donut Chart */}
-              <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+              <div className="relative w-32 h-32 sm:w-36 sm:h-36 shrink-0 flex items-center justify-center">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                   {(() => {
                     let accumulatedPct = 0;
@@ -1076,39 +1077,35 @@ export default function PortfolioTracker({
                     });
                   })()}
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none font-sans scale-85">
-                  <span className="text-[8px] font-black uppercase text-ink-faint tracking-wider">ОБЩО</span>
-                  <span className="text-[11px] font-black text-indigo-400">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none font-sans">
+                  <span className="text-[9px] font-black uppercase text-ink-faint tracking-wider">ОБЩО</span>
+                  <span className="text-xs sm:text-sm font-black text-indigo-400">
                     {isPrivacyMode ? '••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
                   </span>
                 </div>
               </div>
 
               {/* Right Side: Legend List */}
-              <div className="flex-1 w-full space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
-                {holdingsByWeight.slice(0, 4).map((pos, idx) => {
+              <div className="flex-1 w-full space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
+                {holdingsByWeight.map((pos, idx) => {
                   const colors = [
                     '#8b5cf6', '#06b6d4', '#3b82f6', '#d946ef', '#10b981',
                     '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6'
                   ];
                   const color = colors[idx % colors.length];
                   return (
-                    <div key={pos.id} className="flex items-center justify-between text-[11px]">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                        <span className="text-ink-muted truncate font-black">{pos.ticker}</span>
+                    <div key={pos.id} className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-bg/30 border border-white/5">
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: color }} />
+                        <span className="text-ink font-black truncate">{pos.ticker}</span>
+                        <span className="text-ink-muted text-[11px] truncate hidden md:inline">({pos.companyName || pos.ticker})</span>
                       </div>
-                      <span className="font-bold text-ink shrink-0 ml-1">
+                      <span className="font-black text-cyan-400 shrink-0 ml-2">
                         {pos.weightPct.toFixed(1)}%
                       </span>
                     </div>
                   );
                 })}
-                {holdingsByWeight.length > 4 && (
-                  <div className="text-[10px] text-ink-faint italic font-semibold text-right pt-0.5">
-                    + още {holdingsByWeight.length - 4} актива
-                  </div>
-                )}
               </div>
             </div>
           )}
