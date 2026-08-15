@@ -705,147 +705,148 @@ export default function PortfolioTracker({
       {/* SUB-TAB 1: OVERVIEW */}
       {activeSubTab === 'overview' && (
         <>
+          {/* Top 8 Dashboard Metrics (Same proportions as INTERACTIVE TABLE widgets) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch my-3">
         
         {/* Card 1: TOTAL INVESTED */}
-        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-indigo-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+        <div className="bg-bg rounded-2xl border border-border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md relative group min-h-[92px]">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+            <span className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-indigo-400" />
               TOTAL INVESTED
             </span>
-            <span className="text-[9.5px] font-extrabold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/30">
+            <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
               Вложени
             </span>
           </div>
-          <div className="mt-1 flex items-baseline">
-            <span className="text-xl sm:text-2xl font-black text-ink font-sans tabular-nums tracking-tight">
+          <div className="mt-2 flex items-baseline">
+            <span className="text-lg sm:text-xl font-extrabold text-ink font-sans tabular-nums tracking-tight">
               {isPrivacyMode ? '••••••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 2: UNREALIZED RETURNS */}
-        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-emerald-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+        <div className="bg-bg rounded-2xl border border-border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md relative group min-h-[92px]">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+            <span className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
               UNREALIZED P/L
             </span>
-            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${totalReturnVal >= 0 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40'}`}>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${totalReturnVal >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}>
               {isPrivacyMode ? '••••' : `${totalReturnPct >= 0 ? '▲' : '▼'} ${totalReturnPct.toFixed(2)}%`}
             </span>
           </div>
-          <div className="mt-1 flex items-baseline">
-            <span className={`text-xl sm:text-2xl font-black font-sans tabular-nums tracking-tight ${totalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]' : 'text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.3)]'}`}>
+          <div className="mt-2 flex items-baseline">
+            <span className={`text-lg sm:text-xl font-extrabold font-sans tabular-nums tracking-tight ${totalReturnVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {isPrivacyMode ? '••••••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 3: REALIZED P/L */}
-        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-purple-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+        <div className="bg-bg rounded-2xl border border-border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md relative group min-h-[92px]">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+            <span className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
               <Coins className="w-3.5 h-3.5 text-purple-400" />
               REALIZED P/L
             </span>
-            <span className="text-[9.5px] font-extrabold text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded-md border border-purple-500/30">
+            <span className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
               Затворени
             </span>
           </div>
-          <div className="mt-1 flex items-baseline">
-            <span className={`text-xl sm:text-2xl font-black font-sans tabular-nums tracking-tight ${realizedPnLSum >= 0 ? 'text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]' : 'text-rose-400'}`}>
+          <div className="mt-2 flex items-baseline">
+            <span className={`text-lg sm:text-xl font-extrabold font-sans tabular-nums tracking-tight ${realizedPnLSum >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {isPrivacyMode ? '••••••••' : `${realizedPnLSum >= 0 ? '+' : ''}$${realizedPnLSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 4: TOTAL DIVIDENDS EARNED */}
-        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-amber-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+        <div className="bg-bg rounded-2xl border border-border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md relative group min-h-[92px]">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+            <span className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
               <Coins className="w-3.5 h-3.5 text-amber-400" />
               DIVIDENDS EARNED
             </span>
-            <span className="text-[9.5px] font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">
+            <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
               Дивиденти
             </span>
           </div>
-          <div className="mt-1 flex items-baseline">
-            <span className="text-xl sm:text-2xl font-black text-amber-400 font-sans tabular-nums tracking-tight drop-shadow-[0_0_6px_rgba(251,191,36,0.3)]">
+          <div className="mt-2 flex items-baseline">
+            <span className="text-lg sm:text-xl font-extrabold text-amber-400 font-sans tabular-nums tracking-tight">
               {isPrivacyMode ? '••••••••' : `+$${totalDividendsSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
-        {/* Card 5: GRAND TOTAL RETURN (WITH DIVIDENDS) ⭐ */}
-        <div className="bg-gradient-to-r from-emerald-950/40 via-card/80 to-card/75 hover:bg-card/90 border border-emerald-500/40 border-l-4 border-l-emerald-400 rounded-2xl p-3.5 shadow-lg shadow-emerald-500/10 backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-emerald-300 tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+        {/* Card 5: GRAND TOTAL RETURN (WITH DIVIDENDS) */}
+        <div className="bg-bg rounded-2xl border border-border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md relative group min-h-[92px]">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+            <span className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               TOTAL GAIN (W/ DIVIDENDS)
             </span>
-            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${grandTotalReturnVal >= 0 ? 'bg-emerald-500/30 text-emerald-300 border-emerald-400' : 'bg-rose-500/30 text-rose-300 border-rose-400'}`}>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${grandTotalReturnVal >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}>
               {isPrivacyMode ? '••••' : `${grandTotalReturnPct >= 0 ? '▲' : '▼'} ${grandTotalReturnPct.toFixed(2)}%`}
             </span>
           </div>
-          <div className="mt-1 flex items-baseline">
-            <span className={`text-xl sm:text-2xl font-black font-sans tabular-nums tracking-tight ${grandTotalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]' : 'text-rose-400'}`}>
+          <div className="mt-2 flex items-baseline">
+            <span className={`text-lg sm:text-xl font-extrabold font-sans tabular-nums tracking-tight ${grandTotalReturnVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {isPrivacyMode ? '••••••••' : `${grandTotalReturnVal >= 0 ? '+' : ''}$${grandTotalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 6: CURRENT MARKET VALUE */}
-        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-emerald-400 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+        <div className="bg-bg rounded-2xl border border-border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md relative group min-h-[92px]">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+            <span className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               CURRENT MARKET VALUE
             </span>
-            <span className="text-[9.5px] font-extrabold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
               Пазарна
             </span>
           </div>
-          <div className="mt-1 flex items-baseline">
-            <span className="text-xl sm:text-2xl font-black text-emerald-400 font-sans tabular-nums tracking-tight drop-shadow-[0_0_6px_rgba(52,211,153,0.3)]">
+          <div className="mt-2 flex items-baseline">
+            <span className="text-lg sm:text-xl font-extrabold text-emerald-400 font-sans tabular-nums tracking-tight">
               {isPrivacyMode ? '••••••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 7: AVERAGE COST BASIS */}
-        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-cyan-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md transition-all group flex flex-col justify-between min-h-[86px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+        <div className="bg-bg rounded-2xl border border-border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md relative group min-h-[92px]">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+            <span className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
               AVERAGE COST BASIS
             </span>
-            <span className="text-[9.5px] font-extrabold text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded-md border border-cyan-500/30">
+            <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
               Средна цена
             </span>
           </div>
-          <div className="mt-1 flex items-baseline">
-            <span className="text-xl sm:text-2xl font-black text-ink font-sans tabular-nums tracking-tight">
+          <div className="mt-2 flex items-baseline">
+            <span className="text-lg sm:text-xl font-extrabold text-ink font-sans tabular-nums tracking-tight">
               {isPrivacyMode ? '••••••••' : `$${avgCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
 
         {/* Card 8: STOCK HOLDINGS */}
-        <div className="bg-card/75 hover:bg-card/90 border border-border/80 border-l-4 border-l-blue-500 rounded-2xl p-3.5 shadow-md backdrop-blur-md relative overflow-hidden transition-all group flex flex-col justify-between min-h-[86px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1.5">
+        <div className="bg-bg rounded-2xl border border-border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md relative group min-h-[92px]">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+            <span className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
               <Briefcase className="w-3.5 h-3.5 text-blue-400" />
               STOCK HOLDINGS
             </span>
-            <span className="text-[9.5px] font-extrabold text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-md border border-blue-500/30">
+            <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">
               Позиции
             </span>
           </div>
-          <div className="mt-1 flex items-baseline">
-            <span className="text-xl sm:text-2xl font-black text-blue-400 font-sans tabular-nums tracking-tight">
+          <div className="mt-2 flex items-baseline">
+            <span className="text-lg sm:text-xl font-extrabold text-blue-400 font-sans tabular-nums tracking-tight">
               {enrichedHoldings.length}
             </span>
           </div>
@@ -854,17 +855,22 @@ export default function PortfolioTracker({
       </div>
 
       {/* ======================================================================== */}
-      {/* ROW 2: BENTO CARDS (3 COLUMNS)                                           */}
+      {/* ROW 2: BENTO CARDS (3 COLUMNS) - IDENTICAL PROPORTIONS TO INTERACTIVE TABLE */}
       {/* ======================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-4 relative z-40">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 relative z-40">
         
         {/* Bento 1: STOCK INVESTED VS RETURNS */}
-        <div className="bg-card/75 border border-border/80 rounded-2xl p-6 shadow-md backdrop-blur-md flex flex-col justify-between hover:border-border transition-all">
-          <div className="flex items-center justify-between border-b border-border/40 pb-3.5 mb-4">
-            <span className="text-xs sm:text-sm font-black uppercase text-ink tracking-wider flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-              STOCK INVESTED VS RETURNS
-            </span>
+        <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between transition-all duration-200 h-[410px] hover:shadow-md relative group lg:col-span-1">
+          <div className="flex items-center justify-between border-b border-border/50 pb-2.5 shrink-0">
+            <div>
+              <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
+                Invested vs Returns
+              </span>
+              <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                STOCK INVESTED VS RETURNS
+              </h3>
+            </div>
             <button
               onClick={() => setShowAssetAllocationInfo(!showAssetAllocationInfo)}
               title="Натиснете за информация относно следенето на резултатите и алокацията на активи"
@@ -878,78 +884,88 @@ export default function PortfolioTracker({
             </button>
           </div>
 
-          <div className="space-y-3 font-sans tabular-nums">
+          <div className="flex-1 overflow-y-auto my-2 pr-1 space-y-1.5 font-sans tabular-nums text-xs custom-mini-scroll">
             {/* Вложени пари */}
-            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
-              <span className="text-xs sm:text-sm text-ink-muted font-bold">Вложени пари (Cost Basis):</span>
-              <span className="text-xs sm:text-sm font-black text-ink">
+            <div className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40">
+              <span className="text-xs text-ink-muted font-bold">Вложени пари (Cost Basis):</span>
+              <span className="text-xs font-black text-ink">
                 {isPrivacyMode ? '••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
             {/* Пазарна оценка */}
-            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
-              <span className="text-xs sm:text-sm text-ink-muted font-bold">Пазарна оценка:</span>
-              <span className="text-xs sm:text-sm font-black text-emerald-400">
+            <div className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40">
+              <span className="text-xs text-ink-muted font-bold">Пазарна оценка:</span>
+              <span className="text-xs font-black text-emerald-400">
                 {isPrivacyMode ? '••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
             {/* Нереализирана P/L */}
-            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
-              <span className="text-xs sm:text-sm text-ink-muted font-bold">Нереализирана P/L:</span>
-              <span className={`text-xs sm:text-sm font-black flex items-center gap-1 ${totalReturnVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {totalReturnVal >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+            <div className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40">
+              <span className="text-xs text-ink-muted font-bold">Нереализирана P/L:</span>
+              <span className={`text-xs font-black flex items-center gap-1 ${totalReturnVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {totalReturnVal >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                 {isPrivacyMode ? '••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${totalReturnVal >= 0 ? '+' : ''}${totalReturnPct.toFixed(2)}%)`}
               </span>
             </div>
 
             {/* Реализирана P/L */}
-            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
-              <span className="text-xs sm:text-sm text-ink-muted font-bold">Реализирана P/L (Затворени):</span>
-              <span className={`text-xs sm:text-sm font-black ${realizedPnLSum >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40">
+              <span className="text-xs text-ink-muted font-bold">Реализирана P/L (Затворени):</span>
+              <span className={`text-xs font-black ${realizedPnLSum >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                 {isPrivacyMode ? '••••' : `${realizedPnLSum >= 0 ? '+' : ''}$${realizedPnLSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
             {/* Получени дивиденти */}
-            <div className="flex items-center justify-between p-2 rounded-xl bg-bg/40 border border-white/5">
-              <span className="text-xs sm:text-sm text-ink-muted font-bold">Получени дивиденти:</span>
-              <span className="text-xs sm:text-sm font-black text-amber-400">
+            <div className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40">
+              <span className="text-xs text-ink-muted font-bold">Получени дивиденти:</span>
+              <span className="text-xs font-black text-amber-400">
                 {isPrivacyMode ? '••••' : `+$${totalDividendsSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
             {/* Общо с дивиденти */}
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
-              <span className="text-xs sm:text-sm text-ink font-black uppercase tracking-tight">Общо с дивиденти:</span>
-              <span className={`text-sm sm:text-base font-black ${grandTotalReturnVal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-rose-400'}`}>
+            <div className="flex items-center justify-between p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
+              <span className="text-xs text-ink font-black uppercase tracking-tight">Общо с дивиденти:</span>
+              <span className={`text-xs sm:text-sm font-black ${grandTotalReturnVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                 {isPrivacyMode ? '••••' : `${grandTotalReturnVal >= 0 ? '+' : ''}$${grandTotalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${grandTotalReturnVal >= 0 ? '+' : ''}${grandTotalReturnPct.toFixed(2)}%)`}
               </span>
             </div>
           </div>
+
+          <div className="border-t border-border/10 pt-2 text-xs font-sans tabular-nums text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+            <span>Обобщение на инвестициите</span>
+            <span className="font-bold underline text-indigo-400">P/L & Дивиденти</span>
+          </div>
         </div>
 
         {/* Bento 2: STOCK DIVERSIFICATION */}
-        <div className="bg-card/75 border border-border/80 rounded-2xl p-6 shadow-md backdrop-blur-md flex flex-col justify-between hover:border-border transition-all">
-          <div className="flex items-center justify-between border-b border-border/40 pb-3.5 mb-4">
-            <span className="text-xs sm:text-sm font-black uppercase text-ink tracking-wider flex items-center gap-2">
-              <PieChart className="w-4 h-4 text-indigo-400" />
-              STOCK DIVERSIFICATION
-            </span>
-            <span className="text-[10px] font-black text-indigo-400 bg-indigo-500/15 px-2.5 py-1 rounded-full border border-indigo-500/30">
+        <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between transition-all duration-200 h-[410px] hover:shadow-md relative group lg:col-span-1">
+          <div className="flex items-center justify-between border-b border-border/50 pb-2.5 shrink-0">
+            <div>
+              <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
+                Sector Allocation
+              </span>
+              <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
+                <PieChart className="w-4 h-4 text-indigo-400" />
+                STOCK DIVERSIFICATION
+              </h3>
+            </div>
+            <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
               {sectorList.length} Сектора
             </span>
           </div>
 
           {sectorList.length === 0 ? (
-            <div className="py-12 text-center text-ink-faint text-sm font-semibold">
+            <div className="flex-1 flex items-center justify-center text-ink-faint text-xs font-semibold">
               Няма данни за сектори.
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row items-center gap-5 pt-1">
-              {/* Left Side: SVG Donut Chart for Sectors */}
-              <div className="relative w-32 h-32 sm:w-36 sm:h-36 shrink-0 flex items-center justify-center">
+            <div className="flex-1 flex flex-col justify-between overflow-hidden my-2">
+              {/* Top: SVG Donut Chart */}
+              <div className="relative w-28 h-28 mx-auto shrink-0 flex items-center justify-center my-1">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                   {(() => {
                     let accumulatedPct = 0;
@@ -988,15 +1004,15 @@ export default function PortfolioTracker({
                   })()}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none font-sans">
-                  <span className="text-[9px] font-black uppercase text-ink-faint tracking-wider">СЕКТОРИ</span>
-                  <span className="text-sm font-black text-indigo-400">
+                  <span className="text-[8px] font-black uppercase text-ink-faint tracking-wider">СЕКТОРИ</span>
+                  <span className="text-xs font-black text-indigo-400">
                     {sectorList.length}
                   </span>
                 </div>
               </div>
 
-              {/* Right Side: Legend List */}
-              <div className="flex-1 w-full space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
+              {/* Bottom: Scrollable Legend */}
+              <div className="space-y-1 max-h-[140px] overflow-y-auto pr-1 custom-mini-scroll">
                 {sectorList.map((sec, idx) => {
                   const colors = [
                     '#10b981', '#3b82f6', '#8b5cf6', '#d946ef', '#f59e0b',
@@ -1004,12 +1020,12 @@ export default function PortfolioTracker({
                   ];
                   const color = colors[idx % colors.length];
                   return (
-                    <div key={sec.sector} className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-bg/30 border border-white/5">
-                      <div className="flex items-center gap-2 truncate">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: color }} />
-                        <span className="text-ink font-bold truncate">{sec.sector}</span>
+                    <div key={sec.sector} className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40 text-xs">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="w-2 h-2 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: color }} />
+                        <span className="text-ink font-bold truncate text-xs">{sec.sector}</span>
                       </div>
-                      <span className="font-black text-indigo-400 shrink-0 ml-2">
+                      <span className="font-extrabold text-indigo-400 shrink-0 ml-1 text-xs">
                         {sec.pct.toFixed(1)}%
                       </span>
                     </div>
@@ -1018,28 +1034,38 @@ export default function PortfolioTracker({
               </div>
             </div>
           )}
+
+          <div className="border-t border-border/10 pt-2 text-xs font-sans tabular-nums text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+            <span>Разпределение по индустрии</span>
+            <span className="font-bold underline text-indigo-400">Сектори ({sectorList.length})</span>
+          </div>
         </div>
 
         {/* Bento 3: HOLDINGS BREAKDOWN */}
-        <div className="bg-card/75 border border-border/80 rounded-2xl p-6 shadow-md backdrop-blur-md flex flex-col justify-between hover:border-border transition-all">
-          <div className="flex items-center justify-between border-b border-border/40 pb-3.5 mb-4">
-            <span className="text-xs sm:text-sm font-black uppercase text-ink tracking-wider flex items-center gap-2">
-              <PieChart className="w-4 h-4 text-cyan-400" />
-              HOLDINGS BREAKDOWN
-            </span>
-            <span className="text-[10px] font-black text-cyan-400 bg-cyan-500/15 px-2.5 py-1 rounded-full border border-cyan-500/30">
+        <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between transition-all duration-200 h-[410px] hover:shadow-md relative group lg:col-span-1">
+          <div className="flex items-center justify-between border-b border-border/50 pb-2.5 shrink-0">
+            <div>
+              <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
+                Holdings Weights
+              </span>
+              <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
+                <PieChart className="w-4 h-4 text-cyan-400" />
+                HOLDINGS BREAKDOWN
+              </h3>
+            </div>
+            <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
               {enrichedHoldings.length} Актива
             </span>
           </div>
 
           {holdingsByWeight.length === 0 ? (
-            <div className="py-12 text-center text-ink-faint text-sm font-semibold">
+            <div className="flex-1 flex items-center justify-center text-ink-faint text-xs font-semibold">
               Няма въведени акции.
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row items-center gap-5 pt-1">
-              {/* Left Side: SVG Donut Chart */}
-              <div className="relative w-32 h-32 sm:w-36 sm:h-36 shrink-0 flex items-center justify-center">
+            <div className="flex-1 flex flex-col justify-between overflow-hidden my-2">
+              {/* Top: SVG Donut Chart */}
+              <div className="relative w-28 h-28 mx-auto shrink-0 flex items-center justify-center my-1">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                   {(() => {
                     let accumulatedPct = 0;
@@ -1078,15 +1104,15 @@ export default function PortfolioTracker({
                   })()}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none font-sans">
-                  <span className="text-[9px] font-black uppercase text-ink-faint tracking-wider">ОБЩО</span>
-                  <span className="text-xs sm:text-sm font-black text-indigo-400">
+                  <span className="text-[8px] font-black uppercase text-ink-faint tracking-wider">ОБЩО</span>
+                  <span className="text-[11px] font-black text-cyan-400">
                     {isPrivacyMode ? '••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
                   </span>
                 </div>
               </div>
 
-              {/* Right Side: Legend List */}
-              <div className="flex-1 w-full space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
+              {/* Bottom: Scrollable Legend */}
+              <div className="space-y-1 max-h-[140px] overflow-y-auto pr-1 custom-mini-scroll">
                 {holdingsByWeight.map((pos, idx) => {
                   const colors = [
                     '#8b5cf6', '#06b6d4', '#3b82f6', '#d946ef', '#10b981',
@@ -1094,13 +1120,15 @@ export default function PortfolioTracker({
                   ];
                   const color = colors[idx % colors.length];
                   return (
-                    <div key={pos.id} className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-bg/30 border border-white/5">
-                      <div className="flex items-center gap-2 truncate">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: color }} />
-                        <span className="text-ink font-black truncate">{pos.ticker}</span>
-                        <span className="text-ink-muted text-[11px] truncate hidden md:inline">({pos.companyName || pos.ticker})</span>
+                    <div key={pos.id} className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40 text-xs">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="w-2 h-2 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: color }} />
+                        <span className="text-ink font-bold text-xs uppercase">{pos.ticker}</span>
+                        <span className="text-xs font-sans text-ink-faint truncate max-w-[120px]" title={pos.companyName || pos.ticker}>
+                          ({pos.companyName || pos.ticker})
+                        </span>
                       </div>
-                      <span className="font-black text-cyan-400 shrink-0 ml-2">
+                      <span className="font-extrabold text-cyan-400 shrink-0 ml-1 text-xs">
                         {pos.weightPct.toFixed(1)}%
                       </span>
                     </div>
@@ -1109,6 +1137,11 @@ export default function PortfolioTracker({
               </div>
             </div>
           )}
+
+          <div className="border-t border-border/10 pt-2 text-xs font-sans tabular-nums text-ink/60 uppercase tracking-tight flex items-center justify-between shrink-0">
+            <span>Тегло на индивидуалните позиции</span>
+            <span className="font-bold underline text-cyan-400">Активи ({enrichedHoldings.length})</span>
+          </div>
         </div>
 
       </div>
