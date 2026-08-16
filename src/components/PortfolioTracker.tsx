@@ -1573,7 +1573,7 @@ export default function PortfolioTracker({
         >
           <table className="w-full text-left border-collapse font-sans tabular-nums text-xs min-w-[1600px] table-auto">
             <thead className="sticky top-0 z-20 bg-bg rounded-2xl">
-              <tr className="bg-bg text-ink/90 border-b-2 border-border text-xs uppercase font-semibold tracking-wider">
+              <tr className="bg-bg text-ink/90 border-b-2 border-border text-xs uppercase font-extrabold tracking-wider">
                 <th onClick={() => handleSort('ticker')} className="py-3 px-4 whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
                   TICKER{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
                 </th>
@@ -1617,7 +1617,7 @@ export default function PortfolioTracker({
                 <th className="py-3 px-4 text-right whitespace-nowrap">DIVIDEND</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/40 text-ink">
+            <tbody className="divide-y divide-border/40 text-ink text-xs">
               {enrichedHoldings.length === 0 ? (
                 <tr>
                   <td colSpan={15} className="py-8 text-center text-ink-faint font-bold text-xs">
@@ -1634,7 +1634,7 @@ export default function PortfolioTracker({
                   return (
                     <tr 
                       key={pos.id}
-                      className={`transition-all duration-150 group cursor-pointer ${
+                      className={`transition-all duration-150 group cursor-pointer text-xs ${
                         isSelected 
                           ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold' 
                           : 'hover:bg-indigo-500/10'
@@ -1646,9 +1646,9 @@ export default function PortfolioTracker({
                       {/* 1. Ticker */}
                       <td className="py-3 px-4 first:rounded-l-xl">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-extrabold text-ink">{pos.ticker}</span>
+                          <span className="font-extrabold text-ink text-xs">{pos.ticker}</span>
                           {pos.quoteCurrency && (
-                            <span className={`px-1 py-0.5 rounded text-[8px] font-black uppercase ${
+                            <span className={`px-1.5 py-0.5 rounded text-xs font-black uppercase ${
                               pos.quoteCurrency === 'EUR' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-indigo-500/10 text-indigo-400'
                             }`}>
                               {pos.quoteCurrency}
@@ -1682,38 +1682,38 @@ export default function PortfolioTracker({
                       </td>
 
                       {/* 3. % of Portfolio */}
-                      <td className="py-3 px-3 text-right font-mono font-bold text-indigo-400">
+                      <td className="py-3 px-3 text-right font-mono font-bold text-indigo-400 text-xs">
                         {shareOfPortfolioPct.toFixed(1)}%
                       </td>
 
                       {/* 4. Shares */}
-                      <td className="py-3 px-3 text-right font-extrabold text-ink">
+                      <td className="py-3 px-3 text-right font-extrabold text-ink text-xs">
                         {isPrivacyMode ? '••••' : pos.shares}
                       </td>
 
                       {/* 5. Avg. Price */}
-                      <td className="py-3 px-3 text-right font-mono text-ink-faint">
+                      <td className="py-3 px-3 text-right font-mono text-ink-faint text-xs">
                         {isPrivacyMode ? '••••' : `${pos.posSymbol}${pos.buyPrice.toFixed(2)}`}
                       </td>
 
                       {/* 6. Fee */}
-                      <td className="py-3 px-3 text-right font-mono text-ink-faint">
+                      <td className="py-3 px-3 text-right font-mono text-ink-faint text-xs">
                         {isPrivacyMode ? '••••' : `${pos.posSymbol}${(pos.fee || 0).toFixed(2)}`}
                       </td>
 
                       {/* 7. Cost Basis */}
-                      <td className="py-3 px-3 text-right font-mono font-bold text-ink">
+                      <td className="py-3 px-3 text-right font-mono font-bold text-ink text-xs">
                         {isPrivacyMode ? '••••••••' : `${pos.posSymbol}${pos.costBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </td>
 
                       {/* 8. Date of Purchase */}
-                      <td className="py-3 px-3 text-center text-ink-faint text-[10px]">
+                      <td className="py-3 px-3 text-center text-ink-faint font-mono text-xs">
                         {pos.buyDate || '-'}
                       </td>
 
                       {/* 9. Daily Change % */}
                       <td className="py-3 px-3 text-center">
-                        <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-extrabold ${
+                        <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs font-extrabold ${
                           isDailyUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
                         }`}>
                           {isDailyUp ? '▲' : '▼'} {Math.abs(pos.matching?.dailyChangePct || 0).toFixed(2)}%
@@ -1721,7 +1721,7 @@ export default function PortfolioTracker({
                       </td>
 
                       {/* 10. Current Price */}
-                      <td className="py-3 px-3 text-right font-mono font-black text-ink">
+                      <td className="py-3 px-3 text-right font-mono font-black text-ink text-xs">
                         <div className="flex items-center justify-end gap-1.5">
                           <span>{isPrivacyMode ? '•••••' : `${pos.posSymbol}${pos.curPrice.toFixed(2)}`}</span>
                           <button
@@ -1730,18 +1730,16 @@ export default function PortfolioTracker({
                               e.stopPropagation();
                               setTvModalTicker(pos.ticker);
                             }}
-                            className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-sans font-bold transition-all border border-indigo-500/20 flex items-center gap-0.5 cursor-pointer shadow-xs"
+                            className="text-xs px-2 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-sans font-extrabold transition-all border border-indigo-500/20 flex items-center gap-1 cursor-pointer shadow-xs"
                             title={`Отвори TradingView НА ЖИВО графика за ${pos.ticker}`}
                           >
-                            <TrendingUp className="w-2.5 h-2.5 text-indigo-400" />
+                            <TrendingUp className="w-3 h-3 text-indigo-400" />
                             TV
                           </button>
                         </div>
                       </td>
 
-
-
-                      {/* 13. BUY/SELL Buttons & Trash2 Delete */}
+                      {/* 11. BUY/SELL Buttons & Trash2 Delete */}
                       <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1.5">
                           <button
@@ -1749,7 +1747,7 @@ export default function PortfolioTracker({
                               e.stopPropagation();
                               handleStartTransaction(pos, 'Покупка');
                             }}
-                            className="px-2 py-0.5 bg-emerald-600/80 hover:bg-emerald-500 text-white font-extrabold text-[10px] rounded uppercase transition-all cursor-pointer"
+                            className="px-2.5 py-1 bg-emerald-600/80 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg uppercase transition-all cursor-pointer shadow-xs"
                           >
                             BUY
                           </button>
@@ -1758,7 +1756,7 @@ export default function PortfolioTracker({
                               e.stopPropagation();
                               handleStartTransaction(pos, 'Продажба');
                             }}
-                            className="px-2 py-0.5 bg-amber-600/80 hover:bg-amber-500 text-white font-extrabold text-[10px] rounded uppercase transition-all cursor-pointer"
+                            className="px-2.5 py-1 bg-amber-600/80 hover:bg-amber-500 text-white font-extrabold text-xs rounded-lg uppercase transition-all cursor-pointer shadow-xs"
                           >
                             SELL
                           </button>
@@ -1769,41 +1767,41 @@ export default function PortfolioTracker({
                                 onDeletePosition(pos.id);
                               }
                             }}
-                            className="p-1.5 rounded-lg text-ink-faint hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
+                            className="p-1 rounded-lg text-ink-faint hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
                             title="Изтрий позиция"
                           >
-                            <Trash2 className="w-4 h-4 text-rose-400/80 hover:text-rose-400" />
+                            <Trash2 className="w-3.5 h-3.5 text-rose-400/80 hover:text-rose-400" />
                           </button>
                         </div>
                       </td>
 
-                      {/* 14. Profit / Loss % */}
+                      {/* 12. Profit / Loss % */}
                       <td className="py-3 px-3 text-right">
-                        <span className={`font-mono font-black text-[11px] ${
+                        <span className={`font-mono font-black text-xs ${
                           isPosProfit ? 'text-emerald-400' : 'text-rose-400'
                         }`}>
                           {isPrivacyMode ? '••••' : `${isPosProfit ? '▲' : '▼'} ${pos.pnlPct.toFixed(2)}%`}
                         </span>
                       </td>
 
-                      {/* 15. Unrealized P/L */}
-                      <td className="py-3 px-3 text-right font-mono font-extrabold">
+                      {/* 13. Unrealized P/L */}
+                      <td className="py-3 px-3 text-right font-mono font-extrabold text-xs">
                         <span className={isPosProfit ? 'text-emerald-400' : 'text-rose-400'}>
                           {isPrivacyMode ? '••••••••' : `${isPosProfit ? '+' : '-'}${pos.posSymbol}${Math.abs(pos.pnlVal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </span>
                       </td>
 
-                      {/* 16. Value */}
-                      <td className="py-3 px-3 text-right font-mono font-black text-ink">
+                      {/* 14. Value */}
+                      <td className="py-3 px-3 text-right font-mono font-black text-ink text-xs">
                         {isPrivacyMode ? '••••••••' : `${pos.posSymbol}${pos.currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </td>
 
-                      {/* 17. Dividend */}
+                      {/* 15. Dividend */}
                       <td className="py-3 px-3 text-right last:rounded-r-xl">
-                        <span className="font-mono text-emerald-400 font-extrabold block">
+                        <span className="font-mono text-emerald-400 font-extrabold block text-xs">
                           {isPrivacyMode ? '••••' : `${pos.posSymbol}${((pos.annualDivPerShare || 0) * pos.shares).toFixed(2)}`}
                         </span>
-                        <span className="text-[9px] text-ink-faint block">
+                        <span className="text-xs text-ink-faint block">
                           FY: {pos.matching?.dividend || '0.00%'}
                         </span>
                       </td>
