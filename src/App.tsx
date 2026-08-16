@@ -1073,145 +1073,146 @@ export default function App() {
 
       <div className="flex items-center gap-2 flex-wrap justify-start">
 
-  {/* Auto live updates toggler */}
-  <button
-  onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-  className={`text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all border cursor-pointer whitespace-nowrap shrink-0 ${
-  isAutoLiveRefresh 
-  ? 'bg-[#10b981] text-ink border-[#10b981]/50 hover:bg-[#059669] font-extrabold' 
-  : 'bg-bg text-ink-faint border-gray-350 hover:bg-gray-50 hover:text-ink-muted'
-  }`}
-  >
-  <span className={`w-1.5 h-1.5 rounded-full ${isAutoLiveRefresh ? 'bg-green-400 animate-ping' : 'bg-gray-400'}`} />
-  Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}
-  <div className="group/info relative flex items-center">
-    <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-xs leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
-      Автоматично фоново синхронизиране на живите пазарни котировки на всеки 45 секунди
-    </div>
-  </div>
-  </button>
-
-
-
-  {/* Quick real live market quotes sync */}
-  <button
-  onClick={triggerManualRefresh}
-  disabled={isFetchingLivePrices}
-  className={`text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border flex items-center gap-1.5 uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-  isFetchingLivePrices
-  ? 'bg-stone-100 text-stone-500 border-stone-300 cursor-not-allowed'
-  : 'bg-bg text-ink border-black hover:bg-white/20'
-  }`}
-  >
-  <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-[#10b981]' : ''}`} />
-  {isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}
-  <div className="group/info relative flex items-center">
-    <Info className="w-3.5 h-3.5 opacity-60 ml-0.5 cursor-help" />
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 hidden group-hover/info:block w-48 p-2 bg-gray-900 text-white text-xs leading-tight rounded-md shadow-xl z-[100] pointer-events-none text-center whitespace-normal normal-case font-sans border border-gray-700">
-      Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи
-    </div>
-  </div>
-  </button>
-
-  {/* System Settings Dropdown */}
-  <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsSettingsMenuOpen(false); }}>
-    <button
-      onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
-      className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
-      title="Системни настройки и данни"
-    >
-      <Settings2 className="w-3.5 h-3.5" />
-      <span className="hidden sm:inline">Настройки</span>
-      <ChevronDown className={`w-3 h-3 transition-transform ${isSettingsMenuOpen ? 'rotate-180' : ''}`} />
-    </button>
-
-    {isSettingsMenuOpen && (
-      <div className="absolute left-0 top-full mt-2 w-56 bg-bg border border-border rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-1 origin-top-left animate-in fade-in zoom-in-95 duration-100">
+        {/* 1. Auto live updates toggler */}
         <button
-          onClick={() => { exportCSVFile(); setIsSettingsMenuOpen(false); }}
-          className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+          onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
+          className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+            isAutoLiveRefresh 
+              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' 
+              : 'bg-card text-ink-faint border-border hover:bg-card-hover hover:text-ink'
+          }`}
+          title="Автоматично фоново синхронизиране на живите пазарни котировки"
         >
-          <Download className="w-4 h-4" />
-          Експорт CSV
+          <span className="relative flex h-2 w-2 shrink-0">
+            {isAutoLiveRefresh && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            )}
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${isAutoLiveRefresh ? 'bg-emerald-400' : 'bg-stone-500'}`}></span>
+          </span>
+          <span>Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}</span>
         </button>
+
+        {/* 2. Quick real live market quotes sync */}
         <button
-          onClick={() => { handleRestoreDefaults(); setIsSettingsMenuOpen(false); }}
-          className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
-          title="Върнете началните фабрични данни"
+          onClick={triggerManualRefresh}
+          disabled={isFetchingLivePrices}
+          className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+            isFetchingLivePrices
+              ? 'bg-card/50 text-ink-faint border-border/50 cursor-not-allowed'
+              : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
+          }`}
+          title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
         >
-          <ArchiveRestore className="w-4 h-4 text-stone-500" />
-          Фабрични данни
+          <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isFetchingLivePrices ? 'animate-spin text-emerald-400' : 'text-indigo-400'}`} />
+          <span>{isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}</span>
         </button>
-        <div className="h-px bg-border/50 my-1 mx-1" />
-        <button
-          onClick={() => { setShowNewUserModal(true); setIsSettingsMenuOpen(false); }}
-          className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#f43f5e] hover:bg-[#f43f5e]/10 rounded-lg transition-colors cursor-pointer"
-          title="Изтрийте всичко и започнете начисто"
-        >
-          <Trash2 className="w-4 h-4" />
-          Нов потребител (Изчисти)
-        </button>
-      </div>
-    )}
-  </div>
 
-  {/* Header button for Cloud Sync / Account Auth (Email Login) */}
-  <button
-    onClick={() => setIsAuthModalOpen(true)}
-    className={`text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs ${
-      currentUser
-        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10'
-        : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500 hover:text-white uppercase'
-    }`}
-    title={currentUser ? `Влезли сте като ${currentUser.email}` : 'Вход / Синхронизация'}
-  >
-    <Cloud className={`w-3.5 h-3.5 ${currentUser ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
-    <span>
-      {currentUser 
-        ? `👤 ${currentUser.displayName || currentUser.email?.split('@')[0]} (🟢 ON)`
-        : '🔑 Вход / Синхронизация'}
-    </span>
-  </button>
+        {/* 3. System Settings Dropdown */}
+        <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsSettingsMenuOpen(false); }}>
+          <button
+            onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
+            className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+              isSettingsMenuOpen
+                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+                : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
+            }`}
+            title="Системни настройки и данни"
+          >
+            <Settings2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+            <span>Настройки</span>
+            <ChevronDown className={`w-3 h-3 text-ink-faint transition-transform duration-200 shrink-0 ${isSettingsMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-  {/* Header button for TradingView Economic Calendar Modal */}
-  <button
-    onClick={() => setShowEconomicCalendarModal(true)}
-    className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
-    title="Economic Calendar"
-  >
-    <Calendar className="w-3.5 h-3.5" />
-    <span className="hidden sm:inline">Calendar</span>
-  </button>
-
-  {/* Useful Links Dropdown Button */}
-  <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsUsefulLinksMenuOpen(false); }}>
-    <button
-      onClick={() => setIsUsefulLinksMenuOpen(!isUsefulLinksMenuOpen)}
-      className="text-xs sm:text-xs font-sans tabular-nums font-extrabold px-3 py-1.5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white uppercase transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
-      title="Useful Links"
-    >
-      <ExternalLink className="w-3.5 h-3.5" />
-      <span className="hidden sm:inline">Useful Links</span>
-      <ChevronDown className={`w-3 h-3 transition-transform ${isUsefulLinksMenuOpen ? 'rotate-180' : ''}`} />
-    </button>
-
-    {isUsefulLinksMenuOpen && (
-      <div className="absolute right-0 top-full mt-2 w-64 bg-bg border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
-        <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
-          🔗 Useful Links
+          {isSettingsMenuOpen && (
+            <div className="absolute left-0 top-full mt-2 w-56 bg-bg border border-border rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-1 origin-top-left animate-in fade-in zoom-in-95 duration-100">
+              <button
+                onClick={() => { exportCSVFile(); setIsSettingsMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                Експорт CSV
+              </button>
+              <button
+                onClick={() => { handleRestoreDefaults(); setIsSettingsMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                title="Върнете началните фабрични данни"
+              >
+                <ArchiveRestore className="w-4 h-4 text-stone-500" />
+                Фабрични данни
+              </button>
+              <div className="h-px bg-border/50 my-1 mx-1" />
+              <button
+                onClick={() => { setShowNewUserModal(true); setIsSettingsMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#f43f5e] hover:bg-[#f43f5e]/10 rounded-lg transition-colors cursor-pointer"
+                title="Изтрийте всичко и започнете начисто"
+              >
+                <Trash2 className="w-4 h-4" />
+                Нов потребител (Изчисти)
+              </button>
+            </div>
+          )}
         </div>
-        <div className="p-3 text-xs text-ink-faint italic text-center font-sans">
-          Awaiting your links...
+
+        {/* 4. Header button for Cloud Sync / Account Auth (Email Login) */}
+        <button
+          onClick={() => setIsAuthModalOpen(true)}
+          className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+            currentUser
+              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+              : 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/25 uppercase'
+          }`}
+          title={currentUser ? `Влезли сте като ${currentUser.email}` : 'Вход / Синхронизация'}
+        >
+          <Cloud className={`w-3.5 h-3.5 shrink-0 ${currentUser ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
+          <span>
+            {currentUser 
+              ? `👤 ${currentUser.displayName || currentUser.email?.split('@')[0]} (🟢 ON)`
+              : '🔑 Вход / Синхронизация'}
+          </span>
+        </button>
+
+        {/* 5. Header button for TradingView Economic Calendar Modal */}
+        <button
+          onClick={() => setShowEconomicCalendarModal(true)}
+          className="h-9 px-3.5 rounded-xl border border-border bg-card text-ink-muted hover:text-ink hover:bg-card-hover hover:border-indigo-500/30 font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none"
+          title="Economic Calendar"
+        >
+          <Calendar className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+          <span>Calendar</span>
+        </button>
+
+        {/* 6. Useful Links Dropdown Button */}
+        <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsUsefulLinksMenuOpen(false); }}>
+          <button
+            onClick={() => setIsUsefulLinksMenuOpen(!isUsefulLinksMenuOpen)}
+            className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+              isUsefulLinksMenuOpen
+                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+                : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
+            }`}
+            title="Useful Links"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+            <span>Useful Links</span>
+            <ChevronDown className={`w-3 h-3 text-ink-faint transition-transform duration-200 shrink-0 ${isUsefulLinksMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isUsefulLinksMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-64 bg-bg border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
+              <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
+                🔗 Useful Links
+              </div>
+              <div className="p-3 text-xs text-ink-faint italic text-center font-sans">
+                Awaiting your links...
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* 7. Theme Toggle */}
+        <ThemeToggle />
+
       </div>
-    )}
-  </div>
-
-  {/* Theme Toggle placed at the VERY FAR RIGHT */}
-  <ThemeToggle />
-
-  </div>
  </div>
 
     {/* Dynamic indices banner strip (Index Markets / US Markets) */}

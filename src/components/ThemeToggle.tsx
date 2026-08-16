@@ -35,14 +35,14 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-xl bg-card border border-border hover:bg-card-hover text-ink-muted hover:text-ink transition-colors focus:outline-none flex items-center justify-center cursor-pointer shadow-sm"
+      className="h-9 w-9 rounded-xl bg-card border border-border hover:bg-card-hover hover:border-indigo-500/30 text-ink-muted hover:text-ink transition-all duration-150 focus:outline-none inline-flex items-center justify-center cursor-pointer shadow-xs shrink-0"
       aria-label="Toggle theme"
       title={isDark ? "Превключи към светла тема" : "Превключи към тъмна тема"}
     >
       {isDark ? (
-        <Sun className="w-4 h-4" />
+        <Sun className="w-3.5 h-3.5 text-amber-400" />
       ) : (
-        <Moon className="w-4 h-4" />
+        <Moon className="w-3.5 h-3.5 text-indigo-400" />
       )}
     </button>
   );
