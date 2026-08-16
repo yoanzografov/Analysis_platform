@@ -281,8 +281,8 @@ export default function PortfolioTracker({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Sorting state for the table
-  const [sortField, setSortField] = useState<string | null>(null);
+  // Sorting state for the table (Alphabetical by Ticker A-Z by default)
+  const [sortField, setSortField] = useState<string | null>('ticker');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const handleSort = (field: string) => {
@@ -290,7 +290,9 @@ export default function PortfolioTracker({
       if (sortOrder === 'asc') {
         setSortOrder('desc');
       } else {
-        setSortField(null);
+        // Reset back to default alphabetical A-Z
+        setSortField('ticker');
+        setSortOrder('asc');
       }
     } else {
       setSortField(field);
@@ -729,31 +731,35 @@ export default function PortfolioTracker({
     }))
     .sort((a, b) => b.currentValInBase - a.currentValInBase);
 
-  // Sorted Holdings for the table rendering
-  const sortedHoldings = !sortField 
-    ? enrichedHoldings 
-    : [...enrichedHoldings].sort((a, b) => {
-        let valA: any = a[sortField as keyof typeof a];
-        let valB: any = b[sortField as keyof typeof b];
+  // Sorted Holdings for the table rendering (Alphabetical A-Z by default)
+  const sortedHoldings = [...enrichedHoldings].sort((a, b) => {
+    const field = sortField || 'ticker';
+    const order = sortOrder || 'asc';
 
-        // Handle special columns
-        if (sortField === 'dailyChangePct') {
-          valA = a.matching?.dailyChangePct ?? 0;
-          valB = b.matching?.dailyChangePct ?? 0;
-        } else if (sortField === 'weightPct') {
-          valA = a.currentVal;
-          valB = b.currentVal;
-        }
+    let valA: any = a[field as keyof typeof a];
+    let valB: any = b[field as keyof typeof b];
 
-        if (valA === undefined || valA === null) return sortOrder === 'asc' ? 1 : -1;
-        if (valB === undefined || valB === null) return sortOrder === 'asc' ? -1 : 1;
+    // Handle special columns
+    if (field === 'ticker') {
+      valA = a.ticker;
+      valB = b.ticker;
+    } else if (field === 'dailyChangePct') {
+      valA = a.matching?.dailyChangePct ?? 0;
+      valB = b.matching?.dailyChangePct ?? 0;
+    } else if (field === 'weightPct') {
+      valA = a.currentVal;
+      valB = b.currentVal;
+    }
 
-        if (typeof valA === 'string' && typeof valB === 'string') {
-          return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        }
+    if (valA === undefined || valA === null) return order === 'asc' ? 1 : -1;
+    if (valB === undefined || valB === null) return order === 'asc' ? -1 : 1;
 
-        return sortOrder === 'asc' ? valA - valB : valB - valA;
-      });
+    if (typeof valA === 'string' && typeof valB === 'string') {
+      return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    }
+
+    return order === 'asc' ? valA - valB : valB - valA;
+  });
 
   // Annual projected dividends sum & Yield on Cost %
   const totalAnnualDivIncome = enrichedHoldings.reduce((acc, h) => {
