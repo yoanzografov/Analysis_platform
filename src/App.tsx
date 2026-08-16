@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Stock, MarketIndex, PriceAlert, NotificationLog, TableFilter, PortfolioPosition } from './types';
+import { Stock, MarketIndex, PriceAlert, NotificationLog, TableFilter, PortfolioPosition, PortfolioTransaction, PortfolioDividendRecord } from './types';
 import { RAW_SPREADSHEET_CSV, parseCSVData } from './data/initialStocks';
 import IndicesStrip from './components/IndicesStrip';
 import { getSectorForStock, formatDividend } from './utils/sectorHelper';
@@ -35,7 +35,12 @@ import {
   Info,
   X,
   ExternalLink,
-  Cloud
+  Cloud,
+  Lock,
+  LogOut,
+  User as UserIcon,
+  HelpCircle,
+  Database
 } from 'lucide-react';
 
 export default function App() {
@@ -99,6 +104,71 @@ export default function App() {
       console.error('Error saving positions to localStorage', e);
     }
   }, [positions]);
+
+  // Real-time Firestore Synced Portfolio State (across phone, laptop, desktop)
+  const [transactions, setTransactions] = useState<PortfolioTransaction[]>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_transactions');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Error loading transactions from localStorage', e);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_transactions', JSON.stringify(transactions));
+    } catch (e) {
+      console.error('Error saving transactions to localStorage', e);
+    }
+  }, [transactions]);
+
+  const [dividends, setDividends] = useState<PortfolioDividendRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_dividends');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Error loading dividends from localStorage', e);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_dividends', JSON.stringify(dividends));
+    } catch (e) {
+      console.error('Error saving dividends to localStorage', e);
+    }
+  }, [dividends]);
+
+  const [cashBalance, setCashBalance] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_cash');
+      if (saved !== null) return parseFloat(saved) || 0;
+    } catch (e) {}
+    return 0;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_cash', cashBalance.toString());
+    } catch (e) {}
+  }, [cashBalance]);
+
+  const [baseCurrency, setBaseCurrency] = useState<'USD' | 'EUR'>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_base_currency');
+      if (saved === 'EUR' || saved === 'USD') return saved;
+    } catch (e) {}
+    return 'USD';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_base_currency', baseCurrency);
+    } catch (e) {}
+  }, [baseCurrency]);
 
   const [portfolioPrices, setPortfolioPrices] = useState<Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string; currency?: string }>>(() => {
     try {
@@ -362,17 +432,17 @@ export default function App() {
  message: `Пазарната таблица и индексите се опресниха с реални данни в реално време от Yahoo Finance!`,
  type: 'success'
  };
- setLogs(prev => [newLog, ...prev]);
- }
- } catch (err: any) {
- console.error(err);
- // Suppress UI error logging since we lack a backend
- } finally {
- setIsFetchingLivePrices(false);
- }
- };
+        setLogs(prev => [newLog, ...prev]);
+      }
+    } catch (err: any) {
+      console.error(err);
+      // Suppress UI error logging since we lack a backend
+    } finally {
+      setIsFetchingLivePrices(false);
+    }
+  };
 
- // Load and listen to Firebase Firestore
+  // Load and listen to Firebase Firestore
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "portfolio", "default"), (docSnap) => {
       if (docSnap.exists()) {
@@ -393,7 +463,7 @@ export default function App() {
           }
           if (data.indices) setIndices(data.indices);
           
-          // Real-time multi-device sync for positions & alerts
+          // Real-time multi-device sync for positions, alerts, transactions, dividends, cash & base currency
           if (Array.isArray(data.alerts)) {
             setAlerts(data.alerts);
           } else if (!isLoaded) {
@@ -406,6 +476,34 @@ export default function App() {
           } else if (!isLoaded) {
             const localPosRaw = localStorage.getItem('user_portfolio_positions');
             if (localPosRaw) try { setPositions(JSON.parse(localPosRaw)); } catch (e) {}
+          }
+
+          if (Array.isArray(data.transactions)) {
+            setTransactions(data.transactions);
+          } else if (!isLoaded) {
+            const localTxRaw = localStorage.getItem('user_portfolio_transactions');
+            if (localTxRaw) try { setTransactions(JSON.parse(localTxRaw)); } catch (e) {}
+          }
+
+          if (Array.isArray(data.dividends)) {
+            setDividends(data.dividends);
+          } else if (!isLoaded) {
+            const localDivRaw = localStorage.getItem('user_portfolio_dividends');
+            if (localDivRaw) try { setDividends(JSON.parse(localDivRaw)); } catch (e) {}
+          }
+
+          if (typeof data.cashBalance === 'number') {
+            setCashBalance(data.cashBalance);
+          } else if (!isLoaded) {
+            const localCashRaw = localStorage.getItem('user_portfolio_cash');
+            if (localCashRaw !== null) setCashBalance(parseFloat(localCashRaw) || 0);
+          }
+
+          if (data.baseCurrency === 'USD' || data.baseCurrency === 'EUR') {
+            setBaseCurrency(data.baseCurrency);
+          } else if (!isLoaded) {
+            const localBaseCurr = localStorage.getItem('user_portfolio_base_currency');
+            if (localBaseCurr === 'EUR' || localBaseCurr === 'USD') setBaseCurrency(localBaseCurr);
           }
           
           const currentBuyThreshold = data.settings?.buyThreshold ?? data.settings?.buySellThreshold ?? 10;
@@ -423,6 +521,10 @@ export default function App() {
             indices: data.indices || [],
             alerts: Array.isArray(data.alerts) ? data.alerts : [],
             positions: Array.isArray(data.positions) ? data.positions : [],
+            transactions: Array.isArray(data.transactions) ? data.transactions : [],
+            dividends: Array.isArray(data.dividends) ? data.dividends : [],
+            cashBalance: typeof data.cashBalance === 'number' ? data.cashBalance : (parseFloat(localStorage.getItem('user_portfolio_cash') || '0') || 0),
+            baseCurrency: (data.baseCurrency === 'EUR' || data.baseCurrency === 'USD') ? data.baseCurrency : 'USD',
             settings: { buyThreshold: currentBuyThreshold, sellThreshold: currentSellThreshold }
           };
           lastSavedRef.current = JSON.stringify(normalizedPayload);
@@ -431,7 +533,7 @@ export default function App() {
         if (!isLoaded) {
           setIsLoaded(true);
           setLogs([
-            { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Свързано с облачната база данни (Firebase).', type: 'info' },
+            { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Свързано с облачната база данни (Firebase). Синхронизацията между всички устройства е активна!', type: 'info' },
           ]);
           setTimeout(() => {
             fetchRealStockPricesDirect(data.stocks || []);
@@ -452,7 +554,17 @@ export default function App() {
         setAlerts(defaultAlerts);
         setIsLoaded(true);
         
-        const initialData = { stocks: parsedStocks, indices: parsedIndices, alerts: defaultAlerts, positions: [], settings: { buyThreshold: 10, sellThreshold: 10 } };
+        const initialData = { 
+          stocks: parsedStocks, 
+          indices: parsedIndices, 
+          alerts: defaultAlerts, 
+          positions: [], 
+          transactions: [],
+          dividends: [],
+          cashBalance: 0,
+          baseCurrency: 'USD',
+          settings: { buyThreshold: 10, sellThreshold: 10 } 
+        };
         lastSavedRef.current = JSON.stringify(initialData);
         
         setDoc(doc(db, "portfolio", "default"), JSON.parse(JSON.stringify(initialData)))
@@ -475,7 +587,17 @@ export default function App() {
   useEffect(() => {
     if (!isLoaded) return;
     
-    const payload = { stocks, indices, alerts, positions, settings: { buyThreshold, sellThreshold } };
+    const payload = { 
+      stocks, 
+      indices, 
+      alerts, 
+      positions, 
+      transactions,
+      dividends,
+      cashBalance,
+      baseCurrency,
+      settings: { buyThreshold, sellThreshold } 
+    };
     const currentDataString = JSON.stringify(payload);
     
     if (isInitialAutoSave.current) {
@@ -490,7 +612,7 @@ export default function App() {
       setDoc(doc(db, "portfolio", "default"), JSON.parse(currentDataString), { merge: true })
         .catch(err => console.error("Firebase Auto Save Error:", err));
     }
-  }, [stocks, indices, alerts, positions, buyThreshold, sellThreshold, isLoaded]);
+  }, [stocks, indices, alerts, positions, transactions, dividends, cashBalance, baseCurrency, buyThreshold, sellThreshold, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
@@ -1255,11 +1377,19 @@ export default function App() {
       <PortfolioTracker
         stocks={stocks}
         positions={positions}
+        transactions={transactions}
+        dividends={dividends}
+        cashBalance={cashBalance}
+        baseCurrency={baseCurrency}
         currentUser={currentUser}
         onAddPosition={handleAddPosition}
         onUpdatePosition={handleUpdatePosition}
         onDeletePosition={handleDeletePosition}
         onSetAllPositions={(newPositions) => setPositions(newPositions)}
+        onSetTransactions={(newTxList) => setTransactions(newTxList)}
+        onSetDividends={(newDivList) => setDividends(newDivList)}
+        onUpdateCash={(newCash) => setCashBalance(newCash)}
+        onSetBaseCurrency={(newCurr) => setBaseCurrency(newCurr)}
         portfolioPrices={portfolioPrices}
       />
     </div>

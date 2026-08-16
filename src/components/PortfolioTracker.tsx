@@ -50,6 +50,7 @@ interface Props {
   transactions?: PortfolioTransaction[];
   dividends?: PortfolioDividendRecord[];
   cashBalance?: number;
+  baseCurrency?: 'USD' | 'EUR';
   currentUser?: FirebaseUser | null;
   onAddPosition: (pos: Omit<PortfolioPosition, 'id'>) => void;
   onUpdatePosition: (id: string, pos: Omit<PortfolioPosition, 'id'>) => void;
@@ -58,6 +59,9 @@ interface Props {
   onAddDividend?: (div: Omit<PortfolioDividendRecord, 'id'>) => void;
   onUpdateCash?: (cash: number) => void;
   onSetAllPositions?: (positions: PortfolioPosition[]) => void;
+  onSetTransactions?: (transactions: PortfolioTransaction[]) => void;
+  onSetDividends?: (dividends: PortfolioDividendRecord[]) => void;
+  onSetBaseCurrency?: (baseCurrency: 'USD' | 'EUR') => void;
   portfolioPrices?: Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string; currency?: string }>;
 }
 
@@ -86,6 +90,7 @@ export default function PortfolioTracker({
   transactions = [], 
   dividends = [], 
   cashBalance = 0,
+  baseCurrency: propBaseCurrency = 'USD',
   currentUser: propCurrentUser,
   onAddPosition, 
   onUpdatePosition, 
@@ -94,6 +99,9 @@ export default function PortfolioTracker({
   onAddDividend,
   onUpdateCash,
   onSetAllPositions,
+  onSetTransactions,
+  onSetDividends,
+  onSetBaseCurrency,
   portfolioPrices = {}
 }: Props) {
   // Firebase Auth User & Account Sync
@@ -132,74 +140,128 @@ export default function PortfolioTracker({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState('');
 
-  // Cash management state with localStorage persistence
+  // Base Currency state for portfolio totals & charts (USD or EUR)
+  const [baseCurrency, setBaseCurrency] = useState<'USD' | 'EUR'>(() => {
+    if (propBaseCurrency) return propBaseCurrency;
+    try {
+      const saved = localStorage.getItem('user_portfolio_base_currency');
+      if (saved === 'EUR' || saved === 'USD') return saved;
+    } catch (e) {}
+    return 'USD';
+  });
+
+  useEffect(() => {
+    if (propBaseCurrency) {
+      setBaseCurrency(propBaseCurrency);
+    }
+  }, [propBaseCurrency]);
+
+  const handleSetBaseCurrency = (curr: 'USD' | 'EUR') => {
+    setBaseCurrency(curr);
+    try {
+      localStorage.setItem('user_portfolio_base_currency', curr);
+    } catch (e) {}
+    if (onSetBaseCurrency) onSetBaseCurrency(curr);
+  };
+
+  const baseSymbol = baseCurrency === 'EUR' ? '€' : '$';
+
+  // Cash management state with multi-device real-time Firebase sync
   const [cashInput, setCashInput] = useState(() => {
+    if (cashBalance !== undefined && cashBalance > 0) return cashBalance.toString();
     try {
       const saved = localStorage.getItem('user_portfolio_cash');
       if (saved !== null) return saved;
     } catch (e) {}
-    return cashBalance.toString();
+    return (cashBalance || 0).toString();
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem('user_portfolio_cash', cashInput);
-    } catch (e) {}
-  }, [cashInput]);
+    if (cashBalance !== undefined) {
+      setCashInput(cashBalance.toString());
+    }
+  }, [cashBalance]);
 
-  // Dividend ledger form state with localStorage persistence
+  const handleSaveCash = () => {
+    const parsed = parseFloat(cashInput) || 0;
+    try {
+      localStorage.setItem('user_portfolio_cash', parsed.toString());
+    } catch (e) {}
+    if (onUpdateCash) onUpdateCash(parsed);
+    alert(`Кеш наличността (${baseSymbol}${parsed.toFixed(2)}) беше запазена и синхронизирана между всички ваши устройства!`);
+    setIsCashModalOpen(false);
+  };
+
+  // Dividend ledger form state with multi-device real-time Firebase sync
   const [divTicker, setDivTicker] = useState('AAPL');
   const [divAmount, setDivAmount] = useState('24.58');
   const [divDate, setDivDate] = useState(new Date().toISOString().split('T')[0]);
   const [divRecords, setDivRecords] = useState<PortfolioDividendRecord[]>(() => {
+    if (dividends && dividends.length > 0) return dividends;
     try {
       const saved = localStorage.getItem('user_portfolio_dividends');
       if (saved) return JSON.parse(saved);
     } catch (e) {}
-    return dividends.length > 0 ? dividends : [
-      { id: 'd1', ticker: 'AAPL', amount: 24.58, date: '2026-05-01' },
-      { id: 'd2', ticker: 'NVDA', amount: 12.00, date: '2026-04-10' },
-      { id: 'd3', ticker: 'AAPL', amount: 24.58, date: '2026-03-15' },
-    ];
+    return [];
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem('user_portfolio_dividends', JSON.stringify(divRecords));
-    } catch (e) {}
-  }, [divRecords]);
+    if (dividends !== undefined) {
+      setDivRecords(dividends);
+    }
+  }, [dividends]);
 
-  // Transactions History with localStorage persistence
+  const updateDivRecords = (newDivs: PortfolioDividendRecord[]) => {
+    setDivRecords(newDivs);
+    try {
+      localStorage.setItem('user_portfolio_dividends', JSON.stringify(newDivs));
+    } catch (e) {}
+    if (onSetDividends) {
+      onSetDividends(newDivs);
+    }
+  };
+
+  const handleDeleteDividendRecord = (id: string) => {
+    const next = divRecords.filter(d => d.id !== id);
+    updateDivRecords(next);
+  };
+
+  // Transactions History with multi-device real-time Firebase sync
   const [history, setHistory] = useState<PortfolioTransaction[]>(() => {
+    if (transactions && transactions.length > 0) return transactions;
     try {
       const saved = localStorage.getItem('user_portfolio_transactions');
       if (saved) return JSON.parse(saved);
     } catch (e) {}
-    return transactions.length > 0 ? transactions : [
-      { id: 't1', date: '2026-05-29', ticker: 'SXR8', type: 'Покупка', shares: 10, buyPrice: 500.00, currency: 'EUR', pnlVal: 0, pnlPct: 0 },
-      { id: 't2', date: '2026-05-29', ticker: 'QCOM', type: 'Продажба', shares: 10, buyPrice: 150.00, sellPrice: 167.87, currency: 'USD', pnlVal: 178.70, pnlPct: 11.91 },
-      { id: 't3', date: '2026-01-10', ticker: 'AAPL', type: 'Продажба', shares: 10, buyPrice: 150.00, sellPrice: 313.30, currency: 'USD', pnlVal: 1633.00, pnlPct: 108.87 },
-      { id: 't4', date: '2026-02-15', ticker: 'NVDA', type: 'Покупка', shares: 15, buyPrice: 90.00, currency: 'USD', pnlVal: 0, pnlPct: 0 },
-      { id: 't5', date: '2026-03-20', ticker: 'BTC', type: 'Покупка', shares: 0.5, buyPrice: 48000.00, currency: 'USD', pnlVal: 0, pnlPct: 0 },
-      { id: 't6', date: '2026-04-05', ticker: 'ETH', type: 'Покупка', shares: 2.2, buyPrice: 2200.00, currency: 'USD', pnlVal: 0, pnlPct: 0 },
-    ];
+    return [];
   });
 
   useEffect(() => {
+    if (transactions !== undefined) {
+      setHistory(transactions);
+    }
+  }, [transactions]);
+
+  const updateHistory = (newHistory: PortfolioTransaction[]) => {
+    setHistory(newHistory);
     try {
-      localStorage.setItem('user_portfolio_transactions', JSON.stringify(history));
+      localStorage.setItem('user_portfolio_transactions', JSON.stringify(newHistory));
     } catch (e) {}
-  }, [history]);
+    if (onSetTransactions) {
+      onSetTransactions(newHistory);
+    }
+  };
 
   const handleDeleteTransaction = (id: string) => {
     if (window.confirm('Сигурни ли сте, че искате да изтриете тази транзакция от историята?')) {
-      setHistory(prev => prev.filter(t => t.id !== id));
+      const next = history.filter(t => t.id !== id);
+      updateHistory(next);
     }
   };
 
   const handleClearAllHistory = () => {
-    if (window.confirm('Сигурни ли сте, че искате да изчистите ЦЯЛАТА история на транзакциите? Това ще нулира Realized P/L на $0.00.')) {
-      setHistory([]);
+    if (window.confirm('Сигурни ли сте, че искате да изчистите ЦЯЛАТА история на транзакциите? Това ще нулира Realized P/L на $0.00 на всички ваши устройства.')) {
+      updateHistory([]);
     }
   };
 
@@ -253,22 +315,6 @@ export default function PortfolioTracker({
       } catch (e) {}
       return next;
     });
-  };
-
-  // Base Currency state for portfolio totals & charts (USD or EUR)
-  const [baseCurrency, setBaseCurrency] = useState<'USD' | 'EUR'>(() => {
-    try {
-      const saved = localStorage.getItem('user_portfolio_base_currency');
-      if (saved === 'EUR' || saved === 'USD') return saved;
-    } catch (e) {}
-    return 'USD';
-  });
-
-  const handleSetBaseCurrency = (curr: 'USD' | 'EUR') => {
-    setBaseCurrency(curr);
-    try {
-      localStorage.setItem('user_portfolio_base_currency', curr);
-    } catch (e) {}
   };
 
   const handleExportBackup = () => {
@@ -435,7 +481,7 @@ export default function PortfolioTracker({
         pnlVal: pnlVal,
         pnlPct: pnlPct
       };
-      setHistory(prev => [newTx, ...prev]);
+      updateHistory([newTx, ...history]);
     } else {
       onAddPosition(payload);
 
@@ -451,7 +497,7 @@ export default function PortfolioTracker({
         pnlVal: 0,
         pnlPct: 0
       };
-      setHistory(prev => [newTx, ...prev]);
+      updateHistory([newTx, ...history]);
     }
 
     // Reset form and close modal
@@ -529,7 +575,7 @@ export default function PortfolioTracker({
       amount: amt,
       date: divDate
     };
-    setDivRecords(prev => [newDiv, ...prev]);
+    updateDivRecords([newDiv, ...divRecords]);
     if (onAddDividend) onAddDividend(newDiv);
     setDivAmount('');
   };
@@ -540,9 +586,6 @@ export default function PortfolioTracker({
   // Live EUR/USD exchange rate
   const eurUsdStock = stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
   const eurUsdRate = eurUsdStock?.currentPrice || eurUsdStock?.priceOfCalc || 1.08;
-
-  // Base Currency symbol helper
-  const baseSymbol = baseCurrency === 'EUR' ? '€' : '$';
 
   // Currency Converter helper to Portfolio Base Currency
   const convertToBase = (val: number, fromCurr: string = 'USD') => {
@@ -2116,10 +2159,7 @@ export default function PortfolioTracker({
 
               <button
                 type="button"
-                onClick={() => {
-                  alert(`Кеш наличността ($${cashInput}) беше запазена успешно!`);
-                  setIsCashModalOpen(false);
-                }}
+                onClick={handleSaveCash}
                 className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
               >
                 Запази кеш
@@ -2357,8 +2397,9 @@ export default function PortfolioTracker({
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-extrabold text-emerald-400">+${rec.amount.toFixed(2)}</span>
                     <button 
-                      onClick={() => setDivRecords(prev => prev.filter(r => r.id !== rec.id))}
+                      onClick={() => handleDeleteDividendRecord(rec.id)}
                       className="text-ink-faint hover:text-red-400 transition-colors"
+                      title="Изтрий запис"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
