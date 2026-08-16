@@ -44,6 +44,34 @@ import {
   Info
 } from 'lucide-react';
 
+export const formatDateDDMMYYYY = (dateStr?: string | number | null): string => {
+  if (!dateStr) return '-';
+  if (typeof dateStr === 'number') {
+    const d = new Date(dateStr > 1e11 ? dateStr : dateStr * 1000);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}.${month}.${year}`;
+    }
+  }
+  const str = String(dateStr).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const parts = str.split('T')[0].split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+  }
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const year = parsed.getFullYear();
+    return `${day}.${month}.${year}`;
+  }
+  return str;
+};
+
 interface Props {
   stocks: Stock[];
   positions: PortfolioPosition[];
@@ -1708,7 +1736,7 @@ export default function PortfolioTracker({
 
                       {/* 8. Date of Purchase */}
                       <td className="py-3 px-3 text-center text-ink-faint font-mono text-xs">
-                        {pos.buyDate || '-'}
+                        {pos.buyDate ? formatDateDDMMYYYY(pos.buyDate) : '-'}
                       </td>
 
                       {/* 9. Daily Change % */}
@@ -1883,8 +1911,8 @@ export default function PortfolioTracker({
                   </tr>
                 ) : (
                   filteredHistory.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-white/5 transition-colors">
-                      <td className="py-2.5 px-3 font-mono text-ink-muted">{tx.date}</td>
+                    <tr key={tx.id} className="hover:bg-white/5 transition-colors text-xs">
+                      <td className="py-2.5 px-3 font-mono text-ink-muted text-xs">{formatDateDDMMYYYY(tx.date)}</td>
                       <td className="py-2.5 px-3 font-black text-ink">{tx.ticker}</td>
                       <td className="py-2.5 px-3 font-extrabold">
                         <span className={`px-2 py-0.5 rounded text-[10px] ${
@@ -2263,8 +2291,8 @@ export default function PortfolioTracker({
                       const isProfit = (tx.pnlVal || 0) >= 0;
 
                       return (
-                        <tr key={tx.id} className="hover:bg-indigo-500/10 transition-colors">
-                          <td className="py-2.5 px-3 text-ink-faint font-mono text-[10px]">{tx.date}</td>
+                        <tr key={tx.id} className="hover:bg-indigo-500/10 transition-colors text-xs">
+                          <td className="py-2.5 px-3 text-ink-faint font-mono text-xs">{formatDateDDMMYYYY(tx.date)}</td>
                           <td className="py-2.5 px-3 font-extrabold flex items-center gap-1">
                             <span>{tx.ticker}</span>
                             {tx.currency && (
@@ -2397,7 +2425,7 @@ export default function PortfolioTracker({
                 <div key={rec.id} className="flex items-center justify-between p-2.5 rounded-xl bg-card/30 border border-white/5 text-xs">
                   <div className="flex items-center gap-2">
                     <span className="font-extrabold text-ink">{rec.ticker}</span>
-                    <span className="text-[10px] text-ink-faint font-mono">{rec.date}</span>
+                    <span className="text-xs text-ink-faint font-mono">{formatDateDDMMYYYY(rec.date)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-extrabold text-emerald-400">+${rec.amount.toFixed(2)}</span>

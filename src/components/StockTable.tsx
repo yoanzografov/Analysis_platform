@@ -108,12 +108,47 @@ function toIsoDate(dateStr: string): string {
 }
 
 function fromIsoDate(isoStr: string): string {
- if (!isoStr) return '';
- const parts = isoStr.split('-');
- if (parts.length === 3) {
- return `${parts[2]}.${parts[1]}.${parts[0]} г.`;
- }
- return isoStr;
+  if (!isoStr) return '';
+  const parts = isoStr.replace(' г.', '').trim().split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+  }
+  return isoStr;
+}
+
+export function formatDateDDMMYYYY(dateStr?: string | number | null): string {
+  if (!dateStr) return '-';
+  if (typeof dateStr === 'number') {
+    const d = new Date(dateStr > 1e11 ? dateStr : dateStr * 1000);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}.${month}.${year}`;
+    }
+  }
+  const str = String(dateStr).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const parts = str.split('T')[0].split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+  }
+  const match = str.match(/(\d{1,2})[\.\/-](\d{1,2})[\.\/-](\d{4})/);
+  if (match) {
+    const day = match[1].padStart(2, '0');
+    const month = match[2].padStart(2, '0');
+    const year = match[3];
+    return `${day}.${month}.${year}`;
+  }
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const year = parsed.getFullYear();
+    return `${day}.${month}.${year}`;
+  }
+  return str;
 }
 
 const StockLogo = ({ ticker }: { ticker: string }) => {
@@ -856,7 +891,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  className="w-full bg-bg rounded-2xl text-left font-sans tabular-nums text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none cursor-pointer"
  />
  ) : (
- <span>{stock.date || '-'}</span>
+ <span>{formatDateDDMMYYYY(stock.date)}</span>
  )}
  </td>
 
