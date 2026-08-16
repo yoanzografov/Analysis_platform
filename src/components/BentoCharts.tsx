@@ -52,17 +52,30 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
     };
   }, [showContextMenu, showSignalContextMenu]);
 
- // 1. Calculate the values for "Best Deals"
- const undervaluedStocks = [...stocks]
- .filter(s => s.difference !== null && s.difference > 0 && s.fairPrice !== null)
- .sort((a, b) => (b.difference || 0) - (a.difference || 0))
- .slice(0, 6)
- .map(s => ({
- ticker: s.ticker,
- difference: s.difference,
- currentPrice: s.currentPrice,
- fairPrice: s.fairPrice,
- }));
+  // 1. Calculate the values for "Best Deals" (Most Undervalued Stocks)
+  const undervaluedStocks = [...stocks]
+    .map(s => {
+      const cur = s.currentPrice;
+      const fair = s.fairPrice;
+      let diff = s.difference;
+      if (fair !== null && fair > 0 && cur > 0) {
+        diff = parseFloat((((fair - cur) / cur) * 100).toFixed(2));
+      }
+      return {
+        ...s,
+        calcDiff: diff
+      };
+    })
+    .filter(s => s.calcDiff !== null && s.calcDiff > 0 && s.fairPrice !== null && s.fairPrice > 0)
+    .sort((a, b) => (b.calcDiff || 0) - (a.calcDiff || 0))
+    .slice(0, 6)
+    .map(s => ({
+      ticker: s.ticker,
+      companyName: s.companyName,
+      difference: s.calcDiff!,
+      currentPrice: s.currentPrice,
+      fairPrice: s.fairPrice!,
+    }));
 
  // 2. Count signals for allocation breakdown - SIGNAL column
  const signalBuyCount = stocks.filter(s => s.signal?.trim().toLowerCase() === 'buy').length;
@@ -308,7 +321,7 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
  </div>
  ) : (
  <ResponsiveContainer width="100%" height="100%">
- <BarChart data={undervaluedStocks} margin={{ top: 10, right: 10, left: -30, bottom: 5 }}>
+ <BarChart data={undervaluedStocks} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
  <XAxis
  dataKey="ticker"
  stroke="var(--color-ink-muted)"

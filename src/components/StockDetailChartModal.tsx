@@ -141,7 +141,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
               {stock.difference != null && (
                 <>
                   <span className="text-border/40">•</span>
-                  <span className={`font-semibold font-mono ${stock.difference < 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <span className={`font-semibold font-mono ${stock.difference > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     ({stock.difference >= 0 ? '+' : ''}{stock.difference.toFixed(2)}%)
                   </span>
                 </>
