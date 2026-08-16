@@ -261,6 +261,14 @@ export default function App() {
 
   // Yahoo Finance Ticker Mapping for European & Global ETFs/Stocks
   const TICKER_YAHOO_MAP: Record<string, string> = {
+    'BRK.B': 'BRK-B',
+    'BRK/B': 'BRK-B',
+    'BRK B': 'BRK-B',
+    'BRK.A': 'BRK-A',
+    'BRK/A': 'BRK-A',
+    'BRK A': 'BRK-A',
+    'BF.B': 'BF-B',
+    'BF.A': 'BF-A',
     'XNAS': 'XNAS.DE',
     'XNAS.DE': 'XNAS.DE',
     'VHYL': 'VHYL.AS',

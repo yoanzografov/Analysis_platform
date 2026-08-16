@@ -611,7 +611,8 @@ export default function PortfolioTracker({
       return sClean === cleanTicker || sBase === baseTicker;
     });
 
-    const quote = portfolioPrices[cleanTicker] || portfolioPrices[baseTicker];
+    const altDotTicker = cleanTicker.includes('-') ? cleanTicker.replace('-', '.') : cleanTicker.replace('.', '-');
+    const quote = portfolioPrices[cleanTicker] || portfolioPrices[altDotTicker] || portfolioPrices[baseTicker];
 
     // Native price from exchange
     const curPrice = (matching?.currentPrice && matching.currentPrice > 0) 
