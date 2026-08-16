@@ -60,6 +60,7 @@ export interface PortfolioPosition {
   companyName?: string;
   shares: number;
   buyPrice: number;
+  currency?: 'USD' | 'EUR' | 'GBP';
   fee?: number;
   buyDate?: string;
   fairPrice?: number;
@@ -76,6 +77,7 @@ export interface PortfolioTransaction {
   type: 'Покупка' | 'Продажба';
   shares: number;
   buyPrice: number;
+  currency?: 'USD' | 'EUR' | 'GBP';
   sellPrice?: number;
   pnlVal?: number;
   pnlPct?: number;

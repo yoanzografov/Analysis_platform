@@ -243,12 +243,29 @@ export default function PortfolioTracker({
     });
   };
 
+  // Base Currency state for portfolio totals & charts (USD or EUR)
+  const [baseCurrency, setBaseCurrency] = useState<'USD' | 'EUR'>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_base_currency');
+      if (saved === 'EUR' || saved === 'USD') return saved;
+    } catch (e) {}
+    return 'USD';
+  });
+
+  const handleSetBaseCurrency = (curr: 'USD' | 'EUR') => {
+    setBaseCurrency(curr);
+    try {
+      localStorage.setItem('user_portfolio_base_currency', curr);
+    } catch (e) {}
+  };
+
   const handleExportBackup = () => {
     const backupData = {
       positions,
       history,
       divRecords,
       cashInput,
+      baseCurrency,
       exportDate: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -273,6 +290,7 @@ export default function PortfolioTracker({
             if (parsed.history) localStorage.setItem('user_portfolio_transactions', JSON.stringify(parsed.history));
             if (parsed.divRecords) localStorage.setItem('user_portfolio_dividends', JSON.stringify(parsed.divRecords));
             if (parsed.cashInput) localStorage.setItem('user_portfolio_cash', parsed.cashInput);
+            if (parsed.baseCurrency) localStorage.setItem('user_portfolio_base_currency', parsed.baseCurrency);
             window.location.reload();
           }
         } else {
@@ -293,6 +311,15 @@ export default function PortfolioTracker({
   const handleTickerChange = (val: string) => {
     setTicker(val);
     const upper = val.trim().toUpperCase();
+
+    // Auto-detect European vs US ticker currency
+    const isEur = upper.endsWith('.DE') || upper.endsWith('.PA') || upper.endsWith('.AS') || ['SXR8', 'VWCE', 'QDVE', 'IS3N', 'EUNL', '4GLD', 'MEUD', 'JGPI'].includes(upper);
+    if (isEur) {
+      setPositionCurrency('EUR');
+    } else if (upper.endsWith('.L')) {
+      setPositionCurrency('GBP');
+    }
+
     const found = stocks.find(s => s.ticker === upper);
     if (found) {
       setCompanyName(found.companyName);
@@ -324,7 +351,7 @@ export default function PortfolioTracker({
     setFormError('');
 
     if (!ticker.trim()) {
-      setFormError('Въведете тикер (напр. AAPL)');
+      setFormError('Въведете тикер (напр. AAPL или VWCE)');
       return;
     }
 
@@ -340,19 +367,17 @@ export default function PortfolioTracker({
       return;
     }
 
-    // Auto-convert price to USD base if entered in EUR
-    const priceInUsd = positionCurrency === 'EUR' ? priceNum * eurUsdRate : priceNum;
-
     const parseOptionalFloat = (val: string) => {
       const parsed = parseFloat(val);
       return isNaN(parsed) ? undefined : parsed;
     };
 
-    const payload = {
+    const payload: Omit<PortfolioPosition, 'id'> = {
       ticker: ticker.trim().toUpperCase(),
       companyName: companyName.trim(),
       shares: sharesNum,
-      buyPrice: priceInUsd,
+      buyPrice: priceNum,
+      currency: positionCurrency,
       fee: parseFloat(fee) || 0,
       buyDate: buyDate || new Date().toISOString().split('T')[0],
       fairPrice: parseOptionalFloat(fairPrice),
@@ -375,6 +400,7 @@ export default function PortfolioTracker({
         type: txType,
         shares: sharesNum,
         buyPrice: priceNum,
+        currency: positionCurrency,
         pnlVal: 0,
         pnlPct: 0
       };
@@ -410,12 +436,13 @@ export default function PortfolioTracker({
   };
 
   const handleStartEdit = (pos: PortfolioPosition) => {
+    const isEur = pos.currency === 'EUR' || pos.ticker.endsWith('.DE') || pos.ticker.endsWith('.PA') || pos.ticker.endsWith('.AS') || ['SXR8', 'VWCE', 'QDVE', 'IS3N', 'EUNL', '4GLD', 'MEUD', 'JGPI'].includes(pos.ticker.toUpperCase());
     setEditingId(pos.id);
     setTicker(pos.ticker);
     setCompanyName(pos.companyName || '');
     setShares(pos.shares.toString());
     setBuyPrice(pos.buyPrice.toString());
-    setPositionCurrency('USD'); // Stored values are always in USD base
+    setPositionCurrency(pos.currency || (isEur ? 'EUR' : (pos.ticker.endsWith('.L') ? 'GBP' : 'USD')));
     setFee((pos.fee || 0).toString());
     setBuyDate(pos.buyDate || new Date().toISOString().split('T')[0]);
     setFairPrice(pos.fairPrice ? pos.fairPrice.toString() : '');
@@ -467,10 +494,23 @@ export default function PortfolioTracker({
   const eurUsdStock = stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
   const eurUsdRate = eurUsdStock?.currentPrice || eurUsdStock?.priceOfCalc || 1.08;
 
-  // Portfolio Dashboard Calculations
+  // Base Currency symbol helper
+  const baseSymbol = baseCurrency === 'EUR' ? '€' : '$';
+
+  // Currency Converter helper to Portfolio Base Currency
+  const convertToBase = (val: number, fromCurr: string = 'USD') => {
+    if (fromCurr === baseCurrency) return val;
+    if (fromCurr === 'EUR' && baseCurrency === 'USD') return val * eurUsdRate;
+    if (fromCurr === 'USD' && baseCurrency === 'EUR') return val / eurUsdRate;
+    if (fromCurr === 'GBP' && baseCurrency === 'USD') return val * 1.27;
+    if (fromCurr === 'GBP' && baseCurrency === 'EUR') return (val * 1.27) / eurUsdRate;
+    return val;
+  };
+
+  // Portfolio Dashboard Calculations in Base Currency
   let totalCostBasis = 0;
   let totalCurrentValue = 0;
-  let totalDivEarned = divRecords.reduce((acc, r) => acc + (r.amount || 0), 0);
+  let totalDivEarned = divRecords.reduce((acc, r) => acc + convertToBase(r.amount || 0, 'USD'), 0);
 
   const enrichedHoldings = activeHoldings.map(pos => {
     const cleanTicker = pos.ticker.trim().toUpperCase();
@@ -483,33 +523,31 @@ export default function PortfolioTracker({
 
     const quote = portfolioPrices[cleanTicker] || portfolioPrices[baseTicker];
 
+    // Native price from exchange
     const curPrice = (matching?.currentPrice && matching.currentPrice > 0) 
       ? matching.currentPrice 
       : (quote?.currentPrice && quote.currentPrice > 0)
         ? quote.currentPrice
         : ((matching?.priceOfCalc && matching.priceOfCalc > 0) ? matching.priceOfCalc : pos.buyPrice);
 
-    const quoteCurrency = quote?.currency || matching?.currency || (cleanTicker.endsWith('.DE') || cleanTicker.endsWith('.PA') || cleanTicker.endsWith('.AS') || cleanTicker.includes('ETR:') || cleanTicker.includes('EPA:') || cleanTicker.includes('AMS:') ? 'EUR' : 'USD');
+    const isEurTicker = cleanTicker.endsWith('.DE') || cleanTicker.endsWith('.PA') || cleanTicker.endsWith('.AS') || cleanTicker.includes('ETR:') || cleanTicker.includes('EPA:') || cleanTicker.includes('AMS:') || ['SXR8', 'VWCE', 'QDVE', 'IS3N', 'EUNL', '4GLD', 'MEUD', 'JGPI'].includes(cleanTicker);
+    const posCurrency: 'USD' | 'EUR' | 'GBP' = pos.currency || (isEurTicker ? 'EUR' : (cleanTicker.endsWith('.L') ? 'GBP' : 'USD'));
+    const posSymbol = posCurrency === 'EUR' ? '€' : (posCurrency === 'GBP' ? '£' : '$');
 
-    let curPriceInUsd = curPrice;
-    if (quoteCurrency === 'EUR') {
-      curPriceInUsd = curPrice * eurUsdRate;
-    } else if (quoteCurrency === 'GBP' || quoteCurrency === 'GBp' || cleanTicker.endsWith('.L') || cleanTicker.includes('LON:')) {
-      const gbpUsdRate = portfolioPrices['GBPUSD=X']?.currentPrice || portfolioPrices['GBP=X']?.currentPrice || 1.27;
-      const isPence = quoteCurrency === 'GBp' || cleanTicker.endsWith('.L');
-      const priceInGbp = isPence ? curPrice / 100 : curPrice;
-      curPriceInUsd = priceInGbp * gbpUsdRate;
-    }
-
+    // Native position accounting (matches broker statements)
     const costBasis = (pos.shares * pos.buyPrice) + (pos.fee || 0);
-    const currentVal = pos.shares * curPriceInUsd;
+    const currentVal = pos.shares * curPrice;
     const pnlVal = currentVal - costBasis;
     const pnlPct = costBasis > 0 ? (pnlVal / costBasis) * 100 : 0;
     const fPrice = pos.fairPrice || matching?.fairPrice || 0;
-    const diffVsFair = fPrice > 0 ? ((curPriceInUsd - fPrice) / fPrice) * 100 : 0;
+    const diffVsFair = fPrice > 0 ? ((curPrice - fPrice) / fPrice) * 100 : 0;
 
-    totalCostBasis += costBasis;
-    totalCurrentValue += currentVal;
+    // Converted to Portfolio Base Currency for top-level aggregates
+    const costBasisInBase = convertToBase(costBasis, posCurrency);
+    const currentValInBase = convertToBase(currentVal, posCurrency);
+
+    totalCostBasis += costBasisInBase;
+    totalCurrentValue += currentValInBase;
 
     // Synthesize a matching object if we have a live quote but no stock in the main interactive table
     const synthMatching: Stock | undefined = matching || (quote ? {
@@ -535,21 +573,25 @@ export default function PortfolioTracker({
 
     return {
       ...pos,
+      currency: posCurrency,
+      posSymbol,
       companyName: matching?.companyName || quote?.companyName || pos.companyName || pos.ticker,
       matching: synthMatching,
-      curPrice: curPriceInUsd,
+      curPrice,
       originalPrice: curPrice,
-      quoteCurrency,
+      quoteCurrency: posCurrency,
       costBasis,
       currentVal,
       pnlVal,
       pnlPct,
       fPrice,
-      diffVsFair
+      diffVsFair,
+      costBasisInBase,
+      currentValInBase
     };
   });
 
-  const parsedCash = parseFloat(cashInput) || 0;
+  const parsedCash = convertToBase(parseFloat(cashInput) || 0, 'USD');
   const totalPortfolioValue = totalCurrentValue + parsedCash;
   const totalReturnVal = totalCurrentValue - totalCostBasis;
   const totalReturnPct = totalCostBasis > 0 ? (totalReturnVal / totalCostBasis) * 100 : 0;
@@ -561,24 +603,24 @@ export default function PortfolioTracker({
     return true;
   });
 
-  // Additional metric calculations for the 9-Card KPI Grid & Charts
-  const realizedPnLSum = filteredHistory.reduce((acc, h) => acc + (h.pnlVal || 0), 0);
-  const totalDividendsSum = divRecords.reduce((acc, r) => acc + (r.amount || 0), 0);
+  // Additional metric calculations in Portfolio Base Currency
+  const realizedPnLSum = filteredHistory.reduce((acc, h) => acc + convertToBase(h.pnlVal || 0, h.currency || 'USD'), 0);
+  const totalDividendsSum = divRecords.reduce((acc, r) => acc + convertToBase(r.amount || 0, 'USD'), 0);
   const unrealizedProfitCount = enrichedHoldings.filter(h => h.pnlVal >= 0).length;
   const unrealizedLossCount = enrichedHoldings.filter(h => h.pnlVal < 0).length;
   const realizedProfitCount = filteredHistory.filter(h => (h.pnlVal || 0) > 0).length;
   const realizedLossCount = filteredHistory.filter(h => (h.pnlVal || 0) < 0).length;
   const avgCostBasis = enrichedHoldings.length > 0 ? totalCostBasis / enrichedHoldings.length : 0;
 
-  // Grand Total Gain (Unrealized P/L + Realized P/L + Dividends)
+  // Grand Total Gain (Unrealized P/L + Realized P/L + Dividends in Base Currency)
   const grandTotalReturnVal = totalReturnVal + realizedPnLSum + totalDividendsSum;
   const grandTotalReturnPct = totalCostBasis > 0 ? (grandTotalReturnVal / totalCostBasis) * 100 : 0;
 
-  // Sector Diversification breakdown (Snowball Analytics style)
+  // Sector Diversification breakdown (in Base Currency)
   const sectorMap: { [sector: string]: number } = {};
   enrichedHoldings.forEach(h => {
     const sec = getSectorForStock(h.ticker) || 'Other';
-    sectorMap[sec] = (sectorMap[sec] || 0) + h.currentVal;
+    sectorMap[sec] = (sectorMap[sec] || 0) + h.currentValInBase;
   });
   const sectorList = Object.entries(sectorMap)
     .map(([sector, val]) => ({
@@ -592,9 +634,9 @@ export default function PortfolioTracker({
   const holdingsByWeight = [...enrichedHoldings]
     .map(h => ({
       ...h,
-      weightPct: totalCurrentValue > 0 ? (h.currentVal / totalCurrentValue) * 100 : 0
+      weightPct: totalCurrentValue > 0 ? (h.currentValInBase / totalCurrentValue) * 100 : 0
     }))
-    .sort((a, b) => b.currentVal - a.currentVal);
+    .sort((a, b) => b.currentValInBase - a.currentValInBase);
 
   // Sorted Holdings for the table rendering
   const sortedHoldings = !sortField 
@@ -690,8 +732,34 @@ export default function PortfolioTracker({
           </button>
         </div>
 
-        {/* Quick Action Buttons */}
+        {/* Quick Action Buttons: Base Currency Switcher & Privacy Toggle */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Base Currency Switcher (USD / EUR) */}
+          <div className="flex items-center bg-bg/80 border border-border/80 rounded-xl p-0.5 text-xs font-black shadow-2xs">
+            <button
+              onClick={() => handleSetBaseCurrency('USD')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                baseCurrency === 'USD'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+              title="Показвай тоталите и графиките в щатски долари (USD)"
+            >
+              🇺🇸 USD ($)
+            </button>
+            <button
+              onClick={() => handleSetBaseCurrency('EUR')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                baseCurrency === 'EUR'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+              title="Показвай тоталите и графиките в евро (EUR)"
+            >
+              🇪🇺 EUR (€)
+            </button>
+          </div>
+
           <button
             onClick={togglePrivacyMode}
             className="p-2 bg-card border border-border/80 text-ink-muted hover:text-ink rounded-xl text-xs font-bold transition-all"
@@ -716,12 +784,12 @@ export default function PortfolioTracker({
               TOTAL INVESTED
             </span>
             <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
-              Вложени
+              Вложени ({baseCurrency})
             </span>
           </div>
           <div className="mt-2 flex items-baseline">
             <span className="text-lg sm:text-xl font-extrabold text-ink font-sans tabular-nums tracking-tight">
-              {isPrivacyMode ? '••••••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              {isPrivacyMode ? '••••••••' : `${baseSymbol}${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
@@ -739,7 +807,7 @@ export default function PortfolioTracker({
           </div>
           <div className="mt-2 flex items-baseline">
             <span className={`text-lg sm:text-xl font-extrabold font-sans tabular-nums tracking-tight ${totalReturnVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {isPrivacyMode ? '••••••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              {isPrivacyMode ? '••••••••' : `${totalReturnVal >= 0 ? '+' : '-'}${baseSymbol}${Math.abs(totalReturnVal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
@@ -752,12 +820,12 @@ export default function PortfolioTracker({
               REALIZED P/L
             </span>
             <span className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
-              Затворени
+              Затворени ({baseCurrency})
             </span>
           </div>
           <div className="mt-2 flex items-baseline">
             <span className={`text-lg sm:text-xl font-extrabold font-sans tabular-nums tracking-tight ${realizedPnLSum >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {isPrivacyMode ? '••••••••' : `${realizedPnLSum >= 0 ? '+' : ''}$${realizedPnLSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              {isPrivacyMode ? '••••••••' : `${realizedPnLSum >= 0 ? '+' : '-'}${baseSymbol}${Math.abs(realizedPnLSum).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
@@ -770,12 +838,12 @@ export default function PortfolioTracker({
               DIVIDENDS EARNED
             </span>
             <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-              Дивиденти
+              Дивиденти ({baseCurrency})
             </span>
           </div>
           <div className="mt-2 flex items-baseline">
             <span className="text-lg sm:text-xl font-extrabold text-amber-400 font-sans tabular-nums tracking-tight">
-              {isPrivacyMode ? '••••••••' : `+$${totalDividendsSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              {isPrivacyMode ? '••••••••' : `+${baseSymbol}${totalDividendsSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
@@ -793,7 +861,7 @@ export default function PortfolioTracker({
           </div>
           <div className="mt-2 flex items-baseline">
             <span className={`text-lg sm:text-xl font-extrabold font-sans tabular-nums tracking-tight ${grandTotalReturnVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {isPrivacyMode ? '••••••••' : `${grandTotalReturnVal >= 0 ? '+' : ''}$${grandTotalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              {isPrivacyMode ? '••••••••' : `${grandTotalReturnVal >= 0 ? '+' : '-'}${baseSymbol}${Math.abs(grandTotalReturnVal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
@@ -806,12 +874,12 @@ export default function PortfolioTracker({
               CURRENT MARKET VALUE
             </span>
             <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              Пазарна
+              Пазарна ({baseCurrency})
             </span>
           </div>
           <div className="mt-2 flex items-baseline">
             <span className="text-lg sm:text-xl font-extrabold text-emerald-400 font-sans tabular-nums tracking-tight">
-              {isPrivacyMode ? '••••••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              {isPrivacyMode ? '••••••••' : `${baseSymbol}${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
@@ -824,12 +892,12 @@ export default function PortfolioTracker({
               AVERAGE COST BASIS
             </span>
             <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
-              Средна цена
+              Средна ({baseCurrency})
             </span>
           </div>
           <div className="mt-2 flex items-baseline">
             <span className="text-lg sm:text-xl font-extrabold text-ink font-sans tabular-nums tracking-tight">
-              {isPrivacyMode ? '••••••••' : `$${avgCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              {isPrivacyMode ? '••••••••' : `${baseSymbol}${avgCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
           </div>
         </div>
@@ -864,7 +932,7 @@ export default function PortfolioTracker({
           <div className="flex items-center justify-between border-b border-border/50 pb-2.5 shrink-0">
             <div>
               <span className="text-xs text-ink/60 font-serif italic uppercase tracking-wider block">
-                Invested vs Returns
+                Invested vs Returns ({baseCurrency})
               </span>
               <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
                 <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -889,7 +957,7 @@ export default function PortfolioTracker({
             <div className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40">
               <span className="text-xs text-ink-muted font-bold">Вложени пари (Cost Basis):</span>
               <span className="text-xs font-black text-ink">
-                {isPrivacyMode ? '••••' : `$${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {isPrivacyMode ? '••••' : `${baseSymbol}${totalCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
@@ -897,7 +965,7 @@ export default function PortfolioTracker({
             <div className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40">
               <span className="text-xs text-ink-muted font-bold">Пазарна оценка:</span>
               <span className="text-xs font-black text-emerald-400">
-                {isPrivacyMode ? '••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {isPrivacyMode ? '••••' : `${baseSymbol}${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
@@ -906,7 +974,7 @@ export default function PortfolioTracker({
               <span className="text-xs text-ink-muted font-bold">Нереализирана P/L:</span>
               <span className={`text-xs font-black flex items-center gap-1 ${totalReturnVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                 {totalReturnVal >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                {isPrivacyMode ? '••••' : `${totalReturnVal >= 0 ? '+' : ''}$${totalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${totalReturnVal >= 0 ? '+' : ''}${totalReturnPct.toFixed(2)}%)`}
+                {isPrivacyMode ? '••••' : `${totalReturnVal >= 0 ? '+' : '-'}${baseSymbol}${Math.abs(totalReturnVal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${totalReturnVal >= 0 ? '+' : ''}${totalReturnPct.toFixed(2)}%)`}
               </span>
             </div>
 
@@ -914,7 +982,7 @@ export default function PortfolioTracker({
             <div className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40">
               <span className="text-xs text-ink-muted font-bold">Реализирана P/L (Затворени):</span>
               <span className={`text-xs font-black ${realizedPnLSum >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {isPrivacyMode ? '••••' : `${realizedPnLSum >= 0 ? '+' : ''}$${realizedPnLSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {isPrivacyMode ? '••••' : `${realizedPnLSum >= 0 ? '+' : '-'}${baseSymbol}${Math.abs(realizedPnLSum).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
@@ -922,7 +990,7 @@ export default function PortfolioTracker({
             <div className="flex items-center justify-between p-1.5 rounded-xl border border-border/30 bg-card/40">
               <span className="text-xs text-ink-muted font-bold">Получени дивиденти:</span>
               <span className="text-xs font-black text-amber-400">
-                {isPrivacyMode ? '••••' : `+$${totalDividendsSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {isPrivacyMode ? '••••' : `+${baseSymbol}${totalDividendsSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>
             </div>
 
@@ -930,7 +998,7 @@ export default function PortfolioTracker({
             <div className="flex items-center justify-between p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
               <span className="text-xs text-ink font-black uppercase tracking-tight">Общо с дивиденти:</span>
               <span className={`text-xs sm:text-sm font-black ${grandTotalReturnVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {isPrivacyMode ? '••••' : `${grandTotalReturnVal >= 0 ? '+' : ''}$${grandTotalReturnVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${grandTotalReturnVal >= 0 ? '+' : ''}${grandTotalReturnPct.toFixed(2)}%)`}
+                {isPrivacyMode ? '••••' : `${grandTotalReturnVal >= 0 ? '+' : '-'}${baseSymbol}${Math.abs(grandTotalReturnVal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${grandTotalReturnVal >= 0 ? '+' : ''}${grandTotalReturnPct.toFixed(2)}%)`}
               </span>
             </div>
           </div>
@@ -1106,7 +1174,7 @@ export default function PortfolioTracker({
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none font-sans">
                   <span className="text-[8px] font-black uppercase text-ink-faint tracking-wider">ОБЩО</span>
                   <span className="text-[11px] font-black text-cyan-400">
-                    {isPrivacyMode ? '••••' : `$${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+                    {isPrivacyMode ? '••••' : `${baseSymbol}${totalCurrentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
                   </span>
                 </div>
               </div>
@@ -1199,7 +1267,7 @@ export default function PortfolioTracker({
                         <div className="flex justify-between text-xs font-extrabold">
                           <span className="text-ink">{item.sector}</span>
                           <span className="text-ink-muted">
-                            {isPrivacyMode ? '••••' : `$${item.val.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} ({item.pct.toFixed(1)}%)
+                            {isPrivacyMode ? '••••' : `${baseSymbol}${item.val.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} ({item.pct.toFixed(1)}%)
                           </span>
                         </div>
                         <div className="w-full bg-card h-2 rounded-full overflow-hidden border border-border/40">
@@ -1271,10 +1339,10 @@ export default function PortfolioTracker({
             <div className="bg-card/70 border border-border/80 border-l-4 border-l-emerald-500 rounded-2xl p-4 shadow-md backdrop-blur-sm">
               <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
                 <Flame className="w-3.5 h-3.5 text-emerald-400" />
-                ПРОГНОЗЕН ГОДИШЕН ПАСИВЕН ДОХОД
+                ПРОГНОЗЕН ГОДИШЕН ПАСИВЕН ДОХОД ({baseCurrency})
               </span>
               <div className="text-xl sm:text-2xl font-black text-emerald-400 mt-1">
-                {isPrivacyMode ? '••••••••' : `$${totalAnnualDivIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {isPrivacyMode ? '••••••••' : `${baseSymbol}${totalAnnualDivIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </div>
             </div>
 
@@ -1291,10 +1359,10 @@ export default function PortfolioTracker({
             <div className="bg-card/70 border border-border/80 border-l-4 border-l-indigo-500 rounded-2xl p-4 shadow-md backdrop-blur-sm">
               <span className="text-[10px] font-black uppercase text-ink-muted tracking-wider flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-                СРЕДНО НА МЕСЕЦ
+                СРЕДНО НА МЕСЕЦ ({baseCurrency})
               </span>
               <div className="text-xl sm:text-2xl font-black text-indigo-400 mt-1">
-                {isPrivacyMode ? '••••••••' : `$${(totalAnnualDivIncome / 12).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {isPrivacyMode ? '••••••••' : `${baseSymbol}${(totalAnnualDivIncome / 12).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </div>
             </div>
           </div>
@@ -1319,7 +1387,7 @@ export default function PortfolioTracker({
                 return (
                   <div key={m.month} className="flex flex-col items-center gap-1.5 h-full justify-end group">
                     <span className="text-[9px] font-extrabold text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {isPrivacyMode ? '••' : `$${m.val.toFixed(0)}`}
+                      {isPrivacyMode ? '••' : `${baseSymbol}${m.val.toFixed(0)}`}
                     </span>
                     <div className="w-full bg-card/60 rounded-t-lg overflow-hidden border border-emerald-500/20 flex items-end h-28">
                       <div 
@@ -1382,7 +1450,7 @@ export default function PortfolioTracker({
               className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-emerald-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <Coins className="w-4 h-4 text-emerald-400" />
-              <span>Получени дивиденти (${totalDivEarned.toFixed(2)})</span>
+              <span>Получени дивиденти ({baseSymbol}{totalDivEarned.toFixed(2)})</span>
             </button>
 
             {/* 5. Кеш */}
@@ -1391,7 +1459,7 @@ export default function PortfolioTracker({
               className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-amber-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <Coins className="w-4 h-4 text-amber-400" />
-              <span>Кеш: ${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+              <span>Кеш: {baseSymbol}{(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
             </button>
           </div>
 
@@ -1444,7 +1512,7 @@ export default function PortfolioTracker({
                   PROFIT / LOSS %{sortField === 'pnlPct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
                 </th>
                 <th onClick={() => handleSort('pnlVal')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
-                  UNRLZD P&L ($){sortField === 'pnlVal' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                  UNREALIZED P&L{sortField === 'pnlVal' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
                 </th>
                 <th onClick={() => handleSort('weightPct')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
                   VALUE{sortField === 'weightPct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
@@ -1463,7 +1531,7 @@ export default function PortfolioTracker({
                 sortedHoldings.map(pos => {
                   const isPosProfit = pos.pnlVal >= 0;
                   const isDailyUp = (pos.matching?.dailyChangePct || 0) >= 0;
-                  const shareOfPortfolioPct = totalCurrentValue > 0 ? (pos.currentVal / totalCurrentValue) * 100 : 0;
+                  const shareOfPortfolioPct = totalCurrentValue > 0 ? (pos.currentValInBase / totalCurrentValue) * 100 : 0;
                   const isSelected = selectedPosId === pos.id;
 
                   return (
@@ -1482,8 +1550,10 @@ export default function PortfolioTracker({
                       <td className="py-3 px-4 first:rounded-l-xl">
                         <div className="flex items-center gap-1.5">
                           <span className="font-extrabold text-ink">{pos.ticker}</span>
-                          {pos.quoteCurrency && pos.quoteCurrency !== 'USD' && (
-                            <span className="px-1 py-0.5 rounded text-[8px] font-black bg-indigo-500/10 text-indigo-400 uppercase">
+                          {pos.quoteCurrency && (
+                            <span className={`px-1 py-0.5 rounded text-[8px] font-black uppercase ${
+                              pos.quoteCurrency === 'EUR' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-indigo-500/10 text-indigo-400'
+                            }`}>
                               {pos.quoteCurrency}
                             </span>
                           )}
@@ -1526,17 +1596,17 @@ export default function PortfolioTracker({
 
                       {/* 5. Avg. Price */}
                       <td className="py-3 px-3 text-right font-mono text-ink-faint">
-                        {isPrivacyMode ? '••••' : `$${pos.buyPrice.toFixed(2)}`}
+                        {isPrivacyMode ? '••••' : `${pos.posSymbol}${pos.buyPrice.toFixed(2)}`}
                       </td>
 
                       {/* 6. Fee */}
                       <td className="py-3 px-3 text-right font-mono text-ink-faint">
-                        {isPrivacyMode ? '••••' : `$${(pos.fee || 0).toFixed(2)}`}
+                        {isPrivacyMode ? '••••' : `${pos.posSymbol}${(pos.fee || 0).toFixed(2)}`}
                       </td>
 
                       {/* 7. Cost Basis */}
                       <td className="py-3 px-3 text-right font-mono font-bold text-ink">
-                        {isPrivacyMode ? '••••••••' : `$${pos.costBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        {isPrivacyMode ? '••••••••' : `${pos.posSymbol}${pos.costBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </td>
 
                       {/* 8. Date of Purchase */}
@@ -1556,7 +1626,7 @@ export default function PortfolioTracker({
                       {/* 10. Current Price */}
                       <td className="py-3 px-3 text-right font-mono font-black text-ink">
                         <div className="flex items-center justify-end gap-1.5">
-                          <span>{isPrivacyMode ? '•••••' : `$${pos.curPrice.toFixed(2)}`}</span>
+                          <span>{isPrivacyMode ? '•••••' : `${pos.posSymbol}${pos.curPrice.toFixed(2)}`}</span>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1619,22 +1689,22 @@ export default function PortfolioTracker({
                         </span>
                       </td>
 
-                      {/* 15. Unrealized P/L $ */}
+                      {/* 15. Unrealized P/L */}
                       <td className="py-3 px-3 text-right font-mono font-extrabold">
                         <span className={isPosProfit ? 'text-emerald-400' : 'text-rose-400'}>
-                          {isPrivacyMode ? '••••••••' : `${isPosProfit ? '+' : ''}$${pos.pnlVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                          {isPrivacyMode ? '••••••••' : `${isPosProfit ? '+' : '-'}${pos.posSymbol}${Math.abs(pos.pnlVal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </span>
                       </td>
 
                       {/* 16. Value */}
                       <td className="py-3 px-3 text-right font-mono font-black text-ink">
-                        {isPrivacyMode ? '••••••••' : `$${pos.currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        {isPrivacyMode ? '••••••••' : `${pos.posSymbol}${pos.currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </td>
 
                       {/* 17. Dividend */}
                       <td className="py-3 px-3 text-right last:rounded-r-xl">
                         <span className="font-mono text-emerald-400 font-extrabold block">
-                          {isPrivacyMode ? '••••' : `$${((pos.annualDivPerShare || 0) * pos.shares).toFixed(2)}`}
+                          {isPrivacyMode ? '••••' : `${pos.posSymbol}${((pos.annualDivPerShare || 0) * pos.shares).toFixed(2)}`}
                         </span>
                         <span className="text-[9px] text-ink-faint block">
                           FY: {pos.matching?.dividend || '0.00%'}
