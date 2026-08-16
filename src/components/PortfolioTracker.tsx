@@ -176,12 +176,12 @@ export default function PortfolioTracker({
       if (saved) return JSON.parse(saved);
     } catch (e) {}
     return transactions.length > 0 ? transactions : [
-      { id: 't1', date: '2026-05-29', ticker: 'SXR8', type: 'Покупка', shares: 10, buyPrice: 500.00, pnlVal: 0, pnlPct: 0 },
-      { id: 't2', date: '2026-05-29', ticker: 'QCOM', type: 'Покупка', shares: 10, buyPrice: 150.00, pnlVal: 178.70, pnlPct: 11.91 },
-      { id: 't3', date: '2026-01-10', ticker: 'AAPL', type: 'Покупка', shares: 10, buyPrice: 150.00, pnlVal: 1633.00, pnlPct: 108.87 },
-      { id: 't4', date: '2026-02-15', ticker: 'NVDA', type: 'Покупка', shares: 15, buyPrice: 90.00, pnlVal: 0, pnlPct: 0 },
-      { id: 't5', date: '2026-03-20', ticker: 'BTC', type: 'Покупка', shares: 0.5, buyPrice: 48000.00, pnlVal: 0, pnlPct: 0 },
-      { id: 't6', date: '2026-04-05', ticker: 'ETH', type: 'Покупка', shares: 2.2, buyPrice: 2200.00, pnlVal: 0, pnlPct: 0 },
+      { id: 't1', date: '2026-05-29', ticker: 'SXR8', type: 'Покупка', shares: 10, buyPrice: 500.00, currency: 'EUR', pnlVal: 0, pnlPct: 0 },
+      { id: 't2', date: '2026-05-29', ticker: 'QCOM', type: 'Продажба', shares: 10, buyPrice: 150.00, sellPrice: 167.87, currency: 'USD', pnlVal: 178.70, pnlPct: 11.91 },
+      { id: 't3', date: '2026-01-10', ticker: 'AAPL', type: 'Продажба', shares: 10, buyPrice: 150.00, sellPrice: 313.30, currency: 'USD', pnlVal: 1633.00, pnlPct: 108.87 },
+      { id: 't4', date: '2026-02-15', ticker: 'NVDA', type: 'Покупка', shares: 15, buyPrice: 90.00, currency: 'USD', pnlVal: 0, pnlPct: 0 },
+      { id: 't5', date: '2026-03-20', ticker: 'BTC', type: 'Покупка', shares: 0.5, buyPrice: 48000.00, currency: 'USD', pnlVal: 0, pnlPct: 0 },
+      { id: 't6', date: '2026-04-05', ticker: 'ETH', type: 'Покупка', shares: 2.2, buyPrice: 2200.00, currency: 'USD', pnlVal: 0, pnlPct: 0 },
     ];
   });
 
@@ -190,6 +190,18 @@ export default function PortfolioTracker({
       localStorage.setItem('user_portfolio_transactions', JSON.stringify(history));
     } catch (e) {}
   }, [history]);
+
+  const handleDeleteTransaction = (id: string) => {
+    if (window.confirm('Сигурни ли сте, че искате да изтриете тази транзакция от историята?')) {
+      setHistory(prev => prev.filter(t => t.id !== id));
+    }
+  };
+
+  const handleClearAllHistory = () => {
+    if (window.confirm('Сигурни ли сте, че искате да изчистите ЦЯЛАТА история на транзакциите? Това ще нулира Realized P/L на $0.00.')) {
+      setHistory([]);
+    }
+  };
 
   // Privacy mode & Backup Export/Import logic
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'diversification' | 'dividends' | 'holdings' | 'transactions'>('overview');
@@ -389,6 +401,41 @@ export default function PortfolioTracker({
     if (editingId) {
       onUpdatePosition(editingId, payload);
       setEditingId(null);
+    } else if (txType === 'Продажба') {
+      const existingPos = positions.find(p => p.ticker.toUpperCase() === payload.ticker);
+      const posBuyPrice = existingPos ? existingPos.buyPrice : priceNum;
+      const sellPrice = priceNum;
+      const feeNum = parseFloat(fee) || 0;
+      const cost = sharesNum * posBuyPrice;
+      const revenue = (sharesNum * sellPrice) - feeNum;
+      const pnlVal = revenue - cost;
+      const pnlPct = cost > 0 ? (pnlVal / cost) * 100 : 0;
+
+      if (existingPos) {
+        const remainingShares = existingPos.shares - sharesNum;
+        if (remainingShares <= 0) {
+          onDeletePosition(existingPos.id);
+        } else {
+          onUpdatePosition(existingPos.id, {
+            ...existingPos,
+            shares: remainingShares
+          });
+        }
+      }
+
+      const newTx: PortfolioTransaction = {
+        id: `${Date.now()}-${Math.random()}`,
+        date: buyDate || new Date().toISOString().split('T')[0],
+        ticker: payload.ticker,
+        type: 'Продажба',
+        shares: sharesNum,
+        buyPrice: posBuyPrice,
+        sellPrice: sellPrice,
+        currency: positionCurrency,
+        pnlVal: pnlVal,
+        pnlPct: pnlPct
+      };
+      setHistory(prev => [newTx, ...prev]);
     } else {
       onAddPosition(payload);
 
@@ -397,7 +444,7 @@ export default function PortfolioTracker({
         id: `${Date.now()}-${Math.random()}`,
         date: buyDate || new Date().toISOString().split('T')[0],
         ticker: payload.ticker,
-        type: txType,
+        type: 'Покупка',
         shares: sharesNum,
         buyPrice: priceNum,
         currency: positionCurrency,
@@ -2089,35 +2136,57 @@ export default function PortfolioTracker({
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-bg border border-border rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex flex-wrap items-center justify-between border-b border-border/40 pb-3 gap-2">
-              <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
-                <History className="w-5 h-5 text-indigo-400" />
-                История на транзакциите
-              </h3>
-
-              {/* Date Filters */}
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-[10px] font-bold text-ink-faint">ОТ:</span>
-                <input
-                  type="date"
-                  value={historyFromDate}
-                  onChange={e => setHistoryFromDate(e.target.value)}
-                  className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none"
-                />
-                <span className="text-[10px] font-bold text-ink-faint">ДО:</span>
-                <input
-                  type="date"
-                  value={historyToDate}
-                  onChange={e => setHistoryToDate(e.target.value)}
-                  className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none"
-                />
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
+                  <History className="w-5 h-5 text-indigo-400" />
+                  История на транзакциите
+                </h3>
+                <span className={`text-xs font-black px-2.5 py-1 rounded-full border ${
+                  realizedPnLSum >= 0
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                }`}>
+                  Общо реализирана П/З: {realizedPnLSum >= 0 ? '+' : '-'}{baseSymbol}{Math.abs(realizedPnLSum).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
 
-              <button 
-                onClick={() => setIsHistoryModalOpen(false)}
-                className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {/* Controls: Date Filters & Clear All & Close */}
+              <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-ink-faint">ОТ:</span>
+                  <input
+                    type="date"
+                    value={historyFromDate}
+                    onChange={e => setHistoryFromDate(e.target.value)}
+                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none"
+                  />
+                  <span className="text-[10px] font-bold text-ink-faint">ДО:</span>
+                  <input
+                    type="date"
+                    value={historyToDate}
+                    onChange={e => setHistoryToDate(e.target.value)}
+                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none"
+                  />
+                </div>
+
+                {filteredHistory.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAllHistory}
+                    className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all cursor-pointer"
+                    title="Изчисти всички транзакции и нулирай Realized P/L"
+                  >
+                    Изчисти историята
+                  </button>
+                )}
+
+                <button 
+                  onClick={() => setIsHistoryModalOpen(false)}
+                  className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto max-h-[450px] overflow-y-auto pr-1 custom-mini-scroll">
@@ -2130,29 +2199,83 @@ export default function PortfolioTracker({
                     <th className="py-2.5 px-3 text-right">АКЦИИ</th>
                     <th className="py-2.5 px-3 text-right">ПОК. ЦЕНА</th>
                     <th className="py-2.5 px-3 text-right">ПРОД. ЦЕНА</th>
-                    <th className="py-2.5 px-3 text-right">П/З ($)</th>
-                    <th className="py-2.5 px-3 text-right">П/З (%)</th>
+                    <th className="py-2.5 px-3 text-right">РЕАЛИЗИРАНА П/З</th>
+                    <th className="py-2.5 px-3 text-right">ВЪЗВРЪЩАЕМОСТ</th>
+                    <th className="py-2.5 px-2 text-center">ИЗТРИЙ</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40 text-ink">
-                  {filteredHistory.map(tx => (
-                    <tr key={tx.id} className="hover:bg-indigo-500/10 transition-colors">
-                      <td className="py-2.5 px-3 text-ink-faint font-mono text-[10px]">{tx.date}</td>
-                      <td className="py-2.5 px-3 font-extrabold">{tx.ticker}</td>
-                      <td className="py-2.5 px-3 text-center">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
-                          tx.type === 'Покупка' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
-                        }`}>
-                          ⊕ {tx.type}
-                        </span>
+                  {filteredHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-8 text-center text-ink-faint font-bold text-xs">
+                        Няма записани транзакции в историята. При всяка покупка или продажба през бутоните BUY / SELL сделките се отчитат тук.
                       </td>
-                      <td className="py-2.5 px-3 text-right font-extrabold">{tx.shares}</td>
-                      <td className="py-2.5 px-3 text-right font-mono">${tx.buyPrice.toFixed(2)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-ink-faint">{tx.sellPrice ? `$${tx.sellPrice.toFixed(2)}` : '-'}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-ink-faint">{(tx.pnlVal || 0).toFixed(2)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-ink-faint">{(tx.pnlPct || 0).toFixed(0)}%</td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredHistory.map(tx => {
+                      const txSymbol = tx.currency === 'EUR' ? '€' : (tx.currency === 'GBP' ? '£' : '$');
+                      const isSold = tx.type === 'Продажба' || (tx.pnlVal !== undefined && tx.pnlVal !== 0);
+                      const isProfit = (tx.pnlVal || 0) >= 0;
+
+                      return (
+                        <tr key={tx.id} className="hover:bg-indigo-500/10 transition-colors">
+                          <td className="py-2.5 px-3 text-ink-faint font-mono text-[10px]">{tx.date}</td>
+                          <td className="py-2.5 px-3 font-extrabold flex items-center gap-1">
+                            <span>{tx.ticker}</span>
+                            {tx.currency && (
+                              <span className="text-[8px] font-black text-indigo-400 bg-indigo-500/10 px-1 py-0.2 rounded">
+                                {tx.currency}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                              tx.type === 'Покупка' 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                                : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                            }`}>
+                              {tx.type === 'Покупка' ? '⊕ Покупка' : '⊖ Продажба'}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-extrabold">{tx.shares}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-ink-muted">
+                            {txSymbol}{tx.buyPrice.toFixed(2)}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-ink">
+                            {tx.sellPrice ? `${txSymbol}${tx.sellPrice.toFixed(2)}` : '-'}
+                          </td>
+                          <td className={`py-2.5 px-3 text-right font-mono font-extrabold ${
+                            isSold 
+                              ? (isProfit ? 'text-emerald-400' : 'text-rose-400') 
+                              : 'text-ink-faint'
+                          }`}>
+                            {isSold 
+                              ? `${isProfit ? '+' : '-'}${txSymbol}${Math.abs(tx.pnlVal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              : '-'}
+                          </td>
+                          <td className={`py-2.5 px-3 text-right font-mono font-extrabold ${
+                            isSold 
+                              ? (isProfit ? 'text-emerald-400' : 'text-rose-400') 
+                              : 'text-ink-faint'
+                          }`}>
+                            {isSold 
+                              ? `${isProfit ? '+' : ''}${(tx.pnlPct || 0).toFixed(2)}%`
+                              : '-'}
+                          </td>
+                          <td className="py-2.5 px-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTransaction(tx.id)}
+                              className="p-1 rounded text-ink-faint hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
+                              title="Изтрий транзакция"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
