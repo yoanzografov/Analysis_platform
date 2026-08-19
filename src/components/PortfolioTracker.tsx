@@ -1648,8 +1648,43 @@ export default function PortfolioTracker({
             <tbody className="divide-y divide-border/40 text-ink text-xs">
               {enrichedHoldings.length === 0 ? (
                 <tr>
-                  <td colSpan={15} className="py-8 text-center text-ink-faint font-bold text-xs">
-                    Няма намерени или добавени активи в портфейла. Кликнете на <span className="text-emerald-400 font-extrabold">＋ Добавяне на Нов Актив</span> за да добавите първата си позиция.
+                  <td colSpan={15} className="py-10 text-center text-ink-faint font-bold text-xs">
+                    <div className="flex flex-col items-center justify-center gap-3 max-w-md mx-auto">
+                      <p className="text-ink-muted text-xs">
+                        Акаунтът е нов и няма въведени лични активи в портфейла.
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingId(null);
+                            setTicker('');
+                            setCompanyName('');
+                            setShares('');
+                            setBuyPrice('');
+                            setFee('0.00');
+                            setBuyDate(new Date().toISOString().split('T')[0]);
+                            setIsAddModalOpen(true);
+                          }}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+                        >
+                          <PlusCircle className="w-4 h-4" />
+                          ＋ Добавяне на Нов Актив
+                        </button>
+                        <button
+                          onClick={() => {
+                            const demoPos: PortfolioPosition[] = [
+                              { id: '1', ticker: 'AAPL', companyName: 'Apple Inc.', shares: 10, buyPrice: 150.00, fee: 0, buyDate: '2026-01-10', fairPrice: 180, annualDivPerShare: 1.00 },
+                              { id: '2', ticker: 'NVDA', companyName: 'NVIDIA Corp', shares: 15, buyPrice: 90.00, fee: 0, buyDate: '2026-02-15', fairPrice: 140, annualDivPerShare: 0.16 },
+                              { id: '3', ticker: 'QCOM', companyName: 'QUALCOMM Inc.', shares: 10, buyPrice: 150.00, fee: 0, buyDate: '2026-05-29', fairPrice: 180, annualDivPerShare: 3.40 }
+                            ];
+                            if (onSetAllPositions) onSetAllPositions(demoPos);
+                          }}
+                          className="bg-card hover:bg-card-hover border border-border text-ink-muted hover:text-ink font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          ✨ Зареди Примерни Активи
+                        </button>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ) : (
