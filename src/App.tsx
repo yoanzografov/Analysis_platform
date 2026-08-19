@@ -450,9 +450,36 @@ export default function App() {
     }
   };
 
-  // Load and listen to Firebase Firestore
+  // Load and listen to Firebase Firestore (User-Scoped Privacy & Cloud Sync)
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, "portfolio", "default"), (docSnap) => {
+    // If not logged in, operate in Guest / Public mode with empty user portfolio
+    if (!currentUser) {
+      if (!isLoaded) {
+        const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+        setStocks(parsedStocks);
+        setIndices(parsedIndices);
+        setPositions([]);
+        setTransactions([]);
+        setDividends([]);
+        setCashBalance(0);
+        setIsLoaded(true);
+        setTimeout(() => {
+          fetchRealStockPricesDirect(parsedStocks);
+        }, 300);
+      } else {
+        setPositions([]);
+        setTransactions([]);
+        setDividends([]);
+        setCashBalance(0);
+      }
+      return;
+    }
+
+    // When user IS logged in, target their private user document in Firestore: portfolio/user_{uid}
+    const userDocId = `user_${currentUser.uid}`;
+    const userDocRef = doc(db, "portfolio", userDocId);
+
+    const unsub = onSnapshot(userDocRef, async (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const incomingDataString = JSON.stringify(data);
@@ -471,48 +498,12 @@ export default function App() {
           }
           if (data.indices) setIndices(data.indices);
           
-          // Real-time multi-device sync for positions, alerts, transactions, dividends, cash & base currency
-          if (Array.isArray(data.alerts)) {
-            setAlerts(data.alerts);
-          } else if (!isLoaded) {
-            const localAlertsRaw = localStorage.getItem('user_portfolio_alerts');
-            if (localAlertsRaw) try { setAlerts(JSON.parse(localAlertsRaw)); } catch (e) {}
-          }
-
-          if (Array.isArray(data.positions)) {
-            setPositions(data.positions);
-          } else if (!isLoaded) {
-            const localPosRaw = localStorage.getItem('user_portfolio_positions');
-            if (localPosRaw) try { setPositions(JSON.parse(localPosRaw)); } catch (e) {}
-          }
-
-          if (Array.isArray(data.transactions)) {
-            setTransactions(data.transactions);
-          } else if (!isLoaded) {
-            const localTxRaw = localStorage.getItem('user_portfolio_transactions');
-            if (localTxRaw) try { setTransactions(JSON.parse(localTxRaw)); } catch (e) {}
-          }
-
-          if (Array.isArray(data.dividends)) {
-            setDividends(data.dividends);
-          } else if (!isLoaded) {
-            const localDivRaw = localStorage.getItem('user_portfolio_dividends');
-            if (localDivRaw) try { setDividends(JSON.parse(localDivRaw)); } catch (e) {}
-          }
-
-          if (typeof data.cashBalance === 'number') {
-            setCashBalance(data.cashBalance);
-          } else if (!isLoaded) {
-            const localCashRaw = localStorage.getItem('user_portfolio_cash');
-            if (localCashRaw !== null) setCashBalance(parseFloat(localCashRaw) || 0);
-          }
-
-          if (data.baseCurrency === 'USD' || data.baseCurrency === 'EUR') {
-            setBaseCurrency(data.baseCurrency);
-          } else if (!isLoaded) {
-            const localBaseCurr = localStorage.getItem('user_portfolio_base_currency');
-            if (localBaseCurr === 'EUR' || localBaseCurr === 'USD') setBaseCurrency(localBaseCurr);
-          }
+          if (Array.isArray(data.alerts)) setAlerts(data.alerts);
+          if (Array.isArray(data.positions)) setPositions(data.positions);
+          if (Array.isArray(data.transactions)) setTransactions(data.transactions);
+          if (Array.isArray(data.dividends)) setDividends(data.dividends);
+          if (typeof data.cashBalance === 'number') setCashBalance(data.cashBalance);
+          if (data.baseCurrency === 'USD' || data.baseCurrency === 'EUR') setBaseCurrency(data.baseCurrency);
           
           const currentBuyThreshold = data.settings?.buyThreshold ?? data.settings?.buySellThreshold ?? 10;
           const currentSellThreshold = data.settings?.sellThreshold ?? data.settings?.buySellThreshold ?? 10;
@@ -523,7 +514,6 @@ export default function App() {
             setSellThreshold(currentSellThreshold);
           }
 
-          // Normalize lastSavedRef to prevent echo loops
           const normalizedPayload = {
             stocks: migratedStocks,
             indices: data.indices || [],
@@ -531,7 +521,7 @@ export default function App() {
             positions: Array.isArray(data.positions) ? data.positions : [],
             transactions: Array.isArray(data.transactions) ? data.transactions : [],
             dividends: Array.isArray(data.dividends) ? data.dividends : [],
-            cashBalance: typeof data.cashBalance === 'number' ? data.cashBalance : (parseFloat(localStorage.getItem('user_portfolio_cash') || '0') || 0),
+            cashBalance: typeof data.cashBalance === 'number' ? data.cashBalance : 0,
             baseCurrency: (data.baseCurrency === 'EUR' || data.baseCurrency === 'USD') ? data.baseCurrency : 'USD',
             settings: { buyThreshold: currentBuyThreshold, sellThreshold: currentSellThreshold }
           };
@@ -541,14 +531,46 @@ export default function App() {
         if (!isLoaded) {
           setIsLoaded(true);
           setLogs([
-            { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: 'Свързано с облачната база данни (Firebase). Синхронизацията между всички устройства е активна!', type: 'info' },
+            { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: `Успешен вход като ${currentUser.email}! Личното ви портфолио е синхронизирано.`, type: 'info' },
           ]);
           setTimeout(() => {
             fetchRealStockPricesDirect(data.stocks || []);
           }, 300);
         }
       } else {
-        // First time initialization: Load defaults if DB is empty
+        // First time initialization for this user: Check legacy 'default' doc or local storage for migration
+        let legacyPositions: PortfolioPosition[] = [];
+        let legacyTransactions: PortfolioTransaction[] = [];
+        let legacyDividends: PortfolioDividendRecord[] = [];
+        let legacyCash = 0;
+        let legacyBaseCurr: 'USD' | 'EUR' = 'USD';
+
+        try {
+          const defaultSnap = await getDoc(doc(db, "portfolio", "default"));
+          if (defaultSnap.exists()) {
+            const defData = defaultSnap.data();
+            if (Array.isArray(defData.positions) && defData.positions.length > 0) legacyPositions = defData.positions;
+            if (Array.isArray(defData.transactions) && defData.transactions.length > 0) legacyTransactions = defData.transactions;
+            if (Array.isArray(defData.dividends) && defData.dividends.length > 0) legacyDividends = defData.dividends;
+            if (typeof defData.cashBalance === 'number') legacyCash = defData.cashBalance;
+            if (defData.baseCurrency === 'USD' || defData.baseCurrency === 'EUR') legacyBaseCurr = defData.baseCurrency;
+          }
+        } catch (e) {}
+
+        // Fallback to local storage if Firestore default was empty
+        if (legacyPositions.length === 0) {
+          try {
+            const localPosRaw = localStorage.getItem('user_portfolio_positions');
+            if (localPosRaw) legacyPositions = JSON.parse(localPosRaw);
+            const localTxRaw = localStorage.getItem('user_portfolio_transactions');
+            if (localTxRaw) legacyTransactions = JSON.parse(localTxRaw);
+            const localDivRaw = localStorage.getItem('user_portfolio_dividends');
+            if (localDivRaw) legacyDividends = JSON.parse(localDivRaw);
+            const localCashRaw = localStorage.getItem('user_portfolio_cash');
+            if (localCashRaw !== null) legacyCash = parseFloat(localCashRaw) || 0;
+          } catch (e) {}
+        }
+
         const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
         const defaultAlerts = [
           { id: '1', ticker: 'AAPL', criteria: 'ABOVE', targetPrice: 300, isActive: true, createdAt: new Date().toISOString() },
@@ -560,41 +582,56 @@ export default function App() {
         setIndices(parsedIndices);
         // @ts-ignore
         setAlerts(defaultAlerts);
+        setPositions(legacyPositions);
+        setTransactions(legacyTransactions);
+        setDividends(legacyDividends);
+        setCashBalance(legacyCash);
+        setBaseCurrency(legacyBaseCurr);
         setIsLoaded(true);
         
-        const initialData = { 
+        const initialUserData = { 
           stocks: parsedStocks, 
           indices: parsedIndices, 
           alerts: defaultAlerts, 
-          positions: [], 
+          positions: legacyPositions, 
+          transactions: legacyTransactions,
+          dividends: legacyDividends,
+          cashBalance: legacyCash,
+          baseCurrency: legacyBaseCurr,
+          settings: { buyThreshold: 10, sellThreshold: 10 } 
+        };
+        lastSavedRef.current = JSON.stringify(initialUserData);
+        
+        // Save to user private document in Firestore
+        setDoc(userDocRef, JSON.parse(JSON.stringify(initialUserData)))
+          .catch(err => console.error("Error setting user document data", err));
+
+        // Clean up legacy 'default' document so unauthenticated guests can't view private portfolios
+        setDoc(doc(db, "portfolio", "default"), {
+          positions: [],
           transactions: [],
           dividends: [],
           cashBalance: 0,
-          baseCurrency: 'USD',
-          settings: { buyThreshold: 10, sellThreshold: 10 } 
-        };
-        lastSavedRef.current = JSON.stringify(initialData);
-        
-        setDoc(doc(db, "portfolio", "default"), JSON.parse(JSON.stringify(initialData)))
-          .catch(err => console.error("Error setting default data", err));
-          
+          baseCurrency: 'USD'
+        }, { merge: true }).catch(() => {});
+
         setTimeout(() => {
           fetchRealStockPricesDirect(parsedStocks);
         }, 300);
       }
     }, (error) => {
-      console.error("Firebase Snapshot Error:", error);
+      console.error("Firebase User Snapshot Error:", error);
     });
 
-  
     return () => unsub();
-  }, [isLoaded]);
+  }, [currentUser, isLoaded]);
 
-  // Automatic Cloud Sync
+  // Automatic Cloud Sync for Logged-In User
   const isInitialAutoSave = useRef(true);
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !currentUser) return;
     
+    const userDocId = `user_${currentUser.uid}`;
     const payload = { 
       stocks, 
       indices, 
@@ -614,13 +651,13 @@ export default function App() {
       return;
     }
 
-    // Auto-save to cloud only if there's an actual change to prevent loop with snapshot listener
+    // Auto-save to cloud user document only if there's an actual change
     if (lastSavedRef.current !== currentDataString) {
       lastSavedRef.current = currentDataString;
-      setDoc(doc(db, "portfolio", "default"), JSON.parse(currentDataString), { merge: true })
-        .catch(err => console.error("Firebase Auto Save Error:", err));
+      setDoc(doc(db, "portfolio", userDocId), JSON.parse(currentDataString), { merge: true })
+        .catch(err => console.error("Firebase User Auto Save Error:", err));
     }
-  }, [stocks, indices, alerts, positions, transactions, dividends, cashBalance, baseCurrency, buyThreshold, sellThreshold, isLoaded]);
+  }, [currentUser, stocks, indices, alerts, positions, transactions, dividends, cashBalance, baseCurrency, buyThreshold, sellThreshold, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
