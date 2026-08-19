@@ -456,16 +456,33 @@ export default function App() {
       }
     } catch (err: any) {
       console.error(err);
-      // Suppress UI error logging since we lack a backend
+      // Track whether the logged in user's document has completed its initial load from Firestore
     } finally {
       setIsFetchingLivePrices(false);
     }
   };
 
+  const [isUserDocLoaded, setIsUserDocLoaded] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setIsUserDocLoaded(false);
+      if (!user) {
+        setPositions([]);
+        setTransactions([]);
+        setDividends([]);
+        setCashBalance(0);
+      }
+    });
+    return () => unsub();
+  }, []);
+
   // Load and listen to Firebase Firestore (User-Scoped Privacy & Cloud Sync)
   useEffect(() => {
     // If not logged in, operate in Guest / Public mode with empty user portfolio
     if (!currentUser) {
+      setIsUserDocLoaded(false);
       if (!isLoaded) {
         const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
         setStocks(parsedStocks);
@@ -540,6 +557,8 @@ export default function App() {
           lastSavedRef.current = JSON.stringify(normalizedPayload);
         }
         
+        setIsUserDocLoaded(true);
+
         if (!isLoaded) {
           setIsLoaded(true);
           setLogs([
@@ -600,6 +619,7 @@ export default function App() {
         setCashBalance(legacyCash);
         setBaseCurrency(legacyBaseCurr);
         setIsLoaded(true);
+        setIsUserDocLoaded(true);
         
         const initialUserData = { 
           stocks: parsedStocks, 
@@ -639,9 +659,8 @@ export default function App() {
   }, [currentUser, isLoaded]);
 
   // Automatic Cloud Sync for Logged-In User
-  const isInitialAutoSave = useRef(true);
   useEffect(() => {
-    if (!isLoaded || !currentUser) return;
+    if (!isLoaded || !currentUser || !isUserDocLoaded) return;
     
     const userDocId = `user_${currentUser.uid}`;
     const payload = { 
@@ -656,12 +675,6 @@ export default function App() {
       settings: { buyThreshold, sellThreshold } 
     };
     const currentDataString = JSON.stringify(payload);
-    
-    if (isInitialAutoSave.current) {
-      isInitialAutoSave.current = false;
-      lastSavedRef.current = currentDataString;
-      return;
-    }
 
     // Auto-save to cloud user document only if there's an actual change
     if (lastSavedRef.current !== currentDataString) {
@@ -669,7 +682,7 @@ export default function App() {
       setDoc(doc(db, "portfolio", userDocId), JSON.parse(currentDataString), { merge: true })
         .catch(err => console.error("Firebase User Auto Save Error:", err));
     }
-  }, [currentUser, stocks, indices, alerts, positions, transactions, dividends, cashBalance, baseCurrency, buyThreshold, sellThreshold, isLoaded]);
+  }, [currentUser, isUserDocLoaded, stocks, indices, alerts, positions, transactions, dividends, cashBalance, baseCurrency, buyThreshold, sellThreshold, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
