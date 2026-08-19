@@ -72,6 +72,18 @@ export default function App() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      if (!user) {
+        setPositions([]);
+        setTransactions([]);
+        setDividends([]);
+        setCashBalance(0);
+        try {
+          localStorage.removeItem('user_portfolio_positions');
+          localStorage.removeItem('user_portfolio_transactions');
+          localStorage.removeItem('user_portfolio_dividends');
+          localStorage.removeItem('user_portfolio_cash');
+        } catch (e) {}
+      }
     });
     return () => unsub();
   }, []);
