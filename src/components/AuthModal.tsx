@@ -217,27 +217,31 @@ export const AuthModal: React.FC<Props> = ({
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div className="bg-card/90 border border-border/80 rounded-2xl w-full max-w-md p-6 shadow-2xl backdrop-blur-xl relative flex flex-col justify-between overflow-hidden">
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn overflow-y-auto"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-bg border border-border rounded-3xl w-full max-w-md p-4 sm:p-6 shadow-2xl relative flex flex-col my-auto max-h-[92vh] overflow-y-auto scroll-smooth">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/40 pb-4">
+        <div className="flex items-center justify-between border-b border-border/40 pb-3 sm:pb-4 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400">
+            <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-black text-ink tracking-tight">
-                {currentUser ? 'Моят Акаунт & Синхронизация' : 'Вход с Имейл & Парола'}
+              <h2 className="text-sm sm:text-base font-black text-ink tracking-tight">
+                {currentUser ? 'Моят Акаунт & Синхронизация' : 'Вход / Регистрация в Профила'}
               </h2>
-              <p className="text-[11px] font-semibold text-ink-muted">
-                Синхронизирайте портфолиото си на всички ваши устройства
+              <p className="text-[11px] font-semibold text-ink-muted leading-tight">
+                Защитено портфолио и синхронизация на всички устройства
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-card/60 transition-colors"
+            className="p-1.5 rounded-xl text-ink-muted hover:text-ink hover:bg-card transition-colors cursor-pointer shrink-0"
+            title="Затвори"
           >
             <X className="w-4 h-4" />
           </button>
@@ -245,8 +249,8 @@ export const AuthModal: React.FC<Props> = ({
 
         {/* Logged in state display */}
         {currentUser ? (
-          <div className="py-6 space-y-4">
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-start gap-3">
+          <div className="py-4 sm:py-6 space-y-4">
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-xs font-black text-emerald-300 uppercase tracking-wider">
@@ -266,16 +270,16 @@ export const AuthModal: React.FC<Props> = ({
                         Имейлът е потвърден
                       </span>
                     ) : (
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <span className="text-amber-300 font-medium">Очаква потвърждение</span>
                         <button
                           type="button"
                           onClick={handleResendVerificationEmail}
                           disabled={loading}
-                          className="px-2 py-0.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold border border-amber-500/30 transition-all text-[10px] flex items-center gap-1"
+                          className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg font-bold border border-amber-500/30 transition-all text-[11px] flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <Send className="w-3 h-3" />
-                          Изпрати имейл за потвърждение
+                          Изпрати имейл отново
                         </button>
                       </div>
                     )}
@@ -301,7 +305,7 @@ export const AuthModal: React.FC<Props> = ({
               <button
                 onClick={handleLogout}
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs rounded-xl border border-rose-500/40 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs rounded-xl border border-rose-500/40 transition-all flex items-center justify-center gap-2 cursor-pointer uppercase"
               >
                 <LogOut className="w-4 h-4" />
                 {loading ? 'Излизане...' : 'Изход от Акаунта'}
@@ -311,40 +315,42 @@ export const AuthModal: React.FC<Props> = ({
         ) : (
           <>
             {/* Primary Login / Register Tabs */}
-            <div className="flex border-b border-border/40 my-4 text-xs font-black">
+            <div className="flex border-b border-border/40 my-3.5 text-xs font-black shrink-0">
               <button
+                type="button"
                 onClick={() => { setActiveTab('login'); setError(''); setSuccess(''); }}
-                className={`flex-1 py-2.5 text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2.5 text-center border-b-2 transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase ${
                   activeTab === 'login' || activeTab === 'forgot'
-                    ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-lg font-black'
+                    ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-xl font-black'
                     : 'border-transparent text-ink-muted hover:text-ink font-bold'
                 }`}
               >
                 <LogIn className="w-4 h-4" />
-                Вход с Имейл
+                <span>Вход с Имейл</span>
               </button>
               <button
+                type="button"
                 onClick={() => { setActiveTab('register'); setError(''); setSuccess(''); }}
-                className={`flex-1 py-2.5 text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2.5 text-center border-b-2 transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase ${
                   activeTab === 'register'
-                    ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-lg font-black'
+                    ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-xl font-black'
                     : 'border-transparent text-ink-muted hover:text-ink font-bold'
                 }`}
               >
                 <UserPlus className="w-4 h-4" />
-                Нова Регистрация
+                <span>Нова Регистрация</span>
               </button>
             </div>
 
             {/* Error / Success Messages */}
             {error && (
-              <div className="mb-4 bg-rose-500/15 border border-rose-500/30 text-rose-300 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 animate-shake">
+              <div className="mb-3 bg-rose-500/15 border border-rose-500/30 text-rose-300 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 animate-shake">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
             {success && (
-              <div className="mb-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 p-3 rounded-xl text-xs font-semibold flex items-center gap-2">
+              <div className="mb-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 p-3 rounded-xl text-xs font-semibold flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>{success}</span>
               </div>
@@ -354,7 +360,7 @@ export const AuthModal: React.FC<Props> = ({
             {activeTab === 'login' && (
               <form onSubmit={handleLogin} className="space-y-3.5 py-1">
                 <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                     Имейл или Потребителско име
                   </label>
                   <div className="relative">
@@ -364,7 +370,7 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="напр. yoan@gmail.com или yoan"
                       value={emailOrUsername}
                       onChange={(e) => setEmailOrUsername(e.target.value)}
-                      className="w-full bg-card/60 border border-border/70 rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                   </div>
@@ -372,13 +378,13 @@ export const AuthModal: React.FC<Props> = ({
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-ink uppercase tracking-wider">
                       Парола
                     </label>
                     <button
                       type="button"
                       onClick={() => { setActiveTab('forgot'); setError(''); setSuccess(''); }}
-                      className="text-[10px] font-bold text-indigo-400 hover:underline"
+                      className="text-xs font-bold text-indigo-400 hover:underline"
                     >
                       Забравена парола?
                     </button>
@@ -390,13 +396,13 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-card/60 border border-border/70 rounded-xl py-2.5 pl-9 pr-10 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-10 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-ink-muted hover:text-ink"
+                      className="absolute right-3 top-3 text-ink-muted hover:text-ink cursor-pointer"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -406,7 +412,7 @@ export const AuthModal: React.FC<Props> = ({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2"
+                  className="w-full mt-3 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <LogIn className="w-4 h-4" />
                   {loading ? 'Влизане...' : 'Влез в Акаунта'}
@@ -418,7 +424,7 @@ export const AuthModal: React.FC<Props> = ({
             {activeTab === 'forgot' && (
               <form onSubmit={handleForgotPassword} className="space-y-3.5 py-1">
                 <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                     Вашият Имейл адрес
                   </label>
                   <div className="relative">
@@ -428,11 +434,11 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="напр. yoan@gmail.com"
                       value={emailOrUsername}
                       onChange={(e) => setEmailOrUsername(e.target.value)}
-                      className="w-full bg-card/60 border border-border/70 rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                   </div>
-                  <p className="text-[10px] text-ink-faint mt-1">
+                  <p className="text-xs text-ink-muted mt-1.5">
                     Ще ви изпратим линк за смяна на паролата в пощата.
                   </p>
                 </div>
@@ -441,14 +447,14 @@ export const AuthModal: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setActiveTab('login')}
-                    className="py-2.5 px-3 bg-card border border-border text-ink-muted font-bold text-xs rounded-xl hover:text-ink"
+                    className="py-3 px-4 bg-card border border-border text-ink font-bold text-xs rounded-xl hover:bg-card-hover transition-colors cursor-pointer"
                   >
                     Назад
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
                     {loading ? 'Изпращане...' : 'Изпрати линк'}
@@ -459,9 +465,9 @@ export const AuthModal: React.FC<Props> = ({
 
             {/* REGISTER FORM */}
             {activeTab === 'register' && (
-              <form onSubmit={handleRegister} className="space-y-3 py-1">
+              <form onSubmit={handleRegister} className="space-y-3.5 py-1">
                 <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                     Вашето Име (опционално)
                   </label>
                   <div className="relative">
@@ -471,13 +477,13 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="напр. Йоан Зографов"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      className="w-full bg-card/60 border border-border/70 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                     Имейл адрес или Потребителско име *
                   </label>
                   <div className="relative">
@@ -487,14 +493,14 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="напр. yoan@gmail.com или yoan"
                       value={emailOrUsername}
                       onChange={(e) => setEmailOrUsername(e.target.value)}
-                      className="w-full bg-card/60 border border-border/70 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                     Парола (поне 6 символа) *
                   </label>
                   <div className="relative">
@@ -504,13 +510,13 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-card/60 border border-border/70 rounded-xl py-2 pl-9 pr-10 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-10 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-ink-muted hover:text-ink"
+                      className="absolute right-3 top-3 text-ink-muted hover:text-ink cursor-pointer"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -518,7 +524,7 @@ export const AuthModal: React.FC<Props> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                     Повтори Паролата *
                   </label>
                   <div className="relative">
@@ -528,7 +534,7 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full bg-card/60 border border-border/70 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                   </div>
@@ -537,15 +543,13 @@ export const AuthModal: React.FC<Props> = ({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
+                  className="w-full mt-3 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase rounded-xl shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   {loading ? 'Създаване...' : 'Създай Нов Акаунт'}
                 </button>
               </form>
             )}
-
-
 
           </>
         )}
