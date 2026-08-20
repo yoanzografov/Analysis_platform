@@ -2288,14 +2288,16 @@ export default function PortfolioTracker({
                     type="date"
                     value={historyFromDate}
                     onChange={e => setHistoryFromDate(e.target.value)}
-                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none"
+                    onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
+                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none cursor-pointer"
                   />
                   <span className="text-[10px] font-bold text-ink-faint">ДО:</span>
                   <input
                     type="date"
                     value={historyToDate}
                     onChange={e => setHistoryToDate(e.target.value)}
-                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none"
+                    onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
+                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none cursor-pointer"
                   />
                 </div>
 

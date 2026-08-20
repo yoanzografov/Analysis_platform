@@ -1250,6 +1250,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  required
  value={newDate}
  onChange={e => setNewDate(e.target.value)}
+ onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
  className="w-full bg-bg rounded-2xl border border-border p-2 focus:outline-none focus:border-blue-900 cursor-pointer"
  />
  </div>
