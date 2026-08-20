@@ -53,11 +53,12 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
   }, [showContextMenu, showSignalContextMenu]);
 
   // 1. Calculate the values for "Best Deals" (Most Undervalued Stocks)
-  const undervaluedStocks = [...stocks]
+  const undervaluedStocks = (stocks || [])
+    .filter(Boolean)
     .map(s => {
-      const cur = s.currentPrice;
-      const fair = s.fairPrice;
-      let diff = s.difference;
+      const cur = s?.currentPrice || 0;
+      const fair = s?.fairPrice || 0;
+      let diff = s?.difference ?? null;
       if (fair !== null && fair > 0 && cur > 0) {
         diff = parseFloat((((fair - cur) / cur) * 100).toFixed(2));
       }
@@ -66,35 +67,36 @@ export default function BentoCharts({ stocks, activeFilter, onSetActiveFilter, b
         calcDiff: diff
       };
     })
-    .filter(s => s.calcDiff !== null && s.calcDiff > 0 && s.fairPrice !== null && s.fairPrice > 0)
+    .filter(s => s && s.calcDiff !== null && s.calcDiff > 0 && s.fairPrice !== null && s.fairPrice > 0)
     .sort((a, b) => (b.calcDiff || 0) - (a.calcDiff || 0))
     .slice(0, 6)
     .map(s => ({
-      ticker: s.ticker,
-      companyName: s.companyName,
+      ticker: s.ticker || '',
+      companyName: s.companyName || '',
       difference: s.calcDiff!,
-      currentPrice: s.currentPrice,
+      currentPrice: s.currentPrice || 0,
       fairPrice: s.fairPrice!,
     }));
 
- // 2. Count signals for allocation breakdown - SIGNAL column
- const signalBuyCount = stocks.filter(s => s.signal?.trim().toLowerCase() === 'buy').length;
- const signalSellCount = stocks.filter(s => s.signal?.trim().toLowerCase() === 'sell').length;
- const signalHoldCount = stocks.filter(s => {
- const val = s.signal?.trim().toLowerCase();
- return val === 'hold' || val === 'изчакай' || !val || val === '-';
- }).length;
+  // 2. Count signals for allocation breakdown - SIGNAL column
+  const signalBuyCount = (stocks || []).filter(s => s && s.signal?.trim().toLowerCase() === 'buy').length;
+  const signalSellCount = (stocks || []).filter(s => s && s.signal?.trim().toLowerCase() === 'sell').length;
+  const signalHoldCount = (stocks || []).filter(s => {
+    if (!s) return false;
+    const val = s.signal?.trim().toLowerCase();
+    return val === 'hold' || val === 'изчакай' || !val || val === '-';
+  }).length;
 
- const signalData = [
-  { name: 'КУПУВАЙ (BUY)', value: signalBuyCount, color: 'var(--color-chart-buy)' },
-  { name: 'ПРОДАВАЙ (SELL)', value: signalSellCount, color: 'var(--color-chart-sell)' },
-  { name: 'ИЗЧАКАЙ (HOLD)', value: signalHoldCount, color: 'var(--color-chart-hold)' },
- ].filter(d => d.value > 0);
+  const signalData = [
+    { name: 'КУПУВАЙ (BUY)', value: signalBuyCount, color: 'var(--color-chart-buy)' },
+    { name: 'ПРОДАВАЙ (SELL)', value: signalSellCount, color: 'var(--color-chart-sell)' },
+    { name: 'ИЗЧАКАЙ (HOLD)', value: signalHoldCount, color: 'var(--color-chart-hold)' },
+  ].filter(d => d.value > 0);
 
- // 3. Count Over/Under column values strictly
- const bsBuyCount = stocks.filter(s => s.buySell === 'UNDERVALUED').length;
- const bsSellCount = stocks.filter(s => s.buySell === 'OVERVALUED').length;
- const bsOthersCount = stocks.filter(s => s.buySell === 'ДРУГИ').length;
+  // 3. Count Over/Under column values strictly
+  const bsBuyCount = (stocks || []).filter(s => s && s.buySell === 'UNDERVALUED').length;
+  const bsSellCount = (stocks || []).filter(s => s && s.buySell === 'OVERVALUED').length;
+  const bsOthersCount = (stocks || []).filter(s => s && s.buySell === 'ДРУГИ').length;
 
  const buySellData = [
  { name: 'UNDERVALUED', value: bsBuyCount, color: 'var(--color-chart-buy)' },
