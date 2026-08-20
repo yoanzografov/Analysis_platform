@@ -207,9 +207,40 @@ export default function App() {
  const [logs, setLogs] = useState<NotificationLog[]>([]);
  const [activeAlertToast, setActiveAlertToast] = useState<string | null>(null);
 
- // Filter state for the Stock Table, customizable by Bento charts
- const [activeFilter, setActiveFilter] = useState<TableFilter>({ type: 'all', value: 'all' });
- const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio'>('table');
+  const getInitialTab = (): 'table' | 'alerts' | 'portfolio' => {
+    const hash = window.location.hash.toLowerCase().replace('#', '');
+    if (hash === 'alerts' || hash === 'portfolio') return hash;
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab')?.toLowerCase();
+    if (tabParam === 'alerts' || tabParam === 'portfolio') return tabParam;
+    return 'table';
+  };
+
+  // Filter state for the Stock Table, customizable by Bento charts
+  const [activeFilter, setActiveFilter] = useState<TableFilter>({ type: 'all', value: 'all' });
+  const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio'>(getInitialTab);
+
+  const switchTab = (tab: 'table' | 'alerts' | 'portfolio') => {
+    setActiveMainTab(tab);
+    if (window.history.pushState) {
+      window.history.pushState(null, '', `#${tab}`);
+    } else {
+      window.location.hash = `#${tab}`;
+    }
+  };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const tab = getInitialTab();
+      setActiveMainTab(tab);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
+  }, []);
 
  // Selected Stock for deep AI Analyst drawer and News Container
  const [selectedStockForAi, setSelectedStockForAi] = useState<Stock | null>(null);
@@ -1287,8 +1318,12 @@ export default function App() {
     <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full touch-pan-x scroll-smooth no-scrollbar mb-5 mt-2" id="stock-table-section">
       
       {/* Tab 1: INTERACTIVE TABLE */}
-      <button
-        onClick={() => setActiveMainTab('table')}
+      <a
+        href="#table"
+        onClick={(e) => {
+          e.preventDefault();
+          switchTab('table');
+        }}
         className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
           activeMainTab === 'table'
             ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
@@ -1302,11 +1337,15 @@ export default function App() {
         }`}>
           {stocks.length}
         </span>
-      </button>
+      </a>
 
       {/* Tab 2: PRICE ALERTS SCHEDULE */}
-      <button
-        onClick={() => setActiveMainTab('alerts')}
+      <a
+        href="#alerts"
+        onClick={(e) => {
+          e.preventDefault();
+          switchTab('alerts');
+        }}
         className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
           activeMainTab === 'alerts'
             ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
@@ -1320,11 +1359,15 @@ export default function App() {
         }`}>
           {alerts.length}
         </span>
-      </button>
+      </a>
 
       {/* Tab 3: PORTFOLIO TRACKER */}
-      <button
-        onClick={() => setActiveMainTab('portfolio')}
+      <a
+        href="#portfolio"
+        onClick={(e) => {
+          e.preventDefault();
+          switchTab('portfolio');
+        }}
         className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
           activeMainTab === 'portfolio'
             ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
@@ -1338,7 +1381,7 @@ export default function App() {
         }`}>
           {positions.length}
         </span>
-      </button>
+      </a>
     </div>
 
       {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
