@@ -2104,7 +2104,8 @@ export default function PortfolioTracker({
                     type="date"
                     value={buyDate}
                     onChange={e => setBuyDate(e.target.value)}
-                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                    onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
+                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none cursor-pointer"
                   />
                 </div>
               </div>
@@ -2487,7 +2488,8 @@ export default function PortfolioTracker({
                     type="date"
                     value={divDate}
                     onChange={e => setDivDate(e.target.value)}
-                    className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-2 py-1.5 rounded-xl focus:outline-none"
+                    onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
+                    className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-2 py-1.5 rounded-xl focus:outline-none cursor-pointer"
                   />
                   <button
                     type="submit"
@@ -2521,7 +2523,8 @@ export default function PortfolioTracker({
                       type="date"
                       value={divDate}
                       onChange={e => setDivDate(e.target.value)}
-                      className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-2 py-1.5 rounded-xl focus:outline-none"
+                      onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
+                      className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-2 py-1.5 rounded-xl focus:outline-none cursor-pointer"
                     />
                     <button
                       type="submit"
