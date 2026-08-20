@@ -221,9 +221,12 @@ export default function PortfolioTracker({
   };
 
   // Dividend ledger form state with multi-device real-time Firebase sync
+  const [divMode, setDivMode] = useState<'single' | 'bulk'>('single');
   const [divTicker, setDivTicker] = useState('AAPL');
   const [divAmount, setDivAmount] = useState('24.58');
   const [divDate, setDivDate] = useState(new Date().toISOString().split('T')[0]);
+  const [divBulkNote, setDivBulkNote] = useState('Дивиденти Август 2026');
+  const [divAutoCash, setDivAutoCash] = useState(true);
   const [divRecords, setDivRecords] = useState<PortfolioDividendRecord[]>(() => {
     if (dividends && dividends.length > 0) return dividends;
     try {
@@ -597,16 +600,34 @@ export default function PortfolioTracker({
   const handleAddDividendRecord = (e: React.FormEvent) => {
     e.preventDefault();
     const amt = parseFloat(divAmount);
-    if (!divTicker || isNaN(amt) || amt <= 0) return;
+    if (isNaN(amt) || amt <= 0) return;
+
+    const label = divMode === 'bulk' 
+      ? `📦 ${divBulkNote.trim() || 'Обобщен дивидент'}`
+      : divTicker.trim().toUpperCase();
+
+    if (!label) return;
 
     const newDiv: PortfolioDividendRecord = {
       id: `${Date.now()}-${Math.random()}`,
-      ticker: divTicker.trim().toUpperCase(),
+      ticker: label,
       amount: amt,
       date: divDate
     };
     updateDivRecords([newDiv, ...divRecords]);
     if (onAddDividend) onAddDividend(newDiv);
+
+    // Auto-update portfolio cash balance if enabled
+    if (divAutoCash) {
+      const currentCash = parseFloat(cashInput) || 0;
+      const nextCash = currentCash + amt;
+      setCashInput(nextCash.toString());
+      try {
+        localStorage.setItem('user_portfolio_cash', nextCash.toString());
+      } catch (e) {}
+      if (onUpdateCash) onUpdateCash(nextCash);
+    }
+
     setDivAmount('');
   };
 
@@ -2415,65 +2436,150 @@ export default function PortfolioTracker({
               </div>
             </div>
 
-            {/* Add Dividend Form */}
-            <form onSubmit={handleAddDividendRecord} className="flex items-center gap-2 bg-card/40 p-3 rounded-2xl border border-border/40">
-              <input
-                type="text"
-                placeholder="Ticker"
-                value={divTicker}
-                onChange={e => setDivTicker(e.target.value)}
-                className="w-20 bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl text-xs uppercase focus:outline-none"
-                required
-              />
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Сума $"
-                value={divAmount}
-                onChange={e => setDivAmount(e.target.value)}
-                className="w-24 bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl text-xs focus:outline-none"
-                required
-              />
-              <input
-                type="date"
-                value={divDate}
-                onChange={e => setDivDate(e.target.value)}
-                className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-2 py-1.5 rounded-xl focus:outline-none"
-              />
+            {/* Entry Mode Switcher */}
+            <div className="flex items-center gap-2 bg-card/60 p-1 rounded-2xl border border-border/60">
               <button
-                type="submit"
-                className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold transition-all cursor-pointer shrink-0"
-                title="Добави дивидент"
+                type="button"
+                onClick={() => setDivMode('single')}
+                className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  divMode === 'single'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-ink-muted hover:text-ink hover:bg-card/50'
+                }`}
               >
-                <PlusCircle className="w-4 h-4" />
+                <span>👤 По отделна акция</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setDivMode('bulk')}
+                className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  divMode === 'bulk'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-ink-muted hover:text-ink hover:bg-card/50'
+                }`}
+              >
+                <span>📦 Месечен / Сумарен (Бърз)</span>
+              </button>
+            </div>
+
+            {/* Add Dividend Form */}
+            <form onSubmit={handleAddDividendRecord} className="flex flex-col gap-2 bg-card/40 p-3.5 rounded-2xl border border-border/40">
+              {divMode === 'single' ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Тикер (AAPL)"
+                    value={divTicker}
+                    onChange={e => setDivTicker(e.target.value)}
+                    className="w-24 bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl text-xs uppercase focus:outline-none focus:border-emerald-500"
+                    required
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Сума $"
+                    value={divAmount}
+                    onChange={e => setDivAmount(e.target.value)}
+                    className="flex-1 bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl text-xs focus:outline-none focus:border-emerald-500"
+                    required
+                  />
+                  <input
+                    type="date"
+                    value={divDate}
+                    onChange={e => setDivDate(e.target.value)}
+                    className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-2 py-1.5 rounded-xl focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold transition-all cursor-pointer shrink-0"
+                    title="Добави дивидент"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Период / Описание (напр. Дивиденти Август 2026)"
+                      value={divBulkNote}
+                      onChange={e => setDivBulkNote(e.target.value)}
+                      className="flex-1 bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500"
+                      required
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Обща сума $"
+                      value={divAmount}
+                      onChange={e => setDivAmount(e.target.value)}
+                      className="w-28 bg-bg text-ink font-bold border border-border px-2.5 py-1.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500"
+                      required
+                    />
+                    <input
+                      type="date"
+                      value={divDate}
+                      onChange={e => setDivDate(e.target.value)}
+                      className="w-28 bg-bg text-ink text-[10px] font-bold border border-border px-2 py-1.5 rounded-xl focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold transition-all cursor-pointer shrink-0"
+                      title="Запиши сумарен дивидент"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <label className="flex items-center gap-2 text-[11px] font-bold text-ink-muted cursor-pointer select-none">
+                    <input 
+                      type="checkbox"
+                      checked={divAutoCash}
+                      onChange={e => setDivAutoCash(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                    />
+                    <span>Добави сумата автоматично към Кеш баланса на портфолиото</span>
+                  </label>
+                </div>
+              )}
             </form>
 
             {/* Dividend History List */}
-            <div className="space-y-1.5 mt-2 max-h-[350px] overflow-y-auto pr-1 custom-mini-scroll">
+            <div className="space-y-1.5 mt-2 max-h-[320px] overflow-y-auto pr-1 custom-mini-scroll">
               <div className="flex items-center justify-between text-[10px] font-bold text-ink-faint border-b border-border/40 pb-1 uppercase">
                 <span>📋 История ({divRecords.length})</span>
                 <span>СУМА</span>
               </div>
 
-              {divRecords.map(rec => (
-                <div key={rec.id} className="flex items-center justify-between p-2.5 rounded-xl bg-card/30 border border-white/5 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-ink">{rec.ticker}</span>
-                    <span className="text-xs text-ink-faint font-mono">{formatDateDDMMYYYY(rec.date)}</span>
+              {divRecords.map(rec => {
+                const isBulk = rec.ticker.startsWith('📦');
+                return (
+                  <div 
+                    key={rec.id} 
+                    className={`flex items-center justify-between p-2.5 rounded-xl border text-xs ${
+                      isBulk 
+                        ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-200 font-bold' 
+                        : 'bg-card/30 border-white/5 text-ink'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <span className="font-extrabold shrink-0 truncate max-w-[220px]">{rec.ticker}</span>
+                      <span className="text-[10px] text-ink-faint font-mono shrink-0">{formatDateDDMMYYYY(rec.date)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-mono font-extrabold text-emerald-400">+${rec.amount.toFixed(2)}</span>
+                      <button 
+                        onClick={() => handleDeleteDividendRecord(rec.id)}
+                        className="text-ink-faint hover:text-red-400 transition-colors cursor-pointer"
+                        title="Изтрий запис"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-extrabold text-emerald-400">+${rec.amount.toFixed(2)}</span>
-                    <button 
-                      onClick={() => handleDeleteDividendRecord(rec.id)}
-                      className="text-ink-faint hover:text-red-400 transition-colors"
-                      title="Изтрий запис"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
