@@ -2097,15 +2097,17 @@ export default function PortfolioTracker({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
-                    ДАТА НА СДЕЛКАТА <span className="text-ink-muted text-[9px]">(По желание)</span>
+                  <label className="block text-[10px] text-indigo-400 font-black uppercase mb-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-indigo-400" />
+                    📅 ДАТА НА СДЕЛКАТА
                   </label>
                   <input
                     type="date"
                     value={buyDate}
                     onChange={e => setBuyDate(e.target.value)}
                     onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
-                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none cursor-pointer"
+                    className="w-full bg-bg text-ink font-bold border border-indigo-500/50 px-3 py-2 rounded-xl focus:outline-none cursor-pointer hover:border-indigo-400"
+                    required
                   />
                 </div>
               </div>
