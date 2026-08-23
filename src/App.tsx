@@ -33,6 +33,7 @@ import {
   Trash2,
   Layers,
   Info,
+  FileSpreadsheet,
   X,
   ExternalLink,
   Cloud,
@@ -63,6 +64,7 @@ export default function App() {
  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
  const [isUsefulLinksMenuOpen, setIsUsefulLinksMenuOpen] = useState(false);
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
+ const [isCsvUploaderOpen, setIsCsvUploaderOpen] = useState(false);
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -1435,44 +1437,37 @@ export default function App() {
           }}
         />
         
-        {/* Sync with files grid: CSV Uploader and Real-time Notification Logs monitor side by side (Table tab only) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <CsvUploader onDataLoaded={handleSheetSynced} />
+        {/* Real-time Notification Logs monitor (Table tab) */}
+        <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between shadow-xs mt-4">
+          <div>
+            <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums flex items-center gap-1.5">
+              <Bell className="w-3.5 h-3.5 text-amber-800" />
+              Лог на известията & задействания
+            </h3>
+            <p className="text-xs text-ink-faint font-sans tabular-nums mt-0.5">
+              Хроника на пазарните промени и филтри на заложени аларми.
+            </p>
           </div>
 
-          {/* Real-time alert feed logs */}
-          <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between shadow-xs">
-            <div>
-              <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums flex items-center gap-1.5">
-                <Bell className="w-3.5 h-3.5 text-amber-800" />
-                Лог на известията & задействания
-              </h3>
-              <p className="text-xs text-ink-faint font-sans tabular-nums mt-0.5">
-                Хроника на пазарните промени и филтри на заложени аларми.
-              </p>
-            </div>
-
-            <div className="h-28 overflow-y-auto mt-3.5 space-y-1.5 pr-1 text-xs font-sans tabular-nums">
-              {logs.map(log => (
-                <div 
-                  key={log.id} 
-                  className={`p-1.5 rounded-2xl border text-xs leading-relaxed flex items-start gap-1.5 ${
-                    log.type === 'alert' 
-                      ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
-                      : log.type === 'success'
-                      ? 'bg-emerald-50 border-emerald-600 text-emerald-950 font-extrabold'
-                      : 'bg-bg/30 border-border/20 text-ink-muted'
-                  }`}
-                >
-                  <span className="text-ink-faint block shrink-0">[{log.timestamp}]</span>
-                  <p>
-                    <span className="font-bold text-ink mr-1 uppercase">[{log.ticker}]</span>
-                    {log.message}
-                  </p>
-                </div>
-              ))}
-            </div>
+          <div className="h-28 overflow-y-auto mt-3.5 space-y-1.5 pr-1 text-xs font-sans tabular-nums">
+            {logs.map(log => (
+              <div 
+                key={log.id} 
+                className={`p-1.5 rounded-2xl border text-xs leading-relaxed flex items-start gap-1.5 ${
+                  log.type === 'alert' 
+                    ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
+                    : log.type === 'success'
+                    ? 'bg-emerald-50 border-emerald-600 text-emerald-950 font-extrabold'
+                    : 'bg-bg/30 border-border/20 text-ink-muted'
+                }`}
+              >
+                <span className="text-ink-faint block shrink-0">[{log.timestamp}]</span>
+                <p>
+                  <span className="font-bold text-ink mr-1 uppercase">[{log.ticker}]</span>
+                  {log.message}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </>
@@ -1508,57 +1503,33 @@ export default function App() {
       />
     </div>
 
+    {/* Verified Business & Stock News Feed (Table tab only) */}
+    {activeMainTab === 'table' && (
+      <CompanyNewsContainer
+        stocks={stocks}
+        selectedStock={selectedStockForAi}
+        onSelectStock={setSelectedStockForAi}
+      />
+    )}
 
+    {/* Sleek Collapsible CSV & Google Sheets Uploader Footer (Available across all 3 windows/tabs) */}
+    <div className="mt-8 border-t border-border/40 pt-6 pb-8 flex flex-col items-center gap-4">
+      <button
+        type="button"
+        onClick={() => setIsCsvUploaderOpen(!isCsvUploaderOpen)}
+        className="px-5 py-2.5 rounded-2xl bg-card hover:bg-card-hover border border-border/80 text-ink-muted hover:text-ink text-xs font-extrabold transition-all flex items-center gap-2.5 cursor-pointer shadow-xs"
+      >
+        <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+        <span>📊 Синхронизиране с Google Sheets & CSV данни</span>
+        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCsvUploaderOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+      </button>
 
- {/* Verified Business & Stock News Feed (Table tab only) */}
- {activeMainTab === 'table' && (
-   <CompanyNewsContainer
-     stocks={stocks}
-     selectedStock={selectedStockForAi}
-     onSelectStock={setSelectedStockForAi}
-   />
- )}
-
- {/* Sync with files grid: CSV Uploader and Real-time Notification Logs monitor side by side (moved below the table) */}
- <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
- <div className="lg:col-span-2">
- <CsvUploader onDataLoaded={handleSheetSynced} />
- </div>
-
- {/* Real-time alert feed logs */}
- <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between shadow-xs">
- <div>
- <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums flex items-center gap-1.5">
- <Bell className="w-3.5 h-3.5 text-amber-800" />
- Лог на известията & задействания
- </h3>
- <p className="text-xs text-ink-faint font-sans tabular-nums mt-0.5">
- Хроника на пазарните промени и филтри на заложени аларми.
- </p>
- </div>
-
- <div className="h-28 overflow-y-auto mt-3.5 space-y-1.5 pr-1 text-xs font-sans tabular-nums">
- {logs.map(log => (
- <div 
- key={log.id} 
- className={`p-1.5 rounded-2xl border text-xs leading-relaxed flex items-start gap-1.5 ${
- log.type === 'alert' 
- ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
- : log.type === 'success'
- ? 'bg-emerald-50 border-emerald-600 text-emerald-950 font-extrabold'
- : 'bg-bg/30 border-border/20 text-ink-muted'
- }`}
- >
- <span className="text-ink-faint block shrink-0">[{log.timestamp}]</span>
- <p>
- <span className="font-bold text-ink mr-1 uppercase">[{log.ticker}]</span>
- {log.message}
- </p>
- </div>
- ))}
- </div>
- </div>
- </div>
+      {isCsvUploaderOpen && (
+        <div className="w-full max-w-4xl animate-in fade-in zoom-in-95 duration-200">
+          <CsvUploader onDataLoaded={handleSheetSynced} />
+        </div>
+      )}
+    </div>
 
 
   {/* TradingView Economic Calendar Modal Popup */}
