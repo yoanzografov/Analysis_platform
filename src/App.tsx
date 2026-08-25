@@ -43,6 +43,9 @@ import {
   LogOut,
   User as UserIcon,
   HelpCircle,
+  Calculator,
+  TrendingUp,
+  TrendingDown,
   Database
 } from 'lucide-react';
 
