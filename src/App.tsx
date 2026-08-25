@@ -18,6 +18,7 @@ import { AuthModal } from './components/AuthModal';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import RoiCalculatorModal from './components/RoiCalculatorModal';
 import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
+import ProfitCalculatorModal from './components/ProfitCalculatorModal';
 import { 
   Table,
   Save,
@@ -70,8 +71,9 @@ export default function App() {
  const [isUsefulLinksMenuOpen, setIsUsefulLinksMenuOpen] = useState(false);
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
  const [isCsvUploaderOpen, setIsCsvUploaderOpen] = useState(false);
- const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
- const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
+  const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
+  const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
+  const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -1306,6 +1308,14 @@ export default function App() {
               </div>
 
               <button
+                onClick={() => { setShowProfitCalculatorModal(true); setIsUsefulLinksMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+              >
+                <Calculator className="w-4 h-4 text-amber-400" />
+                <span>Profit Calculator (Ексел Стил)</span>
+              </button>
+
+              <button
                 onClick={() => { setShowRoiCalculatorModal(true); setIsUsefulLinksMenuOpen(false); }}
                 className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
               >
@@ -1616,6 +1626,14 @@ export default function App() {
   <InvestmentCalculatorModal
     isOpen={showInvestmentCalculatorModal}
     onClose={() => setShowInvestmentCalculatorModal(false)}
+    baseCurrency={baseCurrency}
+  />
+
+  {/* Profit Calculator Modal (Spreadsheet Style) */}
+  <ProfitCalculatorModal
+    isOpen={showProfitCalculatorModal}
+    onClose={() => setShowProfitCalculatorModal(false)}
+    stocks={stocks}
     baseCurrency={baseCurrency}
   />
  </main>
