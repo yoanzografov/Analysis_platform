@@ -72,7 +72,7 @@ export default function ProfitCalculatorModal({ isOpen, onClose, stocks, baseCur
             </div>
             <div>
               <h3 className="text-xs font-black uppercase text-ink tracking-wider">
-                Profit Calculator
+                Stock Profit Calculator
               </h3>
               <p className="text-[10px] text-ink-faint">
                 Попълват се само <span className="text-amber-400 font-extrabold">жълтите полета</span> (Тикер, Брой акции, Покупна цена)
