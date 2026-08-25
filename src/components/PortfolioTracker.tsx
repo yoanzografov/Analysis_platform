@@ -1827,20 +1827,22 @@ export default function PortfolioTracker({
                       <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1.5">
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleStartTransaction(pos, 'Покупка');
                             }}
-                            className="px-2.5 py-1 bg-emerald-600/80 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg uppercase transition-all cursor-pointer shadow-xs"
+                            className="w-14 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl uppercase transition-all cursor-pointer shadow-xs flex items-center justify-center shrink-0"
                           >
                             BUY
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleStartTransaction(pos, 'Продажба');
                             }}
-                            className="px-2.5 py-1 bg-amber-600/80 hover:bg-amber-500 text-white font-extrabold text-xs rounded-lg uppercase transition-all cursor-pointer shadow-xs"
+                            className="w-14 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl uppercase transition-all cursor-pointer shadow-xs flex items-center justify-center shrink-0"
                           >
                             SELL
                           </button>
