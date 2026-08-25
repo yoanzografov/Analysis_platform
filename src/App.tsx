@@ -39,6 +39,7 @@ import {
   FileSpreadsheet,
   X,
   ExternalLink,
+  Wrench,
   Cloud,
   Lock,
   LogOut,
@@ -1285,7 +1286,7 @@ export default function App() {
           <span>Calendar</span>
         </button>
 
-        {/* 6. Useful Links Dropdown Button */}
+        {/* 6. Tools Dropdown Button */}
         <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsUsefulLinksMenuOpen(false); }}>
           <button
             onClick={() => setIsUsefulLinksMenuOpen(!isUsefulLinksMenuOpen)}
@@ -1294,17 +1295,17 @@ export default function App() {
                 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
                 : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
             }`}
-            title="Useful Links"
+            title="Tools"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-            <span>Useful Links</span>
+            <Wrench className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+            <span>Tools</span>
             <ChevronDown className={`w-3 h-3 text-ink-faint transition-transform duration-200 shrink-0 ${isUsefulLinksMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isUsefulLinksMenuOpen && (
             <div className="absolute right-0 top-full mt-2 w-64 bg-bg border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
               <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
-                🛠️ Калкулатори & Инструменти
+                🛠️ Tools & Calculators
               </div>
 
               <button
