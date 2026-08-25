@@ -38,10 +38,7 @@ export default function InvestmentCalculatorModal({ isOpen, onClose, baseCurrenc
   const profitPct = totalInvested > 0 ? (totalInterestEarned / totalInvested) * 100 : 0;
 
   return (
-    <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-bg/80 backdrop-blur-md font-sans"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-bg/80 backdrop-blur-md font-sans">
       <div className="w-full max-w-lg bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
         
         {/* Modal Header */}

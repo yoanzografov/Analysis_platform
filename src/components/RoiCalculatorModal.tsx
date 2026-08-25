@@ -57,10 +57,7 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-bg/80 backdrop-blur-md font-sans"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-bg/80 backdrop-blur-md font-sans">
       <div className="w-full max-w-2xl bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
         
         {/* Modal Header */}
