@@ -651,7 +651,7 @@ export default function PortfolioTracker({
   // Portfolio Dashboard Calculations in Base Currency
   let totalCostBasis = 0;
   let totalCurrentValue = 0;
-  let totalDivEarned = divRecords.reduce((acc, r) => acc + convertToBase(r.amount || 0, 'USD'), 0);
+  let totalDivEarned = divRecords.reduce((acc, r) => acc + convertToBase(r.amount || 0, (r as any).currency || 'USD'), 0);
 
   const enrichedHoldings = activeHoldings.map(pos => {
     const cleanTicker = pos.ticker.trim().toUpperCase();
@@ -747,7 +747,7 @@ export default function PortfolioTracker({
 
   // Additional metric calculations in Portfolio Base Currency
   const realizedPnLSum = filteredHistory.reduce((acc, h) => acc + convertToBase(h.pnlVal || 0, h.currency || 'USD'), 0);
-  const totalDividendsSum = divRecords.reduce((acc, r) => acc + convertToBase(r.amount || 0, 'USD'), 0);
+  const totalDividendsSum = divRecords.reduce((acc, r) => acc + convertToBase(r.amount || 0, (r as any).currency || 'USD'), 0);
   const unrealizedProfitCount = enrichedHoldings.filter(h => h.pnlVal >= 0).length;
   const unrealizedLossCount = enrichedHoldings.filter(h => h.pnlVal < 0).length;
   const realizedProfitCount = filteredHistory.filter(h => (h.pnlVal || 0) > 0).length;
