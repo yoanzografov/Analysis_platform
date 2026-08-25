@@ -16,6 +16,8 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { AuthModal } from './components/AuthModal';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
+import RoiCalculatorModal from './components/RoiCalculatorModal';
+import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
 import { 
   Table,
   Save,
@@ -65,6 +67,8 @@ export default function App() {
  const [isUsefulLinksMenuOpen, setIsUsefulLinksMenuOpen] = useState(false);
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
  const [isCsvUploaderOpen, setIsCsvUploaderOpen] = useState(false);
+ const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
+ const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -1295,11 +1299,24 @@ export default function App() {
           {isUsefulLinksMenuOpen && (
             <div className="absolute right-0 top-full mt-2 w-64 bg-bg border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
               <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
-                🔗 Useful Links
+                🛠️ Калкулатори & Инструменти
               </div>
-              <div className="p-3 text-xs text-ink-faint italic text-center font-sans">
-                Awaiting your links...
-              </div>
+
+              <button
+                onClick={() => { setShowRoiCalculatorModal(true); setIsUsefulLinksMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+              >
+                <Calculator className="w-4 h-4 text-emerald-400" />
+                <span>Return on Investment (ROI)</span>
+              </button>
+
+              <button
+                onClick={() => { setShowInvestmentCalculatorModal(true); setIsUsefulLinksMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+              >
+                <TrendingUp className="w-4 h-4 text-indigo-400" />
+                <span>Сложна Лихва & Растеж</span>
+              </button>
             </div>
           )}
         </div>
@@ -1583,6 +1600,20 @@ export default function App() {
     isOpen={isAuthModalOpen}
     onClose={() => setIsAuthModalOpen(false)}
     currentUser={currentUser}
+  />
+
+  {/* ROI Calculator Modal */}
+  <RoiCalculatorModal
+    isOpen={showRoiCalculatorModal}
+    onClose={() => setShowRoiCalculatorModal(false)}
+    baseCurrency={baseCurrency}
+  />
+
+  {/* Investment Compound Growth Calculator Modal */}
+  <InvestmentCalculatorModal
+    isOpen={showInvestmentCalculatorModal}
+    onClose={() => setShowInvestmentCalculatorModal(false)}
+    baseCurrency={baseCurrency}
   />
  </main>
 
