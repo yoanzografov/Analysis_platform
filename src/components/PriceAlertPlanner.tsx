@@ -246,25 +246,26 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-2.5 pt-1 sm:pt-0 border-t sm:border-t-0 border-border/30 w-full sm:w-auto">
+                    <div className="flex items-center justify-between sm:justify-end gap-2 pt-1 sm:pt-0 border-t sm:border-t-0 border-border/30 w-full sm:w-auto shrink-0">
                       {curPrice > 0 && (
-                        <span className="text-[10px] text-ink-faint font-mono">
+                        <span className="h-6.5 px-2.5 rounded-lg border border-border/60 bg-bg/80 text-ink-muted font-mono font-bold text-[10px] inline-flex items-center justify-center gap-1 shrink-0 shadow-2xs">
                           (Текуща: ${curPrice.toFixed(2)})
                         </span>
                       )}
 
                       {matchingStock?.date && (
-                        <span className="text-[10px] text-amber-400 font-mono font-bold bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 flex items-center gap-1 shrink-0">
-                          <Calendar className="w-3 h-3 text-amber-400" />
+                        <span className="h-6.5 px-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 font-mono font-bold text-[10px] inline-flex items-center justify-center gap-1 shrink-0 shadow-2xs">
+                          <Calendar className="w-3 h-3 text-amber-400 shrink-0" />
                           <span>Дата: {matchingStock.date}</span>
                         </span>
                       )}
 
                       {matchingStock?.fairPrice !== undefined && matchingStock?.fairPrice !== null && (
-                        <span className="text-[10px] text-indigo-400 font-mono font-bold bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20 shrink-0">
+                        <span className="h-6.5 px-2.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 font-mono font-bold text-[10px] inline-flex items-center justify-center gap-1 shrink-0 shadow-2xs">
                           Fair Price: ${matchingStock.fairPrice.toFixed(2)}
                         </span>
                       )}
+
                       <button
                         type="button"
                         onClick={(e) => {
@@ -274,7 +275,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                           }
                           onDeleteAlert(alert.id);
                         }}
-                        className="text-ink-faint hover:text-red-500 transition-colors cursor-pointer p-1"
+                        className="h-6.5 w-6.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-2xs"
                         title="Изтрий известието"
                       >
                         <Ban className="w-3.5 h-3.5" />
