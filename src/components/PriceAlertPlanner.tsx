@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Stock, PriceAlert } from '../types';
 import { BellRing, Ban, PlusCircle, CheckCircle, XCircle, Edit3, Flame, AlertTriangle, Check, Calendar } from 'lucide-react';
 
@@ -32,6 +32,7 @@ const StockLogo = ({ ticker }: { ticker: string }) => {
 };
 
 export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdateAlert, onDeleteAlert }: Props) {
+  const targetInputRef = useRef<HTMLInputElement>(null);
   const [editingAlertId, setEditingAlertId] = useState<string | null>(null);
   const [newTicker, setNewTicker] = useState('');
   const [criteria, setCriteria] = useState<'ABOVE' | 'BELOW'>('ABOVE');
@@ -44,6 +45,11 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
     setCriteria(alert.criteria);
     setTargetVal(alert.targetPrice.toString());
     setFormError('');
+    setTimeout(() => {
+      targetInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      targetInputRef.current?.focus();
+      targetInputRef.current?.select();
+    }, 50);
   };
 
   const handleCancelEdit = () => {
@@ -122,6 +128,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
           <div className="col-span-2 sm:col-span-1 sm:w-32">
             <label className="block text-[9px] text-ink-faint font-semibold uppercase mb-0.5">ТАРГЕТ ЦЕНА ($)</label>
             <input
+              ref={targetInputRef}
               type="number"
               step="0.01"
               placeholder="400.00"
@@ -227,7 +234,17 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                               · {matchingStock.companyName}
                             </span>
                           )}
-                          <Edit3 className="w-3 h-3 text-ink-faint opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartEdit(alert);
+                            }}
+                            className="p-1 rounded-md text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/20 transition-all cursor-pointer shrink-0 ml-auto"
+                            title="Редактирай тригера"
+                          >
+                            <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+                          </button>
                         </span>
                       </div>
 
