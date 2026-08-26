@@ -246,7 +246,7 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                         ) : (
                           <span className="text-xs font-bold text-ink flex items-center gap-1.5 bg-bg/60 border border-border/50 px-2 py-0.5 rounded-md">
                             <span className="text-ink-faint font-semibold">{alert.criteria === 'ABOVE' ? 'над ▲' : 'под ▼'}</span>
-                            <span className="font-black text-ink font-mono">${alert.targetPrice}</span>
+                            <span className="font-black text-ink font-mono">${alert.targetPrice.toFixed(2)}</span>
                           </span>
                         )}
                       </div>
