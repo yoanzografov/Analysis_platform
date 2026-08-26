@@ -1737,13 +1737,6 @@ export default function PortfolioTracker({
                       <td className="py-3 px-4 first:rounded-l-xl">
                         <div className="flex items-center gap-1.5">
                           <span className="font-extrabold text-ink text-xs">{pos.ticker}</span>
-                          {pos.quoteCurrency && (
-                            <span className={`px-1.5 py-0.5 rounded text-xs font-black uppercase ${
-                              pos.quoteCurrency === 'EUR' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-indigo-500/10 text-indigo-400'
-                            }`}>
-                              {pos.quoteCurrency}
-                            </span>
-                          )}
                         </div>
                       </td>
 
