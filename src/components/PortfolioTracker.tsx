@@ -798,6 +798,9 @@ export default function PortfolioTracker({
     } else if (field === 'weightPct') {
       valA = a.currentVal;
       valB = b.currentVal;
+    } else if (field === 'currency') {
+      valA = a.posCurrency;
+      valB = b.posCurrency;
     }
 
     if (valA === undefined || valA === null) return order === 'asc' ? 1 : -1;
@@ -1635,6 +1638,9 @@ export default function PortfolioTracker({
                 <th onClick={() => handleSort('shares')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
                   SHARES{sortField === 'shares' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
                 </th>
+                <th onClick={() => handleSort('currency')} className="py-3 px-4 text-center whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
+                  CURRENCY{sortField === 'currency' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+                </th>
                 <th onClick={() => handleSort('buyPrice')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
                   AVG. PRICE{sortField === 'buyPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
                 </th>
@@ -1669,7 +1675,7 @@ export default function PortfolioTracker({
             <tbody className="divide-y divide-border/40 text-ink text-xs">
               {enrichedHoldings.length === 0 ? (
                 <tr>
-                  <td colSpan={15} className="py-10 text-center text-ink-faint font-bold text-xs">
+                  <td colSpan={16} className="py-10 text-center text-ink-faint font-bold text-xs">
                     <div className="flex flex-col items-center justify-center gap-3 max-w-md mx-auto">
                       <p className="text-ink-muted text-xs">
                         Акаунтът е нов и няма въведени лични активи в портфейла.
@@ -1773,6 +1779,19 @@ export default function PortfolioTracker({
                       {/* 4. Shares */}
                       <td className="py-3 px-3 text-right font-extrabold text-ink text-xs">
                         {isPrivacyMode ? '••••' : pos.shares}
+                      </td>
+
+                      {/* 4b. Currency Column */}
+                      <td className="py-3 px-3 text-center font-bold text-xs">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono uppercase font-black border ${
+                          pos.posCurrency === 'EUR'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            : pos.posCurrency === 'GBP'
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                              : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
+                        }`}>
+                          {pos.posCurrency}
+                        </span>
                       </td>
 
                       {/* 5. Avg. Price */}
