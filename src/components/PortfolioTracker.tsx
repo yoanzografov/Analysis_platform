@@ -716,6 +716,7 @@ export default function PortfolioTracker({
     return {
       ...pos,
       currency: posCurrency,
+      posCurrency,
       posSymbol,
       companyName: matching?.companyName || quote?.companyName || pos.companyName || pos.ticker,
       matching: synthMatching,
@@ -1775,17 +1776,22 @@ export default function PortfolioTracker({
                       </td>
 
                       {/* 4b. Currency Column */}
-                      <td className="py-3 px-3 text-center font-bold text-xs">
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono uppercase font-black border ${
-                          pos.posCurrency === 'EUR'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                            : pos.posCurrency === 'GBP'
-                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                              : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
-                        }`}>
-                          {pos.posCurrency}
-                        </span>
-                      </td>
+                      {(() => {
+                        const currText = pos.posCurrency || pos.currency || pos.quoteCurrency || 'USD';
+                        return (
+                          <td className="py-3 px-3 text-center font-bold text-xs">
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono uppercase font-black border ${
+                              currText === 'EUR'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                : currText === 'GBP'
+                                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                                  : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
+                            }`}>
+                              {currText}
+                            </span>
+                          </td>
+                        );
+                      })()}
 
                       {/* 5. Avg. Price */}
                       <td className="py-3 px-3 text-right font-mono text-ink-faint text-xs">
