@@ -253,8 +253,15 @@ export default function PriceAlertPlanner({ stocks, alerts, onAddAlert, onUpdate
                         </span>
                       )}
 
+                      {matchingStock?.date && (
+                        <span className="text-[10px] text-amber-400 font-mono font-bold bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 flex items-center gap-1 shrink-0">
+                          <Calendar className="w-3 h-3 text-amber-400" />
+                          <span>Дата: {matchingStock.date}</span>
+                        </span>
+                      )}
+
                       {matchingStock?.fairPrice !== undefined && matchingStock?.fairPrice !== null && (
-                        <span className="text-[10px] text-indigo-400 font-mono font-bold bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                        <span className="text-[10px] text-indigo-400 font-mono font-bold bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20 shrink-0">
                           Fair Price: ${matchingStock.fairPrice.toFixed(2)}
                         </span>
                       )}
