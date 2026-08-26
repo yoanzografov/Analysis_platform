@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Stock, PriceAlert } from '../types';
-import { BellRing, Ban, PlusCircle, CheckCircle, XCircle, Edit3, Flame, AlertTriangle, Check } from 'lucide-react';
+import { BellRing, Ban, PlusCircle, CheckCircle, XCircle, Edit3, Flame, AlertTriangle, Check, Calendar } from 'lucide-react';
 
 interface Props {
   stocks: Stock[];
