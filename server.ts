@@ -875,8 +875,6 @@ app.get("/api/inflation-data", async (req, res) => {
       }
     });
     
-    if (!response.ok) throw new Error('Failed to fetch from TradingEconomics');
-    
     const html = await response.text();
     const $ = cheerio.load(html);
     
@@ -889,6 +887,26 @@ app.get("/api/inflation-data", async (req, res) => {
         rawData[name] = { actual, previous };
       }
     });
+
+    try {
+      const beaRes = await fetch('https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      if (beaRes.ok) {
+        const beaHtml = await beaRes.text();
+        const $bea = cheerio.load(beaHtml);
+        const beaVal = $bea('table.bea-special tbody tr.item-fact-row:first-child td:nth-child(2)').text().trim();
+        if (beaVal) {
+          const cleanVal = beaVal.replace('+', '');
+          rawData['Core PCE Price Index YoY'] = { actual: cleanVal, previous: '3.3%' };
+          rawData['PCE Price Index Annual Change'] = { actual: cleanVal, previous: '3.3%' };
+        }
+      }
+    } catch (e) {
+      console.warn('Direct BEA fetch notice:', e);
+    }
 
     const data = [
       { name: "CPI (Inflation) YoY", key: "Inflation Rate", url: "https://tradingeconomics.com/united-states/inflation-cpi" },
