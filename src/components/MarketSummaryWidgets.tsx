@@ -384,10 +384,10 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
       1:  { releaseDate: 'Aug 12, 2026', actual: '2.9%',   forecast: '3.0%',   previous: '3.0%',   lowerIsBetter: true  },
       // 2. Core CPI — BLS release Aug 12, 2026 | Actual 3.2% in line with forecast 3.2%
       2:  { releaseDate: 'Aug 12, 2026', actual: '3.2%',   forecast: '3.2%',   previous: '3.3%',   lowerIsBetter: true  },
-      // 3. PCE — BEA release Jul 31, 2026 | Actual 2.5% in line with forecast 2.5%
-      3:  { releaseDate: 'Jul 31, 2026', actual: '2.5%',   forecast: '2.5%',   previous: '2.6%',   lowerIsBetter: true  },
-      // 4. Core PCE — BEA release Jul 31, 2026 | Actual 2.6% in line with forecast 2.6%
-      4:  { releaseDate: 'Jul 31, 2026', actual: '2.6%',   forecast: '2.6%',   previous: '2.6%',   lowerIsBetter: true  },
+      // 3. PCE — BEA release Aug 26, 2026 | Actual 3.3% in line with forecast 3.3%
+      3:  { releaseDate: 'Aug 26, 2026', actual: '3.3%',   forecast: '3.3%',   previous: '3.3%',   lowerIsBetter: true  },
+      // 4. Core PCE — BEA official release Aug 26, 2026 | Actual 3.3% in line with forecast 3.3%
+      4:  { releaseDate: 'Aug 26, 2026', actual: '3.3%',   forecast: '3.3%',   previous: '3.3%',   lowerIsBetter: true  },
       // 5. Fed Funds Rate — FOMC release Jul 30, 2026 | Hold at 5.25% as expected
       5:  { releaseDate: 'Jul 30, 2026', actual: '5.25%',  forecast: '5.25%',  previous: '5.50%',  lowerIsBetter: true  },
       // 6. Employment Situation — BLS release Aug 7, 2026 | +114K vs forecast +175K
