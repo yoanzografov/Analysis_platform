@@ -379,32 +379,69 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
   // Format: investing.com style — Release Date (publication date), Actual, Forecast, Previous
   // Last updated: August 2026
   useEffect(() => {
-    setIndicatorStats({
-      // 1. CPI — BLS release Aug 12, 2026 | Actual 2.9% beat forecast 3.0%
+    // Verified fallback stats (updated August 2026)
+    const initialStats: Record<number, IndicatorStats> = {
       1:  { releaseDate: 'Aug 12, 2026', actual: '2.9%',   forecast: '3.0%',   previous: '3.0%',   lowerIsBetter: true  },
-      // 2. Core CPI — BLS release Aug 12, 2026 | Actual 3.2% in line with forecast 3.2%
       2:  { releaseDate: 'Aug 12, 2026', actual: '3.2%',   forecast: '3.2%',   previous: '3.3%',   lowerIsBetter: true  },
-      // 3. PCE — BEA release Aug 26, 2026 | Actual 3.3% in line with forecast 3.3%
       3:  { releaseDate: 'Aug 26, 2026', actual: '3.3%',   forecast: '3.3%',   previous: '3.3%',   lowerIsBetter: true  },
-      // 4. Core PCE — BEA official release Aug 26, 2026 | Actual 3.3% in line with forecast 3.3%
       4:  { releaseDate: 'Aug 26, 2026', actual: '3.3%',   forecast: '3.3%',   previous: '3.3%',   lowerIsBetter: true  },
-      // 5. Fed Funds Rate — FOMC release Jul 30, 2026 | Hold at 5.25% as expected
       5:  { releaseDate: 'Jul 30, 2026', actual: '5.25%',  forecast: '5.25%',  previous: '5.50%',  lowerIsBetter: true  },
-      // 6. Employment Situation — BLS release Aug 7, 2026 | +114K vs forecast +175K
       6:  { releaseDate: 'Aug 7, 2026',  actual: '+114K',  forecast: '+175K',  previous: '+179K',  lowerIsBetter: false },
-      // 7. NFP — BLS release Aug 7, 2026 | +114K vs forecast +175K
       7:  { releaseDate: 'Aug 7, 2026',  actual: '+114K',  forecast: '+175K',  previous: '+179K',  lowerIsBetter: false },
-      // 8. Unemployment — BLS release Aug 7, 2026 | 4.3% vs forecast 4.1%
       8:  { releaseDate: 'Aug 7, 2026',  actual: '4.3%',   forecast: '4.1%',   previous: '4.1%',   lowerIsBetter: true  },
-      // 9. GDP — BEA advance release Jul 30, 2026 | +2.8% beat forecast +2.0%
       9:  { releaseDate: 'Jul 30, 2026', actual: '+2.8%',  forecast: '+2.0%',  previous: '+1.4%',  lowerIsBetter: false },
-      // 10. Retail Sales — Census release Aug 15, 2026 | +1.0% beat forecast +0.3%
       10: { releaseDate: 'Aug 15, 2026', actual: '+1.0%',  forecast: '+0.3%',  previous: '-0.2%',  lowerIsBetter: false },
-      // 11. Consumer Confidence — Conference Board Jul 30, 2026 | 100.3 beat forecast 99.7
       11: { releaseDate: 'Jul 30, 2026', actual: '100.3',  forecast: '99.7',   previous: '97.8',   lowerIsBetter: false },
-      // 12. Housing Starts — Census release Aug 16, 2026 | 1.238M vs forecast 1.330M
       12: { releaseDate: 'Aug 16, 2026', actual: '1.238M', forecast: '1.330M', previous: '1.329M', lowerIsBetter: false },
-    });
+    };
+
+    setIndicatorStats(initialStats);
+
+    // Fetch live macro indicators from backend /api/inflation-data
+    const fetchLiveMacro = async () => {
+      try {
+        const res = await fetch('/api/inflation-data');
+        if (res.ok) {
+          const liveData = await res.json();
+          if (Array.isArray(liveData) && liveData.length > 0) {
+            setIndicatorStats(prev => {
+              const nextStats = { ...prev };
+              liveData.forEach((item: any) => {
+                if (!item.name) return;
+                const nameUpper = item.name.toUpperCase();
+                let targetId: number | null = null;
+                if (nameUpper.includes('CORE CPI')) targetId = 2;
+                else if (nameUpper.includes('CPI')) targetId = 1;
+                else if (nameUpper.includes('CORE PCE')) targetId = 4;
+                else if (nameUpper.includes('PCE')) targetId = 3;
+                else if (nameUpper.includes('FED FUNDS') || nameUpper.includes('INTEREST RATE')) targetId = 5;
+                else if (nameUpper.includes('NON-FARM') || nameUpper.includes('PAYROLLS')) targetId = 7;
+                else if (nameUpper.includes('EMPLOYMENT')) targetId = 6;
+                else if (nameUpper.includes('UNEMPLOYMENT')) targetId = 8;
+                else if (nameUpper.includes('GDP')) targetId = 9;
+                else if (nameUpper.includes('RETAIL')) targetId = 10;
+                else if (nameUpper.includes('CONSUMER CONFIDENCE')) targetId = 11;
+                else if (nameUpper.includes('HOUSING')) targetId = 12;
+
+                if (targetId && nextStats[targetId]) {
+                  nextStats[targetId] = {
+                    ...nextStats[targetId],
+                    actual: (item.actual && item.actual !== 'N/A') ? item.actual : nextStats[targetId].actual,
+                    previous: (item.previous && item.previous !== 'N/A') ? item.previous : nextStats[targetId].previous,
+                    forecast: (item.forecast && item.forecast !== 'N/A') ? item.forecast : nextStats[targetId].forecast
+                  };
+                }
+              });
+              return nextStats;
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Live macro fetch notice:', e);
+      }
+    };
+
+    fetchLiveMacro();
   }, []);
 
   // Compute Top 15 Gainers and Losers
