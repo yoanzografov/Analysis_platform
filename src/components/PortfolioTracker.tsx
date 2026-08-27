@@ -1742,13 +1742,25 @@ export default function PortfolioTracker({
                       </td>
 
                       {/* 2. Company Name */}
-                      <td className="py-3 px-4 min-w-[240px]">
+                      <td className="py-3 px-4 min-w-[260px]">
                         <div className="flex items-center justify-between gap-2 w-full">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
                             <StockLogo ticker={pos.ticker} />
-                            <span className="text-ink font-bold text-xs whitespace-nowrap">
+                            <span className="text-ink font-bold text-xs whitespace-nowrap truncate">
                               {pos.companyName || pos.matching?.companyName || pos.ticker}
                             </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setTvModalTicker(pos.ticker);
+                              }}
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-sans font-extrabold transition-all border border-indigo-500/20 flex items-center gap-1 cursor-pointer shadow-2xs shrink-0"
+                              title={`Отвори TradingView НА ЖИВО графика за ${pos.ticker}`}
+                            >
+                              <TrendingUp className="w-3 h-3 text-indigo-400" />
+                              TV
+                            </button>
                           </div>
                           <button
                             type="button"
@@ -1823,22 +1835,8 @@ export default function PortfolioTracker({
                       </td>
 
                       {/* 10. Current Price */}
-                      <td className="py-3 px-3 text-right font-mono font-black text-ink text-xs">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <span>{isPrivacyMode ? '•••••' : `${pos.posSymbol}${pos.curPrice.toFixed(2)}`}</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setTvModalTicker(pos.ticker);
-                            }}
-                            className="text-xs px-2 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-sans font-extrabold transition-all border border-indigo-500/20 flex items-center gap-1 cursor-pointer shadow-xs"
-                            title={`Отвори TradingView НА ЖИВО графика за ${pos.ticker}`}
-                          >
-                            <TrendingUp className="w-3 h-3 text-indigo-400" />
-                            TV
-                          </button>
-                        </div>
+                      <td className="py-3 px-3 text-right font-mono font-black text-ink text-xs whitespace-nowrap">
+                        {isPrivacyMode ? '•••••' : `${pos.posSymbol}${pos.curPrice.toFixed(2)}`}
                       </td>
 
                       {/* 11. BUY/SELL Buttons & Trash2 Delete */}
