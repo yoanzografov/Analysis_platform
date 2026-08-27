@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter, PriceAlert } from '../types';
-import { Search, Sparkles, TrendingUp, TrendingDown, Edit3, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell } from 'lucide-react';
+import { Search, Sparkles, TrendingUp, TrendingDown, Edit3, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell, CheckSquare } from 'lucide-react';
 import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
 import EarningsModal from './EarningsModal';
@@ -596,6 +596,17 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
      <Bell className="w-3.5 h-3.5" />
      Известие
    </button>
+
+         <a
+           href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit#gid=0"
+           target="_blank"
+           rel="noopener noreferrer"
+           className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
+           title="Отвори Check List за анализ в Google Sheets"
+         >
+           <CheckSquare className="w-3.5 h-3.5" />
+           Check List
+         </a>
 
         <a
           href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
