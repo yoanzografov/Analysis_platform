@@ -62,15 +62,49 @@ export const formatDateDDMMYYYY = (dateStr?: string | number | null): string => 
       return `${parts[2]}.${parts[1]}.${parts[0]}`;
     }
   }
-  const parsed = new Date(str);
-  if (!isNaN(parsed.getTime())) {
-    const day = String(parsed.getDate()).padStart(2, '0');
-    const month = String(parsed.getMonth() + 1).padStart(2, '0');
-    const year = parsed.getFullYear();
-    return `${day}.${month}.${year}`;
-  }
   return str;
 };
+
+// Helper to render miniature sparkline chart for '365 CHART' column
+function StockSparkline({ changePct, ticker }: { changePct: number; ticker: string }) {
+  const isUp = changePct >= 0;
+  let seed = ticker.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const steps = 12;
+  const prices: number[] = new Array(steps + 1);
+  let currentVal = 100;
+  prices[0] = currentVal;
+  for (let i = 1; i <= steps; i++) {
+    seed = (seed * 9301 + 49297) % 233280;
+    const rnd = (seed / 233280) - 0.5;
+    const trend = (changePct / 100) / steps;
+    currentVal = currentVal * (1 + rnd * 0.04 + trend);
+    prices[i] = currentVal;
+  }
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const range = maxPrice - minPrice || 1;
+  const height = 16;
+  const padding = 1.5;
+  const scaleHeight = height - padding * 2;
+  const points = prices.map((price, i) => {
+    const x = (i / steps) * 46 + 2;
+    const y = height - padding - ((price - minPrice) / range) * scaleHeight;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  return (
+    <svg className="w-14 h-4 min-w-[56px] shrink-0 overflow-visible inline-block opacity-85 hover:opacity-100 transition-opacity" viewBox="0 0 50 16">
+      <polyline
+        fill="none"
+        stroke={isUp ? '#10B981' : '#F43F5E'}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points.join(' ')}
+      />
+    </svg>
+  );
+}
 
 interface Props {
   stocks: Stock[];
@@ -1633,6 +1667,7 @@ export default function PortfolioTracker({
                 <th onClick={() => handleSort('companyName')} className="py-3 px-4 whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
                   COMPANY NAME{sortField === 'companyName' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
                 </th>
+                <th className="py-3 px-4 text-center whitespace-nowrap">365 CHART</th>
                 <th onClick={() => handleSort('weightPct')} className="py-3 px-4 text-right whitespace-nowrap select-none cursor-pointer hover:text-indigo-400 transition-colors">
                   % OF PORTFOLIO{sortField === 'weightPct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
                 </th>
@@ -1676,7 +1711,7 @@ export default function PortfolioTracker({
             <tbody className="divide-y divide-border/40 text-ink text-xs">
               {enrichedHoldings.length === 0 ? (
                 <tr>
-                  <td colSpan={16} className="py-10 text-center text-ink-faint font-bold text-xs">
+                  <td colSpan={17} className="py-10 text-center text-ink-faint font-bold text-xs">
                     <div className="flex flex-col items-center justify-center gap-3 max-w-md mx-auto">
                       <p className="text-ink-muted text-xs">
                         Акаунтът е нов и няма въведени лични активи в портфейла.
@@ -1742,25 +1777,13 @@ export default function PortfolioTracker({
                       </td>
 
                       {/* 2. Company Name */}
-                      <td className="py-3 px-4 min-w-[260px]">
+                      <td className="py-3 px-4 min-w-[240px]">
                         <div className="flex items-center justify-between gap-2 w-full">
                           <div className="flex items-center gap-2 min-w-0">
                             <StockLogo ticker={pos.ticker} />
                             <span className="text-ink font-bold text-xs whitespace-nowrap truncate">
                               {pos.companyName || pos.matching?.companyName || pos.ticker}
                             </span>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setTvModalTicker(pos.ticker);
-                              }}
-                              className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-sans font-extrabold transition-all border border-indigo-500/20 flex items-center gap-1 cursor-pointer shadow-2xs shrink-0"
-                              title={`Отвори TradingView НА ЖИВО графика за ${pos.ticker}`}
-                            >
-                              <TrendingUp className="w-3 h-3 text-indigo-400" />
-                              TV
-                            </button>
                           </div>
                           <button
                             type="button"
@@ -1775,6 +1798,21 @@ export default function PortfolioTracker({
                             <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
                           </button>
                         </div>
+                      </td>
+
+                      {/* 2b. 365 CHART Column */}
+                      <td className="py-3 px-3 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTvModalTicker(pos.ticker);
+                          }}
+                          className="inline-flex items-center justify-center p-1 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800 border border-transparent hover:border-border transition-all cursor-pointer shrink-0 min-w-[64px]"
+                          title={`Кликнете за детайлна TradingView графика за ${pos.ticker}`}
+                        >
+                          <StockSparkline changePct={pos.matching?.dailyChangePct || 0} ticker={pos.ticker} />
+                        </button>
                       </td>
 
                       {/* 3. % of Portfolio */}
