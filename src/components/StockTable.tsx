@@ -1469,6 +1469,12 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  </div>
  </div>
  )}
+
+ <StockChecklistModal
+    isOpen={isChecklistOpen}
+    onClose={() => setIsChecklistOpen(false)}
+    stocks={stocks}
+  />
  
  </div>
  );

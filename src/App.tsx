@@ -19,6 +19,7 @@ import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import RoiCalculatorModal from './components/RoiCalculatorModal';
 import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
 import ProfitCalculatorModal from './components/ProfitCalculatorModal';
+import StockChecklistModal from './components/StockChecklistModal';
 import { 
   Table,
   Save,
@@ -29,6 +30,7 @@ import {
   Play, 
   Calendar,
   Square, 
+  CheckSquare,
   RefreshCw,
   Settings2,
   ChevronDown,
@@ -75,10 +77,36 @@ export default function App() {
   const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
   const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
   const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.toLowerCase().replace('#', '');
+      if (hash === 'stock-profit-calculator') {
+        setShowProfitCalculatorModal(true);
+      } else if (hash === 'roi-calculator') {
+        setShowRoiCalculatorModal(true);
+      } else if (hash === 'investment-calculator') {
+        setShowInvestmentCalculatorModal(true);
+      } else if (hash === 'checklist' || hash === 'check-list') {
+        setShowChecklistModal(true);
+      } else {
+        const tab = getInitialTab();
+        setActiveMainTab(tab);
+      }
+    };
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
+  }, []);
 
 
   useEffect(() => {
@@ -1319,6 +1347,21 @@ export default function App() {
               </div>
 
               <a
+                href="#checklist"
+                onClick={(e) => {
+                  if (!e.ctrlKey && !e.metaKey && e.button === 0) {
+                    e.preventDefault();
+                    setShowChecklistModal(true);
+                    setIsUsefulLinksMenuOpen(false);
+                  }
+                }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+              >
+                <CheckSquare className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span>Stock Analysis Check List</span>
+              </a>
+
+              <a
                 href="#stock-profit-calculator"
                 onClick={(e) => {
                   if (!e.ctrlKey && !e.metaKey && e.button === 0) {
@@ -1667,6 +1710,13 @@ export default function App() {
     onClose={() => setShowProfitCalculatorModal(false)}
     stocks={stocks}
     baseCurrency={baseCurrency}
+  />
+
+  {/* Stock Valuation Checklist Modal */}
+  <StockChecklistModal
+    isOpen={showChecklistModal}
+    onClose={() => setShowChecklistModal(false)}
+    stocks={stocks}
   />
  </main>
 
