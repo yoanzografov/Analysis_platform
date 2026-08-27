@@ -380,30 +380,30 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
   // Last updated: August 2026
   useEffect(() => {
     setIndicatorStats({
-      // 1. CPI — BLS release Jul 14, 2026 | Actual 3.5% beat forecast 3.6%
-      1:  { releaseDate: 'Jul 14, 2026', actual: '3.5%',   forecast: '3.6%',   previous: '4.2%',   lowerIsBetter: true  },
-      // 2. Core CPI — BLS release Jul 14, 2026 | Actual 2.6% beat forecast 2.7%
-      2:  { releaseDate: 'Jul 14, 2026', actual: '2.6%',   forecast: '2.7%',   previous: '2.8%',   lowerIsBetter: true  },
-      // 3. PCE — BEA release Jun 27, 2026 | Actual 2.5% beat forecast 2.6%
-      3:  { releaseDate: 'Jun 27, 2026', actual: '2.5%',   forecast: '2.6%',   previous: '2.7%',   lowerIsBetter: true  },
-      // 4. Core PCE — BEA release Jun 27, 2026 | Actual 2.7% in line with forecast 2.7%
-      4:  { releaseDate: 'Jun 27, 2026', actual: '2.7%',   forecast: '2.7%',   previous: '2.8%',   lowerIsBetter: true  },
-      // 5. Fed Funds Rate — FOMC release May 7, 2026 | Hold at 4.25% as expected
-      5:  { releaseDate: 'May 7, 2026',  actual: '4.25%',  forecast: '4.25%',  previous: '4.50%',  lowerIsBetter: true  },
-      // 6. Employment Situation — BLS release Jul 3, 2026 | Disappointing +57K vs forecast +175K
-      6:  { releaseDate: 'Jul 3, 2026',  actual: '+57K',   forecast: '+175K',  previous: '+129K',  lowerIsBetter: false },
-      // 7. NFP — BLS release Jul 3, 2026 | +57K vs forecast +175K
-      7:  { releaseDate: 'Jul 3, 2026',  actual: '+57K',   forecast: '+175K',  previous: '+129K',  lowerIsBetter: false },
-      // 8. Unemployment — BLS release Jul 3, 2026 | 4.2% better than forecast 4.3%
-      8:  { releaseDate: 'Jul 3, 2026',  actual: '4.2%',   forecast: '4.3%',   previous: '4.3%',   lowerIsBetter: true  },
-      // 9. GDP — BEA advance release Apr 30, 2026 | +2.1% missed forecast +2.4%
-      9:  { releaseDate: 'Apr 30, 2026', actual: '+2.1%',  forecast: '+2.4%',  previous: '+2.4%',  lowerIsBetter: false },
-      // 10. Retail Sales — Census release Jul 17, 2026 | +0.3% beat forecast 0.0%
-      10: { releaseDate: 'Jul 17, 2026', actual: '+0.3%',  forecast: '0.0%',   previous: '+0.1%',  lowerIsBetter: false },
-      // 11. Consumer Confidence — Conference Board Jul 29, 2026 | 98.7 missed forecast 100.5
-      11: { releaseDate: 'Jul 29, 2026', actual: '98.7',   forecast: '100.5',  previous: '100.4',  lowerIsBetter: false },
-      // 12. Housing Starts — Census release Jul 17, 2026 | 1.321M beat forecast 1.295M
-      12: { releaseDate: 'Jul 17, 2026', actual: '1.321M', forecast: '1.295M', previous: '1.311M', lowerIsBetter: false },
+      // 1. CPI — BLS release Aug 12, 2026 | Actual 2.9% beat forecast 3.0%
+      1:  { releaseDate: 'Aug 12, 2026', actual: '2.9%',   forecast: '3.0%',   previous: '3.0%',   lowerIsBetter: true  },
+      // 2. Core CPI — BLS release Aug 12, 2026 | Actual 3.2% in line with forecast 3.2%
+      2:  { releaseDate: 'Aug 12, 2026', actual: '3.2%',   forecast: '3.2%',   previous: '3.3%',   lowerIsBetter: true  },
+      // 3. PCE — BEA release Jul 31, 2026 | Actual 2.5% in line with forecast 2.5%
+      3:  { releaseDate: 'Jul 31, 2026', actual: '2.5%',   forecast: '2.5%',   previous: '2.6%',   lowerIsBetter: true  },
+      // 4. Core PCE — BEA release Jul 31, 2026 | Actual 2.6% in line with forecast 2.6%
+      4:  { releaseDate: 'Jul 31, 2026', actual: '2.6%',   forecast: '2.6%',   previous: '2.6%',   lowerIsBetter: true  },
+      // 5. Fed Funds Rate — FOMC release Jul 30, 2026 | Hold at 5.25% as expected
+      5:  { releaseDate: 'Jul 30, 2026', actual: '5.25%',  forecast: '5.25%',  previous: '5.50%',  lowerIsBetter: true  },
+      // 6. Employment Situation — BLS release Aug 7, 2026 | +114K vs forecast +175K
+      6:  { releaseDate: 'Aug 7, 2026',  actual: '+114K',  forecast: '+175K',  previous: '+179K',  lowerIsBetter: false },
+      // 7. NFP — BLS release Aug 7, 2026 | +114K vs forecast +175K
+      7:  { releaseDate: 'Aug 7, 2026',  actual: '+114K',  forecast: '+175K',  previous: '+179K',  lowerIsBetter: false },
+      // 8. Unemployment — BLS release Aug 7, 2026 | 4.3% vs forecast 4.1%
+      8:  { releaseDate: 'Aug 7, 2026',  actual: '4.3%',   forecast: '4.1%',   previous: '4.1%',   lowerIsBetter: true  },
+      // 9. GDP — BEA advance release Jul 30, 2026 | +2.8% beat forecast +2.0%
+      9:  { releaseDate: 'Jul 30, 2026', actual: '+2.8%',  forecast: '+2.0%',  previous: '+1.4%',  lowerIsBetter: false },
+      // 10. Retail Sales — Census release Aug 15, 2026 | +1.0% beat forecast +0.3%
+      10: { releaseDate: 'Aug 15, 2026', actual: '+1.0%',  forecast: '+0.3%',  previous: '-0.2%',  lowerIsBetter: false },
+      // 11. Consumer Confidence — Conference Board Jul 30, 2026 | 100.3 beat forecast 99.7
+      11: { releaseDate: 'Jul 30, 2026', actual: '100.3',  forecast: '99.7',   previous: '97.8',   lowerIsBetter: false },
+      // 12. Housing Starts — Census release Aug 16, 2026 | 1.238M vs forecast 1.330M
+      12: { releaseDate: 'Aug 16, 2026', actual: '1.238M', forecast: '1.330M', previous: '1.329M', lowerIsBetter: false },
     });
   }, []);
 
