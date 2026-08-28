@@ -306,70 +306,48 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150" onClick={onClose}>
       <div className="relative w-full max-w-5xl h-[94vh] bg-[#FFFFFF] dark:bg-[#1E1E1E] border border-[#DADCE0] dark:border-[#3C4043] rounded-xl shadow-2xl overflow-hidden flex flex-col font-sans select-none text-slate-800 dark:text-slate-100" onClick={e => e.stopPropagation()}>
         
-        {/* Google Sheets Header Bar */}
+        {/* Clean Header Bar */}
         <div className="bg-[#0F9D58] text-white px-4 py-2.5 flex items-center justify-between shrink-0 shadow-xs">
           <div className="flex items-center gap-3">
             <div className="bg-white/20 p-1.5 rounded-lg border border-white/30">
               <Table className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm tracking-tight">Stock Valuation.xlsx</span>
-                <span className="text-[10px] bg-white/20 text-white font-mono px-2 py-0.5 rounded border border-white/30 font-bold uppercase">Чиста Таблица (Сива по подразбиране)</span>
-              </div>
-              <p className="text-[11px] text-white/80">Полетата са сиви. Напишете тикъра или въведете данни, за да се оцветят в 🟢 Зелено, 🟡 Жълто или 🔴 Червено!</p>
+              <h2 className="font-extrabold text-sm tracking-tight">
+                Stock Valuation Checklist
+              </h2>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-white/90 uppercase">Избор на Актив:</label>
+              <select
+                value={selectedTicker}
+                onChange={e => handleSelectTicker(e.target.value)}
+                className="bg-white/15 text-white font-mono font-bold text-xs rounded-lg px-2.5 py-1 outline-none border border-white/30 cursor-pointer"
+              >
+                <option value="" className="bg-[#1E1E1E] text-white">-- Изберете Актив --</option>
+                {stocks.map(s => (
+                  <option key={s.ticker} value={s.ticker} className="bg-[#1E1E1E] text-white">{s.ticker} - {s.companyName}</option>
+                ))}
+              </select>
+            </div>
+
             <button
               onClick={handleClearAll}
               className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-extrabold border border-white/30 flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Изчисти всички данни за тестване"
+              title="Изчисти всички данни"
             >
-              🧹 Изчисти таблицата
+              🧹 Изчисти
             </button>
-            <a
-              href="https://docs.google.com/spreadsheets/d/1nM8ETl-AZLwirf759DpabpopoRHzLfE9gpgkHmCibCU/edit?gid=295740580#gid=295740580"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-extrabold border border-white/30 flex items-center gap-1.5 transition-all"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Google Drive
-            </a>
+
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
-        </div>
-
-        {/* Google Sheets Menu Bar & Ticker Selector */}
-        <div className="bg-[#F8F9FA] dark:bg-[#202124] border-b border-[#DADCE0] dark:border-[#3C4043] px-4 py-1.5 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
-          <div className="flex items-center gap-4 text-[#3C4043] dark:text-[#E8EAED] font-medium">
-            <span className="hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 rounded cursor-pointer">Файл</span>
-            <span className="hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 rounded cursor-pointer">Редактиране</span>
-            <span className="hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 rounded cursor-pointer">Изглед</span>
-            <span className="hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 rounded cursor-pointer">Форматиране</span>
-            <span className="hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 rounded cursor-pointer">Данни</span>
-            <span className="hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 rounded cursor-pointer font-bold text-[#0F9D58]">Справка</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Избор на Актив:</label>
-            <select
-              value={selectedTicker}
-              onChange={e => handleSelectTicker(e.target.value)}
-              className="bg-white dark:bg-[#303134] border border-[#DADCE0] dark:border-[#5F6368] text-slate-900 dark:text-slate-100 font-mono font-bold text-xs rounded px-2.5 py-1 outline-none focus:border-[#1A73E8]"
-            >
-              <option value="">-- Изберете Актив --</option>
-              {stocks.map(s => (
-                <option key={s.ticker} value={s.ticker}>{s.ticker} - {s.companyName}</option>
-              ))}
-            </select>
           </div>
         </div>
 
