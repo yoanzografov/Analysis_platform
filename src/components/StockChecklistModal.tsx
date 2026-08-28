@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, Table, ExternalLink, ShieldCheck, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react';
+import { X, Table, ExternalLink, ShieldCheck } from 'lucide-react';
 
 interface StockChecklistModalProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 7, label: 'Current Price', defaultVal: '224.23', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2)', note: 'Текуща борсова цена ($)' },
   { rowNum: 8, label: '52 week low / 52 week high', defaultVal: '164.08 / 237.23', cellType: 'ref-error', formulaStr: '=GOOGLEFINANCE(B2, "low52")', note: '52-седмично дъно и връх' },
   { rowNum: 9, label: 'Market Cap', defaultVal: '3,450,000,000,000', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "marketcap")', note: 'Пазарна капитализация ($)' },
-  { rowNum: 10, label: 'P/E Ratio', link: 'https://fullratio.com/pe-ratio-by-industry', defaultVal: '33.5', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "pe")', note: 'P/E Ratio = Stock Price / EPS. Насоки: Без растеж: ≤10 | Бавен: 12 | Умерен: 15 | Бърз: 25+' },
+  { rowNum: 10, label: 'P/E Ratio', link: 'https://fullratio.com/pe-ratio-by-industry', defaultVal: '33.5', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "pe")', note: 'P/E Ratio = Stock Price / EPS. 🟢 ≤15 | 🟡 15-25 | 🔴 >25' },
   { rowNum: 11, label: 'Price to FCF', defaultVal: '31.2', cellType: 'default', formulaStr: '=SUBSTITUTE(index(importhtml(...),7,4),"*","")', note: 'Price to FCF = Stock Price / FCF per share' },
   { rowNum: 12, label: 'Dividend Yield', defaultVal: '0.55%', cellType: 'default', formulaStr: '=SUBSTITUTE(index(importhtml(...),8,2),"*","")', note: 'Dividend Yield = (Annual Dividend / Stock Price) x 100' },
   { rowNum: 13, label: 'Dividend Payout Ratio', defaultVal: '15.2%', cellType: 'default', formulaStr: '=SUBSTITUTE(index(importhtml(...),12,2),"*","")', note: 'Dividend Payout Ratio = (Dividends Paid / Net Income) x 100' },
@@ -41,62 +41,61 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 17, label: '10 yrs Annualized ROI', defaultVal: '22.1%', cellType: 'default', formulaStr: '=Overview!J29', note: 'Годишна възвръщаемост 10г.' },
   { rowNum: 18, label: 'Shares Outstanding', defaultVal: '15,400,000,000', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "shares")', note: 'Брой акции в обращение' },
   { rowNum: 19, label: 'Revenue', defaultVal: '1,159,897,000', cellType: 'yellow-input', note: 'Годишни брутни приходи ($)' },
-  { rowNum: 20, label: 'Revenue avg increase 3 - 5 yrs', defaultVal: '8.2%', cellType: 'default', note: 'Среден ръст на приходите' },
-  { rowNum: 21, label: 'Gross Profit Margin', defaultVal: '46.2%', cellType: 'green-formula', formulaStr: '=(Gross Profit / Total Revenue) x 100', note: 'Брутен марж' },
-  { rowNum: 22, label: 'Research & Development (R&D Ratio)', defaultVal: '7.8%', cellType: 'green-formula', note: 'R&D Ratio (< 30%)' },
-  { rowNum: 23, label: 'Selling, General & Admin (SG&A Ratio)', defaultVal: '6.4%', cellType: 'green-formula', note: 'SG&A Ratio (< 30%)' },
+  { rowNum: 20, label: 'Revenue avg increase 3 - 5 yrs', defaultVal: '8.2%', cellType: 'default', note: '🟢 15%+ | 🟡 10%-15% | 🔴 <10%' },
+  { rowNum: 21, label: 'Gross Profit Margin', defaultVal: '46.2%', cellType: 'green-formula', formulaStr: '=(Gross Profit / Total Revenue) x 100', note: '🟢 40%+ | 🟡 30%-40% | 🔴 <30%' },
+  { rowNum: 22, label: 'Research & Development (R&D Ratio)', defaultVal: '7.8%', cellType: 'green-formula', note: '🟢 <30% | 🔴 >30%' },
+  { rowNum: 23, label: 'Selling, General & Admin (SG&A Ratio)', defaultVal: '6.4%', cellType: 'green-formula', note: '🟢 <30% | 🔴 >30%' },
   { rowNum: 24, label: 'EPS - Earnings Per Share', defaultVal: '6.70', cellType: 'green-formula', formulaStr: '=Net Income / Shares Outstanding', note: 'Печалба на акция ($)' },
   { rowNum: 25, label: 'EPS Growth 5 - 10 yrs', defaultVal: '9.4%', cellType: 'green-formula', note: 'Ръст на EPS' },
   { rowNum: 26, label: 'Net Income', defaultVal: '7,457,000,000', cellType: 'yellow-input', note: 'Нетна печалба ($)' },
-  { rowNum: 27, label: 'Net Profit Margin', defaultVal: '642.90%', cellType: 'green-formula', formulaStr: '=(Net Income / Revenue) x 100', note: 'Чист марж (> 20%)' },
-  { rowNum: 28, label: 'Return on Equity (ROE)', defaultVal: '147.2%', cellType: 'yellow-input', note: 'ROE (> 15%)' },
-  { rowNum: 29, label: 'Return on Assets (ROA)', defaultVal: '29.4%', cellType: 'yellow-input', note: 'ROA (> 5%)' },
-  { rowNum: 30, label: 'Return on Capital (ROIC)', defaultVal: '54.2%', cellType: 'yellow-input', note: 'ROIC (> 15% е силен Moat)' },
-  { rowNum: 31, label: 'Current Ratio', defaultVal: '0.99', cellType: 'yellow-input', note: 'Текуща ликвидност (> 1.0)' },
+  { rowNum: 27, label: 'Net Profit Margin', defaultVal: '642.90%', cellType: 'green-formula', formulaStr: '=(Net Income / Revenue) x 100', note: '🟢 17%+ | 🟡 5%-17% | 🔴 <5%' },
+  { rowNum: 28, label: 'Return on Equity (ROE)', defaultVal: '147.2%', cellType: 'yellow-input', note: '🟢 15%+ | 🟡 5%-15% | 🔴 <5%' },
+  { rowNum: 29, label: 'Return on Assets (ROA)', defaultVal: '29.4%', cellType: 'yellow-input', note: '🟢 5%+ | 🟡 2%-5% | 🔴 <2%' },
+  { rowNum: 30, label: 'Return on Capital (ROIC)', defaultVal: '54.2%', cellType: 'yellow-input', note: '🟢 15%+ | 🟡 5%-15% | 🔴 <5%' },
+  { rowNum: 31, label: 'Current Ratio', defaultVal: '0.99', cellType: 'yellow-input', note: '🟢 1.0+ | 🟡 0.8-1.0 | 🔴 <0.8' },
   { rowNum: 32, label: 'Long - Term Debt', defaultVal: '95,000,000,000', cellType: 'yellow-input', note: 'Дългосрочен дълг ($)' },
   { rowNum: 33, label: 'Avg Debt Increase 10 yrs', defaultVal: '2.1%', cellType: 'default', note: 'Средно увеличение на дълга' },
   { rowNum: 34, label: 'Long-term Debt to Equity Ratio', defaultVal: '1.45', cellType: 'default', note: 'Дългосрочен дълг / капитал' },
-  { rowNum: 35, label: 'Debt to Equity Ratio', defaultVal: '1.81', cellType: 'yellow-input', note: 'Задължения / капитал' },
+  { rowNum: 35, label: 'Debt to Equity Ratio', defaultVal: '1.81', cellType: 'yellow-input', note: '🟢 <1.0 | 🟡 1.0-2.0 | 🔴 >2.0' },
   { rowNum: 36, label: 'Cash Flow from Operations', defaultVal: '110,540,000,000', cellType: 'yellow-input', note: 'Оперативен кеш поток (CFFO)' },
   { rowNum: 37, label: 'CFFO 5-10 Years increase', defaultVal: '7.8%', cellType: 'default', note: 'Ръст на CFFO' },
   { rowNum: 38, label: 'Free Cash Flow', defaultVal: '14,402,000,000', cellType: 'yellow-input', note: 'Свободен паричен поток (FCF)' },
   { rowNum: 39, label: 'FCF 5 - 10 years avg increase', defaultVal: '8.1%', cellType: 'green-formula', note: 'Ръст на FCF' },
-  { rowNum: 40, label: 'Cash Flow Margin', defaultVal: '9530.16%', cellType: 'green-formula', formulaStr: '=B36/B19', note: 'Cash Flow Margin = CFFO / Revenue x 100' },
-  { rowNum: 41, label: 'Free Cash Flow Margin', defaultVal: '1241.66%', cellType: 'green-formula', formulaStr: '=(B38/B19)', note: 'Free Cash Flow Margin = FCF / Revenue x 100' },
-  { rowNum: 42, label: 'Free Cash Flow Yield', defaultVal: '0.42%', cellType: 'green-formula', formulaStr: '=1*(B38/B9)', note: 'FCF Yield = FCF / Market Cap x 100' },
-  { rowNum: 43, label: 'Earnings Yield', defaultVal: '2.99%', cellType: 'green-formula', formulaStr: '=B24/B7', note: 'Earnings Yield = EPS / Price x 100' },
-  { rowNum: 44, label: 'Free Cash Flow  / Net Income', defaultVal: '193.13%', cellType: 'green-formula', formulaStr: '=B38/B26', note: 'FCF / Net Income (>100% е отлично)' },
-  { rowNum: 45, label: 'Cash Flow Coverage Ratio', defaultVal: '1.16', cellType: 'yellow-input', note: 'CFFO / Long-Term Debt' },
+  { rowNum: 40, label: 'Cash Flow Margin', defaultVal: '9530.16%', cellType: 'green-formula', formulaStr: '=B36/B19', note: '🟢 15%+ | 🟡 10%-15% | 🔴 <10%' },
+  { rowNum: 41, label: 'Free Cash Flow Margin', defaultVal: '1241.66%', cellType: 'green-formula', formulaStr: '=(B38/B19)', note: '🟢 15%+ | 🟡 10%-15% | 🔴 <10%' },
+  { rowNum: 42, label: 'Free Cash Flow Yield', defaultVal: '0.42%', cellType: 'green-formula', formulaStr: '=1*(B38/B9)', note: '🟢 5%+ | 🟡 3%-5% | 🔴 <3%' },
+  { rowNum: 43, label: 'Earnings Yield', defaultVal: '2.99%', cellType: 'green-formula', formulaStr: '=B24/B7', note: '🟢 7%+ | 🟡 4%-7% | 🔴 <4%' },
+  { rowNum: 44, label: 'Free Cash Flow  / Net Income', defaultVal: '193.13%', cellType: 'green-formula', formulaStr: '=B38/B26', note: '🟢 100%+ | 🟡 70%-100% | 🔴 <70%' },
+  { rowNum: 45, label: 'Cash Flow Coverage Ratio', defaultVal: '1.16', cellType: 'yellow-input', note: '🟢 >1.0 | 🔴 <1.0' },
   { rowNum: 46, label: 'Operating Cash Flow Ratio', defaultVal: '0.74', cellType: 'default', note: 'CFFO / Current Liabilities' },
   { rowNum: 47, label: 'Cash ROA', defaultVal: '24.1%', cellType: 'yellow-input', note: 'Възвръщаемост на активите на база кеш' },
 
   // SECTION 2: FINANCIAL STATEMENTS FLAGS (INCOME STATEMENT, BALANCE SHEET, CASH FLOW STATEMENT)
   { rowNum: 48, label: '--- INCOME STATEMENT FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
-  { rowNum: 49, label: 'Gross Margin Flag (Брутен марж)', defaultVal: '🟢 Green (46.2%)', cellType: 'flag-green', formulaStr: '=IF(B21>=40%, "GREEN", IF(B21<30%, "YELLOW", "RED"))', flagRules: { green: '40%+', yellow: '< 30%', red: '< 10%' }, note: '🟢 40%+ | 🟡 <30% | 🔴 <10%' },
-  { rowNum: 50, label: 'Revenue Growth Rate Flag', defaultVal: '🟡 Yellow (8.2%)', cellType: 'flag-yellow', formulaStr: '=IF(B20>=15%, "GREEN", IF(B20<10%, "YELLOW", "RED"))', flagRules: { green: '15%+', yellow: '< 10%', red: '< 2%' }, note: '🟢 15%+ | 🟡 <10% | 🔴 <2%' },
-  { rowNum: 51, label: 'EBITDA Margin Flag', defaultVal: '🟢 Green (28.5%)', cellType: 'flag-green', formulaStr: '=IF(EBITDA>=20%, "GREEN", "YELLOW")', flagRules: { green: '20%+', yellow: '< 10%', red: '< 3%' }, note: '🟢 20%+ | 🟡 <10% | 🔴 <3%' },
-  { rowNum: 52, label: 'Net Profit Margin Flag', defaultVal: '🟢 Green (25.9%)', cellType: 'flag-green', formulaStr: '=IF(B27>=17%, "GREEN", IF(B27<5%, "YELLOW", "RED"))', flagRules: { green: '17%+', yellow: '< 5%', red: '< 1%' }, note: '🟢 17%+ | 🟡 <5% | 🔴 <1%' },
-  { rowNum: 53, label: 'Interest Coverage Rate Flag', defaultVal: '🟢 Green (12.4x)', cellType: 'flag-green', formulaStr: '=IF(Coverage>5, "GREEN", "RED")', flagRules: { green: '> 5x', yellow: '< 2x', red: '< 1.5x' }, note: '🟢 >5x | 🟡 <2x | 🔴 <1.5x' },
+  { rowNum: 49, label: 'Gross Margin Flag (Брутен марж)', defaultVal: '🟢 GREEN (46.2%)', cellType: 'flag-green', formulaStr: '=IF(B21>=40%, "GREEN", IF(B21<30%, "YELLOW", "RED"))', flagRules: { green: '40%+', yellow: '< 30%', red: '< 10%' }, note: '🟢 40%+ | 🟡 <30% | 🔴 <10%' },
+  { rowNum: 50, label: 'Revenue Growth Rate Flag', defaultVal: '🟡 YELLOW (8.2%)', cellType: 'flag-yellow', formulaStr: '=IF(B20>=15%, "GREEN", IF(B20<10%, "YELLOW", "RED"))', flagRules: { green: '15%+', yellow: '< 10%', red: '< 2%' }, note: '🟢 15%+ | 🟡 <10% | 🔴 <2%' },
+  { rowNum: 51, label: 'EBITDA Margin Flag', defaultVal: '🟢 GREEN (28.5%)', cellType: 'flag-green', formulaStr: '=IF(EBITDA>=20%, "GREEN", "YELLOW")', flagRules: { green: '20%+', yellow: '< 10%', red: '< 3%' }, note: '🟢 20%+ | 🟡 <10% | 🔴 <3%' },
+  { rowNum: 52, label: 'Net Profit Margin Flag', defaultVal: '🟢 GREEN (25.9%)', cellType: 'flag-green', formulaStr: '=IF(B27>=17%, "GREEN", IF(B27<5%, "YELLOW", "RED"))', flagRules: { green: '17%+', yellow: '< 5%', red: '< 1%' }, note: '🟢 17%+ | 🟡 <5% | 🔴 <1%' },
+  { rowNum: 53, label: 'Interest Coverage Rate Flag', defaultVal: '🟢 GREEN (12.4x)', cellType: 'flag-green', formulaStr: '=IF(Coverage>5, "GREEN", "RED")', flagRules: { green: '> 5x', yellow: '< 2x', red: '< 1.5x' }, note: '🟢 >5x | 🟡 <2x | 🔴 <1.5x' },
 
   { rowNum: 54, label: '--- BALANCE SHEET FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
-  { rowNum: 55, label: 'Goodwill in Assets Flag', defaultVal: '🟢 Green (4.2%)', cellType: 'flag-green', formulaStr: '=IF(Goodwill<10%, "GREEN", "RED")', flagRules: { green: '< 10%', yellow: '> 20%', red: '> 30%' }, note: '🟢 <10% | 🟡 >20% | 🔴 >30%' },
-  { rowNum: 56, label: 'Debt to Equity Ratio Flag', defaultVal: '🟡 Yellow (1.81)', cellType: 'flag-yellow', formulaStr: '=IF(B35<1.0, "GREEN", IF(B35>2.0, "YELLOW", "RED"))', flagRules: { green: '< 1.0', yellow: '> 2.0', red: '> 4.0' }, note: '🟢 <1.0 | 🟡 >2.0 | 🔴 >4.0' },
-  { rowNum: 57, label: 'Asset Turnover Ratio Flag', defaultVal: '🟡 Yellow (1.15)', cellType: 'flag-yellow', formulaStr: '=IF(Turnover>3.0, "GREEN", "YELLOW")', flagRules: { green: '> 3.0', yellow: '< 1.0', red: '< 0.5' }, note: '🟢 >3.0 | 🟡 <1.0 | 🔴 <0.5' },
-  { rowNum: 58, label: 'Quick Ratio Flag', defaultVal: '🟡 Yellow (0.95)', cellType: 'flag-yellow', formulaStr: '=IF(Quick>=1.0, "GREEN", "YELLOW")', flagRules: { green: '1.0+', yellow: '< 0.8', red: '< 0.3' }, note: '🟢 1.0+ | 🟡 <0.8 | 🔴 <0.3' },
+  { rowNum: 55, label: 'Goodwill in Assets Flag', defaultVal: '🟢 GREEN (4.2%)', cellType: 'flag-green', formulaStr: '=IF(Goodwill<10%, "GREEN", "RED")', flagRules: { green: '< 10%', yellow: '> 20%', red: '> 30%' }, note: '🟢 <10% | 🟡 >20% | 🔴 >30%' },
+  { rowNum: 56, label: 'Debt to Equity Ratio Flag', defaultVal: '🟡 YELLOW (1.81)', cellType: 'flag-yellow', formulaStr: '=IF(B35<1.0, "GREEN", IF(B35>2.0, "YELLOW", "RED"))', flagRules: { green: '< 1.0', yellow: '> 2.0', red: '> 4.0' }, note: '🟢 <1.0 | 🟡 >2.0 | 🔴 >4.0' },
+  { rowNum: 57, label: 'Asset Turnover Ratio Flag', defaultVal: '🟡 YELLOW (1.15)', cellType: 'flag-yellow', formulaStr: '=IF(Turnover>3.0, "GREEN", "YELLOW")', flagRules: { green: '> 3.0', yellow: '< 1.0', red: '< 0.5' }, note: '🟢 >3.0 | 🟡 <1.0 | 🔴 <0.5' },
+  { rowNum: 58, label: 'Quick Ratio Flag', defaultVal: '🟡 YELLOW (0.95)', cellType: 'flag-yellow', formulaStr: '=IF(Quick>=1.0, "GREEN", "YELLOW")', flagRules: { green: '1.0+', yellow: '< 0.8', red: '< 0.3' }, note: '🟢 1.0+ | 🟡 <0.8 | 🔴 <0.3' },
 
   { rowNum: 59, label: '--- CASH FLOW STATEMENT FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
-  { rowNum: 60, label: 'Stock-based Compensation Flag', defaultVal: '🟢 Green (3.8%)', cellType: 'flag-green', formulaStr: '=IF(SBC<5%, "GREEN", "RED")', flagRules: { green: '< 5%', yellow: '> 10%', red: '> 20%' }, note: '🟢 <5% | 🟡 >10% | 🔴 >20%' },
-  { rowNum: 61, label: 'CapEx of Net Income Flag', defaultVal: '🟢 Green (11.2%)', cellType: 'flag-green', formulaStr: '=IF(CapEx<15%, "GREEN", "RED")', flagRules: { green: '< 15%', yellow: '> 25%', red: '> 40%' }, note: '🟢 <15% | 🟡 >25% | 🔴 >40%' },
-  { rowNum: 62, label: 'Free Cash Flow vs Net Income Flag', defaultVal: '🟢 Green (193.13%)', cellType: 'flag-green', formulaStr: '=IF(B44>=100%, "GREEN", "YELLOW")', flagRules: { green: 'FCF > Net Inc', yellow: 'FCF < Net Inc', red: 'FCF << Net Inc' }, note: '🟢 FCF > Net Inc | 🟡 FCF < Net Inc | 🔴 FCF << Net Inc' },
-  { rowNum: 63, label: 'Cash Flow to Debt Ratio Flag', defaultVal: '🟢 Green (1.16)', cellType: 'flag-green', formulaStr: '=IF(CFDebt>1.0, "GREEN", "RED")', flagRules: { green: '> 1.0', yellow: '< 0.3', red: '< 0.1' }, note: '🟢 >1.0 | 🟡 <0.3 | 🔴 <0.1' },
-  { rowNum: 64, label: 'Operating Cash Flow to Sales Flag', defaultVal: '🟢 Green (28.6%)', cellType: 'flag-green', formulaStr: '=IF(B40>=15%, "GREEN", "YELLOW")', flagRules: { green: '15%+', yellow: '< 10%', red: '< 5%' }, note: '🟢 15%+ | 🟡 <10% | 🔴 <5%' }
+  { rowNum: 60, label: 'Stock-based Compensation Flag', defaultVal: '🟢 GREEN (3.8%)', cellType: 'flag-green', formulaStr: '=IF(SBC<5%, "GREEN", "RED")', flagRules: { green: '< 5%', yellow: '> 10%', red: '> 20%' }, note: '🟢 <5% | 🟡 >10% | 🔴 >20%' },
+  { rowNum: 61, label: 'CapEx of Net Income Flag', defaultVal: '🟢 GREEN (11.2%)', cellType: 'flag-green', formulaStr: '=IF(CapEx<15%, "GREEN", "RED")', flagRules: { green: '< 15%', yellow: '> 25%', red: '> 40%' }, note: '🟢 <15% | 🟡 >25% | 🔴 >40%' },
+  { rowNum: 62, label: 'Free Cash Flow vs Net Income Flag', defaultVal: '🟢 GREEN (193.13%)', cellType: 'flag-green', formulaStr: '=IF(B44>=100%, "GREEN", "YELLOW")', flagRules: { green: 'FCF > Net Inc', yellow: 'FCF < Net Inc', red: 'FCF << Net Inc' }, note: '🟢 FCF > Net Inc | 🟡 FCF < Net Inc | 🔴 FCF << Net Inc' },
+  { rowNum: 63, label: 'Cash Flow to Debt Ratio Flag', defaultVal: '🟢 GREEN (1.16)', cellType: 'flag-green', formulaStr: '=IF(CFDebt>1.0, "GREEN", "RED")', flagRules: { green: '> 1.0', yellow: '< 0.3', red: '< 0.1' }, note: '🟢 >1.0 | 🟡 <0.3 | 🔴 <0.1' },
+  { rowNum: 64, label: 'Operating Cash Flow to Sales Flag', defaultVal: '🟢 GREEN (28.6%)', cellType: 'flag-green', formulaStr: '=IF(B40>=15%, "GREEN", "YELLOW")', flagRules: { green: '15%+', yellow: '< 10%', red: '< 5%' }, note: '🟢 15%+ | 🟡 <10% | 🔴 <5%' }
 ];
 
 export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [] }: StockChecklistModalProps) {
   const [selectedTicker, setSelectedTicker] = useState<string>(stock?.ticker || 'AAPL');
   const [activeRow, setActiveRow] = useState<number>(2);
 
-  // Raw human inputs stored by row number
   const [userInputs, setUserInputs] = useState<Record<number, string>>(() => {
     const init: Record<number, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { init[r.rowNum] = r.defaultVal; });
@@ -140,16 +139,133 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return parseFloat(clean) || 0;
   };
 
-  // Live Auto-Calculated Formula Values & Dynamic Statement Flags
+  // Dynamic Conditional Formatting Logic based on BojanFin & Financial Statement Rules
+  const getConditionalFormattingStyle = (rowNum: number, valStr: string): string => {
+    const val = parseNum(valStr);
+
+    // If cell contains explicit flag icon or error text
+    if (valStr.includes('🟢') || valStr.includes('GREEN')) {
+      return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+    }
+    if (valStr.includes('🟡') || valStr.includes('YELLOW')) {
+      return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+    }
+    if (valStr.includes('🔴') || valStr.includes('RED')) {
+      return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 10: P/E Ratio (🟢 ≤ 15 | 🟡 15-25 | 🔴 > 25)
+    if (rowNum === 10) {
+      if (val > 0 && val <= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val > 15 && val <= 25) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val > 25) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 20: Revenue Growth (🟢 ≥ 15% | 🟡 10-15% | 🔴 < 10%)
+    if (rowNum === 20) {
+      if (val >= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 10) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 10) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 21 & 49: Gross Margin (🟢 ≥ 40% | 🟡 30-40% | 🔴 < 30%)
+    if (rowNum === 21 || rowNum === 49) {
+      if (val >= 40) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 30) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 30) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 27 & 52: Net Profit Margin (🟢 ≥ 17% | 🟡 5-17% | 🔴 < 5%)
+    if (rowNum === 27 || rowNum === 52) {
+      if (val >= 17) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 5) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 5) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 28: ROE (🟢 ≥ 15% | 🟡 5-15% | 🔴 < 5%)
+    if (rowNum === 28) {
+      if (val >= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 5) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 5) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 29: ROA (🟢 ≥ 5% | 🟡 2-5% | 🔴 < 2%)
+    if (rowNum === 29) {
+      if (val >= 5) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 2) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 2) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 30: ROIC (🟢 ≥ 15% | 🟡 5-15% | 🔴 < 5%)
+    if (rowNum === 30) {
+      if (val >= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 5) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 5) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 31 & 58: Current Ratio / Quick Ratio (🟢 ≥ 1.0 | 🟡 0.8-1.0 | 🔴 < 0.8)
+    if (rowNum === 31 || rowNum === 58) {
+      if (val >= 1.0) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 0.8) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 0.8) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 35 & 56: Debt to Equity (🟢 ≤ 1.0 | 🟡 1.0-2.0 | 🔴 > 2.0)
+    if (rowNum === 35 || rowNum === 56) {
+      if (val > 0 && val <= 1.0) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val > 1.0 && val <= 2.0) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val > 2.0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 40 & 64: Cash Flow Margin (🟢 ≥ 15% | 🟡 10-15% | 🔴 < 10%)
+    if (rowNum === 40 || rowNum === 64) {
+      if (val >= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 10) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 10) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 41: Free Cash Flow Margin (🟢 ≥ 15% | 🟡 10-15% | 🔴 < 10%)
+    if (rowNum === 41) {
+      if (val >= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 10) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 10) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 42: FCF Yield (🟢 ≥ 5% | 🟡 3-5% | 🔴 < 3%)
+    if (rowNum === 42) {
+      if (val >= 5) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 3) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 3) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 43: Earnings Yield (🟢 ≥ 7% | 🟡 4-7% | 🔴 < 4%)
+    if (rowNum === 43) {
+      if (val >= 7) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 4) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 4) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Row 44 & 62: FCF / Net Income (🟢 ≥ 100% | 🟡 70-100% | 🔴 < 70%)
+    if (rowNum === 44 || rowNum === 62) {
+      if (val >= 100) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val >= 70) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val < 70) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+
+    // Default Yellow Input style
+    return 'bg-[#FFFDE4] dark:bg-[#423D1C] text-[#854D0E] dark:text-[#FDE047] font-black border-2 border-[#EAB308] shadow-xs';
+  };
+
+  // Live Auto-Calculated Formula Values
   const computedValues = useMemo(() => {
-    const rev = parseNum(userInputs[19]);        // B19: Revenue
-    const netInc = parseNum(userInputs[26]);     // B26: Net Income
-    const fcf = parseNum(userInputs[38]);        // B38: Free Cash Flow
-    const cffo = parseNum(userInputs[36]);       // B36: Cash Flow from Operations
-    const price = parseNum(userInputs[7]);       // B7: Current Price
-    const mcap = parseNum(userInputs[9]);        // B9: Market Cap
-    const shares = parseNum(userInputs[18]);     // B18: Shares Outstanding
-    const deRatio = parseNum(userInputs[35]);    // B35: Debt to Equity
+    const rev = parseNum(userInputs[19]);
+    const netInc = parseNum(userInputs[26]);
+    const fcf = parseNum(userInputs[38]);
+    const cffo = parseNum(userInputs[36]);
+    const price = parseNum(userInputs[7]);
+    const mcap = parseNum(userInputs[9]);
+    const shares = parseNum(userInputs[18]);
+    const deRatio = parseNum(userInputs[35]);
 
     let epsCalc = parseNum(userInputs[24]);
     if (shares > 0 && netInc !== 0) {
@@ -200,9 +316,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-sm tracking-tight">Stock Valuation.xlsx</span>
-                <span className="text-[10px] bg-white/20 text-white font-mono px-2 py-0.5 rounded border border-white/30 font-bold uppercase">Пълни Финансови Сигнали (🟢🟡🔴)</span>
+                <span className="text-[10px] bg-white/20 text-white font-mono px-2 py-0.5 rounded border border-white/30 font-bold uppercase">Живо Условно Оцветяване (🟢🟡🔴)</span>
               </div>
-              <p className="text-[11px] text-white/80">Google Sheets формат с вградени Green, Yellow & Red Statement Flags</p>
+              <p className="text-[11px] text-white/80">При попълване клетките автоматично се оцветяват в Зелено 🟢, Жълто 🟡 или Червено 🔴!</p>
             </div>
           </div>
 
@@ -278,8 +394,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               <tr className="bg-[#F8F9FA] dark:bg-[#2D2E31] text-[#5F6368] dark:text-[#9AA0A6] font-mono text-[11px] font-bold border-b border-[#DADCE0] dark:border-[#3C4043]">
                 <th className="w-12 py-1.5 text-center border-r border-[#DADCE0] dark:border-[#3C4043] bg-[#F1F3F4] dark:bg-[#303134]">#</th>
                 <th className="w-[340px] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">A (Показател / Раздел)</th>
-                <th className="w-[260px] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">B (Стойност / Флаг)</th>
-                <th className="px-3 py-1.5 font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">C (Формула & Финансови Граници)</th>
+                <th className="w-[260px] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">B (Динамично Оцветяване 🟢🟡🔴)</th>
+                <th className="px-3 py-1.5 font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">C (Формула & Граници за Оцветяване)</th>
               </tr>
             </thead>
             <tbody>
@@ -300,23 +416,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
                 // Value to display in Column B
                 const displayVal = computedValues[row.rowNum] || userInputs[row.rowNum] || row.defaultVal;
-                const isComputedCell = !!computedValues[row.rowNum] || row.cellType === 'green-formula';
 
-                // Cell B background styling
-                let cellBStyle = 'bg-white dark:bg-[#1E1E1E] text-slate-800 dark:text-slate-100';
-                if (row.cellType === 'yellow-input') {
-                  cellBStyle = 'bg-[#FFFDE4] dark:bg-[#423D1C] text-[#854D0E] dark:text-[#FDE047] font-black border-2 border-[#EAB308] shadow-xs';
-                } else if (row.cellType === 'flag-green' || displayVal.includes('🟢')) {
-                  cellBStyle = 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-                } else if (row.cellType === 'flag-yellow' || displayVal.includes('🟡')) {
-                  cellBStyle = 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-                } else if (row.cellType === 'flag-red' || displayVal.includes('🔴')) {
-                  cellBStyle = 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-                } else if (isComputedCell) {
-                  cellBStyle = 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border border-[#34A853]/40';
-                } else if (row.cellType === 'ref-error') {
-                  cellBStyle = 'bg-[#F8F9FA] dark:bg-[#2A2B2E] text-rose-500 font-mono font-bold';
-                }
+                // Dynamic Conditional Formatting Cell Style
+                const dynamicCellStyle = getConditionalFormattingStyle(row.rowNum, displayVal);
 
                 return (
                   <tr
@@ -350,7 +452,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                       )}
                     </td>
 
-                    {/* Column B: Editable / Dynamic Value or Flag */}
+                    {/* Column B: Dynamically Colored Cell (🟢 GREEN, 🟡 YELLOW, 🔴 RED) */}
                     <td className={`px-2 py-1 border-r border-[#DADCE0] dark:border-[#3C4043] font-mono text-xs relative ${
                       isActive ? 'outline-2 outline-[#1A73E8] z-10' : ''
                     }`}>
@@ -359,7 +461,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                         value={displayVal}
                         onChange={e => handleInputChange(row.rowNum, e.target.value)}
                         onFocus={() => setActiveRow(row.rowNum)}
-                        className={`w-full px-2 py-1 rounded outline-none font-mono font-bold text-xs transition-all ${cellBStyle}`}
+                        className={`w-full px-2 py-1 rounded outline-none font-mono font-bold text-xs transition-all ${dynamicCellStyle}`}
                       />
                     </td>
 
@@ -388,26 +490,19 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           <div className="flex items-center gap-1">
             <div className="bg-white dark:bg-[#303134] text-[#0F9D58] dark:text-[#6EE7B7] font-extrabold px-3 py-1 rounded-t border-t-2 border-[#0F9D58] border-x border-[#DADCE0] dark:border-[#5F6368] flex items-center gap-1.5 shadow-2xs">
               <Table className="w-3.5 h-3.5" />
-              <span>Stock Valuation & Statement Flags</span>
+              <span>Stock Valuation & Dynamic Flags</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1 text-[#854D0E] dark:text-[#FDE047] font-bold">
-              <span className="w-3 h-3 rounded bg-[#FFFDE4] border border-[#EAB308] inline-block" />
-              Жълти = Попълване
+          <div className="flex items-center gap-3 text-[11px]">
+            <span className="flex items-center gap-1 text-[#137333] dark:text-[#6EE7B7] font-bold bg-[#E6F4EA] dark:bg-[#133E2B] px-2 py-0.5 rounded border border-[#34A853]">
+              🟢 Зелено = Преминава перфектно
             </span>
-            <span className="flex items-center gap-1 text-[#137333] dark:text-[#6EE7B7] font-bold">
-              <span className="w-3 h-3 rounded bg-[#E6F4EA] border border-[#34A853] inline-block" />
-              🟢 Зелени Флагове
+            <span className="flex items-center gap-1 text-[#B06000] dark:text-[#FDE047] font-bold bg-[#FEF7E0] dark:bg-[#3C3214] px-2 py-0.5 rounded border border-[#FBBC04]">
+              🟡 Жълто = Внимание / Средно
             </span>
-            <span className="flex items-center gap-1 text-[#B06000] dark:text-[#FDE047] font-bold">
-              <span className="w-3 h-3 rounded bg-[#FEF7E0] border border-[#FBBC04] inline-block" />
-              🟡 Жълти Флагове
-            </span>
-            <span className="flex items-center gap-1 text-[#C5221F] dark:text-[#FCA5A5] font-bold">
-              <span className="w-3 h-3 rounded bg-[#FCE8E6] border border-[#EA4335] inline-block" />
-              🔴 Червени Флагове
+            <span className="flex items-center gap-1 text-[#C5221F] dark:text-[#FCA5A5] font-bold bg-[#FCE8E6] dark:bg-[#4C1D1D] px-2 py-0.5 rounded border border-[#EA4335]">
+              🔴 Червено = Висок риск / Спаден показател
             </span>
           </div>
         </div>
