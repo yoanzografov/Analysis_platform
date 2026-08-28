@@ -47,7 +47,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 22, label: 'Research & Development (R&D Ratio)', defaultVal: '', cellType: 'green-formula', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'R&D Ratio (< 30%)' },
   { rowNum: 23, label: 'Selling, General & Admin (SG&A Ratio)', defaultVal: '', cellType: 'green-formula', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'SG&A Ratio (< 30%)' },
   { rowNum: 24, label: 'EPS - Earnings Per Share', defaultVal: '', cellType: 'green-formula', formulaStr: '=Net Income / Shares Outstanding', note: 'Печалба на акция ($)' },
-  { rowNum: 25, label: 'EPS Growth 5 - 10 yrs', defaultVal: '', cellType: 'green-formula', note: 'Ръст на EPS' },
+  { rowNum: 25, label: 'EPS Growth (5 yrs / 10 yrs)', defaultVal: '', cellType: 'yellow-input', note: 'Разделено на 2 полета: 5 години (ляво) и 10 години (дясно)' },
   { rowNum: 26, label: 'Net Income', defaultVal: '', cellType: 'yellow-input', note: 'Нетна печалба ($)' },
   { rowNum: 27, label: 'Net Profit Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=(Net Income / Revenue) x 100', flagRules: { green: '17%+', yellow: '5% - 17%', red: '< 5%' }, note: 'Чист марж (> 20%)' },
   { rowNum: 28, label: 'Return on Equity (ROE)', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '15%+', yellow: '5% - 15%', red: '< 5%' }, note: 'ROE (> 15%)' },
@@ -102,6 +102,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const init: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { init[String(r.rowNum)] = ''; });
     init['20_5'] = '';
+    init['25_10'] = '';
     return init;
   });
 
@@ -165,6 +166,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const cleared: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
     cleared['20_5'] = '';
+    cleared['25_10'] = '';
     setUserInputs(cleared);
   };
 
@@ -435,13 +437,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                       )}
                     </td>
 
-                    {/* Column B: Editable Value Box (Custom Split Input for Row 20) */}
+                    {/* Column B: Editable Value Box (Custom Split Inputs for Rows 20 & 25) */}
                     <td className={`px-2 py-1 border-r border-[#DADCE0] dark:border-[#3C4043] font-mono text-xs relative ${
                       isActive ? 'outline-2 outline-[#1A73E8] z-10' : ''
                     }`}>
                       {row.rowNum === 20 ? (
                         <div className="flex items-center gap-1.5 w-full">
-                          {/* 3 Years Input Box */}
+                          {/* 3 Years Revenue Growth Input Box */}
                           <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
                             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">3 yrs:</span>
                             <input
@@ -454,7 +456,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                             />
                           </div>
 
-                          {/* 5 Years Input Box */}
+                          {/* 5 Years Revenue Growth Input Box */}
                           <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
                             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">5 yrs:</span>
                             <input
@@ -463,6 +465,34 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                               placeholder="5г..."
                               onChange={e => handleInputChange('20_5', e.target.value)}
                               onFocus={() => setActiveRow(20)}
+                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
+                            />
+                          </div>
+                        </div>
+                      ) : row.rowNum === 25 ? (
+                        <div className="flex items-center gap-1.5 w-full">
+                          {/* 5 Years EPS Growth Input Box */}
+                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
+                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">5 yrs:</span>
+                            <input
+                              type="text"
+                              value={userInputs['25'] || ''}
+                              placeholder="5г..."
+                              onChange={e => handleInputChange('25', e.target.value)}
+                              onFocus={() => setActiveRow(25)}
+                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
+                            />
+                          </div>
+
+                          {/* 10 Years EPS Growth Input Box */}
+                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
+                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">10 yrs:</span>
+                            <input
+                              type="text"
+                              value={userInputs['25_10'] || ''}
+                              placeholder="10г..."
+                              onChange={e => handleInputChange('25_10', e.target.value)}
+                              onFocus={() => setActiveRow(25)}
                               className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
                             />
                           </div>
