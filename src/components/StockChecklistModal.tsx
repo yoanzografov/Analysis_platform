@@ -44,8 +44,8 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 19, label: 'Revenue', defaultVal: '', cellType: 'yellow-input', note: 'Годишни брутни приходи ($)' },
   { rowNum: 20, label: 'Revenue avg increase (3 yrs / 5 yrs)', defaultVal: '', cellType: 'yellow-input', note: 'Разделено на 2 полета: 3 години (ляво) и 5 години (дясно)' },
   { rowNum: 21, label: 'Gross Profit Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=(Gross Profit / Total Revenue) x 100', flagRules: { green: '40%+', yellow: '30% - 40%', red: '< 30%' }, note: 'Брутен марж' },
-  { rowNum: 22, label: 'Research & Development (R&D Ratio)', defaultVal: '', cellType: 'green-formula', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'R&D Ratio (< 30%)' },
-  { rowNum: 23, label: 'Selling, General & Admin (SG&A Ratio)', defaultVal: '', cellType: 'green-formula', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'SG&A Ratio (< 30%)' },
+  { rowNum: 22, label: 'Research & Development (R&D Ratio)', defaultVal: '', cellType: 'yellow-input', formulaStr: '=R&D Expenses / Revenue * 100', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'R&D ratio = R&D Expenses / Revenue х 100 (под 30%)\nПоказва ни какъв процент от оборота е разходът за проучване и развитие. Колкото по-малко, толкова по-добре (🟢 < 30% | 🟡 30%-40% | 🔴 > 40%).' },
+  { rowNum: 23, label: 'Selling, General & Admin (SG&A Ratio)', defaultVal: '', cellType: 'yellow-input', formulaStr: '=SG&A Expenses / Revenue * 100', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'SG&A ratio = SG&A Expenses / Revenue х 100 (под 30%)\nАдминистративни и оперативни разходи. Колкото по-малко, толкова по-добре (🟢 < 30% | 🟡 30%-40% | 🔴 > 40%).' },
   { rowNum: 24, label: 'EPS - Earnings Per Share', defaultVal: '', cellType: 'green-formula', formulaStr: '=Net Income / Shares Outstanding', note: 'Печалба на акция ($)' },
   { rowNum: 25, label: 'EPS Growth (5 yrs / 10 yrs)', defaultVal: '', cellType: 'yellow-input', note: 'Разделено на 2 полета: 5 години (ляво) и 10 години (дясно)' },
   { rowNum: 26, label: 'Net Income', defaultVal: '', cellType: 'yellow-input', note: 'Нетна печалба ($)' },
@@ -203,6 +203,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       if (val >= 40) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
       if (val >= 30) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
       if (val < 30 && val > 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
+    }
+    // R&D Ratio (Row 22) & SG&A Ratio (Row 23): Inverted Rule (Lower is Green <30%, Yellow 30-40%, Red >40%)
+    if (rowNum === 22 || rowNum === 23) {
+      if (val > 0 && val <= 30) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+      if (val > 30 && val <= 40) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+      if (val > 40) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
     }
     if (rowNum === 27 || rowNum === 52) {
       if (val >= 17) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
