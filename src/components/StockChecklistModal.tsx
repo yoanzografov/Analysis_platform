@@ -57,7 +57,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 32, label: 'Long - Term Debt', defaultVal: '', cellType: 'yellow-input', note: 'Дългосрочен дълг ($)' },
   { rowNum: 33, label: 'Avg Debt Increase 10 yrs', defaultVal: '', cellType: 'default', note: 'Средно увеличение на дълга' },
   { rowNum: 34, label: 'Long-term Debt to Equity Ratio', defaultVal: '', cellType: 'default', note: 'Дългосрочен дълг / капитал' },
-  { rowNum: 35, label: 'Debt to Equity Ratio', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '< 1.0', yellow: '1.0 - 2.0', red: '> 2.0' }, note: 'Задължения / капитал' },
+  { rowNum: 35, label: 'Debt / Equity', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '< 1.0', yellow: '1.0 - 2.0', red: '> 2.0' }, note: 'Задължения / капитал' },
   { rowNum: 36, label: 'Cash Flow from Operations', defaultVal: '', cellType: 'yellow-input', note: 'Оперативен кеш поток (CFFO)' },
   { rowNum: 37, label: 'CFFO 5-10 Years increase', defaultVal: '', cellType: 'default', note: 'Ръст на CFFO' },
   { rowNum: 38, label: 'Free Cash Flow', defaultVal: '', cellType: 'yellow-input', note: 'Свободен паричен поток (FCF)' },
@@ -81,7 +81,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
 
   { rowNum: 54, label: '--- BALANCE SHEET FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
   { rowNum: 55, label: 'Goodwill in Assets Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(Goodwill<10%, "GREEN", "RED")', flagRules: { green: '< 10%', yellow: '> 20%', red: '> 30%' }, note: '🟢 <10% | 🟡 >20% | 🔴 >30%' },
-  { rowNum: 56, label: 'Debt to Equity Ratio Flag', defaultVal: '', cellType: 'flag-yellow', formulaStr: '=IF(B35<1.0, "GREEN", IF(B35>2.0, "YELLOW", "RED"))', flagRules: { green: '< 1.0', yellow: '> 2.0', red: '> 4.0' }, note: '🟢 <1.0 | 🟡 >2.0 | 🔴 >4.0' },
+  { rowNum: 56, label: 'Debt / Equity Flag', defaultVal: '', cellType: 'flag-yellow', formulaStr: '=IF(B35<1.0, "GREEN", IF(B35>2.0, "YELLOW", "RED"))', flagRules: { green: '< 1.0', yellow: '> 2.0', red: '> 4.0' }, note: '🟢 <1.0 | 🟡 >2.0 | 🔴 >4.0' },
   { rowNum: 57, label: 'Asset Turnover Ratio Flag', defaultVal: '', cellType: 'flag-yellow', formulaStr: '=IF(Turnover>3.0, "GREEN", "YELLOW")', flagRules: { green: '> 3.0', yellow: '< 1.0', red: '< 0.5' }, note: '🟢 >3.0 | 🟡 <1.0 | 🔴 <0.5' },
   { rowNum: 58, label: 'Quick Ratio Flag', defaultVal: '', cellType: 'flag-yellow', formulaStr: '=IF(Quick>=1.0, "GREEN", "YELLOW")', flagRules: { green: '1.0+', yellow: '< 0.8', red: '< 0.3' }, note: '🟢 1.0+ | 🟡 <0.8 | 🔴 <0.3' },
 
