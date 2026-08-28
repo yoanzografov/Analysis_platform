@@ -271,9 +271,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-sm tracking-tight">Stock Valuation.xlsx</span>
-                <span className="text-[10px] bg-white/20 text-white font-mono px-2 py-0.5 rounded border border-white/30 font-bold uppercase">Google Sheets Clean Grid</span>
+                <span className="text-[10px] bg-white/20 text-white font-mono px-2 py-0.5 rounded border border-white/30 font-bold uppercase">Google Sheets Format</span>
               </div>
-              <p className="text-[11px] text-white/80">Натиснете иконката (i) за пълна формула, разяснения и граници за оцветяване</p>
+              <p className="text-[11px] text-white/80">Официална таблица за анализ • Натиснете бутона (i) за информация</p>
             </div>
           </div>
 
@@ -341,15 +341,16 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           />
         </div>
 
-        {/* Google Sheets Main Grid Table (CLEAN 2-COLUMN STRUCTURE: A & B) */}
+        {/* Google Sheets Main Grid Table */}
         <div className="flex-1 overflow-auto bg-[#FFFFFF] dark:bg-[#1E1E1E]">
           <table className="w-full border-collapse text-xs font-sans text-left table-fixed">
             <thead>
-              {/* Column Letter Headers (A & B) */}
+              {/* Column Letter Headers (A, B, i) */}
               <tr className="bg-[#F8F9FA] dark:bg-[#2D2E31] text-[#5F6368] dark:text-[#9AA0A6] font-mono text-[11px] font-bold border-b border-[#DADCE0] dark:border-[#3C4043]">
                 <th className="w-12 py-1.5 text-center border-r border-[#DADCE0] dark:border-[#3C4043] bg-[#F1F3F4] dark:bg-[#303134]">#</th>
-                <th className="w-[60%] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">A (Показател / Раздел)</th>
-                <th className="w-[40%] px-3 py-1.5 font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">B (Стойност & Оцветяване 🟢🟡🔴)</th>
+                <th className="w-[50%] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">A (Показател)</th>
+                <th className="w-[42%] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">B (Въведете стойност)</th>
+                <th className="w-12 py-1.5 text-center font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">i</th>
               </tr>
             </thead>
             <tbody>
@@ -361,14 +362,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   return (
                     <tr key={row.rowNum} className="bg-[#E8F0FE] dark:bg-[#172B4D] font-bold border-y-2 border-[#1A73E8]">
                       <td className="border-r border-[#DADCE0] dark:border-[#3C4043] text-center font-mono text-[10px] text-[#1A73E8]">{row.rowNum}</td>
-                      <td className="px-3 py-2 text-[#1A73E8] dark:text-blue-300 font-extrabold uppercase tracking-wider" colSpan={2}>
+                      <td className="px-3 py-2 text-[#1A73E8] dark:text-blue-300 font-extrabold uppercase tracking-wider" colSpan={3}>
                         {row.label}
                       </td>
                     </tr>
                   );
                 }
 
-                // Value to display in Column B
+                // Value to display in Column B (Allow empty string when user deletes with Backspace)
                 const rawUserVal = userInputs[row.rowNum];
                 const displayVal = computedValues[row.rowNum] !== undefined 
                   ? computedValues[row.rowNum] 
@@ -392,42 +393,25 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                       {row.rowNum}
                     </td>
 
-                    {/* Column A: Metric Name + Interactive Info Button (i) */}
-                    <td className="px-3 py-1.5 font-semibold text-xs border-r border-[#DADCE0] dark:border-[#3C4043] flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 truncate">
-                        {row.link ? (
-                          <a
-                            href={row.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[#1A73E8] hover:underline font-bold flex items-center gap-1"
-                          >
-                            {row.label}
-                            <ExternalLink className="w-3 h-3 text-[#1A73E8]" />
-                          </a>
-                        ) : (
-                          <span>{row.label}</span>
-                        )}
-                      </div>
-
-                      {/* Info Button (i) */}
-                      {(row.note || row.formulaStr || row.flagRules) && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveInfoModalRow(row);
-                          }}
-                          className="p-1 rounded-full text-indigo-400 hover:text-indigo-600 hover:bg-indigo-500/10 transition-colors cursor-pointer shrink-0"
-                          title="Натиснете за детайлна формула, бележка и граници за оцветяване"
+                    {/* Column A: Metric Name */}
+                    <td className="px-3 py-1.5 font-semibold text-xs border-r border-[#DADCE0] dark:border-[#3C4043] truncate">
+                      {row.link ? (
+                        <a
+                          href={row.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#1A73E8] hover:underline font-bold flex items-center gap-1"
                         >
-                          <Info className="w-4 h-4" />
-                        </button>
+                          {row.label}
+                          <ExternalLink className="w-3 h-3 text-[#1A73E8]" />
+                        </a>
+                      ) : (
+                        <span>{row.label}</span>
                       )}
                     </td>
 
-                    {/* Column B: Dynamically Colored Cell (🟢 GREEN, 🟡 YELLOW, 🔴 RED) */}
-                    <td className={`px-2 py-1 font-mono text-xs relative ${
+                    {/* Column B: Editable Value Box */}
+                    <td className={`px-2 py-1 border-r border-[#DADCE0] dark:border-[#3C4043] font-mono text-xs relative ${
                       isActive ? 'outline-2 outline-[#1A73E8] z-10' : ''
                     }`}>
                       <input
@@ -437,6 +421,25 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                         onFocus={() => setActiveRow(row.rowNum)}
                         className={`w-full px-2.5 py-1.5 rounded outline-none font-mono font-bold text-xs transition-all ${dynamicCellStyle}`}
                       />
+                    </td>
+
+                    {/* Column (i): Info Icon Button positioned on the FAR RIGHT */}
+                    <td className="py-1.5 text-center border-r border-[#DADCE0] dark:border-[#3C4043]">
+                      {(row.note || row.formulaStr || row.flagRules) ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveInfoModalRow(row);
+                          }}
+                          className="p-1 rounded-full text-indigo-400 hover:text-indigo-600 hover:bg-indigo-500/10 transition-colors cursor-pointer inline-flex items-center justify-center"
+                          title="Информация, формула и граници за оцветяване"
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <span className="opacity-20 text-[10px]">-</span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -456,13 +459,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
           <div className="flex items-center gap-3 text-[11px]">
             <span className="flex items-center gap-1 text-[#137333] dark:text-[#6EE7B7] font-bold bg-[#E6F4EA] dark:bg-[#133E2B] px-2 py-0.5 rounded border border-[#34A853]">
-              🟢 Зелено = Преминава перфектно
+              🟢 Зелено = Перфектно
             </span>
             <span className="flex items-center gap-1 text-[#B06000] dark:text-[#FDE047] font-bold bg-[#FEF7E0] dark:bg-[#3C3214] px-2 py-0.5 rounded border border-[#FBBC04]">
-              🟡 Жълто = Внимание / Средно
+              🟡 Жълто = Внимание
             </span>
             <span className="flex items-center gap-1 text-[#C5221F] dark:text-[#FCA5A5] font-bold bg-[#FCE8E6] dark:bg-[#4C1D1D] px-2 py-0.5 rounded border border-[#EA4335]">
-              🔴 Червено = Висок риск / Спаден показател
+              🔴 Червено = Висок риск
             </span>
           </div>
         </div>
