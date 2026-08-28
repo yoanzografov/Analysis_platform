@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, Table, ExternalLink, Calculator, RefreshCw } from 'lucide-react';
+import { X, Table, ExternalLink, ShieldCheck, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react';
 
 interface StockChecklistModalProps {
   isOpen: boolean;
@@ -14,18 +14,20 @@ export interface SheetRowDefinition {
   label: string;
   link?: string;
   defaultVal: string;
-  cellType: 'yellow-input' | 'green-formula' | 'ref-error' | 'default';
+  cellType: 'yellow-input' | 'green-formula' | 'ref-error' | 'flag-green' | 'flag-yellow' | 'flag-red' | 'default';
   formulaStr?: string;
   note?: string;
+  flagRules?: { green: string; yellow: string; red: string };
 }
 
 export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
+  // SECTION 1: CORE VALUATION (ROWS 1 - 47)
   { rowNum: 1, label: 'Company', defaultVal: 'Apple Inc.', cellType: 'default', formulaStr: '=GOOGLEFINANCE(B2, "name")', note: 'Автоматично от борсовия тикер' },
   { rowNum: 2, label: 'Tickr', defaultVal: 'AAPL', cellType: 'yellow-input', note: 'Въвежда се от човека (напр. AAPL, NVDA, TSLA)' },
   { rowNum: 3, label: 'Industry', defaultVal: 'Consumer Electronics', cellType: 'default', note: 'Индустриален сектор' },
   { rowNum: 4, label: 'Sector', defaultVal: 'Technology', cellType: 'default', note: 'Основен сектор' },
   { rowNum: 5, label: 'Undervalued / Overvalued', defaultVal: '-12.4%', cellType: 'green-formula', formulaStr: '=(Fair Price / Current Price) - 1', note: 'Оценка за подцененост на база справедливата цена' },
-  { rowNum: 6, label: '', defaultVal: '', cellType: 'default' },
+  { rowNum: 6, label: '--- CORE FINANCIAL METRICS ---', defaultVal: '', cellType: 'default' },
   { rowNum: 7, label: 'Current Price', defaultVal: '224.23', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2)', note: 'Текуща борсова цена ($)' },
   { rowNum: 8, label: '52 week low / 52 week high', defaultVal: '164.08 / 237.23', cellType: 'ref-error', formulaStr: '=GOOGLEFINANCE(B2, "low52")', note: '52-седмично дъно и връх' },
   { rowNum: 9, label: 'Market Cap', defaultVal: '3,450,000,000,000', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "marketcap")', note: 'Пазарна капитализация ($)' },
@@ -47,10 +49,10 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 25, label: 'EPS Growth 5 - 10 yrs', defaultVal: '9.4%', cellType: 'green-formula', note: 'Ръст на EPS' },
   { rowNum: 26, label: 'Net Income', defaultVal: '7,457,000,000', cellType: 'yellow-input', note: 'Нетна печалба ($)' },
   { rowNum: 27, label: 'Net Profit Margin', defaultVal: '642.90%', cellType: 'green-formula', formulaStr: '=(Net Income / Revenue) x 100', note: 'Чист марж (> 20%)' },
-  { rowNum: 28, label: 'Return on Equity (ROE)', defaultVal: '-6.13%', cellType: 'yellow-input', note: 'ROE (> 15%)' },
-  { rowNum: 29, label: 'Return on Assets (ROA)', defaultVal: '1.56%', cellType: 'yellow-input', note: 'ROA (> 5%)' },
-  { rowNum: 30, label: 'Return on Capital (ROIC)', defaultVal: '38.43%', cellType: 'yellow-input', note: 'ROIC (> 15% е силен Moat)' },
-  { rowNum: 31, label: 'Current Ratio', defaultVal: '0.76', cellType: 'yellow-input', note: 'Текуща ликвидност (> 1.0)' },
+  { rowNum: 28, label: 'Return on Equity (ROE)', defaultVal: '147.2%', cellType: 'yellow-input', note: 'ROE (> 15%)' },
+  { rowNum: 29, label: 'Return on Assets (ROA)', defaultVal: '29.4%', cellType: 'yellow-input', note: 'ROA (> 5%)' },
+  { rowNum: 30, label: 'Return on Capital (ROIC)', defaultVal: '54.2%', cellType: 'yellow-input', note: 'ROIC (> 15% е силен Moat)' },
+  { rowNum: 31, label: 'Current Ratio', defaultVal: '0.99', cellType: 'yellow-input', note: 'Текуща ликвидност (> 1.0)' },
   { rowNum: 32, label: 'Long - Term Debt', defaultVal: '95,000,000,000', cellType: 'yellow-input', note: 'Дългосрочен дълг ($)' },
   { rowNum: 33, label: 'Avg Debt Increase 10 yrs', defaultVal: '2.1%', cellType: 'default', note: 'Средно увеличение на дълга' },
   { rowNum: 34, label: 'Long-term Debt to Equity Ratio', defaultVal: '1.45', cellType: 'default', note: 'Дългосрочен дълг / капитал' },
@@ -63,10 +65,31 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 41, label: 'Free Cash Flow Margin', defaultVal: '1241.66%', cellType: 'green-formula', formulaStr: '=(B38/B19)', note: 'Free Cash Flow Margin = FCF / Revenue x 100' },
   { rowNum: 42, label: 'Free Cash Flow Yield', defaultVal: '0.42%', cellType: 'green-formula', formulaStr: '=1*(B38/B9)', note: 'FCF Yield = FCF / Market Cap x 100' },
   { rowNum: 43, label: 'Earnings Yield', defaultVal: '2.99%', cellType: 'green-formula', formulaStr: '=B24/B7', note: 'Earnings Yield = EPS / Price x 100' },
-  { rowNum: 44, label: 'Free Cash Flow / Net Income', defaultVal: '193.13%', cellType: 'green-formula', formulaStr: '=B38/B26', note: 'FCF / Net Income (>100% е отлично)' },
+  { rowNum: 44, label: 'Free Cash Flow  / Net Income', defaultVal: '193.13%', cellType: 'green-formula', formulaStr: '=B38/B26', note: 'FCF / Net Income (>100% е отлично)' },
   { rowNum: 45, label: 'Cash Flow Coverage Ratio', defaultVal: '1.16', cellType: 'yellow-input', note: 'CFFO / Long-Term Debt' },
   { rowNum: 46, label: 'Operating Cash Flow Ratio', defaultVal: '0.74', cellType: 'default', note: 'CFFO / Current Liabilities' },
-  { rowNum: 47, label: 'Cash ROA', defaultVal: '24.1%', cellType: 'yellow-input', note: 'Възвръщаемост на активите на база кеш' }
+  { rowNum: 47, label: 'Cash ROA', defaultVal: '24.1%', cellType: 'yellow-input', note: 'Възвръщаемост на активите на база кеш' },
+
+  // SECTION 2: FINANCIAL STATEMENTS FLAGS (INCOME STATEMENT, BALANCE SHEET, CASH FLOW STATEMENT)
+  { rowNum: 48, label: '--- INCOME STATEMENT FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
+  { rowNum: 49, label: 'Gross Margin Flag (Брутен марж)', defaultVal: '🟢 Green (46.2%)', cellType: 'flag-green', formulaStr: '=IF(B21>=40%, "GREEN", IF(B21<30%, "YELLOW", "RED"))', flagRules: { green: '40%+', yellow: '< 30%', red: '< 10%' }, note: '🟢 40%+ | 🟡 <30% | 🔴 <10%' },
+  { rowNum: 50, label: 'Revenue Growth Rate Flag', defaultVal: '🟡 Yellow (8.2%)', cellType: 'flag-yellow', formulaStr: '=IF(B20>=15%, "GREEN", IF(B20<10%, "YELLOW", "RED"))', flagRules: { green: '15%+', yellow: '< 10%', red: '< 2%' }, note: '🟢 15%+ | 🟡 <10% | 🔴 <2%' },
+  { rowNum: 51, label: 'EBITDA Margin Flag', defaultVal: '🟢 Green (28.5%)', cellType: 'flag-green', formulaStr: '=IF(EBITDA>=20%, "GREEN", "YELLOW")', flagRules: { green: '20%+', yellow: '< 10%', red: '< 3%' }, note: '🟢 20%+ | 🟡 <10% | 🔴 <3%' },
+  { rowNum: 52, label: 'Net Profit Margin Flag', defaultVal: '🟢 Green (25.9%)', cellType: 'flag-green', formulaStr: '=IF(B27>=17%, "GREEN", IF(B27<5%, "YELLOW", "RED"))', flagRules: { green: '17%+', yellow: '< 5%', red: '< 1%' }, note: '🟢 17%+ | 🟡 <5% | 🔴 <1%' },
+  { rowNum: 53, label: 'Interest Coverage Rate Flag', defaultVal: '🟢 Green (12.4x)', cellType: 'flag-green', formulaStr: '=IF(Coverage>5, "GREEN", "RED")', flagRules: { green: '> 5x', yellow: '< 2x', red: '< 1.5x' }, note: '🟢 >5x | 🟡 <2x | 🔴 <1.5x' },
+
+  { rowNum: 54, label: '--- BALANCE SHEET FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
+  { rowNum: 55, label: 'Goodwill in Assets Flag', defaultVal: '🟢 Green (4.2%)', cellType: 'flag-green', formulaStr: '=IF(Goodwill<10%, "GREEN", "RED")', flagRules: { green: '< 10%', yellow: '> 20%', red: '> 30%' }, note: '🟢 <10% | 🟡 >20% | 🔴 >30%' },
+  { rowNum: 56, label: 'Debt to Equity Ratio Flag', defaultVal: '🟡 Yellow (1.81)', cellType: 'flag-yellow', formulaStr: '=IF(B35<1.0, "GREEN", IF(B35>2.0, "YELLOW", "RED"))', flagRules: { green: '< 1.0', yellow: '> 2.0', red: '> 4.0' }, note: '🟢 <1.0 | 🟡 >2.0 | 🔴 >4.0' },
+  { rowNum: 57, label: 'Asset Turnover Ratio Flag', defaultVal: '🟡 Yellow (1.15)', cellType: 'flag-yellow', formulaStr: '=IF(Turnover>3.0, "GREEN", "YELLOW")', flagRules: { green: '> 3.0', yellow: '< 1.0', red: '< 0.5' }, note: '🟢 >3.0 | 🟡 <1.0 | 🔴 <0.5' },
+  { rowNum: 58, label: 'Quick Ratio Flag', defaultVal: '🟡 Yellow (0.95)', cellType: 'flag-yellow', formulaStr: '=IF(Quick>=1.0, "GREEN", "YELLOW")', flagRules: { green: '1.0+', yellow: '< 0.8', red: '< 0.3' }, note: '🟢 1.0+ | 🟡 <0.8 | 🔴 <0.3' },
+
+  { rowNum: 59, label: '--- CASH FLOW STATEMENT FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
+  { rowNum: 60, label: 'Stock-based Compensation Flag', defaultVal: '🟢 Green (3.8%)', cellType: 'flag-green', formulaStr: '=IF(SBC<5%, "GREEN", "RED")', flagRules: { green: '< 5%', yellow: '> 10%', red: '> 20%' }, note: '🟢 <5% | 🟡 >10% | 🔴 >20%' },
+  { rowNum: 61, label: 'CapEx of Net Income Flag', defaultVal: '🟢 Green (11.2%)', cellType: 'flag-green', formulaStr: '=IF(CapEx<15%, "GREEN", "RED")', flagRules: { green: '< 15%', yellow: '> 25%', red: '> 40%' }, note: '🟢 <15% | 🟡 >25% | 🔴 >40%' },
+  { rowNum: 62, label: 'Free Cash Flow vs Net Income Flag', defaultVal: '🟢 Green (193.13%)', cellType: 'flag-green', formulaStr: '=IF(B44>=100%, "GREEN", "YELLOW")', flagRules: { green: 'FCF > Net Inc', yellow: 'FCF < Net Inc', red: 'FCF << Net Inc' }, note: '🟢 FCF > Net Inc | 🟡 FCF < Net Inc | 🔴 FCF << Net Inc' },
+  { rowNum: 63, label: 'Cash Flow to Debt Ratio Flag', defaultVal: '🟢 Green (1.16)', cellType: 'flag-green', formulaStr: '=IF(CFDebt>1.0, "GREEN", "RED")', flagRules: { green: '> 1.0', yellow: '< 0.3', red: '< 0.1' }, note: '🟢 >1.0 | 🟡 <0.3 | 🔴 <0.1' },
+  { rowNum: 64, label: 'Operating Cash Flow to Sales Flag', defaultVal: '🟢 Green (28.6%)', cellType: 'flag-green', formulaStr: '=IF(B40>=15%, "GREEN", "YELLOW")', flagRules: { green: '15%+', yellow: '< 10%', red: '< 5%' }, note: '🟢 15%+ | 🟡 <10% | 🔴 <5%' }
 ];
 
 export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [] }: StockChecklistModalProps) {
@@ -111,14 +134,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setUserInputs(prev => ({ ...prev, [rowNum]: val }));
   };
 
-  // Helper to parse numbers safely from currency/percentage strings
   const parseNum = (val: string | undefined): number => {
     if (!val) return 0;
     const clean = val.replace(/[^0-9.-]/g, '');
     return parseFloat(clean) || 0;
   };
 
-  // Live Auto-Calculated Formula Values
+  // Live Auto-Calculated Formula Values & Dynamic Statement Flags
   const computedValues = useMemo(() => {
     const rev = parseNum(userInputs[19]);        // B19: Revenue
     const netInc = parseNum(userInputs[26]);     // B26: Net Income
@@ -127,8 +149,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const price = parseNum(userInputs[7]);       // B7: Current Price
     const mcap = parseNum(userInputs[9]);        // B9: Market Cap
     const shares = parseNum(userInputs[18]);     // B18: Shares Outstanding
+    const deRatio = parseNum(userInputs[35]);    // B35: Debt to Equity
 
-    // Calculated EPS (B24 = Net Income / Shares)
     let epsCalc = parseNum(userInputs[24]);
     if (shares > 0 && netInc !== 0) {
       epsCalc = netInc / shares;
@@ -136,40 +158,25 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
     const calculated: Record<number, string> = {};
 
-    // Row 24: EPS = Net Income / Shares
-    if (shares > 0 && netInc !== 0) {
-      calculated[24] = epsCalc.toFixed(2);
-    }
+    if (shares > 0 && netInc !== 0) calculated[24] = epsCalc.toFixed(2);
+    if (rev > 0 && netInc !== 0) calculated[27] = `${((netInc / rev) * 100).toFixed(2)}%`;
+    if (rev > 0 && cffo > 0) calculated[40] = `${((cffo / rev) * 100).toFixed(2)}%`;
+    if (rev > 0 && fcf > 0) calculated[41] = `${((fcf / rev) * 100).toFixed(2)}%`;
+    if (mcap > 0 && fcf > 0) calculated[42] = `${((fcf / mcap) * 100).toFixed(2)}%`;
+    if (price > 0 && epsCalc > 0) calculated[43] = `${((epsCalc / price) * 100).toFixed(2)}%`;
+    if (netInc !== 0 && fcf > 0) calculated[44] = `${((fcf / netInc) * 100).toFixed(2)}%`;
 
-    // Row 27: Net Profit Margin = (Net Income / Revenue) * 100
-    if (rev > 0 && netInc !== 0) {
-      calculated[27] = `${((netInc / rev) * 100).toFixed(2)}%`;
-    }
+    // Dynamic Financial Flags Rows (#49 to #64)
+    const grossMarginVal = parseNum(userInputs[21]) || 46.2;
+    calculated[49] = grossMarginVal >= 40 ? `🟢 GREEN (${grossMarginVal}%)` : grossMarginVal >= 30 ? `🟡 YELLOW (${grossMarginVal}%)` : `🔴 RED (${grossMarginVal}%)`;
 
-    // Row 40: Cash Flow Margin = (CFFO / Revenue) * 100
-    if (rev > 0 && cffo > 0) {
-      calculated[40] = `${((cffo / rev) * 100).toFixed(2)}%`;
-    }
+    const revGrowthVal = parseNum(userInputs[20]) || 8.2;
+    calculated[50] = revGrowthVal >= 15 ? `🟢 GREEN (${revGrowthVal}%)` : revGrowthVal >= 10 ? `🟡 YELLOW (${revGrowthVal}%)` : `🔴 RED (${revGrowthVal}%)`;
 
-    // Row 41: Free Cash Flow Margin = (FCF / Revenue) * 100
-    if (rev > 0 && fcf > 0) {
-      calculated[41] = `${((fcf / rev) * 100).toFixed(2)}%`;
-    }
+    const netMarginVal = parseNum(userInputs[27]) || 25.9;
+    calculated[52] = netMarginVal >= 17 ? `🟢 GREEN (${netMarginVal}%)` : netMarginVal >= 5 ? `🟡 YELLOW (${netMarginVal}%)` : `🔴 RED (${netMarginVal}%)`;
 
-    // Row 42: Free Cash Flow Yield = 1 * (FCF / Market Cap) * 100
-    if (mcap > 0 && fcf > 0) {
-      calculated[42] = `${((fcf / mcap) * 100).toFixed(2)}%`;
-    }
-
-    // Row 43: Earnings Yield = (EPS / Current Price) * 100
-    if (price > 0 && epsCalc > 0) {
-      calculated[43] = `${((epsCalc / price) * 100).toFixed(2)}%`;
-    }
-
-    // Row 44: Free Cash Flow / Net Income = (FCF / Net Income) * 100
-    if (netInc !== 0 && fcf > 0) {
-      calculated[44] = `${((fcf / netInc) * 100).toFixed(2)}%`;
-    }
+    calculated[56] = deRatio <= 1.0 ? `🟢 GREEN (${deRatio})` : deRatio <= 2.0 ? `🟡 YELLOW (${deRatio})` : `🔴 RED (${deRatio})`;
 
     return calculated;
   }, [userInputs]);
@@ -193,9 +200,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-sm tracking-tight">Stock Valuation.xlsx</span>
-                <span className="text-[10px] bg-white/20 text-white font-mono px-2 py-0.5 rounded border border-white/30 font-bold uppercase">Живи Формули в реално време</span>
+                <span className="text-[10px] bg-white/20 text-white font-mono px-2 py-0.5 rounded border border-white/30 font-bold uppercase">Пълни Финансови Сигнали (🟢🟡🔴)</span>
               </div>
-              <p className="text-[11px] text-white/80">Променете стойност в жълтите клетки и формулите се изчисляват моментално!</p>
+              <p className="text-[11px] text-white/80">Google Sheets формат с вградени Green, Yellow & Red Statement Flags</p>
             </div>
           </div>
 
@@ -270,21 +277,23 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               {/* Column Letter Headers (A, B, C) */}
               <tr className="bg-[#F8F9FA] dark:bg-[#2D2E31] text-[#5F6368] dark:text-[#9AA0A6] font-mono text-[11px] font-bold border-b border-[#DADCE0] dark:border-[#3C4043]">
                 <th className="w-12 py-1.5 text-center border-r border-[#DADCE0] dark:border-[#3C4043] bg-[#F1F3F4] dark:bg-[#303134]">#</th>
-                <th className="w-[340px] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">A (Показател)</th>
-                <th className="w-[260px] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">B (Стойност / Формула)</th>
-                <th className="px-3 py-1.5 font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">C (Формула & Бележка)</th>
+                <th className="w-[340px] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">A (Показател / Раздел)</th>
+                <th className="w-[260px] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">B (Стойност / Флаг)</th>
+                <th className="px-3 py-1.5 font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">C (Формула & Финансови Граници)</th>
               </tr>
             </thead>
             <tbody>
               {EXACT_SHEET_ROWS.map((row) => {
                 const isActive = activeRow === row.rowNum;
-                const isBlankRow = !row.label && !row.defaultVal;
+                const isSectionHeader = row.label.startsWith('---');
 
-                if (isBlankRow) {
+                if (isSectionHeader) {
                   return (
-                    <tr key={row.rowNum} className="h-6 bg-[#F8F9FA] dark:bg-[#202124]">
-                      <td className="border-r border-b border-[#DADCE0] dark:border-[#3C4043] text-center font-mono text-[10px] text-[#5F6368]">{row.rowNum}</td>
-                      <td className="border-r border-b border-[#DADCE0] dark:border-[#3C4043]" colSpan={3} />
+                    <tr key={row.rowNum} className="bg-[#E8F0FE] dark:bg-[#172B4D] font-bold border-y-2 border-[#1A73E8]">
+                      <td className="border-r border-[#DADCE0] dark:border-[#3C4043] text-center font-mono text-[10px] text-[#1A73E8]">{row.rowNum}</td>
+                      <td className="px-3 py-2 text-[#1A73E8] dark:text-blue-300 font-extrabold uppercase tracking-wider" colSpan={3}>
+                        {row.label}
+                      </td>
                     </tr>
                   );
                 }
@@ -296,10 +305,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 // Cell B background styling
                 let cellBStyle = 'bg-white dark:bg-[#1E1E1E] text-slate-800 dark:text-slate-100';
                 if (row.cellType === 'yellow-input') {
-                  // Yellow User Input Cell
                   cellBStyle = 'bg-[#FFFDE4] dark:bg-[#423D1C] text-[#854D0E] dark:text-[#FDE047] font-black border-2 border-[#EAB308] shadow-xs';
+                } else if (row.cellType === 'flag-green' || displayVal.includes('🟢')) {
+                  cellBStyle = 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
+                } else if (row.cellType === 'flag-yellow' || displayVal.includes('🟡')) {
+                  cellBStyle = 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
+                } else if (row.cellType === 'flag-red' || displayVal.includes('🔴')) {
+                  cellBStyle = 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
                 } else if (isComputedCell) {
-                  // Green Formula Cell
                   cellBStyle = 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border border-[#34A853]/40';
                 } else if (row.cellType === 'ref-error') {
                   cellBStyle = 'bg-[#F8F9FA] dark:bg-[#2A2B2E] text-rose-500 font-mono font-bold';
@@ -337,7 +350,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                       )}
                     </td>
 
-                    {/* Column B: Editable / Dynamic Value */}
+                    {/* Column B: Editable / Dynamic Value or Flag */}
                     <td className={`px-2 py-1 border-r border-[#DADCE0] dark:border-[#3C4043] font-mono text-xs relative ${
                       isActive ? 'outline-2 outline-[#1A73E8] z-10' : ''
                     }`}>
@@ -375,25 +388,26 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           <div className="flex items-center gap-1">
             <div className="bg-white dark:bg-[#303134] text-[#0F9D58] dark:text-[#6EE7B7] font-extrabold px-3 py-1 rounded-t border-t-2 border-[#0F9D58] border-x border-[#DADCE0] dark:border-[#5F6368] flex items-center gap-1.5 shadow-2xs">
               <Table className="w-3.5 h-3.5" />
-              <span>Stock Valuation</span>
+              <span>Stock Valuation & Statement Flags</span>
             </div>
-
-            <a
-              href="#flags"
-              className="bg-[#F1F3F4] dark:bg-[#2A2B2E] hover:bg-white dark:hover:bg-[#303134] text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#0F9D58] font-bold px-3 py-1 rounded-t border-x border-[#DADCE0] dark:border-[#5F6368] flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <span>🟢🟡🔴 Financial Statement Flags</span>
-            </a>
           </div>
 
           <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1 text-[#854D0E] dark:text-[#FDE047] font-bold">
               <span className="w-3 h-3 rounded bg-[#FFFDE4] border border-[#EAB308] inline-block" />
-              Жълти клетки = Попълване от човека
+              Жълти = Попълване
             </span>
             <span className="flex items-center gap-1 text-[#137333] dark:text-[#6EE7B7] font-bold">
               <span className="w-3 h-3 rounded bg-[#E6F4EA] border border-[#34A853] inline-block" />
-              Зелени клетки = Работещи Формули
+              🟢 Зелени Флагове
+            </span>
+            <span className="flex items-center gap-1 text-[#B06000] dark:text-[#FDE047] font-bold">
+              <span className="w-3 h-3 rounded bg-[#FEF7E0] border border-[#FBBC04] inline-block" />
+              🟡 Жълти Флагове
+            </span>
+            <span className="flex items-center gap-1 text-[#C5221F] dark:text-[#FCA5A5] font-bold">
+              <span className="w-3 h-3 rounded bg-[#FCE8E6] border border-[#EA4335] inline-block" />
+              🔴 Червени Флагове
             </span>
           </div>
         </div>
