@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, Table, ExternalLink, Info } from 'lucide-react';
+import { X, Table, ExternalLink, Info, Lock } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 
 interface StockChecklistModalProps {
@@ -46,10 +46,10 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 21, label: 'Gross Profit Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=(Gross Profit / Total Revenue) x 100', flagRules: { green: '40%+', yellow: '30% - 40%', red: '< 30%' }, note: 'Брутен марж' },
   { rowNum: 22, label: 'Research & Development (R&D Ratio)', defaultVal: '', cellType: 'yellow-input', formulaStr: '=R&D Expenses / Revenue * 100', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'R&D ratio = R&D Expenses / Revenue х 100 (под 30%)\nПоказва ни какъв процент от оборота е разходът за проучване и развитие. Колкото по-малко, толкова по-добре (🟢 < 30% | 🟡 30%-40% | 🔴 > 40%).' },
   { rowNum: 23, label: 'Selling, General & Admin (SG&A Ratio)', defaultVal: '', cellType: 'yellow-input', formulaStr: '=SG&A Expenses / Revenue * 100', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'SG&A ratio = SG&A Expenses / Revenue х 100 (под 30%)\nАдминистративни и оперативни разходи. Колкото по-малко, толкова по-добре (🟢 < 30% | 🟡 30%-40% | 🔴 > 40%).' },
-  { rowNum: 24, label: 'EPS - Earnings Per Share', defaultVal: '', cellType: 'green-formula', formulaStr: '=Net Income / Shares Outstanding', note: 'Печалба на акция ($)' },
+  { rowNum: 24, label: 'EPS - Earnings Per Share', defaultVal: '', cellType: 'green-formula', formulaStr: '=Net Income / Shares Outstanding', note: 'Печалба на акция ($) - Заключена (автоматично изчислена)' },
   { rowNum: 25, label: 'EPS Growth (5 yrs / 10 yrs)', defaultVal: '', cellType: 'yellow-input', note: 'Разделено на 2 полета: 5 години (ляво) и 10 години (дясно)' },
   { rowNum: 26, label: 'Net Income', defaultVal: '', cellType: 'yellow-input', note: 'Нетна печалба ($)' },
-  { rowNum: 27, label: 'Net Profit Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=(Net Income / Revenue) x 100', flagRules: { green: '17%+', yellow: '5% - 17%', red: '< 5%' }, note: 'Чист марж (> 20%)' },
+  { rowNum: 27, label: 'Net Profit Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=(Net Income / Revenue) x 100', flagRules: { green: '17%+', yellow: '5% - 17%', red: '< 5%' }, note: 'Чист марж - Заключена (автоматично изчислена)' },
   { rowNum: 28, label: 'Return on Equity (ROE)', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '15%+', yellow: '5% - 15%', red: '< 5%' }, note: 'ROE (> 15%)' },
   { rowNum: 29, label: 'Return on Assets (ROA)', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '5%+', yellow: '2% - 5%', red: '< 2%' }, note: 'ROA (> 5%)' },
   { rowNum: 30, label: 'Return on Capital (ROIC)', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '15%+', yellow: '5% - 15%', red: '< 5%' }, note: 'ROIC (> 15% е силен Moat)' },
@@ -62,11 +62,11 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 37, label: 'CFFO 5-10 Years increase', defaultVal: '', cellType: 'default', note: 'Ръст на CFFO' },
   { rowNum: 38, label: 'Free Cash Flow', defaultVal: '', cellType: 'yellow-input', note: 'Свободен паричен поток (FCF)' },
   { rowNum: 39, label: 'FCF 5 - 10 years avg increase', defaultVal: '', cellType: 'green-formula', note: 'Ръст на FCF' },
-  { rowNum: 40, label: 'Cash Flow Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=B36/B19', flagRules: { green: '15%+', yellow: '10% - 15%', red: '< 10%' }, note: 'Cash Flow Margin = CFFO / Revenue x 100' },
-  { rowNum: 41, label: 'Free Cash Flow Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=(B38/B19)', flagRules: { green: '15%+', yellow: '10% - 15%', red: '< 10%' }, note: 'Free Cash Flow Margin = FCF / Revenue x 100' },
-  { rowNum: 42, label: 'Free Cash Flow Yield', defaultVal: '', cellType: 'green-formula', formulaStr: '=1*(B38/B9)', flagRules: { green: '5%+', yellow: '3% - 5%', red: '< 3%' }, note: 'FCF Yield = FCF / Market Cap x 100' },
-  { rowNum: 43, label: 'Earnings Yield', defaultVal: '', cellType: 'green-formula', formulaStr: '=B24/B7', flagRules: { green: '7%+', yellow: '4% - 7%', red: '< 4%' }, note: 'Earnings Yield = EPS / Price x 100' },
-  { rowNum: 44, label: 'Free Cash Flow  / Net Income', defaultVal: '', cellType: 'green-formula', formulaStr: '=B38/B26', flagRules: { green: '100%+', yellow: '70% - 100%', red: '< 70%' }, note: 'FCF / Net Income (>100% е отлично)' },
+  { rowNum: 40, label: 'Cash Flow Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=B36/B19', flagRules: { green: '15%+', yellow: '10% - 15%', red: '< 10%' }, note: 'Cash Flow Margin = CFFO / Revenue x 100 - Заключена (автоматично изчислена)' },
+  { rowNum: 41, label: 'Free Cash Flow Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=(B38/B19)', flagRules: { green: '15%+', yellow: '10% - 15%', red: '< 10%' }, note: 'Free Cash Flow Margin = FCF / Revenue x 100 - Заключена (автоматично изчислена)' },
+  { rowNum: 42, label: 'Free Cash Flow Yield', defaultVal: '', cellType: 'green-formula', formulaStr: '=1*(B38/B9)', flagRules: { green: '5%+', yellow: '3% - 5%', red: '< 3%' }, note: 'FCF Yield = FCF / Market Cap x 100 - Заключена (автоматично изчислена)' },
+  { rowNum: 43, label: 'Earnings Yield', defaultVal: '', cellType: 'green-formula', formulaStr: '=B24/B7', flagRules: { green: '7%+', yellow: '4% - 7%', red: '< 4%' }, note: 'Earnings Yield = EPS / Price x 100 - Заключена (автоматично изчислена)' },
+  { rowNum: 44, label: 'Free Cash Flow  / Net Income', defaultVal: '', cellType: 'green-formula', formulaStr: '=B38/B26', flagRules: { green: '100%+', yellow: '70% - 100%', red: '< 70%' }, note: 'FCF / Net Income (>100% е отлично) - Заключена (автоматично изчислена)' },
   { rowNum: 45, label: 'Cash Flow Coverage Ratio', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '> 1.0', yellow: '0.5 - 1.0', red: '< 0.5' }, note: 'CFFO / Long-Term Debt' },
   { rowNum: 46, label: 'Operating Cash Flow Ratio', defaultVal: '', cellType: 'default', note: 'CFFO / Current Liabilities' },
   { rowNum: 47, label: 'Cash ROA', defaultVal: '', cellType: 'yellow-input', note: 'Възвръщаемост на активите на база кеш' },
@@ -204,7 +204,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       if (val >= 30) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
       if (val < 30 && val > 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
     }
-    // R&D Ratio (Row 22) & SG&A Ratio (Row 23): Inverted Rule (Lower is Green <30%, Yellow 30-40%, Red >40%)
     if (rowNum === 22 || rowNum === 23) {
       if (val > 0 && val <= 30) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
       if (val > 30 && val <= 40) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
@@ -411,6 +410,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 // Dynamic Conditional Formatting Cell Style
                 const dynamicCellStyle = getConditionalFormattingStyle(row.rowNum, displayVal);
 
+                // Locked / Read-Only Cells (Calculated Automatically from Data Above)
+                const isReadOnlyCell = row.cellType === 'green-formula' || row.cellType.startsWith('flag-') || [24, 27, 40, 41, 42, 43, 44].includes(row.rowNum);
+
                 return (
                   <tr
                     key={row.rowNum}
@@ -439,7 +441,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                           <ExternalLink className="w-3 h-3 text-[#1A73E8]" />
                         </a>
                       ) : (
-                        <span>{row.label}</span>
+                        <span className="flex items-center gap-1.5">
+                          {row.label}
+                          {isReadOnlyCell && (
+                            <Lock className="w-3 h-3 text-slate-400 dark:text-slate-500 shrink-0" title="Заключена клетка (автоматично изчисление)" />
+                          )}
+                        </span>
                       )}
                     </td>
 
@@ -504,14 +511,24 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                           </div>
                         </div>
                       ) : (
-                        <input
-                          type="text"
-                          value={displayVal}
-                          placeholder={row.rowNum === 2 ? "Въведете тикер (напр. AAPL)..." : "Попълнете стойност..."}
-                          onChange={e => handleInputChange(row.rowNum, e.target.value)}
-                          onFocus={() => setActiveRow(row.rowNum)}
-                          className={`w-full px-2.5 py-1.5 rounded outline-none font-mono font-bold text-xs transition-all ${dynamicCellStyle}`}
-                        />
+                        <div className="relative flex items-center w-full">
+                          <input
+                            type="text"
+                            value={displayVal}
+                            readOnly={isReadOnlyCell}
+                            disabled={isReadOnlyCell}
+                            placeholder={
+                              isReadOnlyCell 
+                                ? "🔒 Автоматично изчислено" 
+                                : (row.rowNum === 2 ? "Въведете тикер (напр. AAPL)..." : "Попълнете стойност...")
+                            }
+                            onChange={e => handleInputChange(row.rowNum, e.target.value)}
+                            onFocus={() => setActiveRow(row.rowNum)}
+                            className={`w-full px-2.5 py-1.5 rounded outline-none font-mono font-bold text-xs transition-all ${dynamicCellStyle} ${
+                              isReadOnlyCell ? 'cursor-not-allowed select-none opacity-90' : ''
+                            }`}
+                          />
+                        </div>
                       )}
                     </td>
 
