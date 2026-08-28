@@ -42,8 +42,8 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 17, label: '10 yrs Annualized ROI', defaultVal: '', cellType: 'default', formulaStr: '=Overview!J29', note: 'Годишна възвръщаемост 10г.' },
   { rowNum: 18, label: 'Shares Outstanding', defaultVal: '', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "shares")', note: 'Брой акции в обращение' },
   { rowNum: 19, label: 'Revenue', defaultVal: '', cellType: 'yellow-input', note: 'Годишни брутни приходи ($)' },
-  { rowNum: 20, label: 'Revenue avg increase 3 yrs', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '15%+', yellow: '10% - 15%', red: '< 10%' }, note: 'Среден ръст на приходите за 3г. (🟢 15%+ | 🟡 10%-15% | 🔴 <10%)' },
-  { rowNum: 21, label: 'Revenue avg increase 5 yrs', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '15%+', yellow: '10% - 15%', red: '< 10%' }, note: 'Среден ръст на приходите за 5г. (🟢 15%+ | 🟡 10%-15% | 🔴 <10%)' },
+  { rowNum: 20, label: 'Revenue avg increase 3 yrs', defaultVal: '', cellType: 'yellow-input', note: 'Среден ръст на приходите за 3 години' },
+  { rowNum: 21, label: 'Revenue avg increase 5 yrs', defaultVal: '', cellType: 'yellow-input', note: 'Среден ръст на приходите за 5 години' },
   { rowNum: 22, label: 'Gross Profit Margin', defaultVal: '', cellType: 'green-formula', formulaStr: '=(Gross Profit / Total Revenue) x 100', flagRules: { green: '40%+', yellow: '30% - 40%', red: '< 30%' }, note: 'Брутен марж' },
   { rowNum: 23, label: 'Research & Development (R&D Ratio)', defaultVal: '', cellType: 'green-formula', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'R&D Ratio (< 30%)' },
   { rowNum: 24, label: 'Selling, General & Admin (SG&A Ratio)', defaultVal: '', cellType: 'green-formula', flagRules: { green: '< 30%', yellow: '30% - 40%', red: '> 40%' }, note: 'SG&A Ratio (< 30%)' },
@@ -172,7 +172,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return parseFloat(clean) || 0;
   };
 
-  // Dynamic Conditional Formatting Logic (Empty cells = Spreadsheet Gray, Filled cells = Green/Yellow/Red)
+  // Dynamic Conditional Formatting Logic
   const getConditionalFormattingStyle = (rowNum: number, valStr: string): string => {
     if (!valStr || valStr.trim() === '') {
       return 'bg-[#F8F9FA] dark:bg-[#2D2E31] text-[#5F6368] dark:text-[#9AA0A6] border border-[#DADCE0] dark:border-[#5F6368]';
@@ -194,11 +194,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       if (val > 0 && val <= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
       if (val > 15 && val <= 25) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
       if (val > 25) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 20 || rowNum === 21) {
-      if (val >= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val >= 10) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val < 10 && val > 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
     }
     if (rowNum === 22 || rowNum === 50) {
       if (val >= 40) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
