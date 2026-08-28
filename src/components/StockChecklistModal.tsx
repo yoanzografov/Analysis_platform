@@ -37,7 +37,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 12, label: 'Dividend Yield', defaultVal: '', cellType: 'default', formulaStr: '=SUBSTITUTE(index(importhtml(...),8,2),"*","")', note: 'Dividend Yield = (Annual Dividend / Stock Price) x 100' },
   { rowNum: 13, label: 'Dividend Payout Ratio', defaultVal: '', cellType: 'default', formulaStr: '=SUBSTITUTE(index(importhtml(...),12,2),"*","")', note: 'Dividend Payout Ratio = (Dividends Paid / Net Income) x 100' },
   { rowNum: 14, label: 'CASH Dividend Payout Ratio', defaultVal: '', cellType: 'default', note: 'Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100' },
-  { rowNum: 15, label: 'Dividend Growth Rate 5 - 10 year avg', defaultVal: '', cellType: 'default', note: 'Средногодишен ръст на дивидента' },
+  { rowNum: 15, label: 'Dividend Growth Rate (5 yrs / 10 yrs)', defaultVal: '', cellType: 'yellow-input', note: 'Разделено на 2 полета: 5 години (ляво) и 10 години (дясно)' },
   { rowNum: 16, label: '5 yrs Annualized ROI', defaultVal: '', cellType: 'default', formulaStr: '=Overview!J19', note: 'Годишна възвръщаемост 5г.' },
   { rowNum: 17, label: '10 yrs Annualized ROI', defaultVal: '', cellType: 'default', formulaStr: '=Overview!J29', note: 'Годишна възвръщаемост 10г.' },
   { rowNum: 18, label: 'Shares Outstanding', defaultVal: '', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "shares")', note: 'Брой акции в обращение' },
@@ -101,6 +101,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [userInputs, setUserInputs] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { init[String(r.rowNum)] = ''; });
+    init['15_10'] = '';
     init['20_5'] = '';
     init['25_10'] = '';
     return init;
@@ -165,6 +166,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setSelectedTicker('');
     const cleared: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
+    cleared['15_10'] = '';
     cleared['20_5'] = '';
     cleared['25_10'] = '';
     setUserInputs(cleared);
@@ -450,11 +452,39 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                       )}
                     </td>
 
-                    {/* Column B: Editable Value Box (Custom Split Inputs for Rows 20 & 25) */}
+                    {/* Column B: Editable Value Box (Custom Split Inputs for Rows 15, 20 & 25) */}
                     <td className={`px-2 py-1 border-r border-[#DADCE0] dark:border-[#3C4043] font-mono text-xs relative ${
                       isActive ? 'outline-2 outline-[#1A73E8] z-10' : ''
                     }`}>
-                      {row.rowNum === 20 ? (
+                      {row.rowNum === 15 ? (
+                        <div className="flex items-center gap-1.5 w-full">
+                          {/* 5 Years Dividend Growth Input Box */}
+                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
+                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">5 yrs:</span>
+                            <input
+                              type="text"
+                              value={userInputs['15'] || ''}
+                              placeholder="5г..."
+                              onChange={e => handleInputChange('15', e.target.value)}
+                              onFocus={() => setActiveRow(15)}
+                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
+                            />
+                          </div>
+
+                          {/* 10 Years Dividend Growth Input Box */}
+                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
+                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">10 yrs:</span>
+                            <input
+                              type="text"
+                              value={userInputs['15_10'] || ''}
+                              placeholder="10г..."
+                              onChange={e => handleInputChange('15_10', e.target.value)}
+                              onFocus={() => setActiveRow(15)}
+                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
+                            />
+                          </div>
+                        </div>
+                      ) : row.rowNum === 20 ? (
                         <div className="flex items-center gap-1.5 w-full">
                           {/* 3 Years Revenue Growth Input Box */}
                           <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
