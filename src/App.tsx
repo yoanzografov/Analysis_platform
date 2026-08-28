@@ -20,6 +20,7 @@ import RoiCalculatorModal from './components/RoiCalculatorModal';
 import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
 import ProfitCalculatorModal from './components/ProfitCalculatorModal';
 import StockChecklistModal from './components/StockChecklistModal';
+import FinancialFlagsModal from './components/FinancialFlagsModal';
 import { 
   Table,
   Save,
@@ -78,6 +79,7 @@ export default function App() {
   const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
   const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [showFinancialFlagsModal, setShowFinancialFlagsModal] = useState(false);
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -94,6 +96,8 @@ export default function App() {
         setShowInvestmentCalculatorModal(true);
       } else if (hash === 'checklist' || hash === 'check-list') {
         setShowChecklistModal(true);
+      } else if (hash === 'flags' || hash === 'financial-flags') {
+        setShowFinancialFlagsModal(true);
       } else {
         const tab = getInitialTab();
         setActiveMainTab(tab);
@@ -1347,6 +1351,21 @@ export default function App() {
               </div>
 
               <a
+                href="#flags"
+                onClick={(e) => {
+                  if (!e.ctrlKey && !e.metaKey && e.button === 0) {
+                    e.preventDefault();
+                    setShowFinancialFlagsModal(true);
+                    setIsUsefulLinksMenuOpen(false);
+                  }
+                }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+              >
+                <Table className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Financial Flags (🟢🟡🔴)</span>
+              </a>
+
+              <a
                 href="#checklist"
                 onClick={(e) => {
                   if (!e.ctrlKey && !e.metaKey && e.button === 0) {
@@ -1716,6 +1735,13 @@ export default function App() {
   <StockChecklistModal
     isOpen={showChecklistModal}
     onClose={() => setShowChecklistModal(false)}
+    stocks={stocks}
+  />
+
+  {/* Financial Statements Flags Modal */}
+  <FinancialFlagsModal
+    isOpen={showFinancialFlagsModal}
+    onClose={() => setShowFinancialFlagsModal(false)}
     stocks={stocks}
   />
  </main>

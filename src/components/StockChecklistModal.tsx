@@ -377,6 +377,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               <Table className="w-3.5 h-3.5" />
               <span>Stock Valuation</span>
             </div>
+
+            <a
+              href="#flags"
+              className="bg-[#F1F3F4] dark:bg-[#2A2B2E] hover:bg-white dark:hover:bg-[#303134] text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#0F9D58] font-bold px-3 py-1 rounded-t border-x border-[#DADCE0] dark:border-[#5F6368] flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <span>🟢🟡🔴 Financial Statement Flags</span>
+            </a>
           </div>
 
           <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
