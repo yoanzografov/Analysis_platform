@@ -300,7 +300,10 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   if (!isOpen) return null;
 
   const activeRowDef = EXACT_SHEET_ROWS.find(r => r.rowNum === activeRow);
-  const activeCellVal = computedValues[activeRow] || userInputs[activeRow] || '';
+  const activeUserVal = userInputs[activeRow];
+  const activeCellVal = computedValues[activeRow] !== undefined 
+    ? computedValues[activeRow] 
+    : (activeUserVal !== undefined ? activeUserVal : (activeRowDef?.defaultVal || ''));
   const activeFormulaStr = activeRowDef?.formulaStr || activeCellVal;
 
   return (
@@ -414,8 +417,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   );
                 }
 
-                // Value to display in Column B
-                const displayVal = computedValues[row.rowNum] || userInputs[row.rowNum] || row.defaultVal;
+                // Value to display in Column B (Allow empty string when user deletes with Backspace)
+                const rawUserVal = userInputs[row.rowNum];
+                const displayVal = computedValues[row.rowNum] !== undefined 
+                  ? computedValues[row.rowNum] 
+                  : (rawUserVal !== undefined ? rawUserVal : row.defaultVal);
 
                 // Dynamic Conditional Formatting Cell Style
                 const dynamicCellStyle = getConditionalFormattingStyle(row.rowNum, displayVal);
