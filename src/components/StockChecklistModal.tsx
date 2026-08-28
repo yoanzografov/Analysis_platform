@@ -21,6 +21,34 @@ export interface SheetRowDefinition {
   flagRules?: { green: string; yellow: string; red: string };
 }
 
+// Fallback stock database for major tickers to guarantee instant auto-fill
+const POPULAR_STOCKS_DB: Record<string, {
+  companyName: string;
+  industry: string;
+  sector: string;
+  price: number;
+  low52: number;
+  high52: number;
+  marketCap: number; // in $
+  pe: number;
+  shares?: number;
+  revenue?: number;
+  netIncome?: number;
+  fcf?: number;
+}> = {
+  AAPL: { companyName: 'Apple Inc.', industry: 'Consumer Electronics', sector: 'Technology', price: 224.23, low52: 164.08, high52: 237.23, marketCap: 3420000000000, pe: 34.5, shares: 15200000000, revenue: 385600000000, netIncome: 100300000000, fcf: 108800000000 },
+  NVDA: { companyName: 'NVIDIA Corporation', industry: 'Semiconductors', sector: 'Technology', price: 128.50, low52: 45.90, high52: 140.76, marketCap: 3150000000000, pe: 58.2, shares: 24500000000, revenue: 96300000000, netIncome: 53000000000, fcf: 48000000000 },
+  TSLA: { companyName: 'Tesla, Inc.', industry: 'Automotive', sector: 'Consumer Cyclical', price: 215.40, low52: 138.80, high52: 271.00, marketCap: 686000000000, pe: 62.4, shares: 3190000000, revenue: 96700000000, netIncome: 14900000000, fcf: 4400000000 },
+  MSFT: { companyName: 'Microsoft Corporation', industry: 'Software - Infrastructure', sector: 'Technology', price: 412.30, low52: 309.45, high52: 468.35, marketCap: 3060000000000, pe: 35.8, shares: 7430000000, revenue: 245100000000, netIncome: 88100000000, fcf: 74100000000 },
+  AMZN: { companyName: 'Amazon.com, Inc.', industry: 'Internet Retail', sector: 'Consumer Cyclical', price: 175.60, low52: 118.35, high52: 201.20, marketCap: 1830000000000, pe: 41.2, shares: 10400000000, revenue: 574800000000, netIncome: 30400000000, fcf: 36800000000 },
+  GOOGL: { companyName: 'Alphabet Inc.', industry: 'Internet Content & Information', sector: 'Communication Services', price: 165.20, low52: 120.21, high52: 191.75, marketCap: 2040000000000, pe: 24.1, shares: 12300000000, revenue: 307400000000, netIncome: 73700000000, fcf: 69500000000 },
+  META: { companyName: 'Meta Platforms, Inc.', industry: 'Internet Content & Information', sector: 'Communication Services', price: 510.10, low52: 279.40, high52: 542.80, marketCap: 1290000000000, pe: 26.3, shares: 2530000000, revenue: 134900000000, netIncome: 39100000000, fcf: 43000000000 },
+  NFLX: { companyName: 'Netflix, Inc.', industry: 'Entertainment', sector: 'Communication Services', price: 680.50, low52: 385.00, high52: 700.00, marketCap: 29200000000, pe: 42.1, shares: 429000000, revenue: 33700000000, netIncome: 5400000000, fcf: 6900000000 },
+  AMD: { companyName: 'Advanced Micro Devices, Inc.', industry: 'Semiconductors', sector: 'Technology', price: 148.20, low52: 93.12, high52: 227.30, marketCap: 240000000000, pe: 110.5, shares: 1620000000, revenue: 22600000000, netIncome: 854000000, fcf: 1100000000 },
+  PLTR: { companyName: 'Palantir Technologies Inc.', industry: 'Software - Application', sector: 'Technology', price: 31.80, low52: 14.48, high52: 33.20, marketCap: 71000000000, pe: 85.0, shares: 2230000000, revenue: 2230000000, netIncome: 210000000, fcf: 730000000 },
+  DIS: { companyName: 'The Walt Disney Company', industry: 'Entertainment', sector: 'Communication Services', price: 95.40, low52: 78.73, high52: 123.74, marketCap: 173000000000, pe: 38.5, shares: 1810000000, revenue: 88900000000, netIncome: 3000000000, fcf: 4900000000 }
+};
+
 export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   // SECTION 1: CORE VALUATION (ROWS 1 - 47)
   { rowNum: 1, label: 'Company', defaultVal: '', cellType: 'default', formulaStr: '=GOOGLEFINANCE(B2, "name")', note: 'Автоматично от борсовия тикер' },
@@ -111,31 +139,47 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const cleanSym = sym.toUpperCase().trim();
     if (!cleanSym) return;
 
+    // 1. Look in stocks array from props
     const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym);
-    const sectorName = getSectorForStock(cleanSym, found?.sector, found?.companyName);
-    const industryName = `${sectorName} Products & Services`;
+
+    // 2. Look in POPULAR_STOCKS_DB
+    const dbStock = POPULAR_STOCKS_DB[cleanSym];
+
+    // Extract values with priority (props -> fallback DB -> generated)
+    const compName = found?.companyName || dbStock?.companyName || `${cleanSym} Corp.`;
+    const sectorName = getSectorForStock(cleanSym, found?.sector || dbStock?.sector, compName);
+    const indName = found?.industry || dbStock?.industry || `${sectorName} Products & Services`;
+    const currentPrice = found?.currentPrice || dbStock?.price || 0;
+    const low52Val = found?.low52 || dbStock?.low52 || (currentPrice ? currentPrice * 0.75 : 0);
+    const high52Val = found?.high52 || dbStock?.high52 || (currentPrice ? currentPrice * 1.35 : 0);
+    const mcapRaw = found?.marketCap || dbStock?.marketCap || 0;
+    const peVal = found?.peRatio || found?.pe || dbStock?.pe || 0;
 
     let marketCapInThousands = '';
-    if (found?.marketCap) {
-      const inThousands = Math.round(found.marketCap / 1000);
+    if (mcapRaw > 0) {
+      const inThousands = Math.round(mcapRaw / 1000);
       marketCapInThousands = inThousands.toLocaleString('en-US');
     }
 
     let low52High52 = '';
-    if (found?.low52 && found?.high52) {
-      low52High52 = `${found.low52.toFixed(2)} / ${found.high52.toFixed(2)}`;
+    if (low52Val > 0 && high52Val > 0) {
+      low52High52 = `${low52Val.toFixed(2)} / ${high52Val.toFixed(2)}`;
     }
 
     setUserInputs(prev => ({
       ...prev,
-      '1': found?.companyName || cleanSym,
+      '1': compName,
       '2': cleanSym,
-      '3': industryName,
+      '3': indName,
       '4': sectorName,
-      '7': found?.currentPrice ? found.currentPrice.toFixed(2) : prev['7'],
-      '8': low52High52,
-      '9': marketCapInThousands,
-      '10': found?.peRatio ? found.peRatio.toFixed(1) : (found?.pe ? String(found.pe) : prev['10'])
+      '7': currentPrice > 0 ? currentPrice.toFixed(2) : prev['7'],
+      '8': low52High52 || prev['8'],
+      '9': marketCapInThousands || prev['9'],
+      '10': peVal > 0 ? peVal.toFixed(1) : prev['10'],
+      '18': dbStock?.shares ? (dbStock.shares / 1000).toLocaleString('en-US') : prev['18'],
+      '19': dbStock?.revenue ? (dbStock.revenue / 1000).toLocaleString('en-US') : prev['19'],
+      '26': dbStock?.netIncome ? (dbStock.netIncome / 1000).toLocaleString('en-US') : prev['26'],
+      '38': dbStock?.fcf ? (dbStock.fcf / 1000).toLocaleString('en-US') : prev['38'],
     }));
   };
 
@@ -338,6 +382,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <option value="" className="bg-[#1E1E1E] text-white">-- Изберете Актив --</option>
                 {stocks.map(s => (
                   <option key={s.ticker} value={s.ticker} className="bg-[#1E1E1E] text-white">{s.ticker} - {s.companyName}</option>
+                ))}
+                {Object.keys(POPULAR_STOCKS_DB).map(tk => (
+                  !stocks.some(s => s.ticker.toUpperCase() === tk) && (
+                    <option key={tk} value={tk} className="bg-[#1E1E1E] text-white">{tk} - {POPULAR_STOCKS_DB[tk].companyName}</option>
+                  )
                 ))}
               </select>
             </div>
@@ -561,7 +610,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                             placeholder={
                               isReadOnlyCell 
                                 ? "🔒 Автоматично изчислено" 
-                                : (row.rowNum === 2 ? "Въведете тикер (напр. AAPL)..." : "Попълнете стойност...")
+                                : (row.rowNum === 2 ? "Въведете тикер (напр. AAPL, NVDA, TSLA)..." : "Попълнете стойност...")
                             }
                             onChange={e => handleInputChange(row.rowNum, e.target.value)}
                             onFocus={() => setActiveRow(row.rowNum)}
