@@ -27,7 +27,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 3, label: 'Industry', defaultVal: 'Consumer Electronics', cellType: 'default', note: 'Индустриален сектор' },
   { rowNum: 4, label: 'Sector', defaultVal: 'Technology', cellType: 'default', note: 'Основен сектор' },
   { rowNum: 5, label: 'Undervalued / Overvalued', defaultVal: '-12.4%', cellType: 'green-formula', formulaStr: '=(Fair Price / Current Price) - 1', note: 'Оценка за подцененост на база справедливата цена' },
-  { rowNum: 6, label: '--- CORE FINANCIAL METRICS ---', defaultVal: '', cellType: 'default' },
+  { rowNum: 6, label: '--- FINANCIAL METRICS ---', defaultVal: '', cellType: 'default' },
   { rowNum: 7, label: 'Current Price', defaultVal: '224.23', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2)', note: 'Текуща борсова цена ($)' },
   { rowNum: 8, label: '52 week low / 52 week high', defaultVal: '164.08 / 237.23', cellType: 'ref-error', formulaStr: '=GOOGLEFINANCE(B2, "low52")', note: '52-седмично дъно и връх' },
   { rowNum: 9, label: 'Market Cap', defaultVal: '3,450,000,000,000', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "marketcap")', note: 'Пазарна капитализация ($)' },
@@ -363,7 +363,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                     <tr key={row.rowNum} className="bg-[#E8F0FE] dark:bg-[#172B4D] font-bold border-y-2 border-[#1A73E8]">
                       <td className="border-r border-[#DADCE0] dark:border-[#3C4043] text-center font-mono text-[10px] text-[#1A73E8]">{row.rowNum}</td>
                       <td className="px-3 py-2 text-[#1A73E8] dark:text-blue-300 font-extrabold uppercase tracking-wider" colSpan={3}>
-                        {row.label}
+                        {row.label.replace(/^---\s*/, '').replace(/\s*---$/, '')}
                       </td>
                     </tr>
                   );
