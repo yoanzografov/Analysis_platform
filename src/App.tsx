@@ -85,6 +85,16 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+  const clearHashUrl = () => {
+    if (window.location.hash) {
+      try {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (e) {
+        window.location.hash = '';
+      }
+    }
+  };
+
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.toLowerCase().replace('#', '');
@@ -1712,21 +1722,21 @@ export default function App() {
   {/* ROI Calculator Modal */}
   <RoiCalculatorModal
     isOpen={showRoiCalculatorModal}
-    onClose={() => setShowRoiCalculatorModal(false)}
+    onClose={() => { setShowRoiCalculatorModal(false); clearHashUrl(); }}
     baseCurrency={baseCurrency}
   />
 
   {/* Investment Compound Growth Calculator Modal */}
   <InvestmentCalculatorModal
     isOpen={showInvestmentCalculatorModal}
-    onClose={() => setShowInvestmentCalculatorModal(false)}
+    onClose={() => { setShowInvestmentCalculatorModal(false); clearHashUrl(); }}
     baseCurrency={baseCurrency}
   />
 
   {/* Profit Calculator Modal (Spreadsheet Style) */}
   <ProfitCalculatorModal
     isOpen={showProfitCalculatorModal}
-    onClose={() => setShowProfitCalculatorModal(false)}
+    onClose={() => { setShowProfitCalculatorModal(false); clearHashUrl(); }}
     stocks={stocks}
     baseCurrency={baseCurrency}
   />
@@ -1734,14 +1744,14 @@ export default function App() {
   {/* Stock Valuation Checklist Modal */}
   <StockChecklistModal
     isOpen={showChecklistModal}
-    onClose={() => setShowChecklistModal(false)}
+    onClose={() => { setShowChecklistModal(false); clearHashUrl(); }}
     stocks={stocks}
   />
 
   {/* Financial Statements Flags Modal */}
   <FinancialFlagsModal
     isOpen={showFinancialFlagsModal}
-    onClose={() => setShowFinancialFlagsModal(false)}
+    onClose={() => { setShowFinancialFlagsModal(false); clearHashUrl(); }}
     stocks={stocks}
   />
  </main>
