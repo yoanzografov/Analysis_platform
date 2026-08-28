@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
 import { X, Table, ExternalLink, Info } from 'lucide-react';
+import { getSectorForStock } from '../utils/sectorHelper';
 
 interface StockChecklistModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 6, label: '--- FINANCIAL METRICS ---', defaultVal: '', cellType: 'default' },
   { rowNum: 7, label: 'Current Price', defaultVal: '224.23', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2)', note: 'Текуща борсова цена ($)' },
   { rowNum: 8, label: '52 week low / 52 week high', defaultVal: '164.08 / 237.23', cellType: 'ref-error', formulaStr: '=GOOGLEFINANCE(B2, "low52")', note: '52-седмично дъно и връх' },
-  { rowNum: 9, label: 'Market Cap', defaultVal: '3,450,000,000,000', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "marketcap")', note: 'Пазарна капитализация ($)' },
+  { rowNum: 9, label: 'Market Cap', defaultVal: '3,450,000,000', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "marketcap")', note: 'Пазарна капитализация (в хиляди $)' },
   { rowNum: 10, label: 'P/E Ratio', link: 'https://fullratio.com/pe-ratio-by-industry', defaultVal: '33.5', cellType: 'yellow-input', formulaStr: '=GOOGLEFINANCE(B2, "pe")', flagRules: { green: '≤ 15', yellow: '15 - 25', red: '> 25' }, note: 'P/E Ratio = Stock Price / EPS. Насоки: Без растеж: ≤10 | Бавен: 12 | Умерен: 15 | Бърз: 25+' },
   { rowNum: 11, label: 'Price to FCF', defaultVal: '31.2', cellType: 'default', formulaStr: '=SUBSTITUTE(index(importhtml(...),7,4),"*","")', note: 'Price to FCF = Stock Price / FCF per share' },
   { rowNum: 12, label: 'Dividend Yield', defaultVal: '0.55%', cellType: 'default', formulaStr: '=SUBSTITUTE(index(importhtml(...),8,2),"*","")', note: 'Dividend Yield = (Annual Dividend / Stock Price) x 100' },
@@ -103,35 +104,60 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return init;
   });
 
+  const updateStockRowDetails = (sym: string) => {
+    const cleanSym = sym.toUpperCase().trim();
+    if (!cleanSym) return;
+
+    const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym);
+    const sectorName = getSectorForStock(cleanSym, found?.sector, found?.companyName);
+    const industryName = `${sectorName} Products & Services`;
+
+    // Market Cap in Thousands ($ в хиляди)
+    let marketCapInThousands = '3,450,000,000';
+    if (found?.marketCap) {
+      const inThousands = Math.round(found.marketCap / 1000);
+      marketCapInThousands = inThousands.toLocaleString('en-US');
+    }
+
+    let low52High52 = '164.08 / 237.23';
+    if (found?.low52 && found?.high52) {
+      low52High52 = `${found.low52.toFixed(2)} / ${found.high52.toFixed(2)}`;
+    }
+
+    setUserInputs(prev => ({
+      ...prev,
+      1: found?.companyName || cleanSym,
+      2: cleanSym,
+      3: industryName,
+      4: sectorName,
+      7: found?.currentPrice ? found.currentPrice.toFixed(2) : prev[7],
+      8: low52High52,
+      9: marketCapInThousands,
+      10: found?.peRatio ? found.peRatio.toFixed(1) : (found?.pe ? String(found.pe) : prev[10])
+    }));
+  };
+
   useEffect(() => {
     if (stock) {
       setSelectedTicker(stock.ticker);
-      setUserInputs(prev => ({
-        ...prev,
-        1: stock.companyName || stock.ticker,
-        2: stock.ticker,
-        7: stock.currentPrice ? String(stock.currentPrice) : prev[7],
-        10: stock.pe ? String(stock.pe) : prev[10]
-      }));
+      updateStockRowDetails(stock.ticker);
     }
   }, [stock]);
 
   const handleSelectTicker = (sym: string) => {
     setSelectedTicker(sym);
-    const found = stocks.find(s => s.ticker === sym);
-    if (found) {
-      setUserInputs(prev => ({
-        ...prev,
-        1: found.companyName || found.ticker,
-        2: found.ticker,
-        7: found.currentPrice ? String(found.currentPrice) : prev[7],
-        10: found.pe ? String(found.pe) : prev[10]
-      }));
-    }
+    updateStockRowDetails(sym);
   };
 
   const handleInputChange = (rowNum: number, val: string) => {
     setUserInputs(prev => ({ ...prev, [rowNum]: val }));
+
+    // When typing into Row 2 (Tickr), automatically load Company, Industry, Sector, Current Price, 52w range & Market Cap in thousands
+    if (rowNum === 2 && val.trim().length >= 1) {
+      const cleanSym = val.toUpperCase().trim();
+      setSelectedTicker(cleanSym);
+      updateStockRowDetails(cleanSym);
+    }
   };
 
   const parseNum = (val: string | undefined): number => {
