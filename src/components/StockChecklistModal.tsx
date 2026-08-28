@@ -311,8 +311,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const activeFormulaStr = activeRowDef?.formulaStr || activeCellVal;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150" onClick={onClose}>
-      <div className="relative w-full max-w-5xl h-[94vh] bg-[#FFFFFF] dark:bg-[#1E1E1E] border border-[#DADCE0] dark:border-[#3C4043] rounded-xl shadow-2xl overflow-hidden flex flex-col font-sans select-none text-slate-800 dark:text-slate-100" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[999999] w-screen h-screen bg-[#FFFFFF] dark:bg-[#1E1E1E] flex flex-col font-sans select-none text-slate-800 dark:text-slate-100 overflow-hidden animate-in fade-in duration-150" onClick={e => e.stopPropagation()}>
+      <div className="relative w-full h-full bg-[#FFFFFF] dark:bg-[#1E1E1E] overflow-hidden flex flex-col">
         
         {/* Clean Header Bar */}
         <div className="bg-[#0F9D58] text-white px-4 py-2.5 flex items-center justify-between shrink-0 shadow-xs">
@@ -341,6 +341,17 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 ))}
               </select>
             </div>
+
+            <button
+              onClick={() => {
+                window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
+              }}
+              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-extrabold border border-white/30 flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Отвори таблицата в нов самостоятелен прозорец"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              🗔 Нов прозорец
+            </button>
 
             <button
               onClick={handleClearAll}
