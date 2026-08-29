@@ -98,28 +98,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 44, label: 'Free Cash Flow  / Net Income', defaultVal: '', cellType: 'green-formula', formulaStr: '=B38/B26', flagRules: { green: '100%+', yellow: '70% - 100%', red: '< 70%' }, note: 'FCF / Net Income (>100% е отлично) - Заключена (автоматично изчислена)' },
   { rowNum: 45, label: 'Cash Flow Coverage Ratio', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '> 1.0', yellow: '0.5 - 1.0', red: '< 0.5' }, note: 'CFFO / Long-Term Debt' },
   { rowNum: 46, label: 'Operating Cash Flow Ratio', defaultVal: '', cellType: 'default', note: 'CFFO / Current Liabilities' },
-  { rowNum: 47, label: 'Cash ROA', defaultVal: '', cellType: 'yellow-input', note: 'Възвръщаемост на активите на база кеш' },
-
-  // SECTION 2: FINANCIAL STATEMENTS FLAGS
-  { rowNum: 48, label: '--- INCOME STATEMENT FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
-  { rowNum: 49, label: 'Gross Margin Flag (Брутен марж)', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(B21>=40%, "GREEN", IF(B21<30%, "YELLOW", "RED"))', flagRules: { green: '40%+', yellow: '< 30%', red: '< 10%' }, note: '🟢 40%+ | 🟡 <30% | 🔴 <10%' },
-  { rowNum: 50, label: 'Revenue Growth Rate Flag (3г. / 5г.)', defaultVal: '', cellType: 'flag-yellow', formulaStr: '=IF(OR(B20>=15%, B20_5>=15%), "GREEN", "YELLOW")', flagRules: { green: '15%+', yellow: '< 10%', red: '< 2%' }, note: '🟢 15%+ | 🟡 <10% | 🔴 <2%' },
-  { rowNum: 51, label: 'EBITDA Margin Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(EBITDA>=20%, "GREEN", "YELLOW")', flagRules: { green: '20%+', yellow: '< 10%', red: '< 3%' }, note: '🟢 20%+ | 🟡 <10% | 🔴 <3%' },
-  { rowNum: 52, label: 'Net Profit Margin Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(B27>=17%, "GREEN", IF(B27<5%, "YELLOW", "RED"))', flagRules: { green: '17%+', yellow: '< 5%', red: '< 1%' }, note: '🟢 17%+ | 🟡 <5% | 🔴 <1%' },
-  { rowNum: 53, label: 'Interest Coverage Rate Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(Coverage>5, "GREEN", "RED")', flagRules: { green: '> 5x', yellow: '< 2x', red: '< 1.5x' }, note: '🟢 >5x | 🟡 <2x | 🔴 <1.5x' },
-
-  { rowNum: 54, label: '--- BALANCE SHEET FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
-  { rowNum: 55, label: 'Goodwill in Assets Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(Goodwill<10%, "GREEN", "RED")', flagRules: { green: '< 10%', yellow: '> 20%', red: '> 30%' }, note: '🟢 <10% | 🟡 >20% | 🔴 >30%' },
-  { rowNum: 56, label: 'Debt / Equity Flag', defaultVal: '', cellType: 'flag-yellow', formulaStr: '=IF(B35<1.0, "GREEN", IF(B35>2.0, "YELLOW", "RED"))', flagRules: { green: '< 1.0', yellow: '> 2.0', red: '> 4.0' }, note: '🟢 <1.0 | 🟡 >2.0 | 🔴 >4.0' },
-  { rowNum: 57, label: 'Asset Turnover Ratio Flag', defaultVal: '', cellType: 'flag-yellow', formulaStr: '=IF(Turnover>3.0, "GREEN", "YELLOW")', flagRules: { green: '> 3.0', yellow: '< 1.0', red: '< 0.5' }, note: '🟢 >3.0 | 🟡 <1.0 | 🔴 <0.5' },
-  { rowNum: 58, label: 'Quick Ratio Flag', defaultVal: '', cellType: 'flag-yellow', formulaStr: '=IF(Quick>=1.0, "GREEN", "YELLOW")', flagRules: { green: '1.0+', yellow: '< 0.8', red: '< 0.3' }, note: '🟢 1.0+ | 🟡 <0.8 | 🔴 <0.3' },
-
-  { rowNum: 59, label: '--- CASH FLOW STATEMENT FLAGS (🟢🟡🔴) ---', defaultVal: '', cellType: 'default' },
-  { rowNum: 60, label: 'Stock-based Compensation Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(SBC<5%, "GREEN", "RED")', flagRules: { green: '< 5%', yellow: '> 10%', red: '> 20%' }, note: '🟢 <5% | 🟡 >10% | 🔴 >20%' },
-  { rowNum: 61, label: 'CapEx of Net Income Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(CapEx<15%, "GREEN", "RED")', flagRules: { green: '< 15%', yellow: '> 25%', red: '> 40%' }, note: '🟢 <15% | 🟡 >25% | 🔴 >40%' },
-  { rowNum: 62, label: 'Free Cash Flow vs Net Income Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(B44>=100%, "GREEN", "YELLOW")', flagRules: { green: 'FCF > Net Inc', yellow: 'FCF < Net Inc', red: 'FCF << Net Inc' }, note: '🟢 FCF > Net Inc | 🟡 FCF < Net Inc | 🔴 FCF << Net Inc' },
-  { rowNum: 63, label: 'Cash Flow to Debt Ratio Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(CFDebt>1.0, "GREEN", "RED")', flagRules: { green: '> 1.0', yellow: '< 0.3', red: '< 0.1' }, note: '🟢 >1.0 | 🟡 <0.3 | 🔴 <0.1' },
-  { rowNum: 64, label: 'Operating Cash Flow to Sales Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(B40>=15%, "GREEN", "YELLOW")', flagRules: { green: '15%+', yellow: '< 10%', red: '< 5%' }, note: '🟢 15%+ | 🟡 <10% | 🔴 <5%' }
+  { rowNum: 47, label: 'Cash ROA', defaultVal: '', cellType: 'yellow-input', note: 'Възвръщаемост на активите на база кеш' }
 ];
 
 export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [], onSaveToTable }: StockChecklistModalProps) {
@@ -702,14 +681,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 </td>
               </tr>
               {[36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47].map(r => renderRowItem(r))}
-
-              {/* SECTION 6 */}
-              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
-                  🚦 6. СИГНАЛНА СИСТЕМА (FINANCIAL STATEMENT FLAGS - BOJANFIN RULES)
-                </td>
-              </tr>
-              {[49, 50, 51, 52, 53, 55, 56, 57, 58, 60, 61, 62, 63, 64].map(r => renderRowItem(r))}
             </tbody>
           </table>
         </div>
