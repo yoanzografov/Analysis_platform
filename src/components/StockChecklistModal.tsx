@@ -498,11 +498,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           )}
         </td>
 
-        {/* Status Badge Cell */}
-        <td className="py-2 px-3 text-center border-r border-border/40">
-          {renderStatusBadge(rowNum, displayVal)}
-        </td>
-
         {/* Info Formula Button Cell */}
         <td className="py-2 px-2 text-center w-10">
           {(row.note || row.formulaStr || row.flagRules) ? (
@@ -652,14 +647,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <th className="py-3 px-3 text-center w-12 border-r border-border/40">#</th>
                 <th className="py-3 px-4 border-r border-border/40">Показател (Financial Metric)</th>
                 <th className="py-3 px-4 text-right border-r border-border/40">Стойност (Value / Input)</th>
-                <th className="py-3 px-3 text-center border-r border-border/40">Статус (Signal)</th>
                 <th className="py-3 px-2 text-center w-12">Инфо</th>
               </tr>
             </thead>
             <tbody>
               {/* SECTION 1 */}
               <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
                   🏢 1. ИНФОРМАЦИЯ ЗА КОМПАНИЯТА (COMPANY OVERVIEW)
                 </td>
               </tr>
@@ -667,7 +661,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
               {/* SECTION 2 */}
               <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
                   📊 2. ФИНАНСОВИ КОЕФИЦИЕНТИ & ОЦЕНКА (VALUATION METRICS)
                 </td>
               </tr>
@@ -675,7 +669,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
               {/* SECTION 3 */}
               <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
                   📈 3. ПРИХОДИ, МАРЖОВЕ & ПЕЧАЛБА (INCOME STATEMENT & MARGINS)
                 </td>
               </tr>
@@ -683,7 +677,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
               {/* SECTION 4 */}
               <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
                   ⚖️ 4. БАЛАНСОВ ОТЧЕТ & ЗАДЪЛЖЕНИЯ (BALANCE SHEET & SOLVENCY)
                 </td>
               </tr>
@@ -691,7 +685,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
               {/* SECTION 5 */}
               <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
                   💵 5. ПАРИЧНИ ПОТОЦИ (CASH FLOW ANALYSIS)
                 </td>
               </tr>
@@ -699,7 +693,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
               {/* SECTION 6 */}
               <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
                   🚦 6. СИГНАЛНА СИСТЕМА (FINANCIAL STATEMENT FLAGS - BOJANFIN RULES)
                 </td>
               </tr>
