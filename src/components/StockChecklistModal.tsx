@@ -504,15 +504,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         </td>
 
         {/* Info Formula Button Cell */}
-        <td className="py-2 px-2 text-center w-12">
+        <td className="py-2 px-2 text-center w-10">
           {(row.note || row.formulaStr || row.flagRules) ? (
             <button
               type="button"
               onClick={() => setActiveInfoModalRow(row)}
-              className="p-1 rounded-lg hover:bg-indigo-500/10 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+              className="p-0.5 rounded-md hover:bg-indigo-500/10 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer inline-flex items-center justify-center"
               title="Формула & правила за оцветяване"
             >
-              <Info className="w-4 h-4" />
+              <Info className="w-3 h-3" />
             </button>
           ) : (
             <span className="opacity-20 text-[10px]">-</span>
