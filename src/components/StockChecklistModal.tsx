@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, Table, ExternalLink, Info, Lock } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, Sparkles, AlertCircle, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 
 interface StockChecklistModalProps {
@@ -123,7 +123,6 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
 
 export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [] }: StockChecklistModalProps) {
   const [selectedTicker, setSelectedTicker] = useState<string>(stock?.ticker || '');
-  const [activeRow, setActiveRow] = useState<number>(2);
   const [activeInfoModalRow, setActiveInfoModalRow] = useState<SheetRowDefinition | null>(null);
 
   const [userInputs, setUserInputs] = useState<Record<string, string>>(() => {
@@ -139,13 +138,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const cleanSym = sym.toUpperCase().trim();
     if (!cleanSym) return;
 
-    // 1. Look in stocks array from props
     const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym);
-
-    // 2. Look in POPULAR_STOCKS_DB
     const dbStock = POPULAR_STOCKS_DB[cleanSym];
 
-    // Extract values with priority (props -> fallback DB -> generated)
     const compName = found?.companyName || dbStock?.companyName || `${cleanSym} Corp.`;
     const sectorName = getSectorForStock(cleanSym, found?.sector || dbStock?.sector, compName);
     const indName = found?.industry || dbStock?.industry || `${sectorName} Products & Services`;
@@ -222,79 +217,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return parseFloat(clean) || 0;
   };
 
-  // Dynamic Conditional Formatting Logic
-  const getConditionalFormattingStyle = (rowNum: number, valStr: string): string => {
-    if (!valStr || valStr.trim() === '') {
-      return 'bg-[#F8F9FA] dark:bg-[#2D2E31] text-[#5F6368] dark:text-[#9AA0A6] border border-[#DADCE0] dark:border-[#5F6368]';
-    }
-
-    const val = parseNum(valStr);
-
-    if (valStr.includes('🟢') || valStr.includes('GREEN')) {
-      return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-    }
-    if (valStr.includes('🟡') || valStr.includes('YELLOW')) {
-      return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-    }
-    if (valStr.includes('🔴') || valStr.includes('RED')) {
-      return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-
-    if (rowNum === 10) {
-      if (val > 0 && val <= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val > 15 && val <= 25) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val > 25) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 21 || rowNum === 49) {
-      if (val >= 40) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val >= 30) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val < 30 && val > 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 22 || rowNum === 23) {
-      if (val > 0 && val <= 30) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val > 30 && val <= 40) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val > 40) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 27 || rowNum === 52) {
-      if (val >= 17) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val >= 5) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val < 5 && val > 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 28) {
-      if (val >= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val >= 5) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val < 5 && val !== 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 29) {
-      if (val >= 5) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val >= 2) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val < 2 && val !== 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 30) {
-      if (val >= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val >= 5) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val < 5 && val !== 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 31 || rowNum === 58) {
-      if (val >= 1.0) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val >= 0.8) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val < 0.8 && val > 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 35 || rowNum === 56) {
-      if (val > 0 && val <= 1.0) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val > 1.0 && val <= 2.0) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val > 2.0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-    if (rowNum === 40 || rowNum === 64) {
-      if (val >= 15) return 'bg-[#E6F4EA] dark:bg-[#133E2B] text-[#137333] dark:text-[#6EE7B7] font-black border-2 border-[#34A853]';
-      if (val >= 10) return 'bg-[#FEF7E0] dark:bg-[#3C3214] text-[#B06000] dark:text-[#FDE047] font-black border-2 border-[#FBBC04]';
-      if (val < 10 && val > 0) return 'bg-[#FCE8E6] dark:bg-[#4C1D1D] text-[#C5221F] dark:text-[#FCA5A5] font-black border-2 border-[#EA4335]';
-    }
-
-    return 'bg-white dark:bg-[#2A2B2E] text-slate-800 dark:text-slate-100 font-bold border border-[#DADCE0] dark:border-[#5F6368]';
-  };
-
-  // Live Auto-Calculated Formula Values
+  // Dynamic Computed Formulas
   const computedValues = useMemo(() => {
     const rev = parseNum(userInputs['19']);
     const netInc = parseNum(userInputs['26']);
@@ -320,7 +243,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     if (price > 0 && epsCalc > 0) calculated['43'] = `${((epsCalc / price) * 100).toFixed(2)}%`;
     if (netInc !== 0 && fcf > 0) calculated['44'] = `${((fcf / netInc) * 100).toFixed(2)}%`;
 
-    // Dynamic Financial Flags Rows (#49 to #64)
+    // Dynamic Flags Rows (#49 to #64)
     const grossMarginVal = parseNum(userInputs['21']);
     if (userInputs['21'] && userInputs['21'].trim() !== '') {
       calculated['49'] = grossMarginVal >= 40 ? `🟢 GREEN (${grossMarginVal}%)` : grossMarginVal >= 30 ? `🟡 YELLOW (${grossMarginVal}%)` : `🔴 RED (${grossMarginVal}%)`;
@@ -345,331 +268,371 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return calculated;
   }, [userInputs]);
 
+  // Live Score Calculator
+  const flagsSummary = useMemo(() => {
+    let green = 0, yellow = 0, red = 0;
+    Object.values(computedValues).forEach(val => {
+      if (val.includes('🟢') || val.includes('GREEN')) green++;
+      else if (val.includes('🟡') || val.includes('YELLOW')) yellow++;
+      else if (val.includes('🔴') || val.includes('RED')) red++;
+    });
+    return { green, yellow, red };
+  }, [computedValues]);
+
   if (!isOpen) return null;
 
-  const activeRowDef = EXACT_SHEET_ROWS.find(r => r.rowNum === activeRow);
-  const activeUserVal = userInputs[String(activeRow)];
-  const activeCellVal = computedValues[String(activeRow)] !== undefined 
-    ? computedValues[String(activeRow)] 
-    : (activeUserVal !== undefined ? activeUserVal : (activeRowDef?.defaultVal || ''));
-  const activeFormulaStr = activeRowDef?.formulaStr || activeCellVal;
+  // Helper to render dynamic status badge
+  const renderStatusBadge = (rowNum: number, valStr: string) => {
+    if (!valStr || valStr.trim() === '') return null;
+
+    if (valStr.includes('🟢') || valStr.includes('GREEN')) {
+      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 GREEN</span>;
+    }
+    if (valStr.includes('🟡') || valStr.includes('YELLOW')) {
+      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 YELLOW</span>;
+    }
+    if (valStr.includes('🔴') || valStr.includes('RED')) {
+      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 RED</span>;
+    }
+
+    const val = parseNum(valStr);
+    if (rowNum === 10) {
+      if (val > 0 && val <= 15) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 ≤15</span>;
+      if (val > 15 && val <= 25) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 15-25</span>;
+      if (val > 25) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &gt;25</span>;
+    }
+    if (rowNum === 21) {
+      if (val >= 40) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 40%+</span>;
+      if (val >= 30) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 30%-40%</span>;
+      if (val < 30 && val > 0) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &lt;30%</span>;
+    }
+    if (rowNum === 22 || rowNum === 23) {
+      if (val > 0 && val <= 30) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 &lt;30%</span>;
+      if (val > 30 && val <= 40) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 30%-40%</span>;
+      if (val > 40) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &gt;40%</span>;
+    }
+
+    return null;
+  };
+
+  // Helper to render metric item inside cards
+  const renderMetricItem = (rowNum: number) => {
+    const row = EXACT_SHEET_ROWS.find(r => r.rowNum === rowNum);
+    if (!row) return null;
+
+    const rawUserVal = userInputs[String(rowNum)];
+    const displayVal = computedValues[String(rowNum)] !== undefined 
+      ? computedValues[String(rowNum)] 
+      : (rawUserVal !== undefined ? rawUserVal : '');
+
+    const isReadOnlyCell = row.cellType === 'green-formula' || row.cellType.startsWith('flag-') || [24, 27, 40, 41, 42, 43, 44].includes(row.rowNum);
+
+    return (
+      <div key={rowNum} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-bg/40 border border-border/40 hover:border-border transition-all gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {isReadOnlyCell ? (
+            <Lock className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Автоматично изчислено" />
+          ) : (
+            <div className="w-2 h-2 rounded-full bg-indigo-500/50 shrink-0" />
+          )}
+          <span className="font-semibold text-xs text-ink truncate">{row.label}</span>
+          {(row.note || row.formulaStr || row.flagRules) && (
+            <button
+              type="button"
+              onClick={() => setActiveInfoModalRow(row)}
+              className="p-1 text-ink-faint hover:text-indigo-400 cursor-pointer"
+              title="Информация & формула"
+            >
+              <Info className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Custom Split Inputs */}
+          {rowNum === 15 ? (
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
+                <span className="text-[10px] text-ink-faint font-bold">5y:</span>
+                <input
+                  type="text"
+                  value={userInputs['15'] || ''}
+                  onChange={e => handleInputChange('15', e.target.value)}
+                  placeholder="..."
+                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
+                <span className="text-[10px] text-ink-faint font-bold">10y:</span>
+                <input
+                  type="text"
+                  value={userInputs['15_10'] || ''}
+                  onChange={e => handleInputChange('15_10', e.target.value)}
+                  placeholder="..."
+                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                />
+              </div>
+            </div>
+          ) : rowNum === 20 ? (
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
+                <span className="text-[10px] text-ink-faint font-bold">3y:</span>
+                <input
+                  type="text"
+                  value={userInputs['20'] || ''}
+                  onChange={e => handleInputChange('20', e.target.value)}
+                  placeholder="..."
+                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
+                <span className="text-[10px] text-ink-faint font-bold">5y:</span>
+                <input
+                  type="text"
+                  value={userInputs['20_5'] || ''}
+                  onChange={e => handleInputChange('20_5', e.target.value)}
+                  placeholder="..."
+                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                />
+              </div>
+            </div>
+          ) : rowNum === 25 ? (
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
+                <span className="text-[10px] text-ink-faint font-bold">5y:</span>
+                <input
+                  type="text"
+                  value={userInputs['25'] || ''}
+                  onChange={e => handleInputChange('25', e.target.value)}
+                  placeholder="..."
+                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
+                <span className="text-[10px] text-ink-faint font-bold">10y:</span>
+                <input
+                  type="text"
+                  value={userInputs['25_10'] || ''}
+                  onChange={e => handleInputChange('25_10', e.target.value)}
+                  placeholder="..."
+                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={displayVal}
+                readOnly={isReadOnlyCell}
+                disabled={isReadOnlyCell}
+                placeholder={isReadOnlyCell ? "🔒 Автомат" : "Попълнете..."}
+                onChange={e => handleInputChange(rowNum, e.target.value)}
+                className={`w-32 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs outline-none transition-all ${
+                  isReadOnlyCell
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 cursor-not-allowed'
+                    : 'bg-bg border-border focus:border-indigo-500 text-ink'
+                }`}
+              />
+              {renderStatusBadge(rowNum, displayVal)}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="fixed inset-0 z-[999999] w-screen h-screen bg-[#FFFFFF] dark:bg-[#1E1E1E] flex flex-col font-sans select-none text-slate-800 dark:text-slate-100 overflow-hidden animate-in fade-in duration-150" onClick={e => e.stopPropagation()}>
-      <div className="relative w-full h-full bg-[#FFFFFF] dark:bg-[#1E1E1E] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[999999] w-screen h-screen bg-bg flex flex-col font-sans select-none text-ink overflow-hidden animate-in fade-in duration-150" onClick={e => e.stopPropagation()}>
+      
+      {/* Sleek App Header Bar */}
+      <div className="bg-bg-card border-b border-border/80 px-6 py-3 flex items-center justify-between shrink-0 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="bg-indigo-500/10 p-2 rounded-xl border border-indigo-500/20 text-indigo-400">
+            <CheckSquare className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="font-black text-base text-ink tracking-tight flex items-center gap-2">
+              Stock Valuation Checklist
+            </h2>
+            <p className="text-[11px] text-ink-muted">Пълна финансова проверка и сигнална система (Flags Analysis)</p>
+          </div>
+        </div>
+
+        {/* Ticker Selector & Actions */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border">
+            <label className="text-xs font-bold text-ink-faint uppercase">Актив:</label>
+            <select
+              value={selectedTicker}
+              onChange={e => handleSelectTicker(e.target.value)}
+              className="bg-transparent text-ink font-mono font-bold text-xs outline-none cursor-pointer"
+            >
+              <option value="" className="bg-bg-card text-ink">-- Изберете --</option>
+              {stocks.map(s => (
+                <option key={s.ticker} value={s.ticker} className="bg-bg-card text-ink">{s.ticker} - {s.companyName}</option>
+              ))}
+              {Object.keys(POPULAR_STOCKS_DB).map(tk => (
+                !stocks.some(s => s.ticker.toUpperCase() === tk) && (
+                  <option key={tk} value={tk} className="bg-bg-card text-ink">{tk} - {POPULAR_STOCKS_DB[tk].companyName}</option>
+                )
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={() => {
+              window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
+            }}
+            className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Отвори инструмента в нов самостоятелен прозорец"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            🗔 Нов прозорец
+          </button>
+
+          <button
+            onClick={handleClearAll}
+            className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold text-xs border border-red-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Изчисти всички попълнени данни"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Изчисти
+          </button>
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl hover:bg-border/60 transition-colors text-ink-muted hover:text-ink cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-auto p-6 space-y-6 bg-bg">
         
-        {/* Clean Header Bar */}
-        <div className="bg-[#0F9D58] text-white px-4 py-2.5 flex items-center justify-between shrink-0 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-1.5 rounded-lg border border-white/30">
-              <Table className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="font-extrabold text-sm tracking-tight">
-                Stock Valuation Checklist
-              </h2>
+        {/* Quick Ticker Chips Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <span className="text-xs font-bold text-ink-faint uppercase mr-1 shrink-0">Бърз избор:</span>
+          {['AAPL', 'NVDA', 'TSLA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'PLTR'].map(tk => (
+            <button
+              key={tk}
+              onClick={() => handleSelectTicker(tk)}
+              className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer shrink-0 ${
+                selectedTicker === tk
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/20'
+                  : 'bg-bg-card text-ink-muted border-border hover:border-indigo-500/40 hover:text-ink'
+              }`}
+            >
+              {tk}
+            </button>
+          ))}
+        </div>
+
+        {/* Live Flags Score Summary Header Card */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+              <div>
+                <span className="text-xs font-bold text-emerald-400 uppercase">Зелени Флаги (Отлично)</span>
+                <h4 className="text-xl font-black text-emerald-300">{flagsSummary.green} показатели</h4>
+              </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-white/90 uppercase">Избор на Актив:</label>
-              <select
-                value={selectedTicker}
-                onChange={e => handleSelectTicker(e.target.value)}
-                className="bg-white/15 text-white font-mono font-bold text-xs rounded-lg px-2.5 py-1 outline-none border border-white/30 cursor-pointer"
-              >
-                <option value="" className="bg-[#1E1E1E] text-white">-- Изберете Актив --</option>
-                {stocks.map(s => (
-                  <option key={s.ticker} value={s.ticker} className="bg-[#1E1E1E] text-white">{s.ticker} - {s.companyName}</option>
-                ))}
-                {Object.keys(POPULAR_STOCKS_DB).map(tk => (
-                  !stocks.some(s => s.ticker.toUpperCase() === tk) && (
-                    <option key={tk} value={tk} className="bg-[#1E1E1E] text-white">{tk} - {POPULAR_STOCKS_DB[tk].companyName}</option>
-                  )
-                ))}
-              </select>
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-amber-400" />
+              <div>
+                <span className="text-xs font-bold text-amber-400 uppercase">Жълти Флаги (Внимание)</span>
+                <h4 className="text-xl font-black text-amber-300">{flagsSummary.yellow} показатели</h4>
+              </div>
             </div>
-
-            <button
-              onClick={() => {
-                window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
-              }}
-              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-extrabold border border-white/30 flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Отвори таблицата в нов самостоятелен прозорец"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              🗔 Нов прозорец
-            </button>
-
-            <button
-              onClick={handleClearAll}
-              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-extrabold border border-white/30 flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Изчисти всички данни"
-            >
-              🧹 Изчисти
-            </button>
-
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          </div>
+          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-rose-400" />
+              <div>
+                <span className="text-xs font-bold text-rose-400 uppercase">Червени Флаги (Висок риск)</span>
+                <h4 className="text-xl font-black text-rose-300">{flagsSummary.red} показатели</h4>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Google Sheets Formula Bar (fx) */}
-        <div className="bg-white dark:bg-[#202124] border-b border-[#DADCE0] dark:border-[#3C4043] px-3 py-1.5 flex items-center gap-2 text-xs font-mono shrink-0">
-          <div className="bg-[#F8F9FA] dark:bg-[#303134] px-2 py-0.5 rounded border border-[#DADCE0] dark:border-[#5F6368] font-bold text-slate-600 dark:text-slate-300 min-w-[45px] text-center">
-            B{activeRow}
-          </div>
-          <div className="text-slate-400 dark:text-slate-500 font-bold italic font-serif px-1">fx</div>
-          <div className="h-4 w-px bg-[#DADCE0] dark:bg-[#5F6368]" />
-          <input
-            type="text"
-            value={activeFormulaStr}
-            onChange={e => handleInputChange(activeRow, e.target.value)}
-            className="flex-1 bg-transparent text-slate-800 dark:text-slate-100 font-mono text-xs outline-none"
-            placeholder="Формула или стойност..."
-          />
-        </div>
+        {/* Cards Grid Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Google Sheets Main Grid Table */}
-        <div className="flex-1 overflow-auto bg-[#FFFFFF] dark:bg-[#1E1E1E]">
-          <table className="w-full border-collapse text-xs font-sans text-left table-fixed">
-            <thead>
-              {/* Column Letter Headers (A, B, i) */}
-              <tr className="bg-[#F8F9FA] dark:bg-[#2D2E31] text-[#5F6368] dark:text-[#9AA0A6] font-mono text-[11px] font-bold border-b border-[#DADCE0] dark:border-[#3C4043]">
-                <th className="w-12 py-1.5 text-center border-r border-[#DADCE0] dark:border-[#3C4043] bg-[#F1F3F4] dark:bg-[#303134]">#</th>
-                <th className="w-[50%] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">A (Показател)</th>
-                <th className="w-[42%] px-3 py-1.5 border-r border-[#DADCE0] dark:border-[#3C4043] font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">B (Въведете стойност)</th>
-                <th className="w-12 py-1.5 text-center font-bold uppercase tracking-wider text-[#3C4043] dark:text-[#E8EAED]">i</th>
-              </tr>
-            </thead>
-            <tbody>
-              {EXACT_SHEET_ROWS.map((row) => {
-                const isActive = activeRow === row.rowNum;
-                const isSectionHeader = row.label.startsWith('---');
-
-                if (isSectionHeader) {
-                  return (
-                    <tr key={row.rowNum} className="bg-[#E8F0FE] dark:bg-[#172B4D] font-bold border-y-2 border-[#1A73E8]">
-                      <td className="border-r border-[#DADCE0] dark:border-[#3C4043] text-center font-mono text-[10px] text-[#1A73E8]">{row.rowNum}</td>
-                      <td className="px-3 py-2 text-[#1A73E8] dark:text-blue-300 font-extrabold uppercase tracking-wider" colSpan={3}>
-                        {row.label.replace(/^---\s*/, '').replace(/\s*---$/, '')}
-                      </td>
-                    </tr>
-                  );
-                }
-
-                // Value to display in Column B
-                const rawUserVal = userInputs[String(row.rowNum)];
-                const displayVal = computedValues[String(row.rowNum)] !== undefined 
-                  ? computedValues[String(row.rowNum)] 
-                  : (rawUserVal !== undefined ? rawUserVal : '');
-
-                // Dynamic Conditional Formatting Cell Style
-                const dynamicCellStyle = getConditionalFormattingStyle(row.rowNum, displayVal);
-
-                // Locked / Read-Only Cells (Calculated Automatically from Data Above)
-                const isReadOnlyCell = row.cellType === 'green-formula' || row.cellType.startsWith('flag-') || [24, 27, 40, 41, 42, 43, 44].includes(row.rowNum);
-
-                return (
-                  <tr
-                    key={row.rowNum}
-                    onClick={() => setActiveRow(row.rowNum)}
-                    className={`border-b border-[#DADCE0] dark:border-[#3C4043] transition-colors cursor-pointer ${
-                      isActive ? 'bg-[#E8F0FE] dark:bg-[#172B4D]' : 'hover:bg-[#F1F3F4] dark:hover:bg-[#252629]'
-                    }`}
-                  >
-                    {/* Row Header Number */}
-                    <td className={`py-1.5 text-center font-mono text-[11px] font-bold border-r border-[#DADCE0] dark:border-[#3C4043] ${
-                      isActive ? 'bg-[#D2E3FC] dark:bg-[#1E3A8A] text-[#1A73E8] dark:text-blue-300' : 'bg-[#F8F9FA] dark:bg-[#2D2E31] text-[#5F6368] dark:text-[#9AA0A6]'
-                    }`}>
-                      {row.rowNum}
-                    </td>
-
-                    {/* Column A: Metric Name */}
-                    <td className="px-3 py-1.5 font-semibold text-xs border-r border-[#DADCE0] dark:border-[#3C4043] truncate">
-                      {row.link ? (
-                        <a
-                          href={row.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#1A73E8] hover:underline font-bold flex items-center gap-1"
-                        >
-                          {row.label}
-                          <ExternalLink className="w-3 h-3 text-[#1A73E8]" />
-                        </a>
-                      ) : (
-                        <span className="flex items-center gap-1.5">
-                          {row.label}
-                          {isReadOnlyCell && (
-                            <Lock className="w-3 h-3 text-slate-400 dark:text-slate-500 shrink-0" title="Заключена клетка (автоматично изчисление)" />
-                          )}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Column B: Editable Value Box (Custom Split Inputs for Rows 15, 20 & 25) */}
-                    <td className={`px-2 py-1 border-r border-[#DADCE0] dark:border-[#3C4043] font-mono text-xs relative ${
-                      isActive ? 'outline-2 outline-[#1A73E8] z-10' : ''
-                    }`}>
-                      {row.rowNum === 15 ? (
-                        <div className="flex items-center gap-1.5 w-full">
-                          {/* 5 Years Dividend Growth Input Box */}
-                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">5 yrs:</span>
-                            <input
-                              type="text"
-                              value={userInputs['15'] || ''}
-                              placeholder="5г..."
-                              onChange={e => handleInputChange('15', e.target.value)}
-                              onFocus={() => setActiveRow(15)}
-                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
-                            />
-                          </div>
-
-                          {/* 10 Years Dividend Growth Input Box */}
-                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">10 yrs:</span>
-                            <input
-                              type="text"
-                              value={userInputs['15_10'] || ''}
-                              placeholder="10г..."
-                              onChange={e => handleInputChange('15_10', e.target.value)}
-                              onFocus={() => setActiveRow(15)}
-                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
-                            />
-                          </div>
-                        </div>
-                      ) : row.rowNum === 20 ? (
-                        <div className="flex items-center gap-1.5 w-full">
-                          {/* 3 Years Revenue Growth Input Box */}
-                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">3 yrs:</span>
-                            <input
-                              type="text"
-                              value={userInputs['20'] || ''}
-                              placeholder="3г..."
-                              onChange={e => handleInputChange('20', e.target.value)}
-                              onFocus={() => setActiveRow(20)}
-                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
-                            />
-                          </div>
-
-                          {/* 5 Years Revenue Growth Input Box */}
-                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">5 yrs:</span>
-                            <input
-                              type="text"
-                              value={userInputs['20_5'] || ''}
-                              placeholder="5г..."
-                              onChange={e => handleInputChange('20_5', e.target.value)}
-                              onFocus={() => setActiveRow(20)}
-                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
-                            />
-                          </div>
-                        </div>
-                      ) : row.rowNum === 25 ? (
-                        <div className="flex items-center gap-1.5 w-full">
-                          {/* 5 Years EPS Growth Input Box */}
-                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">5 yrs:</span>
-                            <input
-                              type="text"
-                              value={userInputs['25'] || ''}
-                              placeholder="5г..."
-                              onChange={e => handleInputChange('25', e.target.value)}
-                              onFocus={() => setActiveRow(25)}
-                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
-                            />
-                          </div>
-
-                          {/* 10 Years EPS Growth Input Box */}
-                          <div className="flex-1 flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#2D2E31] rounded px-2 py-1 border border-[#DADCE0] dark:border-[#5F6368]">
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 shrink-0">10 yrs:</span>
-                            <input
-                              type="text"
-                              value={userInputs['25_10'] || ''}
-                              placeholder="10г..."
-                              onChange={e => handleInputChange('25_10', e.target.value)}
-                              onFocus={() => setActiveRow(25)}
-                              className="w-full bg-transparent outline-none font-mono font-bold text-xs text-slate-800 dark:text-slate-100"
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="relative flex items-center w-full">
-                          <input
-                            type="text"
-                            value={displayVal}
-                            readOnly={isReadOnlyCell}
-                            disabled={isReadOnlyCell}
-                            placeholder={
-                              isReadOnlyCell 
-                                ? "🔒 Автоматично изчислено" 
-                                : (row.rowNum === 2 ? "Въведете тикер (напр. AAPL, NVDA, TSLA)..." : "Попълнете стойност...")
-                            }
-                            onChange={e => handleInputChange(row.rowNum, e.target.value)}
-                            onFocus={() => setActiveRow(row.rowNum)}
-                            className={`w-full px-2.5 py-1.5 rounded outline-none font-mono font-bold text-xs transition-all ${dynamicCellStyle} ${
-                              isReadOnlyCell ? 'cursor-not-allowed select-none opacity-90' : ''
-                            }`}
-                          />
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Column (i): Info Icon Button positioned on the FAR RIGHT */}
-                    <td className="py-1.5 text-center border-r border-[#DADCE0] dark:border-[#3C4043]">
-                      {(row.note || row.formulaStr || row.flagRules) ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveInfoModalRow(row);
-                          }}
-                          className="p-1 rounded-full text-indigo-400 hover:text-indigo-600 hover:bg-indigo-500/10 transition-colors cursor-pointer inline-flex items-center justify-center"
-                          title="Информация, формула и граници за оцветяване"
-                        >
-                          <Info className="w-4 h-4" />
-                        </button>
-                      ) : (
-                        <span className="opacity-20 text-[10px]">-</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Google Sheets Bottom Sheet Tabs Bar */}
-        <div className="bg-[#F8F9FA] dark:bg-[#202124] border-t border-[#DADCE0] dark:border-[#3C4043] px-4 py-2 flex items-center justify-between text-xs shrink-0">
-          <div className="flex items-center gap-1">
-            <div className="bg-white dark:bg-[#303134] text-[#0F9D58] dark:text-[#6EE7B7] font-extrabold px-3 py-1 rounded-t border-t-2 border-[#0F9D58] border-x border-[#DADCE0] dark:border-[#5F6368] flex items-center gap-1.5 shadow-2xs">
-              <Table className="w-3.5 h-3.5" />
-              <span>Stock Valuation & Dynamic Flags</span>
+          {/* CARD 1: Core Company Details */}
+          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">🏢 Основна Информация за Компанията</h3>
+            </div>
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 7, 8, 9].map(r => renderMetricItem(r))}
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-[11px]">
-            <span className="flex items-center gap-1 text-slate-500 font-bold bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded border border-stone-300">
-              ⚪ Сиво = Празна клетка
-            </span>
-            <span className="flex items-center gap-1 text-[#137333] dark:text-[#6EE7B7] font-bold bg-[#E6F4EA] dark:bg-[#133E2B] px-2 py-0.5 rounded border border-[#34A853]">
-              🟢 Зелено = Перфектно
-            </span>
-            <span className="flex items-center gap-1 text-[#B06000] dark:text-[#FDE047] font-bold bg-[#FEF7E0] dark:bg-[#3C3214] px-2 py-0.5 rounded border border-[#FBBC04]">
-              🟡 Жълто = Внимание
-            </span>
-            <span className="flex items-center gap-1 text-[#C5221F] dark:text-[#FCA5A5] font-bold bg-[#FCE8E6] dark:bg-[#4C1D1D] px-2 py-0.5 rounded border border-[#EA4335]">
-              🔴 Червено = Висок риск
-            </span>
+          {/* CARD 2: Valuation Metrics */}
+          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">📊 Оценка & Финансови Коефициенти</h3>
+            </div>
+            <div className="space-y-2">
+              {[10, 11, 12, 13, 14, 15, 16, 17, 18].map(r => renderMetricItem(r))}
+            </div>
           </div>
+
+          {/* CARD 3: Revenue & Margins */}
+          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">📈 Приходи, Маржове & Печалба</h3>
+            </div>
+            <div className="space-y-2">
+              {[19, 20, 21, 22, 23, 24, 25, 26, 27].map(r => renderMetricItem(r))}
+            </div>
+          </div>
+
+          {/* CARD 4: Balance Sheet & Solvency */}
+          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">⚖️ Балансов Отчет & Задължения</h3>
+            </div>
+            <div className="space-y-2">
+              {[28, 29, 30, 31, 32, 33, 34, 35].map(r => renderMetricItem(r))}
+            </div>
+          </div>
+
+          {/* CARD 5: Cash Flow Metrics */}
+          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4 lg:col-span-2">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">💵 Парични Потоци & Ликвидност (Cash Flow Analysis)</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {[36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47].map(r => renderMetricItem(r))}
+            </div>
+          </div>
+
+          {/* CARD 6: Financial Statement Flags (BojanFin Rules) */}
+          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4 lg:col-span-2">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">🚦 Сигнална Система (Financial Statements Flags)</h3>
+              </div>
+              <span className="text-xs text-ink-muted">Автоматичен скрининг по BojanFin правила</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[49, 50, 51, 52, 53, 55, 56, 57, 58, 60, 61, 62, 63, 64].map(r => renderMetricItem(r))}
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -677,7 +640,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       {/* Info Popover Modal for (i) Button */}
       {activeInfoModalRow && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={() => setActiveInfoModalRow(null)}>
-          <div className="relative w-full max-w-md bg-bg border border-border/80 rounded-2xl shadow-2xl p-5 space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="relative w-full max-w-md bg-bg-card border border-border/80 rounded-2xl shadow-2xl p-5 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-border/60 pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
@@ -693,8 +656,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             {/* Formula */}
             {activeInfoModalRow.formulaStr && (
               <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold text-ink-faint tracking-wider">📐 Точна Формула в Google Sheet:</span>
-                <div className="font-mono text-xs font-bold text-emerald-400 bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
+                <span className="text-[10px] uppercase font-bold text-ink-faint tracking-wider">📐 Точна Формула:</span>
+                <div className="font-mono text-xs font-bold text-emerald-400 bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
                   {activeInfoModalRow.formulaStr}
                 </div>
               </div>
@@ -703,15 +666,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             {/* Flag Rules */}
             {activeInfoModalRow.flagRules && (
               <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold text-ink-faint tracking-wider">🚦 Граници за условно оцветяване:</span>
+                <span className="text-[10px] uppercase font-bold text-ink-faint tracking-wider">🚦 Граници за оцветяване:</span>
                 <div className="grid grid-cols-3 gap-2 font-mono text-xs font-bold text-center">
-                  <div className="bg-[#E6F4EA] text-[#137333] p-1.5 rounded border border-[#34A853]">
+                  <div className="bg-emerald-500/10 text-emerald-400 p-2 rounded-xl border border-emerald-500/20">
                     🟢 {activeInfoModalRow.flagRules.green}
                   </div>
-                  <div className="bg-[#FEF7E0] text-[#B06000] p-1.5 rounded border border-[#FBBC04]">
+                  <div className="bg-amber-500/10 text-amber-400 p-2 rounded-xl border border-amber-500/20">
                     🟡 {activeInfoModalRow.flagRules.yellow}
                   </div>
-                  <div className="bg-[#FCE8E6] text-[#C5221F] p-1.5 rounded border border-[#EA4335]">
+                  <div className="bg-rose-500/10 text-rose-400 p-2 rounded-xl border border-rose-500/20">
                     🔴 {activeInfoModalRow.flagRules.red}
                   </div>
                 </div>
@@ -722,7 +685,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             {activeInfoModalRow.note && (
               <div className="space-y-1">
                 <span className="text-[10px] uppercase font-bold text-ink-faint tracking-wider">💡 Бележка & Разяснения:</span>
-                <p className="text-xs text-ink-muted leading-relaxed bg-bg/50 p-2.5 rounded-lg border border-border/30 whitespace-pre-line">
+                <p className="text-xs text-ink-muted leading-relaxed bg-bg/50 p-3 rounded-xl border border-border/30 whitespace-pre-line">
                   {activeInfoModalRow.note}
                 </p>
               </div>
