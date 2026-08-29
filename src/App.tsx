@@ -1377,17 +1377,15 @@ export default function App() {
 
               <a
                 href="#checklist"
-                onClick={(e) => {
-                  if (!e.ctrlKey && !e.metaKey && e.button === 0) {
-                    e.preventDefault();
-                    setShowChecklistModal(true);
-                    setIsUsefulLinksMenuOpen(false);
-                  }
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  setIsUsefulLinksMenuOpen(false);
                 }}
                 className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
               >
                 <CheckSquare className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span>Stock Analysis Check List</span>
+                <span>Stock Analysis Check List 🗔</span>
               </a>
 
               <a
