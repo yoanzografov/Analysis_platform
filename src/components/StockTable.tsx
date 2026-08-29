@@ -598,16 +598,16 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
      <Bell className="w-3.5 h-3.5" />
      Известие
    </button>
-
-         <button
-           type="button"
-           onClick={() => setIsChecklistOpen(true)}
-           className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
-           title="Отвори Check List за анализ на акции"
-         >
-           <CheckSquare className="w-3.5 h-3.5" />
-           Check List
-         </button>
+          <a
+            href="#checklist"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
+            title="Отвори Check List за анализ на акции в нов прозорец"
+          >
+            <CheckSquare className="w-3.5 h-3.5" />
+            Check List 🗔
+          </a>
 
         <a
           href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
