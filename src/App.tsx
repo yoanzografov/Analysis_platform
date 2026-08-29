@@ -1746,6 +1746,33 @@ export default function App() {
     isOpen={showChecklistModal}
     onClose={() => { setShowChecklistModal(false); clearHashUrl(); }}
     stocks={stocks}
+    onSaveToTable={(stockData) => {
+      if (!stockData.ticker) return;
+      const cleanSym = stockData.ticker.toUpperCase().trim();
+      setStocks(prev => {
+        const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = { ...updated[existingIndex], ...stockData };
+          return updated;
+        } else {
+          const newStockObj: Stock = {
+            ticker: cleanSym,
+            companyName: stockData.companyName || cleanSym,
+            sector: stockData.sector || 'Other',
+            currentPrice: stockData.currentPrice || 100,
+            peRatio: stockData.peRatio || 15,
+            dividendYield: stockData.dividendYield || 0,
+            marketCap: stockData.marketCap || 1000000000,
+            currency: 'USD',
+            ...stockData
+          };
+          return [...prev, newStockObj];
+        }
+      });
+      setActiveAlertToast(`Акцията ${cleanSym} беше пресметната и запазена в Интерактивната Таблица!`);
+      setTimeout(() => setActiveAlertToast(null), 4000);
+    }}
   />
 
   {/* Financial Statements Flags Modal */}

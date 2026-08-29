@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, AlertTriangle, AlertCircle, Sparkles } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 
 interface StockChecklistModalProps {
@@ -8,6 +8,7 @@ interface StockChecklistModalProps {
   onClose: () => void;
   stock?: Stock | null;
   stocks?: Stock[];
+  onSaveToTable?: (stockData: Partial<Stock>) => void;
 }
 
 export interface SheetRowDefinition {
@@ -121,9 +122,10 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 64, label: 'Operating Cash Flow to Sales Flag', defaultVal: '', cellType: 'flag-green', formulaStr: '=IF(B40>=15%, "GREEN", "YELLOW")', flagRules: { green: '15%+', yellow: '< 10%', red: '< 5%' }, note: '🟢 15%+ | 🟡 <10% | 🔴 <5%' }
 ];
 
-export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [] }: StockChecklistModalProps) {
+export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [], onSaveToTable }: StockChecklistModalProps) {
   const [selectedTicker, setSelectedTicker] = useState<string>(stock?.ticker || '');
   const [activeInfoModalRow, setActiveInfoModalRow] = useState<SheetRowDefinition | null>(null);
+  const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
   
   // Interactive Checklist State: Track checked rows
   const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>({});
@@ -246,6 +248,37 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return parseFloat(clean) || 0;
   };
 
+  // Save / Sync audited company data to main Interactive Table
+  const handleSaveToMainTable = () => {
+    const cleanSym = (selectedTicker || userInputs['2'] || '').toUpperCase().trim();
+    if (!cleanSym) {
+      alert('Моля, изберете или въведете тикер на компания първо!');
+      return;
+    }
+
+    const compName = userInputs['1'] || `${cleanSym} Corp.`;
+    const sectorName = userInputs['4'] || 'Technology';
+    const price = parseNum(userInputs['7']);
+    const pe = parseNum(userInputs['10']);
+    const divYield = parseNum(userInputs['12']);
+    const mcapInK = parseNum(userInputs['9']);
+
+    if (onSaveToTable) {
+      onSaveToTable({
+        ticker: cleanSym,
+        companyName: compName,
+        sector: sectorName,
+        currentPrice: price > 0 ? price : 100,
+        peRatio: pe > 0 ? pe : 15,
+        dividendYield: divYield > 0 ? divYield : 0,
+        marketCap: mcapInK > 0 ? mcapInK * 1000 : 1000000000
+      });
+    }
+
+    setSavedSuccessMsg(`Акцията ${cleanSym} е пресметната и запазена в Интерактивната Таблица!`);
+    setTimeout(() => setSavedSuccessMsg(null), 4000);
+  };
+
   // Dynamic Computed Formulas
   const computedValues = useMemo(() => {
     const rev = parseNum(userInputs['19']);
@@ -320,40 +353,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const progressPercent = Math.round((totalAudited / totalCheckableRows) * 100);
 
   if (!isOpen) return null;
-
-  // Helper to render dynamic status badge
-  const renderStatusBadge = (rowNum: number, valStr: string) => {
-    if (!valStr || valStr.trim() === '') return null;
-
-    if (valStr.includes('🟢') || valStr.includes('GREEN')) {
-      return <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0 flex items-center gap-1">🟢 Отлично</span>;
-    }
-    if (valStr.includes('🟡') || valStr.includes('YELLOW')) {
-      return <span className="text-xs px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0 flex items-center gap-1">🟡 Внимание</span>;
-    }
-    if (valStr.includes('🔴') || valStr.includes('RED')) {
-      return <span className="text-xs px-2.5 py-1 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0 flex items-center gap-1">🔴 Риск</span>;
-    }
-
-    const val = parseNum(valStr);
-    if (rowNum === 10) {
-      if (val > 0 && val <= 15) return <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 ≤15</span>;
-      if (val > 15 && val <= 25) return <span className="text-xs px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 15-25</span>;
-      if (val > 25) return <span className="text-xs px-2.5 py-1 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &gt;25</span>;
-    }
-    if (rowNum === 21) {
-      if (val >= 40) return <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 40%+</span>;
-      if (val >= 30) return <span className="text-xs px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 30%-40%</span>;
-      if (val < 30 && val > 0) return <span className="text-xs px-2.5 py-1 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &lt;30%</span>;
-    }
-    if (rowNum === 22 || rowNum === 23) {
-      if (val > 0 && val <= 30) return <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 &lt;30%</span>;
-      if (val > 30 && val <= 40) return <span className="text-xs px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 30%-40%</span>;
-      if (val > 40) return <span className="text-xs px-2.5 py-1 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &gt;40%</span>;
-    }
-
-    return null;
-  };
 
   // Helper to render interactive checklist table row
   const renderRowItem = (rowNum: number) => {
@@ -529,9 +528,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           <div>
             <h2 className="font-black text-base text-ink tracking-tight flex items-center gap-2">
               Stock Valuation Checklist Table
-              <Sparkles className="w-4 h-4 text-emerald-400" />
             </h2>
-            <p className="text-xs text-ink-muted">Интерактивен чек лист за финансова оценка & BojanFin сигнални знаци</p>
+            <p className="text-xs text-ink-muted">Инструмент за финансова оценка на отделни компании преди добавяне към Платформата</p>
           </div>
         </div>
 
@@ -555,6 +553,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               ))}
             </select>
           </div>
+
+          <button
+            onClick={handleSaveToMainTable}
+            className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+            title="Запази пресметнатата акция в Интерактивната Таблица на платформата"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            ➕ Добави към Таблицата
+          </button>
 
           <button
             onClick={() => {
@@ -585,25 +592,30 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         </div>
       </div>
 
-      {/* Progress & Quick Filter Bar */}
+      {/* Toast Notification Banner */}
+      {savedSuccessMsg && (
+        <div className="bg-emerald-500 text-white px-6 py-2 flex items-center justify-between text-xs font-bold shadow-md animate-in slide-in-from-top duration-200">
+          <span className="flex items-center gap-2">
+            <Check className="w-4 h-4" />
+            {savedSuccessMsg}
+          </span>
+          <button onClick={() => setSavedSuccessMsg(null)} className="opacity-80 hover:opacity-100">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Progress & Quick Actions Bar */}
       <div className="bg-bg-card/60 border-b border-border/80 px-6 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shrink-0">
         
-        {/* Ticker Quick Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <span className="font-bold text-ink-faint uppercase shrink-0">Бърз избор:</span>
-          {['AAPL', 'NVDA', 'TSLA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'PLTR'].map(tk => (
-            <button
-              key={tk}
-              onClick={() => handleSelectTicker(tk)}
-              className={`px-2.5 py-0.5 rounded-md text-xs font-mono font-bold transition-all border cursor-pointer shrink-0 ${
-                selectedTicker === tk
-                  ? 'bg-indigo-600 text-white border-indigo-500'
-                  : 'bg-bg text-ink-muted border-border hover:border-indigo-500/40 hover:text-ink'
-              }`}
-            >
-              {tk}
-            </button>
-          ))}
+        {/* Audit Checklist Status */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-extrabold text-ink">Анализ на Компанията</span>
+          {selectedTicker && (
+            <span className="text-xs font-mono font-extrabold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              {selectedTicker.toUpperCase()}
+            </span>
+          )}
         </div>
 
         {/* Live Audit Checklist Progress */}
