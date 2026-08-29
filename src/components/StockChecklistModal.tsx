@@ -374,6 +374,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           isChecked ? 'bg-emerald-500/5 dark:bg-emerald-950/20' : 'hover:bg-border/20'
         }`}
       >
+        {/* Row Number */}
+        <td className="py-2.5 px-3 text-center w-12 font-mono text-xs font-bold text-ink-faint border-r border-border/40">
+          {row.rowNum}
+        </td>
+
         {/* Checkbox Cell */}
         <td className="py-2.5 px-3 text-center w-10 border-r border-border/40">
           <button
@@ -388,11 +393,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               <Square className="w-4 h-4 text-ink-faint hover:text-ink" />
             )}
           </button>
-        </td>
-
-        {/* Row Number */}
-        <td className="py-2.5 px-3 text-center w-12 font-mono text-xs font-bold text-ink-faint border-r border-border/40">
-          {row.rowNum}
         </td>
 
         {/* Metric Label */}
@@ -655,8 +655,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="bg-border/40 text-ink-muted text-xs font-bold uppercase tracking-wider border-b border-border">
-                <th className="py-3 px-3 text-center w-10 border-r border-border/40">✓</th>
                 <th className="py-3 px-3 text-center w-12 border-r border-border/40">#</th>
+                <th className="py-3 px-3 text-center w-10 border-r border-border/40">✓</th>
                 <th className="py-3 px-4 border-r border-border/40">Показател (Financial Metric)</th>
                 <th className="py-3 px-4 text-right border-r border-border/40">Стойност (Value / Input)</th>
                 <th className="py-3 px-2 text-center w-12">Инфо</th>
