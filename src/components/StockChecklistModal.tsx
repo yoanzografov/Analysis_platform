@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, ExternalLink, Info, Lock, CheckSquare, Sparkles, AlertCircle, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, RefreshCw } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 
 interface StockChecklistModalProps {
@@ -286,37 +286,37 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     if (!valStr || valStr.trim() === '') return null;
 
     if (valStr.includes('🟢') || valStr.includes('GREEN')) {
-      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 GREEN</span>;
+      return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 Отлично</span>;
     }
     if (valStr.includes('🟡') || valStr.includes('YELLOW')) {
-      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 YELLOW</span>;
+      return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 Внимание</span>;
     }
     if (valStr.includes('🔴') || valStr.includes('RED')) {
-      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 RED</span>;
+      return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 Риск</span>;
     }
 
     const val = parseNum(valStr);
     if (rowNum === 10) {
-      if (val > 0 && val <= 15) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 ≤15</span>;
-      if (val > 15 && val <= 25) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 15-25</span>;
-      if (val > 25) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &gt;25</span>;
+      if (val > 0 && val <= 15) return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 ≤15</span>;
+      if (val > 15 && val <= 25) return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 15-25</span>;
+      if (val > 25) return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &gt;25</span>;
     }
     if (rowNum === 21) {
-      if (val >= 40) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 40%+</span>;
-      if (val >= 30) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 30%-40%</span>;
-      if (val < 30 && val > 0) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &lt;30%</span>;
+      if (val >= 40) return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 40%+</span>;
+      if (val >= 30) return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 30%-40%</span>;
+      if (val < 30 && val > 0) return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &lt;30%</span>;
     }
     if (rowNum === 22 || rowNum === 23) {
-      if (val > 0 && val <= 30) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 &lt;30%</span>;
-      if (val > 30 && val <= 40) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 30%-40%</span>;
-      if (val > 40) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &gt;40%</span>;
+      if (val > 0 && val <= 30) return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 &lt;30%</span>;
+      if (val > 30 && val <= 40) return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 30%-40%</span>;
+      if (val > 40) return <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 &gt;40%</span>;
     }
 
     return null;
   };
 
-  // Helper to render metric item inside cards
-  const renderMetricItem = (rowNum: number) => {
+  // Helper to render clean row in list layout
+  const renderRowItem = (rowNum: number) => {
     const row = EXACT_SHEET_ROWS.find(r => r.rowNum === rowNum);
     if (!row) return null;
 
@@ -328,14 +328,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const isReadOnlyCell = row.cellType === 'green-formula' || row.cellType.startsWith('flag-') || [24, 27, 40, 41, 42, 43, 44].includes(row.rowNum);
 
     return (
-      <div key={rowNum} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-bg/40 border border-border/40 hover:border-border transition-all gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          {isReadOnlyCell ? (
-            <Lock className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Автоматично изчислено" />
-          ) : (
-            <div className="w-2 h-2 rounded-full bg-indigo-500/50 shrink-0" />
+      <div key={rowNum} className="flex items-center justify-between py-2 px-3 hover:bg-border/30 rounded-lg transition-colors border-b border-border/40 last:border-0 gap-3">
+        {/* Metric Name & Info Button */}
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="text-xs font-semibold text-ink truncate">{row.label}</span>
+          {isReadOnlyCell && (
+            <Lock className="w-3 h-3 text-indigo-400 shrink-0" title="Автоматично изчислено" />
           )}
-          <span className="font-semibold text-xs text-ink truncate">{row.label}</span>
           {(row.note || row.formulaStr || row.flagRules) && (
             <button
               type="button"
@@ -348,8 +347,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           )}
         </div>
 
+        {/* Value Box / Split Input */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Custom Split Inputs */}
           {rowNum === 15 ? (
             <div className="flex items-center gap-1.5">
               <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
@@ -359,7 +358,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   value={userInputs['15'] || ''}
                   onChange={e => handleInputChange('15', e.target.value)}
                   placeholder="..."
-                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                  className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
               <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
@@ -369,7 +368,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   value={userInputs['15_10'] || ''}
                   onChange={e => handleInputChange('15_10', e.target.value)}
                   placeholder="..."
-                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                  className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
             </div>
@@ -382,7 +381,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   value={userInputs['20'] || ''}
                   onChange={e => handleInputChange('20', e.target.value)}
                   placeholder="..."
-                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                  className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
               <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
@@ -392,7 +391,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   value={userInputs['20_5'] || ''}
                   onChange={e => handleInputChange('20_5', e.target.value)}
                   placeholder="..."
-                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                  className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
             </div>
@@ -405,7 +404,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   value={userInputs['25'] || ''}
                   onChange={e => handleInputChange('25', e.target.value)}
                   placeholder="..."
-                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                  className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
               <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1">
@@ -415,7 +414,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   value={userInputs['25_10'] || ''}
                   onChange={e => handleInputChange('25_10', e.target.value)}
                   placeholder="..."
-                  className="w-14 bg-transparent text-xs font-mono font-bold outline-none text-ink"
+                  className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
             </div>
@@ -426,9 +425,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 value={displayVal}
                 readOnly={isReadOnlyCell}
                 disabled={isReadOnlyCell}
-                placeholder={isReadOnlyCell ? "🔒 Автомат" : "Попълнете..."}
+                placeholder={isReadOnlyCell ? "🔒 Изчислено" : "Попълнете..."}
                 onChange={e => handleInputChange(rowNum, e.target.value)}
-                className={`w-32 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs outline-none transition-all ${
+                className={`w-36 px-3 py-1 rounded-lg border font-mono font-bold text-xs outline-none text-right transition-all ${
                   isReadOnlyCell
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 cursor-not-allowed'
                     : 'bg-bg border-border focus:border-indigo-500 text-ink'
@@ -443,23 +442,21 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   };
 
   return (
-    <div className="fixed inset-0 z-[999999] w-screen h-screen bg-bg flex flex-col font-sans select-none text-ink overflow-hidden animate-in fade-in duration-150" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[999999] w-screen h-screen bg-bg flex flex-col font-sans text-ink overflow-hidden animate-in fade-in duration-150" onClick={e => e.stopPropagation()}>
       
-      {/* Sleek App Header Bar */}
-      <div className="bg-bg-card border-b border-border/80 px-6 py-3 flex items-center justify-between shrink-0 shadow-lg">
+      {/* Clean Header Bar */}
+      <div className="bg-bg-card border-b border-border px-6 py-3.5 flex items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-500/10 p-2 rounded-xl border border-indigo-500/20 text-indigo-400">
+          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
             <CheckSquare className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="font-black text-base text-ink tracking-tight flex items-center gap-2">
-              Stock Valuation Checklist
-            </h2>
-            <p className="text-[11px] text-ink-muted">Пълна финансова проверка и сигнална система (Flags Analysis)</p>
+            <h2 className="font-extrabold text-base text-ink tracking-tight">Stock Valuation Checklist</h2>
+            <p className="text-xs text-ink-muted">Финансов анализ и сигнални знаци за подцененост</p>
           </div>
         </div>
 
-        {/* Ticker Selector & Actions */}
+        {/* Top Actions & Ticker Selector */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border">
             <label className="text-xs font-bold text-ink-faint uppercase">Актив:</label>
@@ -468,7 +465,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               onChange={e => handleSelectTicker(e.target.value)}
               className="bg-transparent text-ink font-mono font-bold text-xs outline-none cursor-pointer"
             >
-              <option value="" className="bg-bg-card text-ink">-- Изберете --</option>
+              <option value="" className="bg-bg-card text-ink">-- Изберете Актив --</option>
               {stocks.map(s => (
                 <option key={s.ticker} value={s.ticker} className="bg-bg-card text-ink">{s.ticker} - {s.companyName}</option>
               ))}
@@ -484,8 +481,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             onClick={() => {
               window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
             }}
-            className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
-            title="Отвори инструмента в нов самостоятелен прозорец"
+            className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-xs border border-indigo-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Отвори в нов прозорец"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             🗔 Нов прозорец
@@ -493,8 +490,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
           <button
             onClick={handleClearAll}
-            className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold text-xs border border-red-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
-            title="Изчисти всички попълнени данни"
+            className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs border border-red-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Изчисти данните"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Изчисти
@@ -502,27 +499,25 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-border/60 transition-colors text-ink-muted hover:text-ink cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-border transition-colors text-ink-muted hover:text-ink cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-auto p-6 space-y-6 bg-bg">
-        
-        {/* Quick Ticker Chips Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <span className="text-xs font-bold text-ink-faint uppercase mr-1 shrink-0">Бърз избор:</span>
+      {/* Subtle Live Summary Bar */}
+      <div className="bg-bg-card/50 border-b border-border/60 px-6 py-2 flex items-center justify-between text-xs shrink-0">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+          <span className="font-bold text-ink-faint uppercase mr-1">Бърз избор:</span>
           {['AAPL', 'NVDA', 'TSLA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'PLTR'].map(tk => (
             <button
               key={tk}
               onClick={() => handleSelectTicker(tk)}
-              className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer shrink-0 ${
+              className={`px-2.5 py-0.5 rounded-md text-xs font-mono font-bold transition-all border cursor-pointer ${
                 selectedTicker === tk
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/20'
-                  : 'bg-bg-card text-ink-muted border-border hover:border-indigo-500/40 hover:text-ink'
+                  ? 'bg-indigo-600 text-white border-indigo-500'
+                  : 'bg-bg text-ink-muted border-border hover:border-indigo-500/40 hover:text-ink'
               }`}
             >
               {tk}
@@ -530,111 +525,80 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           ))}
         </div>
 
-        {/* Live Flags Score Summary Header Card */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-              <div>
-                <span className="text-xs font-bold text-emerald-400 uppercase">Зелени Флаги (Отлично)</span>
-                <h4 className="text-xl font-black text-emerald-300">{flagsSummary.green} показатели</h4>
-              </div>
-            </div>
-          </div>
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-amber-400" />
-              <div>
-                <span className="text-xs font-bold text-amber-400 uppercase">Жълти Флаги (Внимание)</span>
-                <h4 className="text-xl font-black text-amber-300">{flagsSummary.yellow} показатели</h4>
-              </div>
-            </div>
-          </div>
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-6 h-6 text-rose-400" />
-              <div>
-                <span className="text-xs font-bold text-rose-400 uppercase">Червени Флаги (Висок риск)</span>
-                <h4 className="text-xl font-black text-rose-300">{flagsSummary.red} показатели</h4>
-              </div>
-            </div>
-          </div>
+        {/* Compact Flags Tally */}
+        <div className="flex items-center gap-3 font-mono font-bold shrink-0">
+          <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">🟢 {flagsSummary.green} Зелени</span>
+          <span className="text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20">🟡 {flagsSummary.yellow} Жълти</span>
+          <span className="text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/20">🔴 {flagsSummary.red} Червени</span>
         </div>
+      </div>
 
-        {/* Cards Grid Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Main Checklist Sections View */}
+      <div className="flex-1 overflow-auto p-6 bg-bg space-y-6">
+        <div className="max-w-5xl mx-auto space-y-6">
 
-          {/* CARD 1: Core Company Details */}
-          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4">
-            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">🏢 Основна Информация за Компанията</h3>
+          {/* Section 1: Company Details */}
+          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
+            <div className="bg-border/30 px-4 py-2.5 font-bold text-xs uppercase tracking-wider text-ink-muted border-b border-border">
+              🏢 1. Информация за Компанията
             </div>
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 7, 8, 9].map(r => renderMetricItem(r))}
+            <div className="p-2 space-y-0.5">
+              {[1, 2, 3, 4, 7, 8, 9].map(r => renderRowItem(r))}
             </div>
           </div>
 
-          {/* CARD 2: Valuation Metrics */}
-          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4">
-            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">📊 Оценка & Финансови Коефициенти</h3>
+          {/* Section 2: Financial Valuation Metrics */}
+          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
+            <div className="bg-border/30 px-4 py-2.5 font-bold text-xs uppercase tracking-wider text-ink-muted border-b border-border">
+              📊 2. Финансови Коефициенти & Оценка
             </div>
-            <div className="space-y-2">
-              {[10, 11, 12, 13, 14, 15, 16, 17, 18].map(r => renderMetricItem(r))}
-            </div>
-          </div>
-
-          {/* CARD 3: Revenue & Margins */}
-          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4">
-            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">📈 Приходи, Маржове & Печалба</h3>
-            </div>
-            <div className="space-y-2">
-              {[19, 20, 21, 22, 23, 24, 25, 26, 27].map(r => renderMetricItem(r))}
+            <div className="p-2 space-y-0.5">
+              {[10, 11, 12, 13, 14, 15, 16, 17, 18].map(r => renderRowItem(r))}
             </div>
           </div>
 
-          {/* CARD 4: Balance Sheet & Solvency */}
-          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4">
-            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">⚖️ Балансов Отчет & Задължения</h3>
+          {/* Section 3: Revenue & Income */}
+          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
+            <div className="bg-border/30 px-4 py-2.5 font-bold text-xs uppercase tracking-wider text-ink-muted border-b border-border">
+              📈 3. Приходи, Маржове & Печалба
             </div>
-            <div className="space-y-2">
-              {[28, 29, 30, 31, 32, 33, 34, 35].map(r => renderMetricItem(r))}
-            </div>
-          </div>
-
-          {/* CARD 5: Cash Flow Metrics */}
-          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4 lg:col-span-2">
-            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">💵 Парични Потоци & Ликвидност (Cash Flow Analysis)</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {[36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47].map(r => renderMetricItem(r))}
+            <div className="p-2 space-y-0.5">
+              {[19, 20, 21, 22, 23, 24, 25, 26, 27].map(r => renderRowItem(r))}
             </div>
           </div>
 
-          {/* CARD 6: Financial Statement Flags (BojanFin Rules) */}
-          <div className="p-5 rounded-2xl bg-bg-card border border-border/80 shadow-xl space-y-4 lg:col-span-2">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">🚦 Сигнална Система (Financial Statements Flags)</h3>
-              </div>
-              <span className="text-xs text-ink-muted">Автоматичен скрининг по BojanFin правила</span>
+          {/* Section 4: Balance Sheet */}
+          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
+            <div className="bg-border/30 px-4 py-2.5 font-bold text-xs uppercase tracking-wider text-ink-muted border-b border-border">
+              ⚖️ 4. Балансов Отчет & Задължения
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {[49, 50, 51, 52, 53, 55, 56, 57, 58, 60, 61, 62, 63, 64].map(r => renderMetricItem(r))}
+            <div className="p-2 space-y-0.5">
+              {[28, 29, 30, 31, 32, 33, 34, 35].map(r => renderRowItem(r))}
+            </div>
+          </div>
+
+          {/* Section 5: Cash Flows */}
+          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
+            <div className="bg-border/30 px-4 py-2.5 font-bold text-xs uppercase tracking-wider text-ink-muted border-b border-border">
+              💵 5. Парични Потоци (Cash Flow Analysis)
+            </div>
+            <div className="p-2 space-y-0.5">
+              {[36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47].map(r => renderRowItem(r))}
+            </div>
+          </div>
+
+          {/* Section 6: Financial Statement Flags */}
+          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
+            <div className="bg-border/30 px-4 py-2.5 font-bold text-xs uppercase tracking-wider text-ink-muted border-b border-border flex items-center justify-between">
+              <span>🚦 6. Сигнална Система (Financial Statement Flags - BojanFin Rules)</span>
+              <span className="text-[11px] text-ink-faint font-normal">Автоматично оценяване</span>
+            </div>
+            <div className="p-2 space-y-0.5">
+              {[49, 50, 51, 52, 53, 55, 56, 57, 58, 60, 61, 62, 63, 64].map(r => renderRowItem(r))}
             </div>
           </div>
 
         </div>
-
       </div>
 
       {/* Info Popover Modal for (i) Button */}
