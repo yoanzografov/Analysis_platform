@@ -399,7 +399,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         {/* Metric Label */}
         <td className="py-2.5 px-4 border-r border-border/40">
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-semibold ${isChecked ? 'text-emerald-300 font-bold' : 'text-ink'}`}>
+            <span className={`text-xs font-bold ${isChecked ? 'text-emerald-400' : 'text-ink'}`}>
               {row.label}
             </span>
             {isReadOnlyCell && (
@@ -412,7 +412,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         <td className="py-2 px-4 border-r border-border/40">
           {rowNum === 15 ? (
             <div className="flex items-center gap-2 justify-end">
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
                 <input
                   type="text"
@@ -422,7 +422,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">10y:</span>
                 <input
                   type="text"
@@ -435,7 +435,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             </div>
           ) : rowNum === 20 ? (
             <div className="flex items-center gap-2 justify-end">
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">3y:</span>
                 <input
                   type="text"
@@ -445,7 +445,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
                 <input
                   type="text"
@@ -458,7 +458,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             </div>
           ) : rowNum === 25 ? (
             <div className="flex items-center gap-2 justify-end">
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
                 <input
                   type="text"
@@ -468,7 +468,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">10y:</span>
                 <input
                   type="text"
@@ -488,7 +488,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 disabled={isReadOnlyCell}
                 placeholder={isReadOnlyCell ? "🔒 Изчислено" : "Попълнете..."}
                 onChange={e => handleInputChange(rowNum, e.target.value)}
-                className={`w-48 px-3 py-1 rounded-lg border font-mono font-bold text-xs outline-none text-right transition-all ${
+                className={`w-48 h-8 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs outline-none text-right transition-all ${
                   isReadOnlyCell
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 cursor-not-allowed'
                     : 'bg-bg border-border focus:border-indigo-500 text-ink'
