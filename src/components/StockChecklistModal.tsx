@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, ExternalLink, Info, Lock, CheckSquare, RefreshCw } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, AlertTriangle, AlertCircle, Sparkles } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 
 interface StockChecklistModalProps {
@@ -124,6 +124,9 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
 export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [] }: StockChecklistModalProps) {
   const [selectedTicker, setSelectedTicker] = useState<string>(stock?.ticker || '');
   const [activeInfoModalRow, setActiveInfoModalRow] = useState<SheetRowDefinition | null>(null);
+  
+  // Interactive Checklist State: Track checked rows
+  const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>({});
 
   const [userInputs, setUserInputs] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
@@ -176,6 +179,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       '26': dbStock?.netIncome ? (dbStock.netIncome / 1000).toLocaleString('en-US') : prev['26'],
       '38': dbStock?.fcf ? (dbStock.fcf / 1000).toLocaleString('en-US') : prev['38'],
     }));
+
+    // Auto check non-empty rows for selected ticker
+    const initialChecked: Record<number, boolean> = {};
+    [1, 2, 3, 4, 7, 8, 9, 10].forEach(r => { initialChecked[r] = true; });
+    setCheckedRows(prev => ({ ...prev, ...initialChecked }));
   };
 
   useEffect(() => {
@@ -194,11 +202,20 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const strKey = String(key);
     setUserInputs(prev => ({ ...prev, [strKey]: val }));
 
+    const numKey = typeof key === 'number' ? key : parseInt(key, 10);
+    if (!isNaN(numKey) && val.trim() !== '') {
+      setCheckedRows(prev => ({ ...prev, [numKey]: true }));
+    }
+
     if (strKey === '2' && val.trim().length >= 1) {
       const cleanSym = val.toUpperCase().trim();
       setSelectedTicker(cleanSym);
       updateStockRowDetails(cleanSym);
     }
+  };
+
+  const handleToggleCheck = (rowNum: number) => {
+    setCheckedRows(prev => ({ ...prev, [rowNum]: !prev[rowNum] }));
   };
 
   const handleClearAll = () => {
@@ -209,6 +226,18 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     cleared['20_5'] = '';
     cleared['25_10'] = '';
     setUserInputs(cleared);
+    setCheckedRows({});
+  };
+
+  const handleAutoCheckGreen = () => {
+    const newChecked = { ...checkedRows };
+    EXACT_SHEET_ROWS.forEach(row => {
+      const displayVal = computedValues[String(row.rowNum)] || userInputs[String(row.rowNum)];
+      if (displayVal && (displayVal.includes('🟢') || displayVal.includes('GREEN'))) {
+        newChecked[row.rowNum] = true;
+      }
+    });
+    setCheckedRows(newChecked);
   };
 
   const parseNum = (val: string | undefined): number => {
@@ -279,20 +308,31 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return { green, yellow, red };
   }, [computedValues]);
 
+  // Total checked progress calculation
+  const totalAudited = useMemo(() => {
+    return Object.values(checkedRows).filter(Boolean).length;
+  }, [checkedRows]);
+
+  const totalCheckableRows = useMemo(() => {
+    return EXACT_SHEET_ROWS.filter(r => !r.label.startsWith('---')).length;
+  }, []);
+
+  const progressPercent = Math.round((totalAudited / totalCheckableRows) * 100);
+
   if (!isOpen) return null;
 
-  // Helper to render dynamic status badge with unified size
+  // Helper to render dynamic status badge
   const renderStatusBadge = (rowNum: number, valStr: string) => {
     if (!valStr || valStr.trim() === '') return null;
 
     if (valStr.includes('🟢') || valStr.includes('GREEN')) {
-      return <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0">🟢 Отлично</span>;
+      return <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/30 shrink-0 flex items-center gap-1">🟢 Отлично</span>;
     }
     if (valStr.includes('🟡') || valStr.includes('YELLOW')) {
-      return <span className="text-xs px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0">🟡 Внимание</span>;
+      return <span className="text-xs px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-400 font-extrabold border border-amber-500/30 shrink-0 flex items-center gap-1">🟡 Внимание</span>;
     }
     if (valStr.includes('🔴') || valStr.includes('RED')) {
-      return <span className="text-xs px-2.5 py-1 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0">🔴 Риск</span>;
+      return <span className="text-xs px-2.5 py-1 rounded-md bg-rose-500/15 text-rose-400 font-extrabold border border-rose-500/30 shrink-0 flex items-center gap-1">🔴 Риск</span>;
     }
 
     const val = parseNum(valStr);
@@ -315,11 +355,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return null;
   };
 
-  // Helper to render clean row in 100% UNIFIED size and style
+  // Helper to render interactive checklist table row
   const renderRowItem = (rowNum: number) => {
     const row = EXACT_SHEET_ROWS.find(r => r.rowNum === rowNum);
     if (!row) return null;
 
+    const isChecked = !!checkedRows[rowNum];
     const rawUserVal = userInputs[String(rowNum)];
     const displayVal = computedValues[String(rowNum)] !== undefined 
       ? computedValues[String(rowNum)] 
@@ -328,30 +369,50 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const isReadOnlyCell = row.cellType === 'green-formula' || row.cellType.startsWith('flag-') || [24, 27, 40, 41, 42, 43, 44].includes(row.rowNum);
 
     return (
-      <div key={rowNum} className="flex items-center justify-between py-2.5 px-4 hover:bg-border/20 transition-colors border-b border-border/40 last:border-0 gap-4">
-        {/* Metric Label & Info Button */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <span className="text-xs font-semibold text-ink truncate">{row.label}</span>
-          {isReadOnlyCell && (
-            <Lock className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Автоматично изчислено" />
-          )}
-          {(row.note || row.formulaStr || row.flagRules) && (
-            <button
-              type="button"
-              onClick={() => setActiveInfoModalRow(row)}
-              className="p-1 text-ink-faint hover:text-indigo-400 cursor-pointer"
-              title="Информация & формула"
-            >
-              <Info className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+      <tr
+        key={rowNum}
+        className={`border-b border-border/40 transition-colors ${
+          isChecked ? 'bg-emerald-500/5 dark:bg-emerald-950/20' : 'hover:bg-border/20'
+        }`}
+      >
+        {/* Checkbox Cell */}
+        <td className="py-2.5 px-3 text-center w-10 border-r border-border/40">
+          <button
+            type="button"
+            onClick={() => handleToggleCheck(rowNum)}
+            className="p-1 text-ink-muted hover:text-emerald-400 cursor-pointer transition-transform active:scale-90"
+            title={isChecked ? "Маркиран като прегледан" : "Маркирай като прегледан"}
+          >
+            {isChecked ? (
+              <CheckSquare className="w-4 h-4 text-emerald-400 fill-emerald-500/20" />
+            ) : (
+              <Square className="w-4 h-4 text-ink-faint hover:text-ink" />
+            )}
+          </button>
+        </td>
 
-        {/* Value Box / Split Inputs with Unified Style */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Row Number */}
+        <td className="py-2.5 px-3 text-center w-12 font-mono text-xs font-bold text-ink-faint border-r border-border/40">
+          {row.rowNum}
+        </td>
+
+        {/* Metric Label */}
+        <td className="py-2.5 px-4 border-r border-border/40">
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-semibold ${isChecked ? 'text-emerald-300 font-bold' : 'text-ink'}`}>
+              {row.label}
+            </span>
+            {isReadOnlyCell && (
+              <Lock className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Автоматично изчислено" />
+            )}
+          </div>
+        </td>
+
+        {/* Value Box / Split Inputs */}
+        <td className="py-2 px-4 border-r border-border/40">
           {rowNum === 15 ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5">
+            <div className="flex items-center gap-2 justify-end">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
                 <input
                   type="text"
@@ -361,7 +422,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
                 <span className="text-xs text-ink-faint font-bold">10y:</span>
                 <input
                   type="text"
@@ -373,8 +434,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               </div>
             </div>
           ) : rowNum === 20 ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5">
+            <div className="flex items-center gap-2 justify-end">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
                 <span className="text-xs text-ink-faint font-bold">3y:</span>
                 <input
                   type="text"
@@ -384,7 +445,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
                 <input
                   type="text"
@@ -396,8 +457,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               </div>
             </div>
           ) : rowNum === 25 ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5">
+            <div className="flex items-center gap-2 justify-end">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
                 <input
                   type="text"
@@ -407,7 +468,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
               </div>
-              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1">
                 <span className="text-xs text-ink-faint font-bold">10y:</span>
                 <input
                   type="text"
@@ -419,7 +480,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex justify-end">
               <input
                 type="text"
                 value={displayVal}
@@ -427,36 +488,59 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 disabled={isReadOnlyCell}
                 placeholder={isReadOnlyCell ? "🔒 Изчислено" : "Попълнете..."}
                 onChange={e => handleInputChange(rowNum, e.target.value)}
-                className={`w-44 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs outline-none text-right transition-all ${
+                className={`w-48 px-3 py-1 rounded-lg border font-mono font-bold text-xs outline-none text-right transition-all ${
                   isReadOnlyCell
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 cursor-not-allowed'
                     : 'bg-bg border-border focus:border-indigo-500 text-ink'
                 }`}
               />
-              {renderStatusBadge(rowNum, displayVal)}
             </div>
           )}
-        </div>
-      </div>
+        </td>
+
+        {/* Status Badge Cell */}
+        <td className="py-2 px-3 text-center border-r border-border/40">
+          {renderStatusBadge(rowNum, displayVal)}
+        </td>
+
+        {/* Info Formula Button Cell */}
+        <td className="py-2 px-2 text-center w-12">
+          {(row.note || row.formulaStr || row.flagRules) ? (
+            <button
+              type="button"
+              onClick={() => setActiveInfoModalRow(row)}
+              className="p-1 rounded-lg hover:bg-indigo-500/10 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+              title="Формула & правила за оцветяване"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+          ) : (
+            <span className="opacity-20 text-[10px]">-</span>
+          )}
+        </td>
+      </tr>
     );
   };
 
   return (
     <div className="fixed inset-0 z-[999999] w-screen h-screen bg-bg flex flex-col font-sans text-ink overflow-hidden animate-in fade-in duration-150" onClick={e => e.stopPropagation()}>
       
-      {/* Clean Header Bar */}
-      <div className="bg-bg-card border-b border-border px-6 py-3.5 flex items-center justify-between shrink-0 shadow-sm">
+      {/* Clean App Header Bar */}
+      <div className="bg-bg-card border-b border-border px-6 py-3 flex items-center justify-between shrink-0 shadow-md">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
             <CheckSquare className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="font-extrabold text-base text-ink tracking-tight">Stock Valuation Checklist</h2>
-            <p className="text-xs text-ink-muted">Финансов анализ и сигнални знаци за подцененост</p>
+            <h2 className="font-black text-base text-ink tracking-tight flex items-center gap-2">
+              Stock Valuation Checklist Table
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+            </h2>
+            <p className="text-xs text-ink-muted">Интерактивен чек лист за финансова оценка & BojanFin сигнални знаци</p>
           </div>
         </div>
 
-        {/* Top Actions & Ticker Selector */}
+        {/* Top Controls */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border">
             <label className="text-xs font-bold text-ink-faint uppercase">Актив:</label>
@@ -506,15 +590,17 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         </div>
       </div>
 
-      {/* Subtle Live Summary Bar */}
-      <div className="bg-bg-card/50 border-b border-border/60 px-6 py-2 flex items-center justify-between text-xs shrink-0">
+      {/* Progress & Quick Filter Bar */}
+      <div className="bg-bg-card/60 border-b border-border/80 px-6 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shrink-0">
+        
+        {/* Ticker Quick Chips */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <span className="font-bold text-ink-faint uppercase mr-1">Бърз избор:</span>
+          <span className="font-bold text-ink-faint uppercase shrink-0">Бърз избор:</span>
           {['AAPL', 'NVDA', 'TSLA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'PLTR'].map(tk => (
             <button
               key={tk}
               onClick={() => handleSelectTicker(tk)}
-              className={`px-2.5 py-0.5 rounded-md text-xs font-mono font-bold transition-all border cursor-pointer ${
+              className={`px-2.5 py-0.5 rounded-md text-xs font-mono font-bold transition-all border cursor-pointer shrink-0 ${
                 selectedTicker === tk
                   ? 'bg-indigo-600 text-white border-indigo-500'
                   : 'bg-bg text-ink-muted border-border hover:border-indigo-500/40 hover:text-ink'
@@ -525,79 +611,101 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           ))}
         </div>
 
-        {/* Compact Flags Tally */}
-        <div className="flex items-center gap-3 font-mono font-bold shrink-0">
-          <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">🟢 {flagsSummary.green} Зелени</span>
-          <span className="text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20">🟡 {flagsSummary.yellow} Жълти</span>
-          <span className="text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/20">🔴 {flagsSummary.red} Червени</span>
+        {/* Live Audit Checklist Progress */}
+        <div className="flex items-center gap-4 shrink-0">
+          <button
+            onClick={handleAutoCheckGreen}
+            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/20 flex items-center gap-1 transition-all cursor-pointer"
+            title="Автоматично отметни всички зелени показатели"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            Отметни зелени
+          </button>
+
+          <div className="flex items-center gap-2 bg-bg px-3 py-1 rounded-lg border border-border">
+            <span className="text-xs font-bold text-ink-muted">Прогрес:</span>
+            <div className="w-24 bg-border/60 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="font-mono font-bold text-xs text-emerald-400">{progressPercent}%</span>
+            <span className="text-[11px] text-ink-faint">({totalAudited}/{totalCheckableRows})</span>
+          </div>
+
+          <div className="flex items-center gap-2 font-mono font-bold text-xs">
+            <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">🟢 {flagsSummary.green}</span>
+            <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">🟡 {flagsSummary.yellow}</span>
+            <span className="text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">🔴 {flagsSummary.red}</span>
+          </div>
         </div>
       </div>
 
-      {/* Main Checklist Sections View - 100% UNIFIED SIZE AND STYLE */}
-      <div className="flex-1 overflow-auto p-6 bg-bg space-y-6">
-        <div className="max-w-5xl mx-auto space-y-6">
-
-          {/* Section 1: Company Details */}
-          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
-            <div className="bg-border/30 px-4 py-2.5 font-extrabold text-xs text-ink uppercase tracking-wider border-b border-border">
-              🏢 1. Информация за Компанията
-            </div>
-            <div className="p-1 space-y-0.5">
+      {/* Main Checklist Table */}
+      <div className="flex-1 overflow-auto p-6 bg-bg">
+        <div className="max-w-6xl mx-auto bg-bg-card rounded-2xl border border-border shadow-xl overflow-hidden">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="bg-border/40 text-ink-muted text-xs font-bold uppercase tracking-wider border-b border-border">
+                <th className="py-3 px-3 text-center w-10 border-r border-border/40">✓</th>
+                <th className="py-3 px-3 text-center w-12 border-r border-border/40">#</th>
+                <th className="py-3 px-4 border-r border-border/40">Показател (Financial Metric)</th>
+                <th className="py-3 px-4 text-right border-r border-border/40">Стойност (Value / Input)</th>
+                <th className="py-3 px-3 text-center border-r border-border/40">Статус (Signal)</th>
+                <th className="py-3 px-2 text-center w-12">Инфо</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* SECTION 1 */}
+              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
+                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                  🏢 1. ИНФОРМАЦИЯ ЗА КОМПАНИЯТА (COMPANY OVERVIEW)
+                </td>
+              </tr>
               {[1, 2, 3, 4, 7, 8, 9].map(r => renderRowItem(r))}
-            </div>
-          </div>
 
-          {/* Section 2: Financial Valuation Metrics */}
-          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
-            <div className="bg-border/30 px-4 py-2.5 font-extrabold text-xs text-ink uppercase tracking-wider border-b border-border">
-              📊 2. Финансови Коефициенти & Оценка
-            </div>
-            <div className="p-1 space-y-0.5">
+              {/* SECTION 2 */}
+              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
+                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                  📊 2. ФИНАНСОВИ КОЕФИЦИЕНТИ & ОЦЕНКА (VALUATION METRICS)
+                </td>
+              </tr>
               {[10, 11, 12, 13, 14, 15, 16, 17, 18].map(r => renderRowItem(r))}
-            </div>
-          </div>
 
-          {/* Section 3: Revenue & Income */}
-          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
-            <div className="bg-border/30 px-4 py-2.5 font-extrabold text-xs text-ink uppercase tracking-wider border-b border-border">
-              📈 3. Приходи, Маржове & Печалба
-            </div>
-            <div className="p-1 space-y-0.5">
+              {/* SECTION 3 */}
+              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
+                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                  📈 3. ПРИХОДИ, МАРЖОВЕ & ПЕЧАЛБА (INCOME STATEMENT & MARGINS)
+                </td>
+              </tr>
               {[19, 20, 21, 22, 23, 24, 25, 26, 27].map(r => renderRowItem(r))}
-            </div>
-          </div>
 
-          {/* Section 4: Balance Sheet */}
-          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
-            <div className="bg-border/30 px-4 py-2.5 font-extrabold text-xs text-ink uppercase tracking-wider border-b border-border">
-              ⚖️ 4. Балансов Отчет & Задължения
-            </div>
-            <div className="p-1 space-y-0.5">
+              {/* SECTION 4 */}
+              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
+                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                  ⚖️ 4. БАЛАНСОВ ОТЧЕТ & ЗАДЪЛЖЕНИЯ (BALANCE SHEET & SOLVENCY)
+                </td>
+              </tr>
               {[28, 29, 30, 31, 32, 33, 34, 35].map(r => renderRowItem(r))}
-            </div>
-          </div>
 
-          {/* Section 5: Cash Flows */}
-          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
-            <div className="bg-border/30 px-4 py-2.5 font-extrabold text-xs text-ink uppercase tracking-wider border-b border-border">
-              💵 5. Парични Потоци (Cash Flow Analysis)
-            </div>
-            <div className="p-1 space-y-0.5">
+              {/* SECTION 5 */}
+              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
+                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                  💵 5. ПАРИЧНИ ПОТОЦИ (CASH FLOW ANALYSIS)
+                </td>
+              </tr>
               {[36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47].map(r => renderRowItem(r))}
-            </div>
-          </div>
 
-          {/* Section 6: Financial Statement Flags */}
-          <div className="bg-bg-card rounded-xl border border-border overflow-hidden shadow-xs">
-            <div className="bg-border/30 px-4 py-2.5 font-extrabold text-xs text-ink uppercase tracking-wider border-b border-border flex items-center justify-between">
-              <span>🚦 6. Сигнална Система (Financial Statement Flags - BojanFin Rules)</span>
-              <span className="text-xs text-ink-faint font-semibold normal-case">Автоматично оценяване</span>
-            </div>
-            <div className="p-1 space-y-0.5">
+              {/* SECTION 6 */}
+              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
+                <td colSpan={6} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                  🚦 6. СИГНАЛНА СИСТЕМА (FINANCIAL STATEMENT FLAGS - BOJANFIN RULES)
+                </td>
+              </tr>
               {[49, 50, 51, 52, 53, 55, 56, 57, 58, 60, 61, 62, 63, 64].map(r => renderRowItem(r))}
-            </div>
-          </div>
-
+            </tbody>
+          </table>
         </div>
       </div>
 
