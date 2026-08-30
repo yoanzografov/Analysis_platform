@@ -82,7 +82,25 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 28, label: 'Return on Equity (ROE)', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '15%+', yellow: '5% - 15%', red: '< 5%' }, note: 'ROE (> 15%)' },
   { rowNum: 29, label: 'Return on Assets (ROA)', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '5%+', yellow: '2% - 5%', red: '< 2%' }, note: 'ROA (> 5%)' },
   { rowNum: 30, label: 'Return on Capital (ROIC)', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '15%+', yellow: '5% - 15%', red: '< 5%' }, note: 'ROIC (> 15% е силен Moat)' },
-  { rowNum: 31, label: 'Current Ratio', defaultVal: '', cellType: 'yellow-input', flagRules: { green: '1.0+', yellow: '0.8 - 1.0', red: '< 0.8' }, note: 'Текуща ликвидност (> 1.0)' },
+  { rowNum: 31, label: 'Current Ratio', defaultVal: '', cellType: 'yellow-input', formulaStr: 'CURRENT RATIO = CURRENT ASSETS / CURRENT LIABILITIES', flagRules: { green: '1.5 - 3.0', yellow: '1.0 - 1.5', red: '< 1.0' }, note: `CURRENT RATIO = CURRENT ASSETS / CURRENT LIABILITIES (над 1 е ок)
+Показва ни дали компанията може да погаси текущите си задължения с текущите си активи.
+
+================
+Текущият коефициент се използва за измерване на краткосрочната ликвидност на компанията. Ниско число може да показва, че дадена компания ще има проблеми с плащането на предстоящите си задължения.
+
+Доброто текущо съотношение е между 1,2 към 2 , което означава, че бизнесът има 2 пъти повече текущи активи, отколкото пасиви, за да покрие дълговете си. Текущо съотношение под 1 означава, че компанията няма достатъчно ликвидни активи, за да покрие своите краткосрочни задължения
+
+Какво е „добро“ Current Ratio?
+1.5 – 3.0: Това обикновено се счита за здравословен (добър) диапазон. Показва, че фирмата може да покрива задълженията си и има известен буфер.
+
+Под 1.0: Потенциален риск от ликвидни затруднения – фирмата няма достатъчно краткосрочни активи, за да плати краткосрочните си задължения.
+
+Над 3.0: Може да е знак, че капиталът не се използва ефективно – прекалено много пари са задържани в активи вместо да се инвестират.
+
+Контекстът има значение:
+Сектор: Търговски компании често имат по-нисък Current Ratio, докато производствени или технологични компании могат да поддържат по-висок.
+
+Сезонност: Някои фирми имат сезонно колебание на оборотни активи и пасиви.` },
   { rowNum: 32, label: 'Long - Term Debt', defaultVal: '', cellType: 'yellow-input', note: 'Дългосрочен дълг ($)' },
   { rowNum: 33, label: 'Avg Debt Increase 10 yrs', defaultVal: '', cellType: 'default', note: 'Средно увеличение на дълга' },
   { rowNum: 34, label: 'Long-term Debt to Equity Ratio', defaultVal: '', cellType: 'default', note: 'Дългосрочен дълг / капитал' },
