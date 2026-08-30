@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 
 interface StockChecklistModalProps {
@@ -105,6 +105,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [selectedTicker, setSelectedTicker] = useState<string>(stock?.ticker || '');
   const [activeInfoModalRow, setActiveInfoModalRow] = useState<SheetRowDefinition | null>(null);
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
+  const [activeRow, setActiveRow] = useState<number | null>(null);
   
   // Interactive Checklist State: Track checked rows
   const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>({});
@@ -338,6 +339,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const row = EXACT_SHEET_ROWS.find(r => r.rowNum === rowNum);
     if (!row) return null;
 
+    const isActive = activeRow === rowNum;
     const isChecked = !!checkedRows[rowNum];
     const rawUserVal = userInputs[String(rowNum)];
     const displayVal = computedValues[String(rowNum)] !== undefined 
@@ -349,13 +351,21 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return (
       <tr
         key={rowNum}
+        onMouseEnter={() => setActiveRow(rowNum)}
         className={`border-b border-border/40 transition-colors ${
-          isChecked ? 'bg-emerald-500/5 dark:bg-emerald-950/20' : 'hover:bg-border/20'
+          isActive 
+            ? 'bg-indigo-500/15 dark:bg-indigo-950/40 border-l-4 border-l-indigo-500' 
+            : (isChecked ? 'bg-emerald-500/5 dark:bg-emerald-950/20' : 'hover:bg-border/20')
         }`}
       >
         {/* Row Number */}
-        <td className="py-2.5 px-3 text-center w-12 font-mono text-xs font-bold text-ink-faint border-r border-border/40">
-          {row.rowNum}
+        <td className="py-2.5 px-2 text-center w-14 font-mono text-xs font-bold border-r border-border/40">
+          <div className="flex items-center justify-center gap-0.5">
+            {isActive && <ChevronRight className="w-3.5 h-3.5 text-indigo-400 animate-pulse shrink-0" />}
+            <span className={isActive ? "text-indigo-400 font-extrabold" : "text-ink-faint"}>
+              {row.rowNum}
+            </span>
+          </div>
         </td>
 
         {/* Checkbox Cell */}
@@ -593,6 +603,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           {selectedTicker && (
             <span className="text-xs font-mono font-extrabold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
               {selectedTicker.toUpperCase()}
+            </span>
+          )}
+          {activeRow && (
+            <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center gap-1 animate-in fade-in duration-150">
+              📍 Активен ред #{activeRow}: {EXACT_SHEET_ROWS.find(r => r.rowNum === activeRow)?.label}
             </span>
           )}
         </div>
