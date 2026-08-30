@@ -105,7 +105,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [selectedTicker, setSelectedTicker] = useState<string>(stock?.ticker || '');
   const [activeInfoModalRow, setActiveInfoModalRow] = useState<SheetRowDefinition | null>(null);
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
-  const [activeRow, setActiveRow] = useState<number | null>(null);
+  const [selectedRow, setSelectedRow] = useState<number | null>(null);
   
   // Interactive Checklist State: Track checked rows
   const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>({});
@@ -339,7 +339,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const row = EXACT_SHEET_ROWS.find(r => r.rowNum === rowNum);
     if (!row) return null;
 
-    const isActive = activeRow === rowNum;
+    const isSelected = selectedRow === rowNum;
     const isChecked = !!checkedRows[rowNum];
     const rawUserVal = userInputs[String(rowNum)];
     const displayVal = computedValues[String(rowNum)] !== undefined 
@@ -351,18 +351,27 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return (
       <tr
         key={rowNum}
-        onMouseEnter={() => setActiveRow(rowNum)}
-        className={`border-b border-border/40 transition-colors ${
-          isActive 
-            ? 'bg-indigo-500/15 dark:bg-indigo-950/40 border-l-4 border-l-indigo-500' 
-            : (isChecked ? 'bg-emerald-500/5 dark:bg-emerald-950/20' : 'hover:bg-border/20')
+        onClick={(e) => {
+          if (
+            (e.target as HTMLElement).tagName !== 'BUTTON' && 
+            (e.target as HTMLElement).tagName !== 'A' && 
+            (e.target as HTMLElement).tagName !== 'INPUT'
+          ) {
+            setSelectedRow(rowNum);
+          }
+        }}
+        onMouseEnter={() => setSelectedRow(rowNum)}
+        className={`transition-all duration-150 group cursor-pointer border-b border-border/40 ${
+          isSelected 
+            ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold' 
+            : (isChecked ? 'bg-emerald-500/5 dark:bg-emerald-950/20' : 'hover:bg-indigo-500/10')
         }`}
       >
         {/* Row Number */}
         <td className="py-2.5 px-2 text-center w-14 font-mono text-xs font-bold border-r border-border/40">
           <div className="flex items-center justify-center gap-0.5">
-            {isActive && <ChevronRight className="w-3.5 h-3.5 text-indigo-400 animate-pulse shrink-0" />}
-            <span className={isActive ? "text-indigo-400 font-extrabold" : "text-ink-faint"}>
+            {isSelected && <ChevronRight className="w-3.5 h-3.5 text-indigo-400 animate-pulse shrink-0" />}
+            <span className={isSelected ? "text-indigo-400 font-extrabold" : "text-ink-faint"}>
               {row.rowNum}
             </span>
           </div>
@@ -605,9 +614,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               {selectedTicker.toUpperCase()}
             </span>
           )}
-          {activeRow && (
+          {selectedRow && (
             <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center gap-1 animate-in fade-in duration-150">
-              📍 Активен ред #{activeRow}: {EXACT_SHEET_ROWS.find(r => r.rowNum === activeRow)?.label}
+              📍 Селектиран ред #{selectedRow}: {EXACT_SHEET_ROWS.find(r => r.rowNum === selectedRow)?.label}
             </span>
           )}
         </div>
