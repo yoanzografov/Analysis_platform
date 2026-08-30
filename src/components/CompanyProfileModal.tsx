@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Stock } from '../types';
-import { X, ExternalLink, Globe, Building2, MapPin, Phone, Calendar, Users, Briefcase, TrendingUp } from 'lucide-react';
+import { X, ExternalLink, Globe, Building2, MapPin, Phone, Calendar, Users, Briefcase, TrendingUp, ChevronRight } from 'lucide-react';
 import { getTradingViewSymbol } from '../utils/tvSymbolMap';
 import { getCompanyProfileData } from '../utils/tvCompanyProfiles';
 
@@ -180,8 +180,9 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
                     { icon: <Users size={13} />, label: 'Employees', value: details.employees ? Number(details.employees.replace(/,/g, '')).toLocaleString() : 'N/A' },
                     { icon: <Building2 size={13} />, label: 'CEO', value: details.ceo || 'N/A' },
                   ].map(row => (
-                    <tr key={row.label} className="border-b border-[#2a2e39] last:border-0">
+                    <tr key={row.label} className="border-b border-[#2a2e39] last:border-0 hover:bg-indigo-500/10 transition-all cursor-pointer group">
                       <td className="px-4 py-2.5 text-stone-400 font-semibold flex items-center gap-1.5">
+                        <ChevronRight className="w-3 h-3 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                         <span className="text-stone-500">{row.icon}</span>
                         {row.label}
                       </td>
@@ -240,8 +241,11 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
                     { label: '52-Week High', value: stock.high52 ? `$${stock.high52.toFixed(2)}` : 'N/A' },
                     { label: '52-Week Low', value: stock.low52 ? `$${stock.low52.toFixed(2)}` : 'N/A' },
                   ].map(row => (
-                    <tr key={row.label} className="border-b border-[#2a2e39] last:border-0">
-                      <td className="px-4 py-2 text-stone-400 font-semibold text-xs">{row.label}</td>
+                    <tr key={row.label} className="border-b border-[#2a2e39] last:border-0 hover:bg-indigo-500/10 transition-all cursor-pointer group">
+                      <td className="px-4 py-2 text-stone-400 font-semibold text-xs flex items-center gap-1.5">
+                        <ChevronRight className="w-3 h-3 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        <span>{row.label}</span>
+                      </td>
                       <td className="px-4 py-2 text-right font-semibold text-stone-200 text-xs font-mono">{row.value}</td>
                     </tr>
                   ))}

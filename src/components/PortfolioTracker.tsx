@@ -1772,6 +1772,7 @@ export default function PortfolioTracker({
                       {/* 1. Ticker */}
                       <td className="py-3 px-4 first:rounded-l-xl">
                         <div className="flex items-center gap-1.5">
+                          {isSelected && <ChevronRight className="w-3.5 h-3.5 text-indigo-400 animate-pulse shrink-0" />}
                           <span className="font-extrabold text-ink text-xs">{pos.ticker}</span>
                         </div>
                       </td>
@@ -2023,9 +2024,14 @@ export default function PortfolioTracker({
                   </tr>
                 ) : (
                   filteredHistory.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-white/5 transition-colors text-xs">
+                    <tr key={tx.id} className="hover:bg-indigo-500/10 transition-all cursor-pointer text-xs group">
                       <td className="py-2.5 px-3 font-mono text-ink-muted text-xs">{formatDateDDMMYYYY(tx.date)}</td>
-                      <td className="py-2.5 px-3 font-black text-ink">{tx.ticker}</td>
+                      <td className="py-2.5 px-3 font-black text-ink">
+                        <div className="flex items-center gap-1">
+                          <ChevronRight className="w-3 h-3 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          <span>{tx.ticker}</span>
+                        </div>
+                      </td>
                       <td className="py-2.5 px-3 font-extrabold">
                         <span className={`px-2 py-0.5 rounded text-[10px] ${
                           tx.type === 'Покупка' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-purple-500/20 text-purple-300'
