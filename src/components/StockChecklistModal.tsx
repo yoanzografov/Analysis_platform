@@ -354,16 +354,81 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return calculated;
   }, [userInputs]);
 
+  const getMetricFlagType = (rowNum: number, valStr: string): 'green' | 'yellow' | 'red' | null => {
+    if (!valStr || valStr.trim() === '') return null;
+    const numVal = parseNum(valStr);
+    if (isNaN(numVal)) return null;
+
+    switch (rowNum) {
+      case 10: // P/E Ratio
+        if (numVal <= 15) return 'green';
+        if (numVal <= 25) return 'yellow';
+        return 'red';
+      case 21: // Gross Profit Margin
+        if (numVal >= 40) return 'green';
+        if (numVal >= 30) return 'yellow';
+        return 'red';
+      case 22: // R&D Ratio
+      case 23: // SG&A Ratio
+        if (numVal <= 30) return 'green';
+        if (numVal <= 40) return 'yellow';
+        return 'red';
+      case 27: // Net Profit Margin
+        if (numVal >= 20) return 'green';
+        if (numVal >= 10) return 'yellow';
+        return 'red';
+      case 28: // ROE
+      case 30: // ROIC
+        if (numVal >= 15) return 'green';
+        if (numVal >= 5) return 'yellow';
+        return 'red';
+      case 29: // ROA
+        if (numVal >= 5) return 'green';
+        if (numVal >= 2) return 'yellow';
+        return 'red';
+      case 31: // Current Ratio
+        if (numVal >= 1.5 && numVal <= 3.0) return 'green';
+        if (numVal >= 1.0) return 'yellow';
+        return 'red';
+      case 35: // Debt / Equity
+        if (numVal <= 1.0) return 'green';
+        if (numVal <= 2.0) return 'yellow';
+        return 'red';
+      case 42: // FCF Yield
+        if (numVal >= 5) return 'green';
+        if (numVal >= 3) return 'yellow';
+        return 'red';
+      case 43: // Earnings Yield
+        if (numVal >= 7) return 'green';
+        if (numVal >= 4) return 'yellow';
+        return 'red';
+      case 44: // FCF / Net Income
+        if (numVal >= 100) return 'green';
+        if (numVal >= 70) return 'yellow';
+        return 'red';
+      case 45: // Cash Flow Coverage Ratio
+        if (numVal >= 1.0) return 'green';
+        if (numVal >= 0.5) return 'yellow';
+        return 'red';
+      default:
+        return null;
+    }
+  };
+
   // Live Score Calculator
   const flagsSummary = useMemo(() => {
     let green = 0, yellow = 0, red = 0;
-    Object.values(computedValues).forEach(val => {
-      if (val.includes('🟢') || val.includes('GREEN')) green++;
-      else if (val.includes('🟡') || val.includes('YELLOW')) yellow++;
-      else if (val.includes('🔴') || val.includes('RED')) red++;
+    EXACT_SHEET_ROWS.forEach(row => {
+      const displayVal = computedValues[String(row.rowNum)] !== undefined 
+        ? computedValues[String(row.rowNum)] 
+        : (userInputs[String(row.rowNum)] || '');
+      const flag = getMetricFlagType(row.rowNum, displayVal);
+      if (flag === 'green') green++;
+      else if (flag === 'yellow') yellow++;
+      else if (flag === 'red') red++;
     });
     return { green, yellow, red };
-  }, [computedValues]);
+  }, [userInputs, computedValues]);
 
   // Total checked progress calculation
   const totalAudited = useMemo(() => {
@@ -380,78 +445,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
   // Helper to render dynamic status badge (Green, Yellow, Red Signals)
   const renderStatusBadge = (rowNum: number, valStr: string) => {
-    const numVal = parseNum(valStr);
-    if (!valStr || valStr.trim() === '' || isNaN(numVal)) return null;
-
-    let flagType: 'green' | 'yellow' | 'red' | null = null;
-
-    switch (rowNum) {
-      case 10: // P/E Ratio
-        if (numVal <= 15) flagType = 'green';
-        else if (numVal <= 25) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 21: // Gross Profit Margin
-        if (numVal >= 40) flagType = 'green';
-        else if (numVal >= 30) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 22: // R&D Ratio
-      case 23: // SG&A Ratio
-        if (numVal <= 30) flagType = 'green';
-        else if (numVal <= 40) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 27: // Net Profit Margin
-        if (numVal >= 20) flagType = 'green';
-        else if (numVal >= 10) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 28: // ROE
-      case 30: // ROIC
-        if (numVal >= 15) flagType = 'green';
-        else if (numVal >= 5) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 29: // ROA
-        if (numVal >= 5) flagType = 'green';
-        else if (numVal >= 2) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 31: // Current Ratio
-        if (numVal >= 1.5 && numVal <= 3.0) flagType = 'green';
-        else if (numVal >= 1.0) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 35: // Debt / Equity
-        if (numVal <= 1.0) flagType = 'green';
-        else if (numVal <= 2.0) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 42: // FCF Yield
-        if (numVal >= 5) flagType = 'green';
-        else if (numVal >= 3) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 43: // Earnings Yield
-        if (numVal >= 7) flagType = 'green';
-        else if (numVal >= 4) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 44: // FCF / Net Income
-        if (numVal >= 100) flagType = 'green';
-        else if (numVal >= 70) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      case 45: // Cash Flow Coverage Ratio
-        if (numVal >= 1.0) flagType = 'green';
-        else if (numVal >= 0.5) flagType = 'yellow';
-        else flagType = 'red';
-        break;
-      default:
-        flagType = null;
-    }
-
+    const flagType = getMetricFlagType(rowNum, valStr);
     if (!flagType) return null;
 
     return (
@@ -661,8 +655,22 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           </div>
         </div>
 
-        {/* Top Controls */}
+        {/* Top Controls & Live Signals Counter Badge */}
         <div className="flex items-center gap-3">
+          {/* Live Signals Counter Badge in Top Right */}
+          <div className="flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border/80 shadow-xs" title="Брой червени, жълти и зелени сигнали за компанията">
+            <span className="text-[11px] font-black text-ink-muted uppercase tracking-wider">Сигнали:</span>
+            <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 flex items-center gap-1">
+              🟢 {flagsSummary.green}
+            </span>
+            <span className="text-xs font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 flex items-center gap-1">
+              🟡 {flagsSummary.yellow}
+            </span>
+            <span className="text-xs font-black text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 flex items-center gap-1">
+              🔴 {flagsSummary.red}
+            </span>
+          </div>
+
           <div className="flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border">
             <label className="text-xs font-bold text-ink-faint uppercase">Актив:</label>
             <select
