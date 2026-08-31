@@ -135,25 +135,19 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return base * multiplier;
   };
 
-  const formatCapValue = (num: number): string => {
-    if (!num || isNaN(num)) return '';
+  const formatLargeNum = (num: number | null | undefined): string => {
+    if (num === null || num === undefined || isNaN(num) || num === 0) return '';
     if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
     if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
     if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
-    return `$${num.toLocaleString('en-US')}`;
-  };
-
-  const formatSharesValue = (num: number): string => {
-    if (!num || isNaN(num)) return '';
-    if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
-    return Math.round(num).toLocaleString('en-US');
+    return num.toLocaleString('en-US');
   };
 
   const updateStockRowDetails = (sym: string) => {
     const cleanSym = sym.toUpperCase().trim();
     if (!cleanSym) return;
 
+    // Search directly in main INTERACTIVE TABLE stocks array first
     const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym);
     const dbStock = POPULAR_STOCKS_DB[cleanSym];
 
@@ -161,10 +155,10 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const sectorName = getSectorForStock(cleanSym, found?.sector || dbStock?.sector, compName);
     const indName = found?.industry || dbStock?.industry || `${sectorName} Products & Services`;
     
-    // 1. Current Price
+    // 1. Current Price (Direct from INTERACTIVE TABLE)
     const currentPrice = found?.currentPrice || dbStock?.price || 0;
     
-    // 2. 52-week Low / High
+    // 2. 52-week Low / High (Direct from INTERACTIVE TABLE)
     const low52Val = found?.low52 || dbStock?.low52 || (currentPrice ? currentPrice * 0.75 : 0);
     const high52Val = found?.high52 || dbStock?.high52 || (currentPrice ? currentPrice * 1.35 : 0);
     let low52High52 = '';
@@ -172,11 +166,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       low52High52 = `${low52Val.toFixed(2)} / ${high52Val.toFixed(2)}`;
     }
 
-    // 3. Market Cap
+    // 3. Market Cap (Direct from INTERACTIVE TABLE format)
     const mcapRaw = found?.marketCap || dbStock?.marketCap || 0;
-    const mcapDisplay = mcapRaw > 0 ? formatCapValue(mcapRaw) : '';
+    const mcapDisplay = mcapRaw > 0 ? formatLargeNum(mcapRaw) : '';
 
-    // 4. P/E Ratio & EPS
+    // 4. P/E Ratio & EPS (Direct from INTERACTIVE TABLE)
     let peVal = (found?.peRatio !== undefined && found?.peRatio !== null && found.peRatio > 0) 
       ? found.peRatio 
       : (dbStock?.pe || 0);
@@ -186,12 +180,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     }
     const peDisplay = peVal > 0 ? peVal.toFixed(2) : '';
 
-    // 5. Shares Outstanding
+    // 5. Shares Outstanding (Calculated from INTERACTIVE TABLE Market Cap / Price)
     let sharesRaw = dbStock?.shares || 0;
     if (!sharesRaw && mcapRaw > 0 && currentPrice > 0) {
       sharesRaw = mcapRaw / currentPrice;
     }
-    const sharesDisplay = sharesRaw > 0 ? formatSharesValue(sharesRaw) : '';
+    const sharesDisplay = sharesRaw > 0 ? formatLargeNum(sharesRaw) : '';
 
     // 6. Financials
     const revRaw = dbStock?.revenue || 0;
@@ -208,11 +202,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       '8': low52High52 || prev['8'],
       '9': mcapDisplay || prev['9'],
       '10': peDisplay || prev['10'],
+      '12': found?.dividend || prev['12'],
       '18': sharesDisplay || prev['18'],
-      '19': revRaw > 0 ? formatCapValue(revRaw) : prev['19'],
+      '19': revRaw > 0 ? formatLargeNum(revRaw) : prev['19'],
       '24': epsVal > 0 ? epsVal.toFixed(2) : prev['24'],
-      '26': netIncRaw > 0 ? formatCapValue(netIncRaw) : prev['26'],
-      '38': fcfRaw > 0 ? formatCapValue(fcfRaw) : prev['38'],
+      '26': netIncRaw > 0 ? formatLargeNum(netIncRaw) : prev['26'],
+      '38': fcfRaw > 0 ? formatLargeNum(fcfRaw) : prev['38'],
     }));
 
     // Auto check filled rows for selected ticker
