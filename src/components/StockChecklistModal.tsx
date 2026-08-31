@@ -357,13 +357,10 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         }`}
       >
         {/* Row Number */}
-        <td className="py-2.5 px-2 text-center w-14 font-mono text-xs font-bold border-r border-border/40">
-          <div className="flex items-center justify-center gap-0.5">
-            {isSelected && <ChevronRight className="w-3.5 h-3.5 text-indigo-400 animate-pulse shrink-0" />}
-            <span className={isSelected ? "text-indigo-400 font-extrabold" : "text-ink-faint"}>
-              {row.rowNum}
-            </span>
-          </div>
+        <td className="py-2.5 px-3 text-center w-12 font-mono text-xs font-bold border-r border-border/40">
+          <span className={isSelected ? "text-indigo-400 font-extrabold" : "text-ink-faint"}>
+            {row.rowNum}
+          </span>
         </td>
 
         {/* Checkbox Cell */}

@@ -182,7 +182,6 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
                   ].map(row => (
                     <tr key={row.label} className="border-b border-[#2a2e39] last:border-0 hover:bg-indigo-500/10 transition-all cursor-pointer group">
                       <td className="px-4 py-2.5 text-stone-400 font-semibold flex items-center gap-1.5">
-                        <ChevronRight className="w-3 h-3 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                         <span className="text-stone-500">{row.icon}</span>
                         {row.label}
                       </td>
@@ -243,7 +242,6 @@ export default function CompanyProfileModal({ stock, onClose }: Props) {
                   ].map(row => (
                     <tr key={row.label} className="border-b border-[#2a2e39] last:border-0 hover:bg-indigo-500/10 transition-all cursor-pointer group">
                       <td className="px-4 py-2 text-stone-400 font-semibold text-xs flex items-center gap-1.5">
-                        <ChevronRight className="w-3 h-3 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                         <span>{row.label}</span>
                       </td>
                       <td className="px-4 py-2 text-right font-semibold text-stone-200 text-xs font-mono">{row.value}</td>
