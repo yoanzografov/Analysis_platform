@@ -350,7 +350,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             setSelectedRow(rowNum);
           }
         }}
-        onMouseEnter={() => setSelectedRow(rowNum)}
         className={`transition-all duration-150 group cursor-pointer border-b border-border/40 ${
           isSelected 
             ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold' 
