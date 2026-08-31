@@ -378,6 +378,93 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
   if (!isOpen) return null;
 
+  // Helper to render dynamic status badge (Green, Yellow, Red Signals)
+  const renderStatusBadge = (rowNum: number, valStr: string) => {
+    const numVal = parseNum(valStr);
+    if (!valStr || valStr.trim() === '' || isNaN(numVal)) return null;
+
+    let flagType: 'green' | 'yellow' | 'red' | null = null;
+
+    switch (rowNum) {
+      case 10: // P/E Ratio
+        if (numVal <= 15) flagType = 'green';
+        else if (numVal <= 25) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 21: // Gross Profit Margin
+        if (numVal >= 40) flagType = 'green';
+        else if (numVal >= 30) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 22: // R&D Ratio
+      case 23: // SG&A Ratio
+        if (numVal <= 30) flagType = 'green';
+        else if (numVal <= 40) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 27: // Net Profit Margin
+        if (numVal >= 20) flagType = 'green';
+        else if (numVal >= 10) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 28: // ROE
+      case 30: // ROIC
+        if (numVal >= 15) flagType = 'green';
+        else if (numVal >= 5) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 29: // ROA
+        if (numVal >= 5) flagType = 'green';
+        else if (numVal >= 2) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 31: // Current Ratio
+        if (numVal >= 1.5 && numVal <= 3.0) flagType = 'green';
+        else if (numVal >= 1.0) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 35: // Debt / Equity
+        if (numVal <= 1.0) flagType = 'green';
+        else if (numVal <= 2.0) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 42: // FCF Yield
+        if (numVal >= 5) flagType = 'green';
+        else if (numVal >= 3) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 43: // Earnings Yield
+        if (numVal >= 7) flagType = 'green';
+        else if (numVal >= 4) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 44: // FCF / Net Income
+        if (numVal >= 100) flagType = 'green';
+        else if (numVal >= 70) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      case 45: // Cash Flow Coverage Ratio
+        if (numVal >= 1.0) flagType = 'green';
+        else if (numVal >= 0.5) flagType = 'yellow';
+        else flagType = 'red';
+        break;
+      default:
+        flagType = null;
+    }
+
+    if (!flagType) return null;
+
+    return (
+      <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold shrink-0 border flex items-center gap-1 ${
+        flagType === 'green' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' :
+        flagType === 'yellow' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
+        'bg-rose-500/15 text-rose-400 border-rose-500/30'
+      }`}>
+        {flagType === 'green' ? '🟢 Зелен' : flagType === 'yellow' ? '🟡 Жълт' : '🔴 Червен'}
+      </span>
+    );
+  };
+
   // Helper to render interactive checklist table row
   const renderRowItem = (rowNum: number) => {
     const row = EXACT_SHEET_ROWS.find(r => r.rowNum === rowNum);
@@ -433,15 +520,18 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           </button>
         </td>
 
-        {/* Metric Label */}
+        {/* Metric Label & Dynamic Signal Badge */}
         <td className="py-2.5 px-4 border-r border-border/40">
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-bold ${isChecked ? 'text-emerald-400' : 'text-ink'}`}>
-              {row.label}
-            </span>
-            {isReadOnlyCell && (
-              <Lock className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Автоматично изчислено" />
-            )}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-bold ${isChecked ? 'text-emerald-400' : 'text-ink'}`}>
+                {row.label}
+              </span>
+              {isReadOnlyCell && (
+                <Lock className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Автоматично изчислено" />
+              )}
+            </div>
+            {renderStatusBadge(rowNum, displayVal)}
           </div>
         </td>
 
@@ -661,8 +751,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           )}
         </div>
 
-        {/* Live Audit Checklist Progress */}
-        <div className="flex items-center gap-4 shrink-0">
+        {/* Live Audit Checklist Progress & Signals Summary */}
+        <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border text-xs font-mono" title="Реално време сигнали за избраната компания">
+            <span className="text-emerald-400 font-extrabold flex items-center gap-1">🟢 {flagsSummary.green}</span>
+            <span className="text-amber-400 font-extrabold flex items-center gap-1">🟡 {flagsSummary.yellow}</span>
+            <span className="text-rose-400 font-extrabold flex items-center gap-1">🔴 {flagsSummary.red}</span>
+          </div>
+
           <button
             onClick={handleAutoCheckGreen}
             className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/20 flex items-center gap-1 transition-all cursor-pointer"
