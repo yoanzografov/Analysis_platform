@@ -218,6 +218,60 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setCheckedRows(prev => ({ ...prev, ...initialChecked }));
   };
 
+  useEffect(() => {
+    if (stock && stock.ticker) {
+      setSelectedTicker(stock.ticker);
+      updateStockRowDetails(stock.ticker);
+    }
+  }, [stock]);
+
+  const handleSelectTicker = (sym: string) => {
+    setSelectedTicker(sym);
+    updateStockRowDetails(sym);
+  };
+
+  const handleInputChange = (key: string | number, val: string) => {
+    const strKey = String(key);
+    setUserInputs(prev => ({ ...prev, [strKey]: val }));
+
+    const numKey = typeof key === 'number' ? key : parseInt(key, 10);
+    if (!isNaN(numKey) && val.trim() !== '') {
+      setCheckedRows(prev => ({ ...prev, [numKey]: true }));
+    }
+
+    if (strKey === '2' && val.trim().length >= 1) {
+      const cleanSym = val.toUpperCase().trim();
+      setSelectedTicker(cleanSym);
+      updateStockRowDetails(cleanSym);
+    }
+  };
+
+  const handleToggleCheck = (rowNum: number) => {
+    setCheckedRows(prev => ({ ...prev, [rowNum]: !prev[rowNum] }));
+  };
+
+  const handleClearAll = () => {
+    setSelectedTicker('');
+    const cleared: Record<string, string> = {};
+    EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
+    cleared['15_10'] = '';
+    cleared['20_5'] = '';
+    cleared['25_10'] = '';
+    setUserInputs(cleared);
+    setCheckedRows({});
+  };
+
+  const handleAutoCheckGreen = () => {
+    const newChecked = { ...checkedRows };
+    EXACT_SHEET_ROWS.forEach(row => {
+      const displayVal = computedValues[String(row.rowNum)] || userInputs[String(row.rowNum)];
+      if (displayVal && (displayVal.includes('🟢') || displayVal.includes('GREEN'))) {
+        newChecked[row.rowNum] = true;
+      }
+    });
+    setCheckedRows(newChecked);
+  };
+
   // Save / Sync audited company data to main Interactive Table
   const handleSaveToMainTable = () => {
     const cleanSym = (selectedTicker || userInputs['2'] || '').toUpperCase().trim();
