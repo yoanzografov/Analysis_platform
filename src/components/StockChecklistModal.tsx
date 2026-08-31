@@ -121,6 +121,35 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return init;
   });
 
+  const parseNum = (val: string | undefined): number => {
+    if (!val) return 0;
+    const upper = val.trim().toUpperCase();
+    let multiplier = 1;
+    if (upper.endsWith('T')) multiplier = 1e12;
+    else if (upper.endsWith('B')) multiplier = 1e9;
+    else if (upper.endsWith('M')) multiplier = 1e6;
+    else if (upper.endsWith('K')) multiplier = 1e3;
+    
+    const clean = val.replace(/[^0-9.-]/g, '');
+    const base = parseFloat(clean) || 0;
+    return base * multiplier;
+  };
+
+  const formatCapValue = (num: number): string => {
+    if (!num || isNaN(num)) return '';
+    if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    return `$${num.toLocaleString('en-US')}`;
+  };
+
+  const formatSharesValue = (num: number): string => {
+    if (!num || isNaN(num)) return '';
+    if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
+    return Math.round(num).toLocaleString('en-US');
+  };
+
   const updateStockRowDetails = (sym: string) => {
     const cleanSym = sym.toUpperCase().trim();
     if (!cleanSym) return;
@@ -131,22 +160,43 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const compName = found?.companyName || dbStock?.companyName || `${cleanSym} Corp.`;
     const sectorName = getSectorForStock(cleanSym, found?.sector || dbStock?.sector, compName);
     const indName = found?.industry || dbStock?.industry || `${sectorName} Products & Services`;
+    
+    // 1. Current Price
     const currentPrice = found?.currentPrice || dbStock?.price || 0;
+    
+    // 2. 52-week Low / High
     const low52Val = found?.low52 || dbStock?.low52 || (currentPrice ? currentPrice * 0.75 : 0);
     const high52Val = found?.high52 || dbStock?.high52 || (currentPrice ? currentPrice * 1.35 : 0);
-    const mcapRaw = found?.marketCap || dbStock?.marketCap || 0;
-    const peVal = found?.peRatio || found?.pe || dbStock?.pe || 0;
-
-    let marketCapInThousands = '';
-    if (mcapRaw > 0) {
-      const inThousands = Math.round(mcapRaw / 1000);
-      marketCapInThousands = inThousands.toLocaleString('en-US');
-    }
-
     let low52High52 = '';
     if (low52Val > 0 && high52Val > 0) {
       low52High52 = `${low52Val.toFixed(2)} / ${high52Val.toFixed(2)}`;
     }
+
+    // 3. Market Cap
+    const mcapRaw = found?.marketCap || dbStock?.marketCap || 0;
+    const mcapDisplay = mcapRaw > 0 ? formatCapValue(mcapRaw) : '';
+
+    // 4. P/E Ratio & EPS
+    let peVal = (found?.peRatio !== undefined && found?.peRatio !== null && found.peRatio > 0) 
+      ? found.peRatio 
+      : (dbStock?.pe || 0);
+    const epsVal = (found?.eps !== undefined && found?.eps !== null && found.eps > 0) ? found.eps : 0;
+    if (peVal === 0 && currentPrice > 0 && epsVal > 0) {
+      peVal = currentPrice / epsVal;
+    }
+    const peDisplay = peVal > 0 ? peVal.toFixed(2) : '';
+
+    // 5. Shares Outstanding
+    let sharesRaw = dbStock?.shares || 0;
+    if (!sharesRaw && mcapRaw > 0 && currentPrice > 0) {
+      sharesRaw = mcapRaw / currentPrice;
+    }
+    const sharesDisplay = sharesRaw > 0 ? formatSharesValue(sharesRaw) : '';
+
+    // 6. Financials
+    const revRaw = dbStock?.revenue || 0;
+    const netIncRaw = dbStock?.netIncome || 0;
+    const fcfRaw = dbStock?.fcf || 0;
 
     setUserInputs(prev => ({
       ...prev,
@@ -156,78 +206,21 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       '4': sectorName,
       '7': currentPrice > 0 ? currentPrice.toFixed(2) : prev['7'],
       '8': low52High52 || prev['8'],
-      '9': marketCapInThousands || prev['9'],
-      '10': peVal > 0 ? peVal.toFixed(1) : prev['10'],
-      '18': dbStock?.shares ? (dbStock.shares / 1000).toLocaleString('en-US') : prev['18'],
-      '19': dbStock?.revenue ? (dbStock.revenue / 1000).toLocaleString('en-US') : prev['19'],
-      '26': dbStock?.netIncome ? (dbStock.netIncome / 1000).toLocaleString('en-US') : prev['26'],
-      '38': dbStock?.fcf ? (dbStock.fcf / 1000).toLocaleString('en-US') : prev['38'],
+      '9': mcapDisplay || prev['9'],
+      '10': peDisplay || prev['10'],
+      '18': sharesDisplay || prev['18'],
+      '19': revRaw > 0 ? formatCapValue(revRaw) : prev['19'],
+      '24': epsVal > 0 ? epsVal.toFixed(2) : prev['24'],
+      '26': netIncRaw > 0 ? formatCapValue(netIncRaw) : prev['26'],
+      '38': fcfRaw > 0 ? formatCapValue(fcfRaw) : prev['38'],
     }));
 
-    // Auto check non-empty rows for selected ticker
+    // Auto check filled rows for selected ticker
     const initialChecked: Record<number, boolean> = {};
     [1, 2, 3, 4, 7, 8, 9, 10].forEach(r => { initialChecked[r] = true; });
+    if (sharesDisplay) initialChecked[18] = true;
+    if (epsVal > 0) initialChecked[24] = true;
     setCheckedRows(prev => ({ ...prev, ...initialChecked }));
-  };
-
-  useEffect(() => {
-    if (stock && stock.ticker) {
-      setSelectedTicker(stock.ticker);
-      updateStockRowDetails(stock.ticker);
-    }
-  }, [stock]);
-
-  const handleSelectTicker = (sym: string) => {
-    setSelectedTicker(sym);
-    updateStockRowDetails(sym);
-  };
-
-  const handleInputChange = (key: string | number, val: string) => {
-    const strKey = String(key);
-    setUserInputs(prev => ({ ...prev, [strKey]: val }));
-
-    const numKey = typeof key === 'number' ? key : parseInt(key, 10);
-    if (!isNaN(numKey) && val.trim() !== '') {
-      setCheckedRows(prev => ({ ...prev, [numKey]: true }));
-    }
-
-    if (strKey === '2' && val.trim().length >= 1) {
-      const cleanSym = val.toUpperCase().trim();
-      setSelectedTicker(cleanSym);
-      updateStockRowDetails(cleanSym);
-    }
-  };
-
-  const handleToggleCheck = (rowNum: number) => {
-    setCheckedRows(prev => ({ ...prev, [rowNum]: !prev[rowNum] }));
-  };
-
-  const handleClearAll = () => {
-    setSelectedTicker('');
-    const cleared: Record<string, string> = {};
-    EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
-    cleared['15_10'] = '';
-    cleared['20_5'] = '';
-    cleared['25_10'] = '';
-    setUserInputs(cleared);
-    setCheckedRows({});
-  };
-
-  const handleAutoCheckGreen = () => {
-    const newChecked = { ...checkedRows };
-    EXACT_SHEET_ROWS.forEach(row => {
-      const displayVal = computedValues[String(row.rowNum)] || userInputs[String(row.rowNum)];
-      if (displayVal && (displayVal.includes('🟢') || displayVal.includes('GREEN'))) {
-        newChecked[row.rowNum] = true;
-      }
-    });
-    setCheckedRows(newChecked);
-  };
-
-  const parseNum = (val: string | undefined): number => {
-    if (!val) return 0;
-    const clean = val.replace(/[^0-9.-]/g, '');
-    return parseFloat(clean) || 0;
   };
 
   // Save / Sync audited company data to main Interactive Table
@@ -243,7 +236,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const price = parseNum(userInputs['7']);
     const pe = parseNum(userInputs['10']);
     const divYield = parseNum(userInputs['12']);
-    const mcapInK = parseNum(userInputs['9']);
+    const mcap = parseNum(userInputs['9']);
 
     if (onSaveToTable) {
       onSaveToTable({
@@ -253,7 +246,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         currentPrice: price > 0 ? price : 100,
         peRatio: pe > 0 ? pe : 15,
         dividendYield: divYield > 0 ? divYield : 0,
-        marketCap: mcapInK > 0 ? mcapInK * 1000 : 1000000000
+        marketCap: mcap > 0 ? mcap : 1000000000
       });
     }
 
