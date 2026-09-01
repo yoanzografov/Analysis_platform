@@ -2028,9 +2028,18 @@ export default function PortfolioTracker({
                 История на Транзакциите (Trade History Log)
               </h3>
             </div>
-            <span className="text-xs font-extrabold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20">
-              {filteredHistory.length} Записа
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-extrabold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20">
+                {filteredHistory.length} Записа
+              </span>
+              <button 
+                onClick={() => setActiveSubTab('overview')}
+                className="p-1.5 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
+                title="Затвори История на транзакциите"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="w-full overflow-x-auto">
@@ -2431,7 +2440,8 @@ export default function PortfolioTracker({
 
                 <button 
                   onClick={() => setIsHistoryModalOpen(false)}
-                  className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
+                  className="p-1.5 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer shrink-0 ml-auto"
+                  title="Затвори История на транзакциите"
                 >
                   <X className="w-5 h-5" />
                 </button>
