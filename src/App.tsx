@@ -21,6 +21,7 @@ import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
 import ProfitCalculatorModal from './components/ProfitCalculatorModal';
 import StockChecklistModal from './components/StockChecklistModal';
 import FinancialFlagsModal from './components/FinancialFlagsModal';
+import WelcomeQuoteModal from './components/WelcomeQuoteModal';
 import { 
   Table,
   Save,
@@ -28,6 +29,7 @@ import {
   Download, 
   Bell, 
   Briefcase,
+  Sparkles,
   Play, 
   Calendar,
   Square, 
@@ -140,6 +142,17 @@ export default function App() {
       }
     });
     return () => unsub();
+  }, []);
+
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const hidden = localStorage.getItem('hideWelcomeQuote_v1');
+      if (!hidden) {
+        setIsQuoteModalOpen(true);
+      }
+    } catch (e) {}
   }, []);
 
   // Price Alert targets & Portfolio Positions persisted to localStorage
@@ -1338,6 +1351,16 @@ export default function App() {
           <span>Calendar</span>
         </button>
 
+        {/* 6. Quote of the Day Button */}
+        <button
+          onClick={() => setIsQuoteModalOpen(true)}
+          className="h-9 px-3 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-sans text-xs font-black uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none"
+          title="Инвестиционна мъдрост - Уорън Бъфет"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span>Цитат</span>
+        </button>
+
         {/* 6. Tools Dropdown Button */}
         <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsUsefulLinksMenuOpen(false); }}>
           <button
@@ -1778,6 +1801,12 @@ export default function App() {
     isOpen={showFinancialFlagsModal}
     onClose={() => { setShowFinancialFlagsModal(false); clearHashUrl(); }}
     stocks={stocks}
+  />
+
+  {/* Welcome Investor Wisdom Quote Modal */}
+  <WelcomeQuoteModal
+    isOpen={isQuoteModalOpen}
+    onClose={() => setIsQuoteModalOpen(false)}
   />
  </main>
 
