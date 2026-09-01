@@ -338,6 +338,38 @@ export default function PortfolioTracker({
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDividendsModalOpen, setIsDividendsModalOpen] = useState(false);
+  const [editingTx, setEditingTx] = useState<PortfolioTransaction | null>(null);
+  const [isEditTxModalOpen, setIsEditTxModalOpen] = useState(false);
+
+  const handleOpenEditTxModal = (tx: PortfolioTransaction) => {
+    setEditingTx({ ...tx });
+    setIsEditTxModalOpen(true);
+  };
+
+  const handleSaveEditTx = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTx) return;
+
+    const sharesNum = parseFloat(String(editingTx.shares)) || 0;
+    const priceNum = parseFloat(String(editingTx.buyPrice)) || 0;
+    const sellPriceNum = editingTx.sellPrice !== undefined && String(editingTx.sellPrice).trim() !== '' ? parseFloat(String(editingTx.sellPrice)) : undefined;
+    const pnlNum = editingTx.pnlVal !== undefined && String(editingTx.pnlVal).trim() !== '' ? parseFloat(String(editingTx.pnlVal)) : undefined;
+
+    const updatedTx: PortfolioTransaction = {
+      ...editingTx,
+      ticker: editingTx.ticker.toUpperCase().trim(),
+      shares: sharesNum,
+      buyPrice: priceNum,
+      sellPrice: sellPriceNum,
+      pnlVal: pnlNum,
+      pnlPct: (sellPriceNum !== undefined && priceNum > 0) ? ((sellPriceNum - priceNum) / priceNum) * 100 : editingTx.pnlPct
+    };
+
+    const nextHistory = history.map(t => t.id === editingTx.id ? updatedTx : t);
+    updateHistory(nextHistory);
+    setIsEditTxModalOpen(false);
+    setEditingTx(null);
+  };
   const [cagrHorizon, setCagrHorizon] = useState<'1г.' | '2г.' | '3г.' | '5г.'>('2г.');
   const [showAssetAllocationInfo, setShowAssetAllocationInfo] = useState(false);
 
@@ -2012,12 +2044,13 @@ export default function PortfolioTracker({
                   <th className="py-2.5 px-3 text-right">ЦЕНА</th>
                   <th className="py-2.5 px-3 text-right">ОБЩА СУМА</th>
                   <th className="py-2.5 px-3 text-right">РЕАЛИЗИРАНА P/L</th>
+                  <th className="py-2.5 px-3 text-center">ДЕЙСТВИЯ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/20">
                 {filteredHistory.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-ink-faint italic">
+                    <td colSpan={8} className="py-8 text-center text-ink-faint italic">
                       Няма регистрирани транзакции
                     </td>
                   </tr>
@@ -2037,9 +2070,35 @@ export default function PortfolioTracker({
                       <td className="py-2.5 px-3 text-right font-mono font-bold text-ink">${tx.buyPrice.toFixed(2)}</td>
                       <td className="py-2.5 px-3 text-right font-mono font-black text-ink">${(tx.shares * tx.buyPrice).toFixed(2)}</td>
                       <td className="py-2.5 px-3 text-right font-mono font-black">
-                        <span className={tx.pnlVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                          {tx.pnlVal ? `${tx.pnlVal >= 0 ? '+' : ''}$${tx.pnlVal.toFixed(2)}` : '—'}
+                        <span className={tx.pnlVal !== undefined ? (tx.pnlVal >= 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-ink-faint'}>
+                          {tx.pnlVal !== undefined ? `${tx.pnlVal >= 0 ? '+' : ''}$${tx.pnlVal.toFixed(2)}` : '—'}
                         </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEditTxModal(tx);
+                            }}
+                            className="p-1 rounded-md text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/20 transition-all cursor-pointer"
+                            title="Редактирай транзакция"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTransaction(tx.id);
+                            }}
+                            className="p-1 rounded-md text-ink-faint hover:text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer"
+                            title="Изтрий транзакция"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -2453,14 +2512,24 @@ export default function PortfolioTracker({
                               : '-'}
                           </td>
                           <td className="py-2.5 px-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTransaction(tx.id)}
-                              className="p-1 rounded text-ink-faint hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
-                              title="Изтрий транзакция"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditTxModal(tx)}
+                                className="p-1 rounded text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/20 transition-all cursor-pointer"
+                                title="Редактирай транзакция"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteTransaction(tx.id)}
+                                className="p-1 rounded text-ink-faint hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
+                                title="Изтрий транзакция"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -2723,6 +2792,132 @@ export default function PortfolioTracker({
                 className="w-full h-full border-0 rounded-2xl"
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT TRANSACTION MODAL DIALOG */}
+      {isEditTxModalOpen && editingTx && (
+        <div className="fixed inset-0 z-[999999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-bg border border-border rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-indigo-400" />
+                Редактиране на Транзакция
+              </h3>
+              <button 
+                onClick={() => { setIsEditTxModalOpen(false); setEditingTx(null); }}
+                className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditTx} className="space-y-4 text-xs font-sans">
+              <div>
+                <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Тикер / Символ</label>
+                <input
+                  type="text"
+                  value={editingTx.ticker}
+                  onChange={e => setEditingTx({ ...editingTx, ticker: e.target.value })}
+                  className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Тип Сделка</label>
+                  <select
+                    value={editingTx.type}
+                    onChange={e => setEditingTx({ ...editingTx, type: e.target.value as 'Покупка' | 'Продажба' })}
+                    className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-bold text-xs outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="Покупка">⊕ Покупка</option>
+                    <option value="Продажба">⊖ Продажба</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Валута</label>
+                  <select
+                    value={editingTx.currency || 'USD'}
+                    onChange={e => setEditingTx({ ...editingTx, currency: e.target.value as 'USD' | 'EUR' | 'GBP' })}
+                    className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-bold text-xs outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Дата</label>
+                  <input
+                    type="date"
+                    value={editingTx.date}
+                    onChange={e => setEditingTx({ ...editingTx, date: e.target.value })}
+                    onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
+                    className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-bold text-xs outline-none focus:border-indigo-500 cursor-pointer"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Брой Акции</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editingTx.shares}
+                    onChange={e => setEditingTx({ ...editingTx, shares: parseFloat(e.target.value) || 0 })}
+                    className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-indigo-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Цена за акция</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editingTx.buyPrice}
+                    onChange={e => setEditingTx({ ...editingTx, buyPrice: parseFloat(e.target.value) || 0 })}
+                    className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Реализирана P/L ($)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editingTx.pnlVal !== undefined ? editingTx.pnlVal : ''}
+                    onChange={e => setEditingTx({ ...editingTx, pnlVal: e.target.value === '' ? undefined : parseFloat(e.target.value) })}
+                    placeholder="0.00"
+                    className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-border/40">
+                <button
+                  type="button"
+                  onClick={() => { setIsEditTxModalOpen(false); setEditingTx(null); }}
+                  className="px-4 py-2 rounded-xl border border-border text-ink-muted font-bold text-xs hover:bg-card transition-all cursor-pointer"
+                >
+                  Отказ
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  Запази Промените
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
