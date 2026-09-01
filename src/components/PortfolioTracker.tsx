@@ -2389,10 +2389,21 @@ export default function PortfolioTracker({
       {/* TRANSACTION HISTORY MODAL DIALOG                                         */}
       {/* ======================================================================== */}
       {isHistoryModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-bg border border-border rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex flex-wrap items-center justify-between border-b border-border/40 pb-3 gap-2">
-              <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-bg border border-border rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 relative">
+            
+            {/* Top Close Button (Absolute Top Right) */}
+            <button 
+              onClick={() => setIsHistoryModalOpen(false)}
+              className="absolute top-5 right-5 p-1.5 rounded-full text-ink-faint hover:text-ink hover:bg-card/80 transition-all cursor-pointer z-10"
+              title="Затвори История на транзакциите"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header Content */}
+            <div className="border-b border-border/40 pb-3 space-y-3 pr-10">
+              <div className="flex flex-wrap items-center gap-3">
                 <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
                   <History className="w-5 h-5 text-indigo-400" />
                   История на транзакциите
@@ -2406,16 +2417,16 @@ export default function PortfolioTracker({
                 </span>
               </div>
 
-              {/* Controls: Date Filters & Clear All & Close */}
-              <div className="flex items-center gap-2 text-xs">
-                <div className="flex items-center gap-1">
+              {/* Controls: Date Filters & Clear All */}
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-bold text-ink-faint">ОТ:</span>
                   <input
                     type="date"
                     value={historyFromDate}
                     onChange={e => setHistoryFromDate(e.target.value)}
                     onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
-                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none cursor-pointer"
+                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2.5 py-1 rounded-xl focus:outline-none cursor-pointer"
                   />
                   <span className="text-[10px] font-bold text-ink-faint">ДО:</span>
                   <input
@@ -2423,7 +2434,7 @@ export default function PortfolioTracker({
                     value={historyToDate}
                     onChange={e => setHistoryToDate(e.target.value)}
                     onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
-                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2 py-1 rounded-xl focus:outline-none cursor-pointer"
+                    className="bg-bg text-ink text-[11px] font-bold border border-border px-2.5 py-1 rounded-xl focus:outline-none cursor-pointer"
                   />
                 </div>
 
@@ -2437,14 +2448,6 @@ export default function PortfolioTracker({
                     Изчисти историята
                   </button>
                 )}
-
-                <button 
-                  onClick={() => setIsHistoryModalOpen(false)}
-                  className="p-1.5 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer shrink-0 ml-auto"
-                  title="Затвори История на транзакциите"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
             </div>
 
