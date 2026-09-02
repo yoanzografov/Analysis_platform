@@ -147,34 +147,37 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const cleanSym = sym.toUpperCase().trim();
     if (!cleanSym) return;
 
-    // Search directly in main INTERACTIVE TABLE stocks array first
-    const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym);
+    // Search directly in main INTERACTIVE TABLE stocks array first, fallback to passed stock prop or popular DB
+    const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym) || (stock?.ticker?.toUpperCase() === cleanSym ? stock : undefined);
     const dbStock = POPULAR_STOCKS_DB[cleanSym];
 
     const compName = found?.companyName || dbStock?.companyName || `${cleanSym} Corp.`;
     const sectorName = getSectorForStock(cleanSym, found?.sector || dbStock?.sector, compName);
     const indName = found?.industry || dbStock?.industry || `${sectorName} Products & Services`;
     
-    // 1. Current Price (Direct from INTERACTIVE TABLE)
-    const currentPrice = found?.currentPrice || dbStock?.price || 0;
+    // 1. Current Price (Direct from INTERACTIVE TABLE, stock prop, or DB)
+    const currentPrice = found?.currentPrice || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.currentPrice : 0) || dbStock?.price || 0;
     
-    // 2. 52-week Low / High (Direct from INTERACTIVE TABLE)
-    const low52Val = found?.low52 || dbStock?.low52 || (currentPrice ? currentPrice * 0.75 : 0);
-    const high52Val = found?.high52 || dbStock?.high52 || (currentPrice ? currentPrice * 1.35 : 0);
+    // 2. 52-week Low / High (Direct from INTERACTIVE TABLE, stock prop, or DB)
+    const low52Val = found?.low52 || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.low52 : 0) || dbStock?.low52 || (currentPrice ? currentPrice * 0.75 : 0);
+    const high52Val = found?.high52 || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.high52 : 0) || dbStock?.high52 || (currentPrice ? currentPrice * 1.35 : 0);
     let low52High52 = '';
     if (low52Val > 0 && high52Val > 0) {
       low52High52 = `${low52Val.toFixed(2)} / ${high52Val.toFixed(2)}`;
     }
 
     // 3. Market Cap (Direct from INTERACTIVE TABLE format)
-    const mcapRaw = found?.marketCap || dbStock?.marketCap || 0;
+    const mcapRaw = found?.marketCap || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.marketCap : 0) || dbStock?.marketCap || 0;
     const mcapDisplay = mcapRaw > 0 ? formatLargeNum(mcapRaw) : '';
 
     // 4. P/E Ratio & EPS (Direct from INTERACTIVE TABLE)
     let peVal = (found?.peRatio !== undefined && found?.peRatio !== null && found.peRatio > 0) 
       ? found.peRatio 
-      : (dbStock?.pe || 0);
-    const epsVal = (found?.eps !== undefined && found?.eps !== null && found.eps > 0) ? found.eps : 0;
+      : ((stock?.ticker?.toUpperCase() === cleanSym && stock?.peRatio) ? stock.peRatio : (dbStock?.pe || 0));
+    const epsVal = (found?.eps !== undefined && found?.eps !== null && found.eps > 0) 
+      ? found.eps 
+      : ((stock?.ticker?.toUpperCase() === cleanSym && stock?.eps) ? stock.eps : 0);
+
     if (peVal === 0 && currentPrice > 0 && epsVal > 0) {
       peVal = currentPrice / epsVal;
     }
@@ -198,16 +201,16 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       '2': cleanSym,
       '3': indName,
       '4': sectorName,
-      '7': currentPrice > 0 ? currentPrice.toFixed(2) : prev['7'],
-      '8': low52High52 || prev['8'],
-      '9': mcapDisplay || prev['9'],
-      '10': peDisplay || prev['10'],
-      '12': found?.dividend || prev['12'],
-      '18': sharesDisplay || prev['18'],
-      '19': revRaw > 0 ? formatLargeNum(revRaw) : prev['19'],
-      '24': epsVal > 0 ? epsVal.toFixed(2) : prev['24'],
-      '26': netIncRaw > 0 ? formatLargeNum(netIncRaw) : prev['26'],
-      '38': fcfRaw > 0 ? formatLargeNum(fcfRaw) : prev['38'],
+      '7': currentPrice > 0 ? currentPrice.toFixed(2) : (prev['7'] || ''),
+      '8': low52High52 || (prev['8'] || ''),
+      '9': mcapDisplay || (prev['9'] || ''),
+      '10': peDisplay || (prev['10'] || ''),
+      '12': found?.dividend ? String(found.dividend) : (prev['12'] || ''),
+      '18': sharesDisplay || (prev['18'] || ''),
+      '19': revRaw > 0 ? formatLargeNum(revRaw) : (prev['19'] || ''),
+      '24': epsVal > 0 ? epsVal.toFixed(2) : (prev['24'] || ''),
+      '26': netIncRaw > 0 ? formatLargeNum(netIncRaw) : (prev['26'] || ''),
+      '38': fcfRaw > 0 ? formatLargeNum(fcfRaw) : (prev['38'] || ''),
     }));
 
     // Auto check filled rows for selected ticker
@@ -219,11 +222,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   };
 
   useEffect(() => {
-    if (stock && stock.ticker) {
-      setSelectedTicker(stock.ticker);
-      updateStockRowDetails(stock.ticker);
+    if (isOpen) {
+      const activeSym = stock?.ticker || selectedTicker;
+      if (activeSym) {
+        const clean = activeSym.toUpperCase().trim();
+        setSelectedTicker(clean);
+        updateStockRowDetails(clean);
+      }
     }
-  }, [stock]);
+  }, [isOpen, stock, stocks]);
 
   const handleSelectTicker = (sym: string) => {
     setSelectedTicker(sym);
