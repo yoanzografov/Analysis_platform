@@ -1264,11 +1264,16 @@ export default function App() {
 
   {/* Dashboard Header Bar */}
   <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-[100] mb-4">
-      <div className="flex items-center gap-2 max-w-full">
-        <Building2 className="w-5 h-5 text-ink shrink-0" />
-        <h1 className="text-lg sm:text-2xl font-extrabold text-ink font-sans tabular-nums tracking-tight uppercase leading-tight">
-          ПЛАТФОРМА ЗА СЛЕДЕНЕ НА АКЦИИ
-        </h1>
+      <div className="flex items-center gap-2.5 max-w-full">
+        <div className="p-1.5 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shrink-0">
+          <Building2 className="w-5 h-5" />
+        </div>
+        <div>
+          <h1 className="text-lg sm:text-2xl font-black text-indigo-400 font-sans tracking-tight uppercase leading-none">
+            RAYVES CAPITAL
+          </h1>
+          <span className="text-[11px] font-bold text-ink-muted tracking-wide block">Инвестиционна платформа за Рая & Веселин</span>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap justify-start">

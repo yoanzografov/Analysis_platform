@@ -35,10 +35,10 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
             <TrendingUp className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-base sm:text-lg font-black text-ink tracking-tight uppercase">
-              BULGARIAN STOCK PLATFORM
+            <h1 className="text-base sm:text-lg font-black text-indigo-400 tracking-tight uppercase flex items-center gap-2">
+              RAYVES CAPITAL
             </h1>
-            <p className="text-[11px] text-ink-muted hidden sm:block">Платформа за следене на акции & фундаментален анализ</p>
+            <p className="text-[11px] text-ink-muted hidden sm:block">Инвестиционна платформа за Рая & Веселин</p>
           </div>
         </div>
 
