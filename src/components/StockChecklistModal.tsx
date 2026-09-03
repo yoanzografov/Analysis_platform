@@ -210,7 +210,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       '19': prev['19'] || '',
       '24': epsVal > 0 ? epsVal.toFixed(2) : (prev['24'] || ''),
       '26': prev['26'] || '',
-      '38': fcfRaw > 0 ? formatLargeNum(fcfRaw) : (prev['38'] || ''),
+      '38': prev['38'] || '',
+      '39': prev['39'] || '',
     }));
 
     // Auto check filled rows for selected ticker
