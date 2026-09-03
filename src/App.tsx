@@ -1295,7 +1295,7 @@ export default function App() {
         />
         <div>
           <h1 className="text-lg sm:text-2xl font-black text-indigo-400 font-sans tracking-tight uppercase leading-none group-hover:text-indigo-300 transition-colors">
-            RAYVES CAPITAL
+            RAYVES.COM
           </h1>
           <span className="text-[11px] font-bold text-ink-muted tracking-wide block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</span>
         </div>
@@ -1894,7 +1894,7 @@ export default function App() {
         />
 
         <div className="text-center space-y-1 py-1">
-          <h3 className="text-xl font-black text-stone-900 tracking-tight">RAYVES CAPITAL</h3>
+          <h3 className="text-xl font-black text-stone-900 tracking-tight">RAYVES.COM</h3>
           <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Investing Today. Building Tomorrow.</p>
           <p className="text-[11px] font-semibold text-stone-500">For Our Children. For Their Future.</p>
         </div>

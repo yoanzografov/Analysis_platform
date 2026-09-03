@@ -40,7 +40,7 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
           />
           <div>
             <h1 className="text-base sm:text-lg font-black text-indigo-400 tracking-tight uppercase flex items-center gap-2 group-hover:text-indigo-300 transition-colors">
-              RAYVES CAPITAL
+              RAYVES.COM
             </h1>
             <p className="text-[11px] text-ink-muted hidden sm:block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</p>
           </div>
@@ -204,7 +204,7 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
             />
 
             <div className="text-center space-y-1 py-1">
-              <h3 className="text-xl font-black text-stone-900 tracking-tight">RAYVES CAPITAL</h3>
+              <h3 className="text-xl font-black text-stone-900 tracking-tight">RAYVES.COM</h3>
               <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Investing Today. Building Tomorrow.</p>
               <p className="text-[11px] font-semibold text-stone-500">For Our Children. For Their Future.</p>
             </div>
