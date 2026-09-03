@@ -83,6 +83,7 @@ export default function App() {
   const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showFinancialFlagsModal, setShowFinancialFlagsModal] = useState(false);
+  const [showLogoModal, setShowLogoModal] = useState(false);
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -1282,14 +1283,18 @@ export default function App() {
 
   {/* Dashboard Header Bar */}
   <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-[100] mb-4">
-      <div className="flex items-center gap-3 max-w-full">
+      <div 
+        onClick={() => setShowLogoModal(true)}
+        className="flex items-center gap-3 max-w-full cursor-pointer group"
+        title="Кликнете за преглед на логото в пълен размер"
+      >
         <img 
           src="/rayves-logo.jpg" 
           alt="RayVes Capital" 
-          className="h-11 w-auto rounded-xl border border-amber-500/30 object-contain shadow-xs bg-white p-0.5 shrink-0" 
+          className="h-11 w-auto rounded-xl border border-amber-500/30 object-contain shadow-xs bg-white p-0.5 shrink-0 group-hover:scale-105 transition-transform" 
         />
         <div>
-          <h1 className="text-lg sm:text-2xl font-black text-indigo-400 font-sans tracking-tight uppercase leading-none">
+          <h1 className="text-lg sm:text-2xl font-black text-indigo-400 font-sans tracking-tight uppercase leading-none group-hover:text-indigo-300 transition-colors">
             RAYVES CAPITAL
           </h1>
           <span className="text-[11px] font-bold text-ink-muted tracking-wide block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</span>
@@ -1863,6 +1868,39 @@ export default function App() {
     isOpen={isQuoteModalOpen}
     onClose={() => setIsQuoteModalOpen(false)}
   />
+
+  {/* Logo Preview Lightbox Modal */}
+  {showLogoModal && (
+    <div 
+      className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150 cursor-pointer"
+      onClick={() => setShowLogoModal(false)}
+    >
+      <div 
+        className="relative max-w-lg w-full bg-white rounded-3xl p-5 shadow-2xl border border-amber-500/50 flex flex-col items-center gap-4 animate-in zoom-in-95 duration-150 cursor-default text-stone-900"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          onClick={() => setShowLogoModal(false)}
+          className="absolute top-4 right-4 p-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer"
+          title="Затвори"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <img 
+          src="/rayves-logo.jpg" 
+          alt="RayVes Capital - Official Emblem" 
+          className="w-full h-auto rounded-2xl object-contain shadow-md"
+        />
+
+        <div className="text-center space-y-1 py-1">
+          <h3 className="text-xl font-black text-stone-900 tracking-tight">RAYVES CAPITAL</h3>
+          <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Investing Today. Building Tomorrow.</p>
+          <p className="text-[11px] font-semibold text-stone-500">For Our Children. For Their Future.</p>
+        </div>
+      </div>
+    </div>
+  )}
  </main>
 
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   Lock, 
   ShieldCheck, 
@@ -11,7 +10,8 @@ import {
   Zap, 
   Database,
   Sun,
-  Moon
+  Moon,
+  X
 } from 'lucide-react';
 
 interface LandingAuthGateProps {
@@ -21,6 +21,8 @@ interface LandingAuthGateProps {
 }
 
 export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAuthGateProps) {
+  const [showLogoModal, setShowLogoModal] = React.useState(false);
+
   return (
     <div className="min-h-screen bg-bg text-ink font-sans flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-150 relative overflow-hidden">
       
@@ -30,14 +32,14 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
 
       {/* Navigation Header Bar */}
       <header className="w-full border-b border-border/80 bg-bg-card/80 backdrop-blur-md sticky top-0 z-50 px-6 py-3 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setShowLogoModal(true)} title="Виж логото в пълен размер">
           <img 
             src="/rayves-logo.jpg" 
             alt="RayVes Capital" 
-            className="h-10 w-auto rounded-xl border border-amber-500/30 object-contain shadow-xs bg-white p-0.5" 
+            className="h-10 w-auto rounded-xl border border-amber-500/30 object-contain shadow-xs bg-white p-0.5 group-hover:scale-105 transition-transform" 
           />
           <div>
-            <h1 className="text-base sm:text-lg font-black text-indigo-400 tracking-tight uppercase flex items-center gap-2">
+            <h1 className="text-base sm:text-lg font-black text-indigo-400 tracking-tight uppercase flex items-center gap-2 group-hover:text-indigo-300 transition-colors">
               RAYVES CAPITAL
             </h1>
             <p className="text-[11px] text-ink-muted hidden sm:block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</p>
@@ -75,11 +77,15 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
       <main className="flex-1 max-w-6xl mx-auto px-6 py-10 flex flex-col items-center text-center justify-center relative z-10 space-y-8">
         
         {/* Main Logo Card */}
-        <div className="p-3 bg-white rounded-3xl border border-amber-500/40 shadow-2xl transition-transform hover:scale-[1.02]">
+        <div 
+          onClick={() => setShowLogoModal(true)}
+          className="p-3 bg-white rounded-3xl border border-amber-500/40 shadow-2xl transition-transform hover:scale-[1.03] cursor-pointer group"
+          title="Кликнете за преглед в пълен размер"
+        >
           <img 
             src="/rayves-logo.jpg" 
             alt="RayVes Capital - Investing Today. Building Tomorrow." 
-            className="w-64 sm:w-80 h-auto rounded-2xl object-contain" 
+            className="w-64 sm:w-80 h-auto rounded-2xl object-contain group-hover:brightness-105 transition-all" 
           />
         </div>
 
@@ -172,6 +178,39 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
           <span>Данните в платформата са достъпни единствено за регистрирани потребители.</span>
         </div>
       </footer>
+
+      {/* Logo Preview Lightbox Modal */}
+      {showLogoModal && (
+        <div 
+          className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150 cursor-pointer"
+          onClick={() => setShowLogoModal(false)}
+        >
+          <div 
+            className="relative max-w-lg w-full bg-white rounded-3xl p-5 shadow-2xl border border-amber-500/50 flex flex-col items-center gap-4 animate-in zoom-in-95 duration-150 cursor-default"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowLogoModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer"
+              title="Затвори"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <img 
+              src="/rayves-logo.jpg" 
+              alt="RayVes Capital - Official Emblem" 
+              className="w-full h-auto rounded-2xl object-contain shadow-md"
+            />
+
+            <div className="text-center space-y-1 py-1">
+              <h3 className="text-xl font-black text-stone-900 tracking-tight">RAYVES CAPITAL</h3>
+              <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Investing Today. Building Tomorrow.</p>
+              <p className="text-[11px] font-semibold text-stone-500">For Our Children. For Their Future.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
