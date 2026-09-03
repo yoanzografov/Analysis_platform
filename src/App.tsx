@@ -15,6 +15,7 @@ import { db, auth } from './lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { AuthModal } from './components/AuthModal';
+import { LandingAuthGate } from './components/LandingAuthGate';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import RoiCalculatorModal from './components/RoiCalculatorModal';
 import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
@@ -571,11 +572,13 @@ export default function App() {
   };
 
   const [isUserDocLoaded, setIsUserDocLoaded] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setIsUserDocLoaded(false);
+      setIsAuthChecking(false);
       if (!user) {
         setPositions([]);
         setTransactions([]);
@@ -1173,6 +1176,33 @@ export default function App() {
  link.click();
  document.body.removeChild(link);
  };
+
+  if (isAuthChecking) {
+    return (
+      <div className={`min-h-screen bg-bg text-ink flex items-center justify-center ${isDark ? 'dark' : ''}`}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+          <span className="text-xs font-bold text-ink-muted uppercase tracking-widest">Проверка на достъпа...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className={isDark ? 'dark' : ''}>
+        <LandingAuthGate
+          onOpenAuth={() => setIsAuthModalOpen(true)}
+          isDark={isDark}
+          onToggleTheme={() => setIsDark(!isDark)}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+        />
+      </div>
+    );
+  }
 
   return (
   <div className="min-h-screen bg-bg text-ink flex flex-col pb-12 antialiased overflow-x-hidden w-full">
