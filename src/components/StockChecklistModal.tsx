@@ -892,6 +892,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 </td>
               </tr>
               {[36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47].map(r => renderRowItem(r))}
+
+              {/* SECTION 6 */}
+              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
+                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                  🏆 6. ДОПЪЛНИТЕЛНИ ФИНАНСОВИ ФЛАГОВЕ & КОЕФИЦИЕНТИ (ADDITIONAL FINANCIAL FLAGS)
+                </td>
+              </tr>
+              {[48, 49, 50, 51, 52, 53, 54].map(r => renderRowItem(r))}
             </tbody>
           </table>
         </div>
