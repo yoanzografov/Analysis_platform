@@ -206,8 +206,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       '9': mcapDisplay || (prev['9'] || ''),
       '10': peDisplay || (prev['10'] || ''),
       '12': found?.dividend ? String(found.dividend) : (prev['12'] || ''),
-      '18': sharesDisplay || (prev['18'] || ''),
-      '19': revRaw > 0 ? formatLargeNum(revRaw) : (prev['19'] || ''),
+      '18': prev['18'] || '',
+      '19': prev['19'] || '',
       '24': epsVal > 0 ? epsVal.toFixed(2) : (prev['24'] || ''),
       '26': netIncRaw > 0 ? formatLargeNum(netIncRaw) : (prev['26'] || ''),
       '38': fcfRaw > 0 ? formatLargeNum(fcfRaw) : (prev['38'] || ''),
@@ -216,7 +216,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     // Auto check filled rows for selected ticker
     const initialChecked: Record<number, boolean> = {};
     [1, 2, 3, 4, 7, 8, 9, 10].forEach(r => { initialChecked[r] = true; });
-    if (sharesDisplay) initialChecked[18] = true;
     if (epsVal > 0) initialChecked[24] = true;
     setCheckedRows(prev => ({ ...prev, ...initialChecked }));
   };
