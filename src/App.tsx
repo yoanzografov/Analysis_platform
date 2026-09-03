@@ -88,6 +88,24 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+  // Theme State
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved !== 'light';
+  });
+
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDark(true);
+    }
+  };
+
   const clearHashUrl = () => {
     if (window.location.hash) {
       try {
@@ -1194,7 +1212,7 @@ export default function App() {
         <LandingAuthGate
           onOpenAuth={() => setIsAuthModalOpen(true)}
           isDark={isDark}
-          onToggleTheme={() => setIsDark(!isDark)}
+          onToggleTheme={toggleTheme}
         />
         <AuthModal
           isOpen={isAuthModalOpen}
