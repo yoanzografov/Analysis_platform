@@ -29,16 +29,18 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-500/10 blur-[140px] pointer-events-none rounded-full" />
 
       {/* Navigation Header Bar */}
-      <header className="w-full border-b border-border/80 bg-bg-card/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-xs">
+      <header className="w-full border-b border-border/80 bg-bg-card/80 backdrop-blur-md sticky top-0 z-50 px-6 py-3 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
-            <TrendingUp className="w-6 h-6" />
-          </div>
+          <img 
+            src="/rayves-logo.jpg" 
+            alt="RayVes Capital" 
+            className="h-10 w-auto rounded-xl border border-amber-500/30 object-contain shadow-xs bg-white p-0.5" 
+          />
           <div>
             <h1 className="text-base sm:text-lg font-black text-indigo-400 tracking-tight uppercase flex items-center gap-2">
               RAYVES CAPITAL
             </h1>
-            <p className="text-[11px] text-ink-muted hidden sm:block">Инвестиционна платформа за Рая & Веселин</p>
+            <p className="text-[11px] text-ink-muted hidden sm:block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</p>
           </div>
         </div>
 
@@ -70,8 +72,17 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1 max-w-6xl mx-auto px-6 py-12 flex flex-col items-center text-center justify-center relative z-10 space-y-12">
+      <main className="flex-1 max-w-6xl mx-auto px-6 py-10 flex flex-col items-center text-center justify-center relative z-10 space-y-8">
         
+        {/* Main Logo Card */}
+        <div className="p-3 bg-white rounded-3xl border border-amber-500/40 shadow-2xl transition-transform hover:scale-[1.02]">
+          <img 
+            src="/rayves-logo.jpg" 
+            alt="RayVes Capital - Investing Today. Building Tomorrow." 
+            className="w-64 sm:w-80 h-auto rounded-2xl object-contain" 
+          />
+        </div>
+
         {/* Floating Protected Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-extrabold tracking-wide uppercase animate-pulse">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
