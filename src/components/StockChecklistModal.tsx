@@ -91,7 +91,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 36, label: "Cash Flow from Operations", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 37, label: "CFFO 5-10 Years increase", defaultVal: "", cellType: "default" },
   { rowNum: 38, label: "Free Cash Flow", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 39, label: "FCF 5 - 10 years avg increase", defaultVal: "", cellType: "green-formula" },
+  { rowNum: 39, label: "FCF 5 - 10 years avg increase", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 40, label: "Cash Flow Margin", defaultVal: "", cellType: "green-formula", formulaStr: "=B36/B19", flagRules: { green: "15%+", yellow: "10% - 15%", red: "< 10%" }, note: "Cash Flow Margin Ratio = Cash Flow From Operations / Revenue x 100 (%)\nПоказва ни колко от всеки долар продажба се задържа като пари в брой (КЕШ). Колкото повече, толкова по-добре." },
   { rowNum: 41, label: "Free Cash Flow Margin", defaultVal: "", cellType: "green-formula", formulaStr: "=(B38/B19)", flagRules: { green: "15%+", yellow: "10% - 15%", red: "< 10%" }, note: "Free Cash Flow Margin = Free Cash Flow / Revenue x 100 (%)\n\nМаржът на свободния паричен поток (марж на FCF) е финансов показател, който показва колко ефективно една компания преобразува приходите си в свободен паричен поток, който представлява паричните средства, генерирани от компанията след покриване на оперативните разходи и капиталовите разходи. Той по същество измерва каква част от продажбите на компанията са налични като парични средства за дейности като изплащане на дълг, инвестиции или дивиденти. \n\nПо-високият марж на свободния финансов поток (FCF) показва, че компанията е по-ефективна в превръщането на продажбите в пари в брой, което може да бъде положителен знак за финансово здраве и оперативна ефективност. Марж на FCF от 10-15% често се счита за.\n\nВисокият марж на свободния финансов поток предполага ефективно управление на разходите и ефикасно използване на капитала." },
   { rowNum: 42, label: "Free Cash Flow Yield", defaultVal: "", cellType: "green-formula", formulaStr: "=1*(B38/B9)", flagRules: { green: "5%+", yellow: "3% - 5%", red: "< 3%" }, note: "Free Cash Flow Yield = Free Cash Flow / Market Cap x 100 (%)\n\nFree Cash Flow Yield (FCF Yield) е финансов показател, който показва колко свободен паричен поток (FCF) генерира една компания спрямо пазарната ѝ стойност. Това е мярка за доходността на инвестицията, базирана на реалния паричен поток, който остава на разположение за инвеститорите, след като всички оперативни и капиталови разходи са покрити.\n\nКакво ни казва този показател:\nВисок FCF Yield (напр. 8–10%+) → компанията генерира много свободен паричен поток спрямо текущата си пазарна оценка → потенциално подценена или много ефективна.\n\nНисък FCF Yield (напр. под 3%) → или е надценена, или не генерира достатъчно свободен паричен поток → възможен сигнал за рискове или слабости." },
@@ -263,6 +263,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     cleared['15_10'] = '';
     cleared['20_5'] = '';
     cleared['25_10'] = '';
+    cleared['39_10'] = '';
     setUserInputs(cleared);
     setCheckedRows({});
   };
@@ -583,14 +584,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 />
               </div>
             </div>
-          ) : rowNum === 25 ? (
+          ) : (rowNum === 25 || rowNum === 39) ? (
             <div className="flex items-center gap-2 justify-end">
               <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
                 <input
                   type="text"
-                  value={userInputs['25'] || ''}
-                  onChange={e => handleInputChange('25', e.target.value)}
+                  value={userInputs[String(rowNum)] || ''}
+                  onChange={e => handleInputChange(rowNum, e.target.value)}
                   placeholder="..."
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
@@ -599,8 +600,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <span className="text-xs text-ink-faint font-bold">10y:</span>
                 <input
                   type="text"
-                  value={userInputs['25_10'] || ''}
-                  onChange={e => handleInputChange('25_10', e.target.value)}
+                  value={userInputs[`${rowNum}_10`] || ''}
+                  onChange={e => handleInputChange(`${rowNum}_10`, e.target.value)}
                   placeholder="..."
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
