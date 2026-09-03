@@ -100,6 +100,13 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 45, label: "Cash Flow Coverage Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "Cash Flow Coverage Ratio = Operating Cash flow / Long-Term Debt", flagRules: { green: "> 1.0", yellow: "0.5 - 1.0", red: "< 0.5" }, note: "Cash Flow Coverage Ratio = Operating Cash flow / Long-Term Debt\n\nВисока стойност на това ratio показва, че компанията може да обслужва дълга си. Колкото по-високо CFCR над 1, толкова по-добре." },
   { rowNum: 46, label: "Operating Cash Flow Ratio", defaultVal: "", cellType: "default", formulaStr: "Operating Cash Flow Ratio = Operating Cash Flow / Current Liabilities", note: "Yoan Zografov:\n\nOperating Cash Flow Ratio = Operating Cash Flow / Current Liabilities\n\nТова е мярка за броя пъти, кога една компания може да изплати текущи задължения с паричните средства, генерирани за даден период." },
   { rowNum: 47, label: "Cash ROA", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 48, label: "EBITDA Margin", defaultVal: "", cellType: "yellow-input", formulaStr: "EBITDA Margin = (EBITDA / Revenue) * 100", flagRules: { green: "20%+", yellow: "10% - 20%", red: "< 10%" }, note: "EBITDA Margin = (EBITDA / Revenue) * 100 (%)\n\nМаржът на EBITDA показва оперативната доходност на компанията преди начисляването на лихви, данъци, амортизация и обезценка. \n\nЗелен флаг: над 20%\nЖълт флаг: 10% - 20%\nЧервен флаг: под 10%" },
+  { rowNum: 49, label: "Interest Coverage Rate", defaultVal: "", cellType: "yellow-input", formulaStr: "Interest Coverage = EBIT / Interest Expense", flagRules: { green: "> 5.0", yellow: "2.0 - 5.0", red: "< 2.0" }, note: "Interest Coverage Rate = EBIT / Interest Expense\n\nПокритието на лихвените разходи измерва колко пъти оперативната печалба (EBIT) може да покрие разходите за лихви по дълговете. Колкото по-високо число, толкова по-сигурна е компанията.\n\nЗелен флаг: над 5.0\nЖълт флаг: 2.0 - 5.0\nЧервен флаг: под 2.0 (риск от дефолт)" },
+  { rowNum: 50, label: "Goodwill in Assets", defaultVal: "", cellType: "yellow-input", formulaStr: "Goodwill Ratio = (Goodwill / Total Assets) * 100", flagRules: { green: "< 10%", yellow: "10% - 20%", red: "> 20%" }, note: "Goodwill in Assets = (Goodwill / Total Assets) * 100 (%)\n\nПоказва каква част от активите на компанията се състоят от 'Goodwill' (репутация от премиум цени при придобивания). Прекалено висок Goodwill носи риск от бъдещи обезценки (impairments).\n\nЗелен флаг: под 10%\nЖълт флаг: 10% - 20%\nЧервен флаг: над 20%" },
+  { rowNum: 51, label: "Asset Turnover Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "Asset Turnover = Revenue / Total Assets", flagRules: { green: "> 3.0", yellow: "1.0 - 3.0", red: "< 1.0" }, note: "Asset Turnover Ratio = Revenue / Total Assets\n\nКоефициентът на оборот на активите показва колко приходи генерира компанията за всеки $1 от активите си. Показва ефективността на управлението на активите.\n\nЗелен флаг: над 3.0\nЖълт флаг: 1.0 - 3.0\nЧервен флаг: под 1.0" },
+  { rowNum: 52, label: "Quick Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "Quick Ratio = (Current Assets - Inventory) / Current Liabilities", flagRules: { green: "≥ 1.0", yellow: "0.8 - 1.0", red: "< 0.8" }, note: "Quick Ratio (Бърза ликвидност) = (Текущи активи - Запаси) / Текущи пасиви\n\nЗа разлика от Current Ratio, Quick Ratio изключва материалните запаси (които трудно се превръщат бързо в пари) и измерва най-бързата ликвидност на компанията.\n\nЗелен флаг: над 1.0\nЖълт флаг: 0.8 - 1.0\nЧервен флаг: под 0.8" },
+  { rowNum: 53, label: "Stock-based Compensation (% of Net Income)", defaultVal: "", cellType: "yellow-input", formulaStr: "SBC Ratio = (Stock-Based Compensation / Net Income) * 100", flagRules: { green: "< 5%", yellow: "5% - 10%", red: "> 10%" }, note: "Stock-based Compensation as % of Net Income = (SBC / Net Income) * 100 (%)\n\nПоказва какъв процент от отчетената печалба се раздава като възнаграждения под формата на нови акции. Прекалено високото SBC разводнява акционерите и маскира реалните разходи.\n\nЗелен флаг: под 5%\nЖълт флаг: 5% - 10%\nЧервен флаг: над 10%" },
+  { rowNum: 54, label: "CapEx (% of Net Income)", defaultVal: "", cellType: "yellow-input", formulaStr: "CapEx Ratio = (Capital Expenditures / Net Income) * 100", flagRules: { green: "< 15%", yellow: "15% - 25%", red: "> 25%" }, note: "CapEx as % of Net Income = (Capital Expenditures / Net Income) * 100 (%)\n\nИзмерва каква част от нетната печалба трябва да се реинвестира обратно в дълготрайни активи (оборудване, заводи, недвижими имоти), за да се поддържа бизнеса.\n\nЗелен флаг: под 15% (лек капитал, висок FCF)\nЖълт флаг: 15% - 25%\nЧервен флаг: над 25% (капиталоемък бизнес)" },
 ];
 
 
@@ -417,6 +424,34 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       case 45: // Cash Flow Coverage Ratio
         if (numVal >= 1.0) return 'green';
         if (numVal >= 0.5) return 'yellow';
+        return 'red';
+      case 48: // EBITDA Margin
+        if (numVal >= 20) return 'green';
+        if (numVal >= 10) return 'yellow';
+        return 'red';
+      case 49: // Interest Coverage Rate
+        if (numVal >= 5) return 'green';
+        if (numVal >= 2) return 'yellow';
+        return 'red';
+      case 50: // Goodwill in Assets
+        if (numVal <= 10) return 'green';
+        if (numVal <= 20) return 'yellow';
+        return 'red';
+      case 51: // Asset Turnover Ratio
+        if (numVal >= 3.0) return 'green';
+        if (numVal >= 1.0) return 'yellow';
+        return 'red';
+      case 52: // Quick Ratio
+        if (numVal >= 1.0) return 'green';
+        if (numVal >= 0.8) return 'yellow';
+        return 'red';
+      case 53: // Stock-based Compensation as % of Net Income
+        if (numVal <= 5) return 'green';
+        if (numVal <= 10) return 'yellow';
+        return 'red';
+      case 54: // CapEx as % of Net Income
+        if (numVal <= 15) return 'green';
+        if (numVal <= 25) return 'yellow';
         return 'red';
       default:
         return null;
