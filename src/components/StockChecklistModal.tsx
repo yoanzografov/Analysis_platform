@@ -209,7 +209,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       '18': prev['18'] || '',
       '19': prev['19'] || '',
       '24': epsVal > 0 ? epsVal.toFixed(2) : (prev['24'] || ''),
-      '26': netIncRaw > 0 ? formatLargeNum(netIncRaw) : (prev['26'] || ''),
+      '26': prev['26'] || '',
       '38': fcfRaw > 0 ? formatLargeNum(fcfRaw) : (prev['38'] || ''),
     }));
 
