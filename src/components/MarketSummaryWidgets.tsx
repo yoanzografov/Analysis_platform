@@ -728,23 +728,19 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             </span>
           </div>
 
-          {/* Render All 10 Indicators formatted WITH ZERO OVERLAPPING */}
+          {/* Render All Indicators formatted WITH ZERO OVERLAPPING */}
           {INDICATORS_DATA.map((ind) => (
             <a
               key={ind.id}
-              href={ind.tradingViewUrl}
+              href={(ind as any).officialUrl || ind.tradingViewUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col p-2.5 rounded-xl border border-border/50 bg-card/30 hover:bg-card-hover hover:border-indigo-500/40 transition-all group cursor-pointer relative"
             >
-              {/* Line 1: Favicon + Title + Info Button + External Link */}
+              {/* Line 1: Government Favicon/Icon + Title + Info Button + External Link */}
               <div className="flex items-center justify-between gap-2 w-full">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <img 
-                    src="https://www.google.com/s2/favicons?domain=tradingview.com&sz=32" 
-                    alt="TradingView" 
-                    className="w-4 h-4 rounded shrink-0 bg-white/90 p-0.5"
-                  />
+                  <span className="text-xs shrink-0">🏛️</span>
                   <span className="text-xs font-extrabold text-ink group-hover:text-indigo-400 transition-colors truncate" title={ind.title}>
                     {ind.title}
                   </span>
@@ -895,36 +891,22 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 <p className="text-ink-muted">{selectedIndicator.marketReaction}</p>
               </div>
 
-              {/* Bottom Action Footer with Direct TradingView & Official Government Buttons */}
+              {/* Bottom Action Footer with Single Official Government Button */}
               <div className="pt-3 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-[11px] text-ink-faint">
-                  Източник: <strong className="text-ink">{selectedIndicator.source}</strong>
+                  Официален държавен източник: <strong className="text-ink">{selectedIndicator.source}</strong>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                  {(selectedIndicator as any).officialUrl && (
-                    <a
-                      href={(selectedIndicator as any).officialUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full sm:w-auto px-3.5 py-2 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                      title="Отвори официалния държавен източник (BLS.gov)"
-                    >
-                      <span>🏛️ Официален източник (BLS)</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-
-                  <a
-                    href={selectedIndicator.tradingViewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto px-4 py-2 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
-                  >
-                    <span>Отвори в TradingView</span>
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </div>
+                <a
+                  href={(selectedIndicator as any).officialUrl || 'https://www.bls.gov/cpi/'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/30 cursor-pointer"
+                  title="Отвори официалния държавен доклад"
+                >
+                  <span>🏛️ Отвори официалния държавен доклад ({selectedIndicator.source})</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
               </div>
             </div>
           </div>
