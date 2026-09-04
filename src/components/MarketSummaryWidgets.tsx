@@ -87,7 +87,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'PCE под очакванията → рали на борсата. PCE над очакванията → притеснение и корекция.',
     tradingViewSymbol: 'FRED:PCE',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PCE/',
-    source: 'US Bureau of Economic Analysis (BEA)'
+    source: 'US Bureau of Economic Analysis (BEA)',
+    officialUrl: 'https://www.bea.gov/data/personal-consumption-expenditures'
   },
   {
     id: 4,
@@ -102,7 +103,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'Ако Core PCE е близо до 2% → bullish сигнал за акциите. Ако Core PCE се задържа над 3% → bearish сигнал.',
     tradingViewSymbol: 'FRED:PCEPILFE',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PCEPILFE/',
-    source: 'US Bureau of Economic Analysis (BEA)'
+    source: 'US Bureau of Economic Analysis (BEA)',
+    officialUrl: 'https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy'
   },
   {
     id: 5,
@@ -117,7 +119,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'Nasdaq и технологичните компании са най-чувствителни на промени в лихвите.',
     tradingViewSymbol: 'FRED:FEDFUNDS',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-FEDFUNDS/',
-    source: 'Federal Reserve (Федерален резерв на САЩ)'
+    source: 'Federal Reserve (Федерален резерв на САЩ)',
+    officialUrl: 'https://www.federalreserve.gov/monetarypolicy/openmarket.htm'
   },
   {
     id: 6,
@@ -132,7 +135,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'Прекалено силна заетост → страх от лихвени повишения. Умерен ръст → стабилност.',
     tradingViewSymbol: 'FRED:PAYEMS',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PAYEMS/',
-    source: 'US Bureau of Labor Statistics (BLS)'
+    source: 'US Bureau of Labor Statistics (BLS)',
+    officialUrl: 'https://www.bls.gov/news.release/empsit.toc.htm'
   },
   {
     id: 7,
@@ -147,7 +151,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'NFP над очакванията → скок на долара и притеснение за задържане на високи лихви.',
     tradingViewSymbol: 'FRED:PAYEMS',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PAYEMS/',
-    source: 'US Bureau of Labor Statistics (BLS)'
+    source: 'US Bureau of Labor Statistics (BLS)',
+    officialUrl: 'https://www.bls.gov/news.release/empsit.toc.htm'
   },
   {
     id: 8,
@@ -162,7 +167,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'Безработица над очакванията → риск от забавяне, но и натиск върху ФЕД за намаляване на лихвите.',
     tradingViewSymbol: 'FRED:UNRATE',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-UNRATE/',
-    source: 'US Bureau of Labor Statistics (BLS)'
+    source: 'US Bureau of Labor Statistics (BLS)',
+    officialUrl: 'https://www.bls.gov/news.release/empsit.toc.htm'
   },
   {
     id: 9,
@@ -177,7 +183,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'Златната среда: Умерен растеж без висока инфлация е най-благоприятен за пазара.',
     tradingViewSymbol: 'FRED:GDP',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-GDP/',
-    source: 'US Bureau of Economic Analysis (BEA)'
+    source: 'US Bureau of Economic Analysis (BEA)',
+    officialUrl: 'https://www.bea.gov/data/gdp/gross-domestic-product'
   },
   {
     id: 10,
@@ -192,7 +199,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'Ръст на продажбите → по-високи печалби за потребителските компании, но и риск за инфлация.',
     tradingViewSymbol: 'FRED:RSAFS',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-RSAFS/',
-    source: 'US Census Bureau'
+    source: 'US Census Bureau',
+    officialUrl: 'https://www.census.gov/retail/index.html'
   },
   {
     id: 11,
@@ -207,7 +215,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'Висок CCI → позитивно за търговците на дребно и автопроизводителите.',
     tradingViewSymbol: 'FRED:UMCSENT',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-UMCSENT/',
-    source: 'The Conference Board / University of Michigan'
+    source: 'The Conference Board / University of Michigan',
+    officialUrl: 'https://www.conference-board.org/topics/consumer-confidence'
   },
   {
     id: 12,
@@ -222,7 +231,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'Силно строителство → подкрепа за строителните компании и банките.',
     tradingViewSymbol: 'FRED:PERMIT',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-PERMIT/',
-    source: 'US Census Bureau / HUD'
+    source: 'US Census Bureau / HUD',
+    officialUrl: 'https://www.census.gov/construction/nres/index.html'
   }
 ];
 
