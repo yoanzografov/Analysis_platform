@@ -888,6 +888,36 @@ app.get("/api/inflation-data", async (req, res) => {
       }
     });
 
+    // Direct BLS Public API v2.0 fetch for CPI (CUSR0000SA0 = CPI All Urban, CUSR0000SA0L1E = Core CPI)
+    try {
+      const blsRes = await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          seriesid: ['CUSR0000SA0', 'CUSR0000SA0L1E'],
+          latest: true
+        })
+      });
+      if (blsRes.ok) {
+        const blsJson = await blsRes.json();
+        if (blsJson?.Results?.series) {
+          blsJson.Results.series.forEach((s: any) => {
+            const latestVal = s.data?.[0]?.value;
+            const prevVal = s.data?.[1]?.value;
+            if (latestVal) {
+              if (s.seriesID === 'CUSR0000SA0') {
+                rawData['BLS_CPI_INDEX'] = { actual: latestVal, previous: prevVal || 'N/A' };
+              } else if (s.seriesID === 'CUSR0000SA0L1E') {
+                rawData['BLS_CORE_CPI_INDEX'] = { actual: latestVal, previous: prevVal || 'N/A' };
+              }
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Direct BLS API fetch notice:', e);
+    }
+
     try {
       const beaRes = await fetch('https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy', {
         headers: {
