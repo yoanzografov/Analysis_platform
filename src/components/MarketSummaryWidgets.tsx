@@ -55,7 +55,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'CPI над очакванията → спад на акциите и скок на щатския долар. CPI под очакванията → силно пазарно рали.',
     tradingViewSymbol: 'FRED:CPIAUCSL',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-CPIAUCSL/',
-    source: 'US Bureau of Labor Statistics (BLS)'
+    source: 'US Bureau of Labor Statistics (BLS)',
+    officialUrl: 'https://www.bls.gov/cpi/'
   },
   {
     id: 2,
@@ -70,7 +71,8 @@ const INDICATORS_DATA: MarketIndicator[] = [
     marketReaction: 'Core CPI над очакванията → спад в акциите, особено в технологичния сектор.',
     tradingViewSymbol: 'FRED:CPILFESL',
     tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-CPILFESL/',
-    source: 'US Bureau of Labor Statistics (BLS)'
+    source: 'US Bureau of Labor Statistics (BLS)',
+    officialUrl: 'https://www.bls.gov/cpi/'
   },
   {
     id: 3,
@@ -883,21 +885,36 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 <p className="text-ink-muted">{selectedIndicator.marketReaction}</p>
               </div>
 
-              {/* Bottom Action Footer with Direct TradingView Button */}
+              {/* Bottom Action Footer with Direct TradingView & Official Government Buttons */}
               <div className="pt-3 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-[11px] text-ink-faint">
                   Източник: <strong className="text-ink">{selectedIndicator.source}</strong>
                 </div>
 
-                <a
-                  href={selectedIndicator.tradingViewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-4 py-2 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
-                >
-                  <span>Отвори {selectedIndicator.englishTitle} в TradingView</span>
-                  <ExternalLink className="w-4 h-4" />
-                </a>
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                  {(selectedIndicator as any).officialUrl && (
+                    <a
+                      href={(selectedIndicator as any).officialUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto px-3.5 py-2 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      title="Отвори официалния държавен източник (BLS.gov)"
+                    >
+                      <span>🏛️ Официален източник (BLS)</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+
+                  <a
+                    href={selectedIndicator.tradingViewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto px-4 py-2 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                  >
+                    <span>Отвори в TradingView</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>
