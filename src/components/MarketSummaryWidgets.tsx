@@ -39,6 +39,7 @@ export interface MarketIndicator {
   tradingViewSymbol: string;
   tradingViewUrl: string;
   source: string;
+  officialUrl: string;
 }
 
 const INDICATORS_DATA: MarketIndicator[] = [
@@ -210,12 +211,12 @@ const INDICATORS_DATA: MarketIndicator[] = [
     nextDateDesc: 'Индекс на потребителското доверие (CCI)',
     impact: 'MEDIUM',
     shortSummary: 'Измерва колко уверени са потребителите относно икономиката, личните си финанси и следващите 6 месеца.',
-    description: 'Consumer Confidence Index (CCI) измерва колко уверени и оптимистично настроени са потребителите относно: настоящото състояние на икономиката, личните им финанси и перспективите за следващите 6 месеца.',
+    description: 'Consumer Confidence Index (CCI) измерва колко уверени и оптимистично настроени са потребителите относно: настоящото състояние на икономиката, личните им финанси и перспективите за следващите 6 месеца. The Conference Board публикува CCI в последния вторник от месеца.',
     whyItMovesMarket: 'Оптимистичните потребители харчат повече пари и вземат кредити. Песимизмът предвещава забавяне.',
     marketReaction: 'Висок CCI → позитивно за търговците на дребно и автопроизводителите.',
-    tradingViewSymbol: 'FRED:UMCSENT',
-    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-UMCSENT/',
-    source: 'The Conference Board / University of Michigan',
+    tradingViewSymbol: 'FRED:CONCCONF',
+    tradingViewUrl: 'https://www.tradingview.com/symbols/FRED-CONCCONF/',
+    source: 'The Conference Board (Конференц борд на САЩ)',
     officialUrl: 'https://www.conference-board.org/topics/consumer-confidence'
   },
   {

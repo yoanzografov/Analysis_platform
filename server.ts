@@ -939,24 +939,32 @@ app.get("/api/inflation-data", async (req, res) => {
     }
 
     const data = [
-      { name: "CPI (Inflation) YoY", key: "Inflation Rate", url: "https://tradingeconomics.com/united-states/inflation-cpi" },
-      { name: "Core CPI YoY", key: "Core Inflation Rate", url: "https://tradingeconomics.com/united-states/core-inflation-rate" },
-      { name: "PCE Price Index YoY", key: "PCE Price Index Annual Change", url: "https://tradingeconomics.com/united-states/pce-price-index-annual-change" },
-      { name: "Core PCE Price Index YoY", key: "Core PCE Price Index YoY", url: "https://tradingeconomics.com/united-states/core-pce-price-index-yoy" },
-      { name: "Fed Funds Rate", key: "Interest Rate", url: "https://tradingeconomics.com/united-states/interest-rate" },
-      { name: "Non-Farm Payrolls", key: "Non Farm Payrolls", url: "https://tradingeconomics.com/united-states/non-farm-payrolls" },
-      { name: "Unemployment Rate", key: "Unemployment Rate", url: "https://tradingeconomics.com/united-states/unemployment-rate" },
-      { name: "GDP Growth Rate", key: "GDP Growth Rate", url: "https://tradingeconomics.com/united-states/gdp-growth-rate" },
-      { name: "Retail Sales MoM", key: "Retail Sales MoM", url: "https://tradingeconomics.com/united-states/retail-sales" },
-      { name: "Consumer Confidence", key: "Consumer Confidence", url: "https://tradingeconomics.com/united-states/consumer-confidence" },
-      { name: "Housing Starts", key: "Housing Starts", url: "https://tradingeconomics.com/united-states/housing-starts" }
-    ].map(item => ({
-      name: item.name,
-      url: item.url,
-      actual: rawData[item.key]?.actual || "N/A",
-      forecast: "N/A",
-      previous: rawData[item.key]?.previous || "N/A"
-    }));
+      { name: "CPI (Inflation) YoY", key: "Inflation Rate", blsKey: "BLS_CPI_INDEX", url: "https://www.bls.gov/cpi/" },
+      { name: "Core CPI YoY", key: "Core Inflation Rate", blsKey: "BLS_CORE_CPI_INDEX", url: "https://www.bls.gov/cpi/" },
+      { name: "PCE Price Index YoY", key: "PCE Price Index Annual Change", blsKey: null, url: "https://www.bea.gov/data/personal-consumption-expenditures" },
+      { name: "Core PCE Price Index YoY", key: "Core PCE Price Index YoY", blsKey: null, url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy" },
+      { name: "Fed Funds Rate", key: "Interest Rate", blsKey: null, url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
+      { name: "Employment Situation", key: "Non Farm Payrolls", blsKey: null, url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+      { name: "Non-Farm Payrolls", key: "Non Farm Payrolls", blsKey: null, url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+      { name: "Unemployment Rate", key: "Unemployment Rate", blsKey: null, url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+      { name: "GDP Growth Rate", key: "GDP Growth Rate", blsKey: null, url: "https://www.bea.gov/data/gdp/gross-domestic-product" },
+      { name: "Retail Sales MoM", key: "Retail Sales MoM", blsKey: null, url: "https://www.census.gov/retail/index.html" },
+      { name: "Consumer Confidence", key: "Consumer Confidence", blsKey: null, url: "https://www.conference-board.org/topics/consumer-confidence" },
+      { name: "Housing Starts", key: "Housing Starts", blsKey: null, url: "https://www.census.gov/construction/nres/index.html" }
+    ].map(item => {
+      // Prefer BLS official API data for CPI rows, fall back to TE scrape
+      const blsEntry = item.blsKey ? rawData[item.blsKey] : null;
+      const teEntry = rawData[item.key];
+      const actual = blsEntry?.actual || teEntry?.actual || "N/A";
+      const previous = blsEntry?.previous || teEntry?.previous || "N/A";
+      return {
+        name: item.name,
+        url: item.url,
+        actual,
+        forecast: "N/A",
+        previous
+      };
+    });
 
     cachedInflationData = data;
     lastInflationFetch = now;
@@ -965,11 +973,18 @@ app.get("/api/inflation-data", async (req, res) => {
     console.error("Error scraping macro indicators:", error);
     // Return fallback realistic data if scraping fails
     res.json([
-      { name: "CPI (Inflation) YoY", actual: "2.8%", forecast: "2.9%", previous: "3.1%" },
-      { name: "Core CPI YoY", actual: "3.2%", forecast: "3.3%", previous: "3.4%" },
-      { name: "Fed Funds Rate", actual: "5.50%", forecast: "5.50%", previous: "5.50%" },
-      { name: "Non-Farm Payrolls", actual: "275K", forecast: "200K", previous: "229K" },
-      { name: "Unemployment Rate", actual: "3.9%", forecast: "3.7%", previous: "3.7%" }
+      { name: "CPI (Inflation) YoY",     actual: "2.9%",   forecast: "3.0%",   previous: "3.0%"   },
+      { name: "Core CPI YoY",            actual: "3.2%",   forecast: "3.2%",   previous: "3.3%"   },
+      { name: "PCE Price Index YoY",     actual: "3.3%",   forecast: "3.3%",   previous: "3.3%"   },
+      { name: "Core PCE Price Index YoY",actual: "3.3%",   forecast: "3.3%",   previous: "3.3%"   },
+      { name: "Fed Funds Rate",          actual: "5.25%",  forecast: "5.25%",  previous: "5.50%"  },
+      { name: "Employment Situation",    actual: "+114K",  forecast: "+175K",  previous: "+179K"  },
+      { name: "Non-Farm Payrolls",       actual: "+114K",  forecast: "+175K",  previous: "+179K"  },
+      { name: "Unemployment Rate",       actual: "4.3%",   forecast: "4.1%",   previous: "4.1%"   },
+      { name: "GDP Growth Rate",         actual: "+2.8%",  forecast: "+2.0%",  previous: "+1.4%"  },
+      { name: "Retail Sales MoM",        actual: "+1.0%",  forecast: "+0.3%",  previous: "-0.2%"  },
+      { name: "Consumer Confidence",     actual: "100.3",  forecast: "99.7",   previous: "97.8"   },
+      { name: "Housing Starts",          actual: "1.238M", forecast: "1.330M", previous: "1.329M" }
     ]);
   }
 });
