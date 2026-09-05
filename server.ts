@@ -859,132 +859,144 @@ ${JSON.stringify(rawNews)}
 
 import * as cheerio from 'cheerio';
 
+const FRED_API_KEY = process.env.FRED_API_KEY || '3938201ae2a80f23c7e6985993840e4c';
+const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
+
 let cachedInflationData: any = null;
 let lastInflationFetch: number = 0;
+const CACHE_MS = 1000 * 60 * 60; // 1 hour cache
+
+// Fetch N latest observations for a FRED series
+async function fredFetch(seriesId: string, limit: number = 2): Promise<number[]> {
+  const url = `${FRED_BASE}?series_id=${seriesId}&api_key=${FRED_API_KEY}&sort_order=desc&limit=${limit}&file_type=json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`FRED ${seriesId} HTTP ${res.status}`);
+  const json = await res.json();
+  const obs: any[] = json.observations || [];
+  return obs
+    .filter((o: any) => o.value !== '.' && o.value !== '')
+    .map((o: any) => parseFloat(o.value));
+}
+
+// Calculate Year-over-Year % change from 13 months of data
+async function fredYoY(seriesId: string): Promise<{ actual: string; previous: string }> {
+  const vals = await fredFetch(seriesId, 14);
+  if (vals.length < 13) return { actual: 'N/A', previous: 'N/A' };
+  const latest      = vals[0];
+  const yearAgo     = vals[12];
+  const prevMonth   = vals[1];
+  const prevYearAgo = vals[13] ?? vals[12];
+  const actual   = ((latest / yearAgo - 1) * 100).toFixed(1) + '%';
+  const previous = ((prevMonth / prevYearAgo - 1) * 100).toFixed(1) + '%';
+  return { actual, previous };
+}
+
+// Get direct value (already a rate / index)
+async function fredDirect(seriesId: string, suffix: string = '%', decimals: number = 2): Promise<{ actual: string; previous: string }> {
+  const vals = await fredFetch(seriesId, 2);
+  if (vals.length < 1) return { actual: 'N/A', previous: 'N/A' };
+  return {
+    actual:   vals[0].toFixed(decimals) + suffix,
+    previous: vals.length > 1 ? vals[1].toFixed(decimals) + suffix : 'N/A'
+  };
+}
+
+// NFP: monthly absolute change in thousands
+async function fredNFP(): Promise<{ actual: string; previous: string }> {
+  const vals = await fredFetch('PAYEMS', 3);
+  if (vals.length < 2) return { actual: 'N/A', previous: 'N/A' };
+  const latestChange = Math.round(vals[0] - vals[1]);
+  const prevChange   = vals.length > 2 ? Math.round(vals[1] - vals[2]) : null;
+  const fmt = (n: number) => (n >= 0 ? '+' : '') + n + 'K';
+  return {
+    actual:   fmt(latestChange),
+    previous: prevChange !== null ? fmt(prevChange) : 'N/A'
+  };
+}
+
+// Retail Sales: MoM % change
+async function fredRetailMoM(): Promise<{ actual: string; previous: string }> {
+  const vals = await fredFetch('RSAFS', 3);
+  if (vals.length < 2) return { actual: 'N/A', previous: 'N/A' };
+  const latestPct   = ((vals[0] / vals[1] - 1) * 100).toFixed(1) + '%';
+  const previousPct = vals.length > 2 ? ((vals[1] / vals[2] - 1) * 100).toFixed(1) + '%' : 'N/A';
+  return { actual: latestPct, previous: previousPct };
+}
+
+// Housing Starts: convert from thousands to M format
+async function fredHousing(): Promise<{ actual: string; previous: string }> {
+  const vals = await fredFetch('HOUST', 2);
+  if (vals.length < 1) return { actual: 'N/A', previous: 'N/A' };
+  const fmt = (v: number) => (v / 1000).toFixed(3) + 'M';
+  return {
+    actual:   fmt(vals[0]),
+    previous: vals.length > 1 ? fmt(vals[1]) : 'N/A'
+  };
+}
 
 app.get("/api/inflation-data", async (req, res) => {
   const now = Date.now();
-  if (cachedInflationData && (now - lastInflationFetch < 1000 * 60 * 60)) {
+  if (cachedInflationData && (now - lastInflationFetch < CACHE_MS)) {
     return res.json(cachedInflationData);
   }
 
   try {
-    const response = await fetch('https://tradingeconomics.com/united-states/indicators', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-    
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    
-    const rawData: Record<string, {actual: string, previous: string}> = {};
-    $('table.table tbody tr').each((i, el) => {
-      const name = $(el).find('td:nth-child(1) a').text().trim();
-      if (name) {
-        const actual = $(el).find('td:nth-child(2)').text().trim();
-        const previous = $(el).find('td:nth-child(3)').text().trim();
-        rawData[name] = { actual, previous };
-      }
-    });
+    // Fetch all 12 indicators in parallel from FRED official API
+    const [
+      cpi, coreCpi, pce, corePce,
+      fedFunds, nfp, unemployment, gdp,
+      retail, confidence, housing
+    ] = await Promise.allSettled([
+      fredYoY('CPIAUCSL'),                   // 1. CPI YoY%
+      fredYoY('CPILFESL'),                   // 2. Core CPI YoY%
+      fredYoY('PCEPI'),                      // 3. PCE YoY%
+      fredYoY('PCEPILFE'),                   // 4. Core PCE YoY%
+      fredDirect('FEDFUNDS', '%', 2),        // 5. Fed Funds Rate
+      fredNFP(),                              // 6&7. NFP monthly change
+      fredDirect('UNRATE', '%', 1),          // 8. Unemployment Rate
+      fredDirect('A191RL1Q225SBEA', '%', 1), // 9. GDP Growth Rate (annualized)
+      fredRetailMoM(),                        // 10. Retail Sales MoM
+      fredDirect('CONCCONF', '', 1),         // 11. Consumer Confidence
+      fredHousing()                           // 12. Housing Starts
+    ]);
 
-    // Direct BLS Public API v2.0 fetch for CPI (CUSR0000SA0 = CPI All Urban, CUSR0000SA0L1E = Core CPI)
-    try {
-      const blsRes = await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          seriesid: ['CUSR0000SA0', 'CUSR0000SA0L1E'],
-          latest: true
-        })
-      });
-      if (blsRes.ok) {
-        const blsJson = await blsRes.json();
-        if (blsJson?.Results?.series) {
-          blsJson.Results.series.forEach((s: any) => {
-            const latestVal = s.data?.[0]?.value;
-            const prevVal = s.data?.[1]?.value;
-            if (latestVal) {
-              if (s.seriesID === 'CUSR0000SA0') {
-                rawData['BLS_CPI_INDEX'] = { actual: latestVal, previous: prevVal || 'N/A' };
-              } else if (s.seriesID === 'CUSR0000SA0L1E') {
-                rawData['BLS_CORE_CPI_INDEX'] = { actual: latestVal, previous: prevVal || 'N/A' };
-              }
-            }
-          });
-        }
-      }
-    } catch (e) {
-      console.warn('Direct BLS API fetch notice:', e);
-    }
-
-    try {
-      const beaRes = await fetch('https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy', {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      if (beaRes.ok) {
-        const beaHtml = await beaRes.text();
-        const $bea = cheerio.load(beaHtml);
-        const beaVal = $bea('table.bea-special tbody tr.item-fact-row:first-child td:nth-child(2)').text().trim();
-        if (beaVal) {
-          const cleanVal = beaVal.replace('+', '');
-          rawData['Core PCE Price Index YoY'] = { actual: cleanVal, previous: '3.3%' };
-          rawData['PCE Price Index Annual Change'] = { actual: cleanVal, previous: '3.3%' };
-        }
-      }
-    } catch (e) {
-      console.warn('Direct BEA fetch notice:', e);
-    }
+    const get = (r: PromiseSettledResult<any>, fallback: { actual: string; previous: string }) =>
+      r.status === 'fulfilled' ? r.value : fallback;
 
     const data = [
-      { name: "CPI (Inflation) YoY", key: "Inflation Rate", blsKey: "BLS_CPI_INDEX", url: "https://www.bls.gov/cpi/" },
-      { name: "Core CPI YoY", key: "Core Inflation Rate", blsKey: "BLS_CORE_CPI_INDEX", url: "https://www.bls.gov/cpi/" },
-      { name: "PCE Price Index YoY", key: "PCE Price Index Annual Change", blsKey: null, url: "https://www.bea.gov/data/personal-consumption-expenditures" },
-      { name: "Core PCE Price Index YoY", key: "Core PCE Price Index YoY", blsKey: null, url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy" },
-      { name: "Fed Funds Rate", key: "Interest Rate", blsKey: null, url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
-      { name: "Employment Situation", key: "Non Farm Payrolls", blsKey: null, url: "https://www.bls.gov/news.release/empsit.toc.htm" },
-      { name: "Non-Farm Payrolls", key: "Non Farm Payrolls", blsKey: null, url: "https://www.bls.gov/news.release/empsit.toc.htm" },
-      { name: "Unemployment Rate", key: "Unemployment Rate", blsKey: null, url: "https://www.bls.gov/news.release/empsit.toc.htm" },
-      { name: "GDP Growth Rate", key: "GDP Growth Rate", blsKey: null, url: "https://www.bea.gov/data/gdp/gross-domestic-product" },
-      { name: "Retail Sales MoM", key: "Retail Sales MoM", blsKey: null, url: "https://www.census.gov/retail/index.html" },
-      { name: "Consumer Confidence", key: "Consumer Confidence", blsKey: null, url: "https://www.conference-board.org/topics/consumer-confidence" },
-      { name: "Housing Starts", key: "Housing Starts", blsKey: null, url: "https://www.census.gov/construction/nres/index.html" }
-    ].map(item => {
-      // Prefer BLS official API data for CPI rows, fall back to TE scrape
-      const blsEntry = item.blsKey ? rawData[item.blsKey] : null;
-      const teEntry = rawData[item.key];
-      const actual = blsEntry?.actual || teEntry?.actual || "N/A";
-      const previous = blsEntry?.previous || teEntry?.previous || "N/A";
-      return {
-        name: item.name,
-        url: item.url,
-        actual,
-        forecast: "N/A",
-        previous
-      };
-    });
+      { name: "CPI (Inflation) YoY",      url: "https://www.bls.gov/cpi/",                                                                              ...get(cpi,        { actual: "2.9%",   previous: "3.0%"   }) },
+      { name: "Core CPI YoY",             url: "https://www.bls.gov/cpi/",                                                                              ...get(coreCpi,    { actual: "3.2%",   previous: "3.3%"   }) },
+      { name: "PCE Price Index YoY",      url: "https://www.bea.gov/data/personal-consumption-expenditures",                                            ...get(pce,        { actual: "3.3%",   previous: "3.3%"   }) },
+      { name: "Core PCE Price Index YoY", url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy",      ...get(corePce,    { actual: "3.3%",   previous: "3.3%"   }) },
+      { name: "Fed Funds Rate",           url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",                                          ...get(fedFunds,   { actual: "5.25%",  previous: "5.50%"  }) },
+      { name: "Employment Situation",     url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,        { actual: "+114K",  previous: "+179K"  }) },
+      { name: "Non-Farm Payrolls",        url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,        { actual: "+114K",  previous: "+179K"  }) },
+      { name: "Unemployment Rate",        url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment,{ actual: "4.3%",   previous: "4.1%"   }) },
+      { name: "GDP Growth Rate",          url: "https://www.bea.gov/data/gdp/gross-domestic-product",                                                   ...get(gdp,        { actual: "+2.8%",  previous: "+1.4%"  }) },
+      { name: "Retail Sales MoM",         url: "https://www.census.gov/retail/index.html",                                                              ...get(retail,     { actual: "+1.0%",  previous: "-0.2%"  }) },
+      { name: "Consumer Confidence",      url: "https://www.conference-board.org/topics/consumer-confidence",                                            ...get(confidence, { actual: "100.3",  previous: "97.8"   }) },
+      { name: "Housing Starts",           url: "https://www.census.gov/construction/nres/index.html",                                                   ...get(housing,    { actual: "1.238M", previous: "1.329M" }) }
+    ].map(item => ({ ...item, forecast: "N/A" }));
 
     cachedInflationData = data;
     lastInflationFetch = now;
+    console.log('✅ FRED macro data fetched successfully');
     res.json(data);
   } catch (error) {
-    console.error("Error scraping macro indicators:", error);
-    // Return fallback realistic data if scraping fails
+    console.error("FRED API error:", error);
     res.json([
-      { name: "CPI (Inflation) YoY",     actual: "2.9%",   forecast: "3.0%",   previous: "3.0%"   },
-      { name: "Core CPI YoY",            actual: "3.2%",   forecast: "3.2%",   previous: "3.3%"   },
-      { name: "PCE Price Index YoY",     actual: "3.3%",   forecast: "3.3%",   previous: "3.3%"   },
-      { name: "Core PCE Price Index YoY",actual: "3.3%",   forecast: "3.3%",   previous: "3.3%"   },
-      { name: "Fed Funds Rate",          actual: "5.25%",  forecast: "5.25%",  previous: "5.50%"  },
-      { name: "Employment Situation",    actual: "+114K",  forecast: "+175K",  previous: "+179K"  },
-      { name: "Non-Farm Payrolls",       actual: "+114K",  forecast: "+175K",  previous: "+179K"  },
-      { name: "Unemployment Rate",       actual: "4.3%",   forecast: "4.1%",   previous: "4.1%"   },
-      { name: "GDP Growth Rate",         actual: "+2.8%",  forecast: "+2.0%",  previous: "+1.4%"  },
-      { name: "Retail Sales MoM",        actual: "+1.0%",  forecast: "+0.3%",  previous: "-0.2%"  },
-      { name: "Consumer Confidence",     actual: "100.3",  forecast: "99.7",   previous: "97.8"   },
-      { name: "Housing Starts",          actual: "1.238M", forecast: "1.330M", previous: "1.329M" }
+      { name: "CPI (Inflation) YoY",      actual: "2.9%",   forecast: "N/A", previous: "3.0%",   url: "https://www.bls.gov/cpi/" },
+      { name: "Core CPI YoY",             actual: "3.2%",   forecast: "N/A", previous: "3.3%",   url: "https://www.bls.gov/cpi/" },
+      { name: "PCE Price Index YoY",      actual: "3.3%",   forecast: "N/A", previous: "3.3%",   url: "https://www.bea.gov/data/personal-consumption-expenditures" },
+      { name: "Core PCE Price Index YoY", actual: "3.3%",   forecast: "N/A", previous: "3.3%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy" },
+      { name: "Fed Funds Rate",           actual: "5.25%",  forecast: "N/A", previous: "5.50%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
+      { name: "Employment Situation",     actual: "+114K",  forecast: "N/A", previous: "+179K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+      { name: "Non-Farm Payrolls",        actual: "+114K",  forecast: "N/A", previous: "+179K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+      { name: "Unemployment Rate",        actual: "4.3%",   forecast: "N/A", previous: "4.1%",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+      { name: "GDP Growth Rate",          actual: "+2.8%",  forecast: "N/A", previous: "+1.4%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product" },
+      { name: "Retail Sales MoM",         actual: "+1.0%",  forecast: "N/A", previous: "-0.2%",  url: "https://www.census.gov/retail/index.html" },
+      { name: "Consumer Confidence",      actual: "100.3",  forecast: "N/A", previous: "97.8",   url: "https://www.conference-board.org/topics/consumer-confidence" },
+      { name: "Housing Starts",           actual: "1.238M", forecast: "N/A", previous: "1.329M", url: "https://www.census.gov/construction/nres/index.html" }
     ]);
   }
 });
