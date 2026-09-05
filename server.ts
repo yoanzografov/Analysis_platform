@@ -864,7 +864,7 @@ const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
 
 let cachedInflationData: any = null;
 let lastInflationFetch: number = 0;
-const CACHE_MS = 1000 * 60 * 60; // 1 hour cache
+const CACHE_MS = 1000 * 60 * 60 * 24; // 24 hours cache (FRED data updates daily)
 
 // Fetch N latest observations for a FRED series
 async function fredFetch(seriesId: string, limit: number = 2): Promise<number[]> {
@@ -1861,7 +1861,7 @@ app.get("/api/stock-quotes", async (req, res) => {
 
 let cachedFngData: any = null;
 let lastFngFetchTime = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 минути кеш
+const CACHE_DURATION = 30 * 60 * 1000; // 30 минути кеш (намалява CPU usage)
 
 app.get("/api/fng", async (req, res) => {
   try {
