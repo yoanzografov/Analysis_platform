@@ -956,7 +956,7 @@ app.get("/api/inflation-data", async (req, res) => {
       fredDirect('UNRATE', '%', 1),          // 8. Unemployment Rate
       fredDirect('A191RL1Q225SBEA', '%', 1), // 9. GDP Growth Rate (annualized)
       fredRetailMoM(),                        // 10. Retail Sales MoM
-      fredDirect('CONCCONF', '', 1),         // 11. Consumer Confidence
+      fredDirect('UMCSENT', '', 1),         // 11. Consumer Sentiment (Univ. of Michigan)
       fredHousing()                           // 12. Housing Starts
     ]);
 
