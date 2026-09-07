@@ -699,19 +699,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
         {/* Top Controls & Live Signals Counter Badge */}
         <div className="flex items-center gap-3">
-          {/* Live Signals Counter Badge in Top Right */}
-          <div className="flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border/80 shadow-xs" title="Брой червени, жълти и зелени сигнали за компанията">
-            <span className="text-[11px] font-black text-ink-muted uppercase tracking-wider">Сигнали:</span>
-            <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 flex items-center gap-1">
-              🟢 {flagsSummary.green}
-            </span>
-            <span className="text-xs font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 flex items-center gap-1">
-              🟡 {flagsSummary.yellow}
-            </span>
-            <span className="text-xs font-black text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 flex items-center gap-1">
-              🔴 {flagsSummary.red}
-            </span>
-          </div>
 
           <div className="flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border">
             <label className="text-xs font-bold text-ink-faint uppercase">Актив:</label>
