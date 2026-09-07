@@ -694,7 +694,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             <h2 className="font-black text-base text-ink tracking-tight flex items-center gap-2">
               Stock Valuation Checklist Table
             </h2>
-            <p className="text-xs text-ink-muted">Инструмент за финансова оценка на отделни компании преди добавяне към Платформата</p>
           </div>
         </div>
 
@@ -746,7 +745,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             onClick={() => {
               window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
             }}
-            className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-xs border border-indigo-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
             title="Отвори в нов прозорец"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -755,7 +754,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
           <button
             onClick={handleClearAll}
-            className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs border border-red-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold text-xs border border-red-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
             title="Изчисти данните"
           >
             <RefreshCw className="w-3.5 h-3.5" />
