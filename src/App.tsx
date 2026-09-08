@@ -31,6 +31,7 @@ import {
   Bell, 
   Briefcase,
   Sparkles,
+  ShieldCheck,
   Play, 
   Calendar,
   Square, 
@@ -1434,21 +1435,6 @@ export default function App() {
               </div>
 
               <a
-                href="#flags"
-                onClick={(e) => {
-                  if (!e.ctrlKey && !e.metaKey && e.button === 0) {
-                    e.preventDefault();
-                    setShowFinancialFlagsModal(true);
-                    setIsUsefulLinksMenuOpen(false);
-                  }
-                }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
-              >
-                <Table className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Financial Flags (🟢🟡🔴)</span>
-              </a>
-
-              <a
                 href="#checklist"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1747,25 +1733,47 @@ export default function App() {
       )}
     </div>
 
-    {/* Inspirational Quote of the Day Footer */}
-    <div className="border-t border-border/30 pt-6 pb-12 flex flex-col items-center text-center max-w-2xl mx-auto px-4">
-      <button
-        type="button"
-        onClick={() => setIsQuoteModalOpen(true)}
-        className="group flex flex-col items-center gap-2 p-3.5 rounded-2xl hover:bg-card/70 border border-border/40 hover:border-amber-500/30 transition-all cursor-pointer shadow-2xs"
-        title="Отвори пълния цитат и инвестиционна мъдрост"
-      >
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-black uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Цитат на Деня • Уорън Бъфет</span>
-        </div>
-        <p className="text-xs sm:text-sm text-ink-muted font-serif italic leading-relaxed group-hover:text-ink transition-colors px-2">
-          „Цената е това, което плащаш; стойността е това, което получаваш.“
-        </p>
-        <span className="text-[10px] text-ink-faint font-sans font-extrabold uppercase tracking-wide flex items-center gap-1 group-hover:text-amber-400 transition-colors">
-          Виж пълен цитат (BG / EN) →
-        </span>
-      </button>
+    {/* Footer Navigation Cards: Quote of the Day & Financial Statements Flags */}
+    <div className="border-t border-border/30 pt-6 pb-12 max-w-4xl mx-auto px-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Quote of the Day Card */}
+        <button
+          type="button"
+          onClick={() => setIsQuoteModalOpen(true)}
+          className="group flex flex-col items-center justify-between text-center p-4 rounded-2xl bg-card/40 hover:bg-card/80 border border-border/50 hover:border-amber-500/40 transition-all cursor-pointer shadow-2xs"
+          title="Отвори пълния цитат и инвестиционна мъдрост"
+        >
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[11px] font-black uppercase tracking-wider mb-2">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Цитат на Деня • Уорън Бъфет</span>
+          </div>
+          <p className="text-xs sm:text-sm text-ink-muted font-serif italic leading-relaxed group-hover:text-ink transition-colors px-2 mb-3">
+            „Цената е това, което плащаш; стойността е това, което получаваш.“
+          </p>
+          <span className="text-[10px] text-ink-faint font-sans font-extrabold uppercase tracking-wide flex items-center gap-1 group-hover:text-amber-400 transition-colors mt-auto">
+            Виж пълен цитат (BG / EN) →
+          </span>
+        </button>
+
+        {/* Financial Flags Matrix Card */}
+        <button
+          type="button"
+          onClick={() => setShowFinancialFlagsModal(true)}
+          className="group flex flex-col items-center justify-between text-center p-4 rounded-2xl bg-card/40 hover:bg-card/80 border border-border/50 hover:border-emerald-500/40 transition-all cursor-pointer shadow-2xs"
+          title="Отвори пълен одит и критерии за финансови флагове (Green, Yellow, Red Flags)"
+        >
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[11px] font-black uppercase tracking-wider mb-2">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Financial Statements Flags • 🟢🟡🔴</span>
+          </div>
+          <p className="text-xs sm:text-sm text-ink-muted font-sans leading-relaxed group-hover:text-ink transition-colors px-2 mb-3">
+            Пълен одит на Income Statement, Balance Sheet и Cash Flow по методологията на BojanFin.
+          </p>
+          <span className="text-[10px] text-ink-faint font-sans font-extrabold uppercase tracking-wide flex items-center gap-1 group-hover:text-emerald-400 transition-colors mt-auto">
+            Отвори Financial Flags матрица →
+          </span>
+        </button>
+      </div>
     </div>
 
 
@@ -1880,6 +1888,7 @@ export default function App() {
     isOpen={showFinancialFlagsModal}
     onClose={() => { setShowFinancialFlagsModal(false); clearHashUrl(); }}
     stocks={stocks}
+    stock={selectedStockForAi}
   />
 
   {/* Welcome Investor Wisdom Quote Modal */}
