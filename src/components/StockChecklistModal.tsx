@@ -115,6 +115,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [activeInfoModalRow, setActiveInfoModalRow] = useState<SheetRowDefinition | null>(null);
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
+  const [isFetchingQuote, setIsFetchingQuote] = useState(false);
   
   // Interactive Checklist State: Track checked rows
   const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>({});
@@ -239,9 +240,45 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     }
   }, [isOpen, stock, stocks]);
 
-  const handleSelectTicker = (sym: string) => {
+  const handleSelectTicker = async (sym: string) => {
     setSelectedTicker(sym);
-    updateStockRowDetails(sym);
+    updateStockRowDetails(sym); // fill immediately from local stocks/DB as baseline
+
+    if (!sym) return;
+    const cleanSym = sym.toUpperCase().trim();
+
+    // Live fetch from /api/stock-quotes — same source as Interactive Table (Yahoo Finance)
+    setIsFetchingQuote(true);
+    try {
+      const res = await fetch(`/api/stock-quotes?tickers=${encodeURIComponent(cleanSym)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const q = data[cleanSym] || data[cleanSym.split('.')[0]];
+        if (q) {
+          setUserInputs(prev => {
+            const next = { ...prev };
+            // Row 7: Current Price
+            if (q.currentPrice > 0) next['7'] = q.currentPrice.toFixed(2);
+            // Row 10: P/E Ratio — live from Yahoo Finance (trailingPE)
+            if (q.peRatio && q.peRatio > 0) next['10'] = q.peRatio.toFixed(2);
+            // Row 24: EPS
+            if (q.eps && q.eps !== 0) next['24'] = q.eps.toFixed(2);
+            // Row 9: Market Cap
+            if (q.marketCap && q.marketCap > 0) {
+              const mc = q.marketCap;
+              if (mc >= 1e12) next['9'] = `$${(mc / 1e12).toFixed(2)}T`;
+              else if (mc >= 1e9) next['9'] = `$${(mc / 1e9).toFixed(2)}B`;
+              else if (mc >= 1e6) next['9'] = `$${(mc / 1e6).toFixed(2)}M`;
+            }
+            return next;
+          });
+        }
+      }
+    } catch (e) {
+      // silently fall back to local data already filled
+    } finally {
+      setIsFetchingQuote(false);
+    }
   };
 
   const handleInputChange = (key: string | number, val: string) => {
@@ -717,6 +754,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 )
               ))}
             </select>
+            {isFetchingQuote && (
+              <span className="text-[10px] text-indigo-400 font-bold animate-pulse flex items-center gap-1">
+                <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                Live…
+              </span>
+            )}
           </div>
 
           <button
