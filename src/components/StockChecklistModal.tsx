@@ -253,7 +253,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       const res = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(cleanSym)}`);
       if (res.ok) {
         const data = await res.json();
-        const q = data[cleanSym] || data[cleanSym.split('.')[0]];
+        const quotes = data.quotes || data; // server returns { quotes: {...}, source: "..." }
+        const q = quotes[cleanSym] || quotes[cleanSym.split('.')[0]];
         if (q) {
           setUserInputs(prev => {
             const next = { ...prev };
