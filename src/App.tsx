@@ -1411,16 +1411,6 @@ export default function App() {
           <span>Calendar</span>
         </button>
 
-        {/* 6. Quote of the Day Button */}
-        <button
-          onClick={() => setIsQuoteModalOpen(true)}
-          className="h-9 px-3 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-sans text-xs font-black uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none"
-          title="Инвестиционна мъдрост - Уорън Бъфет"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span>Цитат</span>
-        </button>
-
         {/* 6. Tools Dropdown Button */}
         <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsUsefulLinksMenuOpen(false); }}>
           <button
@@ -1755,6 +1745,27 @@ export default function App() {
           <CsvUploader onDataLoaded={handleSheetSynced} />
         </div>
       )}
+    </div>
+
+    {/* Inspirational Quote of the Day Footer */}
+    <div className="border-t border-border/30 pt-6 pb-12 flex flex-col items-center text-center max-w-2xl mx-auto px-4">
+      <button
+        type="button"
+        onClick={() => setIsQuoteModalOpen(true)}
+        className="group flex flex-col items-center gap-2 p-3.5 rounded-2xl hover:bg-card/70 border border-border/40 hover:border-amber-500/30 transition-all cursor-pointer shadow-2xs"
+        title="Отвори пълния цитат и инвестиционна мъдрост"
+      >
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-black uppercase tracking-wider">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Цитат на Деня • Уорън Бъфет</span>
+        </div>
+        <p className="text-xs sm:text-sm text-ink-muted font-serif italic leading-relaxed group-hover:text-ink transition-colors px-2">
+          „Цената е това, което плащаш; стойността е това, което получаваш.“
+        </p>
+        <span className="text-[10px] text-ink-faint font-sans font-extrabold uppercase tracking-wide flex items-center gap-1 group-hover:text-amber-400 transition-colors">
+          Виж пълен цитат (BG / EN) →
+        </span>
+      </button>
     </div>
 
 
