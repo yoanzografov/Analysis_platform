@@ -1102,8 +1102,14 @@ export default function App() {
     setActiveMainTab('alerts');
   };
 
-  const handleUpdateAlert = (id: string, ticker: string, criteria: 'ABOVE' | 'BELOW', targetPrice: number) => {
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, ticker, criteria, targetPrice } : a));
+  const handleUpdateAlert = (id: string, ticker: string, criteria: 'ABOVE' | 'BELOW', targetPrice: number, isActive?: boolean) => {
+    setAlerts(prev => prev.map(a => a.id === id ? { 
+      ...a, 
+      ticker, 
+      criteria, 
+      targetPrice,
+      isActive: isActive !== undefined ? isActive : true 
+    } : a));
 
     const newLog: NotificationLog = {
       id: `${Date.now()}-${Math.random()}`,
@@ -1113,6 +1119,8 @@ export default function App() {
       type: 'info'
     };
     setLogs(prev => [newLog, ...prev]);
+    setActiveAlertToast(`🔔 Сигналът за ${ticker} беше обновен: ${criteria === 'ABOVE' ? 'над' : 'под'} $${targetPrice}!`);
+    setTimeout(() => setActiveAlertToast(null), 4000);
   };
 
   const handleDeleteAlert = (id: string) => {
