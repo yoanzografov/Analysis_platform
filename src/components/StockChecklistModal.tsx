@@ -258,16 +258,20 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         if (q) {
           setUserInputs(prev => {
             const next = { ...prev };
+            // Row 1: Company
+            if (q.companyName && !next['1']) next['1'] = q.companyName;
             // Row 7: Current Price
             if (q.currentPrice > 0) next['7'] = q.currentPrice.toFixed(2);
-            // Row 10: P/E Ratio — live from Yahoo Finance (trailingPE)
-            if (q.peRatio && q.peRatio > 0) next['10'] = q.peRatio.toFixed(2);
-            // Row 24: EPS
-            if (q.eps && q.eps !== 0) next['24'] = q.eps.toFixed(2);
+            // Row 8: 52 week low / 52 week high
+            if (q.low52 && q.high52) next['8'] = `${q.low52.toFixed(2)} / ${q.high52.toFixed(2)}`;
             // Row 9: Market Cap (in thousands)
             if (q.marketCap && q.marketCap > 0) {
               next['9'] = Math.round(q.marketCap / 1000).toLocaleString('en-US');
             }
+            // Row 10: P/E Ratio — live from TradingView / Yahoo
+            if (q.peRatio && q.peRatio > 0) next['10'] = q.peRatio.toFixed(2);
+            // Row 24: EPS
+            if (q.eps && q.eps !== 0) next['24'] = q.eps.toFixed(2);
             return next;
           });
         }

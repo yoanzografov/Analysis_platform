@@ -184,6 +184,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  // Add stock modal state
  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
+  const [checklistModalStock, setChecklistModalStock] = useState<Stock | null>(null);
   const [isQuickAlertOpen, setIsQuickAlertOpen] = useState(false);
   const [alertModalTicker, setAlertModalTicker] = useState('AAPL');
   const [alertModalCriteria, setAlertModalCriteria] = useState<'ABOVE' | 'BELOW'>('ABOVE');
@@ -862,6 +863,18 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
             D
           </button>
 
+          {/* Stock Valuation Checklist Badge [C] */}
+          <button
+            onClick={() => {
+              setChecklistModalStock(stock);
+              setIsChecklistOpen(true);
+            }}
+            className="w-5 h-5 rounded-full bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 font-black text-[10px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
+            title={`Checklist (C) - Отвори Stock Valuation Checklist за ${stock.ticker}`}
+          >
+            C
+          </button>
+
 
           {/* Quick Price Alert Badge [🔔] */}
           <button
@@ -1470,10 +1483,15 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  </div>
  )}
 
- <StockChecklistModal
+  <StockChecklistModal
     isOpen={isChecklistOpen}
-    onClose={() => setIsChecklistOpen(false)}
+    onClose={() => {
+      setIsChecklistOpen(false);
+      setChecklistModalStock(null);
+    }}
+    stock={checklistModalStock || undefined}
     stocks={stocks}
+    onSaveToTable={onAddStock}
   />
  
  </div>
