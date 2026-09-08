@@ -97,6 +97,53 @@ async function fetchYahooV8Single(symbol: string): Promise<any | null> {
   };
 }
 
+// TradingView Scanner for live P/E (TTM), EPS (TTM), Price and Market Cap
+async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string, { peRatio?: number; eps?: number; marketCap?: number; currentPrice?: number }>> {
+  const result: Record<string, { peRatio?: number; eps?: number; marketCap?: number; currentPrice?: number }> = {};
+  const plainTickers = [...new Set(tickers.map(t => t.split('.')[0].split(':')[1] || t.split('.')[0]))];
+  if (plainTickers.length === 0) return result;
+
+  const scanners = [
+    'https://scanner.tradingview.com/america/scan',
+    'https://scanner.tradingview.com/germany/scan'
+  ];
+
+  await Promise.allSettled(scanners.map(async (url) => {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filter: [
+            { left: 'name', operation: 'in_range', right: plainTickers }
+          ],
+          columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
+        })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        for (const row of json.data || []) {
+          const name = (row.d?.[0] || '').toUpperCase();
+          const close = row.d?.[1];
+          const pe = row.d?.[2];
+          const eps = row.d?.[3];
+          const mcap = row.d?.[4];
+          if (name) {
+            result[name] = {
+              currentPrice: typeof close === 'number' && close > 0 ? parseFloat(close.toFixed(2)) : undefined,
+              peRatio: typeof pe === 'number' && pe > 0 ? parseFloat(pe.toFixed(2)) : undefined,
+              eps: typeof eps === 'number' ? parseFloat(eps.toFixed(2)) : undefined,
+              marketCap: typeof mcap === 'number' && mcap > 0 ? mcap : undefined
+            };
+          }
+        }
+      }
+    } catch {}
+  }));
+
+  return result;
+}
+
 function buildResult(q: any) {
   const price = q.regularMarketPrice ?? q.bid;
   if (price == null) return null;
@@ -237,9 +284,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         } catch {}
       }));
+    // --- Step 4: TradingView Scanner for live P/E (TTM), EPS (TTM), and Market Cap ---
+    try {
+      const tvData = await fetchTradingViewScanner(tickers);
+      for (const t of tickers) {
+        const plain = t.split('.')[0].split(':')[1] || t.split('.')[0];
+        const tv = tvData[plain] || tvData[t];
+        if (tv) {
+          if (!results[t]) {
+            results[t] = {
+              currentPrice: tv.currentPrice ?? 0,
+              dailyChangePct: 0,
+              companyName: t
+            };
+          }
+          if (tv.peRatio !== undefined) results[t].peRatio = tv.peRatio;
+          if (tv.eps !== undefined) results[t].eps = tv.eps;
+          if (tv.marketCap !== undefined && !results[t].marketCap) results[t].marketCap = tv.marketCap;
+          if (tv.currentPrice !== undefined && (!results[t].currentPrice || results[t].currentPrice === 0)) {
+            results[t].currentPrice = tv.currentPrice;
+          }
+          const baseSym = t.split('.')[0].split(':')[1] || t.split('.')[0];
+          if (results[baseSym]) {
+            if (tv.peRatio !== undefined) results[baseSym].peRatio = tv.peRatio;
+            if (tv.eps !== undefined) results[baseSym].eps = tv.eps;
+          }
+        }
+      }
+    } catch (e: any) {
+      console.warn("TradingView scanner merge failed:", e?.message);
     }
 
-    return res.json({ quotes: results, source: "vercel-yahoo-v7+v8+finnhub", count: Object.keys(results).length });
+    return res.json({ quotes: results, source: "vercel-yahoo+tv-scanner+finnhub", count: Object.keys(results).length });
 
   } catch (err: any) {
     console.error("API handler error:", err.message);

@@ -1847,7 +1847,56 @@ app.get("/api/stock-quotes", async (req, res) => {
       }
     }
 
-    return res.json({ quotes: results, source: "live-yahoo-finance2" });
+    // TradingView Scanner override for live P/E (TTM), EPS (TTM), and Market Cap
+    try {
+      const plainTickers = [...new Set(tickers.map(t => t.split('.')[0].split(':')[1] || t.split('.')[0]))];
+      if (plainTickers.length > 0) {
+        const scanners = [
+          'https://scanner.tradingview.com/america/scan',
+          'https://scanner.tradingview.com/germany/scan'
+        ];
+        await Promise.allSettled(scanners.map(async (url) => {
+          try {
+            const tvRes = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                filter: [{ left: 'name', operation: 'in_range', right: plainTickers }],
+                columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
+              })
+            });
+            if (tvRes.ok) {
+              const tvJson = await tvRes.json() as any;
+              for (const row of tvJson.data || []) {
+                const name = (row.d?.[0] || '').toUpperCase();
+                const pe = row.d?.[2];
+                const eps = row.d?.[3];
+                const mcap = row.d?.[4];
+                if (name) {
+                  for (const origTicker of tickers) {
+                    const plain = origTicker.split('.')[0].split(':')[1] || origTicker.split('.')[0];
+                    if (plain === name) {
+                      if (!results[origTicker]) results[origTicker] = { currentPrice: 0, dailyChangePct: 0 };
+                      if (typeof pe === 'number' && pe > 0) results[origTicker].peRatio = parseFloat(pe.toFixed(2));
+                      if (typeof eps === 'number') results[origTicker].eps = parseFloat(eps.toFixed(2));
+                      if (typeof mcap === 'number' && mcap > 0 && !results[origTicker].marketCap) results[origTicker].marketCap = mcap;
+                      if (results[name]) {
+                        if (typeof pe === 'number' && pe > 0) results[name].peRatio = parseFloat(pe.toFixed(2));
+                        if (typeof eps === 'number') results[name].eps = parseFloat(eps.toFixed(2));
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } catch {}
+        }));
+      }
+    } catch (err) {
+      console.warn("TradingView scanner live sync notice:", err);
+    }
+
+    return res.json({ quotes: results, source: "live-yahoo-and-tradingview" });
 
   } catch (error: any) {
     console.error("Грешка при обслужване на котировки:", error.message);
