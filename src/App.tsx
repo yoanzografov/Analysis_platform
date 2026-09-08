@@ -1284,22 +1284,42 @@ export default function App() {
 
   {/* Dashboard Header Bar */}
   <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-[100] mb-4">
-      <div 
-        onClick={() => setShowLogoModal(true)}
-        className="flex items-center gap-3 max-w-full cursor-pointer group"
-        title="Кликнете за преглед на логото в пълен размер"
-      >
-        <img 
-          src="/rayves-logo.jpg" 
-          alt="RayVes Capital" 
-          className="h-11 w-auto rounded-xl border border-amber-500/30 object-contain shadow-xs bg-white p-0.5 shrink-0 group-hover:scale-105 transition-transform" 
-        />
-        <div>
-          <h1 className="text-lg sm:text-2xl font-black text-indigo-400 font-sans tracking-tight uppercase leading-none group-hover:text-indigo-300 transition-colors">
-            RAYVES.COM
-          </h1>
-          <span className="text-[11px] font-bold text-ink-muted tracking-wide block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</span>
+      <div className="flex items-center justify-between w-full flex-wrap sm:flex-nowrap gap-3">
+        <div 
+          onClick={() => setShowLogoModal(true)}
+          className="flex items-center gap-3 max-w-full cursor-pointer group"
+          title="Кликнете за преглед на логото в пълен размер"
+        >
+          <img 
+            src="/rayves-logo.jpg" 
+            alt="RayVes Capital" 
+            className="h-11 w-auto rounded-xl border border-amber-500/30 object-contain shadow-xs bg-white p-0.5 shrink-0 group-hover:scale-105 transition-transform" 
+          />
+          <div>
+            <h1 className="text-lg sm:text-2xl font-black text-indigo-400 font-sans tracking-tight uppercase leading-none group-hover:text-indigo-300 transition-colors">
+              RAYVES.COM
+            </h1>
+            <span className="text-[11px] font-bold text-ink-muted tracking-wide block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</span>
+          </div>
         </div>
+
+        {/* User Account Status Indicator (горе в дясно на нивото на RAYVES.COM) */}
+        <button
+          onClick={() => setIsAuthModalOpen(true)}
+          className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+            currentUser
+              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+              : 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/25 uppercase'
+          }`}
+          title={currentUser ? `Влезли сте като ${currentUser.email || currentUser.displayName} • Профил / Изход` : 'Вход / Синхронизация'}
+        >
+          <Cloud className={`w-3.5 h-3.5 shrink-0 ${currentUser ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
+          <span>
+            {currentUser 
+              ? `👤 ${currentUser.displayName || (currentUser.email ? (currentUser.email.toLowerCase().startsWith('yoan') ? 'Yoan Zografov' : currentUser.email.split('@')[0]) : 'Yoan Zografov')} (🟢 ON)`
+              : '🔑 Вход / Синхронизация'}
+          </span>
+        </button>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap justify-start">
@@ -1384,25 +1404,7 @@ export default function App() {
           )}
         </div>
 
-        {/* 4. Header button for Cloud Sync / Account Auth (Email Login) */}
-        <button
-          onClick={() => setIsAuthModalOpen(true)}
-          className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
-            currentUser
-              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
-              : 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/25 uppercase'
-          }`}
-          title={currentUser ? `Влезли сте като ${currentUser.email}` : 'Вход / Синхронизация'}
-        >
-          <Cloud className={`w-3.5 h-3.5 shrink-0 ${currentUser ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
-          <span>
-            {currentUser 
-              ? `👤 ${currentUser.displayName || currentUser.email?.split('@')[0]} (🟢 ON)`
-              : '🔑 Вход / Синхронизация'}
-          </span>
-        </button>
-
-        {/* 5. Header button for TradingView Economic Calendar Modal */}
+        {/* 4. Header button for TradingView Economic Calendar Modal */}
         <button
           onClick={() => setShowEconomicCalendarModal(true)}
           className="h-9 px-3.5 rounded-xl border border-border bg-card text-ink-muted hover:text-ink hover:bg-card-hover hover:border-indigo-500/30 font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none"
