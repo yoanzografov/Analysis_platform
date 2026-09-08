@@ -103,32 +103,57 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
   const plainTickers = [...new Set(tickers.map(t => t.split('.')[0].split(':')[1] || t.split('.')[0]))];
   if (plainTickers.length === 0) return result;
 
-  const scanners = [
-    'https://scanner.tradingview.com/america/scan',
-    'https://scanner.tradingview.com/germany/scan'
-  ];
+  // 1. Query US scanner first (takes priority for all US stocks, avoiding collisions with European penny stocks like NEE)
+  try {
+    const resUS = await fetch('https://scanner.tradingview.com/america/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: [{ left: 'name', operation: 'in_range', right: plainTickers }],
+        columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
+      })
+    });
+    if (resUS.ok) {
+      const jsonUS = await resUS.json();
+      for (const row of jsonUS.data || []) {
+        const name = (row.d?.[0] || '').toUpperCase();
+        const close = row.d?.[1];
+        const pe = row.d?.[2];
+        const eps = row.d?.[3];
+        const mcap = row.d?.[4];
+        if (name) {
+          result[name] = {
+            currentPrice: typeof close === 'number' && close > 0 ? parseFloat(close.toFixed(2)) : undefined,
+            peRatio: typeof pe === 'number' && pe > 0 ? parseFloat(pe.toFixed(2)) : undefined,
+            eps: typeof eps === 'number' ? parseFloat(eps.toFixed(2)) : undefined,
+            marketCap: typeof mcap === 'number' && mcap > 0 ? mcap : undefined
+          };
+        }
+      }
+    }
+  } catch {}
 
-  await Promise.allSettled(scanners.map(async (url) => {
+  // 2. For tickers NOT found in US scanner (e.g. German/European stocks like DHL), query German scanner
+  const remainingTickers = plainTickers.filter(t => !result[t]);
+  if (remainingTickers.length > 0) {
     try {
-      const res = await fetch(url, {
+      const resEU = await fetch('https://scanner.tradingview.com/germany/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          filter: [
-            { left: 'name', operation: 'in_range', right: plainTickers }
-          ],
+          filter: [{ left: 'name', operation: 'in_range', right: remainingTickers }],
           columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
         })
       });
-      if (res.ok) {
-        const json = await res.json();
-        for (const row of json.data || []) {
+      if (resEU.ok) {
+        const jsonEU = await resEU.json();
+        for (const row of jsonEU.data || []) {
           const name = (row.d?.[0] || '').toUpperCase();
           const close = row.d?.[1];
           const pe = row.d?.[2];
           const eps = row.d?.[3];
           const mcap = row.d?.[4];
-          if (name) {
+          if (name && !result[name]) {
             result[name] = {
               currentPrice: typeof close === 'number' && close > 0 ? parseFloat(close.toFixed(2)) : undefined,
               peRatio: typeof pe === 'number' && pe > 0 ? parseFloat(pe.toFixed(2)) : undefined,
@@ -139,7 +164,7 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
         }
       }
     } catch {}
-  }));
+  }
 
   return result;
 }
