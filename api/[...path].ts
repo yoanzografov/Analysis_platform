@@ -300,14 +300,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
           if (tv.peRatio !== undefined) results[t].peRatio = tv.peRatio;
           if (tv.eps !== undefined) results[t].eps = tv.eps;
-          if (tv.marketCap !== undefined && !results[t].marketCap) results[t].marketCap = tv.marketCap;
-          if (tv.currentPrice !== undefined && (!results[t].currentPrice || results[t].currentPrice === 0)) {
+          if (tv.marketCap !== undefined) results[t].marketCap = tv.marketCap;
+          if (tv.currentPrice !== undefined && (/^[A-Z]{1,5}$/.test(t) || !results[t].currentPrice || results[t].currentPrice === 0)) {
             results[t].currentPrice = tv.currentPrice;
           }
           const baseSym = t.split('.')[0].split(':')[1] || t.split('.')[0];
           if (results[baseSym]) {
             if (tv.peRatio !== undefined) results[baseSym].peRatio = tv.peRatio;
             if (tv.eps !== undefined) results[baseSym].eps = tv.eps;
+            if (tv.currentPrice !== undefined && /^[A-Z]{1,5}$/.test(baseSym)) {
+              results[baseSym].currentPrice = tv.currentPrice;
+            }
           }
         }
       }

@@ -1879,10 +1879,16 @@ app.get("/api/stock-quotes", async (req, res) => {
                       if (!results[origTicker]) results[origTicker] = { currentPrice: 0, dailyChangePct: 0 };
                       if (typeof pe === 'number' && pe > 0) results[origTicker].peRatio = parseFloat(pe.toFixed(2));
                       if (typeof eps === 'number') results[origTicker].eps = parseFloat(eps.toFixed(2));
-                      if (typeof mcap === 'number' && mcap > 0 && !results[origTicker].marketCap) results[origTicker].marketCap = mcap;
+                      if (typeof mcap === 'number' && mcap > 0) results[origTicker].marketCap = mcap;
+                      if (typeof close === 'number' && close > 0 && (/^[A-Z]{1,5}$/.test(origTicker) || !results[origTicker].currentPrice || results[origTicker].currentPrice === 0)) {
+                        results[origTicker].currentPrice = parseFloat(close.toFixed(2));
+                      }
                       if (results[name]) {
                         if (typeof pe === 'number' && pe > 0) results[name].peRatio = parseFloat(pe.toFixed(2));
                         if (typeof eps === 'number') results[name].eps = parseFloat(eps.toFixed(2));
+                        if (typeof close === 'number' && close > 0 && /^[A-Z]{1,5}$/.test(name)) {
+                          results[name].currentPrice = parseFloat(close.toFixed(2));
+                        }
                       }
                     }
                   }
