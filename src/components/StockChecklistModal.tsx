@@ -59,7 +59,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 6, label: "--- FINANCIAL METRICS ---", defaultVal: "", cellType: "default" },
   { rowNum: 7, label: "Current Price", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 8, label: "52 week low / 52 week high", defaultVal: "", cellType: "ref-error" },
-  { rowNum: 9, label: "Market Cap", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 9, label: "Market Cap (в хил.)", defaultVal: "", cellType: "yellow-input", note: "Пазарна капитализация на компанията в хиляди ($ in thousands)" },
   { rowNum: 10, label: "P/E Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "PE Ratio = Stock Price / Earnings Per Share", flagRules: { green: "≤ 15", yellow: "15 - 25", red: "> 25" }, note: "PE Ratio = Stock Price / Earnings Per Share\n\nДРУГА ФОРМУЛА:\nPE Ratio = Market Cap / Net Income\n\nСъотношението цена към печалба (PE) е съотношението между цената на акциите на компанията и печалбата на акция. Той измерва цената на акцията спрямо нейните печалби.\n\nВъпреки това, ето обща насока за добри съотношения на PE въз основа на темпа на растеж:\nhttps://www.lynalden.com/pe-ratio/\n\nБез растеж: 10 или по-малко\nБавен растеж: 12\nУмерен растеж: 15\nБърз растеж: 25+\n\nВъпреки това, никога не трябва да инвестирате само въз основа на съотношението PE. \nНяма едно число, което да ви каже дали една инвестиция е добра идея." },
   { rowNum: 11, label: "Price to FCF", defaultVal: "", cellType: "default", note: "Price to FCF = Stock Price / FCF per share\nЗа разлика от P/E ratio-то, това съотношение ни показва по-истински данни за реалния кеш, с който дружеството разполага, а не с обявените печалби, които са манипулируеми до известна степен според GAAP. \n\nПо-ниската стойност от P/E ratio е по-добрата стойност." },
   { rowNum: 12, label: "Dividend Yield", defaultVal: "", cellType: "default", note: "Dividend yield = ($5 / $100) x 100 = 5%\n\nКогато цената падне с 50%, ето какво се случва, ако приемем, че\nкомпанията запази годишния дивидент от $5 непроменен:\n\nDividend yield = ($5 / $50) x 100 = 10%" },
@@ -174,9 +174,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       low52High52 = `${low52Val.toFixed(2)} / ${high52Val.toFixed(2)}`;
     }
 
-    // 3. Market Cap (Direct from INTERACTIVE TABLE format)
+    // 3. Market Cap (in thousands)
     const mcapRaw = found?.marketCap || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.marketCap : 0) || dbStock?.marketCap || 0;
-    const mcapDisplay = mcapRaw > 0 ? formatLargeNum(mcapRaw) : '';
+    const mcapDisplay = mcapRaw > 0 ? Math.round(mcapRaw / 1000).toLocaleString('en-US') : '';
 
     // 4. P/E Ratio & EPS (Direct from INTERACTIVE TABLE)
     let peVal = (found?.peRatio !== undefined && found?.peRatio !== null && found.peRatio > 0) 
@@ -264,12 +264,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             if (q.peRatio && q.peRatio > 0) next['10'] = q.peRatio.toFixed(2);
             // Row 24: EPS
             if (q.eps && q.eps !== 0) next['24'] = q.eps.toFixed(2);
-            // Row 9: Market Cap
+            // Row 9: Market Cap (in thousands)
             if (q.marketCap && q.marketCap > 0) {
-              const mc = q.marketCap;
-              if (mc >= 1e12) next['9'] = `$${(mc / 1e12).toFixed(2)}T`;
-              else if (mc >= 1e9) next['9'] = `$${(mc / 1e9).toFixed(2)}B`;
-              else if (mc >= 1e6) next['9'] = `$${(mc / 1e6).toFixed(2)}M`;
+              next['9'] = Math.round(q.marketCap / 1000).toLocaleString('en-US');
             }
             return next;
           });
@@ -338,7 +335,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const price = parseNum(userInputs['7']);
     const pe = parseNum(userInputs['10']);
     const divYield = parseNum(userInputs['12']);
-    const mcap = parseNum(userInputs['9']);
+    const mcapRawVal = parseNum(userInputs['9']);
+    const mcap = mcapRawVal > 0 ? (mcapRawVal < 1e9 ? mcapRawVal * 1000 : mcapRawVal) : 1000000000;
 
     if (onSaveToTable) {
       onSaveToTable({
@@ -348,7 +346,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         currentPrice: price > 0 ? price : 100,
         peRatio: pe > 0 ? pe : 15,
         dividendYield: divYield > 0 ? divYield : 0,
-        marketCap: mcap > 0 ? mcap : 1000000000
+        marketCap: mcap
       });
     }
 
