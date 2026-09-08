@@ -100,71 +100,72 @@ async function fetchYahooV8Single(symbol: string): Promise<any | null> {
 // TradingView Scanner for live P/E (TTM), EPS (TTM), Price and Market Cap
 async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string, { peRatio?: number; eps?: number; marketCap?: number; currentPrice?: number }>> {
   const result: Record<string, { peRatio?: number; eps?: number; marketCap?: number; currentPrice?: number }> = {};
-  const plainTickers = [...new Set(tickers.map(t => t.split('.')[0].split(':')[1] || t.split('.')[0]))];
-  if (plainTickers.length === 0) return result;
+  
+  const usTickers: string[] = [];
+  const franceTickers: string[] = [];
+  const germanyTickers: string[] = [];
+  const swedenTickers: string[] = [];
+  const swissTickers: string[] = [];
+  const ukTickers: string[] = [];
 
-  // 1. Query US scanner first (takes priority for all US stocks, avoiding collisions with European penny stocks like NEE)
-  try {
-    const resUS = await fetch('https://scanner.tradingview.com/america/scan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filter: [{ left: 'name', operation: 'in_range', right: plainTickers }],
-        columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
-      })
-    });
-    if (resUS.ok) {
-      const jsonUS = await resUS.json();
-      for (const row of jsonUS.data || []) {
-        const name = (row.d?.[0] || '').toUpperCase();
-        const close = row.d?.[1];
-        const pe = row.d?.[2];
-        const eps = row.d?.[3];
-        const mcap = row.d?.[4];
-        if (name) {
-          result[name] = {
-            currentPrice: typeof close === 'number' && close > 0 ? parseFloat(close.toFixed(2)) : undefined,
-            peRatio: typeof pe === 'number' && pe > 0 ? parseFloat(pe.toFixed(2)) : undefined,
-            eps: typeof eps === 'number' ? parseFloat(eps.toFixed(2)) : undefined,
-            marketCap: typeof mcap === 'number' && mcap > 0 ? mcap : undefined
-          };
-        }
-      }
-    }
-  } catch {}
+  for (const t of tickers) {
+    const upper = t.toUpperCase().trim();
+    if (upper.startsWith('EPA:')) franceTickers.push(upper.slice(4));
+    else if (upper.startsWith('ETR:') || upper.endsWith('.DE')) germanyTickers.push(upper.replace('ETR:', '').replace('.DE', ''));
+    else if (upper.startsWith('STO:')) swedenTickers.push(upper.slice(4));
+    else if (upper.startsWith('SWX:')) swissTickers.push(upper.slice(4));
+    else if (upper.startsWith('LON:') || upper === 'BRBY' || upper.endsWith('.L')) ukTickers.push(upper.replace('LON:', '').replace('.L', ''));
+    else if (!upper.includes(':') && !upper.includes('.')) usTickers.push(upper);
+  }
 
-  // 2. For tickers NOT found in US scanner (e.g. German/European stocks like DHL), query German scanner
-  const remainingTickers = plainTickers.filter(t => !result[t]);
-  if (remainingTickers.length > 0) {
+  const marketScanners: { market: string; list: string[]; prefix: string }[] = [
+    { market: 'america', list: usTickers, prefix: '' },
+    { market: 'france', list: franceTickers, prefix: 'EPA:' },
+    { market: 'germany', list: germanyTickers, prefix: 'ETR:' },
+    { market: 'sweden', list: swedenTickers, prefix: 'STO:' },
+    { market: 'switzerland', list: swissTickers, prefix: 'SWX:' },
+    { market: 'uk', list: ukTickers, prefix: '' }
+  ];
+
+  await Promise.allSettled(marketScanners.map(async ({ market, list, prefix }) => {
+    if (list.length === 0) return;
     try {
-      const resEU = await fetch('https://scanner.tradingview.com/germany/scan', {
+      const res = await fetch(`https://scanner.tradingview.com/${market}/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          filter: [{ left: 'name', operation: 'in_range', right: remainingTickers }],
+          filter: [{ left: 'name', operation: 'in_range', right: list }],
           columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
         })
       });
-      if (resEU.ok) {
-        const jsonEU = await resEU.json();
-        for (const row of jsonEU.data || []) {
+      if (res.ok) {
+        const json = await res.json();
+        for (const row of json.data || []) {
           const name = (row.d?.[0] || '').toUpperCase();
           const close = row.d?.[1];
           const pe = row.d?.[2];
           const eps = row.d?.[3];
           const mcap = row.d?.[4];
-          if (name && !result[name]) {
-            result[name] = {
+          if (name) {
+            const item = {
               currentPrice: typeof close === 'number' && close > 0 ? parseFloat(close.toFixed(2)) : undefined,
               peRatio: typeof pe === 'number' && pe > 0 ? parseFloat(pe.toFixed(2)) : undefined,
               eps: typeof eps === 'number' ? parseFloat(eps.toFixed(2)) : undefined,
               marketCap: typeof mcap === 'number' && mcap > 0 ? mcap : undefined
             };
+            const fullKey = prefix ? prefix + name : name;
+            result[fullKey] = item;
+            if (prefix === 'ETR:') {
+              result[`${name}.DE`] = item;
+            }
+            if (!prefix) {
+              result[name] = item;
+            }
           }
         }
       }
     } catch {}
-  }
+  }));
 
   return result;
 }
@@ -313,8 +314,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const tvData = await fetchTradingViewScanner(tickers);
       for (const t of tickers) {
+        const upper = t.toUpperCase().trim();
         const plain = t.split('.')[0].split(':')[1] || t.split('.')[0];
-        const tv = tvData[plain] || tvData[t];
+        const tv = tvData[upper] || tvData[t] || (!t.includes(':') ? tvData[plain] : undefined);
         if (tv) {
           if (!results[t]) {
             results[t] = {
@@ -326,14 +328,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (tv.peRatio !== undefined) results[t].peRatio = tv.peRatio;
           if (tv.eps !== undefined) results[t].eps = tv.eps;
           if (tv.marketCap !== undefined) results[t].marketCap = tv.marketCap;
-          if (tv.currentPrice !== undefined && (/^[A-Z]{1,5}$/.test(t) || !results[t].currentPrice || results[t].currentPrice === 0)) {
+          if (tv.currentPrice !== undefined && tv.currentPrice > 0) {
             results[t].currentPrice = tv.currentPrice;
           }
           const baseSym = t.split('.')[0].split(':')[1] || t.split('.')[0];
-          if (results[baseSym]) {
+          if (results[baseSym] && !t.includes(':')) {
             if (tv.peRatio !== undefined) results[baseSym].peRatio = tv.peRatio;
             if (tv.eps !== undefined) results[baseSym].eps = tv.eps;
-            if (tv.currentPrice !== undefined && /^[A-Z]{1,5}$/.test(baseSym)) {
+            if (tv.currentPrice !== undefined && tv.currentPrice > 0) {
               results[baseSym].currentPrice = tv.currentPrice;
             }
           }

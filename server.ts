@@ -1849,17 +1849,40 @@ app.get("/api/stock-quotes", async (req, res) => {
 
     // TradingView Scanner override for live P/E (TTM), EPS (TTM), and Market Cap
     try {
-      const plainTickers = [...new Set(tickers.map(t => t.split('.')[0].split(':')[1] || t.split('.')[0]))];
-      if (plainTickers.length > 0) {
-        const foundTickers = new Set<string>();
+      const usTickers: string[] = [];
+      const franceTickers: string[] = [];
+      const germanyTickers: string[] = [];
+      const swedenTickers: string[] = [];
+      const swissTickers: string[] = [];
+      const ukTickers: string[] = [];
 
-        // 1. Query US scanner first (priority for US stocks, preventing collisions with German penny stocks)
+      for (const t of tickers) {
+        const upper = t.toUpperCase().trim();
+        if (upper.startsWith('EPA:')) franceTickers.push(upper.slice(4));
+        else if (upper.startsWith('ETR:') || upper.endsWith('.DE')) germanyTickers.push(upper.replace('ETR:', '').replace('.DE', ''));
+        else if (upper.startsWith('STO:')) swedenTickers.push(upper.slice(4));
+        else if (upper.startsWith('SWX:')) swissTickers.push(upper.slice(4));
+        else if (upper.startsWith('LON:') || upper === 'BRBY' || upper.endsWith('.L')) ukTickers.push(upper.replace('LON:', '').replace('.L', ''));
+        else if (!upper.includes(':') && !upper.includes('.')) usTickers.push(upper);
+      }
+
+      const marketScanners: { market: string; list: string[]; prefix: string }[] = [
+        { market: 'america', list: usTickers, prefix: '' },
+        { market: 'france', list: franceTickers, prefix: 'EPA:' },
+        { market: 'germany', list: germanyTickers, prefix: 'ETR:' },
+        { market: 'sweden', list: swedenTickers, prefix: 'STO:' },
+        { market: 'switzerland', list: swissTickers, prefix: 'SWX:' },
+        { market: 'uk', list: ukTickers, prefix: '' }
+      ];
+
+      await Promise.allSettled(marketScanners.map(async ({ market, list, prefix }) => {
+        if (list.length === 0) return;
         try {
-          const tvRes = await fetch('https://scanner.tradingview.com/america/scan', {
+          const tvRes = await fetch(`https://scanner.tradingview.com/${market}/scan`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              filter: [{ left: 'name', operation: 'in_range', right: plainTickers }],
+              filter: [{ left: 'name', operation: 'in_range', right: list }],
               columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
             })
           });
@@ -1872,23 +1895,16 @@ app.get("/api/stock-quotes", async (req, res) => {
               const eps = row.d?.[3];
               const mcap = row.d?.[4];
               if (name) {
-                foundTickers.add(name);
+                const fullKey = prefix ? prefix + name : name;
                 for (const origTicker of tickers) {
-                  const plain = origTicker.split('.')[0].split(':')[1] || origTicker.split('.')[0];
-                  if (plain === name) {
+                  const upperOrig = origTicker.toUpperCase().trim();
+                  if (upperOrig === fullKey || (!prefix && upperOrig === name) || (prefix === 'ETR:' && upperOrig === `${name}.DE`)) {
                     if (!results[origTicker]) results[origTicker] = { currentPrice: 0, dailyChangePct: 0 };
                     if (typeof pe === 'number' && pe > 0) results[origTicker].peRatio = parseFloat(pe.toFixed(2));
                     if (typeof eps === 'number') results[origTicker].eps = parseFloat(eps.toFixed(2));
                     if (typeof mcap === 'number' && mcap > 0) results[origTicker].marketCap = mcap;
-                    if (typeof close === 'number' && close > 0 && (/^[A-Z]{1,5}$/.test(origTicker) || !results[origTicker].currentPrice || results[origTicker].currentPrice === 0)) {
+                    if (typeof close === 'number' && close > 0) {
                       results[origTicker].currentPrice = parseFloat(close.toFixed(2));
-                    }
-                    if (results[name]) {
-                      if (typeof pe === 'number' && pe > 0) results[name].peRatio = parseFloat(pe.toFixed(2));
-                      if (typeof eps === 'number') results[name].eps = parseFloat(eps.toFixed(2));
-                      if (typeof close === 'number' && close > 0 && /^[A-Z]{1,5}$/.test(name)) {
-                        results[name].currentPrice = parseFloat(close.toFixed(2));
-                      }
                     }
                   }
                 }
@@ -1896,46 +1912,7 @@ app.get("/api/stock-quotes", async (req, res) => {
             }
           }
         } catch {}
-
-        // 2. Query Germany scanner only for tickers NOT found in US scanner (e.g. DHL, VHYL)
-        const remainingTickers = plainTickers.filter(t => !foundTickers.has(t));
-        if (remainingTickers.length > 0) {
-          try {
-            const tvResEU = await fetch('https://scanner.tradingview.com/germany/scan', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                filter: [{ left: 'name', operation: 'in_range', right: remainingTickers }],
-                columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
-              })
-            });
-            if (tvResEU.ok) {
-              const tvJsonEU = await tvResEU.json() as any;
-              for (const row of tvJsonEU.data || []) {
-                const name = (row.d?.[0] || '').toUpperCase();
-                const close = row.d?.[1];
-                const pe = row.d?.[2];
-                const eps = row.d?.[3];
-                const mcap = row.d?.[4];
-                if (name && !foundTickers.has(name)) {
-                  for (const origTicker of tickers) {
-                    const plain = origTicker.split('.')[0].split(':')[1] || origTicker.split('.')[0];
-                    if (plain === name) {
-                      if (!results[origTicker]) results[origTicker] = { currentPrice: 0, dailyChangePct: 0 };
-                      if (typeof pe === 'number' && pe > 0) results[origTicker].peRatio = parseFloat(pe.toFixed(2));
-                      if (typeof eps === 'number') results[origTicker].eps = parseFloat(eps.toFixed(2));
-                      if (typeof mcap === 'number' && mcap > 0) results[origTicker].marketCap = mcap;
-                      if (typeof close === 'number' && close > 0 && (!results[origTicker].currentPrice || results[origTicker].currentPrice === 0)) {
-                        results[origTicker].currentPrice = parseFloat(close.toFixed(2));
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          } catch {}
-        }
-      }
+      }));
     } catch (err) {
       console.warn("TradingView scanner live sync notice:", err);
     }
