@@ -785,7 +785,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             title="Отвори в нов прозорец"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            🗔 Нов прозорец
+            Нов прозорец
           </button>
 
           <button

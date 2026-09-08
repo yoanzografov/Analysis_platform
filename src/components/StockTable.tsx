@@ -607,7 +607,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
             title="Отвори Check List за анализ на акции в нов прозорец"
           >
             <CheckSquare className="w-3.5 h-3.5" />
-            Check List 🗔
+            Check List
           </a>
 
         <a
