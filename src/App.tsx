@@ -1311,23 +1311,26 @@ export default function App() {
           </div>
         </div>
 
-        {/* User Account Status Indicator (горе в дясно на нивото на RAYVES.COM) */}
-        <button
-          onClick={() => setIsAuthModalOpen(true)}
-          className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
-            currentUser
-              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
-              : 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/25 uppercase'
-          }`}
-          title={currentUser ? `Влезли сте като ${currentUser.email || currentUser.displayName} • Профил / Изход` : 'Вход / Синхронизация'}
-        >
-          <Cloud className={`w-3.5 h-3.5 shrink-0 ${currentUser ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
-          <span>
-            {currentUser 
-              ? `👤 ${currentUser.displayName || (currentUser.email ? (currentUser.email.toLowerCase().startsWith('yoan') ? 'Yoan Zografov' : currentUser.email.split('@')[0]) : 'Yoan Zografov')} (🟢 ON)`
-              : '🔑 Вход / Синхронизация'}
-          </span>
-        </button>
+        {/* Top-Right Controls: Theme Toggle & User Account Status Indicator */}
+        <div className="flex items-center gap-2 shrink-0">
+          <ThemeToggle />
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+              currentUser
+                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                : 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/25 uppercase'
+            }`}
+            title={currentUser ? `Влезли сте като ${currentUser.email || currentUser.displayName} • Профил / Изход` : 'Вход / Синхронизация'}
+          >
+            <Cloud className={`w-3.5 h-3.5 shrink-0 ${currentUser ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
+            <span>
+              {currentUser 
+                ? `👤 ${currentUser.displayName || (currentUser.email ? (currentUser.email.toLowerCase().startsWith('yoan') ? 'Yoan Zografov' : currentUser.email.split('@')[0]) : 'Yoan Zografov')} (🟢 ON)`
+                : '🔑 Вход / Синхронизация'}
+            </span>
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap justify-start">
@@ -1504,9 +1507,6 @@ export default function App() {
             </div>
           )}
         </div>
-
-        {/* 7. Theme Toggle */}
-        <ThemeToggle />
 
       </div>
  </div>
