@@ -250,7 +250,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     // Live fetch from /api/stock-quotes — same source as Interactive Table (Yahoo Finance)
     setIsFetchingQuote(true);
     try {
-      const res = await fetch(`/api/stock-quotes?tickers=${encodeURIComponent(cleanSym)}`);
+      const res = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(cleanSym)}`);
       if (res.ok) {
         const data = await res.json();
         const q = data[cleanSym] || data[cleanSym.split('.')[0]];
