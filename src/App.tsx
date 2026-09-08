@@ -1640,12 +1640,20 @@ export default function App() {
           buyThreshold={buyThreshold}
           sellThreshold={sellThreshold}
           onAddStock={(newStock) => {
-            setStocks(prev => [...prev, newStock]);
+            setStocks(prev => {
+              const existingIdx = prev.findIndex(s => s.ticker.toUpperCase() === newStock.ticker.toUpperCase());
+              if (existingIdx >= 0) {
+                const updated = [...prev];
+                updated[existingIdx] = { ...updated[existingIdx], ...newStock };
+                return updated;
+              }
+              return [...prev, newStock];
+            });
             const newLog = {
               id: `${Date.now()}-${Math.random()}`,
               timestamp: new Date().toLocaleTimeString(),
               ticker: newStock.ticker,
-              message: `Добавен нов актив: ${newStock.companyName || newStock.ticker} (${newStock.ticker})`,
+              message: `Актуализиран актив: ${newStock.companyName || newStock.ticker} (${newStock.ticker})`,
               type: 'success' as const
             };
             setLogs(prev => [newLog, ...prev]);
