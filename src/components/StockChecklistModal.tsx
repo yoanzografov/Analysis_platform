@@ -235,7 +235,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       if (activeSym) {
         const clean = activeSym.toUpperCase().trim();
         setSelectedTicker(clean);
-        updateStockRowDetails(clean);
+        void handleSelectTicker(clean); // live fetch P/E TTM + other data from Yahoo Finance
       }
     }
   }, [isOpen, stock, stocks]);
