@@ -135,7 +135,7 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           filter: [{ left: 'name', operation: 'in_range', right: list }],
-          columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
+          columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic', 'dps_common_stock_prim_issue_fq', 'dps_common_stock_prim_issue_fy', 'dividends_yield_current']
         })
       });
       if (res.ok) {
@@ -146,12 +146,18 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
           const pe = row.d?.[2];
           const eps = row.d?.[3];
           const mcap = row.d?.[4];
+          const divFq = row.d?.[5];
+          const divFy = row.d?.[6];
+          const divYield = row.d?.[7];
           if (name) {
+            const divRate = (typeof divFq === 'number' && divFq > 0) ? divFq : ((typeof divFy === 'number' && divFy > 0) ? (divFy / 4) : undefined);
             const item = {
               currentPrice: typeof close === 'number' && close > 0 ? parseFloat(close.toFixed(2)) : undefined,
               peRatio: typeof pe === 'number' && pe > 0 ? parseFloat(pe.toFixed(2)) : undefined,
               eps: typeof eps === 'number' ? parseFloat(eps.toFixed(2)) : undefined,
-              marketCap: typeof mcap === 'number' && mcap > 0 ? mcap : undefined
+              marketCap: typeof mcap === 'number' && mcap > 0 ? mcap : undefined,
+              dividend: divRate !== undefined ? parseFloat(divRate.toFixed(2)) : undefined,
+              dividendYield: typeof divYield === 'number' && divYield > 0 ? parseFloat(divYield.toFixed(2)) : undefined
             };
             const fullKey = prefix ? prefix + name : name;
             result[fullKey] = item;
@@ -328,6 +334,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (tv.peRatio !== undefined) results[t].peRatio = tv.peRatio;
           if (tv.eps !== undefined) results[t].eps = tv.eps;
           if (tv.marketCap !== undefined) results[t].marketCap = tv.marketCap;
+          if (tv.dividend !== undefined) results[t].dividend = tv.dividend;
+          if (tv.dividendYield !== undefined) results[t].dividendYield = tv.dividendYield;
           if (tv.currentPrice !== undefined && tv.currentPrice > 0) {
             results[t].currentPrice = tv.currentPrice;
           }
@@ -335,6 +343,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (results[baseSym] && !t.includes(':')) {
             if (tv.peRatio !== undefined) results[baseSym].peRatio = tv.peRatio;
             if (tv.eps !== undefined) results[baseSym].eps = tv.eps;
+            if (tv.dividend !== undefined) results[baseSym].dividend = tv.dividend;
+            if (tv.dividendYield !== undefined) results[baseSym].dividendYield = tv.dividendYield;
             if (tv.currentPrice !== undefined && tv.currentPrice > 0) {
               results[baseSym].currentPrice = tv.currentPrice;
             }

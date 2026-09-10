@@ -1368,6 +1368,16 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
  <DividendModal 
  stock={dividendModalStock} 
  onClose={() => setDividendModalStock(null)} 
+ onUpdateStockDividend={(ticker, newDiv, yieldVal) => {
+ const target = stocks.find(s => s.ticker === ticker);
+ if (target && onUpdateStock) {
+ onUpdateStock(ticker, {
+ ...target,
+ dividend: newDiv,
+ dividendYield: yieldVal !== undefined ? yieldVal : target.dividendYield
+ });
+ }
+ }}
  />
  )}
 

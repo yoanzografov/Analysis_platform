@@ -18,9 +18,21 @@ export interface StockEarningsData {
 }
 
 export interface StockDividendData {
+  ticker?: string;
+  companyName?: string;
+  isDividendPayer: boolean;
   exDateStr: string;
   amountStr: string;
+  amountNum?: number;
+  annualAmountStr?: string;
+  annualAmountNum?: number;
   payDateStr: string;
+  yieldPctStr?: string;
+  yieldPctNum?: number;
+  payoutRatioStr?: string;
+  payoutRatioNum?: number;
+  frequency?: string;
+  currency?: string;
 }
 
 interface TVScanRecord {
@@ -129,19 +141,56 @@ export function getStockEarningsData(stock: Stock): StockEarningsData {
 }
 
 export function getStockDividendData(stock: Stock): StockDividendData {
-  let amountStr = '0.22';
-  if (stock.dividend && stock.dividend !== '-' && stock.dividend !== '#N/A') {
-    const cleanNum = parseFloat(stock.dividend.replace(/[^0-9.]/g, ''));
+  const rawDiv = stock.dividend ? stock.dividend.trim() : '';
+  const isPayer = Boolean(rawDiv && rawDiv !== '-' && rawDiv !== '#N/A' && rawDiv !== '0' && rawDiv !== '0.00' && rawDiv !== '0.00%');
+
+  if (!isPayer) {
+    return {
+      ticker: stock.ticker,
+      companyName: stock.companyName,
+      isDividendPayer: false,
+      exDateStr: '—',
+      amountStr: 'Не изплаща',
+      annualAmountStr: '0.00',
+      payDateStr: '—',
+      yieldPctStr: '0.00%',
+      payoutRatioStr: '0.00%',
+      frequency: 'Няма',
+      currency: stock.currency || 'USD'
+    };
+  }
+
+  let amountNum = 0;
+  let yieldPctStr = '—';
+  
+  if (rawDiv.includes('(') && rawDiv.includes('%')) {
+    const yieldMatch = rawDiv.match(/([\d.]+)%/);
+    if (yieldMatch) yieldPctStr = `${yieldMatch[1]}%`;
+    const amtMatch = rawDiv.match(/([$\d.]+)\s*\(/);
+    if (amtMatch) amountNum = parseFloat(amtMatch[1].replace('$', '')) || 0;
+  } else {
+    const cleanNum = parseFloat(rawDiv.replace(/[^0-9.]/g, ''));
     if (!isNaN(cleanNum) && cleanNum > 0) {
-      amountStr = cleanNum.toFixed(2);
-    } else {
-      amountStr = stock.dividend;
+      amountNum = cleanNum;
+      if (stock.currentPrice > 0) {
+        yieldPctStr = `${((cleanNum / stock.currentPrice) * 100).toFixed(2)}%`;
+      }
     }
   }
 
+  const currencySign = stock.currency === 'EUR' ? '€' : '$';
+
   return {
-    exDateStr: "Fri 04 Sep '26",
-    amountStr: amountStr,
-    payDateStr: "Mon 14 Sep '26"
+    ticker: stock.ticker,
+    companyName: stock.companyName,
+    isDividendPayer: true,
+    exDateStr: 'Зарежда се...',
+    amountStr: amountNum > 0 ? `${currencySign}${amountNum.toFixed(2)}` : rawDiv,
+    amountNum: amountNum > 0 ? amountNum : undefined,
+    annualAmountStr: amountNum > 0 ? `${currencySign}${(amountNum * 4).toFixed(2)}` : undefined,
+    payDateStr: 'Зарежда се...',
+    yieldPctStr,
+    frequency: 'Тримесечно',
+    currency: stock.currency || 'USD'
   };
 }
