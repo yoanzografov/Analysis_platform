@@ -66,8 +66,8 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 13, label: "Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100", note: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100" },
   { rowNum: 14, label: "CASH Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100", note: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100\n\nПоказва ни по-истинското Payout Ratio и ни касае пряко като дивидентни инвеститори." },
   { rowNum: 15, label: "Dividend Growth Rate 5 - 10 year avg", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 16, label: "5 yrs Annualized ROI", defaultVal: "", cellType: "default", formulaStr: "=Overview!J19" },
-  { rowNum: 17, label: "10 yrs Annualized ROI", defaultVal: "", cellType: "default", formulaStr: "=Overview!J29" },
+  { rowNum: 16, label: "Annualized ROI", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 17, label: "Annualized ROI 5 - 10 years avg", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 18, label: "Shares Outstanding", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 19, label: "Revenue", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 20, label: "Revenue avg increase 3 - 5 yrs", defaultVal: "", cellType: "yellow-input" },
@@ -124,8 +124,10 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const init: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { init[String(r.rowNum)] = ''; });
     init['15_10'] = '';
+    init['17_10'] = '';
     init['20_5'] = '';
     init['25_10'] = '';
+    init['39_10'] = '';
     return init;
   });
 
@@ -308,6 +310,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const cleared: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
     cleared['15_10'] = '';
+    cleared['17_10'] = '';
     cleared['20_5'] = '';
     cleared['25_10'] = '';
     cleared['39_10'] = '';
@@ -660,7 +663,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 />
               </div>
             </div>
-          ) : (rowNum === 25 || rowNum === 39) ? (
+          ) : (rowNum === 17 || rowNum === 25 || rowNum === 39) ? (
             <div className="flex items-center gap-2 justify-end">
               <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
