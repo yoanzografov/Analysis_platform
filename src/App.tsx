@@ -317,6 +317,33 @@ export default function App() {
     }
   };
 
+  const handleGoHome = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    clearHashUrl();
+    try {
+      window.history.pushState(null, '', window.location.pathname);
+    } catch (err) {
+      // fallback
+    }
+    setActiveMainTab('table');
+    setActiveFilter({ type: 'all', value: 'all' });
+    setSearchQuery('');
+    setSelectedStockForAi(null);
+    setShowProfitCalculatorModal(false);
+    setShowRoiCalculatorModal(false);
+    setShowInvestmentCalculatorModal(false);
+    setShowChecklistModal(false);
+    setShowFinancialFlagsModal(false);
+    setShowEconomicCalendarModal(false);
+    setShowLogoModal(false);
+    setShowNewUserModal(false);
+    setIsSettingsMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.toLowerCase().replace('#', '');
@@ -1293,14 +1320,20 @@ export default function App() {
   {/* Dashboard Header Bar */}
   <div className="flex flex-col items-start gap-4 border-b border-border pb-5 -mx-4 px-4 md:mx-0 md:px-0 relative z-[100] mb-4">
       <div className="flex items-center justify-between w-full flex-wrap sm:flex-nowrap gap-3">
-        <div 
-          onClick={() => setShowLogoModal(true)}
-          className="flex items-center gap-3 max-w-full cursor-pointer group"
-          title="Кликнете за преглед на логото в пълен размер"
+        <a 
+          href="/"
+          onClick={handleGoHome}
+          className="flex items-center gap-3 max-w-full cursor-pointer group select-none no-underline"
+          title="Към началната страница на платформата (RAYVES.COM)"
         >
           <img 
             src="/rayves-logo.jpg" 
             alt="RayVes Capital" 
+            onDoubleClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowLogoModal(true);
+            }}
             className="h-11 w-auto rounded-xl border border-amber-500/30 object-contain shadow-xs bg-white p-0.5 shrink-0 group-hover:scale-105 transition-transform" 
           />
           <div>
@@ -1309,7 +1342,7 @@ export default function App() {
             </h1>
             <span className="text-[11px] font-bold text-ink-muted tracking-wide block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</span>
           </div>
-        </div>
+        </a>
 
         {/* Top-Right Controls: Theme Toggle & User Account Status Indicator */}
         <div className="flex items-center gap-2 shrink-0">
