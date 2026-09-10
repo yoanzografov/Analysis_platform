@@ -109,6 +109,16 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 54, label: "CapEx (% of Net Income)", defaultVal: "", cellType: "yellow-input", formulaStr: "CapEx Ratio = (Capital Expenditures / Net Income) * 100", flagRules: { green: "< 15%", yellow: "15% - 25%", red: "> 25%" }, note: "CapEx as % of Net Income = (Capital Expenditures / Net Income) * 100 (%)\n\nИзмерва каква част от нетната печалба трябва да се реинвестира обратно в дълготрайни активи (оборудване, заводи, недвижими имоти), за да се поддържа бизнеса.\n\nЗелен флаг: под 15% (лек капитал, висок FCF)\nЖълт флаг: 15% - 25%\nЧервен флаг: над 25% (капиталоемък бизнес)" },
 ];
 
+export const CHECKLIST_SECTIONS = [
+  { id: 1, title: '🏢 1. ИНФОРМАЦИЯ ЗА КОМПАНИЯТА (COMPANY OVERVIEW)', rows: [1, 2, 3, 4, 7, 8, 9] },
+  { id: 2, title: '📊 2. ФИНАНСОВИ КОЕФИЦИЕНТИ & ОЦЕНКА (VALUATION METRICS)', rows: [10, 11, 12, 13, 14, 15, 16, 17, 18] },
+  { id: 3, title: '📈 3. ПРИХОДИ, МАРЖОВЕ & ПЕЧАЛБА (INCOME STATEMENT & MARGINS)', rows: [19, 20, 21, 22, 23, 24, 25, 26, 27] },
+  { id: 4, title: '⚖️ 4. БАЛАНСОВ ОТЧЕТ & ЗАДЪЛЖЕНИЯ (BALANCE SHEET & SOLVENCY)', rows: [28, 29, 30, 31, 32, 33, 34, 35] },
+  { id: 5, title: '💵 5. ПАРИЧНИ ПОТОЦИ (CASH FLOW ANALYSIS)', rows: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47] },
+  { id: 6, title: '🏆 6. ДОПЪЛНИТЕЛНИ ФИНАНСОВИ ФЛАГОВЕ & КОЕФИЦИЕНТИ (ADDITIONAL FINANCIAL FLAGS)', rows: [48, 49, 50, 51, 52, 53, 54] },
+];
+
+export const ALL_CHECKABLE_ROW_NUMS = CHECKLIST_SECTIONS.flatMap(s => s.rows);
 
 export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [], onSaveToTable }: StockChecklistModalProps) {
   const [selectedTicker, setSelectedTicker] = useState<string>(stock?.ticker || '');
@@ -516,16 +526,49 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return { green, yellow, red };
   }, [userInputs, computedValues]);
 
-  // Total checked progress calculation
+  // Total checked progress calculation across all rendered rows
   const totalAudited = useMemo(() => {
-    return Object.values(checkedRows).filter(Boolean).length;
+    return ALL_CHECKABLE_ROW_NUMS.filter(r => Boolean(checkedRows[r])).length;
   }, [checkedRows]);
 
-  const totalCheckableRows = useMemo(() => {
-    return EXACT_SHEET_ROWS.filter(r => !r.label.startsWith('---')).length;
-  }, []);
+  const totalCheckableRows = ALL_CHECKABLE_ROW_NUMS.length;
+  const isAllChecked = totalCheckableRows > 0 && totalAudited === totalCheckableRows;
+  const isPartiallyChecked = totalAudited > 0 && totalAudited < totalCheckableRows;
+  const progressPercent = totalCheckableRows > 0 ? Math.round((totalAudited / totalCheckableRows) * 100) : 0;
 
-  const progressPercent = Math.round((totalAudited / totalCheckableRows) * 100);
+  const handleToggleAllRows = () => {
+    if (isAllChecked) {
+      setCheckedRows({});
+    } else {
+      const all: Record<number, boolean> = {};
+      ALL_CHECKABLE_ROW_NUMS.forEach(r => { all[r] = true; });
+      setCheckedRows(all);
+    }
+  };
+
+  const handleAutoCheckFilled = () => {
+    const newChecked = { ...checkedRows };
+    ALL_CHECKABLE_ROW_NUMS.forEach(r => {
+      const userVal = userInputs[String(r)] || '';
+      const compVal = computedValues[String(r)] || '';
+      const subVal = userInputs[`${r}_10`] || userInputs[`${r}_5`] || '';
+      if ((userVal && userVal.trim() !== '') || (compVal && compVal.trim() !== '') || (subVal && subVal.trim() !== '')) {
+        newChecked[r] = true;
+      }
+    });
+    setCheckedRows(newChecked);
+  };
+
+  const handleToggleSection = (sectionRows: number[]) => {
+    const allChecked = sectionRows.every(r => checkedRows[r]);
+    setCheckedRows(prev => {
+      const next = { ...prev };
+      sectionRows.forEach(r => {
+        next[r] = !allChecked;
+      });
+      return next;
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -841,7 +884,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         </div>
 
         {/* Live Audit Checklist Progress & Signals Summary */}
-        <div className="flex items-center gap-3 shrink-0 flex-wrap">
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
           <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border text-xs font-mono" title="Реално време сигнали за избраната компания">
             <span className="text-emerald-400 font-extrabold flex items-center gap-1">🟢 {flagsSummary.green}</span>
             <span className="text-amber-400 font-extrabold flex items-center gap-1">🟡 {flagsSummary.yellow}</span>
@@ -849,6 +892,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           </div>
 
           <button
+            type="button"
             onClick={handleAutoCheckGreen}
             className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/20 flex items-center gap-1 transition-all cursor-pointer"
             title="Автоматично отметни всички зелени показатели"
@@ -857,22 +901,57 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             Отметни зелени
           </button>
 
+          <button
+            type="button"
+            onClick={handleAutoCheckFilled}
+            className="px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-xs border border-indigo-500/20 flex items-center gap-1 transition-all cursor-pointer"
+            title="Автоматично отметни всички редове с въведени или изчислени стойности"
+          >
+            <Check className="w-3.5 h-3.5 text-indigo-400" />
+            Отметни попълнени
+          </button>
+
+          <button
+            type="button"
+            onClick={handleToggleAllRows}
+            className={`px-2.5 py-1 rounded-lg font-bold text-xs border flex items-center gap-1 transition-all cursor-pointer ${
+              isAllChecked
+                ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/30'
+                : 'bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border-indigo-500/30'
+            }`}
+            title={isAllChecked ? "Премахни всички отметки" : "Отметни всички 51 реда в таблицата (100%)"}
+          >
+            {isAllChecked ? (
+              <>
+                <Square className="w-3.5 h-3.5" />
+                Изчисти всички
+              </>
+            ) : (
+              <>
+                <CheckSquare className="w-3.5 h-3.5" />
+                Отметни цялата таблица
+              </>
+            )}
+          </button>
+
           <div className="flex items-center gap-2 bg-bg px-3 py-1 rounded-lg border border-border">
             <span className="text-xs font-bold text-ink-muted">Прогрес:</span>
-            <div className="w-24 bg-border/60 rounded-full h-2 overflow-hidden">
+            <div className="w-28 bg-border/60 rounded-full h-2.5 overflow-hidden">
               <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                className={`h-full rounded-full transition-all duration-300 ${
+                  progressPercent === 100 ? 'bg-emerald-400' : 'bg-emerald-500'
+                }`}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <span className="font-mono font-bold text-xs text-emerald-400">{progressPercent}%</span>
-            <span className="text-[11px] text-ink-faint">({totalAudited}/{totalCheckableRows})</span>
-          </div>
-
-          <div className="flex items-center gap-2 font-mono font-bold text-xs">
-            <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">🟢 {flagsSummary.green}</span>
-            <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">🟡 {flagsSummary.yellow}</span>
-            <span className="text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">🔴 {flagsSummary.red}</span>
+            <span className={`font-mono font-bold text-xs ${
+              progressPercent === 100 ? 'text-emerald-300' : 'text-emerald-400'
+            }`}>
+              {progressPercent}%
+            </span>
+            <span className="text-[11px] text-ink-faint font-mono font-semibold">
+              ({totalAudited}/{totalCheckableRows})
+            </span>
           </div>
         </div>
       </div>
@@ -884,60 +963,69 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             <thead>
               <tr className="bg-border/40 text-ink-muted text-xs font-bold uppercase tracking-wider border-b border-border">
                 <th className="py-3 px-3 text-center w-12 border-r border-border/40">#</th>
-                <th className="py-3 px-3 text-center w-10 border-r border-border/40">✓</th>
+                <th className="py-3 px-3 text-center w-10 border-r border-border/40">
+                  <button
+                    type="button"
+                    onClick={handleToggleAllRows}
+                    className="p-1 hover:bg-indigo-500/20 rounded transition-colors cursor-pointer inline-flex items-center justify-center text-ink-muted hover:text-indigo-400"
+                    title={isAllChecked ? "Премахни всички отметки" : "Отметни цялата таблица (100%)"}
+                  >
+                    {isAllChecked ? (
+                      <CheckSquare className="w-4 h-4 text-emerald-400" />
+                    ) : isPartiallyChecked ? (
+                      <div className="w-3.5 h-3.5 rounded-xs border-2 border-indigo-400 flex items-center justify-center bg-indigo-500/20">
+                        <div className="w-1.5 h-1.5 bg-indigo-400 rounded-xs" />
+                      </div>
+                    ) : (
+                      <Square className="w-4 h-4 text-ink-faint" />
+                    )}
+                  </button>
+                </th>
                 <th className="py-3 px-4 border-r border-border/40">Показател (Financial Metric)</th>
                 <th className="py-3 px-4 text-right border-r border-border/40">Стойност (Value / Input)</th>
                 <th className="py-3 px-2 text-center w-12">Инфо</th>
               </tr>
             </thead>
             <tbody>
-              {/* SECTION 1 */}
-              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
-                  🏢 1. ИНФОРМАЦИЯ ЗА КОМПАНИЯТА (COMPANY OVERVIEW)
-                </td>
-              </tr>
-              {[1, 2, 3, 4, 7, 8, 9].map(r => renderRowItem(r))}
-
-              {/* SECTION 2 */}
-              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
-                  📊 2. ФИНАНСОВИ КОЕФИЦИЕНТИ & ОЦЕНКА (VALUATION METRICS)
-                </td>
-              </tr>
-              {[10, 11, 12, 13, 14, 15, 16, 17, 18].map(r => renderRowItem(r))}
-
-              {/* SECTION 3 */}
-              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
-                  📈 3. ПРИХОДИ, МАРЖОВЕ & ПЕЧАЛБА (INCOME STATEMENT & MARGINS)
-                </td>
-              </tr>
-              {[19, 20, 21, 22, 23, 24, 25, 26, 27].map(r => renderRowItem(r))}
-
-              {/* SECTION 4 */}
-              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
-                  ⚖️ 4. БАЛАНСОВ ОТЧЕТ & ЗАДЪЛЖЕНИЯ (BALANCE SHEET & SOLVENCY)
-                </td>
-              </tr>
-              {[28, 29, 30, 31, 32, 33, 34, 35].map(r => renderRowItem(r))}
-
-              {/* SECTION 5 */}
-              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
-                  💵 5. ПАРИЧНИ ПОТОЦИ (CASH FLOW ANALYSIS)
-                </td>
-              </tr>
-              {[36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47].map(r => renderRowItem(r))}
-
-              {/* SECTION 6 */}
-              <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
-                  🏆 6. ДОПЪЛНИТЕЛНИ ФИНАНСОВИ ФЛАГОВЕ & КОЕФИЦИЕНТИ (ADDITIONAL FINANCIAL FLAGS)
-                </td>
-              </tr>
-              {[48, 49, 50, 51, 52, 53, 54].map(r => renderRowItem(r))}
+              {CHECKLIST_SECTIONS.map(section => {
+                const sectionChecked = section.rows.filter(r => checkedRows[r]).length;
+                const isSectionComplete = sectionChecked === section.rows.length;
+                return (
+                  <React.Fragment key={section.id}>
+                    <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
+                      <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                        <div className="flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSection(section.rows)}
+                            className="hover:opacity-80 transition-opacity cursor-pointer inline-flex items-center gap-1.5 text-left"
+                            title={isSectionComplete ? "Премахни отметките за тази секция" : "Отметни цялата секция"}
+                          >
+                            {isSectionComplete ? (
+                              <CheckSquare className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            ) : sectionChecked > 0 ? (
+                              <div className="w-3.5 h-3.5 rounded-xs border-2 border-indigo-400 flex items-center justify-center bg-indigo-500/20 shrink-0">
+                                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-xs" />
+                              </div>
+                            ) : (
+                              <Square className="w-3.5 h-3.5 text-indigo-400/60 shrink-0" />
+                            )}
+                            <span>{section.title}</span>
+                          </button>
+                          <span className={`text-[11px] font-mono px-2 py-0.5 rounded-md border font-bold ${
+                            isSectionComplete
+                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                              : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                          }`}>
+                            {sectionChecked} / {section.rows.length}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                    {section.rows.map(r => renderRowItem(r))}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
