@@ -61,21 +61,21 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 8, label: "52 week low / 52 week high", defaultVal: "", cellType: "ref-error" },
   { rowNum: 9, label: "Market Cap (в хил.)", defaultVal: "", cellType: "yellow-input", note: "Пазарна капитализация на компанията в хиляди ($ in thousands)" },
   { rowNum: 10, label: "P/E Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "PE Ratio = Stock Price / Earnings Per Share", flagRules: { green: "≤ 15", yellow: "15 - 25", red: "> 25" }, note: "PE Ratio = Stock Price / Earnings Per Share\n\nДРУГА ФОРМУЛА:\nPE Ratio = Market Cap / Net Income\n\nСъотношението цена към печалба (PE) е съотношението между цената на акциите на компанията и печалбата на акция. Той измерва цената на акцията спрямо нейните печалби.\n\nВъпреки това, ето обща насока за добри съотношения на PE въз основа на темпа на растеж:\nhttps://www.lynalden.com/pe-ratio/\n\nБез растеж: 10 или по-малко\nБавен растеж: 12\nУмерен растеж: 15\nБърз растеж: 25+\n\nВъпреки това, никога не трябва да инвестирате само въз основа на съотношението PE. \nНяма едно число, което да ви каже дали една инвестиция е добра идея." },
-  { rowNum: 11, label: "Price to FCF", defaultVal: "", cellType: "default", note: "Price to FCF = Stock Price / FCF per share\nЗа разлика от P/E ratio-то, това съотношение ни показва по-истински данни за реалния кеш, с който дружеството разполага, а не с обявените печалби, които са манипулируеми до известна степен според GAAP. \n\nПо-ниската стойност от P/E ratio е по-добрата стойност." },
-  { rowNum: 12, label: "Dividend Yield", defaultVal: "", cellType: "default", note: "Dividend yield = ($5 / $100) x 100 = 5%\n\nКогато цената падне с 50%, ето какво се случва, ако приемем, че\nкомпанията запази годишния дивидент от $5 непроменен:\n\nDividend yield = ($5 / $50) x 100 = 10%" },
-  { rowNum: 13, label: "Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100", note: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100" },
-  { rowNum: 14, label: "CASH Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100", note: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100\n\nПоказва ни по-истинското Payout Ratio и ни касае пряко като дивидентни инвеститори." },
-  { rowNum: 15, label: "Dividend Growth Rate 5 - 10 year avg", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 16, label: "Annualized ROI", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 17, label: "Annualized ROI 5 - 10 years avg", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 11, label: "Price to FCF", defaultVal: "", cellType: "default", flagRules: { green: "≤ 15", yellow: "15 - 25", red: "> 25" }, note: "Price to FCF = Stock Price / FCF per share\nЗа разлика от P/E ratio-то, това съотношение ни показва по-истински данни за реалния кеш, с който дружеството разполага, а не с обявените печалби, които са манипулируеми до известна степен според GAAP. \n\nПо-ниската стойност от P/E ratio е по-добрата стойност." },
+  { rowNum: 12, label: "Dividend Yield", defaultVal: "", cellType: "default", flagRules: { green: "2.5% - 6.5%", yellow: "0.5% - 2.5%", red: "< 0.5% или > 10%" }, note: "Dividend yield = ($5 / $100) x 100 = 5%\n\nКогато цената падне с 50%, ето какво се случва, ако приемем, че\nкомпанията запази годишния дивидент от $5 непроменен:\n\nDividend yield = ($5 / $50) x 100 = 10%" },
+  { rowNum: 13, label: "Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100", flagRules: { green: "≤ 50%", yellow: "50% - 75%", red: "> 75%" }, note: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100" },
+  { rowNum: 14, label: "CASH Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100", flagRules: { green: "≤ 50%", yellow: "50% - 70%", red: "> 70%" }, note: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100\n\nПоказва ни по-истинското Payout Ratio и ни касае пряко като дивидентни инвеститори." },
+  { rowNum: 15, label: "Dividend Growth Rate 5 - 10 year avg", defaultVal: "", cellType: "yellow-input", flagRules: { green: "8%+", yellow: "4% - 8%", red: "< 4%" } },
+  { rowNum: 16, label: "Annualized ROI", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" } },
+  { rowNum: 17, label: "Annualized ROI 5 - 10 years avg", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" } },
   { rowNum: 18, label: "Shares Outstanding", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 19, label: "Revenue", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 20, label: "Revenue avg increase 3 - 5 yrs", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 20, label: "Revenue avg increase 3 - 5 yrs", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" } },
   { rowNum: 21, label: "Gross Profit Margin", defaultVal: "", cellType: "yellow-input", flagRules: { green: "40%+", yellow: "30% - 40%", red: "< 30%" }, note: "Gross Profit Margin = (Gross Profit / Total Revenue) x 100 (%)\n\nПоказва ни какъв процент от оборота представлява брутната печалба. \n\nКолкото повече, толкова по-добре." },
   { rowNum: 22, label: "Research & Development (R&D Ratio)", defaultVal: "", cellType: "yellow-input", flagRules: { green: "< 30%", yellow: "30% - 40%", red: "> 40%" }, note: "Yoan Zografov:\nR&D ratio = R&D Expenses / Revenue х 100 (под 30%)\n\nПоказва ни какъв процент от оборота е разходът за проучване и развитие." },
   { rowNum: 23, label: "Selling, General & Admin (SG&A Ratio)", defaultVal: "", cellType: "yellow-input", flagRules: { green: "< 30%", yellow: "30% - 40%", red: "> 40%" }, note: "SGA ratio = SG&A Expenses / Revenue х 100 (под 30%)\nПоказва ни какъв процент от оборота е този разход.\nРазходи за Заплати, Маркетинг, Реклама" },
   { rowNum: 24, label: "EPS - Earnings Per Share", defaultVal: "", cellType: "green-formula", formulaStr: "Печалба на дял: EPS = Net Income/ Shares outstanding", note: "EPS - Earnings per share. \nПечалба на дял: EPS = Net Income/ Shares outstanding\n\nПечалбата на акция или EPS е просто изчисление, което показва колко печалба може да генерира една компания на акция от своите акци.\n\nДва основни фактора влияят на EPS: печалбата и броят на акциите.\n\nПечалби: EPS на компанията ще се увеличи с нарастването на приходите. Това може да се случи поради фактори като ръст на продажбите или намаляване на разходите. Ако печалбите намалеят, EPS също ще намалее.\nАкции: EPS на компанията ще се увеличи, когато общият брой на акциите в обращение намалява, като например в случай на обратно изкупуване на акции. Той ще намалее, когато броят на акциите се увеличи, например ако компанията издаде нови акции.\n\nАко една компания заеме повече дълг, EPS (знаменателят) намалява от по-високите разходи за лихви . Степента на въздействие върху цената на акциите до голяма степен зависи от това как се използва дългът.\n\nНапример повишеният риск и разходите за лихви могат да доведат до намаляване на съотношението цена/печалба, докато добре структурираната реинвестиция за растеж може да доведе до увеличаване на съотношението P/E и да компенсира недостатъците от използването на дълг.\n\nАко има две идентични компании, инвеститорите са по-склонни да оценят компанията с висок ливъридж при по-ниско съотношение P/E, предвид по-високите рискове, свързани с ливъриджа.\n\nhttps://www.wallstreetprep.com/knowledge/pe-ratio-price-to-earnings/" },
-  { rowNum: 25, label: "EPS Growth 5 - 10 yrs", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 25, label: "EPS Growth 5 - 10 yrs", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" } },
   { rowNum: 26, label: "Net Income", defaultVal: "", cellType: "yellow-input", note: "Net Income = Revenue - All Expenses\nНетни приходи = Приходи - Всички разходи\n\nНетният доход е счетоводната печалба на компанията след изваждане на всички разходи и разходи от приходите. Нарича се още печалби." },
   { rowNum: 27, label: "Net Profit Margin", defaultVal: "", cellType: "green-formula", formulaStr: "NET PROFIT MARGIN = NET INCOME / REVENUE x 100", flagRules: { green: "20%+", yellow: "10% - 20%", red: "< 10%" }, note: `NET PROFIT MARGIN = NET INCOME / REVENUE x 100
 Показва ни какъв процент от оборота представлява чистата печалба. Колкото повече, толкова по-добре.
@@ -91,15 +91,15 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 36, label: "Cash Flow from Operations", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 37, label: "CFFO 5-10 Years increase", defaultVal: "", cellType: "default" },
   { rowNum: 38, label: "Free Cash Flow", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 39, label: "FCF 5 - 10 years avg increase", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 39, label: "FCF 5 - 10 years avg increase", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" } },
   { rowNum: 40, label: "Cash Flow Margin", defaultVal: "", cellType: "green-formula", formulaStr: "=B36/B19", flagRules: { green: "15%+", yellow: "10% - 15%", red: "< 10%" }, note: "Cash Flow Margin Ratio = Cash Flow From Operations / Revenue x 100 (%)\nПоказва ни колко от всеки долар продажба се задържа като пари в брой (КЕШ). Колкото повече, толкова по-добре." },
   { rowNum: 41, label: "Free Cash Flow Margin", defaultVal: "", cellType: "green-formula", formulaStr: "=(B38/B19)", flagRules: { green: "15%+", yellow: "10% - 15%", red: "< 10%" }, note: "Free Cash Flow Margin = Free Cash Flow / Revenue x 100 (%)\n\nМаржът на свободния паричен поток (марж на FCF) е финансов показател, който показва колко ефективно една компания преобразува приходите си в свободен паричен поток, който представлява паричните средства, генерирани от компанията след покриване на оперативните разходи и капиталовите разходи. Той по същество измерва каква част от продажбите на компанията са налични като парични средства за дейности като изплащане на дълг, инвестиции или дивиденти. \n\nПо-високият марж на свободния финансов поток (FCF) показва, че компанията е по-ефективна в превръщането на продажбите в пари в брой, което може да бъде положителен знак за финансово здраве и оперативна ефективност. Марж на FCF от 10-15% често се счита за.\n\nВисокият марж на свободния финансов поток предполага ефективно управление на разходите и ефикасно използване на капитала." },
   { rowNum: 42, label: "Free Cash Flow Yield", defaultVal: "", cellType: "green-formula", formulaStr: "=1*(B38/B9)", flagRules: { green: "5%+", yellow: "3% - 5%", red: "< 3%" }, note: "Free Cash Flow Yield = Free Cash Flow / Market Cap x 100 (%)\n\nFree Cash Flow Yield (FCF Yield) е финансов показател, който показва колко свободен паричен поток (FCF) генерира една компания спрямо пазарната ѝ стойност. Това е мярка за доходността на инвестицията, базирана на реалния паричен поток, който остава на разположение за инвеститорите, след като всички оперативни и капиталови разходи са покрити.\n\nКакво ни казва този показател:\nВисок FCF Yield (напр. 8–10%+) → компанията генерира много свободен паричен поток спрямо текущата си пазарна оценка → потенциално подценена или много ефективна.\n\nНисък FCF Yield (напр. под 3%) → или е надценена, или не генерира достатъчно свободен паричен поток → възможен сигнал за рискове или слабости." },
   { rowNum: 43, label: "Earnings Yield", defaultVal: "", cellType: "green-formula", formulaStr: "=B24/B7", flagRules: { green: "7%+", yellow: "4% - 7%", red: "< 4%" }, note: "Earnings Yield = EPS / Price x 100 (%)\nEarnings Yield (EY) е финансов показател, който показва каква печалба на акция (EPS) се получава спрямо цената на акцията. Тоест, измерва колко „печалба“ получаваш за всеки вложен лев в акция.\n\nВисока стойност на EY → компанията генерира много печалба спрямо цената си → потенциално подценена.\nНиска стойност на EY → или е надценена, или има ниска печалба спрямо цената си.\nТова е обратното на P/E (Price-to-Earnings) ratio:\n\nEarnings Yield Интерпретация\n> 10% Много високо – потенциално подценена акция (или с временни проблеми)\n7–10% Добро ниво – може да бъде разумна стойностна инвестиция\n4–7% Нормално ниво за зрели компании със стабилни приходи\n< 4% Ниско – потенциално надценена акция или висок растеж, но с риск\n\nВажно:\nEarnings Yield сам по себе си НЕ е достатъчен.\n\nТрябва да го сравняваш с:\nЛихвения процент на безрисков актив – напр. доходността по 10-годишни държавни облигации.\nАко Earnings Yield е значително над тях (напр. 10% vs. 3%), това е добър знак.\n\n- Ръст на печалбите (EPS Growth) – висока печалба с бавен растеж ≠ добра инвестиция.\n\n- Качество на печалбата – дали е устойчива или манипулирана чрез счетоводни трикове.\n\n- Сравнение със сектора – EY от 5% може да е отлично за tech, но ниско за енергийна компания." },
   { rowNum: 44, label: "Free Cash Flow  / Net Income", defaultVal: "", cellType: "green-formula", formulaStr: "=B38/B26", flagRules: { green: "100%+", yellow: "70% - 100%", red: "< 70%" }, note: "Съотношението Свободен паричен поток към нетен доход (Free Cash Flow to Net Income ratio, FCF/NI) \nПоказва колко от отчетената печалба на една компания реално се превръща в „твърди“ пари, които остават след всички разходи и могат да се използват за: инвестиции, изплащане на дълг или дивиденти.\n\nПрагове:\nНад 100% → отлично, реалният кеш надвишава печалбата.\n\nОколо 100% → здравословно.\n\nПод 100% → внимателно, особено ако е трайно под 70%.\n\nОтрицателно → нетен доход положителен, но FCF отрицателен → червен флаг." },
   { rowNum: 45, label: "Cash Flow Coverage Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "Cash Flow Coverage Ratio = Operating Cash flow / Long-Term Debt", flagRules: { green: "> 1.0", yellow: "0.5 - 1.0", red: "< 0.5" }, note: "Cash Flow Coverage Ratio = Operating Cash flow / Long-Term Debt\n\nВисока стойност на това ratio показва, че компанията може да обслужва дълга си. Колкото по-високо CFCR над 1, толкова по-добре." },
-  { rowNum: 46, label: "Operating Cash Flow Ratio", defaultVal: "", cellType: "default", formulaStr: "Operating Cash Flow Ratio = Operating Cash Flow / Current Liabilities", note: "Yoan Zografov:\n\nOperating Cash Flow Ratio = Operating Cash Flow / Current Liabilities\n\nТова е мярка за броя пъти, кога една компания може да изплати текущи задължения с паричните средства, генерирани за даден период." },
-  { rowNum: 47, label: "Cash ROA", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 46, label: "Operating Cash Flow Ratio", defaultVal: "", cellType: "default", formulaStr: "Operating Cash Flow Ratio = Operating Cash Flow / Current Liabilities", flagRules: { green: "> 1.0", yellow: "0.5 - 1.0", red: "< 0.5" }, note: "Yoan Zografov:\n\nOperating Cash Flow Ratio = Operating Cash Flow / Current Liabilities\n\nТова е мярка за броя пъти, кога една компания може да изплати текущи задължения с паричните средства, генерирани за даден период." },
+  { rowNum: 47, label: "Cash ROA", defaultVal: "", cellType: "yellow-input", flagRules: { green: "5%+", yellow: "2% - 5%", red: "< 2%" } },
   { rowNum: 48, label: "EBITDA Margin", defaultVal: "", cellType: "yellow-input", formulaStr: "EBITDA Margin = (EBITDA / Revenue) * 100", flagRules: { green: "20%+", yellow: "10% - 20%", red: "< 10%" }, note: "EBITDA Margin = (EBITDA / Revenue) * 100 (%)\n\nМаржът на EBITDA показва оперативната доходност на компанията преди начисляването на лихви, данъци, амортизация и обезценка. \n\nЗелен флаг: над 20%\nЖълт флаг: 10% - 20%\nЧервен флаг: под 10%" },
   { rowNum: 49, label: "Interest Coverage Rate", defaultVal: "", cellType: "yellow-input", formulaStr: "Interest Coverage = EBIT / Interest Expense", flagRules: { green: "> 5.0", yellow: "2.0 - 5.0", red: "< 2.0" }, note: "Interest Coverage Rate = EBIT / Interest Expense\n\nПокритието на лихвените разходи измерва колко пъти оперативната печалба (EBIT) може да покрие разходите за лихви по дълговете. Колкото по-високо число, толкова по-сигурна е компанията.\n\nЗелен флаг: над 5.0\nЖълт флаг: 2.0 - 5.0\nЧервен флаг: под 2.0 (риск от дефолт)" },
   { rowNum: 50, label: "Goodwill in Assets", defaultVal: "", cellType: "yellow-input", formulaStr: "Goodwill Ratio = (Goodwill / Total Assets) * 100", flagRules: { green: "< 10%", yellow: "10% - 20%", red: "> 20%" }, note: "Goodwill in Assets = (Goodwill / Total Assets) * 100 (%)\n\nПоказва каква част от активите на компанията се състоят от 'Goodwill' (репутация от премиум цени при придобивания). Прекалено висок Goodwill носи риск от бъдещи обезценки (impairments).\n\nЗелен флаг: под 10%\nЖълт флаг: 10% - 20%\nЧервен флаг: над 20%" },
@@ -161,6 +161,176 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
     if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
     return num.toLocaleString('en-US');
+  };
+
+  const getMetricFlagType = (rowNum: number, valStr: string): 'green' | 'yellow' | 'red' | null => {
+    if (!valStr || valStr.trim() === '') return null;
+    const numVal = parseNum(valStr);
+    if (isNaN(numVal)) return null;
+
+    switch (rowNum) {
+      case 10: // P/E Ratio (≤ 15: green, 15 - 25: yellow, > 25 or ≤ 0: red)
+        if (numVal <= 0) return 'red';
+        if (numVal <= 15) return 'green';
+        if (numVal <= 25) return 'yellow';
+        return 'red';
+
+      case 11: // Price to FCF (≤ 15: green, 15 - 25: yellow, > 25 or ≤ 0: red)
+        if (numVal <= 0) return 'red';
+        if (numVal <= 15) return 'green';
+        if (numVal <= 25) return 'yellow';
+        return 'red';
+
+      case 12: // Dividend Yield (2.5% - 6.5%: green, 0.5% - 2.5% or 6.5% - 10%: yellow, < 0.5% or > 10%: red)
+        if (numVal >= 2.5 && numVal <= 6.5) return 'green';
+        if ((numVal >= 0.5 && numVal < 2.5) || (numVal > 6.5 && numVal <= 10)) return 'yellow';
+        return 'red';
+
+      case 13: // Dividend Payout Ratio (≤ 50%: green, 50% - 75%: yellow, > 75%: red)
+        if (numVal <= 0) return 'yellow';
+        if (numVal <= 50) return 'green';
+        if (numVal <= 75) return 'yellow';
+        return 'red';
+
+      case 14: // CASH Dividend Payout Ratio (≤ 50%: green, 50% - 70%: yellow, > 70%: red)
+        if (numVal <= 0) return 'yellow';
+        if (numVal <= 50) return 'green';
+        if (numVal <= 70) return 'yellow';
+        return 'red';
+
+      case 15: // Dividend Growth Rate 5 - 10 year avg (8%+: green, 4% - 8%: yellow, < 4%: red)
+        if (numVal >= 8) return 'green';
+        if (numVal >= 4) return 'yellow';
+        return 'red';
+
+      case 16: // Annualized ROI (10%+: green, 6% - 10%: yellow, < 6%: red)
+      case 17: // Annualized ROI 5 - 10 years avg (10%+: green, 6% - 10%: yellow, < 6%: red)
+        if (numVal >= 10) return 'green';
+        if (numVal >= 6) return 'yellow';
+        return 'red';
+
+      case 20: // Revenue avg increase 3 - 5 yrs (10%+: green, 5% - 10%: yellow, < 5%: red)
+        if (numVal >= 10) return 'green';
+        if (numVal >= 5) return 'yellow';
+        return 'red';
+
+      case 21: // Gross Profit Margin (40%+: green, 30% - 40%: yellow, < 30%: red)
+        if (numVal >= 40) return 'green';
+        if (numVal >= 30) return 'yellow';
+        return 'red';
+
+      case 22: // Research & Development (R&D Ratio) (< 30%: green, 30% - 40%: yellow, > 40%: red)
+      case 23: // Selling, General & Admin (SG&A Ratio) (< 30%: green, 30% - 40%: yellow, > 40%: red)
+        if (numVal <= 30) return 'green';
+        if (numVal <= 40) return 'yellow';
+        return 'red';
+
+      case 25: // EPS Growth 5 - 10 yrs (10%+: green, 5% - 10%: yellow, < 5%: red)
+        if (numVal >= 10) return 'green';
+        if (numVal >= 5) return 'yellow';
+        return 'red';
+
+      case 27: // Net Profit Margin (20%+: green, 10% - 20%: yellow, < 10%: red)
+        if (numVal >= 20) return 'green';
+        if (numVal >= 10) return 'yellow';
+        return 'red';
+
+      case 28: // Return on Equity (ROE) (15%+: green, 5% - 15%: yellow, < 5%: red)
+      case 30: // Return on Capital (ROIC) (15%+: green, 5% - 15%: yellow, < 5%: red)
+        if (numVal >= 15) return 'green';
+        if (numVal >= 5) return 'yellow';
+        return 'red';
+
+      case 29: // Return on Assets (ROA) (5%+: green, 2% - 5%: yellow, < 2%: red)
+        if (numVal >= 5) return 'green';
+        if (numVal >= 2) return 'yellow';
+        return 'red';
+
+      case 31: // Current Ratio (1.5 - 3.0: green, 1.0 - 1.5 or > 3.0: yellow, < 1.0: red)
+        if (numVal >= 1.5 && numVal <= 3.0) return 'green';
+        if ((numVal >= 1.0 && numVal < 1.5) || (numVal > 3.0 && numVal <= 4.0)) return 'yellow';
+        return 'red';
+
+      case 35: // Debt / Equity (< 1.0: green, 1.0 - 2.0: yellow, > 2.0: red)
+        if (numVal <= 1.0) return 'green';
+        if (numVal <= 2.0) return 'yellow';
+        return 'red';
+
+      case 39: // FCF 5 - 10 years avg increase (10%+: green, 5% - 10%: yellow, < 5%: red)
+        if (numVal >= 10) return 'green';
+        if (numVal >= 5) return 'yellow';
+        return 'red';
+
+      case 40: // Cash Flow Margin (15%+: green, 10% - 15%: yellow, < 10%: red)
+      case 41: // Free Cash Flow Margin (15%+: green, 10% - 15%: yellow, < 10%: red)
+        if (numVal >= 15) return 'green';
+        if (numVal >= 10) return 'yellow';
+        return 'red';
+
+      case 42: // Free Cash Flow Yield (5%+: green, 3% - 5%: yellow, < 3%: red)
+        if (numVal >= 5) return 'green';
+        if (numVal >= 3) return 'yellow';
+        return 'red';
+
+      case 43: // Earnings Yield (7%+: green, 4% - 7%: yellow, < 4%: red)
+        if (numVal >= 7) return 'green';
+        if (numVal >= 4) return 'yellow';
+        return 'red';
+
+      case 44: // Free Cash Flow / Net Income (100%+: green, 70% - 100%: yellow, < 70%: red)
+        if (numVal >= 100) return 'green';
+        if (numVal >= 70) return 'yellow';
+        return 'red';
+
+      case 45: // Cash Flow Coverage Ratio (> 1.0: green, 0.5 - 1.0: yellow, < 0.5: red)
+      case 46: // Operating Cash Flow Ratio (> 1.0: green, 0.5 - 1.0: yellow, < 0.5: red)
+        if (numVal >= 1.0) return 'green';
+        if (numVal >= 0.5) return 'yellow';
+        return 'red';
+
+      case 47: // Cash ROA (5%+: green, 2% - 5%: yellow, < 2%: red)
+        if (numVal >= 5) return 'green';
+        if (numVal >= 2) return 'yellow';
+        return 'red';
+
+      case 48: // EBITDA Margin (20%+: green, 10% - 20%: yellow, < 10%: red)
+        if (numVal >= 20) return 'green';
+        if (numVal >= 10) return 'yellow';
+        return 'red';
+
+      case 49: // Interest Coverage Rate (> 5.0: green, 2.0 - 5.0: yellow, < 2.0: red)
+        if (numVal >= 5) return 'green';
+        if (numVal >= 2) return 'yellow';
+        return 'red';
+
+      case 50: // Goodwill in Assets (< 10%: green, 10% - 20%: yellow, > 20%: red)
+        if (numVal <= 10) return 'green';
+        if (numVal <= 20) return 'yellow';
+        return 'red';
+
+      case 51: // Asset Turnover Ratio (> 3.0: green, 1.0 - 3.0: yellow, < 1.0: red)
+        if (numVal >= 3.0) return 'green';
+        if (numVal >= 1.0) return 'yellow';
+        return 'red';
+
+      case 52: // Quick Ratio (≥ 1.0: green, 0.8 - 1.0: yellow, < 0.8: red)
+        if (numVal >= 1.0) return 'green';
+        if (numVal >= 0.8) return 'yellow';
+        return 'red';
+
+      case 53: // Stock-based Compensation (% of Net Income) (< 5%: green, 5% - 10%: yellow, > 10%: red)
+        if (numVal <= 5) return 'green';
+        if (numVal <= 10) return 'yellow';
+        return 'red';
+
+      case 54: // CapEx (% of Net Income) (< 15%: green, 15% - 25%: yellow, > 25%: red)
+        if (numVal <= 15) return 'green';
+        if (numVal <= 25) return 'yellow';
+        return 'red';
+
+      default:
+        return null;
+    }
   };
 
   const updateStockRowDetails = (sym: string) => {
@@ -331,8 +501,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const handleAutoCheckGreen = () => {
     const newChecked = { ...checkedRows };
     EXACT_SHEET_ROWS.forEach(row => {
-      const displayVal = computedValues[String(row.rowNum)] || userInputs[String(row.rowNum)];
-      if (displayVal && (displayVal.includes('🟢') || displayVal.includes('GREEN'))) {
+      const flagVal = getEffectiveMetricVal(row.rowNum);
+      const flag = getMetricFlagType(row.rowNum, flagVal);
+      if (flag === 'green') {
         newChecked[row.rowNum] = true;
       }
     });
@@ -397,128 +568,29 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     if (price > 0 && epsCalc > 0) calculated['43'] = `${((epsCalc / price) * 100).toFixed(2)}%`;
     if (netInc !== 0 && fcf > 0) calculated['44'] = `${((fcf / netInc) * 100).toFixed(2)}%`;
 
-    // Dynamic Flags Rows (#49 to #64)
-    const grossMarginVal = parseNum(userInputs['21']);
-    if (userInputs['21'] && userInputs['21'].trim() !== '') {
-      calculated['49'] = grossMarginVal >= 40 ? `🟢 GREEN (${grossMarginVal}%)` : grossMarginVal >= 30 ? `🟡 YELLOW (${grossMarginVal}%)` : `🔴 RED (${grossMarginVal}%)`;
-    }
-
-    const revGrowthVal3 = parseNum(userInputs['20']);
-    const revGrowthVal5 = parseNum(userInputs['20_5']);
-    const activeRevGrowth = revGrowthVal3 || revGrowthVal5;
-    if (activeRevGrowth > 0) {
-      calculated['50'] = activeRevGrowth >= 15 ? `🟢 GREEN (${activeRevGrowth}%)` : activeRevGrowth >= 10 ? `🟡 YELLOW (${activeRevGrowth}%)` : `🔴 RED (${activeRevGrowth}%)`;
-    }
-
-    const netMarginVal = parseNum(userInputs['27']);
-    if (userInputs['27'] && userInputs['27'].trim() !== '') {
-      calculated['52'] = netMarginVal >= 17 ? `🟢 GREEN (${netMarginVal}%)` : netMarginVal >= 5 ? `🟡 YELLOW (${netMarginVal}%)` : `🔴 RED (${netMarginVal}%)`;
-    }
-
-    if (userInputs['35'] && userInputs['35'].trim() !== '') {
-      calculated['56'] = deRatio <= 1.0 ? `🟢 GREEN (${deRatio})` : deRatio <= 2.0 ? `🟡 YELLOW (${deRatio})` : `🔴 RED (${deRatio})`;
-    }
 
     return calculated;
   }, [userInputs]);
 
-  const getMetricFlagType = (rowNum: number, valStr: string): 'green' | 'yellow' | 'red' | null => {
-    if (!valStr || valStr.trim() === '') return null;
-    const numVal = parseNum(valStr);
-    if (isNaN(numVal)) return null;
-
-    switch (rowNum) {
-      case 10: // P/E Ratio
-        if (numVal <= 15) return 'green';
-        if (numVal <= 25) return 'yellow';
-        return 'red';
-      case 21: // Gross Profit Margin
-        if (numVal >= 40) return 'green';
-        if (numVal >= 30) return 'yellow';
-        return 'red';
-      case 22: // R&D Ratio
-      case 23: // SG&A Ratio
-        if (numVal <= 30) return 'green';
-        if (numVal <= 40) return 'yellow';
-        return 'red';
-      case 27: // Net Profit Margin
-        if (numVal >= 20) return 'green';
-        if (numVal >= 10) return 'yellow';
-        return 'red';
-      case 28: // ROE
-      case 30: // ROIC
-        if (numVal >= 15) return 'green';
-        if (numVal >= 5) return 'yellow';
-        return 'red';
-      case 29: // ROA
-        if (numVal >= 5) return 'green';
-        if (numVal >= 2) return 'yellow';
-        return 'red';
-      case 31: // Current Ratio
-        if (numVal >= 1.5 && numVal <= 3.0) return 'green';
-        if (numVal >= 1.0) return 'yellow';
-        return 'red';
-      case 35: // Debt / Equity
-        if (numVal <= 1.0) return 'green';
-        if (numVal <= 2.0) return 'yellow';
-        return 'red';
-      case 42: // FCF Yield
-        if (numVal >= 5) return 'green';
-        if (numVal >= 3) return 'yellow';
-        return 'red';
-      case 43: // Earnings Yield
-        if (numVal >= 7) return 'green';
-        if (numVal >= 4) return 'yellow';
-        return 'red';
-      case 44: // FCF / Net Income
-        if (numVal >= 100) return 'green';
-        if (numVal >= 70) return 'yellow';
-        return 'red';
-      case 45: // Cash Flow Coverage Ratio
-        if (numVal >= 1.0) return 'green';
-        if (numVal >= 0.5) return 'yellow';
-        return 'red';
-      case 48: // EBITDA Margin
-        if (numVal >= 20) return 'green';
-        if (numVal >= 10) return 'yellow';
-        return 'red';
-      case 49: // Interest Coverage Rate
-        if (numVal >= 5) return 'green';
-        if (numVal >= 2) return 'yellow';
-        return 'red';
-      case 50: // Goodwill in Assets
-        if (numVal <= 10) return 'green';
-        if (numVal <= 20) return 'yellow';
-        return 'red';
-      case 51: // Asset Turnover Ratio
-        if (numVal >= 3.0) return 'green';
-        if (numVal >= 1.0) return 'yellow';
-        return 'red';
-      case 52: // Quick Ratio
-        if (numVal >= 1.0) return 'green';
-        if (numVal >= 0.8) return 'yellow';
-        return 'red';
-      case 53: // Stock-based Compensation as % of Net Income
-        if (numVal <= 5) return 'green';
-        if (numVal <= 10) return 'yellow';
-        return 'red';
-      case 54: // CapEx as % of Net Income
-        if (numVal <= 15) return 'green';
-        if (numVal <= 25) return 'yellow';
-        return 'red';
-      default:
-        return null;
+  // Helper to resolve effective metric value including multi-input fields (5y/10y, 3y/5y)
+  const getEffectiveMetricVal = (rowNum: number): string => {
+    const rawUserVal = userInputs[String(rowNum)];
+    const displayVal = computedValues[String(rowNum)] !== undefined 
+      ? computedValues[String(rowNum)] 
+      : (rawUserVal !== undefined ? rawUserVal : '');
+    
+    if (rowNum === 15 || rowNum === 17 || rowNum === 20 || rowNum === 25 || rowNum === 39) {
+      return userInputs[String(rowNum)] || userInputs[`${rowNum}_10`] || userInputs[`${rowNum}_5`] || '';
     }
+    return displayVal;
   };
 
   // Live Score Calculator
   const flagsSummary = useMemo(() => {
     let green = 0, yellow = 0, red = 0;
     EXACT_SHEET_ROWS.forEach(row => {
-      const displayVal = computedValues[String(row.rowNum)] !== undefined 
-        ? computedValues[String(row.rowNum)] 
-        : (userInputs[String(row.rowNum)] || '');
-      const flag = getMetricFlagType(row.rowNum, displayVal);
+      const flagVal = getEffectiveMetricVal(row.rowNum);
+      const flag = getMetricFlagType(row.rowNum, flagVal);
       if (flag === 'green') green++;
       else if (flag === 'yellow') yellow++;
       else if (flag === 'red') red++;
@@ -654,7 +726,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <Lock className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Автоматично изчислено" />
               )}
             </div>
-            {renderStatusBadge(rowNum, displayVal)}
+            {renderStatusBadge(rowNum, getEffectiveMetricVal(rowNum))}
           </div>
         </td>
 
