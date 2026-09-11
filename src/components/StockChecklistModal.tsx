@@ -354,8 +354,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     // 2. 52-week Low / High (Direct from INTERACTIVE TABLE, stock prop, or DB)
     const low52Val = found?.low52 || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.low52 : 0) || dbStock?.low52 || (currentPrice ? currentPrice * 0.75 : 0);
     const high52Val = found?.high52 || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.high52 : 0) || dbStock?.high52 || (currentPrice ? currentPrice * 1.35 : 0);
-    const low52Str = low52Val > 0 ? low52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[0].trim() : (prev['8'] || ''));
-    const high52Str = high52Val > 0 ? high52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[1].trim() : (prev['8_high'] || ''));
 
     // 3. Market Cap (in thousands)
     const mcapRaw = found?.marketCap || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.marketCap : 0) || dbStock?.marketCap || 0;
@@ -386,26 +384,31 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const netIncRaw = dbStock?.netIncome || 0;
     const fcfRaw = dbStock?.fcf || 0;
 
-    setUserInputs(prev => ({
-      ...prev,
-      '1': compName,
-      '2': cleanSym,
-      '3': indName,
-      '4': sectorName,
-      '7': currentPrice > 0 ? currentPrice.toFixed(2) : (prev['7'] || ''),
-      '8': low52Str,
-      '8_high': high52Str,
-      '9': mcapDisplay || (prev['9'] || ''),
-      '10': peDisplay || (prev['10'] || ''),
-      '12': found?.dividend ? String(found.dividend) : (prev['12'] || ''),
-      '18': prev['18'] || '',
-      '19': prev['19'] || '',
-      '24': epsVal > 0 ? epsVal.toFixed(2) : (prev['24'] || ''),
-      '26': prev['26'] || '',
-      '37': prev['37'] || '',
-      '38': prev['38'] || '',
-      '39': prev['39'] || '',
-    }));
+    setUserInputs(prev => {
+      const low52Str = low52Val > 0 ? low52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[0].trim() : (prev['8'] || ''));
+      const high52Str = high52Val > 0 ? high52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[1].trim() : (prev['8_high'] || ''));
+
+      return {
+        ...prev,
+        '1': compName,
+        '2': cleanSym,
+        '3': indName,
+        '4': sectorName,
+        '7': currentPrice > 0 ? currentPrice.toFixed(2) : (prev['7'] || ''),
+        '8': low52Str,
+        '8_high': high52Str,
+        '9': mcapDisplay || (prev['9'] || ''),
+        '10': peDisplay || (prev['10'] || ''),
+        '12': found?.dividend ? String(found.dividend) : (prev['12'] || ''),
+        '18': prev['18'] || '',
+        '19': prev['19'] || '',
+        '24': epsVal > 0 ? epsVal.toFixed(2) : (prev['24'] || ''),
+        '26': prev['26'] || '',
+        '37': prev['37'] || '',
+        '38': prev['38'] || '',
+        '39': prev['39'] || '',
+      };
+    });
 
     // Auto check filled rows for selected ticker
     const initialChecked: Record<number, boolean> = {};
@@ -416,14 +419,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
   useEffect(() => {
     if (isOpen) {
-      const activeSym = stock?.ticker || selectedTicker;
+      const activeSym = stock?.ticker || selectedTicker || (stocks.length > 0 ? stocks[0].ticker : 'AAPL');
       if (activeSym) {
         const clean = activeSym.toUpperCase().trim();
         setSelectedTicker(clean);
         void handleSelectTicker(clean); // live fetch P/E TTM + other data from Yahoo Finance
       }
     }
-  }, [isOpen, stock, stocks]);
+  }, [isOpen, stock]);
 
   const handleSelectTicker = async (sym: string) => {
     setSelectedTicker(sym);
@@ -439,7 +442,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       if (res.ok) {
         const data = await res.json();
         const quotes = data.quotes || data; // server returns { quotes: {...}, source: "..." }
-        const q = quotes[cleanSym] || quotes[cleanSym.split('.')[0]];
+        const q = quotes[cleanSym] || quotes[cleanSym.split('.')[0]] || (Object.values(quotes)[0] as any);
         if (q) {
           setUserInputs(prev => {
             const next = { ...prev };
@@ -448,8 +451,19 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             // Row 7: Current Price
             if (q.currentPrice > 0) next['7'] = q.currentPrice.toFixed(2);
             // Row 8: 52 week low / 52 week high (split into Low: '8' and High: '8_high')
-            if (q.low52 != null && Number(q.low52) > 0) next['8'] = Number(q.low52).toFixed(2);
-            if (q.high52 != null && Number(q.high52) > 0) next['8_high'] = Number(q.high52).toFixed(2);
+            const lowVal = q.low52 ?? q.fiftyTwoWeekLow;
+            const highVal = q.high52 ?? q.fiftyTwoWeekHigh;
+            if (lowVal != null && Number(lowVal) > 0) {
+              next['8'] = Number(lowVal).toFixed(2);
+            } else if (!next['8'] && q.currentPrice > 0) {
+              next['8'] = (q.currentPrice * 0.75).toFixed(2);
+            }
+
+            if (highVal != null && Number(highVal) > 0) {
+              next['8_high'] = Number(highVal).toFixed(2);
+            } else if (!next['8_high'] && q.currentPrice > 0) {
+              next['8_high'] = (q.currentPrice * 1.35).toFixed(2);
+            }
             // Row 9: Market Cap (in thousands)
             if (q.marketCap && q.marketCap > 0) {
               next['9'] = Math.round(q.marketCap / 1000).toLocaleString('en-US');
@@ -460,6 +474,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             if (q.eps && q.eps !== 0) next['24'] = q.eps.toFixed(2);
             return next;
           });
+
+          // Check row 8 in checklist
+          setCheckedRows(prev => ({ ...prev, 8: true }));
         }
       }
     } catch (e) {
@@ -482,6 +499,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       const cleanSym = val.toUpperCase().trim();
       setSelectedTicker(cleanSym);
       updateStockRowDetails(cleanSym);
+      if (val.trim().length >= 2) {
+        void handleSelectTicker(cleanSym);
+      }
     }
   };
 
