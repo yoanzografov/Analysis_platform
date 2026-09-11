@@ -145,25 +145,15 @@ export default function App() {
     };
   }, []);
 
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      if (!user) {
-        setPositions([]);
-        setTransactions([]);
-        setDividends([]);
-        setCashBalance(0);
-        try {
-          localStorage.removeItem('user_portfolio_positions');
-          localStorage.removeItem('user_portfolio_transactions');
-          localStorage.removeItem('user_portfolio_dividends');
-          localStorage.removeItem('user_portfolio_cash');
-        } catch (e) {}
-      }
-    });
-    return () => unsub();
-  }, []);
+  // Guest / Direct preview mode support for devices without mandatory lock
+  const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('app_guest_mode') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+  const [authModalInitialTab, setAuthModalInitialTab] = useState<'login' | 'register'>('login');
 
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
 
@@ -622,7 +612,13 @@ export default function App() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
+    // Safety timeout: prevent hanging forever on slow or restricted mobile networks
+    const safetyTimeout = setTimeout(() => {
+      setIsAuthChecking(false);
+    }, 2500);
+
     const unsub = onAuthStateChanged(auth, (user) => {
+      clearTimeout(safetyTimeout);
       setCurrentUser(user);
       setIsUserDocLoaded(false);
       setIsAuthChecking(false);
@@ -633,7 +629,10 @@ export default function App() {
         setCashBalance(0);
       }
     });
-    return () => unsub();
+    return () => {
+      clearTimeout(safetyTimeout);
+      unsub();
+    };
   }, []);
 
   // Load and listen to Firebase Firestore (User-Scoped Privacy & Cloud Sync)
@@ -1243,17 +1242,31 @@ export default function App() {
     );
   }
 
-  if (!currentUser) {
+  if (!currentUser && !isGuestMode) {
     return (
       <div className={isDark ? 'dark' : ''}>
         <LandingAuthGate
-          onOpenAuth={() => setIsAuthModalOpen(true)}
+          onOpenAuth={(mode) => {
+            setAuthModalInitialTab(mode === 'signup' ? 'register' : 'login');
+            setIsAuthModalOpen(true);
+          }}
+          onContinueAsGuest={() => {
+            setIsGuestMode(true);
+            try { localStorage.setItem('app_guest_mode', 'true'); } catch (e) {}
+          }}
           isDark={isDark}
           onToggleTheme={toggleTheme}
         />
         <AuthModal
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
+          currentUser={currentUser}
+          initialTab={authModalInitialTab}
+          onContinueAsGuest={() => {
+            setIsGuestMode(true);
+            setIsAuthModalOpen(false);
+            try { localStorage.setItem('app_guest_mode', 'true'); } catch (e) {}
+          }}
         />
       </div>
     );
@@ -1348,7 +1361,10 @@ export default function App() {
         <div className="flex items-center gap-2 shrink-0">
           <ThemeToggle />
           <button
-            onClick={() => setIsAuthModalOpen(true)}
+            onClick={() => {
+              setAuthModalInitialTab('login');
+              setIsAuthModalOpen(true);
+            }}
             className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
               currentUser
                 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
@@ -1868,6 +1884,12 @@ export default function App() {
     isOpen={isAuthModalOpen}
     onClose={() => setIsAuthModalOpen(false)}
     currentUser={currentUser}
+    initialTab={authModalInitialTab}
+    onContinueAsGuest={() => {
+      setIsGuestMode(true);
+      setIsAuthModalOpen(false);
+      try { localStorage.setItem('app_guest_mode', 'true'); } catch (e) {}
+    }}
   />
 
   {/* ROI Calculator Modal */}

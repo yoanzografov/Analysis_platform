@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Lock, 
@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   Eye,
   EyeOff,
-  Send
+  Send,
+  Compass
 } from 'lucide-react';
 import { 
   signInWithEmailAndPassword, 
@@ -30,14 +31,18 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   currentUser: FirebaseUser | null;
+  initialTab?: 'login' | 'register';
+  onContinueAsGuest?: () => void;
 }
 
 export const AuthModal: React.FC<Props> = ({
   isOpen,
   onClose,
-  currentUser
+  currentUser,
+  initialTab,
+  onContinueAsGuest
 }) => {
-  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>(currentUser ? 'login' : 'login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>(initialTab || (currentUser ? 'login' : 'login'));
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -48,14 +53,25 @@ export const AuthModal: React.FC<Props> = ({
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      if (initialTab) {
+        setActiveTab(initialTab);
+      }
+      setError('');
+      setSuccess('');
+    }
+  }, [isOpen, initialTab]);
+
   if (!isOpen) return null;
 
   // Helper to format email if user enters plain username like "yoan"
+  // ALWAYS lowercase and trim to prevent mobile keyboard auto-capitalization bugs
   const formatEmail = (input: string) => {
-    const trimmed = input.trim();
+    const trimmed = input.trim().toLowerCase();
     if (!trimmed) return '';
     if (trimmed.includes('@')) return trimmed;
-    return `${trimmed.toLowerCase()}@stocktracker.app`;
+    return `${trimmed}@stocktracker.app`;
   };
 
   const isRealEmail = (input: string) => {
@@ -80,15 +96,21 @@ export const AuthModal: React.FC<Props> = ({
       setSuccess('Успешен вход! Данните се синхронизират...');
       setTimeout(() => {
         onClose();
-      }, 1000);
+      }, 800);
     } catch (err: any) {
       console.error("Login error:", err);
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setError('Грешно потребителско име/имейл или парола!');
+        setError('Грешно потребителско име/имейл или парола! Проверете главни/малки букви или кликнете на "Нова Регистрация" горе.');
       } else if (err.code === 'auth/invalid-email') {
-        setError('Невалиден формат на имейла!');
+        setError('Невалиден формат на имейл адреса!');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Твърде много неуспешни опити! Достъпът е временно ограничен от съображения за сигурност. Моля изчакайте малко или използвайте "Забравена парола".');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Проблем с мрежата или интернет връзката на устройството. Моля опитайте отново или влезте като Гост.');
+      } else if (err.code === 'auth/user-disabled') {
+        setError('Този профил е временно деактивиран.');
       } else if (err.code === 'auth/configuration-not-found') {
-        setError('Моля активирайте "Email/Password" във Firebase Console (Authentication -> Sign-in method -> Enable) или ползвайте бързия PIN.');
+        setError('Моля активирайте "Email/Password" във Firebase Console или използвайте Гост достъп.');
       } else {
         setError(err.message || 'Грешка при вход. Опитайте отново!');
       }
@@ -141,13 +163,15 @@ export const AuthModal: React.FC<Props> = ({
 
       setTimeout(() => {
         onClose();
-      }, 1800);
+      }, 1500);
     } catch (err: any) {
       console.error("Register error:", err);
       if (err.code === 'auth/email-already-in-use') {
-        setError('Този имейл/потребителско име вече е регистриран!');
+        setError('Този имейл/потребителско име вече е регистриран! Моля преминете на таб "Вход с Имейл".');
       } else if (err.code === 'auth/weak-password') {
         setError('Паролата е прекалено слаба (поне 6 символа).');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Проблем с интернет връзката на устройството. Опитайте отново.');
       } else if (err.code === 'auth/configuration-not-found') {
         setError('Моля активирайте "Email/Password" във Firebase Console (Authentication -> Sign-in method -> Enable).');
       } else {
@@ -169,16 +193,25 @@ export const AuthModal: React.FC<Props> = ({
       return;
     }
 
+    if (formattedEmail.endsWith('@stocktracker.app')) {
+      setError('За акаунти, регистрирани само с потребителско име, възстановяването по имейл не е налично. Въведете Вашия реален имейл или регистрирайте нов акаунт.');
+      return;
+    }
+
     try {
       setLoading(true);
       await sendPasswordResetEmail(auth, formattedEmail);
-      setSuccess('Изпратихме ви имейл с инструкции за възстановяване на паролата!');
+      setSuccess('Изпратихме ви имейл с инструкции за възстановяване на паролата! Проверете входящата поща и спам папката.');
     } catch (err: any) {
       console.error("Password reset error:", err);
       if (err.code === 'auth/user-not-found') {
-        setError('Не открихме акаунт с този имейл.');
+        setError('Не открихме акаунт с този имейл адрес.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Невалиден формат на имейл адреса.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Проблем с интернет връзката. Опитайте отново.');
       } else {
-        setError('Грешка при изпращане на имейла.');
+        setError('Грешка при изпращане на имейла. Моля опитайте отново.');
       }
     } finally {
       setLoading(false);
@@ -370,6 +403,10 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="напр. yoan@gmail.com или yoan"
                       value={emailOrUsername}
                       onChange={(e) => setEmailOrUsername(e.target.value)}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoComplete="username"
                       className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
@@ -384,7 +421,7 @@ export const AuthModal: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={() => { setActiveTab('forgot'); setError(''); setSuccess(''); }}
-                      className="text-xs font-bold text-indigo-400 hover:underline"
+                      className="text-xs font-bold text-indigo-400 hover:underline cursor-pointer"
                     >
                       Забравена парола?
                     </button>
@@ -396,13 +433,18 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoComplete="current-password"
                       className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-10 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-ink-muted hover:text-ink cursor-pointer"
+                      className="absolute right-2 top-2 p-1.5 text-ink-muted hover:text-ink cursor-pointer"
+                      title={showPassword ? "Скрий паролата" : "Покажи паролата"}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -434,6 +476,10 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="напр. yoan@gmail.com"
                       value={emailOrUsername}
                       onChange={(e) => setEmailOrUsername(e.target.value)}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoComplete="email"
                       className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
@@ -477,6 +523,9 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="напр. Йоан Зографов"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
+                      autoCapitalize="words"
+                      autoCorrect="off"
+                      spellCheck={false}
                       className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                     />
                   </div>
@@ -493,6 +542,10 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="напр. yoan@gmail.com или yoan"
                       value={emailOrUsername}
                       onChange={(e) => setEmailOrUsername(e.target.value)}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoComplete="username"
                       className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
@@ -510,13 +563,18 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoComplete="new-password"
                       className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-10 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-ink-muted hover:text-ink cursor-pointer"
+                      className="absolute right-2 top-2 p-1.5 text-ink-muted hover:text-ink cursor-pointer"
+                      title={showPassword ? "Скрий паролата" : "Покажи паролата"}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -534,6 +592,10 @@ export const AuthModal: React.FC<Props> = ({
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoComplete="new-password"
                       className="w-full bg-card border border-border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
@@ -551,6 +613,20 @@ export const AuthModal: React.FC<Props> = ({
               </form>
             )}
 
+            {/* Continue as Guest fallback link */}
+            {onContinueAsGuest && (
+              <div className="text-center pt-3.5 border-t border-border/40 mt-3">
+                <button
+                  type="button"
+                  onClick={onContinueAsGuest}
+                  className="text-xs font-extrabold text-ink-muted hover:text-indigo-400 transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer py-1 px-3 rounded-lg hover:bg-card"
+                >
+                  <Compass className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Или продължи като Гост (без профил) →</span>
+                </button>
+              </div>
+            )}
+
           </>
         )}
 
@@ -558,3 +634,4 @@ export const AuthModal: React.FC<Props> = ({
     </div>
   );
 };
+

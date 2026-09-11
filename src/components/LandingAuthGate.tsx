@@ -1,3 +1,4 @@
+import React from 'react';
 import { 
   Lock, 
   ShieldCheck, 
@@ -11,16 +12,18 @@ import {
   Database,
   Sun,
   Moon,
-  X
+  X,
+  Compass
 } from 'lucide-react';
 
 interface LandingAuthGateProps {
   onOpenAuth: (mode?: 'login' | 'signup') => void;
+  onContinueAsGuest?: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
 }
 
-export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAuthGateProps) {
+export function LandingAuthGate({ onOpenAuth, onContinueAsGuest, isDark, onToggleTheme }: LandingAuthGateProps) {
   const [showLogoModal, setShowLogoModal] = React.useState(false);
 
   return (
@@ -46,7 +49,7 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={onToggleTheme}
             className="p-2 rounded-xl border border-border bg-bg text-ink-muted hover:text-ink hover:border-indigo-500/30 transition-all cursor-pointer"
@@ -55,9 +58,20 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
           </button>
 
+          {onContinueAsGuest && (
+            <button
+              onClick={onContinueAsGuest}
+              className="px-3 py-2 rounded-xl bg-card hover:bg-card-hover border border-border text-ink-muted hover:text-ink text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5"
+              title="Разгледай платформата като гост"
+            >
+              <Compass className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden xs:inline">Гост</span>
+            </button>
+          )}
+
           <button
             onClick={() => onOpenAuth('login')}
-            className="px-4 py-2 rounded-xl bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25 border border-indigo-500/30 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-3 sm:px-4 py-2 rounded-xl bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25 border border-indigo-500/30 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5"
           >
             <LogIn className="w-3.5 h-3.5" />
             <span>Вход</span>
@@ -65,7 +79,7 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
 
           <button
             onClick={() => onOpenAuth('signup')}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md shadow-indigo-600/30 transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-3 sm:px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md shadow-indigo-600/30 transition-all cursor-pointer flex items-center gap-1.5"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>Регистрация</span>
@@ -123,6 +137,19 @@ export function LandingAuthGate({ onOpenAuth, isDark, onToggleTheme }: LandingAu
             <span>Влез в Акаунта</span>
           </button>
         </div>
+
+        {onContinueAsGuest && (
+          <div className="pt-1">
+            <button
+              onClick={onContinueAsGuest}
+              className="text-xs sm:text-sm font-extrabold text-ink-muted hover:text-indigo-400 transition-colors flex items-center gap-2 cursor-pointer group py-1 px-3 rounded-xl hover:bg-card border border-transparent hover:border-border"
+            >
+              <Compass className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform" />
+              <span>Продължи като Гост (Демо преглед на платформата)</span>
+              <span className="text-indigo-400 group-hover:translate-x-1 transition-transform">→</span>
+            </button>
+          </div>
+        )}
 
         {/* Feature Highlights Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full pt-8 text-left">
