@@ -142,22 +142,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [isFetchingQuote, setIsFetchingQuote] = useState(false);
-  const [peDropdownOpen, setPeDropdownOpen] = useState(false);
-  const peDropdownRef = React.useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (peDropdownRef.current && !peDropdownRef.current.contains(event.target as Node)) {
-        setPeDropdownOpen(false);
-      }
-    };
-    if (peDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [peDropdownOpen]);
   
   // Interactive Checklist State: Track checked rows
   const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>({});
@@ -199,22 +183,24 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   };
 
   const getMetricFlagType = (rowNum: number, valStr: string): 'green' | 'yellow' | 'red' | null => {
+    if (rowNum === 10) {
+      const lvl = userInputs['10_level'] || (valStr && valStr.toLowerCase().includes('ниско') ? 'low' : valStr && valStr.toLowerCase().includes('средно') ? 'mid' : valStr && valStr.toLowerCase().includes('високо') ? 'high' : null);
+      if (lvl === 'low') return 'green';
+      if (lvl === 'mid') return 'yellow';
+      if (lvl === 'high') return 'red';
+      if (!valStr || valStr.trim() === '') return null;
+      const numVal = parseNum(valStr);
+      if (numVal <= 0) return 'red';
+      if (numVal <= 15) return 'green';
+      if (numVal <= 25) return 'yellow';
+      return 'red';
+    }
+
     if (!valStr || valStr.trim() === '') return null;
     const numVal = parseNum(valStr);
     if (isNaN(numVal)) return null;
 
     switch (rowNum) {
-      case 10: // P/E Ratio (≤ 15: green, 15 - 25: yellow, > 25 or ≤ 0: red)
-        if (userInputs['10_level'] === 'low') return 'green';
-        if (userInputs['10_level'] === 'mid') return 'yellow';
-        if (userInputs['10_level'] === 'high') return 'red';
-        if (valStr.toLowerCase().includes('ниско') || valStr.toLowerCase().includes('low')) return 'green';
-        if (valStr.toLowerCase().includes('средно') || valStr.toLowerCase().includes('mid')) return 'yellow';
-        if (valStr.toLowerCase().includes('високо') || valStr.toLowerCase().includes('high')) return 'red';
-        if (numVal <= 0) return 'red';
-        if (numVal <= 15) return 'green';
-        if (numVal <= 25) return 'yellow';
-        return 'red';
 
       case 11: // Price to FCF (≤ 15: green, 15 - 25: yellow, > 25 or ≤ 0: red)
         if (numVal <= 0) return 'red';
@@ -423,6 +409,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const netIncRaw = dbStock?.netIncome || 0;
     const fcfRaw = dbStock?.fcf || 0;
 
+    let peLevel = '';
+    if (peVal > 0) {
+      if (peVal <= 15) peLevel = 'low';
+      else if (peVal <= 25) peLevel = 'mid';
+      else peLevel = 'high';
+    }
+
     setUserInputs(prev => {
       const low52Str = low52Val > 0 ? low52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[0].trim() : (prev['8'] || ''));
       const high52Str = high52Val > 0 ? high52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[1].trim() : (prev['8_high'] || ''));
@@ -438,6 +431,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         '8_high': high52Str,
         '9': mcapDisplay || (prev['9'] || ''),
         '10': peDisplay || (prev['10'] || ''),
+        '10_level': peLevel || (prev['10_level'] || ''),
         '12': found?.dividend ? String(found.dividend) : (prev['12'] || ''),
         '18': prev['18'] || '',
         '19': prev['19'] || '',
@@ -508,14 +502,20 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               next['9'] = Math.round(q.marketCap / 1000).toLocaleString('en-US');
             }
             // Row 10: P/E Ratio — live from TradingView / Yahoo
-            if (q.peRatio && q.peRatio > 0) next['10'] = q.peRatio.toFixed(2);
+            // Row 10: P/E Ratio — live from TradingView / Yahoo
+            if (q.peRatio && q.peRatio > 0) {
+              next['10'] = q.peRatio.toFixed(2);
+              if (q.peRatio <= 15) next['10_level'] = 'low';
+              else if (q.peRatio <= 25) next['10_level'] = 'mid';
+              else next['10_level'] = 'high';
+            }
             // Row 24: EPS
             if (q.eps && q.eps !== 0) next['24'] = q.eps.toFixed(2);
             return next;
           });
 
           // Check row 8 in checklist
-          setCheckedRows(prev => ({ ...prev, 8: true }));
+          setCheckedRows(prev => ({ ...prev, 8: true, 10: true }));
         }
       }
     } catch (e) {
@@ -527,6 +527,26 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
   const handleInputChange = (key: string | number, val: string) => {
     const strKey = String(key);
+
+    if (strKey === '10') {
+      const num = parseNum(val);
+      setUserInputs(prev => {
+        const next = { ...prev, '10': val };
+        if (num > 0) {
+          if (num <= 15) next['10_level'] = 'low';
+          else if (num <= 25) next['10_level'] = 'mid';
+          else next['10_level'] = 'high';
+        } else {
+          next['10_level'] = '';
+        }
+        return next;
+      });
+      if (val.trim() !== '') {
+        setCheckedRows(prev => ({ ...prev, 10: true }));
+      }
+      return;
+    }
+
     setUserInputs(prev => ({ ...prev, [strKey]: val }));
 
     const numKey = typeof key === 'number' ? key : parseInt(key, 10);
@@ -562,17 +582,30 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     cleared['39_10'] = '';
     setUserInputs(cleared);
     setCheckedRows({});
-    setPeDropdownOpen(false);
   };
 
-  const handleSelectPeLevel = (level: 'low' | 'mid' | 'high' | 'auto') => {
-    if (level === 'auto') {
-      setUserInputs(prev => ({ ...prev, '10_level': '' }));
+  const handleSelectPeLevel = (level: 'low' | 'mid' | 'high' | '' | 'auto') => {
+    if (level === 'auto' || level === '') {
+      setUserInputs(prev => {
+        const num = parseNum(prev['10']);
+        let autoLevel = '';
+        if (num > 0) {
+          if (num <= 15) autoLevel = 'low';
+          else if (num <= 25) autoLevel = 'mid';
+          else autoLevel = 'high';
+        }
+        return { ...prev, '10_level': autoLevel };
+      });
     } else {
       setUserInputs(prev => {
         const next = { ...prev, '10_level': level };
-        // If input is empty, fill representative P/E value
-        if (!prev['10'] || prev['10'].trim() === '') {
+        const currentNum = parseNum(prev['10']);
+        if (
+          !currentNum ||
+          (level === 'low' && currentNum > 15) ||
+          (level === 'mid' && (currentNum <= 15 || currentNum > 25)) ||
+          (level === 'high' && currentNum <= 25)
+        ) {
           if (level === 'low') next['10'] = '12.00';
           else if (level === 'mid') next['10'] = '18.00';
           else if (level === 'high') next['10'] = '30.00';
@@ -581,7 +614,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       });
       setCheckedRows(prev => ({ ...prev, 10: true }));
     }
-    setPeDropdownOpen(false);
   };
 
   const currentPeLevel = useMemo(() => {
@@ -767,13 +799,18 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const flagType = getMetricFlagType(rowNum, valStr);
     if (!flagType) return null;
 
+    let badgeText = flagType === 'green' ? '🟢 Зелен' : flagType === 'yellow' ? '🟡 Жълт' : '🔴 Червен';
+    if (rowNum === 10) {
+      badgeText = flagType === 'green' ? '🟢 Ниско' : flagType === 'yellow' ? '🟡 Средно' : '🔴 Високо';
+    }
+
     return (
       <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold shrink-0 border flex items-center gap-1 ${
         flagType === 'green' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' :
         flagType === 'yellow' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
         'bg-rose-500/15 text-rose-400 border-rose-500/30'
       }`}>
-        {flagType === 'green' ? '🟢 Зелен' : flagType === 'yellow' ? '🟡 Жълт' : '🔴 Червен'}
+        {badgeText}
       </span>
     );
   };
@@ -874,97 +911,35 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               </div>
             </div>
           ) : rowNum === 10 ? (
-            <div className="flex items-center gap-2 justify-end relative" ref={peDropdownRef}>
+            <div className="flex items-center gap-2 justify-end">
               <input
                 type="text"
                 value={userInputs['10'] || ''}
                 onChange={e => handleInputChange('10', e.target.value)}
                 placeholder="P/E..."
-                className="w-24 sm:w-28 h-8 px-2.5 py-1.5 rounded-lg border bg-bg border-border focus:border-indigo-500 font-mono font-bold text-xs outline-none text-right text-ink transition-all"
+                className="w-20 sm:w-24 h-8 px-2.5 py-1.5 rounded-lg border bg-bg border-border focus:border-indigo-500 font-mono font-bold text-xs outline-none text-right text-ink transition-all"
               />
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setPeDropdownOpen(prev => !prev)}
-                  className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 h-8 border rounded-lg text-xs font-bold transition-all cursor-pointer select-none shadow-xs hover:scale-102 active:scale-98 ${
+              <div className="relative inline-flex items-center">
+                <select
+                  value={currentPeLevel || ''}
+                  onChange={e => handleSelectPeLevel(e.target.value as any)}
+                  className={`h-8 pl-3 pr-8 rounded-lg border text-xs font-extrabold appearance-none transition-all cursor-pointer outline-none shadow-xs select-none hover:scale-102 active:scale-98 ${
                     currentPeLevel === 'low'
                       ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25'
                       : currentPeLevel === 'mid'
                       ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 hover:bg-amber-500/25'
                       : currentPeLevel === 'high'
                       ? 'bg-rose-500/15 border-rose-500/40 text-rose-400 hover:bg-rose-500/25'
-                      : 'bg-bg border-border text-ink-muted hover:border-indigo-500/50 hover:text-ink'
+                      : 'bg-bg border-border text-ink-muted hover:border-indigo-500/40 hover:text-ink'
                   }`}
-                  title="Изберете оценка за P/E: Ниско, Средно или Високо"
+                  title="Изберете оценка за P/E: Ниско (≤ 15), Средно (15 - 25), Високо (> 25)"
                 >
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${
-                    currentPeLevel === 'low' ? 'bg-emerald-400' :
-                    currentPeLevel === 'mid' ? 'bg-amber-400' :
-                    currentPeLevel === 'high' ? 'bg-rose-400' : 'bg-ink-muted/50'
-                  }`} />
-                  <span>
-                    {currentPeLevel === 'low' ? 'Ниско' :
-                     currentPeLevel === 'mid' ? 'Средно' :
-                     currentPeLevel === 'high' ? 'Високо' : 'Ниво'}
-                  </span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${peDropdownOpen ? 'rotate-180 text-indigo-400' : 'text-ink-muted'}`} />
-                </button>
-
-                {/* Dropdown Menu */}
-                {peDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1.5 w-44 bg-bg-card border border-border rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-1">
-                    <div className="text-[10px] uppercase font-bold text-ink-faint px-2 py-1 border-b border-border/50">
-                      Избор на P/E:
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectPeLevel('low')}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer text-left ${
-                        currentPeLevel === 'low' ? 'bg-emerald-500/20 text-emerald-300' : 'text-ink hover:bg-emerald-500/15 hover:text-emerald-400'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                        <span>Ниско</span>
-                      </div>
-                      <span className="text-[10px] text-ink-faint font-mono">≤ 15</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectPeLevel('mid')}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer text-left ${
-                        currentPeLevel === 'mid' ? 'bg-amber-500/20 text-amber-300' : 'text-ink hover:bg-amber-500/15 hover:text-amber-400'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                        <span>Средно</span>
-                      </div>
-                      <span className="text-[10px] text-ink-faint font-mono">15 - 25</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectPeLevel('high')}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer text-left ${
-                        currentPeLevel === 'high' ? 'bg-rose-500/20 text-rose-300' : 'text-ink hover:bg-rose-500/15 hover:text-rose-400'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0" />
-                        <span>Високо</span>
-                      </div>
-                      <span className="text-[10px] text-ink-faint font-mono">&gt; 25</span>
-                    </button>
-                    <div className="border-t border-border/50 my-0.5" />
-                    <button
-                      type="button"
-                      onClick={() => handleSelectPeLevel('auto')}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-border/50 text-[11px] font-bold text-ink-muted hover:text-ink transition-colors cursor-pointer text-left"
-                    >
-                      <span>↺ Автоматично</span>
-                    </button>
-                  </div>
-                )}
+                  <option value="" className="bg-bg-card text-ink-muted">-- P/E Ниво --</option>
+                  <option value="low" className="bg-bg-card text-emerald-400 font-bold">🟢 Ниско (≤ 15)</option>
+                  <option value="mid" className="bg-bg-card text-amber-400 font-bold">🟡 Средно (15 - 25)</option>
+                  <option value="high" className="bg-bg-card text-rose-400 font-bold">🔴 Високо (&gt; 25)</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 pointer-events-none text-current opacity-70" />
               </div>
             </div>
           ) : rowNum === 15 ? (
