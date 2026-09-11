@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 
 interface StockChecklistModalProps {
@@ -126,6 +126,22 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [isFetchingQuote, setIsFetchingQuote] = useState(false);
+  const [peDropdownOpen, setPeDropdownOpen] = useState(false);
+  const peDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (peDropdownRef.current && !peDropdownRef.current.contains(event.target as Node)) {
+        setPeDropdownOpen(false);
+      }
+    };
+    if (peDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [peDropdownOpen]);
   
   // Interactive Checklist State: Track checked rows
   const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>({});
@@ -134,6 +150,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const init: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { init[String(r.rowNum)] = ''; });
     init['8_high'] = '';
+    init['10_level'] = '';
     init['15_10'] = '';
     init['17_10'] = '';
     init['20_5'] = '';
@@ -172,6 +189,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
     switch (rowNum) {
       case 10: // P/E Ratio (≤ 15: green, 15 - 25: yellow, > 25 or ≤ 0: red)
+        if (userInputs['10_level'] === 'low') return 'green';
+        if (userInputs['10_level'] === 'mid') return 'yellow';
+        if (userInputs['10_level'] === 'high') return 'red';
+        if (valStr.toLowerCase().includes('ниско') || valStr.toLowerCase().includes('low')) return 'green';
+        if (valStr.toLowerCase().includes('средно') || valStr.toLowerCase().includes('mid')) return 'yellow';
+        if (valStr.toLowerCase().includes('високо') || valStr.toLowerCase().includes('high')) return 'red';
         if (numVal <= 0) return 'red';
         if (numVal <= 15) return 'green';
         if (numVal <= 25) return 'yellow';
@@ -514,6 +537,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const cleared: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
     cleared['8_high'] = '';
+    cleared['10_level'] = '';
     cleared['15_10'] = '';
     cleared['17_10'] = '';
     cleared['20_5'] = '';
@@ -522,7 +546,40 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     cleared['39_10'] = '';
     setUserInputs(cleared);
     setCheckedRows({});
+    setPeDropdownOpen(false);
   };
+
+  const handleSelectPeLevel = (level: 'low' | 'mid' | 'high' | 'auto') => {
+    if (level === 'auto') {
+      setUserInputs(prev => ({ ...prev, '10_level': '' }));
+    } else {
+      setUserInputs(prev => {
+        const next = { ...prev, '10_level': level };
+        // If input is empty, fill representative P/E value
+        if (!prev['10'] || prev['10'].trim() === '') {
+          if (level === 'low') next['10'] = '12.00';
+          else if (level === 'mid') next['10'] = '18.00';
+          else if (level === 'high') next['10'] = '30.00';
+        }
+        return next;
+      });
+      setCheckedRows(prev => ({ ...prev, 10: true }));
+    }
+    setPeDropdownOpen(false);
+  };
+
+  const currentPeLevel = useMemo(() => {
+    if (userInputs['10_level'] === 'low') return 'low';
+    if (userInputs['10_level'] === 'mid') return 'mid';
+    if (userInputs['10_level'] === 'high') return 'high';
+    const num = parseNum(userInputs['10']);
+    if (num > 0) {
+      if (num <= 15) return 'low';
+      if (num <= 25) return 'mid';
+      return 'high';
+    }
+    return null;
+  }, [userInputs['10'], userInputs['10_level']]);
 
   const handleAutoCheckGreen = () => {
     const newChecked = { ...checkedRows };
@@ -616,6 +673,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       return userInputs['8'] || userInputs['8_high'] || '';
     }
 
+    if (rowNum === 10) {
+      const level = userInputs['10_level'];
+      if (level === 'low') return userInputs['10'] ? `${userInputs['10']} (Ниско)` : 'Ниско';
+      if (level === 'mid') return userInputs['10'] ? `${userInputs['10']} (Средно)` : 'Средно';
+      if (level === 'high') return userInputs['10'] ? `${userInputs['10']} (Високо)` : 'Високо';
+      return userInputs['10'] || '';
+    }
+
     if (rowNum === 15 || rowNum === 17 || rowNum === 20 || rowNum === 25 || rowNum === 37 || rowNum === 39) {
       return userInputs[String(rowNum)] || userInputs[`${rowNum}_10`] || userInputs[`${rowNum}_5`] || '';
     }
@@ -660,7 +725,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     ALL_CHECKABLE_ROW_NUMS.forEach(r => {
       const userVal = userInputs[String(r)] || '';
       const compVal = computedValues[String(r)] || '';
-      const subVal = userInputs[`${r}_10`] || userInputs[`${r}_5`] || userInputs[`${r}_high`] || '';
+      const subVal = userInputs[`${r}_10`] || userInputs[`${r}_5`] || userInputs[`${r}_high`] || userInputs[`${r}_level`] || '';
       if ((userVal && userVal.trim() !== '') || (compVal && compVal.trim() !== '') || (subVal && subVal.trim() !== '')) {
         newChecked[r] = true;
       }
@@ -790,6 +855,100 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   placeholder="..."
                   className="w-16 sm:w-20 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
                 />
+              </div>
+            </div>
+          ) : rowNum === 10 ? (
+            <div className="flex items-center gap-2 justify-end relative" ref={peDropdownRef}>
+              <input
+                type="text"
+                value={userInputs['10'] || ''}
+                onChange={e => handleInputChange('10', e.target.value)}
+                placeholder="P/E..."
+                className="w-24 sm:w-28 h-8 px-2.5 py-1.5 rounded-lg border bg-bg border-border focus:border-indigo-500 font-mono font-bold text-xs outline-none text-right text-ink transition-all"
+              />
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPeDropdownOpen(prev => !prev)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 h-8 border rounded-lg text-xs font-bold transition-all cursor-pointer select-none ${
+                    currentPeLevel === 'low'
+                      ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25'
+                      : currentPeLevel === 'mid'
+                      ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 hover:bg-amber-500/25'
+                      : currentPeLevel === 'high'
+                      ? 'bg-rose-500/15 border-rose-500/40 text-rose-400 hover:bg-rose-500/25'
+                      : 'bg-bg border-border text-ink-muted hover:border-indigo-500/50 hover:text-ink'
+                  }`}
+                  title="Изберете оценка за P/E: Ниско, Средно или Високо"
+                >
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    currentPeLevel === 'low' ? 'bg-emerald-400' :
+                    currentPeLevel === 'mid' ? 'bg-amber-400' :
+                    currentPeLevel === 'high' ? 'bg-rose-400' : 'bg-ink-muted/50'
+                  }`} />
+                  <span>
+                    {currentPeLevel === 'low' ? 'Ниско' :
+                     currentPeLevel === 'mid' ? 'Средно' :
+                     currentPeLevel === 'high' ? 'Високо' : 'Ниво'}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${peDropdownOpen ? 'rotate-180 text-indigo-400' : 'text-ink-muted'}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {peDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 w-44 bg-bg-card border border-border rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-1">
+                    <div className="text-[10px] uppercase font-bold text-ink-faint px-2 py-1 border-b border-border/50">
+                      Избор на P/E:
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectPeLevel('low')}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer text-left ${
+                        currentPeLevel === 'low' ? 'bg-emerald-500/20 text-emerald-300' : 'text-ink hover:bg-emerald-500/15 hover:text-emerald-400'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                        <span>Ниско</span>
+                      </div>
+                      <span className="text-[10px] text-ink-faint font-mono">≤ 15</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectPeLevel('mid')}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer text-left ${
+                        currentPeLevel === 'mid' ? 'bg-amber-500/20 text-amber-300' : 'text-ink hover:bg-amber-500/15 hover:text-amber-400'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                        <span>Средно</span>
+                      </div>
+                      <span className="text-[10px] text-ink-faint font-mono">15 - 25</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectPeLevel('high')}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer text-left ${
+                        currentPeLevel === 'high' ? 'bg-rose-500/20 text-rose-300' : 'text-ink hover:bg-rose-500/15 hover:text-rose-400'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0" />
+                        <span>Високо</span>
+                      </div>
+                      <span className="text-[10px] text-ink-faint font-mono">&gt; 25</span>
+                    </button>
+                    <div className="border-t border-border/50 my-0.5" />
+                    <button
+                      type="button"
+                      onClick={() => handleSelectPeLevel('auto')}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-border/50 text-[11px] font-bold text-ink-muted hover:text-ink transition-colors cursor-pointer text-left"
+                    >
+                      <span>↺ Автоматично</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ) : rowNum === 15 ? (
