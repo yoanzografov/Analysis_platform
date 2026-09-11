@@ -51,15 +51,15 @@ const POPULAR_STOCKS_DB: Record<string, {
 };
 
 export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
-  { rowNum: 1, label: "Company", defaultVal: "", cellType: "default" },
-  { rowNum: 2, label: "Tickr", defaultVal: "", cellType: "yellow-input", formulaStr: "=Overview!B5" },
-  { rowNum: 3, label: "Industry", defaultVal: "", cellType: "default" },
-  { rowNum: 4, label: "Sector", defaultVal: "", cellType: "default" },
-  { rowNum: 5, label: "Undervalued / Overvalued", defaultVal: "", cellType: "green-formula", formulaStr: "=#REF!/B7-1" },
+  { rowNum: 1, label: "Company", defaultVal: "", cellType: "default", note: "Име на анализираната публична компания (Company Name).\nПоказва официалното наименование на дружеството." },
+  { rowNum: 2, label: "Tickr", defaultVal: "", cellType: "yellow-input", formulaStr: "=Overview!B5", note: "Борсов тикер (символ) на акцията (напр. AAPL, MSFT, TSLA).\nУникалният борсов код за търговия." },
+  { rowNum: 3, label: "Industry", defaultVal: "", cellType: "default", note: "Специфичната индустрия, в която оперира компанията (напр. Consumer Electronics, Software, Internet Content)." },
+  { rowNum: 4, label: "Sector", defaultVal: "", cellType: "default", note: "Главният икономически сектор (напр. Technology, Healthcare, Financial Services, Consumer Discretionary)." },
+  { rowNum: 5, label: "Undervalued / Overvalued", defaultVal: "", cellType: "green-formula", formulaStr: "=#REF!/B7-1", note: "Сравнение между изчислената вътрешна стойност (Fair Value) и текущата пазарна цена.\nПоказва дали акцията е подценена (зелено) или надценена (червено)." },
   { rowNum: 6, label: "--- FINANCIAL METRICS ---", defaultVal: "", cellType: "default" },
-  { rowNum: 7, label: "Current Price", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 7, label: "Current Price", defaultVal: "", cellType: "yellow-input", note: "Текуща пазарна цена на акцията в реално време ($).\nСинхронизира се автоматично от борсовите котировки." },
   { rowNum: 8, label: "52 week low / 52 week high", defaultVal: "", cellType: "yellow-input", note: "52-седмично най-ниско и най-високо ценово равнище (52 Week Low / 52 Week High).\nПоказва ценовия диапазон на акцията за последната 1 година (52 седмици)." },
-  { rowNum: 9, label: "Market Cap (в хил.)", defaultVal: "", cellType: "yellow-input", note: "Пазарна капитализация на компанията в хиляди ($ in thousands)" },
+  { rowNum: 9, label: "Market Cap (в хил.)", defaultVal: "", cellType: "yellow-input", note: "Пазарна капитализация на компанията в хиляди ($ in thousands).\nОбщата пазарна стойност на всички акции в обращение." },
   { rowNum: 10, label: "P/E Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "PE Ratio = Stock Price / Earnings Per Share", flagRules: { green: "≤ 15 (Ниско)", yellow: "15 - 25 (Средно)", red: "> 25 (Високо)" }, note: `PE Ratio = Stock Price / Earnings Per Share
 ДРУГА ФОРМУЛА: PE Ratio = Market Cap / Net Income
 
@@ -81,17 +81,17 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 12, label: "Dividend Yield", defaultVal: "", cellType: "default", flagRules: { green: "2.5% - 6.5%", yellow: "0.5% - 2.5%", red: "< 0.5% или > 10%" }, note: "Dividend yield = ($5 / $100) x 100 = 5%\n\nКогато цената падне с 50%, ето какво се случва, ако приемем, че\nкомпанията запази годишния дивидент от $5 непроменен:\n\nDividend yield = ($5 / $50) x 100 = 10%" },
   { rowNum: 13, label: "Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100", flagRules: { green: "≤ 50%", yellow: "50% - 75%", red: "> 75%" }, note: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100" },
   { rowNum: 14, label: "CASH Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100", flagRules: { green: "≤ 50%", yellow: "50% - 70%", red: "> 70%" }, note: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100\n\nПоказва ни по-истинското Payout Ratio и ни касае пряко като дивидентни инвеститори." },
-  { rowNum: 15, label: "Dividend Growth Rate 5 - 10 year avg", defaultVal: "", cellType: "yellow-input", flagRules: { green: "8%+", yellow: "4% - 8%", red: "< 4%" } },
-  { rowNum: 16, label: "Annualized ROI", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" } },
-  { rowNum: 17, label: "Annualized ROI 5 - 10 years avg", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" } },
-  { rowNum: 18, label: "Shares Outstanding", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 19, label: "Revenue", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 20, label: "Revenue avg increase 3 - 5 yrs", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" } },
+  { rowNum: 15, label: "Dividend Growth Rate 5 - 10 year avg", defaultVal: "", cellType: "yellow-input", flagRules: { green: "8%+", yellow: "4% - 8%", red: "< 4%" }, note: "Среден годишен темп на растеж на дивидента за 5-10 години.\nПоказва стабилността на увеличаване на изплащаните парични суми към акционерите." },
+  { rowNum: 16, label: "Annualized ROI", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" }, note: "Годишна норма на възвръщаемост на инвестицията (Annualized Return on Investment)." },
+  { rowNum: 17, label: "Annualized ROI 5 - 10 years avg", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" }, note: "Средна годишна възвръщаемост на инвестицията за дълъг период от 5 до 10 години." },
+  { rowNum: 18, label: "Shares Outstanding", defaultVal: "", cellType: "yellow-input", note: "Общ брой акции в обращение (Shares Outstanding).\nОпределя базовия брой дялове за капитализация и изчисляване на EPS." },
+  { rowNum: 19, label: "Revenue", defaultVal: "", cellType: "yellow-input", note: "Общи годишни приходи на компанията (Total Revenue / Sales).\nПоказва брутния паричен поток от продажби преди разходи." },
+  { rowNum: 20, label: "Revenue avg increase 3 - 5 yrs", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" }, note: "Среден годишен темп на растеж на приходите за последните 3 до 5 години." },
   { rowNum: 21, label: "Gross Profit Margin", defaultVal: "", cellType: "yellow-input", flagRules: { green: "40%+", yellow: "30% - 40%", red: "< 30%" }, note: "Gross Profit Margin = (Gross Profit / Total Revenue) x 100 (%)\n\nПоказва ни какъв процент от оборота представлява брутната печалба. \n\nКолкото повече, толкова по-добре." },
   { rowNum: 22, label: "Research & Development (R&D Ratio)", defaultVal: "", cellType: "yellow-input", flagRules: { green: "< 30%", yellow: "30% - 40%", red: "> 40%" }, note: "Yoan Zografov:\nR&D ratio = R&D Expenses / Revenue х 100 (под 30%)\n\nПоказва ни какъв процент от оборота е разходът за проучване и развитие." },
   { rowNum: 23, label: "Selling, General & Admin (SG&A Ratio)", defaultVal: "", cellType: "yellow-input", flagRules: { green: "< 30%", yellow: "30% - 40%", red: "> 40%" }, note: "SGA ratio = SG&A Expenses / Revenue х 100 (под 30%)\nПоказва ни какъв процент от оборота е този разход.\nРазходи за Заплати, Маркетинг, Реклама" },
   { rowNum: 24, label: "EPS - Earnings Per Share", defaultVal: "", cellType: "green-formula", formulaStr: "Печалба на дял: EPS = Net Income/ Shares outstanding", note: "EPS - Earnings per share. \nПечалба на дял: EPS = Net Income/ Shares outstanding\n\nПечалбата на акция или EPS е просто изчисление, което показва колко печалба може да генерира една компания на акция от своите акци.\n\nДва основни фактора влияят на EPS: печалбата и броят на акциите.\n\nПечалби: EPS на компанията ще се увеличи с нарастването на приходите. Това може да се случи поради фактори като ръст на продажбите или намаляване на разходите. Ако печалбите намалеят, EPS също ще намалее.\nАкции: EPS на компанията ще се увеличи, когато общият брой на акциите в обращение намалява, като например в случай на обратно изкупуване на акции. Той ще намалее, когато броят на акциите се увеличи, например ако компанията издаде нови акции.\n\nАко една компания заеме повече дълг, EPS (знаменателят) намалява от по-високите разходи за лихви . Степента на въздействие върху цената на акциите до голяма степен зависи от това как се използва дългът.\n\nНапример повишеният риск и разходите за лихви могат да доведат до намаляване на съотношението цена/печалба, докато добре структурираната реинвестиция за растеж може да доведе до увеличаване на съотношението P/E и да компенсира недостатъците от използването на дълг.\n\nАко има две идентични компании, инвеститорите са по-склонни да оценят компанията с висок ливъридж при по-ниско съотношение P/E, предвид по-високите рискове, свързани с ливъриджа.\n\nhttps://www.wallstreetprep.com/knowledge/pe-ratio-price-to-earnings/" },
-  { rowNum: 25, label: "EPS Growth 5 - 10 yrs", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" } },
+  { rowNum: 25, label: "EPS Growth 5 - 10 yrs", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" }, note: "Среден годишен темп на растеж на печалбата на акция за 5-10 години." },
   { rowNum: 26, label: "Net Income", defaultVal: "", cellType: "yellow-input", note: "Net Income = Revenue - All Expenses\nНетни приходи = Приходи - Всички разходи\n\nНетният доход е счетоводната печалба на компанията след изваждане на всички разходи и разходи от приходите. Нарича се още печалби." },
   { rowNum: 27, label: "Net Profit Margin", defaultVal: "", cellType: "green-formula", formulaStr: "NET PROFIT MARGIN = NET INCOME / REVENUE x 100", flagRules: { green: "20%+", yellow: "10% - 20%", red: "< 10%" }, note: `NET PROFIT MARGIN = NET INCOME / REVENUE x 100
 Показва ни какъв процент от оборота представлява чистата печалба. Колкото повече, толкова по-добре.
@@ -100,14 +100,14 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 29, label: "Return on Assets (ROA)", defaultVal: "", cellType: "yellow-input", formulaStr: "ROA = (Net Income / Average Total Assets) * 100%", flagRules: { green: "5%+", yellow: "2% - 5%", red: "< 2%" }, note: "ROA = (Net Income / Average Total Assets) * 100%\n\nПоказва ни как компанията използва активите си за генериране на печалби, как ги оползотворява. Търсим стойности над 5%." },
   { rowNum: 30, label: "Return on Capital (ROIC)", defaultVal: "", cellType: "yellow-input", formulaStr: "ROIC = (EBIT / Average Invested Capital) * 100%", flagRules: { green: "15%+", yellow: "5% - 15%", red: "< 5%" }, note: "ROIC = (EBIT / Average Invested Capital) * 100%\nВъзвръщаемостта на инвестирания капитал (ROIC) измерва доколко една компания е ефективна при инвестирането на своя капитал с цел увеличаване на печалбите. Изчислява се като EBIT (печалба преди лихви и данъци) се раздели на средния инвестиран капитал през предходната година.\n\nТърсим стойности над 15%\n\nROIC СТтойност - Интерпретация\n< 5% Слабо управление на капитала\n5% – 10% Приемливо, но посредствено\n> 10% Много добро – компанията създава стойност\n> 15% Отлично – вероятно има силно конкурентно предимство (moat)" },
   { rowNum: 31, label: "Current Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "CURRENT RATIO = CURRENT ASSETS / CURRENT LIABILITIES (над 1 е ок)", flagRules: { green: "1.5 - 3.0", yellow: "1.0 - 1.5", red: "< 1.0" }, note: "CURRENT RATIO = CURRENT ASSETS / CURRENT LIABILITIES (над 1 е ок)\nПоказва ни дали компанията може да погаси текущите си задължения с текущите си активи.\n\n================\nТекущият коефициент се използва за измерване на краткосрочната ликвидност на компанията. Ниско число може да показва, че дадена компания ще има проблеми с плащането на предстоящите си задължения.\n\nДоброто текущо съотношение е между 1,2 към 2 , което означава, че бизнесът има 2 пъти повече текущи активи, отколкото пасиви, за да покрие дълговете си. Текущо съотношение под 1 означава, че компанията няма достатъчно ликвидни активи, за да покрие своите краткосрочни задължения\n\nКакво е „добро“ Current Ratio?\n1.5 – 3.0: Това обикновено се счита за здравословен (добър) диапазон. Показва, че фирмата може да покрива задълженията си и има известен буфер.\n\nПод 1.0: Потенциален риск от ликвидни затруднения – фирмата няма достатъчно краткосрочни активи, за да плати краткосрочните си задължения.\n\nНад 3.0: Може да е знак, че капиталът не се използва ефективно – прекалено много пари са задържани в активи вместо да се инвестират.\n\nКонтекстът има значение:\nСектор: Търговски компании често имат по-нисък Current Ratio, докато производствени или технологични компании могат да поддържат по-висок.\n\nСезонност: Някои фирми имат сезонно колебание на оборотни активи и пасиви.\n\nИскаш ли да проверим какъв е текущият коефициент на определена компания?" },
-  { rowNum: 32, label: "Long-Term Debt", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 33, label: "Avg Debt Increase 10 yrs", defaultVal: "", cellType: "default" },
-  { rowNum: 34, label: "Long-term Debt to Equity Ratio", defaultVal: "", cellType: "default" },
+  { rowNum: 32, label: "Long-Term Debt", defaultVal: "", cellType: "yellow-input", note: "Дългосрочен дълг на компанията (Long-Term Debt).\nЗадължения с падеж над 1 година. Използва се за оценка на финансовата задлъжнялост и капиталовата структура." },
+  { rowNum: 33, label: "Avg Debt Increase 10 yrs", defaultVal: "", cellType: "default", note: "Среден годишен темп на нарастване на дълга за 10 години.\nПоказва дали дружеството натрупва прекомерни дългове по-бързо от растежа на бизнеса си." },
+  { rowNum: 34, label: "Long-term Debt to Equity Ratio", defaultVal: "", cellType: "default", formulaStr: "LT Debt to Equity = Long-Term Debt / Total Shareholders' Equity", flagRules: { green: "< 0.8", yellow: "0.8 - 1.5", red: "> 1.5" }, note: "Съотношение между дългосрочния дълг и собствения капитал.\nПоказва каква част от дългосрочния капитал е финансиран чрез заемни средства." },
   { rowNum: 35, label: "Debt / Equity", defaultVal: "", cellType: "yellow-input", formulaStr: "Debt to Equity Ratio = Total Debt / Total Equity", flagRules: { green: "< 1.0", yellow: "1.0 - 2.0", red: "> 2.0" }, note: "Debt to Equity Ratio = Total Debt / Total Equity\n\nDebt / Equity Ratio = Total Debt / Shareholders' Equity\n\nПОД 2 Е ОК\n\nDebt to Equity Ratio: Съотношението дълг към собствен капитал изчислява тежестта на общия дълг и финансови пасиви спрямо собствения капитал или с други думи показва как компанията финансира бизнес операциите си - повече чрез дълг или акционерен капитал. Препоръчителни са стойности под 2.\n\nНякои инвеститори също обичат да сравняват съотношението D/E на компанията с общото \nD/E на S&P 500, което беше приблизително 1,58 в края на 202" },
-  { rowNum: 36, label: "Cash Flow from Operations", defaultVal: "", cellType: "yellow-input" },
+  { rowNum: 36, label: "Cash Flow from Operations", defaultVal: "", cellType: "yellow-input", note: "Оперативен паричен поток (Cash Flow from Operations / CFFO).\nРеалният паричен поток от основната търговска дейност на фирмата за отчетния период." },
   { rowNum: 37, label: "CFFO 5-10 Years increase", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" }, note: "Cash Flow from Operations (CFFO) 5 - 10 years avg increase\nИзмерва средния годишен темп на растеж на оперативния паричен поток (CFFO) за период от 5 и 10 години.\n\nЗелен флаг: 10%+\nЖълт флаг: 5% - 10%\nЧервен флаг: < 5%" },
-  { rowNum: 38, label: "Free Cash Flow", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 39, label: "FCF 5 - 10 years avg increase", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" } },
+  { rowNum: 38, label: "Free Cash Flow", defaultVal: "", cellType: "yellow-input", formulaStr: "Free Cash Flow = Cash Flow from Operations - CapEx", note: "Свободен паричен поток (Free Cash Flow / FCF).\nПарите, с които дружеството реално разполага след извършените капиталови разходи (CapEx) за запазване и развитие на активите." },
+  { rowNum: 39, label: "FCF 5 - 10 years avg increase", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" }, note: "Среден годишен темп на растеж на свободния паричен поток (FCF) за период от 5 до 10 години." },
   { rowNum: 40, label: "Cash Flow Margin", defaultVal: "", cellType: "green-formula", formulaStr: "=B36/B19", flagRules: { green: "15%+", yellow: "10% - 15%", red: "< 10%" }, note: "Cash Flow Margin Ratio = Cash Flow From Operations / Revenue x 100 (%)\nПоказва ни колко от всеки долар продажба се задържа като пари в брой (КЕШ). Колкото повече, толкова по-добре." },
   { rowNum: 41, label: "Free Cash Flow Margin", defaultVal: "", cellType: "green-formula", formulaStr: "=(B38/B19)", flagRules: { green: "15%+", yellow: "10% - 15%", red: "< 10%" }, note: "Free Cash Flow Margin = Free Cash Flow / Revenue x 100 (%)\n\nМаржът на свободния паричен поток (марж на FCF) е финансов показател, който показва колко ефективно една компания преобразува приходите си в свободен паричен поток, който представлява паричните средства, генерирани от компанията след покриване на оперативните разходи и капиталовите разходи. Той по същество измерва каква част от продажбите на компанията са налични като парични средства за дейности като изплащане на дълг, инвестиции или дивиденти. \n\nПо-високият марж на свободния финансов поток (FCF) показва, че компанията е по-ефективна в превръщането на продажбите в пари в брой, което може да бъде положителен знак за финансово здраве и оперативна ефективност. Марж на FCF от 10-15% често се счита за.\n\nВисокият марж на свободния финансов поток предполага ефективно управление на разходите и ефикасно използване на капитала." },
   { rowNum: 42, label: "Free Cash Flow Yield", defaultVal: "", cellType: "green-formula", formulaStr: "=1*(B38/B9)", flagRules: { green: "5%+", yellow: "3% - 5%", red: "< 3%" }, note: "Free Cash Flow Yield = Free Cash Flow / Market Cap x 100 (%)\n\nFree Cash Flow Yield (FCF Yield) е финансов показател, който показва колко свободен паричен поток (FCF) генерира една компания спрямо пазарната ѝ стойност. Това е мярка за доходността на инвестицията, базирана на реалния паричен поток, който остава на разположение за инвеститорите, след като всички оперативни и капиталови разходи са покрити.\n\nКакво ни казва този показател:\nВисок FCF Yield (напр. 8–10%+) → компанията генерира много свободен паричен поток спрямо текущата си пазарна оценка → потенциално подценена или много ефективна.\n\nНисък FCF Yield (напр. под 3%) → или е надценена, или не генерира достатъчно свободен паричен поток → възможен сигнал за рискове или слабости." },
@@ -115,7 +115,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 44, label: "Free Cash Flow  / Net Income", defaultVal: "", cellType: "green-formula", formulaStr: "=B38/B26", flagRules: { green: "100%+", yellow: "70% - 100%", red: "< 70%" }, note: "Съотношението Свободен паричен поток към нетен доход (Free Cash Flow to Net Income ratio, FCF/NI) \nПоказва колко от отчетената печалба на една компания реално се превръща в „твърди“ пари, които остават след всички разходи и могат да се използват за: инвестиции, изплащане на дълг или дивиденти.\n\nПрагове:\nНад 100% → отлично, реалният кеш надвишава печалбата.\n\nОколо 100% → здравословно.\n\nПод 100% → внимателно, особено ако е трайно под 70%.\n\nОтрицателно → нетен доход положителен, но FCF отрицателен → червен флаг." },
   { rowNum: 45, label: "Cash Flow Coverage Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "Cash Flow Coverage Ratio = Operating Cash flow / Long-Term Debt", flagRules: { green: "> 1.0", yellow: "0.5 - 1.0", red: "< 0.5" }, note: "Cash Flow Coverage Ratio = Operating Cash flow / Long-Term Debt\n\nВисока стойност на това ratio показва, че компанията може да обслужва дълга си. Колкото по-високо CFCR над 1, толкова по-добре." },
   { rowNum: 46, label: "Operating Cash Flow Ratio", defaultVal: "", cellType: "default", formulaStr: "Operating Cash Flow Ratio = Operating Cash Flow / Current Liabilities", flagRules: { green: "> 1.0", yellow: "0.5 - 1.0", red: "< 0.5" }, note: "Yoan Zografov:\n\nOperating Cash Flow Ratio = Operating Cash Flow / Current Liabilities\n\nТова е мярка за броя пъти, кога една компания може да изплати текущи задължения с паричните средства, генерирани за даден период." },
-  { rowNum: 47, label: "Cash ROA", defaultVal: "", cellType: "yellow-input", flagRules: { green: "5%+", yellow: "2% - 5%", red: "< 2%" } },
+  { rowNum: 47, label: "Cash ROA", defaultVal: "", cellType: "yellow-input", formulaStr: "Cash ROA = (Cash Flow from Operations / Total Assets) * 100", flagRules: { green: "5%+", yellow: "2% - 5%", red: "< 2%" }, note: "Парична възвръщаемост на активите (Cash Return on Assets).\nПоказва колко оперативен паричен поток генерира фирмата за всеки $1 от своите активи." },
   { rowNum: 48, label: "EBITDA Margin", defaultVal: "", cellType: "yellow-input", formulaStr: "EBITDA Margin = (EBITDA / Revenue) * 100", flagRules: { green: "20%+", yellow: "10% - 20%", red: "< 10%" }, note: "EBITDA Margin = (EBITDA / Revenue) * 100 (%)\n\nМаржът на EBITDA показва оперативната доходност на компанията преди начисляването на лихви, данъци, амортизация и обезценка. \n\nЗелен флаг: над 20%\nЖълт флаг: 10% - 20%\nЧервен флаг: под 10%" },
   { rowNum: 49, label: "Interest Coverage Rate", defaultVal: "", cellType: "yellow-input", formulaStr: "Interest Coverage = EBIT / Interest Expense", flagRules: { green: "> 5.0", yellow: "2.0 - 5.0", red: "< 2.0" }, note: "Interest Coverage Rate = EBIT / Interest Expense\n\nПокритието на лихвените разходи измерва колко пъти оперативната печалба (EBIT) може да покрие разходите за лихви по дълговете. Колкото по-високо число, толкова по-сигурна е компанията.\n\nЗелен флаг: над 5.0\nЖълт флаг: 2.0 - 5.0\nЧервен флаг: под 2.0 (риск от дефолт)" },
   { rowNum: 50, label: "Goodwill in Assets", defaultVal: "", cellType: "yellow-input", formulaStr: "Goodwill Ratio = (Goodwill / Total Assets) * 100", flagRules: { green: "< 10%", yellow: "10% - 20%", red: "> 20%" }, note: "Goodwill in Assets = (Goodwill / Total Assets) * 100 (%)\n\nПоказва каква част от активите на компанията се състоят от 'Goodwill' (репутация от премиум цени при придобивания). Прекалено висок Goodwill носи риск от бъдещи обезценки (impairments).\n\nЗелен флаг: под 10%\nЖълт флаг: 10% - 20%\nЧервен флаг: над 20%" },
@@ -822,7 +822,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           <button
             type="button"
             onClick={() => handleToggleCheck(rowNum)}
-            className="p-1 text-ink-muted hover:text-emerald-400 cursor-pointer transition-transform active:scale-90"
+            className="w-7 h-7 rounded-lg hover:bg-indigo-500/10 text-ink-muted hover:text-emerald-400 cursor-pointer transition-all inline-flex items-center justify-center active:scale-90"
             title={isChecked ? "Маркиран като прегледан" : "Маркирай като прегледан"}
           >
             {isChecked ? (
@@ -886,7 +886,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <button
                   type="button"
                   onClick={() => setPeDropdownOpen(prev => !prev)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 h-8 border rounded-lg text-xs font-bold transition-all cursor-pointer select-none ${
+                  className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 h-8 border rounded-lg text-xs font-bold transition-all cursor-pointer select-none shadow-xs hover:scale-102 active:scale-98 ${
                     currentPeLevel === 'low'
                       ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25'
                       : currentPeLevel === 'mid'
@@ -1056,15 +1056,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         </td>
 
         {/* Info Formula Button Cell */}
-        <td className="py-2 px-2 text-center w-10">
+        <td className="py-2 px-2 text-center w-12">
           {(row.note || row.formulaStr || row.flagRules) ? (
             <button
               type="button"
               onClick={() => setActiveInfoModalRow(row)}
-              className="p-0.5 rounded-md hover:bg-indigo-500/10 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer inline-flex items-center justify-center"
-              title="Формула & правила за оцветяване"
+              className="w-7 h-7 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 border border-indigo-500/20 hover:border-indigo-500/40 transition-all cursor-pointer inline-flex items-center justify-center shadow-xs hover:scale-105 active:scale-95"
+              title="Формула, правила за оцветяване & разяснения"
             >
-              <Info className="w-3 h-3" />
+              <Info className="w-3.5 h-3.5" />
             </button>
           ) : (
             <span className="opacity-20 text-[10px]">-</span>
@@ -1123,36 +1123,37 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
           <button
             onClick={handleSaveToMainTable}
-            className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs inline-flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/20 cursor-pointer hover:scale-102 active:scale-98 select-none"
             title="Запази пресметнатата акция в Интерактивната Таблица на платформата"
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            ➕ Добави към Таблицата
+            <span>➕ Добави към Таблицата</span>
           </button>
 
           <button
             onClick={() => {
               window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
             }}
-            className="px-3.5 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:scale-102 active:scale-98 select-none shadow-xs"
             title="Отвори в нов прозорец"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            Нов прозорец
+            <span>Нов прозорец</span>
           </button>
 
           <button
             onClick={handleClearAll}
-            className="px-3.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold text-xs border border-red-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold text-xs border border-red-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:scale-102 active:scale-98 select-none shadow-xs"
             title="Изчисти данните"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Изчисти
+            <span>Изчисти</span>
           </button>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-border transition-colors text-ink-muted hover:text-ink cursor-pointer"
+            className="w-9 h-9 rounded-xl border border-border hover:bg-border/60 transition-colors text-ink-muted hover:text-ink cursor-pointer inline-flex items-center justify-center select-none"
+            title="Затвори"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1201,27 +1202,27 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           <button
             type="button"
             onClick={handleAutoCheckGreen}
-            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/20 flex items-center gap-1 transition-all cursor-pointer"
+            className="h-8 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 active:scale-98 select-none"
             title="Автоматично отметни всички зелени показатели"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            Отметни зелени
+            <span>Отметни зелени</span>
           </button>
 
           <button
             type="button"
             onClick={handleAutoCheckFilled}
-            className="px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-xs border border-indigo-500/20 flex items-center gap-1 transition-all cursor-pointer"
+            className="h-8 px-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-xs border border-indigo-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 active:scale-98 select-none"
             title="Автоматично отметни всички редове с въведени или изчислени стойности"
           >
             <Check className="w-3.5 h-3.5 text-indigo-400" />
-            Отметни попълнени
+            <span>Отметни попълнени</span>
           </button>
 
           <button
             type="button"
             onClick={handleToggleAllRows}
-            className={`px-2.5 py-1 rounded-lg font-bold text-xs border flex items-center gap-1 transition-all cursor-pointer ${
+            className={`h-8 px-3 rounded-lg font-bold text-xs border inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 active:scale-98 select-none ${
               isAllChecked
                 ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/30'
                 : 'bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border-indigo-500/30'
@@ -1231,12 +1232,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             {isAllChecked ? (
               <>
                 <Square className="w-3.5 h-3.5" />
-                Изчисти всички
+                <span>Изчисти всички</span>
               </>
             ) : (
               <>
                 <CheckSquare className="w-3.5 h-3.5" />
-                Отметни цялата таблица
+                <span>Отметни цялата таблица</span>
               </>
             )}
           </button>
@@ -1274,7 +1275,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   <button
                     type="button"
                     onClick={handleToggleAllRows}
-                    className="p-1 hover:bg-indigo-500/20 rounded transition-colors cursor-pointer inline-flex items-center justify-center text-ink-muted hover:text-indigo-400"
+                    className="w-7 h-7 rounded-lg hover:bg-indigo-500/20 transition-colors cursor-pointer inline-flex items-center justify-center text-ink-muted hover:text-indigo-400"
                     title={isAllChecked ? "Премахни всички отметки" : "Отметни цялата таблица (100%)"}
                   >
                     {isAllChecked ? (
@@ -1349,7 +1350,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 </div>
                 <h3 className="font-extrabold text-sm text-ink">{activeInfoModalRow.label}</h3>
               </div>
-              <button onClick={() => setActiveInfoModalRow(null)} className="p-1 text-ink-faint hover:text-ink cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setActiveInfoModalRow(null)}
+                className="w-8 h-8 rounded-xl border border-border hover:bg-border/60 text-ink-faint hover:text-ink cursor-pointer inline-flex items-center justify-center transition-colors select-none"
+                title="Затвори"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1427,8 +1433,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
             <div className="flex justify-end pt-2">
               <button
+                type="button"
                 onClick={() => setActiveInfoModalRow(null)}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer"
+                className="h-9 px-5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-md shadow-indigo-500/20 cursor-pointer inline-flex items-center justify-center transition-all hover:scale-102 active:scale-98 select-none"
               >
                 Разбрах
               </button>
