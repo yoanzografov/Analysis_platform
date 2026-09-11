@@ -60,7 +60,23 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 7, label: "Current Price", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 8, label: "52 week low / 52 week high", defaultVal: "", cellType: "yellow-input", note: "52-седмично най-ниско и най-високо ценово равнище (52 Week Low / 52 Week High).\nПоказва ценовия диапазон на акцията за последната 1 година (52 седмици)." },
   { rowNum: 9, label: "Market Cap (в хил.)", defaultVal: "", cellType: "yellow-input", note: "Пазарна капитализация на компанията в хиляди ($ in thousands)" },
-  { rowNum: 10, label: "P/E Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "PE Ratio = Stock Price / Earnings Per Share", flagRules: { green: "≤ 15", yellow: "15 - 25", red: "> 25" }, note: "PE Ratio = Stock Price / Earnings Per Share\n\nДРУГА ФОРМУЛА:\nPE Ratio = Market Cap / Net Income\n\nСъотношението цена към печалба (PE) е съотношението между цената на акциите на компанията и печалбата на акция. Той измерва цената на акцията спрямо нейните печалби.\n\nВъпреки това, ето обща насока за добри съотношения на PE въз основа на темпа на растеж:\nhttps://www.lynalden.com/pe-ratio/\n\nБез растеж: 10 или по-малко\nБавен растеж: 12\nУмерен растеж: 15\nБърз растеж: 25+\n\nВъпреки това, никога не трябва да инвестирате само въз основа на съотношението PE. \nНяма едно число, което да ви каже дали една инвестиция е добра идея." },
+  { rowNum: 10, label: "P/E Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "PE Ratio = Stock Price / Earnings Per Share", flagRules: { green: "≤ 15 (Ниско)", yellow: "15 - 25 (Средно)", red: "> 25 (Високо)" }, note: `PE Ratio = Stock Price / Earnings Per Share
+ДРУГА ФОРМУЛА: PE Ratio = Market Cap / Net Income
+
+🎯 ОЦЕНКА НА НИВО (ПАДАЩО МЕНЮ):
+• 🟢 Ниско (≤ 15): Изгодна, потенциално подценена компания (стойностно инвестиране).
+• 🟡 Средно (15 - 25): Справедлива / умерена пазарна оценка за развити стабилни компании.
+• 🔴 Високо (> 25): Скъпа / надценена компания или компания със заложен голям бъдещ растеж.
+
+Съотношението цена към печалба (PE) е съотношението между цената на акциите на компанията и печалбата на акция (EPS). То измерва цената на акцията спрямо нейните печалби.
+
+Насоки за добри съотношения на PE според темпа на растеж:
+- Без растеж: 10 или по-малко
+- Бавен растеж: 12
+- Умерен растеж: 15
+- Бърз растеж: 25+
+
+💡 Можете да зададете нивото директно от бутона с падащо меню до полето, или да въведете точно число, като системата ще изчисли автоматично съответния флаг.` },
   { rowNum: 11, label: "Price to FCF", defaultVal: "", cellType: "default", flagRules: { green: "≤ 15", yellow: "15 - 25", red: "> 25" }, note: "Price to FCF = Stock Price / FCF per share\nЗа разлика от P/E ratio-то, това съотношение ни показва по-истински данни за реалния кеш, с който дружеството разполага, а не с обявените печалби, които са манипулируеми до известна степен според GAAP. \n\nПо-ниската стойност от P/E ratio е по-добрата стойност." },
   { rowNum: 12, label: "Dividend Yield", defaultVal: "", cellType: "default", flagRules: { green: "2.5% - 6.5%", yellow: "0.5% - 2.5%", red: "< 0.5% или > 10%" }, note: "Dividend yield = ($5 / $100) x 100 = 5%\n\nКогато цената падне с 50%, ето какво се случва, ако приемем, че\nкомпанията запази годишния дивидент от $5 непроменен:\n\nDividend yield = ($5 / $50) x 100 = 10%" },
   { rowNum: 13, label: "Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100", flagRules: { green: "≤ 50%", yellow: "50% - 75%", red: "> 75%" }, note: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100" },
@@ -1361,6 +1377,39 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   </div>
                   <div className="bg-rose-500/10 text-rose-400 p-2 rounded-xl border border-rose-500/20">
                     🔴 {activeInfoModalRow.flagRules.red}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Specialized P/E Ratio Dropdown Guide */}
+            {activeInfoModalRow.rowNum === 10 && (
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">🎯 Бутон за бърз избор (Ниско / Средно / Високо):</span>
+                <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 text-xs space-y-2 text-ink-muted">
+                  <div className="flex items-start gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0 mt-1" />
+                    <div>
+                      <span className="font-bold text-emerald-400">Ниско (≤ 15):</span>
+                      <span className="ml-1 text-ink">Изгодна, подценена акция. Инвестирате за реална стойност на добра цена.</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0 mt-1" />
+                    <div>
+                      <span className="font-bold text-amber-400">Средно (15 – 25):</span>
+                      <span className="ml-1 text-ink">Умерена, балансирана и справедлива оценка за стабилни растящи компании.</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0 mt-1" />
+                    <div>
+                      <span className="font-bold text-rose-400">Високо (&gt; 25):</span>
+                      <span className="ml-1 text-ink">Скъпа оценка. Пазарът очаква огромен бъдещ растеж или има спекулативна надценка.</span>
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-ink-faint pt-1.5 border-t border-border/40">
+                    💡 <em>Можете да изберете нивото директно от бутона с падащо меню до полето, или да въведете число и системата автоматично ще го определи.</em>
                   </div>
                 </div>
               </div>
