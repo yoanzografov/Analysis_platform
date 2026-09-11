@@ -89,7 +89,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 34, label: "Long-term Debt to Equity Ratio", defaultVal: "", cellType: "default" },
   { rowNum: 35, label: "Debt / Equity", defaultVal: "", cellType: "yellow-input", formulaStr: "Debt to Equity Ratio = Total Debt / Total Equity", flagRules: { green: "< 1.0", yellow: "1.0 - 2.0", red: "> 2.0" }, note: "Debt to Equity Ratio = Total Debt / Total Equity\n\nDebt / Equity Ratio = Total Debt / Shareholders' Equity\n\nПОД 2 Е ОК\n\nDebt to Equity Ratio: Съотношението дълг към собствен капитал изчислява тежестта на общия дълг и финансови пасиви спрямо собствения капитал или с други думи показва как компанията финансира бизнес операциите си - повече чрез дълг или акционерен капитал. Препоръчителни са стойности под 2.\n\nНякои инвеститори също обичат да сравняват съотношението D/E на компанията с общото \nD/E на S&P 500, което беше приблизително 1,58 в края на 202" },
   { rowNum: 36, label: "Cash Flow from Operations", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 37, label: "CFFO 5-10 Years increase", defaultVal: "", cellType: "default" },
+  { rowNum: 37, label: "CFFO 5-10 Years increase", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" }, note: "Cash Flow from Operations (CFFO) 5 - 10 years avg increase\nИзмерва средния годишен темп на растеж на оперативния паричен поток (CFFO) за период от 5 и 10 години.\n\nЗелен флаг: 10%+\nЖълт флаг: 5% - 10%\nЧервен флаг: < 5%" },
   { rowNum: 38, label: "Free Cash Flow", defaultVal: "", cellType: "yellow-input" },
   { rowNum: 39, label: "FCF 5 - 10 years avg increase", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" } },
   { rowNum: 40, label: "Cash Flow Margin", defaultVal: "", cellType: "green-formula", formulaStr: "=B36/B19", flagRules: { green: "15%+", yellow: "10% - 15%", red: "< 10%" }, note: "Cash Flow Margin Ratio = Cash Flow From Operations / Revenue x 100 (%)\nПоказва ни колко от всеки долар продажба се задържа като пари в брой (КЕШ). Колкото повече, толкова по-добре." },
@@ -137,6 +137,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     init['17_10'] = '';
     init['20_5'] = '';
     init['25_10'] = '';
+    init['37_10'] = '';
     init['39_10'] = '';
     return init;
   });
@@ -256,6 +257,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         if (numVal <= 2.0) return 'yellow';
         return 'red';
 
+      case 37: // CFFO 5 - 10 years avg increase (10%+: green, 5% - 10%: yellow, < 5%: red)
       case 39: // FCF 5 - 10 years avg increase (10%+: green, 5% - 10%: yellow, < 5%: red)
         if (numVal >= 10) return 'green';
         if (numVal >= 5) return 'yellow';
@@ -400,6 +402,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       '19': prev['19'] || '',
       '24': epsVal > 0 ? epsVal.toFixed(2) : (prev['24'] || ''),
       '26': prev['26'] || '',
+      '37': prev['37'] || '',
       '38': prev['38'] || '',
       '39': prev['39'] || '',
     }));
@@ -493,6 +496,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     cleared['17_10'] = '';
     cleared['20_5'] = '';
     cleared['25_10'] = '';
+    cleared['37_10'] = '';
     cleared['39_10'] = '';
     setUserInputs(cleared);
     setCheckedRows({});
@@ -579,7 +583,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       ? computedValues[String(rowNum)] 
       : (rawUserVal !== undefined ? rawUserVal : '');
     
-    if (rowNum === 15 || rowNum === 17 || rowNum === 20 || rowNum === 25 || rowNum === 39) {
+    if (rowNum === 15 || rowNum === 17 || rowNum === 20 || rowNum === 25 || rowNum === 37 || rowNum === 39) {
       return userInputs[String(rowNum)] || userInputs[`${rowNum}_10`] || userInputs[`${rowNum}_5`] || '';
     }
     return displayVal;
@@ -778,7 +782,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 />
               </div>
             </div>
-          ) : (rowNum === 17 || rowNum === 25 || rowNum === 39) ? (
+          ) : (rowNum === 17 || rowNum === 25 || rowNum === 37 || rowNum === 39) ? (
             <div className="flex items-center gap-2 justify-end">
               <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
