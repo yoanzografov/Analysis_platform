@@ -58,7 +58,7 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
   { rowNum: 5, label: "Undervalued / Overvalued", defaultVal: "", cellType: "green-formula", formulaStr: "=#REF!/B7-1" },
   { rowNum: 6, label: "--- FINANCIAL METRICS ---", defaultVal: "", cellType: "default" },
   { rowNum: 7, label: "Current Price", defaultVal: "", cellType: "yellow-input" },
-  { rowNum: 8, label: "52 week low / 52 week high", defaultVal: "", cellType: "ref-error" },
+  { rowNum: 8, label: "52 week low / 52 week high", defaultVal: "", cellType: "yellow-input", note: "52-седмично най-ниско и най-високо ценово равнище (52 Week Low / 52 Week High).\nПоказва ценовия диапазон на акцията за последната 1 година (52 седмици)." },
   { rowNum: 9, label: "Market Cap (в хил.)", defaultVal: "", cellType: "yellow-input", note: "Пазарна капитализация на компанията в хиляди ($ in thousands)" },
   { rowNum: 10, label: "P/E Ratio", defaultVal: "", cellType: "yellow-input", formulaStr: "PE Ratio = Stock Price / Earnings Per Share", flagRules: { green: "≤ 15", yellow: "15 - 25", red: "> 25" }, note: "PE Ratio = Stock Price / Earnings Per Share\n\nДРУГА ФОРМУЛА:\nPE Ratio = Market Cap / Net Income\n\nСъотношението цена към печалба (PE) е съотношението между цената на акциите на компанията и печалбата на акция. Той измерва цената на акцията спрямо нейните печалби.\n\nВъпреки това, ето обща насока за добри съотношения на PE въз основа на темпа на растеж:\nhttps://www.lynalden.com/pe-ratio/\n\nБез растеж: 10 или по-малко\nБавен растеж: 12\nУмерен растеж: 15\nБърз растеж: 25+\n\nВъпреки това, никога не трябва да инвестирате само въз основа на съотношението PE. \nНяма едно число, което да ви каже дали една инвестиция е добра идея." },
   { rowNum: 11, label: "Price to FCF", defaultVal: "", cellType: "default", flagRules: { green: "≤ 15", yellow: "15 - 25", red: "> 25" }, note: "Price to FCF = Stock Price / FCF per share\nЗа разлика от P/E ratio-то, това съотношение ни показва по-истински данни за реалния кеш, с който дружеството разполага, а не с обявените печалби, които са манипулируеми до известна степен според GAAP. \n\nПо-ниската стойност от P/E ratio е по-добрата стойност." },
@@ -133,6 +133,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [userInputs, setUserInputs] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { init[String(r.rowNum)] = ''; });
+    init['8_high'] = '';
     init['15_10'] = '';
     init['17_10'] = '';
     init['20_5'] = '';
@@ -353,10 +354,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     // 2. 52-week Low / High (Direct from INTERACTIVE TABLE, stock prop, or DB)
     const low52Val = found?.low52 || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.low52 : 0) || dbStock?.low52 || (currentPrice ? currentPrice * 0.75 : 0);
     const high52Val = found?.high52 || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.high52 : 0) || dbStock?.high52 || (currentPrice ? currentPrice * 1.35 : 0);
-    let low52High52 = '';
-    if (low52Val > 0 && high52Val > 0) {
-      low52High52 = `${low52Val.toFixed(2)} / ${high52Val.toFixed(2)}`;
-    }
+    const low52Str = low52Val > 0 ? low52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[0].trim() : (prev['8'] || ''));
+    const high52Str = high52Val > 0 ? high52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[1].trim() : (prev['8_high'] || ''));
 
     // 3. Market Cap (in thousands)
     const mcapRaw = found?.marketCap || (stock?.ticker?.toUpperCase() === cleanSym ? stock?.marketCap : 0) || dbStock?.marketCap || 0;
@@ -394,7 +393,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       '3': indName,
       '4': sectorName,
       '7': currentPrice > 0 ? currentPrice.toFixed(2) : (prev['7'] || ''),
-      '8': low52High52 || (prev['8'] || ''),
+      '8': low52Str,
+      '8_high': high52Str,
       '9': mcapDisplay || (prev['9'] || ''),
       '10': peDisplay || (prev['10'] || ''),
       '12': found?.dividend ? String(found.dividend) : (prev['12'] || ''),
@@ -447,8 +447,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             if (q.companyName && !next['1']) next['1'] = q.companyName;
             // Row 7: Current Price
             if (q.currentPrice > 0) next['7'] = q.currentPrice.toFixed(2);
-            // Row 8: 52 week low / 52 week high
-            if (q.low52 && q.high52) next['8'] = `${q.low52.toFixed(2)} / ${q.high52.toFixed(2)}`;
+            // Row 8: 52 week low / 52 week high (split into Low: '8' and High: '8_high')
+            if (q.low52 != null && Number(q.low52) > 0) next['8'] = Number(q.low52).toFixed(2);
+            if (q.high52 != null && Number(q.high52) > 0) next['8_high'] = Number(q.high52).toFixed(2);
             // Row 9: Market Cap (in thousands)
             if (q.marketCap && q.marketCap > 0) {
               next['9'] = Math.round(q.marketCap / 1000).toLocaleString('en-US');
@@ -492,6 +493,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setSelectedTicker('');
     const cleared: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
+    cleared['8_high'] = '';
     cleared['15_10'] = '';
     cleared['17_10'] = '';
     cleared['20_5'] = '';
@@ -525,6 +527,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const compName = userInputs['1'] || `${cleanSym} Corp.`;
     const sectorName = userInputs['4'] || 'Technology';
     const price = parseNum(userInputs['7']);
+    const low52 = parseNum(userInputs['8']);
+    const high52 = parseNum(userInputs['8_high']);
     const pe = parseNum(userInputs['10']);
     const divYield = parseNum(userInputs['12']);
     const mcapRawVal = parseNum(userInputs['9']);
@@ -536,6 +540,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         companyName: compName,
         sector: sectorName,
         currentPrice: price > 0 ? price : 100,
+        low52: low52 > 0 ? low52 : null,
+        high52: high52 > 0 ? high52 : null,
         peRatio: pe > 0 ? pe : 15,
         dividendYield: divYield > 0 ? divYield : 0,
         marketCap: mcap
@@ -583,6 +589,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       ? computedValues[String(rowNum)] 
       : (rawUserVal !== undefined ? rawUserVal : '');
     
+    if (rowNum === 8) {
+      if (userInputs['8'] && userInputs['8_high']) {
+        return `${userInputs['8']} / ${userInputs['8_high']}`;
+      }
+      return userInputs['8'] || userInputs['8_high'] || '';
+    }
+
     if (rowNum === 15 || rowNum === 17 || rowNum === 20 || rowNum === 25 || rowNum === 37 || rowNum === 39) {
       return userInputs[String(rowNum)] || userInputs[`${rowNum}_10`] || userInputs[`${rowNum}_5`] || '';
     }
@@ -627,7 +640,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     ALL_CHECKABLE_ROW_NUMS.forEach(r => {
       const userVal = userInputs[String(r)] || '';
       const compVal = computedValues[String(r)] || '';
-      const subVal = userInputs[`${r}_10`] || userInputs[`${r}_5`] || '';
+      const subVal = userInputs[`${r}_10`] || userInputs[`${r}_5`] || userInputs[`${r}_high`] || '';
       if ((userVal && userVal.trim() !== '') || (compVal && compVal.trim() !== '') || (subVal && subVal.trim() !== '')) {
         newChecked[r] = true;
       }
@@ -736,7 +749,30 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
         {/* Value Box / Split Inputs */}
         <td className="py-2 px-4 border-r border-border/40">
-          {rowNum === 15 ? (
+          {rowNum === 8 ? (
+            <div className="flex items-center gap-2 justify-end">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
+                <span className="text-xs text-ink-faint font-bold">Low:</span>
+                <input
+                  type="text"
+                  value={userInputs['8'] || ''}
+                  onChange={e => handleInputChange('8', e.target.value)}
+                  placeholder="..."
+                  className="w-16 sm:w-20 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
+                <span className="text-xs text-ink-faint font-bold">High:</span>
+                <input
+                  type="text"
+                  value={userInputs['8_high'] || ''}
+                  onChange={e => handleInputChange('8_high', e.target.value)}
+                  placeholder="..."
+                  className="w-16 sm:w-20 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+            </div>
+          ) : rowNum === 15 ? (
             <div className="flex items-center gap-2 justify-end">
               <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">5y:</span>
