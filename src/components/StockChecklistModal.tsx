@@ -522,12 +522,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
   useEffect(() => {
     if (isOpen) {
-      const activeSym = stock?.ticker || selectedTicker || (stocks.length > 0 ? stocks[0].ticker : 'AAPL');
-      if (activeSym) {
-        const clean = activeSym.toUpperCase().trim();
+      if (stock?.ticker) {
+        // Opened from table with button [C] for a specific stock
+        const clean = stock.ticker.toUpperCase().trim();
         setSelectedTicker(clean);
         void handleSelectTicker(clean); // live fetch P/E TTM + other data from Yahoo Finance
         void loadReturnsForTicker(clean);
+      } else {
+        // Opened via top Checklist button: LOAD COMPLETELY EMPTY!
+        handleClearAll();
       }
       setUserInputs(prev => ({
         ...prev,
@@ -543,11 +546,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   }, [isOpen, stock]);
 
   const handleSelectTicker = async (sym: string) => {
+    if (!sym) {
+      handleClearAll();
+      return;
+    }
     setSelectedTicker(sym);
     updateStockRowDetails(sym); // fill immediately from local stocks/DB as baseline
     void loadReturnsForTicker(sym);
 
-    if (!sym) return;
     const cleanSym = sym.toUpperCase().trim();
 
     // Live fetch from /api/stock-quotes — same source as Interactive Table (Yahoo Finance)
@@ -717,6 +723,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     cleared['39_10'] = '';
     setUserInputs(cleared);
     setCheckedRows({});
+    setReturnsData(null);
+    setSelectedRow(null);
   };
 
   const handleSelectPeLevel = (level: 'low' | 'mid' | 'high' | '' | 'auto') => {
