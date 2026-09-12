@@ -1628,6 +1628,100 @@ app.get("/api/stock-history", async (req, res) => {
   }
 });
 
+// Endpoint for fetching stock historical returns (3y, 5y, 10y, custom months)
+app.get("/api/stock-returns", async (req, res) => {
+  const ticker = (req.query.ticker as string || req.query.symbol as string || "").toUpperCase().trim();
+  if (!ticker) return res.status(400).json({ error: "Липсва символ (ticker)" });
+
+  let yahooSymbol = ticker;
+  if (ticker.startsWith("EPA:")) {
+    yahooSymbol = ticker.replace("EPA:", "") + ".PA";
+  } else if (ticker.startsWith("ETR:")) {
+    const raw = ticker.replace("ETR:", "");
+    yahooSymbol = (raw === "DHL" ? "DPW" : raw) + ".DE";
+  } else if (ticker.startsWith("STO:")) {
+    yahooSymbol = ticker.replace("STO:", "") + ".ST";
+  } else if (ticker.startsWith("SWX:")) {
+    yahooSymbol = ticker.replace("SWX:", "") + ".SW";
+  } else if (ticker.includes(":")) {
+    const parts = ticker.split(":");
+    yahooSymbol = parts[1] + "." + parts[0];
+  }
+
+  const periods = [1, 3, 6, 12, 24, 36, 48, 60, 72, 120, 144];
+  const urls = [
+    `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=15y&interval=1mo`,
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=15y&interval=1mo`
+  ];
+
+  for (const u of urls) {
+    try {
+      const response = await fetch(u, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+          "Accept": "application/json"
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json() as any;
+        const result = data?.chart?.result?.[0];
+        const quotes = result?.indicators?.quote?.[0]?.close;
+        const timestamps = result?.timestamp;
+
+        if (quotes && quotes.length > 0) {
+          const validBars: { price: number; time: number }[] = [];
+          for (let i = 0; i < quotes.length; i++) {
+            if (quotes[i] !== null && quotes[i] !== undefined && !isNaN(quotes[i])) {
+              validBars.push({ price: parseFloat(quotes[i].toFixed(2)), time: timestamps?.[i] || 0 });
+            }
+          }
+
+          if (validBars.length > 1) {
+            const latestPrice = validBars[validBars.length - 1].price;
+            const allPeriods: Record<number, any> = {};
+
+            for (const m of periods) {
+              const idx = validBars.length - 1 - m;
+              const targetBar = idx >= 0 ? validBars[idx] : validBars[0];
+              const pastPrice = targetBar.price;
+
+              if (pastPrice > 0) {
+                const returnPct = parseFloat((((latestPrice - pastPrice) / pastPrice) * 100).toFixed(2));
+                const years = m / 12;
+                let cagr: number | null = null;
+                if (years >= 1 && latestPrice > 0) {
+                  cagr = parseFloat(((Math.pow(latestPrice / pastPrice, 1 / years) - 1) * 100).toFixed(2));
+                }
+
+                allPeriods[m] = {
+                  months: m,
+                  label: `${m}M`,
+                  returnPct,
+                  cagr,
+                  pastPrice,
+                  currentPrice: latestPrice
+                };
+              }
+            }
+
+            return res.json({
+              ticker,
+              currentPrice: latestPrice,
+              ret3y: allPeriods[36] || null,
+              ret5y: allPeriods[60] || null,
+              ret10y: allPeriods[120] || null,
+              allPeriods
+            });
+          }
+        }
+      }
+    } catch {}
+  }
+
+  return res.status(404).json({ error: "Could not fetch returns for " + ticker });
+});
+
 // Helper for deterministic backward random walk simulated stock history
 function generateSimulatedHistory(
   ticker: string, 

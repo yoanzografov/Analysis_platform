@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown, TrendingUp, Clock } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
+import { fetchStockReturns, StockReturnsResult, AVAILABLE_RETURN_MONTHS } from '../utils/stockReturnsFetcher';
 
 interface StockChecklistModalProps {
   isOpen: boolean;
@@ -171,6 +172,34 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   
   // Interactive Checklist State: Track checked rows
   const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>({});
+
+  // Historical Returns State (3Y, 5Y, 10Y and custom monthly periods)
+  const [returnsData, setReturnsData] = useState<StockReturnsResult | null>(null);
+  const [isLoadingReturns, setIsLoadingReturns] = useState(false);
+  const [customPeriodMonths, setCustomPeriodMonths] = useState<number>(12);
+  const [showReturnsBar, setShowReturnsBar] = useState(true);
+
+  const loadReturnsForTicker = async (tickerToFetch: string) => {
+    if (!tickerToFetch) {
+      setReturnsData(null);
+      return;
+    }
+    setIsLoadingReturns(true);
+    try {
+      const curPrice = parseNum(userInputs['7']);
+      const data = await fetchStockReturns(tickerToFetch, curPrice > 0 ? curPrice : undefined);
+      setReturnsData(data);
+    } catch (e) {
+      console.warn('Could not load returns for', tickerToFetch, e);
+    } finally {
+      setIsLoadingReturns(false);
+    }
+  };
+
+  const selectedCustomReturn = useMemo(() => {
+    if (!returnsData?.allPeriods) return null;
+    return returnsData.allPeriods[customPeriodMonths] || null;
+  }, [returnsData, customPeriodMonths]);
 
   const [userInputs, setUserInputs] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
@@ -498,6 +527,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         const clean = activeSym.toUpperCase().trim();
         setSelectedTicker(clean);
         void handleSelectTicker(clean); // live fetch P/E TTM + other data from Yahoo Finance
+        void loadReturnsForTicker(clean);
       }
       setUserInputs(prev => ({
         ...prev,
@@ -515,6 +545,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const handleSelectTicker = async (sym: string) => {
     setSelectedTicker(sym);
     updateStockRowDetails(sym); // fill immediately from local stocks/DB as baseline
+    void loadReturnsForTicker(sym);
 
     if (!sym) return;
     const cleanSym = sym.toUpperCase().trim();
@@ -1275,6 +1306,18 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             <span>Нов прозорец</span>
           </button>
 
+          {!showReturnsBar && (
+            <button
+              onClick={() => setShowReturnsBar(true)}
+              className="h-9 px-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:scale-102 active:scale-98 select-none shadow-xs"
+              title="Покажи лентата за историческа доходност"
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Доходност (3Y, 5Y, 10Y)</span>
+              <span className="sm:hidden">Доходност</span>
+            </button>
+          )}
+
           <button
             onClick={handleClearAll}
             className="h-9 px-3.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold text-xs border border-red-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:scale-102 active:scale-98 select-none shadow-xs"
@@ -1304,6 +1347,135 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           <button onClick={() => setSavedSuccessMsg(null)} className="opacity-80 hover:opacity-100">
             <X className="w-3.5 h-3.5" />
           </button>
+        </div>
+      )}
+
+      {/* Historical Returns Performance Bar (3Y, 5Y, 10Y & Custom Period: 1, 3, 6, 12, 24, 36, 48, 60, 72, 120, 144 Months) */}
+      {showReturnsBar && (
+        <div className="bg-bg-card border-b border-border px-6 py-2 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 shadow-xs animate-in fade-in duration-150">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-1.5 text-indigo-400 font-extrabold text-[11px] uppercase tracking-wider bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>Историческа Доходност:</span>
+            </div>
+
+            {/* 3 Year Return Card */}
+            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border" title="3-годишна обща възвръщаемост (3 Year Return) и средногодишен темп (CAGR)">
+              <span className="text-[11px] text-ink-faint font-bold">3Y:</span>
+              {isLoadingReturns ? (
+                <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
+              ) : returnsData?.ret3y ? (
+                <div className="flex items-center gap-1 font-mono text-xs font-extrabold">
+                  <span className={returnsData.ret3y.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                    {returnsData.ret3y.returnPct >= 0 ? '+' : ''}{returnsData.ret3y.returnPct.toFixed(1)}%
+                  </span>
+                  {returnsData.ret3y.cagr != null && (
+                    <span className="text-[10px] text-ink-faint font-medium">
+                      ({returnsData.ret3y.cagr >= 0 ? '+' : ''}{returnsData.ret3y.cagr.toFixed(1)}%/г)
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-xs font-mono text-ink-faint">—</span>
+              )}
+            </div>
+
+            {/* 5 Year Return Card */}
+            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border" title="5-годишна обща възвръщаемост (5 Year Return) и средногодишен темп (CAGR)">
+              <span className="text-[11px] text-ink-faint font-bold">5Y:</span>
+              {isLoadingReturns ? (
+                <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
+              ) : returnsData?.ret5y ? (
+                <div className="flex items-center gap-1 font-mono text-xs font-extrabold">
+                  <span className={returnsData.ret5y.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                    {returnsData.ret5y.returnPct >= 0 ? '+' : ''}{returnsData.ret5y.returnPct.toFixed(1)}%
+                  </span>
+                  {returnsData.ret5y.cagr != null && (
+                    <span className="text-[10px] text-ink-faint font-medium">
+                      ({returnsData.ret5y.cagr >= 0 ? '+' : ''}{returnsData.ret5y.cagr.toFixed(1)}%/г)
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-xs font-mono text-ink-faint">—</span>
+              )}
+            </div>
+
+            {/* 10 Year Return Card */}
+            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border" title="10-годишна обща възвръщаемост (10 Year Return) и средногодишен темп (CAGR)">
+              <span className="text-[11px] text-ink-faint font-bold">10Y:</span>
+              {isLoadingReturns ? (
+                <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
+              ) : returnsData?.ret10y ? (
+                <div className="flex items-center gap-1 font-mono text-xs font-extrabold">
+                  <span className={returnsData.ret10y.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                    {returnsData.ret10y.returnPct >= 0 ? '+' : ''}{returnsData.ret10y.returnPct.toFixed(1)}%
+                  </span>
+                  {returnsData.ret10y.cagr != null && (
+                    <span className="text-[10px] text-ink-faint font-medium">
+                      ({returnsData.ret10y.cagr >= 0 ? '+' : ''}{returnsData.ret10y.cagr.toFixed(1)}%/г)
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-xs font-mono text-ink-faint">—</span>
+              )}
+            </div>
+          </div>
+
+          {/* Custom Period: 1, 3, 6, 12, 24, 36, 48, 60, 72, 120, 144 Months */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border">
+              <label className="text-[11px] font-bold text-ink-faint uppercase flex items-center gap-1">
+                <Clock className="w-3 h-3 text-indigo-400" />
+                Период:
+              </label>
+              <select
+                value={customPeriodMonths}
+                onChange={e => setCustomPeriodMonths(Number(e.target.value))}
+                className="bg-transparent text-ink font-mono font-bold text-xs outline-none cursor-pointer"
+              >
+                {AVAILABLE_RETURN_MONTHS.map(m => (
+                  <option key={m.months} value={m.months} className="bg-bg-card text-ink">
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Custom Result Badge */}
+            {isLoadingReturns ? (
+              <span className="text-xs font-mono text-ink-faint animate-pulse px-2 py-1">Изчисляване...</span>
+            ) : selectedCustomReturn ? (
+              <div className="flex items-center gap-2 bg-bg px-2.5 py-1 rounded-lg border border-border">
+                <span className={`font-mono text-xs font-extrabold ${selectedCustomReturn.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {selectedCustomReturn.returnPct >= 0 ? '+' : ''}{selectedCustomReturn.returnPct.toFixed(2)}%
+                </span>
+                {selectedCustomReturn.cagr != null && (
+                  <span className="text-[11px] font-mono text-ink-muted">
+                    CAGR: <strong className={selectedCustomReturn.cagr >= 0 ? 'text-emerald-400' : 'text-rose-400'}>{selectedCustomReturn.cagr >= 0 ? '+' : ''}{selectedCustomReturn.cagr.toFixed(2)}%/г</strong>
+                  </span>
+                )}
+                {selectedCustomReturn.pastPrice > 0 && (
+                  <span className="text-[10px] text-ink-faint font-mono hidden xl:inline">
+                    (${selectedCustomReturn.pastPrice.toFixed(2)} ➔ ${selectedCustomReturn.currentPrice.toFixed(2)})
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-xs font-mono text-ink-faint px-2 py-1">—</span>
+            )}
+
+            {/* Quick Hide Button so user can easily dismiss it if they prefer */}
+            <button
+              type="button"
+              onClick={() => setShowReturnsBar(false)}
+              className="w-6 h-6 rounded-md hover:bg-border/60 text-ink-faint hover:text-ink transition-colors inline-flex items-center justify-center cursor-pointer ml-1"
+              title="Скрий лентата за доходност (може да се включи отново от бутон 'Доходност' горе вдясно)"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       )}
 
