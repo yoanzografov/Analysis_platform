@@ -78,7 +78,33 @@ export const EXACT_SHEET_ROWS: SheetRowDefinition[] = [
 
 💡 Можете да зададете нивото директно от бутона с падащо меню до полето, или да въведете точно число, като системата ще изчисли автоматично съответния флаг.` },
   { rowNum: 11, label: "Price to FCF", defaultVal: "", cellType: "default", flagRules: { green: "≤ 15", yellow: "15 - 25", red: "> 25" }, note: "Price to FCF = Stock Price / FCF per share\nЗа разлика от P/E ratio-то, това съотношение ни показва по-истински данни за реалния кеш, с който дружеството разполага, а не с обявените печалби, които са манипулируеми до известна степен според GAAP. \n\nПо-ниската стойност от P/E ratio е по-добрата стойност." },
-  { rowNum: 12, label: "Dividend Yield", defaultVal: "", cellType: "default", flagRules: { green: "2.5% - 6.5%", yellow: "0.5% - 2.5%", red: "< 0.5% или > 10%" }, note: "Dividend yield = ($5 / $100) x 100 = 5%\n\nКогато цената падне с 50%, ето какво се случва, ако приемем, че\nкомпанията запази годишния дивидент от $5 непроменен:\n\nDividend yield = ($5 / $50) x 100 = 10%" },
+  { 
+    rowNum: 12, 
+    label: "Dividend / Yield", 
+    defaultVal: "", 
+    cellType: "default", 
+    formulaStr: "Dividend Yield = (Annual Dividends Per Share / Stock Price) * 100%", 
+    flagRules: { green: "2.5% - 6.5%", yellow: "0.5% - 2.5%", red: "< 0.5% или > 10%" }, 
+    note: `Dividend Yield = (Annual Dividends Per Share / Stock Price) * 100%
+
+Формула за изчисляване:
+Dividend Yield = (Годишен дивидент на акция / Цена на акцията) x 100%
+
+Примери:
+• Годишен дивидент $5.00 при цена на акцията $100.00:
+  Dividend Yield = ($5.00 / $100.00) x 100% = 5.00%
+
+• Ако цената падне с 50% до $50.00 при запазен дивидент от $5.00:
+  Dividend Yield = ($5.00 / $50.00) x 100% = 10.00%
+
+🎯 ПРАВИЛА ЗА ОЦЕНКА:
+• 🟢 Зелен флаг: 2.5% - 6.5% (Здравословна и устойчива дивидентна доходност)
+• 🟡 Жълт флаг: 0.5% - 2.5% или 6.5% - 10.0% (Нисък дивидент или повишен риск)
+• 🔴 Червен флаг: < 0.5% или > 10.0% (Несъществен дивидент или неустойчиво висок капан)
+
+💡 Автоматично изчисление:
+Въведете годишния дивидент в полето 'Dividend' ($), а системата автоматично изчислява процента 'Yield' (%) на база цената на акцията (ред 7). Можете да въведете Yield (%) и директно.` 
+  },
   { rowNum: 13, label: "Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100", flagRules: { green: "≤ 50%", yellow: "50% - 75%", red: "> 75%" }, note: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100" },
   { rowNum: 14, label: "CASH Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100", flagRules: { green: "≤ 50%", yellow: "50% - 70%", red: "> 70%" }, note: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100\n\nПоказва ни по-истинското Payout Ratio и ни касае пряко като дивидентни инвеститори." },
   { rowNum: 15, label: "Dividend Growth Rate 5 - 10 year avg", defaultVal: "", cellType: "yellow-input", flagRules: { green: "8%+", yellow: "4% - 8%", red: "< 4%" }, note: "Среден годишен темп на растеж на дивидента за 5-10 години.\nПоказва стабилността на увеличаване на изплащаните парични суми към акционерите." },
@@ -151,6 +177,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     EXACT_SHEET_ROWS.forEach(r => { init[String(r.rowNum)] = ''; });
     init['8_high'] = '';
     init['10_level'] = '';
+    init['12_div'] = '';
     init['15_10'] = '';
     init['17_10'] = '';
     init['20_5'] = '';
@@ -196,6 +223,24 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       return 'red';
     }
 
+    if (rowNum === 12) {
+      let yld = parseNum(userInputs['12']);
+      if (yld === 0 && userInputs['12_div'] && userInputs['7']) {
+        const d = parseNum(userInputs['12_div']);
+        const p = parseNum(userInputs['7']);
+        if (p > 0 && d > 0) yld = (d / p) * 100;
+      }
+      if (yld === 0 && valStr) {
+        const match = valStr.match(/([0-9.]+)\s*%/);
+        if (match) yld = parseFloat(match[1]);
+        else yld = parseNum(valStr);
+      }
+      if (yld <= 0) return null;
+      if (yld >= 2.5 && yld <= 6.5) return 'green';
+      if ((yld >= 0.5 && yld < 2.5) || (yld > 6.5 && yld <= 10)) return 'yellow';
+      return 'red';
+    }
+
     if (!valStr || valStr.trim() === '') return null;
     const numVal = parseNum(valStr);
     if (isNaN(numVal)) return null;
@@ -206,11 +251,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         if (numVal <= 0) return 'red';
         if (numVal <= 15) return 'green';
         if (numVal <= 25) return 'yellow';
-        return 'red';
-
-      case 12: // Dividend Yield (2.5% - 6.5%: green, 0.5% - 2.5% or 6.5% - 10%: yellow, < 0.5% or > 10%: red)
-        if (numVal >= 2.5 && numVal <= 6.5) return 'green';
-        if ((numVal >= 0.5 && numVal < 2.5) || (numVal > 6.5 && numVal <= 10)) return 'yellow';
         return 'red';
 
       case 13: // Dividend Payout Ratio (≤ 50%: green, 50% - 75%: yellow, > 75%: red)
@@ -416,6 +456,22 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       else peLevel = 'high';
     }
 
+    // 7. Dividends: Annual Dividends Per Share & Yield %
+    let initialDiv = '';
+    let initialYield = '';
+    const rawDiv = found?.dividend || stock?.dividend || '';
+    if (rawDiv) {
+      const match = rawDiv.match(/(?:[\$€£]?\s*([0-9.]+))(?:\s*\((?:[^)]*?)?([0-9.]+)\s*%\))?/);
+      if (match) {
+        if (match[1]) initialDiv = match[1];
+        if (match[2]) initialYield = match[2];
+      }
+    }
+    if (!initialYield && initialDiv && currentPrice > 0) {
+      const d = parseFloat(initialDiv);
+      if (d > 0) initialYield = ((d / currentPrice) * 100).toFixed(2);
+    }
+
     setUserInputs(prev => {
       const low52Str = low52Val > 0 ? low52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[0].trim() : (prev['8'] || ''));
       const high52Str = high52Val > 0 ? high52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[1].trim() : (prev['8_high'] || ''));
@@ -432,7 +488,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         '9': mcapDisplay || (prev['9'] || ''),
         '10': peDisplay || (prev['10'] || ''),
         '10_level': peLevel || (prev['10_level'] || ''),
-        '12': found?.dividend ? String(found.dividend) : (prev['12'] || ''),
+        '12': initialYield || prev['12'] || '',
+        '12_div': initialDiv || prev['12_div'] || '',
         '18': prev['18'] || '',
         '19': prev['19'] || '',
         '24': epsVal > 0 ? epsVal.toFixed(2) : (prev['24'] || ''),
@@ -447,6 +504,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const initialChecked: Record<number, boolean> = {};
     [1, 2, 3, 4, 7, 8, 9, 10].forEach(r => { initialChecked[r] = true; });
     if (epsVal > 0) initialChecked[24] = true;
+    if (initialYield || initialDiv) initialChecked[12] = true;
     setCheckedRows(prev => ({ ...prev, ...initialChecked }));
   };
 
@@ -502,20 +560,45 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               next['9'] = Math.round(q.marketCap / 1000).toLocaleString('en-US');
             }
             // Row 10: P/E Ratio — live from TradingView / Yahoo
-            // Row 10: P/E Ratio — live from TradingView / Yahoo
             if (q.peRatio && q.peRatio > 0) {
               next['10'] = q.peRatio.toFixed(2);
               if (q.peRatio <= 15) next['10_level'] = 'low';
               else if (q.peRatio <= 25) next['10_level'] = 'mid';
               else next['10_level'] = 'high';
             }
+            // Row 12: Dividend ($) and Yield (%)
+            const divRate = q.dividend !== undefined && q.dividend !== null ? Number(q.dividend) : null;
+            let yldVal = q.dividendYield !== undefined && q.dividendYield !== null ? Number(q.dividendYield) : null;
+            const priceVal = q.currentPrice > 0 ? q.currentPrice : parseNum(next['7']);
+
+            if (yldVal !== null && yldVal > 0 && yldVal < 0.20 && divRate && priceVal > 0) {
+              const expectedYield = (divRate / priceVal) * 100;
+              if (Math.abs(yldVal * 100 - expectedYield) < Math.abs(yldVal - expectedYield)) {
+                yldVal = yldVal * 100;
+              }
+            }
+
+            if (divRate !== null && divRate > 0) {
+              next['12_div'] = divRate.toFixed(2);
+              if (priceVal > 0) {
+                next['12'] = ((divRate / priceVal) * 100).toFixed(2);
+              }
+            } else if (yldVal !== null && yldVal > 0) {
+              next['12'] = yldVal.toFixed(2);
+              if (priceVal > 0 && !next['12_div']) {
+                next['12_div'] = ((yldVal / 100) * priceVal).toFixed(2);
+              }
+            }
             // Row 24: EPS
             if (q.eps && q.eps !== 0) next['24'] = q.eps.toFixed(2);
             return next;
           });
 
-          // Check row 8 in checklist
-          setCheckedRows(prev => ({ ...prev, 8: true, 10: true }));
+          // Check rows in checklist
+          setCheckedRows(prev => {
+            const nextChecked = { ...prev, 8: true, 10: true };
+            return nextChecked;
+          });
         }
       }
     } catch (e) {
@@ -527,6 +610,22 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
   const handleInputChange = (key: string | number, val: string) => {
     const strKey = String(key);
+
+    if (strKey === '7') {
+      const newPrice = parseNum(val);
+      setUserInputs(prev => {
+        const next = { ...prev, '7': val };
+        const divAmt = parseNum(prev['12_div']);
+        if (newPrice > 0 && divAmt > 0) {
+          next['12'] = ((divAmt / newPrice) * 100).toFixed(2);
+        }
+        return next;
+      });
+      if (val.trim() !== '') {
+        setCheckedRows(prev => ({ ...prev, 7: true }));
+      }
+      return;
+    }
 
     if (strKey === '10') {
       const num = parseNum(val);
@@ -543,6 +642,40 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       });
       if (val.trim() !== '') {
         setCheckedRows(prev => ({ ...prev, 10: true }));
+      }
+      return;
+    }
+
+    if (strKey === '12_div') {
+      const divAmt = parseNum(val);
+      setUserInputs(prev => {
+        const next = { ...prev, '12_div': val };
+        const stockPrice = parseNum(prev['7']);
+        if (stockPrice > 0 && divAmt >= 0) {
+          const calcYield = (divAmt / stockPrice) * 100;
+          next['12'] = calcYield > 0 ? calcYield.toFixed(2) : (divAmt === 0 ? '0.00' : '');
+        }
+        return next;
+      });
+      if (val.trim() !== '') {
+        setCheckedRows(prev => ({ ...prev, 12: true }));
+      }
+      return;
+    }
+
+    if (strKey === '12') {
+      const yieldPct = parseNum(val);
+      setUserInputs(prev => {
+        const next = { ...prev, '12': val };
+        const stockPrice = parseNum(prev['7']);
+        if (stockPrice > 0 && yieldPct > 0 && (!prev['12_div'] || prev['12_div'].trim() === '')) {
+          const calcDiv = (yieldPct / 100) * stockPrice;
+          next['12_div'] = calcDiv.toFixed(2);
+        }
+        return next;
+      });
+      if (val.trim() !== '') {
+        setCheckedRows(prev => ({ ...prev, 12: true }));
       }
       return;
     }
@@ -574,6 +707,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
     cleared['8_high'] = '';
     cleared['10_level'] = '';
+    cleared['12_div'] = '';
     cleared['15_10'] = '';
     cleared['17_10'] = '';
     cleared['20_5'] = '';
@@ -656,6 +790,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const high52 = parseNum(userInputs['8_high']);
     const pe = parseNum(userInputs['10']);
     const divYield = parseNum(userInputs['12']);
+    const divAmt = parseNum(userInputs['12_div']);
+    let finalDividendStr = '';
+    if (divAmt > 0 && divYield > 0) {
+      finalDividendStr = `$${divAmt.toFixed(2)} (${divYield.toFixed(2)}%)`;
+    } else if (divYield > 0) {
+      finalDividendStr = `${divYield.toFixed(2)}%`;
+    } else if (divAmt > 0) {
+      finalDividendStr = `$${divAmt.toFixed(2)}`;
+    }
     const mcapRawVal = parseNum(userInputs['9']);
     const mcap = mcapRawVal > 0 ? (mcapRawVal < 1e9 ? mcapRawVal * 1000 : mcapRawVal) : 1000000000;
 
@@ -668,6 +811,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         low52: low52 > 0 ? low52 : null,
         high52: high52 > 0 ? high52 : null,
         peRatio: pe > 0 ? pe : 15,
+        dividend: finalDividendStr || undefined,
         dividendYield: divYield > 0 ? divYield : 0,
         marketCap: mcap
       });
@@ -727,6 +871,26 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       if (level === 'mid') return userInputs['10'] ? `${userInputs['10']} (Средно)` : 'Средно';
       if (level === 'high') return userInputs['10'] ? `${userInputs['10']} (Високо)` : 'Високо';
       return userInputs['10'] || '';
+    }
+
+    if (rowNum === 12) {
+      const divAmt = userInputs['12_div'];
+      const yieldVal = userInputs['12'];
+      if (divAmt && yieldVal) {
+        return `$${divAmt} (${yieldVal}%)`;
+      }
+      if (yieldVal) {
+        return `${yieldVal}%`;
+      }
+      if (divAmt) {
+        const price = parseNum(userInputs['7']);
+        if (price > 0) {
+          const calcYld = ((parseNum(divAmt) / price) * 100).toFixed(2);
+          return `$${divAmt} (${calcYld}%)`;
+        }
+        return `$${divAmt}`;
+      }
+      return '';
     }
 
     if (rowNum === 15 || rowNum === 17 || rowNum === 20 || rowNum === 25 || rowNum === 37 || rowNum === 39) {
@@ -940,6 +1104,31 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   <option value="high" className="bg-bg-card text-rose-400 font-bold">🔴 Високо (&gt; 25)</option>
                 </select>
                 <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 pointer-events-none text-current opacity-70" />
+              </div>
+            </div>
+          ) : rowNum === 12 ? (
+            <div className="flex items-center gap-2 justify-end">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8 focus-within:border-indigo-500 transition-colors" title="Annual Dividends Per Share (Годишен дивидент на акция)">
+                <span className="text-xs text-ink-faint font-bold">Dividend:</span>
+                <span className="text-xs text-ink-muted font-bold">$</span>
+                <input
+                  type="text"
+                  value={userInputs['12_div'] || ''}
+                  onChange={e => handleInputChange('12_div', e.target.value)}
+                  placeholder="0.00"
+                  className="w-16 sm:w-20 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8 focus-within:border-indigo-500 transition-colors" title="Dividend Yield = (Annual Dividends Per Share / Stock Price) * 100%">
+                <span className="text-xs text-ink-faint font-bold">Yield:</span>
+                <input
+                  type="text"
+                  value={userInputs['12'] || ''}
+                  onChange={e => handleInputChange('12', e.target.value)}
+                  placeholder="0.00"
+                  className="w-14 sm:w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+                <span className="text-xs text-ink-muted font-bold">%</span>
               </div>
             </div>
           ) : rowNum === 15 ? (
@@ -1391,6 +1580,23 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   </div>
                   <div className="text-[11px] text-ink-faint pt-1.5 border-t border-border/40">
                     💡 <em>Можете да изберете нивото директно от бутона с падащо меню до полето, или да въведете число и системата автоматично ще го определи.</em>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Specialized Dividend / Yield Guide */}
+            {activeInfoModalRow.rowNum === 12 && (
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">💡 Формула & Автоматично Изчисление:</span>
+                <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 text-xs space-y-2 text-ink-muted">
+                  <div className="text-ink">
+                    <span className="font-bold text-emerald-400">Dividend Yield = </span>
+                    <span className="font-mono">(Annual Dividends Per Share / Stock Price) × 100%</span>
+                  </div>
+                  <div className="text-[11px] text-ink-faint pt-1.5 border-t border-border/40 space-y-1">
+                    <p>• Когато попълните годишния дивидент в полето <strong>Dividend ($)</strong>, доходността в <strong>Yield (%)</strong> се пресмята мигновено на база цената на акцията (ред 7).</p>
+                    <p>• При промяна на цената на акцията (ред 7), доходността се преизчислява автоматично.</p>
                   </div>
                 </div>
               </div>
