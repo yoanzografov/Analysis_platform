@@ -456,22 +456,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       else peLevel = 'high';
     }
 
-    // 7. Dividends: Annual Dividends Per Share & Yield %
-    let initialDiv = '';
-    let initialYield = '';
-    const rawDiv = found?.dividend || stock?.dividend || '';
-    if (rawDiv) {
-      const match = rawDiv.match(/(?:[\$€£]?\s*([0-9.]+))(?:\s*\((?:[^)]*?)?([0-9.]+)\s*%\))?/);
-      if (match) {
-        if (match[1]) initialDiv = match[1];
-        if (match[2]) initialYield = match[2];
-      }
-    }
-    if (!initialYield && initialDiv && currentPrice > 0) {
-      const d = parseFloat(initialDiv);
-      if (d > 0) initialYield = ((d / currentPrice) * 100).toFixed(2);
-    }
-
     setUserInputs(prev => {
       const low52Str = low52Val > 0 ? low52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[0].trim() : (prev['8'] || ''));
       const high52Str = high52Val > 0 ? high52Val.toFixed(2) : (prev['8']?.includes('/') ? prev['8'].split('/')[1].trim() : (prev['8_high'] || ''));
@@ -488,8 +472,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         '9': mcapDisplay || (prev['9'] || ''),
         '10': peDisplay || (prev['10'] || ''),
         '10_level': peLevel || (prev['10_level'] || ''),
-        '12': initialYield || prev['12'] || '',
-        '12_div': initialDiv || prev['12_div'] || '',
+        '12': '',
+        '12_div': '',
         '18': prev['18'] || '',
         '19': prev['19'] || '',
         '24': epsVal > 0 ? epsVal.toFixed(2) : (prev['24'] || ''),
@@ -504,7 +488,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const initialChecked: Record<number, boolean> = {};
     [1, 2, 3, 4, 7, 8, 9, 10].forEach(r => { initialChecked[r] = true; });
     if (epsVal > 0) initialChecked[24] = true;
-    if (initialYield || initialDiv) initialChecked[12] = true;
     setCheckedRows(prev => ({ ...prev, ...initialChecked }));
   };
 
@@ -516,6 +499,16 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         setSelectedTicker(clean);
         void handleSelectTicker(clean); // live fetch P/E TTM + other data from Yahoo Finance
       }
+      setUserInputs(prev => ({
+        ...prev,
+        '12': '',
+        '12_div': '',
+      }));
+      setCheckedRows(prev => {
+        const next = { ...prev };
+        delete next[12];
+        return next;
+      });
     }
   }, [isOpen, stock]);
 
@@ -565,29 +558,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               if (q.peRatio <= 15) next['10_level'] = 'low';
               else if (q.peRatio <= 25) next['10_level'] = 'mid';
               else next['10_level'] = 'high';
-            }
-            // Row 12: Dividend ($) and Yield (%)
-            const divRate = q.dividend !== undefined && q.dividend !== null ? Number(q.dividend) : null;
-            let yldVal = q.dividendYield !== undefined && q.dividendYield !== null ? Number(q.dividendYield) : null;
-            const priceVal = q.currentPrice > 0 ? q.currentPrice : parseNum(next['7']);
-
-            if (yldVal !== null && yldVal > 0 && yldVal < 0.20 && divRate && priceVal > 0) {
-              const expectedYield = (divRate / priceVal) * 100;
-              if (Math.abs(yldVal * 100 - expectedYield) < Math.abs(yldVal - expectedYield)) {
-                yldVal = yldVal * 100;
-              }
-            }
-
-            if (divRate !== null && divRate > 0) {
-              next['12_div'] = divRate.toFixed(2);
-              if (priceVal > 0) {
-                next['12'] = ((divRate / priceVal) * 100).toFixed(2);
-              }
-            } else if (yldVal !== null && yldVal > 0) {
-              next['12'] = yldVal.toFixed(2);
-              if (priceVal > 0 && !next['12_div']) {
-                next['12_div'] = ((yldVal / 100) * priceVal).toFixed(2);
-              }
             }
             // Row 24: EPS
             if (q.eps && q.eps !== 0) next['24'] = q.eps.toFixed(2);
