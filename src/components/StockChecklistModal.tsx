@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock } from '../types';
-import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown, TrendingUp, Clock, Wrench, Calculator } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown, TrendingUp, Clock, Wrench, Calculator, Search } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 import { fetchStockReturns, StockReturnsResult, AVAILABLE_RETURN_MONTHS } from '../utils/stockReturnsFetcher';
 import ProfitCalculatorModal from './ProfitCalculatorModal';
@@ -188,6 +188,58 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
   const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
   const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
+
+  // Ticker Search Bar State
+  const [tickerSearchQuery, setTickerSearchQuery] = useState<string>(stock?.ticker || '');
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+
+  // Combined list of stocks for ticker search
+  const allAvailableStocks = useMemo(() => {
+    const list: Array<{ ticker: string; companyName: string; price?: number }> = [];
+    const seen = new Set<string>();
+
+    stocks.forEach(s => {
+      const sym = s.ticker.toUpperCase().trim();
+      if (!seen.has(sym)) {
+        seen.add(sym);
+        list.push({
+          ticker: sym,
+          companyName: s.companyName || sym,
+          price: s.currentPrice
+        });
+      }
+    });
+
+    Object.entries(POPULAR_STOCKS_DB).forEach(([tk, data]) => {
+      const sym = tk.toUpperCase().trim();
+      if (!seen.has(sym)) {
+        seen.add(sym);
+        list.push({
+          ticker: sym,
+          companyName: data.companyName,
+          price: data.price
+        });
+      }
+    });
+
+    return list;
+  }, [stocks]);
+
+  // Filter stocks by ticker symbol primarily
+  const filteredStocks = useMemo(() => {
+    const query = tickerSearchQuery.trim().toUpperCase();
+    if (!query) {
+      return allAvailableStocks.slice(0, 15);
+    }
+    const exactTicker = allAvailableStocks.filter(s => s.ticker === query);
+    const startsTicker = allAvailableStocks.filter(s => s.ticker.startsWith(query) && s.ticker !== query);
+    const containsTicker = allAvailableStocks.filter(s => s.ticker.includes(query) && !s.ticker.startsWith(query));
+    const nameMatches = allAvailableStocks.filter(s => 
+      s.companyName.toUpperCase().includes(query) && !s.ticker.includes(query)
+    );
+
+    return [...exactTicker, ...startsTicker, ...containsTicker, ...nameMatches].slice(0, 20);
+  }, [allAvailableStocks, tickerSearchQuery]);
 
   const loadReturnsForTicker = async (tickerToFetch: string) => {
     if (!tickerToFetch) {
@@ -536,6 +588,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         // Opened from table with button [C] for a specific stock
         const clean = stock.ticker.toUpperCase().trim();
         setSelectedTicker(clean);
+        setTickerSearchQuery(clean);
         void handleSelectTicker(clean); // live fetch P/E TTM + other data from Yahoo Finance
         void loadReturnsForTicker(clean);
       } else {
@@ -560,11 +613,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       handleClearAll();
       return;
     }
-    setSelectedTicker(sym);
-    updateStockRowDetails(sym); // fill immediately from local stocks/DB as baseline
-    void loadReturnsForTicker(sym);
-
     const cleanSym = sym.toUpperCase().trim();
+    setSelectedTicker(cleanSym);
+    setTickerSearchQuery(cleanSym);
+    updateStockRowDetails(cleanSym); // fill immediately from local stocks/DB as baseline
+    void loadReturnsForTicker(cleanSym);
 
     // Live fetch from /api/stock-quotes — same source as Interactive Table (Yahoo Finance)
     setIsFetchingQuote(true);
@@ -707,6 +760,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     if (strKey === '2' && val.trim().length >= 1) {
       const cleanSym = val.toUpperCase().trim();
       setSelectedTicker(cleanSym);
+      setTickerSearchQuery(cleanSym);
       updateStockRowDetails(cleanSym);
       if (val.trim().length >= 2) {
         void handleSelectTicker(cleanSym);
@@ -720,6 +774,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
   const handleClearAll = () => {
     setSelectedTicker('');
+    setTickerSearchQuery('');
+    setIsSearchDropdownOpen(false);
     const cleared: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
     cleared['8_high'] = '';
@@ -1276,31 +1332,128 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         {/* Top Controls & Live Signals Counter Badge */}
         <div className="flex items-center gap-3">
 
-          <div className="flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border">
-            <label className="text-xs font-bold text-ink-faint uppercase">Актив:</label>
-            <select
-              value={selectedTicker}
-              onChange={e => handleSelectTicker(e.target.value)}
-              className="bg-transparent text-ink font-mono font-bold text-xs outline-none cursor-pointer"
-            >
-              <option value="" className="bg-bg-card text-ink">-- Изберете Актив --</option>
-              {stocks.map(s => (
-                <option key={s.ticker} value={s.ticker} className="bg-bg-card text-ink">{s.ticker} - {s.companyName}</option>
-              ))}
-              {Object.keys(POPULAR_STOCKS_DB).map(tk => (
-                !stocks.some(s => s.ticker.toUpperCase() === tk) && (
-                  <option key={tk} value={tk} className="bg-bg-card text-ink">{tk} - {POPULAR_STOCKS_DB[tk].companyName}</option>
-                )
-              ))}
-            </select>
+          {/* Ticker Search Bar with Instant Autocomplete */}
+          <div 
+            className="relative flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border focus-within:border-indigo-500/50 transition-colors shadow-xs"
+            onBlur={(e) => { 
+              if (!e.currentTarget.contains(e.relatedTarget)) {
+                setIsSearchDropdownOpen(false); 
+              }
+            }}
+          >
+            <Search className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+            <input
+              type="text"
+              value={tickerSearchQuery}
+              placeholder="Търси по тикър (AAPL, NVDA...)"
+              onChange={(e) => {
+                const val = e.target.value;
+                setTickerSearchQuery(val);
+                setIsSearchDropdownOpen(true);
+              }}
+              onFocus={() => setIsSearchDropdownOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (filteredStocks.length > 0) {
+                    const chosen = filteredStocks[0].ticker;
+                    void handleSelectTicker(chosen);
+                  } else if (tickerSearchQuery.trim()) {
+                    void handleSelectTicker(tickerSearchQuery.trim().toUpperCase());
+                  }
+                  setIsSearchDropdownOpen(false);
+                } else if (e.key === 'Escape') {
+                  setIsSearchDropdownOpen(false);
+                }
+              }}
+              className="w-44 sm:w-56 bg-transparent text-ink font-mono font-bold text-xs outline-none uppercase placeholder:normal-case placeholder:font-sans placeholder:text-ink-faint placeholder:font-medium"
+            />
+
+            {tickerSearchQuery && (
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setTickerSearchQuery('');
+                  handleClearAll();
+                }}
+                className="p-0.5 rounded-md hover:bg-card-hover text-ink-faint hover:text-ink cursor-pointer transition-colors"
+                title="Изчисти"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+
             {isFetchingQuote && (
-              <span className="text-[10px] text-indigo-400 font-bold animate-pulse flex items-center gap-1">
+              <span className="text-[10px] text-indigo-400 font-bold animate-pulse flex items-center gap-1 shrink-0">
                 <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                 </svg>
                 Live…
               </span>
+            )}
+
+            {/* Dropdown Suggestions Menu */}
+            {isSearchDropdownOpen && (
+              <div 
+                className="absolute left-0 top-full mt-2 w-72 sm:w-80 bg-card border border-border rounded-xl shadow-2xl p-1.5 z-[1000002] flex flex-col gap-0.5 max-h-72 overflow-y-auto origin-top-left animate-in fade-in zoom-in-95 duration-100 custom-scrollbar"
+              >
+                <div className="px-2 py-1 text-[10px] uppercase font-bold text-ink-faint border-b border-border/40 flex items-center justify-between">
+                  <span>Търсене по тикър символ</span>
+                  <span>{filteredStocks.length} намерени</span>
+                </div>
+
+                {filteredStocks.map(s => (
+                  <button
+                    key={s.ticker}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      void handleSelectTicker(s.ticker);
+                      setIsSearchDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between rounded-lg cursor-pointer transition-colors group ${
+                      selectedTicker === s.ticker 
+                        ? 'bg-indigo-500/15 text-indigo-300' 
+                        : 'hover:bg-card-hover text-ink'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono font-black text-indigo-400 group-hover:text-indigo-300 text-xs bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 shrink-0">
+                        {s.ticker}
+                      </span>
+                      <span className="text-ink font-semibold truncate text-[11px]">{s.companyName}</span>
+                    </div>
+                    {s.price ? (
+                      <span className="text-ink-faint font-mono text-[11px] ml-2 shrink-0">${s.price.toFixed(2)}</span>
+                    ) : null}
+                  </button>
+                ))}
+
+                {filteredStocks.length === 0 && (
+                  <div className="px-3 py-3 text-center text-xs text-ink-faint">
+                    Няма намерен локален актив за &quot;{tickerSearchQuery}&quot;
+                  </div>
+                )}
+
+                {tickerSearchQuery.trim() && !allAvailableStocks.some(s => s.ticker === tickerSearchQuery.trim().toUpperCase()) && (
+                  <button
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      void handleSelectTicker(tickerSearchQuery.trim().toUpperCase());
+                      setIsSearchDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-2.5 py-2 text-xs flex items-center justify-between hover:bg-emerald-500/10 dark:hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors border-t border-border/40 text-emerald-400 font-bold"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Search className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">Зареди &quot;{tickerSearchQuery.trim().toUpperCase()}&quot; от Yahoo Finance</span>
+                    </div>
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
