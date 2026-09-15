@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Stock } from '../types';
 import { Calculator, X, Wallet, TrendingUp } from 'lucide-react';
 
@@ -7,10 +7,11 @@ interface Props {
   onClose: () => void;
   stocks: Stock[];
   baseCurrency?: 'USD' | 'EUR';
+  initialTicker?: string;
 }
 
-export default function ProfitCalculatorModal({ isOpen, onClose, stocks, baseCurrency = 'USD' }: Props) {
-  const [ticker, setTicker] = useState('FTNT');
+export default function ProfitCalculatorModal({ isOpen, onClose, stocks, baseCurrency = 'USD', initialTicker }: Props) {
+  const [ticker, setTicker] = useState(initialTicker || 'FTNT');
   const [companyName, setCompanyName] = useState('Fortinet Inc');
   const [currentPrice, setCurrentPrice] = useState('164.59');
   const [shares, setShares] = useState('6.00');
@@ -48,6 +49,12 @@ export default function ProfitCalculatorModal({ isOpen, onClose, stocks, baseCur
     }
   };
 
+  useEffect(() => {
+    if (isOpen && initialTicker) {
+      handleTickerChange(initialTicker);
+    }
+  }, [isOpen, initialTicker]);
+
   const numShares = Math.max(0, parseFloat(shares) || 0);
   const numAvgPrice = Math.max(0, parseFloat(avgPrice) || 0);
   const numCurrentPrice = Math.max(0, parseFloat(currentPrice) || 0);
@@ -61,7 +68,7 @@ export default function ProfitCalculatorModal({ isOpen, onClose, stocks, baseCur
   const freeFunds = numSellShares * numCurrentPrice; // Cash returned upon sale
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-bg/80 backdrop-blur-md font-sans">
+    <div className="fixed inset-0 z-[1000000] flex items-center justify-center p-3 sm:p-4 bg-bg/80 backdrop-blur-md font-sans">
       <div className="w-full max-w-2xl bg-card border border-border rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header Banner - Native Platform Style */}

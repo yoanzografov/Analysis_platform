@@ -1919,6 +1919,7 @@ export default function App() {
     isOpen={showChecklistModal}
     onClose={() => { setShowChecklistModal(false); clearHashUrl(); }}
     stocks={stocks}
+    baseCurrency={baseCurrency}
     onSaveToTable={(stockData) => {
       if (!stockData.ticker) return;
       const cleanSym = stockData.ticker.toUpperCase().trim();
