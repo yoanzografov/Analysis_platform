@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calculator, X, Calendar, Play, RotateCcw, TrendingUp } from 'lucide-react';
+import { Calculator, X, Calendar, Play, RotateCcw, TrendingUp, Info } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -14,6 +14,7 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
   const [fromDate, setFromDate] = useState('2021-08-25');
   const [toDate, setToDate] = useState('2026-08-25');
   const [lengthYears, setLengthYears] = useState('5');
+  const [showCagrTooltip, setShowCagrTooltip] = useState(false);
 
   if (!isOpen) return null;
 
@@ -57,20 +58,20 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
   };
 
   return (
-    <div className="fixed inset-0 z-[1000000] flex items-center justify-center p-3 sm:p-4 bg-bg/80 backdrop-blur-md font-sans">
-      <div className="w-full max-w-2xl bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-[1000000] flex items-center justify-center p-3 sm:p-4 bg-black/60 dark:bg-black/75 backdrop-blur-md font-sans animate-in fade-in duration-150">
+      <div className="w-full max-w-2xl bg-white dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 text-ink">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-border/40 pb-3.5">
+        <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+            <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400">
               <Calculator className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-sm font-black uppercase text-ink tracking-wide">
                 Return on Investment (ROI) Calculator
               </h3>
-              <p className="text-[11px] text-ink-faint">
+              <p className="text-[11px] text-ink-muted">
                 Калкулатор за обща и годишна възвръщаемост на инвестицията
               </p>
             </div>
@@ -78,7 +79,7 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full text-ink-faint hover:text-ink hover:bg-card-hover transition-all cursor-pointer"
+            className="p-1.5 rounded-full text-ink-muted hover:text-ink hover:bg-stone-100 dark:hover:bg-stone-800 transition-all cursor-pointer"
             title="Затвори"
           >
             <X className="w-5 h-5" />
@@ -89,44 +90,44 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           
           {/* Left Column: Form Controls */}
-          <div className="bg-bg/40 p-4 rounded-2xl border border-border/60 space-y-3.5 text-xs">
+          <div className="bg-stone-50 dark:bg-stone-850/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 space-y-3.5 text-xs shadow-xs">
             <div>
-              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+              <label className="block text-[10px] text-ink-muted font-extrabold uppercase mb-1">
                 ВЛОЖЕНА СУМА (Amount Invested)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 font-bold text-ink-faint">{symbol}</span>
+                <span className="absolute left-3 top-2.5 font-bold text-ink-muted">{symbol}</span>
                 <input
                   type="number"
                   step="any"
                   value={amountInvested}
                   onChange={e => setAmountInvested(e.target.value)}
                   placeholder="118.19"
-                  className="w-full bg-bg text-ink font-mono font-bold border border-border pl-7 pr-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500 text-sm"
+                  className="w-full bg-white dark:bg-stone-900 text-ink font-mono font-bold border border-stone-300 dark:border-stone-700 pl-7 pr-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500 text-sm shadow-2xs"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+              <label className="block text-[10px] text-ink-muted font-extrabold uppercase mb-1">
                 КРАЙНА СУМА / ПОЛУЧЕНИ ПАРИ (Amount Returned)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 font-bold text-ink-faint">{symbol}</span>
+                <span className="absolute left-3 top-2.5 font-bold text-ink-muted">{symbol}</span>
                 <input
                   type="number"
                   step="any"
                   value={amountReturned}
                   onChange={e => setAmountReturned(e.target.value)}
                   placeholder="346.18"
-                  className="w-full bg-bg text-ink font-mono font-bold border border-border pl-7 pr-3 py-2 rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-emerald-400"
+                  className="w-full bg-white dark:bg-stone-900 text-ink font-mono font-bold border border-stone-300 dark:border-stone-700 pl-7 pr-3 py-2 rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-emerald-600 dark:text-emerald-400 shadow-2xs"
                 />
               </div>
             </div>
 
             {/* Time Mode Radio Options */}
             <div>
-              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1.5">
+              <label className="block text-[10px] text-ink-muted font-extrabold uppercase mb-1.5">
                 ВРЕМЕТРАЕНЕ НА ИНВЕСТИЦИЯТА:
               </label>
               <div className="flex items-center gap-4 text-ink font-extrabold text-xs">
@@ -157,36 +158,36 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
             {timeMode === 'dates' ? (
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <div>
-                  <label className="block text-[9px] text-ink-faint font-bold uppercase mb-1">ОТ ДАТА</label>
+                  <label className="block text-[9px] text-ink-muted font-bold uppercase mb-1">ОТ ДАТА</label>
                   <input
                     type="date"
                     value={fromDate}
                     onChange={e => setFromDate(e.target.value)}
                     onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
-                    className="w-full bg-bg text-ink font-mono font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none cursor-pointer text-xs"
+                    className="w-full bg-white dark:bg-stone-900 text-ink font-mono font-bold border border-stone-300 dark:border-stone-700 px-2.5 py-1.5 rounded-xl focus:outline-none cursor-pointer text-xs shadow-2xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[9px] text-ink-faint font-bold uppercase mb-1">ДО ДАТА</label>
+                  <label className="block text-[9px] text-ink-muted font-bold uppercase mb-1">ДО ДАТА</label>
                   <input
                     type="date"
                     value={toDate}
                     onChange={e => setToDate(e.target.value)}
                     onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
-                    className="w-full bg-bg text-ink font-mono font-bold border border-border px-2.5 py-1.5 rounded-xl focus:outline-none cursor-pointer text-xs"
+                    className="w-full bg-white dark:bg-stone-900 text-ink font-mono font-bold border border-stone-300 dark:border-stone-700 px-2.5 py-1.5 rounded-xl focus:outline-none cursor-pointer text-xs shadow-2xs"
                   />
                 </div>
               </div>
             ) : (
               <div className="pt-1">
-                <label className="block text-[9px] text-ink-faint font-bold uppercase mb-1">ПРОДЪЛЖИТЕЛНОСТ (ГОДИНИ)</label>
+                <label className="block text-[9px] text-ink-muted font-bold uppercase mb-1">ПРОДЪЛЖИТЕЛНОСТ (ГОДИНИ)</label>
                 <input
                   type="number"
                   step="0.1"
                   value={lengthYears}
                   onChange={e => setLengthYears(e.target.value)}
                   placeholder="5"
-                  className="w-full bg-bg text-ink font-mono font-bold border border-border px-3 py-2 rounded-xl focus:outline-none text-xs"
+                  className="w-full bg-white dark:bg-stone-900 text-ink font-mono font-bold border border-stone-300 dark:border-stone-700 px-3 py-2 rounded-xl focus:outline-none text-xs shadow-2xs"
                 />
               </div>
             )}
@@ -196,7 +197,7 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
               <button
                 type="button"
                 onClick={handleClear}
-                className="px-4 py-2 rounded-xl bg-card hover:bg-card-hover border border-border text-ink-muted font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all shrink-0"
+                className="px-4 py-2 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-750 border border-stone-300 dark:border-stone-700 text-ink font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all shrink-0 shadow-2xs"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Изчисти
@@ -206,7 +207,7 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
 
           {/* Right Column: Results Box & Chart */}
           <div className="flex flex-col justify-between space-y-4">
-            <div className="bg-emerald-600/90 text-white rounded-2xl p-3.5 shadow-md flex items-center justify-between">
+            <div className="bg-emerald-600 text-white rounded-2xl p-3.5 shadow-md flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
                 <TrendingUp className="w-4 h-4" />
                 Резултати (Results)
@@ -217,27 +218,73 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
             </div>
 
             {/* Table of Results */}
-            <div className="bg-bg/60 rounded-2xl border border-border/60 overflow-hidden divide-y divide-border/40 text-xs font-sans">
+            <div className="bg-white/95 dark:bg-stone-850/70 rounded-2xl border border-stone-200/80 dark:border-stone-800 divide-y divide-stone-200/80 dark:divide-stone-800 text-xs font-sans shadow-xs relative">
               <div className="flex items-center justify-between px-3.5 py-2.5">
-                <span className="font-bold text-ink-faint">Печалба (Investment Gain):</span>
-                <span className={`font-mono font-extrabold ${gain >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <span className="font-bold text-ink-muted">Печалба (Investment Gain):</span>
+                <span className={`font-mono font-extrabold ${gain >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
                   {gain >= 0 ? '+' : ''}{symbol}{gain.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex items-center justify-between px-3.5 py-2.5">
-                <span className="font-bold text-ink-faint">Общ ROI (Total ROI %):</span>
-                <span className={`font-mono font-black ${roiPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <span className="font-bold text-ink-muted">Общ ROI (Total ROI %):</span>
+                <span className={`font-mono font-black ${roiPct >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
                   {roiPct >= 0 ? '+' : ''}{roiPct.toFixed(2)}%
                 </span>
               </div>
-              <div className="flex items-center justify-between px-3.5 py-2.5">
-                <span className="font-bold text-ink-faint">Годишен ROI (Annualized ROI %):</span>
-                <span className={`font-mono font-black ${annualizedRoiPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+
+              {/* Annualized ROI with Hover CAGR Popup Comment */}
+              <div className="flex items-center justify-between px-3.5 py-2.5 relative">
+                <div 
+                  className="relative flex items-center gap-1.5 cursor-pointer select-none group/cagr"
+                  onMouseEnter={() => setShowCagrTooltip(true)}
+                  onMouseLeave={() => setShowCagrTooltip(false)}
+                  onClick={() => setShowCagrTooltip(!showCagrTooltip)}
+                >
+                  <span className="font-bold text-ink-muted group-hover/cagr:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors border-b border-dashed border-ink-muted/50">
+                    Годишен ROI (Annualized ROI %):
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 tracking-tight">
+                    CAGR
+                  </span>
+                  <Info className="w-3.5 h-3.5 text-emerald-500/80 dark:text-emerald-400/80 group-hover/cagr:text-emerald-500 transition-colors" />
+
+                  {/* Floating Tooltip / Comment Popup */}
+                  {showCagrTooltip && (
+                    <div className="absolute left-0 bottom-full mb-2 w-72 sm:w-84 p-3.5 bg-stone-900/95 dark:bg-stone-950/95 backdrop-blur-md text-white border border-emerald-500/40 rounded-2xl shadow-2xl z-[1000005] text-xs animate-in fade-in zoom-in-95 duration-150">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-white/10">
+                        <div className="flex items-center gap-1.5 font-black text-emerald-400 text-xs uppercase tracking-wide">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          <span>CAGR (Compound Annual Growth Rate)</span>
+                        </div>
+                        <span className="text-[9px] bg-emerald-500/20 text-emerald-300 font-extrabold px-1.5 py-0.5 rounded">
+                          Коментар
+                        </span>
+                      </div>
+                      <div className="pt-2 space-y-1.5 text-[11px] leading-relaxed text-stone-200 font-sans">
+                        <p>
+                          <strong className="text-emerald-300">Annualized ROI е еквивалентен на CAGR</strong> — съставният годишен темп на растеж на вашата инвестиция със сложна лихва.
+                        </p>
+                        <p className="text-stone-300">
+                          Той изчислява каква средна годишна доходност е генерирал капиталът ви за всяка една година през периода от <strong>{years.toFixed(2)} {years === 1 ? 'година' : 'години'}</strong>.
+                        </p>
+                        <div className="mt-1 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-mono text-[10px] space-y-0.5">
+                          <div className="font-bold text-white">Формула:</div>
+                          <div>CAGR = (Крайна сума / Начална сума)^(1 / Години) - 1</div>
+                        </div>
+                      </div>
+                      {/* Triangle tail */}
+                      <div className="absolute top-full left-8 -mt-1 w-2.5 h-2.5 bg-stone-900 border-r border-b border-emerald-500/40 transform rotate-45" />
+                    </div>
+                  )}
+                </div>
+
+                <span className={`font-mono font-black ${annualizedRoiPct >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
                   {annualizedRoiPct >= 0 ? '+' : ''}{annualizedRoiPct.toFixed(2)}%
                 </span>
               </div>
+
               <div className="flex items-center justify-between px-3.5 py-2.5">
-                <span className="font-bold text-ink-faint">Времетраене (Investment Length):</span>
+                <span className="font-bold text-ink-muted">Времетраене (Investment Length):</span>
                 <span className="font-mono font-bold text-ink">
                   {years.toFixed(3)} години
                 </span>
@@ -245,7 +292,7 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
             </div>
 
             {/* Donut Chart Visual Representation */}
-            <div className="bg-bg/40 p-3 rounded-2xl border border-border/40 flex items-center justify-around gap-4">
+            <div className="bg-stone-50 dark:bg-stone-850/60 p-3 rounded-2xl border border-stone-200/80 dark:border-stone-800 flex items-center justify-around gap-4 shadow-xs">
               <div className="relative w-20 h-20 shrink-0">
                 <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
                   <path
@@ -272,11 +319,11 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
               <div className="space-y-1 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-md bg-blue-500 inline-block" />
-                  <span className="font-bold text-ink-faint text-[11px]">Вложени (Invested): {investedSharePct.toFixed(0)}%</span>
+                  <span className="font-bold text-ink-muted text-[11px]">Вложени (Invested): {investedSharePct.toFixed(0)}%</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-md bg-lime-500 inline-block" />
-                  <span className="font-bold text-ink-faint text-[11px]">Печалба (Profit): {profitSharePct.toFixed(0)}%</span>
+                  <span className="font-bold text-ink-muted text-[11px]">Печалба (Profit): {profitSharePct.toFixed(0)}%</span>
                 </div>
               </div>
             </div>
