@@ -3,7 +3,7 @@ import { Stock } from '../types';
 import { POPULAR_STOCKS_DB } from './StockChecklistModal';
 import { RAW_SPREADSHEET_CSV, parseCSVData } from '../data/initialStocks';
 import officialProfiles from '../data/officialCompanyProfiles.json';
-import { Calculator, X, Wallet, RotateCcw, Sparkles } from 'lucide-react';
+import { Calculator, X, Wallet, RotateCcw } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -205,9 +205,6 @@ export default function ProfitCalculatorModal({
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-black uppercase text-ink tracking-wider flex items-center gap-2 whitespace-nowrap">
                 Stock Profit Calculator
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold normal-case whitespace-nowrap">
-                  Табличен калкулатор
-                </span>
               </h3>
               <p className="text-[11px] text-ink-faint whitespace-nowrap truncate">
                 Попълват се <span className="text-amber-400 font-extrabold">жълтите полета</span> (Тикер, Брой акции, Покупна цена, Цена на продажба)
@@ -242,28 +239,6 @@ export default function ProfitCalculatorModal({
               <X className="w-4 h-4" />
             </button>
           </div>
-        </div>
-
-        {/* Quick Ticker Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 text-[11px] whitespace-nowrap">
-          <span className="text-ink-faint text-[10px] font-bold uppercase shrink-0 flex items-center gap-1 whitespace-nowrap">
-            <Sparkles className="w-3 h-3 text-amber-400" />
-            Бърз избор:
-          </span>
-          {['FTNT', 'AAPL', 'NVDA', 'TSLA', 'MSFT'].map(quickTick => (
-            <button
-              key={quickTick}
-              type="button"
-              onClick={() => handleTickerChange(quickTick)}
-              className={`px-2.5 py-0.5 rounded-lg border font-mono font-bold transition-all cursor-pointer whitespace-nowrap ${
-                ticker === quickTick
-                  ? 'bg-amber-500/25 text-amber-300 border-amber-500/50'
-                  : 'bg-bg text-ink-muted border-border hover:text-ink hover:border-amber-500/30'
-              }`}
-            >
-              {quickTick}
-            </button>
-          ))}
         </div>
 
         {/* Row 1: Ticker & Company Name & Live Current Market Price */}
