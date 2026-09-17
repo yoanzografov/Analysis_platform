@@ -193,33 +193,33 @@ export default function ProfitCalculatorModal({
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-2xl bg-card border border-border rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150 text-ink"
+        className="w-full max-w-4xl bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150 text-ink"
         onClick={e => e.stopPropagation()}
       >
         {/* Header Banner - Native Platform Style */}
-        <div className="flex items-center justify-between border-b border-border/40 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
+        <div className="flex items-center justify-between border-b border-border/40 pb-3 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 shrink-0">
               <Calculator className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-sm font-black uppercase text-ink tracking-wider flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-black uppercase text-ink tracking-wider flex items-center gap-2 whitespace-nowrap">
                 Stock Profit Calculator
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold normal-case">
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold normal-case whitespace-nowrap">
                   Табличен калкулатор
                 </span>
               </h3>
-              <p className="text-[11px] text-ink-faint">
+              <p className="text-[11px] text-ink-faint whitespace-nowrap truncate">
                 Попълват се <span className="text-amber-400 font-extrabold">жълтите полета</span> (Тикер, Брой акции, Покупна цена, Цена на продажба)
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={handleResetExample}
-              className="px-2.5 py-1 text-[10px] font-bold text-ink-muted hover:text-ink bg-bg border border-border rounded-lg hover:bg-card-hover transition-all cursor-pointer flex items-center gap-1"
+              className="px-2.5 py-1 text-[10px] font-bold text-ink-muted hover:text-ink bg-bg border border-border rounded-lg hover:bg-card-hover transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap"
               title="Зареди образец с FTNT"
             >
               <RotateCcw className="w-3 h-3" />
@@ -228,7 +228,7 @@ export default function ProfitCalculatorModal({
             <button
               type="button"
               onClick={handleClear}
-              className="px-2.5 py-1 text-[10px] font-bold text-ink-muted hover:text-ink bg-bg border border-border rounded-lg hover:bg-card-hover transition-all cursor-pointer"
+              className="px-2.5 py-1 text-[10px] font-bold text-ink-muted hover:text-ink bg-bg border border-border rounded-lg hover:bg-card-hover transition-all cursor-pointer whitespace-nowrap"
               title="Изчисти полетата"
             >
               Изчисти
@@ -245,8 +245,8 @@ export default function ProfitCalculatorModal({
         </div>
 
         {/* Quick Ticker Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-[11px]">
-          <span className="text-ink-faint text-[10px] font-bold uppercase shrink-0 flex items-center gap-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 text-[11px] whitespace-nowrap">
+          <span className="text-ink-faint text-[10px] font-bold uppercase shrink-0 flex items-center gap-1 whitespace-nowrap">
             <Sparkles className="w-3 h-3 text-amber-400" />
             Бърз избор:
           </span>
@@ -255,7 +255,7 @@ export default function ProfitCalculatorModal({
               key={quickTick}
               type="button"
               onClick={() => handleTickerChange(quickTick)}
-              className={`px-2 py-0.5 rounded-lg border font-mono font-bold transition-all cursor-pointer ${
+              className={`px-2.5 py-0.5 rounded-lg border font-mono font-bold transition-all cursor-pointer whitespace-nowrap ${
                 ticker === quickTick
                   ? 'bg-amber-500/25 text-amber-300 border-amber-500/50'
                   : 'bg-bg text-ink-muted border-border hover:text-ink hover:border-amber-500/30'
@@ -267,10 +267,10 @@ export default function ProfitCalculatorModal({
         </div>
 
         {/* Row 1: Ticker & Company Name & Live Current Market Price */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
           {/* Ticker Input (Yellow Theme) */}
           <div className="md:col-span-3">
-            <label className="block text-[10px] text-amber-400 font-extrabold uppercase mb-1">
+            <label className="block text-[10px] text-amber-400 font-extrabold uppercase mb-1 whitespace-nowrap">
               🟨 Ticker (Символ)
             </label>
             <input
@@ -284,7 +284,7 @@ export default function ProfitCalculatorModal({
 
           {/* Company Name (Editable Light Blue Theme) */}
           <div className="md:col-span-6">
-            <label className="block text-[10px] text-indigo-400 font-extrabold uppercase mb-1">
+            <label className="block text-[10px] text-indigo-400 font-extrabold uppercase mb-1 whitespace-nowrap">
               🟦 Име на компанията
             </label>
             <input
@@ -298,7 +298,7 @@ export default function ProfitCalculatorModal({
 
           {/* Current Market Price (Coral / Rose Red Theme) */}
           <div className="md:col-span-3">
-            <label className="block text-[10px] text-rose-400 font-extrabold uppercase mb-1">
+            <label className="block text-[10px] text-rose-400 font-extrabold uppercase mb-1 whitespace-nowrap">
               🟥 Current Price ({symbol})
             </label>
             <input
@@ -320,18 +320,18 @@ export default function ProfitCalculatorModal({
           <table className="w-full text-center border-collapse">
             <thead>
               <tr className="bg-bg text-ink-faint text-[10px] font-black uppercase tracking-tight border-b border-border/50">
-                <th className="py-2.5 px-2 border-r border-border/40">Shares</th>
-                <th className="py-2.5 px-2 border-r border-border/40">Cost Basis</th>
-                <th className="py-2.5 px-2 border-r border-border/40">Avg. Price</th>
-                <th className="py-2.5 px-2 border-r border-border/40">Curent Price</th>
-                <th className="py-2.5 px-2 border-r border-border/40">Profit / Share</th>
-                <th className="py-2.5 px-2">Rlzd P&L</th>
+                <th className="py-2.5 px-3 border-r border-border/40 whitespace-nowrap">Shares</th>
+                <th className="py-2.5 px-3 border-r border-border/40 whitespace-nowrap">Cost Basis</th>
+                <th className="py-2.5 px-3 border-r border-border/40 whitespace-nowrap">Avg. Price</th>
+                <th className="py-2.5 px-3 border-r border-border/40 whitespace-nowrap">Current Price</th>
+                <th className="py-2.5 px-3 border-r border-border/40 whitespace-nowrap">Profit / Share</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Rlzd P&L</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40 text-xs font-mono">
               <tr>
                 {/* 🟨 Shares Input */}
-                <td className="p-1.5 border-r border-border/40 bg-amber-500/10">
+                <td className="p-2 border-r border-border/40 bg-amber-500/10 whitespace-nowrap">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -350,12 +350,12 @@ export default function ProfitCalculatorModal({
                 </td>
 
                 {/* 🟦 Cost Basis (Calculated: Shares * Avg Price) */}
-                <td className="p-2 border-r border-border/40 bg-indigo-500/5 font-extrabold text-ink text-xs">
+                <td className="p-2 border-r border-border/40 bg-indigo-500/5 font-extrabold text-ink text-xs whitespace-nowrap">
                   {symbol}{costBasis.toFixed(2)}
                 </td>
 
                 {/* 🟨 Avg. Price Input */}
-                <td className="p-1.5 border-r border-border/40 bg-amber-500/10">
+                <td className="p-2 border-r border-border/40 bg-amber-500/10 whitespace-nowrap">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -367,7 +367,7 @@ export default function ProfitCalculatorModal({
                 </td>
 
                 {/* 🟨 Current / Exit Price (Editable) */}
-                <td className="p-1.5 border-r border-border/40 bg-amber-500/10">
+                <td className="p-2 border-r border-border/40 bg-amber-500/10 whitespace-nowrap">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -379,12 +379,12 @@ export default function ProfitCalculatorModal({
                 </td>
 
                 {/* 🟦 Profit per Share (Calculated: Current Price - Avg Price) */}
-                <td className={`p-2 border-r border-border/40 bg-indigo-500/5 font-black text-xs ${profitPerShare >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <td className={`p-2 border-r border-border/40 bg-indigo-500/5 font-black text-xs whitespace-nowrap ${profitPerShare >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {profitPerShare >= 0 ? '+' : ''}{symbol}{profitPerShare.toFixed(2)}
                 </td>
 
                 {/* 🟦 Rlzd P&L (Calculated: Shares * Profit per Share) */}
-                <td className={`p-2 bg-indigo-500/5 font-black text-xs ${rlzdPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <td className={`p-2 bg-indigo-500/5 font-black text-xs whitespace-nowrap ${rlzdPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {rlzdPnL >= 0 ? '+' : ''}{symbol}{rlzdPnL.toFixed(2)}
                 </td>
               </tr>
@@ -393,10 +393,10 @@ export default function ProfitCalculatorModal({
         </div>
 
         {/* Row 3: Sell Simulation & Summary Banner */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
           {/* Sell Input Box */}
-          <div className="md:col-span-3 bg-bg/50 p-2.5 rounded-xl border border-border/50 space-y-1">
-            <label className="block text-[10px] font-black uppercase text-amber-400 text-center">
+          <div className="md:col-span-3 bg-bg/50 p-2.5 rounded-2xl border border-border/50 space-y-1">
+            <label className="block text-[10px] font-black uppercase text-amber-400 text-center whitespace-nowrap">
               🟨 Sell (Брой за продажба)
             </label>
             <input
@@ -410,15 +410,15 @@ export default function ProfitCalculatorModal({
           </div>
 
           {/* Profit & % Return Box */}
-          <div className="md:col-span-5 bg-emerald-500/10 border border-emerald-500/25 p-2.5 rounded-xl flex items-center justify-between text-emerald-400">
-            <div>
-              <span className="text-[9px] font-extrabold uppercase block text-emerald-400/80">PROFIT (Печалба):</span>
+          <div className="md:col-span-5 bg-emerald-500/10 border border-emerald-500/25 px-4 py-3 rounded-2xl flex items-center justify-between gap-3 text-emerald-400">
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-emerald-400/80">PROFIT:</span>
               <span className="text-base sm:text-lg font-black font-mono">
                 {profitOnSale >= 0 ? '+' : ''}{symbol}{profitOnSale.toFixed(2)}
               </span>
             </div>
-            <div className="text-right">
-              <span className="text-[9px] font-extrabold uppercase block text-emerald-400/80">% TOTAL RETURN:</span>
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-emerald-400/80">% RETURN:</span>
               <span className="text-base sm:text-lg font-black font-mono">
                 {totalReturnPct >= 0 ? '▲ ' : '▼ '}{totalReturnPct.toFixed(2)}%
               </span>
@@ -426,15 +426,17 @@ export default function ProfitCalculatorModal({
           </div>
 
           {/* Free Funds Box */}
-          <div className="md:col-span-4 bg-rose-500/10 border border-rose-500/25 p-2.5 rounded-xl text-rose-400 flex items-center justify-between">
-            <div>
-              <span className="text-[9px] font-extrabold uppercase block text-rose-400/80">FREE FUNDS (Освободен капитал):</span>
-              <span className="text-base sm:text-lg font-black font-mono">
-                {symbol}{freeFundsCostBasis.toFixed(2)}
-              </span>
-              <span className="text-[9px] block text-rose-400/70 font-mono mt-0.5">
-                Общо постъпления: {symbol}{totalCashProceeds.toFixed(2)}
-              </span>
+          <div className="md:col-span-4 bg-rose-500/10 border border-rose-500/25 px-4 py-2.5 rounded-2xl text-rose-400 flex items-center justify-between gap-2">
+            <div className="space-y-0.5 whitespace-nowrap">
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-rose-400/80">FREE FUNDS:</span>
+                <span className="text-base sm:text-lg font-black font-mono">
+                  {symbol}{freeFundsCostBasis.toFixed(2)}
+                </span>
+              </div>
+              <div className="text-[10px] text-rose-400/80 font-mono whitespace-nowrap">
+                Постъпления: <span className="font-bold text-rose-300">{symbol}{totalCashProceeds.toFixed(2)}</span>
+              </div>
             </div>
             <Wallet className="w-5 h-5 text-rose-400/50 shrink-0" />
           </div>
