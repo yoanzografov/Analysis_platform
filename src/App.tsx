@@ -334,28 +334,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.toLowerCase().replace('#', '');
-      if (hash === 'stock-profit-calculator') {
-        setShowProfitCalculatorModal(true);
-      } else if (hash === 'roi-calculator') {
-        setShowRoiCalculatorModal(true);
-      } else if (hash === 'investment-calculator') {
-        setShowInvestmentCalculatorModal(true);
-      } else {
-        const tab = getInitialTab();
-        setActiveMainTab(tab);
-      }
-    };
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    window.addEventListener('popstate', handleHashChange);
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-      window.removeEventListener('popstate', handleHashChange);
-    };
-  }, []);
+
 
  // Selected Stock for deep AI Analyst drawer and News Container
  const [selectedStockForAi, setSelectedStockForAi] = useState<Stock | null>(null);
@@ -1491,7 +1470,10 @@ export default function App() {
           </button>
 
           {isUsefulLinksMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-bg border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
+            <div 
+              onMouseDown={(e) => e.stopPropagation()}
+              className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100"
+            >
               <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
                 🛠️ Tools & Calculators
               </div>
@@ -1500,59 +1482,64 @@ export default function App() {
                 href="#checklist"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => {
-                  setIsUsefulLinksMenuOpen(false);
-                }}
+                onMouseDown={() => setIsUsefulLinksMenuOpen(false)}
+                onClick={() => setIsUsefulLinksMenuOpen(false)}
                 className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
               >
                 <CheckSquare className="w-4 h-4 text-cyan-400 shrink-0" />
                 <span>Stock Analysis Check List</span>
               </a>
 
-              <a
-                href="#stock-profit-calculator"
-                onClick={(e) => {
-                  if (!e.ctrlKey && !e.metaKey && e.button === 0) {
-                    e.preventDefault();
-                    setShowProfitCalculatorModal(true);
-                    setIsUsefulLinksMenuOpen(false);
-                  }
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setShowProfitCalculatorModal(true);
+                  setIsUsefulLinksMenuOpen(false);
+                }}
+                onClick={() => {
+                  setShowProfitCalculatorModal(true);
+                  setIsUsefulLinksMenuOpen(false);
                 }}
                 className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
               >
                 <Calculator className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>Stock Profit Calculator</span>
-              </a>
+              </button>
 
-              <a
-                href="#roi-calculator"
-                onClick={(e) => {
-                  if (!e.ctrlKey && !e.metaKey && e.button === 0) {
-                    e.preventDefault();
-                    setShowRoiCalculatorModal(true);
-                    setIsUsefulLinksMenuOpen(false);
-                  }
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setShowRoiCalculatorModal(true);
+                  setIsUsefulLinksMenuOpen(false);
+                }}
+                onClick={() => {
+                  setShowRoiCalculatorModal(true);
+                  setIsUsefulLinksMenuOpen(false);
                 }}
                 className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
               >
                 <Calculator className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>Return on Investment (ROI)</span>
-              </a>
+              </button>
 
-              <a
-                href="#investment-calculator"
-                onClick={(e) => {
-                  if (!e.ctrlKey && !e.metaKey && e.button === 0) {
-                    e.preventDefault();
-                    setShowInvestmentCalculatorModal(true);
-                    setIsUsefulLinksMenuOpen(false);
-                  }
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setShowInvestmentCalculatorModal(true);
+                  setIsUsefulLinksMenuOpen(false);
+                }}
+                onClick={() => {
+                  setShowInvestmentCalculatorModal(true);
+                  setIsUsefulLinksMenuOpen(false);
                 }}
                 className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
               >
                 <TrendingUp className="w-4 h-4 text-indigo-400 shrink-0" />
                 <span>Сложна Лихва & Растеж</span>
-              </a>
+              </button>
             </div>
           )}
         </div>

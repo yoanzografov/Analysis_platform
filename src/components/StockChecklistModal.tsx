@@ -28,7 +28,7 @@ export interface SheetRowDefinition {
 }
 
 // Fallback stock database for major tickers to guarantee instant auto-fill
-const POPULAR_STOCKS_DB: Record<string, {
+export const POPULAR_STOCKS_DB: Record<string, {
   companyName: string;
   industry: string;
   sector: string;
@@ -1484,14 +1484,21 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             </button>
 
             {isToolsMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-xl shadow-2xl p-2 z-[1000001] flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
+              <div 
+                onMouseDown={(e) => e.stopPropagation()}
+                className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-xl shadow-2xl p-2 z-[1000001] flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100"
+              >
                 <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
                   🛠️ Tools & Calculators
                 </div>
 
                 <button
                   type="button"
-                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setShowProfitCalculatorModal(true);
+                    setIsToolsMenuOpen(false);
+                  }}
                   onClick={() => {
                     setShowProfitCalculatorModal(true);
                     setIsToolsMenuOpen(false);
@@ -1504,7 +1511,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
                 <button
                   type="button"
-                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setShowRoiCalculatorModal(true);
+                    setIsToolsMenuOpen(false);
+                  }}
                   onClick={() => {
                     setShowRoiCalculatorModal(true);
                     setIsToolsMenuOpen(false);
@@ -1517,7 +1528,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
                 <button
                   type="button"
-                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setShowInvestmentCalculatorModal(true);
+                    setIsToolsMenuOpen(false);
+                  }}
                   onClick={() => {
                     setShowInvestmentCalculatorModal(true);
                     setIsToolsMenuOpen(false);
