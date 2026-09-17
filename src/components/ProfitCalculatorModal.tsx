@@ -3,7 +3,7 @@ import { Stock } from '../types';
 import { POPULAR_STOCKS_DB } from './StockChecklistModal';
 import { RAW_SPREADSHEET_CSV, parseCSVData } from '../data/initialStocks';
 import officialProfiles from '../data/officialCompanyProfiles.json';
-import { Calculator, X, Wallet, RotateCcw, Sparkles } from 'lucide-react';
+import { Calculator, X, RotateCcw, TrendingUp, Sparkles, Table } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -55,6 +55,7 @@ export default function ProfitCalculatorModal({
   const [avgPrice, setAvgPrice] = useState(DEFAULT_FTNT.avgPrice);
   const [currentPrice, setCurrentPrice] = useState(DEFAULT_FTNT.currentPrice);
   const [sellShares, setSellShares] = useState(DEFAULT_FTNT.sellShares);
+  const [showSpreadsheetView, setShowSpreadsheetView] = useState(true);
 
   const symbol = baseCurrency === 'EUR' ? '€' : '$';
 
@@ -167,6 +168,11 @@ export default function ProfitCalculatorModal({
   // 7. Total Cash Proceeds upon sale: Free Funds + Profit
   const totalCashProceeds = numSellShares * numCurrentPrice;
 
+  // Donut chart shares
+  const totalVal = costBasisOfSold + Math.max(0, profitOnSale);
+  const investedSharePct = totalVal > 0 ? Math.min(100, Math.max(0, (costBasisOfSold / totalVal) * 100)) : 50;
+  const profitSharePct = Math.max(0, 100 - investedSharePct);
+
   const handleResetExample = () => {
     setTicker(DEFAULT_FTNT.ticker);
     setCompanyName(DEFAULT_FTNT.companyName);
@@ -189,265 +195,364 @@ export default function ProfitCalculatorModal({
 
   return (
     <div 
-      className="fixed inset-0 z-[1000002] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md font-sans"
+      className="fixed inset-0 z-[1000000] flex items-center justify-center p-3 sm:p-4 bg-bg/80 backdrop-blur-md font-sans"
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-2xl bg-card border border-border rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150 text-ink"
+        className="w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header Banner - Native Platform Style */}
-        <div className="flex items-center justify-between border-b border-border/40 pb-3">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between border-b border-border/40 pb-3.5">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
               <Calculator className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-black uppercase text-ink tracking-wider flex items-center gap-2">
+              <h3 className="text-sm font-black uppercase text-ink tracking-wide">
                 Stock Profit Calculator
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold normal-case">
-                  Табличен калкулатор
-                </span>
               </h3>
               <p className="text-[11px] text-ink-faint">
-                Попълват се <span className="text-amber-400 font-extrabold">жълтите полета</span> (Тикер, Брой акции, Покупна цена, Цена на продажба)
+                Калкулатор за печалба, доходност и освободен капитал от акции
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={handleResetExample}
-              className="px-2.5 py-1 text-[10px] font-bold text-ink-muted hover:text-ink bg-bg border border-border rounded-lg hover:bg-card-hover transition-all cursor-pointer flex items-center gap-1"
-              title="Зареди образец с FTNT"
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>FTNT Образец</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleClear}
-              className="px-2.5 py-1 text-[10px] font-bold text-ink-muted hover:text-ink bg-bg border border-border rounded-lg hover:bg-card-hover transition-all cursor-pointer"
-              title="Изчисти полетата"
-            >
-              Изчисти
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-full text-ink-faint hover:text-ink hover:bg-card-hover transition-all cursor-pointer ml-1"
-              title="Затвори"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-full text-ink-faint hover:text-ink hover:bg-card-hover transition-all cursor-pointer"
+            title="Затвори"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Quick Ticker Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-[11px]">
-          <span className="text-ink-faint text-[10px] font-bold uppercase shrink-0 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-400" />
-            Бърз избор:
-          </span>
-          {['FTNT', 'AAPL', 'NVDA', 'TSLA', 'MSFT'].map(quickTick => (
-            <button
-              key={quickTick}
-              type="button"
-              onClick={() => handleTickerChange(quickTick)}
-              className={`px-2 py-0.5 rounded-lg border font-mono font-bold transition-all cursor-pointer ${
-                ticker === quickTick
-                  ? 'bg-amber-500/25 text-amber-300 border-amber-500/50'
-                  : 'bg-bg text-ink-muted border-border hover:text-ink hover:border-amber-500/30'
-              }`}
-            >
-              {quickTick}
-            </button>
-          ))}
-        </div>
+        {/* Main Grid: Inputs on Left, Results on Right */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          {/* Left Column: Form Controls */}
+          <div className="bg-bg/40 p-4 rounded-2xl border border-border/60 space-y-3.5 text-xs">
+            
+            {/* Ticker & Quick Chips */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase">
+                  ТИКЕР (Ticker Symbol)
+                </label>
+                <span className="text-[9px] text-ink-faint font-bold uppercase">Търсене</span>
+              </div>
+              <input
+                type="text"
+                value={ticker}
+                onChange={e => handleTickerChange(e.target.value)}
+                placeholder="напр. FTNT"
+                className="w-full bg-bg text-ink font-mono font-bold border border-border px-3 py-2 rounded-xl focus:outline-none focus:border-amber-500 text-sm uppercase"
+              />
 
-        {/* Row 1: Ticker & Company Name & Live Current Market Price */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
-          {/* Ticker Input (Yellow Theme) */}
-          <div className="md:col-span-3">
-            <label className="block text-[10px] text-amber-400 font-extrabold uppercase mb-1">
-              🟨 Ticker (Символ)
-            </label>
-            <input
-              type="text"
-              value={ticker}
-              onChange={e => handleTickerChange(e.target.value)}
-              placeholder="напр. FTNT"
-              className="w-full bg-amber-500/20 text-amber-300 dark:text-amber-300 font-mono font-black text-center py-2 px-3 rounded-xl border-2 border-amber-500/50 focus:outline-none focus:border-amber-400 uppercase text-sm shadow-xs"
-            />
+              {/* Quick Ticker Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pt-1.5 text-[10px]">
+                <span className="text-ink-faint text-[9px] font-bold uppercase shrink-0 flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                  Бърз избор:
+                </span>
+                {['FTNT', 'AAPL', 'NVDA', 'TSLA', 'MSFT'].map(quickTick => (
+                  <button
+                    key={quickTick}
+                    type="button"
+                    onClick={() => handleTickerChange(quickTick)}
+                    className={`px-1.5 py-0.5 rounded-md border font-mono font-bold transition-all cursor-pointer ${
+                      ticker === quickTick
+                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                        : 'bg-card text-ink-muted border-border hover:text-ink hover:border-amber-500/30'
+                    }`}
+                  >
+                    {quickTick}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Company Name */}
+            <div>
+              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                ИМЕ НА КОМПАНИЯТА (Company Name)
+              </label>
+              <input
+                type="text"
+                value={companyName}
+                onChange={e => setCompanyName(e.target.value)}
+                placeholder="Име на компания..."
+                className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500 text-xs"
+              />
+            </div>
+
+            {/* Shares Held */}
+            <div>
+              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                БРОЙ ЗАКУПЕНИ АКЦИИ (Shares Held)
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={shares}
+                onChange={e => {
+                  const val = e.target.value;
+                  setShares(val);
+                  if (sellShares === shares || !sellShares) {
+                    setSellShares(val);
+                  }
+                }}
+                placeholder="6.00"
+                className="w-full bg-bg text-ink font-mono font-bold border border-border px-3 py-2 rounded-xl focus:outline-none focus:border-indigo-500 text-sm"
+              />
+            </div>
+
+            {/* Avg Buy Price */}
+            <div>
+              <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                СРЕДНА ПОКУПНА ЦЕНА (Avg. Buy Price)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 font-bold text-ink-faint">{symbol}</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={avgPrice}
+                  onChange={e => setAvgPrice(e.target.value)}
+                  placeholder="73.80"
+                  className="w-full bg-bg text-ink font-mono font-bold border border-border pl-7 pr-3 py-2 rounded-xl focus:outline-none focus:border-amber-500 text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Current / Exit Price */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase">
+                  ПРОДАЖНА / ТЕКУЩА ЦЕНА (Exit Price)
+                </label>
+                {marketPrice && (
+                  <span className="text-[9px] text-ink-faint font-mono">
+                    Пазарна: {symbol}{marketPrice}
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 font-bold text-ink-faint">{symbol}</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={currentPrice}
+                  onChange={e => setCurrentPrice(e.target.value)}
+                  placeholder="164.59"
+                  className="w-full bg-bg text-ink font-mono font-bold border border-border pl-7 pr-3 py-2 rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-emerald-400"
+                />
+              </div>
+            </div>
+
+            {/* Shares to Sell */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase">
+                  БРОЙ ЗА ПРОДАЖБА (Shares to Sell)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setSellShares(shares)}
+                  className="text-[9px] text-indigo-400 hover:text-indigo-300 font-bold uppercase transition-colors cursor-pointer"
+                >
+                  Всички ({shares || 0})
+                </button>
+              </div>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={sellShares}
+                onChange={e => setSellShares(e.target.value)}
+                placeholder="6.00"
+                className="w-full bg-bg text-ink font-mono font-bold border border-border px-3 py-2 rounded-xl focus:outline-none focus:border-amber-500 text-sm"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleResetExample}
+                className="px-3 py-2 rounded-xl bg-card hover:bg-card-hover border border-border text-ink-muted hover:text-ink font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all shrink-0"
+                title="Зареди образец с FTNT"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                FTNT Образец
+              </button>
+              <button
+                type="button"
+                onClick={handleClear}
+                className="px-3 py-2 rounded-xl bg-card hover:bg-card-hover border border-border text-ink-muted hover:text-ink font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all shrink-0"
+              >
+                Изчисти
+              </button>
+            </div>
           </div>
 
-          {/* Company Name (Editable Light Blue Theme) */}
-          <div className="md:col-span-6">
-            <label className="block text-[10px] text-indigo-400 font-extrabold uppercase mb-1">
-              🟦 Име на компанията
-            </label>
-            <input
-              type="text"
-              value={companyName}
-              onChange={e => setCompanyName(e.target.value)}
-              placeholder="Име на компания..."
-              className="w-full bg-indigo-500/10 border border-indigo-500/30 text-ink font-bold px-3 py-2 rounded-xl text-xs h-[38px] focus:outline-none focus:border-indigo-400"
-            />
-          </div>
+          {/* Right Column: Results Box & Chart */}
+          <div className="flex flex-col justify-between space-y-4">
+            <div className="bg-emerald-600/90 text-white rounded-2xl p-3.5 shadow-md flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                <TrendingUp className="w-4 h-4" />
+                Резултати (Results)
+              </span>
+              <span className="text-[10px] font-extrabold bg-white/20 px-2 py-0.5 rounded-full">
+                Profit Analysis
+              </span>
+            </div>
 
-          {/* Current Market Price (Coral / Rose Red Theme) */}
-          <div className="md:col-span-3">
-            <label className="block text-[10px] text-rose-400 font-extrabold uppercase mb-1">
-              🟥 Current Price ({symbol})
-            </label>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={marketPrice}
-              onChange={e => {
-                setMarketPrice(e.target.value);
-                setCurrentPrice(e.target.value);
-              }}
-              placeholder="151.99"
-              className="w-full bg-rose-500/15 text-rose-400 dark:text-rose-300 font-mono font-extrabold text-center py-2 px-3 rounded-xl border border-rose-500/30 focus:outline-none text-sm h-[38px]"
-            />
-          </div>
-        </div>
+            {/* Table of Results */}
+            <div className="bg-bg/60 rounded-2xl border border-border/60 divide-y divide-border/40 text-xs font-sans relative">
+              <div className="flex items-center justify-between px-3.5 py-2.5">
+                <span className="font-bold text-ink-faint">Вложена сума (Cost Basis):</span>
+                <span className="font-mono font-extrabold text-ink">
+                  {symbol}{costBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
 
-        {/* Row 2: Table of Position Metrics (Spreadsheet Replica) */}
-        <div className="overflow-x-auto rounded-xl border border-border/60">
-          <table className="w-full text-center border-collapse">
-            <thead>
-              <tr className="bg-bg text-ink-faint text-[10px] font-black uppercase tracking-tight border-b border-border/50">
-                <th className="py-2.5 px-2 border-r border-border/40">Shares</th>
-                <th className="py-2.5 px-2 border-r border-border/40">Cost Basis</th>
-                <th className="py-2.5 px-2 border-r border-border/40">Avg. Price</th>
-                <th className="py-2.5 px-2 border-r border-border/40">Curent Price</th>
-                <th className="py-2.5 px-2 border-r border-border/40">Profit / Share</th>
-                <th className="py-2.5 px-2">Rlzd P&L</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40 text-xs font-mono">
-              <tr>
-                {/* 🟨 Shares Input */}
-                <td className="p-1.5 border-r border-border/40 bg-amber-500/10">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={shares}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setShares(val);
-                      // Auto synchronize sellShares if previously matching or empty
-                      if (sellShares === shares || !sellShares) {
-                        setSellShares(val);
-                      }
-                    }}
-                    placeholder="6.00"
-                    className="w-full bg-amber-500/20 text-amber-300 font-black text-center py-1.5 rounded-lg border border-amber-500/40 focus:outline-none text-xs"
-                  />
-                </td>
-
-                {/* 🟦 Cost Basis (Calculated: Shares * Avg Price) */}
-                <td className="p-2 border-r border-border/40 bg-indigo-500/5 font-extrabold text-ink text-xs">
-                  {symbol}{costBasis.toFixed(2)}
-                </td>
-
-                {/* 🟨 Avg. Price Input */}
-                <td className="p-1.5 border-r border-border/40 bg-amber-500/10">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={avgPrice}
-                    onChange={e => setAvgPrice(e.target.value)}
-                    placeholder="73.80"
-                    className="w-full bg-amber-500/20 text-amber-300 font-black text-center py-1.5 rounded-lg border border-amber-500/40 focus:outline-none text-xs"
-                  />
-                </td>
-
-                {/* 🟨 Current / Exit Price (Editable) */}
-                <td className="p-1.5 border-r border-border/40 bg-amber-500/10">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={currentPrice}
-                    onChange={e => setCurrentPrice(e.target.value)}
-                    placeholder="164.59"
-                    className="w-full bg-amber-500/20 text-amber-300 font-black text-center py-1.5 rounded-lg border border-amber-500/40 focus:outline-none text-xs"
-                  />
-                </td>
-
-                {/* 🟦 Profit per Share (Calculated: Current Price - Avg Price) */}
-                <td className={`p-2 border-r border-border/40 bg-indigo-500/5 font-black text-xs ${profitPerShare >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <div className="flex items-center justify-between px-3.5 py-2.5">
+                <span className="font-bold text-ink-faint">Печалба на акция (Profit / Share):</span>
+                <span className={`font-mono font-extrabold ${profitPerShare >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {profitPerShare >= 0 ? '+' : ''}{symbol}{profitPerShare.toFixed(2)}
-                </td>
+                </span>
+              </div>
 
-                {/* 🟦 Rlzd P&L (Calculated: Shares * Profit per Share) */}
-                <td className={`p-2 bg-indigo-500/5 font-black text-xs ${rlzdPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {rlzdPnL >= 0 ? '+' : ''}{symbol}{rlzdPnL.toFixed(2)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              <div className="flex items-center justify-between px-3.5 py-2.5">
+                <span className="font-bold text-ink-faint">Печалба от продажбата (Profit):</span>
+                <span className={`font-mono font-black ${profitOnSale >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {profitOnSale >= 0 ? '+' : ''}{symbol}{profitOnSale.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between px-3.5 py-2.5">
+                <span className="font-bold text-ink-faint">Общ ROI (% Total Return):</span>
+                <span className={`font-mono font-black ${totalReturnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {totalReturnPct >= 0 ? '▲ +' : '▼ '}{totalReturnPct.toFixed(2)}%
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between px-3.5 py-2.5">
+                <span className="font-bold text-ink-faint">Освободен капитал (Free Funds):</span>
+                <span className="font-mono font-bold text-rose-400">
+                  {symbol}{freeFundsCostBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between px-3.5 py-2.5">
+                <span className="font-bold text-ink-faint">Общо получени пари (Proceeds):</span>
+                <span className="font-mono font-extrabold text-ink">
+                  {symbol}{totalCashProceeds.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {/* Donut Chart Visual Representation */}
+            <div className="bg-bg/40 p-3 rounded-2xl border border-border/40 flex items-center justify-around gap-4">
+              <div className="relative w-20 h-20 shrink-0">
+                <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#3b82f6"
+                    strokeWidth="4"
+                    strokeDasharray={`${investedSharePct}, 100`}
+                  />
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#84cc16"
+                    strokeWidth="4"
+                    strokeDasharray={`${profitSharePct}, 100`}
+                    strokeDashoffset={`-${investedSharePct}`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-ink font-mono">
+                  {totalReturnPct.toFixed(0)}%
+                </div>
+              </div>
+
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-md bg-blue-500 inline-block" />
+                  <span className="font-bold text-ink-faint text-[11px]">
+                    Вложени (Cost Basis): {investedSharePct.toFixed(0)}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-md bg-lime-500 inline-block" />
+                  <span className="font-bold text-ink-faint text-[11px]">
+                    Печалба (Profit): {profitSharePct.toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
 
-        {/* Row 3: Sell Simulation & Summary Banner */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
-          {/* Sell Input Box */}
-          <div className="md:col-span-3 bg-bg/50 p-2.5 rounded-xl border border-border/50 space-y-1">
-            <label className="block text-[10px] font-black uppercase text-amber-400 text-center">
-              🟨 Sell (Брой за продажба)
-            </label>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={sellShares}
-              onChange={e => setSellShares(e.target.value)}
-              placeholder="6.00"
-              className="w-full bg-amber-500/20 text-amber-300 font-mono font-black text-center py-1.5 rounded-lg border border-amber-500/40 focus:outline-none text-xs"
-            />
+        {/* Spreadsheet Detailed Position Table */}
+        <div className="bg-bg/40 p-3.5 rounded-2xl border border-border/60 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase text-ink-faint tracking-wider flex items-center gap-1.5">
+              <Table className="w-3.5 h-3.5 text-indigo-400" />
+              Табличен изглед на позицията (Spreadsheet View)
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowSpreadsheetView(!showSpreadsheetView)}
+              className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer"
+            >
+              {showSpreadsheetView ? 'Скрий' : 'Покажи'}
+            </button>
           </div>
 
-          {/* Profit & % Return Box */}
-          <div className="md:col-span-5 bg-emerald-500/10 border border-emerald-500/25 p-2.5 rounded-xl flex items-center justify-between text-emerald-400">
-            <div>
-              <span className="text-[9px] font-extrabold uppercase block text-emerald-400/80">PROFIT (Печалба):</span>
-              <span className="text-base sm:text-lg font-black font-mono">
-                {profitOnSale >= 0 ? '+' : ''}{symbol}{profitOnSale.toFixed(2)}
-              </span>
+          {showSpreadsheetView && (
+            <div className="overflow-x-auto rounded-xl border border-border/60">
+              <table className="w-full text-center border-collapse text-xs font-mono">
+                <thead>
+                  <tr className="bg-bg text-ink-faint text-[10px] font-black uppercase tracking-tight border-b border-border/50">
+                    <th className="py-2 px-2 border-r border-border/40">Shares</th>
+                    <th className="py-2 px-2 border-r border-border/40">Cost Basis</th>
+                    <th className="py-2 px-2 border-r border-border/40">Avg. Price</th>
+                    <th className="py-2 px-2 border-r border-border/40">Curent Price</th>
+                    <th className="py-2 px-2 border-r border-border/40">Profit / Share</th>
+                    <th className="py-2 px-2">Rlzd P&L</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  <tr className="bg-card">
+                    <td className="p-2 border-r border-border/40 font-bold text-ink">{numShares.toFixed(2)}</td>
+                    <td className="p-2 border-r border-border/40 font-bold text-ink">{symbol}{costBasis.toFixed(2)}</td>
+                    <td className="p-2 border-r border-border/40 font-bold text-ink">{symbol}{numAvgPrice.toFixed(2)}</td>
+                    <td className="p-2 border-r border-border/40 font-bold text-ink">{symbol}{numCurrentPrice.toFixed(2)}</td>
+                    <td className={`p-2 border-r border-border/40 font-bold ${profitPerShare >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {profitPerShare >= 0 ? '+' : ''}{symbol}{profitPerShare.toFixed(2)}
+                    </td>
+                    <td className={`p-2 font-black ${rlzdPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {rlzdPnL >= 0 ? '+' : ''}{symbol}{rlzdPnL.toFixed(2)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div className="text-right">
-              <span className="text-[9px] font-extrabold uppercase block text-emerald-400/80">% TOTAL RETURN:</span>
-              <span className="text-base sm:text-lg font-black font-mono">
-                {totalReturnPct >= 0 ? '▲ ' : '▼ '}{totalReturnPct.toFixed(2)}%
-              </span>
-            </div>
-          </div>
-
-          {/* Free Funds Box */}
-          <div className="md:col-span-4 bg-rose-500/10 border border-rose-500/25 p-2.5 rounded-xl text-rose-400 flex items-center justify-between">
-            <div>
-              <span className="text-[9px] font-extrabold uppercase block text-rose-400/80">FREE FUNDS (Освободен капитал):</span>
-              <span className="text-base sm:text-lg font-black font-mono">
-                {symbol}{freeFundsCostBasis.toFixed(2)}
-              </span>
-              <span className="text-[9px] block text-rose-400/70 font-mono mt-0.5">
-                Общо постъпления: {symbol}{totalCashProceeds.toFixed(2)}
-              </span>
-            </div>
-            <Wallet className="w-5 h-5 text-rose-400/50 shrink-0" />
-          </div>
+          )}
         </div>
 
-        {/* Action Button */}
+        {/* Footer Button */}
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all cursor-pointer mt-2"
+          className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
         >
           Готово
         </button>
+
       </div>
     </div>
   );
