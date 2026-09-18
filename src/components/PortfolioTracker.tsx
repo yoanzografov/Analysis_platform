@@ -193,6 +193,7 @@ export default function PortfolioTracker({
   const [companyName, setCompanyName] = useState('');
   const [shares, setShares] = useState('');
   const [buyPrice, setBuyPrice] = useState('');
+  const [sellPrice, setSellPrice] = useState('');
   const [fee, setFee] = useState('0.00');
   const [buyDate, setBuyDate] = useState(new Date().toISOString().split('T')[0]);
   const [fairPrice, setFairPrice] = useState('');
@@ -352,17 +353,37 @@ export default function PortfolioTracker({
 
     const sharesNum = parseFloat(String(editingTx.shares)) || 0;
     const priceNum = parseFloat(String(editingTx.buyPrice)) || 0;
-    const sellPriceNum = editingTx.sellPrice !== undefined && String(editingTx.sellPrice).trim() !== '' ? parseFloat(String(editingTx.sellPrice)) : undefined;
-    const pnlNum = editingTx.pnlVal !== undefined && String(editingTx.pnlVal).trim() !== '' ? parseFloat(String(editingTx.pnlVal)) : undefined;
+    const isSell = editingTx.type === 'Продажба';
+    const sellPriceNum = isSell && editingTx.sellPrice !== undefined && String(editingTx.sellPrice).trim() !== '' 
+      ? parseFloat(String(editingTx.sellPrice)) 
+      : undefined;
+
+    let pnlNum = editingTx.pnlVal !== undefined && String(editingTx.pnlVal).trim() !== '' 
+      ? parseFloat(String(editingTx.pnlVal)) 
+      : undefined;
+
+    let pnlPct = editingTx.pnlPct;
+
+    if (isSell) {
+      if (sellPriceNum !== undefined && priceNum > 0) {
+        pnlPct = ((sellPriceNum - priceNum) / priceNum) * 100;
+        if (pnlNum === undefined) {
+          pnlNum = (sellPriceNum - priceNum) * sharesNum;
+        }
+      }
+    } else {
+      pnlNum = 0;
+      pnlPct = 0;
+    }
 
     const updatedTx: PortfolioTransaction = {
       ...editingTx,
       ticker: editingTx.ticker.toUpperCase().trim(),
       shares: sharesNum,
       buyPrice: priceNum,
-      sellPrice: sellPriceNum,
+      sellPrice: isSell ? sellPriceNum : undefined,
       pnlVal: pnlNum,
-      pnlPct: (sellPriceNum !== undefined && priceNum > 0) ? ((sellPriceNum - priceNum) / priceNum) * 100 : editingTx.pnlPct
+      pnlPct: pnlPct
     };
 
     const nextHistory = history.map(t => t.id === editingTx.id ? updatedTx : t);
@@ -477,11 +498,24 @@ export default function PortfolioTracker({
       setPositionCurrency('GBP');
     }
 
+    const existing = positions.find(p => p.ticker.toUpperCase() === upper);
+    if (existing) {
+      setBuyPrice(existing.buyPrice.toFixed(2));
+      if (existing.companyName && !companyName) setCompanyName(existing.companyName);
+      if (existing.currency) setPositionCurrency(existing.currency as any);
+      if (txType === 'Продажба' && !shares) setShares(existing.shares.toString());
+    }
+
     const found = stocks.find(s => s.ticker === upper);
     if (found) {
-      setCompanyName(found.companyName);
-      if (found.currentPrice || found.priceOfCalc) {
-        setBuyPrice((found.currentPrice || found.priceOfCalc || 0).toFixed(2));
+      if (!companyName) setCompanyName(found.companyName);
+      const mPrice = found.currentPrice || found.priceOfCalc || 0;
+      if (mPrice > 0) {
+        if (txType === 'Продажба') {
+          setSellPrice(mPrice.toFixed(2));
+        } else {
+          setBuyPrice(mPrice.toFixed(2));
+        }
       }
       if (found.fairPrice) {
         setFairPrice(found.fairPrice.toFixed(2));
@@ -489,6 +523,35 @@ export default function PortfolioTracker({
       if (found.dividend) {
         const match = found.dividend.match(/([\d.]+)/);
         if (match) setAnnualDiv(match[1]);
+      }
+    }
+  };
+
+  // Switch transaction type between Buy and Sell with auto-population of prices
+  const handleSwitchTxType = (type: 'Покупка' | 'Продажба') => {
+    setTxType(type);
+    setFormError('');
+    if (ticker.trim()) {
+      const upper = ticker.trim().toUpperCase();
+      const existing = positions.find(p => p.ticker.toUpperCase() === upper);
+      const found = stocks.find(s => s.ticker === upper);
+      const mPrice = found?.currentPrice || found?.priceOfCalc || 0;
+
+      if (type === 'Продажба') {
+        if (existing) {
+          setBuyPrice(existing.buyPrice.toFixed(2));
+          if (!shares) setShares(existing.shares.toString());
+        }
+        if (mPrice > 0) {
+          setSellPrice(mPrice.toFixed(2));
+        } else if (existing) {
+          setSellPrice(existing.buyPrice.toFixed(2));
+        }
+      } else {
+        if (mPrice > 0) {
+          setBuyPrice(mPrice.toFixed(2));
+        }
+        setSellPrice('');
       }
     }
   };
@@ -518,12 +581,6 @@ export default function PortfolioTracker({
       return;
     }
 
-    const priceNum = parseFloat(buyPrice);
-    if (isNaN(priceNum) || priceNum <= 0) {
-      setFormError('Въведете валидна цена');
-      return;
-    }
-
     const parseOptionalFloat = (val: string) => {
       const parsed = parseFloat(val);
       return isNaN(parsed) ? undefined : parsed;
@@ -533,7 +590,7 @@ export default function PortfolioTracker({
       ticker: ticker.trim().toUpperCase(),
       companyName: companyName.trim(),
       shares: sharesNum,
-      buyPrice: priceNum,
+      buyPrice: parseFloat(buyPrice) || 0,
       currency: positionCurrency,
       fee: parseFloat(fee) || 0,
       buyDate: buyDate || new Date().toISOString().split('T')[0],
@@ -544,21 +601,41 @@ export default function PortfolioTracker({
     };
 
     if (editingId) {
-      onUpdatePosition(editingId, payload);
+      const priceNum = parseFloat(buyPrice);
+      if (isNaN(priceNum) || priceNum <= 0) {
+        setFormError('Въведете валидна цена');
+        return;
+      }
+      onUpdatePosition(editingId, { ...payload, buyPrice: priceNum });
       setEditingId(null);
     } else if (txType === 'Продажба') {
+      const sellPriceNum = parseFloat(sellPrice);
+      if (isNaN(sellPriceNum) || sellPriceNum <= 0) {
+        setFormError('Въведете валидна цена на продажба');
+        return;
+      }
+
       const existingPos = positions.find(p => p.ticker.toUpperCase() === payload.ticker);
-      const posBuyPrice = existingPos ? existingPos.buyPrice : priceNum;
-      const sellPrice = priceNum;
+      if (existingPos && sharesNum > existingPos.shares + 0.00001) {
+        setFormError(`Не можете да продадете ${sharesNum} акции. Притежавате само ${existingPos.shares} бр.`);
+        return;
+      }
+
+      const buyPriceNum = parseFloat(buyPrice);
+      const actualBuyPrice = (!isNaN(buyPriceNum) && buyPriceNum > 0)
+        ? buyPriceNum
+        : (existingPos ? existingPos.buyPrice : sellPriceNum);
+
       const feeNum = parseFloat(fee) || 0;
-      const cost = sharesNum * posBuyPrice;
-      const revenue = (sharesNum * sellPrice) - feeNum;
-      const pnlVal = revenue - cost;
+      const cost = sharesNum * actualBuyPrice;
+      const grossRevenue = sharesNum * sellPriceNum;
+      const netRevenue = grossRevenue - feeNum;
+      const pnlVal = netRevenue - cost;
       const pnlPct = cost > 0 ? (pnlVal / cost) * 100 : 0;
 
       if (existingPos) {
         const remainingShares = existingPos.shares - sharesNum;
-        if (remainingShares <= 0) {
+        if (remainingShares <= 0.00001) {
           onDeletePosition(existingPos.id);
         } else {
           onUpdatePosition(existingPos.id, {
@@ -574,15 +651,20 @@ export default function PortfolioTracker({
         ticker: payload.ticker,
         type: 'Продажба',
         shares: sharesNum,
-        buyPrice: posBuyPrice,
-        sellPrice: sellPrice,
+        buyPrice: actualBuyPrice,
+        sellPrice: sellPriceNum,
         currency: positionCurrency,
         pnlVal: pnlVal,
         pnlPct: pnlPct
       };
       updateHistory([newTx, ...history]);
     } else {
-      onAddPosition(payload);
+      const priceNum = parseFloat(buyPrice);
+      if (isNaN(priceNum) || priceNum <= 0) {
+        setFormError('Въведете валидна цена на покупка');
+        return;
+      }
+      onAddPosition({ ...payload, buyPrice: priceNum });
 
       // Add to transaction history
       const newTx: PortfolioTransaction = {
@@ -604,11 +686,13 @@ export default function PortfolioTracker({
     setCompanyName('');
     setShares('');
     setBuyPrice('');
+    setSellPrice('');
     setFee('0.00');
     setFairPrice('');
     setAnnualDiv('');
     setBuyTarget('');
     setSellTarget('');
+    setFormError('');
     setIsAddModalOpen(false);
   };
 
@@ -618,6 +702,7 @@ export default function PortfolioTracker({
     setCompanyName('');
     setShares('');
     setBuyPrice('');
+    setSellPrice('');
     setFee('0.00');
     setFairPrice('');
     setAnnualDiv('');
@@ -630,10 +715,12 @@ export default function PortfolioTracker({
   const handleStartEdit = (pos: PortfolioPosition) => {
     const isEur = pos.currency === 'EUR' || pos.ticker.endsWith('.DE') || pos.ticker.endsWith('.PA') || pos.ticker.endsWith('.AS') || ['SXR8', 'VWCE', 'QDVE', 'IS3N', 'EUNL', '4GLD', 'MEUD', 'JGPI'].includes(pos.ticker.toUpperCase());
     setEditingId(pos.id);
+    setTxType('Покупка');
     setTicker(pos.ticker);
     setCompanyName(pos.companyName || '');
     setShares(pos.shares.toString());
     setBuyPrice(pos.buyPrice.toString());
+    setSellPrice('');
     setPositionCurrency(pos.currency || (isEur ? 'EUR' : (pos.ticker.endsWith('.L') ? 'GBP' : 'USD')));
     setFee((pos.fee || 0).toString());
     setBuyDate(pos.buyDate || new Date().toISOString().split('T')[0]);
@@ -641,6 +728,7 @@ export default function PortfolioTracker({
     setAnnualDiv(pos.annualDivPerShare ? pos.annualDivPerShare.toString() : '');
     setBuyTarget(pos.buyTarget ? pos.buyTarget.toString() : '');
     setSellTarget(pos.sellTarget ? pos.sellTarget.toString() : '');
+    setFormError('');
     setIsAddModalOpen(true);
   };
 
@@ -649,10 +737,24 @@ export default function PortfolioTracker({
     setTxType(type);
     setTicker(pos.ticker);
     setCompanyName(pos.companyName || '');
-    setShares('');
-    const origCurrency = pos.quoteCurrency === 'EUR' ? 'EUR' : 'USD';
+    const origCurrency = pos.quoteCurrency === 'EUR' ? 'EUR' : (pos.currency === 'EUR' ? 'EUR' : (pos.currency === 'GBP' ? 'GBP' : 'USD'));
     setPositionCurrency(origCurrency);
-    setBuyPrice(pos.originalPrice ? pos.originalPrice.toFixed(2) : (pos.curPrice ? pos.curPrice.toFixed(2) : ''));
+
+    // Current market price from pos
+    const mPrice = (pos.curPrice || pos.originalPrice || pos.buyPrice || 0).toFixed(2);
+
+    if (type === 'Продажба') {
+      // For sale: default shares to owned shares, buyPrice to purchase price / cost basis, sellPrice to current market price
+      setShares(pos.shares ? pos.shares.toString() : '');
+      setBuyPrice(pos.buyPrice ? pos.buyPrice.toFixed(2) : (pos.originalPrice ? pos.originalPrice.toFixed(2) : mPrice));
+      setSellPrice(mPrice);
+    } else {
+      // For buy: user enters shares, buyPrice defaults to market price
+      setShares('');
+      setBuyPrice(mPrice);
+      setSellPrice('');
+    }
+
     setFee('0.00');
     setBuyDate(new Date().toISOString().split('T')[0]);
     setFairPrice('');
@@ -1637,11 +1739,14 @@ export default function PortfolioTracker({
             <button 
               onClick={() => {
                 setEditingId(null);
+                setTxType('Покупка');
                 setTicker('');
                 setCompanyName('');
                 setShares('');
                 setBuyPrice('');
+                setSellPrice('');
                 setFee('0.00');
+                setFormError('');
                 setBuyDate(new Date().toISOString().split('T')[0]);
                 setIsAddModalOpen(true);
               }}
@@ -1752,11 +1857,14 @@ export default function PortfolioTracker({
                         <button
                           onClick={() => {
                             setEditingId(null);
+                            setTxType('Покупка');
                             setTicker('');
                             setCompanyName('');
                             setShares('');
                             setBuyPrice('');
+                            setSellPrice('');
                             setFee('0.00');
+                            setFormError('');
                             setBuyDate(new Date().toISOString().split('T')[0]);
                             setIsAddModalOpen(true);
                           }}
@@ -2125,207 +2233,421 @@ export default function PortfolioTracker({
       {/* ======================================================================== */}
       {/* ADD / EDIT ASSET MODAL DIALOG                                            */}
       {/* ======================================================================== */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-bg border border-border rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-border/40 pb-3">
-              <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-emerald-400" />
-                {editingId ? 'Редактиране на Актив' : 'Добавяне на Нов Актив'}
-              </h3>
-              <button 
-                onClick={handleCloseAddModal}
-                className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {isAddModalOpen && (() => {
+        const modalExistingPos = positions.find(p => p.ticker.toUpperCase() === ticker.trim().toUpperCase());
+        const sharesVal = parseFloat(shares) || 0;
+        const sellPriceVal = parseFloat(sellPrice) || 0;
+        const buyPriceVal = parseFloat(buyPrice) || (modalExistingPos ? modalExistingPos.buyPrice : 0);
+        const feeVal = parseFloat(fee) || 0;
+        const previewGrossRevenue = sharesVal * sellPriceVal;
+        const previewCost = sharesVal * buyPriceVal;
+        const previewNetRevenue = previewGrossRevenue - feeVal;
+        const previewRealizedPnL = previewNetRevenue - previewCost;
+        const previewReturnPct = previewCost > 0 ? (previewRealizedPnL / previewCost) * 100 : 0;
+        const currSym = positionCurrency === 'EUR' ? '€' : (positionCurrency === 'GBP' ? '£' : '$');
 
-            {formError && (
-              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
-                {formError}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmitPosition} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">ТИП ТРАНЗАЦИЯ</label>
-                <select
-                  value={txType}
-                  onChange={e => setTxType(e.target.value as any)}
-                  className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+        return (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-bg border border-border rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                <h3 className="text-sm font-extrabold uppercase text-ink flex items-center gap-2">
+                  {editingId ? (
+                    <>
+                      <Edit3 className="w-5 h-5 text-indigo-400" />
+                      <span>Редактиране на Актив</span>
+                    </>
+                  ) : txType === 'Продажба' ? (
+                    <>
+                      <TrendingDown className="w-5 h-5 text-rose-400" />
+                      <span className="text-rose-400">Продажба на Актив (SELL)</span>
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="w-5 h-5 text-emerald-400" />
+                      <span>Добавяне на Нов Актив (BUY)</span>
+                    </>
+                  )}
+                </h3>
+                <button 
+                  onClick={handleCloseAddModal}
+                  className="p-1 rounded-full text-ink-faint hover:text-ink hover:bg-card transition-all cursor-pointer"
                 >
-                  <option value="Покупка">Покупка</option>
-                  <option value="Продажба">Продажба</option>
-                </select>
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
-                    ТИКЕР <span className="text-rose-400 font-black">* (Задължително)</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="напр. AAPL или SAP.DE"
-                    value={ticker}
-                    onChange={e => handleTickerChange(e.target.value)}
-                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none uppercase"
-                    required
-                  />
-                  <span className="text-[9px] text-indigo-400 mt-1 block leading-tight">
-                    САЩ (AAPL), Германия (.DE), Амстердам (.AS) и др.
-                  </span>
+              {formError && (
+                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
+                  {formError}
                 </div>
-                <div>
-                  <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
-                    ИМЕ НА АКТИВА <span className="text-ink-muted text-[9px]">(По желание)</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="напр. Apple Inc."
-                    value={companyName}
-                    onChange={e => setCompanyName(e.target.value)}
-                    className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
-                  />
+              )}
+
+              <form onSubmit={handleSubmitPosition} className="space-y-3 text-xs">
+                {/* Transaction Type Switcher */}
+                {!editingId && (
+                  <div>
+                    <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1.5">ТИП ТРАНЗАЦИЯ</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSwitchTxType('Покупка')}
+                        className={`py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          txType === 'Покупка'
+                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 border border-emerald-400'
+                            : 'bg-card text-ink-muted border border-border hover:text-ink hover:bg-card/80'
+                        }`}
+                      >
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        🟢 BUY (Покупка)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSwitchTxType('Продажба')}
+                        className={`py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          txType === 'Продажба'
+                            ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 border border-rose-400'
+                            : 'bg-card text-ink-muted border border-border hover:text-ink hover:bg-card/80'
+                        }`}
+                      >
+                        <TrendingDown className="w-3.5 h-3.5" />
+                        🔴 SELL (Продажба)
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Existing Position Helper for SELL */}
+                {txType === 'Продажба' && !editingId && (
+                  <div className={`p-2.5 rounded-xl border flex items-center justify-between text-xs ${
+                    modalExistingPos 
+                      ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' 
+                      : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                  }`}>
+                    {modalExistingPos ? (
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <Briefcase className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                          <span>
+                            Притежавате: <strong className="text-ink font-mono">{modalExistingPos.shares}</strong> бр. 
+                            (Ср. покупна: <strong className="text-ink font-mono">{currSym}{modalExistingPos.buyPrice.toFixed(2)}</strong>)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShares(modalExistingPos.shares.toString())}
+                          className="px-2 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase transition-all cursor-pointer shrink-0 ml-2"
+                        >
+                          Продай всички ({modalExistingPos.shares})
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <Info className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>Няма намерена активна позиция с този тикер в портфолиото. Продажбата ще бъде записана в историята на транзакциите.</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                      ТИКЕР <span className="text-rose-400 font-black">* (Задължително)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="напр. AAPL или SAP.DE"
+                      value={ticker}
+                      onChange={e => handleTickerChange(e.target.value)}
+                      className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none uppercase"
+                      required
+                    />
+                    <span className="text-[9px] text-indigo-400 mt-1 block leading-tight">
+                      САЩ (AAPL), Германия (.DE), Амстердам (.AS) и др.
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                      ИМЕ НА АКТИВА <span className="text-ink-muted text-[9px]">(По желание)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="напр. Apple Inc."
+                      value={companyName}
+                      onChange={e => setCompanyName(e.target.value)}
+                      className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
-                  ПЛАТЕНА ТАКСА ($ fee) <span className="text-ink-muted text-[9px]">(По желание)</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={fee}
-                  onChange={e => setFee(e.target.value)}
-                  className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
-                    БРОЙ АКЦИИ <span className="text-rose-400 font-black">* (Задължително)</span>
+                    ПЛАТЕНА ТАКСА ({currSym} fee) <span className="text-ink-muted text-[9px]">(По желание)</span>
                   </label>
                   <input
                     type="number"
-                    step="any"
-                    placeholder="напр. 15"
-                    value={shares}
-                    onChange={e => setShares(e.target.value)}
+                    step="0.01"
+                    placeholder="0.00"
+                    value={fee}
+                    onChange={e => setFee(e.target.value)}
                     className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
-                    required
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] text-indigo-400 font-black uppercase mb-1 flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-indigo-400" />
-                    📅 ДАТА НА СДЕЛКАТА
-                  </label>
-                  <input
-                    type="date"
-                    value={buyDate}
-                    onChange={e => setBuyDate(e.target.value)}
-                    onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
-                    className="w-full bg-bg text-ink font-bold border border-indigo-500/50 px-3 py-2 rounded-xl focus:outline-none cursor-pointer hover:border-indigo-400"
-                    required
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
-                  ГОДИШЕН ДИВИДЕНТ ЗА 1 АКЦИЯ ($) <span className="text-ink-muted text-[9px]">(По желание)</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="напр. 1.25"
-                  value={annualDiv}
-                  onChange={e => setAnnualDiv(e.target.value)}
-                  className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none text-emerald-400"
-                />
-              </div>
-
-              {/* Currency Selector & Live Exchange Rate Auto-converter */}
-              <div className="p-3 bg-bg/50 rounded-2xl border border-border/50 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-ink-faint font-extrabold uppercase">ВАЛУТА НА АКТИВА</label>
-                  <span className="text-[10px] text-indigo-400 font-bold">
-                    Курс: 1 EUR = ${eurUsdRate.toFixed(4)} USD
-                  </span>
-                </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPositionCurrency('USD')}
-                    className={`py-1.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      positionCurrency === 'USD'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-400'
-                        : 'bg-bg text-ink-muted border border-border hover:text-ink'
-                    }`}
-                  >
-                    🇺🇸 USD ($)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPositionCurrency('EUR')}
-                    className={`py-1.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      positionCurrency === 'EUR'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-400'
-                        : 'bg-bg text-ink-muted border border-border hover:text-ink'
-                    }`}
-                  >
-                    🇪🇺 EUR (€)
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 pt-1">
                   <div>
                     <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
-                      ЦЕНА ЗАКУПУВАНЕ ({positionCurrency === 'USD' ? '$' : '€'}) <span className="text-rose-400 font-black">* (Задължително)</span>
+                      {txType === 'Продажба' && !editingId ? 'БРОЙ ЗА ПРОДАЖБА' : 'БРОЙ АКЦИИ'} <span className="text-rose-400 font-black">*</span>
                     </label>
                     <input
                       type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={buyPrice}
-                      onChange={e => setBuyPrice(e.target.value)}
+                      step="any"
+                      placeholder="напр. 15"
+                      value={shares}
+                      onChange={e => setShares(e.target.value)}
                       className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
-                      ПРЕИЗЧИСЛЕНА В {positionCurrency === 'USD' ? 'EUR (€)' : 'USD ($)'}
+                    <label className="block text-[10px] text-indigo-400 font-black uppercase mb-1 flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-indigo-400" />
+                      📅 ДАТА НА СДЕЛКАТА
                     </label>
-                    <div className="w-full bg-card/60 text-emerald-400 font-extrabold border border-border/50 px-3 py-2 rounded-xl text-xs flex items-center h-[38px]">
-                      {buyPrice && !isNaN(parseFloat(buyPrice)) ? (
-                        positionCurrency === 'USD'
-                          ? `€${(parseFloat(buyPrice) / eurUsdRate).toFixed(2)} EUR`
-                          : `$${(parseFloat(buyPrice) * eurUsdRate).toFixed(2)} USD`
-                      ) : (
-                        positionCurrency === 'USD' ? '€0.00 EUR' : '$0.00 USD'
-                      )}
-                    </div>
+                    <input
+                      type="date"
+                      value={buyDate}
+                      onChange={e => setBuyDate(e.target.value)}
+                      onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
+                      className="w-full bg-bg text-ink font-bold border border-indigo-500/50 px-3 py-2 rounded-xl focus:outline-none cursor-pointer hover:border-indigo-400"
+                      required
+                    />
                   </div>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer mt-4"
-              >
-                <PlusCircle className="w-4 h-4" />
-                {editingId ? 'Запази промяната' : (txType === 'Покупка' ? 'Купи актив' : 'Продай актив')}
-              </button>
-            </form>
+                {(!txType || txType === 'Покупка' || editingId) && (
+                  <div>
+                    <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                      ГОДИШЕН ДИВИДЕНТ ЗА 1 АКЦИЯ ({currSym}) <span className="text-ink-muted text-[9px]">(По желание)</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="напр. 1.25"
+                      value={annualDiv}
+                      onChange={e => setAnnualDiv(e.target.value)}
+                      className="w-full bg-bg text-ink font-bold border border-border px-3 py-2 rounded-xl focus:outline-none text-emerald-400"
+                    />
+                  </div>
+                )}
+
+                {/* Currency Selector & Live Exchange Rate Auto-converter */}
+                <div className="p-3 bg-bg/50 rounded-2xl border border-border/50 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] text-ink-faint font-extrabold uppercase">ВАЛУТА НА АКТИВА</label>
+                    <span className="text-[10px] text-indigo-400 font-bold">
+                      Курс: 1 EUR = ${eurUsdRate.toFixed(4)} USD
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPositionCurrency('USD')}
+                      className={`py-1.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        positionCurrency === 'USD'
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-400'
+                          : 'bg-bg text-ink-muted border border-border hover:text-ink'
+                      }`}
+                    >
+                      🇺🇸 USD ($)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPositionCurrency('EUR')}
+                      className={`py-1.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        positionCurrency === 'EUR'
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-400'
+                          : 'bg-bg text-ink-muted border border-border hover:text-ink'
+                      }`}
+                    >
+                      🇪🇺 EUR (€)
+                    </button>
+                  </div>
+
+                  {/* Price inputs: Dedicated Selling Price + Cost basis for SELL */}
+                  {txType === 'Продажба' && !editingId ? (
+                    <div className="space-y-2.5 pt-1">
+                      {/* 1. Selling Price (Required) */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] text-rose-400 font-black uppercase mb-1">
+                            ЦЕНА НА ПРОДАЖБА ({currSym}) <span className="text-rose-400">* (Задължително)</span>
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={sellPrice}
+                            onChange={e => setSellPrice(e.target.value)}
+                            className="w-full bg-bg text-ink font-mono font-bold border border-rose-500/60 focus:border-rose-400 px-3 py-2 rounded-xl focus:outline-none"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                            ПРЕИЗЧИСЛЕНА В {positionCurrency === 'USD' ? 'EUR (€)' : 'USD ($)'}
+                          </label>
+                          <div className="w-full bg-card/60 text-rose-400 font-mono font-extrabold border border-border/50 px-3 py-2 rounded-xl text-xs flex items-center h-[38px]">
+                            {sellPrice && !isNaN(parseFloat(sellPrice)) ? (
+                              positionCurrency === 'USD'
+                                ? `€${(parseFloat(sellPrice) / eurUsdRate).toFixed(2)} EUR`
+                                : `$${(parseFloat(sellPrice) * eurUsdRate).toFixed(2)} USD`
+                            ) : (
+                              positionCurrency === 'USD' ? '€0.00 EUR' : '$0.00 USD'
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. Buy Price / Cost Basis */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                            ПОКУПНА ЦЕНА / БАЗА ({currSym})
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={buyPrice}
+                            onChange={e => setBuyPrice(e.target.value)}
+                            className="w-full bg-bg text-ink font-mono font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                          />
+                          <span className="text-[9px] text-ink-faint mt-0.5 block">
+                            {modalExistingPos ? 'Автоматично заредена от портфолиото' : 'Покупна цена за точен P&L'}
+                          </span>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                            ПРЕИЗЧИСЛЕНА В {positionCurrency === 'USD' ? 'EUR (€)' : 'USD ($)'}
+                          </label>
+                          <div className="w-full bg-card/60 text-indigo-400 font-mono font-extrabold border border-border/50 px-3 py-2 rounded-xl text-xs flex items-center h-[38px]">
+                            {buyPrice && !isNaN(parseFloat(buyPrice)) ? (
+                              positionCurrency === 'USD'
+                                ? `€${(parseFloat(buyPrice) / eurUsdRate).toFixed(2)} EUR`
+                                : `$${(parseFloat(buyPrice) * eurUsdRate).toFixed(2)} USD`
+                            ) : (
+                              positionCurrency === 'USD' ? '€0.00 EUR' : '$0.00 USD'
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Live P&L Preview Card */}
+                      {sharesVal > 0 && sellPriceVal > 0 && (
+                        <div className={`p-3 rounded-2xl border transition-all ${
+                          previewRealizedPnL >= 0 
+                            ? 'bg-emerald-500/10 border-emerald-500/30' 
+                            : 'bg-rose-500/10 border-rose-500/30'
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-black uppercase flex items-center gap-1 text-ink">
+                              {previewRealizedPnL >= 0 ? (
+                                <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+                              ) : (
+                                <ArrowDownRight className="w-4 h-4 text-rose-400" />
+                              )}
+                              Реализирана P/L:
+                            </span>
+                            <span className={`text-xs font-black font-mono ${
+                              previewRealizedPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            }`}>
+                              {previewRealizedPnL >= 0 ? '+' : ''}{currSym}{previewRealizedPnL.toFixed(2)} ({previewRealizedPnL >= 0 ? '+' : ''}{previewReturnPct.toFixed(2)}%)
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-[10px] text-ink-muted pt-2 mt-2 border-t border-border/30">
+                            <div>
+                              <span className="block text-[9px] uppercase font-bold text-ink-faint">Приход (Бруто)</span>
+                              <span className="font-mono font-bold text-ink">{currSym}{previewGrossRevenue.toFixed(2)}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[9px] uppercase font-bold text-ink-faint">Разход (База)</span>
+                              <span className="font-mono font-bold text-ink">{currSym}{previewCost.toFixed(2)}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[9px] uppercase font-bold text-ink-faint">Такса</span>
+                              <span className="font-mono font-bold text-ink">{currSym}{feeVal.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div>
+                        <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                          ЦЕНА ЗАКУПУВАНЕ ({currSym}) <span className="text-rose-400 font-black">* (Задължително)</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={buyPrice}
+                          onChange={e => setBuyPrice(e.target.value)}
+                          className="w-full bg-bg text-ink font-mono font-bold border border-border px-3 py-2 rounded-xl focus:outline-none"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">
+                          ПРЕИЗЧИСЛЕНА В {positionCurrency === 'USD' ? 'EUR (€)' : 'USD ($)'}
+                        </label>
+                        <div className="w-full bg-card/60 text-emerald-400 font-mono font-extrabold border border-border/50 px-3 py-2 rounded-xl text-xs flex items-center h-[38px]">
+                          {buyPrice && !isNaN(parseFloat(buyPrice)) ? (
+                            positionCurrency === 'USD'
+                              ? `€${(parseFloat(buyPrice) / eurUsdRate).toFixed(2)} EUR`
+                              : `$${(parseFloat(buyPrice) * eurUsdRate).toFixed(2)} USD`
+                          ) : (
+                            positionCurrency === 'USD' ? '€0.00 EUR' : '$0.00 USD'
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className={`w-full py-2.5 px-4 rounded-xl text-white font-extrabold text-xs uppercase flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer mt-4 ${
+                    editingId
+                      ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/20'
+                      : txType === 'Продажба'
+                        ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'
+                        : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
+                  }`}
+                >
+                  {editingId ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Запази промяната</span>
+                    </>
+                  ) : txType === 'Продажба' ? (
+                    <>
+                      <TrendingDown className="w-4 h-4" />
+                      <span>Потвърди Продажбата (Sell)</span>
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="w-4 h-4" />
+                      <span>Купи актив (Buy)</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ======================================================================== */}
       {/* CASH MANAGEMENT MODAL DIALOG                                              */}
@@ -2891,28 +3213,94 @@ export default function PortfolioTracker({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Цена за акция</label>
+                  <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
+                    {editingTx.type === 'Продажба' ? 'Покупна цена (База)' : 'Цена за акция'}
+                  </label>
                   <input
                     type="number"
                     step="any"
                     value={editingTx.buyPrice}
-                    onChange={e => setEditingTx({ ...editingTx, buyPrice: parseFloat(e.target.value) || 0 })}
+                    onChange={e => {
+                      const bPrice = parseFloat(e.target.value) || 0;
+                      const sPrice = editingTx.sellPrice !== undefined ? parseFloat(String(editingTx.sellPrice)) : undefined;
+                      const sh = parseFloat(String(editingTx.shares)) || 0;
+                      let newPnl = editingTx.pnlVal;
+                      let newPct = editingTx.pnlPct;
+                      if (editingTx.type === 'Продажба' && sPrice !== undefined) {
+                        newPnl = (sPrice - bPrice) * sh;
+                        newPct = bPrice > 0 ? ((sPrice - bPrice) / bPrice) * 100 : 0;
+                      }
+                      setEditingTx({ ...editingTx, buyPrice: bPrice, pnlVal: newPnl, pnlPct: newPct });
+                    }}
                     className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-indigo-500"
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Реализирана P/L ($)</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={editingTx.pnlVal !== undefined ? editingTx.pnlVal : ''}
-                    onChange={e => setEditingTx({ ...editingTx, pnlVal: e.target.value === '' ? undefined : parseFloat(e.target.value) })}
-                    placeholder="0.00"
-                    className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-indigo-500"
-                  />
-                </div>
+                {editingTx.type === 'Продажба' ? (
+                  <div>
+                    <label className="block text-[11px] font-bold text-rose-400 uppercase mb-1">Цена на продажба</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={editingTx.sellPrice !== undefined ? editingTx.sellPrice : ''}
+                      onChange={e => {
+                        const sPrice = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                        const bPrice = parseFloat(String(editingTx.buyPrice)) || 0;
+                        const sh = parseFloat(String(editingTx.shares)) || 0;
+                        let newPnl = editingTx.pnlVal;
+                        let newPct = editingTx.pnlPct;
+                        if (sPrice !== undefined) {
+                          newPnl = (sPrice - bPrice) * sh;
+                          newPct = bPrice > 0 ? ((sPrice - bPrice) / bPrice) * 100 : 0;
+                        }
+                        setEditingTx({ ...editingTx, sellPrice: sPrice, pnlVal: newPnl, pnlPct: newPct });
+                      }}
+                      placeholder="0.00"
+                      className="w-full bg-card border border-rose-500/50 rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-rose-400"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Реализирана P/L ($)</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={editingTx.pnlVal !== undefined ? editingTx.pnlVal : ''}
+                      onChange={e => setEditingTx({ ...editingTx, pnlVal: e.target.value === '' ? undefined : parseFloat(e.target.value) })}
+                      placeholder="0.00"
+                      className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                )}
               </div>
+
+              {editingTx.type === 'Продажба' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Реализирана P/L</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={editingTx.pnlVal !== undefined ? editingTx.pnlVal : ''}
+                      onChange={e => setEditingTx({ ...editingTx, pnlVal: e.target.value === '' ? undefined : parseFloat(e.target.value) })}
+                      placeholder="0.00"
+                      className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">Възвръщаемост (%)</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={editingTx.pnlPct !== undefined ? Number(editingTx.pnlPct).toFixed(2) : ''}
+                      onChange={e => setEditingTx({ ...editingTx, pnlPct: e.target.value === '' ? undefined : parseFloat(e.target.value) })}
+                      placeholder="0.00%"
+                      className="w-full bg-card border border-border rounded-xl px-3 py-2 text-ink font-mono font-bold text-xs outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-border/40">
                 <button
