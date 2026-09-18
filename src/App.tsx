@@ -88,7 +88,16 @@ export default function App() {
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const currentUserRef = useRef<FirebaseUser | null>(null);
+  currentUserRef.current = currentUser;
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authFeatureNotice, setAuthFeatureNotice] = useState<string>('');
+
+  const handleRequireAuth = (featureName: string) => {
+    setAuthFeatureNotice(`Достъпът до "${featureName}" е само за регистрирани потребители. Моля, влезте в профила си или се регистрирайте.`);
+    setAuthModalInitialTab('register');
+    setIsAuthModalOpen(true);
+  };
 
   // Theme State
   const [isDark, setIsDark] = useState(() => {
@@ -121,19 +130,52 @@ export default function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.toLowerCase().replace('#', '');
+      const user = currentUserRef.current;
       if (hash === 'stock-profit-calculator') {
+        if (!user) {
+          handleRequireAuth('Stock Profit Calculator');
+          clearHashUrl();
+          return;
+        }
         setShowProfitCalculatorModal(true);
       } else if (hash === 'roi-calculator') {
+        if (!user) {
+          handleRequireAuth('Return on Investment (ROI)');
+          clearHashUrl();
+          return;
+        }
         setShowRoiCalculatorModal(true);
       } else if (hash === 'investment-calculator') {
+        if (!user) {
+          handleRequireAuth('Сложна Лихва & Растеж');
+          clearHashUrl();
+          return;
+        }
         setShowInvestmentCalculatorModal(true);
       } else if (hash === 'checklist' || hash === 'check-list') {
+        if (!user) {
+          handleRequireAuth('Stock Analysis Check List');
+          clearHashUrl();
+          return;
+        }
         setShowChecklistModal(true);
+      } else if (hash === 'alerts' || hash === 'price-alerts') {
+        if (!user) {
+          handleRequireAuth('PRICE ALERTS SCHEDULE');
+          clearHashUrl();
+          switchTab('table');
+          return;
+        }
+        switchTab('alerts');
       } else if (hash === 'flags' || hash === 'financial-flags') {
         setShowFinancialFlagsModal(true);
       } else {
         const tab = getInitialTab();
-        setActiveMainTab(tab);
+        if (tab === 'alerts' && !user) {
+          switchTab('table');
+        } else {
+          setActiveMainTab(tab);
+        }
       }
     };
     handleHashChange();
@@ -1238,12 +1280,17 @@ export default function App() {
         />
         <AuthModal
           isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            setAuthFeatureNotice('');
+          }}
           currentUser={currentUser}
           initialTab={authModalInitialTab}
+          featureNotice={authFeatureNotice}
           onContinueAsGuest={() => {
             setIsGuestMode(true);
             setIsAuthModalOpen(false);
+            setAuthFeatureNotice('');
             try { localStorage.setItem('app_guest_mode', 'true'); } catch (e) {}
           }}
         />
@@ -1456,16 +1503,23 @@ export default function App() {
         {/* 6. Tools Dropdown Button */}
         <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsUsefulLinksMenuOpen(false); }}>
           <button
-            onClick={() => setIsUsefulLinksMenuOpen(!isUsefulLinksMenuOpen)}
+            onClick={() => {
+              if (!currentUser) {
+                handleRequireAuth('TOOLS');
+                return;
+              }
+              setIsUsefulLinksMenuOpen(!isUsefulLinksMenuOpen);
+            }}
             className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
               isUsefulLinksMenuOpen
                 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
                 : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
             }`}
-            title="Tools"
+            title={currentUser ? "Tools" : "Tools (Изисква регистрация)"}
           >
             <Wrench className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
             <span>Tools</span>
+            {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
             <ChevronDown className={`w-3 h-3 text-ink-faint transition-transform duration-200 shrink-0 ${isUsefulLinksMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
@@ -1478,26 +1532,52 @@ export default function App() {
                 🛠️ Tools & Calculators
               </div>
 
-              <a
-                href="#checklist"
-                target="_blank"
-                rel="noopener noreferrer"
-                onMouseDown={() => setIsUsefulLinksMenuOpen(false)}
-                onClick={() => setIsUsefulLinksMenuOpen(false)}
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  if (!currentUser) {
+                    handleRequireAuth('Stock Analysis Check List');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
+                  setShowChecklistModal(true);
+                  setIsUsefulLinksMenuOpen(false);
+                }}
+                onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('Stock Analysis Check List');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
+                  setShowChecklistModal(true);
+                  setIsUsefulLinksMenuOpen(false);
+                }}
                 className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
               >
                 <CheckSquare className="w-4 h-4 text-cyan-400 shrink-0" />
                 <span>Stock Analysis Check List</span>
-              </a>
+                {!currentUser && <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />}
+              </button>
 
               <button
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
+                  if (!currentUser) {
+                    handleRequireAuth('Stock Profit Calculator');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
                   setShowProfitCalculatorModal(true);
                   setIsUsefulLinksMenuOpen(false);
                 }}
                 onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('Stock Profit Calculator');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
                   setShowProfitCalculatorModal(true);
                   setIsUsefulLinksMenuOpen(false);
                 }}
@@ -1505,16 +1585,27 @@ export default function App() {
               >
                 <Calculator className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>Stock Profit Calculator</span>
+                {!currentUser && <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />}
               </button>
 
               <button
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
+                  if (!currentUser) {
+                    handleRequireAuth('Return on Investment (ROI)');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
                   setShowRoiCalculatorModal(true);
                   setIsUsefulLinksMenuOpen(false);
                 }}
                 onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('Return on Investment (ROI)');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
                   setShowRoiCalculatorModal(true);
                   setIsUsefulLinksMenuOpen(false);
                 }}
@@ -1522,16 +1613,27 @@ export default function App() {
               >
                 <Calculator className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>Return on Investment (ROI)</span>
+                {!currentUser && <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />}
               </button>
 
               <button
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
+                  if (!currentUser) {
+                    handleRequireAuth('Сложна Лихва & Растеж');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
                   setShowInvestmentCalculatorModal(true);
                   setIsUsefulLinksMenuOpen(false);
                 }}
                 onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('Сложна Лихва & Растеж');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
                   setShowInvestmentCalculatorModal(true);
                   setIsUsefulLinksMenuOpen(false);
                 }}
@@ -1539,6 +1641,7 @@ export default function App() {
               >
                 <TrendingUp className="w-4 h-4 text-indigo-400 shrink-0" />
                 <span>Сложна Лихва & Растеж</span>
+                {!currentUser && <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />}
               </button>
             </div>
           )}
@@ -1583,6 +1686,10 @@ export default function App() {
         href="#alerts"
         onClick={(e) => {
           e.preventDefault();
+          if (!currentUser) {
+            handleRequireAuth('PRICE ALERTS SCHEDULE');
+            return;
+          }
           switchTab('alerts');
         }}
         className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
@@ -1593,6 +1700,7 @@ export default function App() {
       >
         <Bell className="w-4 h-4 shrink-0" />
         <span>PRICE ALERTS SCHEDULE</span>
+        {!currentUser && <Lock className="w-3 h-3 text-amber-400 shrink-0" />}
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
           activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
         }`}>
@@ -1651,6 +1759,8 @@ export default function App() {
         <StockTable 
           stocks={stocks} 
           alerts={alerts}
+          currentUser={currentUser}
+          onRequireAuth={handleRequireAuth}
           onAddAlert={handleAddAlert}
           onUpdateAlert={handleUpdateAlert}
           onDeleteAlert={handleDeleteAlert}
@@ -1684,13 +1794,34 @@ export default function App() {
         
       </>
     ) : activeMainTab === 'alerts' ? (
-      <PriceAlertPlanner
-        stocks={stocks}
-        alerts={alerts}
-        onAddAlert={handleAddAlert}
-        onUpdateAlert={handleUpdateAlert}
-        onDeleteAlert={handleDeleteAlert}
-      />
+      currentUser ? (
+        <PriceAlertPlanner
+          stocks={stocks}
+          alerts={alerts}
+          onAddAlert={handleAddAlert}
+          onUpdateAlert={handleUpdateAlert}
+          onDeleteAlert={handleDeleteAlert}
+        />
+      ) : (
+        <div className="bg-card border border-border rounded-3xl p-8 text-center max-w-lg mx-auto my-12 space-y-4 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+            <Lock className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-black uppercase text-ink tracking-wide">
+            PRICE ALERTS SCHEDULE
+          </h3>
+          <p className="text-xs text-ink-muted leading-relaxed">
+            Планирането и управлението на персонализирани ценови известия е достъпно само за регистрирани потребители. Моля, влезте в профила си или се регистрирайте.
+          </p>
+          <button
+            onClick={() => handleRequireAuth('PRICE ALERTS SCHEDULE')}
+            className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase shadow-md shadow-indigo-600/20 transition-all cursor-pointer inline-flex items-center gap-2"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            Вход / Регистрация
+          </button>
+        </div>
+      )
     ) : null}
 
     {/* PortfolioTracker is ALWAYS mounted so its real-time Firestore sync stays alive 24/7 */}
@@ -1869,72 +2000,85 @@ export default function App() {
   {/* Global Auth / Cloud Sync Modal */}
   <AuthModal
     isOpen={isAuthModalOpen}
-    onClose={() => setIsAuthModalOpen(false)}
+    onClose={() => {
+      setIsAuthModalOpen(false);
+      setAuthFeatureNotice('');
+    }}
     currentUser={currentUser}
     initialTab={authModalInitialTab}
+    featureNotice={authFeatureNotice}
     onContinueAsGuest={() => {
       setIsGuestMode(true);
       setIsAuthModalOpen(false);
+      setAuthFeatureNotice('');
       try { localStorage.setItem('app_guest_mode', 'true'); } catch (e) {}
     }}
   />
 
   {/* ROI Calculator Modal */}
-  <RoiCalculatorModal
-    isOpen={showRoiCalculatorModal}
-    onClose={() => { setShowRoiCalculatorModal(false); clearHashUrl(); }}
-    baseCurrency={baseCurrency}
-  />
+  {currentUser && (
+    <RoiCalculatorModal
+      isOpen={showRoiCalculatorModal}
+      onClose={() => { setShowRoiCalculatorModal(false); clearHashUrl(); }}
+      baseCurrency={baseCurrency}
+    />
+  )}
 
   {/* Investment Compound Growth Calculator Modal */}
-  <InvestmentCalculatorModal
-    isOpen={showInvestmentCalculatorModal}
-    onClose={() => { setShowInvestmentCalculatorModal(false); clearHashUrl(); }}
-    baseCurrency={baseCurrency}
-  />
+  {currentUser && (
+    <InvestmentCalculatorModal
+      isOpen={showInvestmentCalculatorModal}
+      onClose={() => { setShowInvestmentCalculatorModal(false); clearHashUrl(); }}
+      baseCurrency={baseCurrency}
+    />
+  )}
 
   {/* Profit Calculator Modal (Spreadsheet Style) */}
-  <ProfitCalculatorModal
-    isOpen={showProfitCalculatorModal}
-    onClose={() => { setShowProfitCalculatorModal(false); clearHashUrl(); }}
-    stocks={stocks}
-    baseCurrency={baseCurrency}
-  />
+  {currentUser && (
+    <ProfitCalculatorModal
+      isOpen={showProfitCalculatorModal}
+      onClose={() => { setShowProfitCalculatorModal(false); clearHashUrl(); }}
+      stocks={stocks}
+      baseCurrency={baseCurrency}
+    />
+  )}
 
   {/* Stock Valuation Checklist Modal */}
-  <StockChecklistModal
-    isOpen={showChecklistModal}
-    onClose={() => { setShowChecklistModal(false); clearHashUrl(); }}
-    stocks={stocks}
-    baseCurrency={baseCurrency}
-    onSaveToTable={(stockData) => {
-      if (!stockData.ticker) return;
-      const cleanSym = stockData.ticker.toUpperCase().trim();
-      setStocks(prev => {
-        const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
-        if (existingIndex >= 0) {
-          const updated = [...prev];
-          updated[existingIndex] = { ...updated[existingIndex], ...stockData };
-          return updated;
-        } else {
-          const newStockObj: Stock = {
-            ticker: cleanSym,
-            companyName: stockData.companyName || cleanSym,
-            sector: stockData.sector || 'Other',
-            currentPrice: stockData.currentPrice || 100,
-            peRatio: stockData.peRatio || 15,
-            dividendYield: stockData.dividendYield || 0,
-            marketCap: stockData.marketCap || 1000000000,
-            currency: 'USD',
-            ...stockData
-          };
-          return [...prev, newStockObj];
-        }
-      });
-      setActiveAlertToast(`Акцията ${cleanSym} беше пресметната и запазена в Интерактивната Таблица!`);
-      setTimeout(() => setActiveAlertToast(null), 4000);
-    }}
-  />
+  {currentUser && (
+    <StockChecklistModal
+      isOpen={showChecklistModal}
+      onClose={() => { setShowChecklistModal(false); clearHashUrl(); }}
+      stocks={stocks}
+      baseCurrency={baseCurrency}
+      onSaveToTable={(stockData) => {
+        if (!stockData.ticker) return;
+        const cleanSym = stockData.ticker.toUpperCase().trim();
+        setStocks(prev => {
+          const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
+          if (existingIndex >= 0) {
+            const updated = [...prev];
+            updated[existingIndex] = { ...updated[existingIndex], ...stockData };
+            return updated;
+          } else {
+            const newStockObj: Stock = {
+              ticker: cleanSym,
+              companyName: stockData.companyName || cleanSym,
+              sector: stockData.sector || 'Other',
+              currentPrice: stockData.currentPrice || 100,
+              peRatio: stockData.peRatio || 15,
+              dividendYield: stockData.dividendYield || 0,
+              marketCap: stockData.marketCap || 1000000000,
+              currency: 'USD',
+              ...stockData
+            };
+            return [...prev, newStockObj];
+          }
+        });
+        setActiveAlertToast(`Акцията ${cleanSym} беше пресметната и запазена в Интерактивната Таблица!`);
+        setTimeout(() => setActiveAlertToast(null), 4000);
+      }}
+    />
+  )}
 
   {/* Financial Statements Flags Modal */}
   <FinancialFlagsModal

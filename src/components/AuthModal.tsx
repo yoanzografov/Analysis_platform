@@ -33,6 +33,7 @@ interface Props {
   currentUser: FirebaseUser | null;
   initialTab?: 'login' | 'register';
   onContinueAsGuest?: () => void;
+  featureNotice?: string;
 }
 
 export const AuthModal: React.FC<Props> = ({
@@ -40,7 +41,8 @@ export const AuthModal: React.FC<Props> = ({
   onClose,
   currentUser,
   initialTab,
-  onContinueAsGuest
+  onContinueAsGuest,
+  featureNotice
 }) => {
   const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>(initialTab || (currentUser ? 'login' : 'login'));
   const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -347,6 +349,14 @@ export const AuthModal: React.FC<Props> = ({
           </div>
         ) : (
           <>
+            {/* Feature Notice for Gated Actions */}
+            {featureNotice && (
+              <div className="mt-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 p-3 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-xs">
+                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>{featureNotice}</span>
+              </div>
+            )}
+
             {/* Primary Login / Register Tabs */}
             <div className="flex border-b border-border/40 my-3.5 text-xs font-black shrink-0">
               <button

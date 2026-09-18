@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Stock, TableFilter, PriceAlert } from '../types';
-import { Search, Sparkles, TrendingUp, TrendingDown, Edit3, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell, CheckSquare } from 'lucide-react';
+import { Search, Sparkles, TrendingUp, TrendingDown, Edit3, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell, CheckSquare, Lock } from 'lucide-react';
+import { User as FirebaseUser } from 'firebase/auth';
 import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
 import EarningsModal from './EarningsModal';
@@ -11,19 +12,21 @@ import StockChecklistModal from './StockChecklistModal';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
 interface Props {
- stocks: Stock[];
- alerts?: PriceAlert[];
- onAddAlert?: (ticker: string, criteria: 'ABOVE' | 'BELOW', target: number) => void;
- onUpdateAlert?: (id: string, ticker: string, criteria: 'ABOVE' | 'BELOW', target: number) => void;
- onDeleteAlert?: (id: string) => void;
- onUpdateStock: (oldTicker: string, updatedStock: Stock) => void;
- onDeleteStock: (ticker: string) => void;
- onSelectStockForAi: (stock: Stock) => void;
- onAddStock: (stock: Stock) => void;
- activeFilter: TableFilter;
- onSetActiveFilter: (filter: TableFilter) => void;
- buyThreshold: number;
- sellThreshold: number;
+  stocks: Stock[];
+  alerts?: PriceAlert[];
+  currentUser?: FirebaseUser | null;
+  onRequireAuth?: (featureName: string) => void;
+  onAddAlert?: (ticker: string, criteria: 'ABOVE' | 'BELOW', target: number) => void;
+  onUpdateAlert?: (id: string, ticker: string, criteria: 'ABOVE' | 'BELOW', target: number) => void;
+  onDeleteAlert?: (id: string) => void;
+  onUpdateStock: (oldTicker: string, updatedStock: Stock) => void;
+  onDeleteStock: (ticker: string) => void;
+  onSelectStockForAi: (stock: Stock) => void;
+  onAddStock: (stock: Stock) => void;
+  activeFilter: TableFilter;
+  onSetActiveFilter: (filter: TableFilter) => void;
+  buyThreshold: number;
+  sellThreshold: number;
 }
 
 type SortField = 'ticker' | 'dailyChangePct' | 'currentPrice' | 'fairPrice' | 'difference' | 'marketCap';
@@ -173,7 +176,23 @@ const StockLogo = ({ ticker }: { ticker: string }) => {
   );
 };
 
-export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, onDeleteAlert, onUpdateStock, onDeleteStock, onSelectStockForAi, onAddStock, activeFilter, onSetActiveFilter, buyThreshold, sellThreshold }: Props) {
+export default function StockTable({ 
+  stocks, 
+  alerts, 
+  currentUser,
+  onRequireAuth,
+  onAddAlert, 
+  onUpdateAlert, 
+  onDeleteAlert, 
+  onUpdateStock, 
+  onDeleteStock, 
+  onSelectStockForAi, 
+  onAddStock, 
+  activeFilter, 
+  onSetActiveFilter, 
+  buyThreshold, 
+  sellThreshold 
+}: Props) {
  // Search state
  const [search, setSearch] = useState('');
 
@@ -567,59 +586,82 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
           <option value="watch|Not interesting">Not interesting ({stocks.filter(s => s.watch === 'Not interesting').length})</option>
         </select>
 
- <button
- onClick={() => {
- // Pre-fill today's ISO date
- const todayStr = new Date().toISOString().split('T')[0];
- setNewDate(todayStr);
- setNewTicker('');
- setNewCompanyName('');
- setNewPriceOfCalc('');
- setNewFairPrice('');
- setIsAddModalOpen(true);
- }}
- className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
- title="Добави нова акция в таблицата"
- >
- <Plus className="w-3.5 h-3.5" />
- Добавяне
- </button>
+  <button
+    onClick={() => {
+      if (!currentUser) {
+        onRequireAuth?.('Добавяне на нова акция');
+        return;
+      }
+      // Pre-fill today's ISO date
+      const todayStr = new Date().toISOString().split('T')[0];
+      setNewDate(todayStr);
+      setNewTicker('');
+      setNewCompanyName('');
+      setNewPriceOfCalc('');
+      setNewFairPrice('');
+      setIsAddModalOpen(true);
+    }}
+    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
+    title={currentUser ? "Добави нова акция в таблицата" : "Добавяне (Изисква регистрация)"}
+  >
+    <Plus className="w-3.5 h-3.5" />
+    <span>Добавяне</span>
+    {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
+  </button>
 
-   {/* Price Alert Button */}
-   <button
-     onClick={() => {
-       setAlertModalTicker('AAPL');
-       setAlertModalCriteria('ABOVE');
-       setAlertModalTargetPrice('400.00');
-       setIsQuickAlertOpen(true);
-     }}
-     className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
-     title="Планиране на персонализирани известия за цена"
-   >
-     <Bell className="w-3.5 h-3.5" />
-     Известие
-   </button>
-          <a
-            href="#checklist"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
-            title="Отвори Check List за анализ на акции в нов прозорец"
-          >
-            <CheckSquare className="w-3.5 h-3.5" />
-            Check List
-          </a>
+  {/* Price Alert Button */}
+  <button
+    onClick={() => {
+      if (!currentUser) {
+        onRequireAuth?.('Ценови известия');
+        return;
+      }
+      setAlertModalTicker('AAPL');
+      setAlertModalCriteria('ABOVE');
+      setAlertModalTargetPrice('400.00');
+      setIsQuickAlertOpen(true);
+    }}
+    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
+    title={currentUser ? "Планиране на персонализирани известия за цена" : "Известие (Изисква регистрация)"}
+  >
+    <Bell className="w-3.5 h-3.5" />
+    <span>Известие</span>
+    {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
+  </button>
 
-        <a
-          href="https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
-          title="Отвори калкулатора в Google Sheets"
-        >
-          <Calculator className="w-3.5 h-3.5" />
-          Calculator
-        </a>
+  <button
+    onClick={(e) => {
+      e.preventDefault();
+      if (!currentUser) {
+        onRequireAuth?.('Stock Analysis Check List');
+        return;
+      }
+      window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
+    }}
+    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
+    title={currentUser ? "Отвори Check List за анализ на акции в нов прозорец" : "Check List (Изисква регистрация)"}
+  >
+    <CheckSquare className="w-3.5 h-3.5" />
+    <span>Check List</span>
+    {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
+  </button>
+
+  <button
+    onClick={(e) => {
+      e.preventDefault();
+      if (!currentUser) {
+        onRequireAuth?.('Calculator');
+        return;
+      }
+      window.open("https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805", '_blank');
+    }}
+    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
+    title={currentUser ? "Отвори калкулатора в Google Sheets" : "Calculator (Изисква регистрация)"}
+  >
+    <Calculator className="w-3.5 h-3.5" />
+    <span>Calculator</span>
+    {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
+  </button>
 
  {/* Special badges when filtering by signals from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
@@ -866,11 +908,15 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
           {/* Stock Valuation Checklist Badge [C] */}
           <button
             onClick={() => {
+              if (!currentUser) {
+                onRequireAuth?.('Stock Valuation Checklist');
+                return;
+              }
               setChecklistModalStock(stock);
               setIsChecklistOpen(true);
             }}
             className="w-5 h-5 rounded-full bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 font-black text-[10px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
-            title={`Checklist (C) - Отвори Stock Valuation Checklist за ${stock.ticker}`}
+            title={currentUser ? `Checklist (C) - Отвори Stock Valuation Checklist за ${stock.ticker}` : `Checklist (C) (Изисква регистрация)`}
           >
             C
           </button>
@@ -879,6 +925,10 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
           {/* Quick Price Alert Badge [🔔] */}
           <button
             onClick={() => {
+              if (!currentUser) {
+                onRequireAuth?.('Ценови известия');
+                return;
+              }
               setAlertModalTicker(stock.ticker);
               setAlertModalCriteria('ABOVE');
               const defaultVal = stock.currentPrice || stock.priceOfCalc || 400;
@@ -886,7 +936,7 @@ export default function StockTable({ stocks, alerts, onAddAlert, onUpdateAlert, 
               setIsQuickAlertOpen(true);
             }}
             className="w-5 h-5 rounded-full bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white border border-indigo-500/30 font-black text-[10px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
-            title="Заложи персонализирано известие за цена за тази акция"
+            title={currentUser ? "Заложи персонализирано известие за цена за тази акция" : "Известие (Изисква регистрация)"}
           >
             🔔
           </button>
