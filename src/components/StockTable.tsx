@@ -636,10 +636,11 @@ export default function StockTable({
         onRequireAuth?.('Stock Analysis Check List');
         return;
       }
-      window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
+      setChecklistModalStock(null);
+      setIsChecklistOpen(true);
     }}
     className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
-    title={currentUser ? "Отвори Check List за анализ на акции в нов прозорец" : "Check List (Изисква регистрация)"}
+    title={currentUser ? "Отвори Check List за анализ на акции" : "Check List (Изисква регистрация)"}
   >
     <CheckSquare className="w-3.5 h-3.5" />
     <span>Check List</span>

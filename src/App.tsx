@@ -88,6 +88,7 @@ export default function App() {
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const currentUserRef = useRef<FirebaseUser | null>(null);
   currentUserRef.current = currentUser;
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -128,9 +129,14 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (isAuthChecking) {
+      // Do not check auth-gated hashes while Firebase is verifying user session
+      return;
+    }
+
     const handleHashChange = () => {
       const hash = window.location.hash.toLowerCase().replace('#', '');
-      const user = currentUserRef.current;
+      const user = currentUser;
       if (hash === 'stock-profit-calculator') {
         if (!user) {
           handleRequireAuth('Stock Profit Calculator');
@@ -185,7 +191,7 @@ export default function App() {
       window.removeEventListener('hashchange', handleHashChange);
       window.removeEventListener('popstate', handleHashChange);
     };
-  }, []);
+  }, [isAuthChecking, currentUser]);
 
   // Guest / Direct preview mode support for devices without mandatory lock
   const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
@@ -630,7 +636,6 @@ export default function App() {
   };
 
   const [isUserDocLoaded, setIsUserDocLoaded] = useState(false);
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
     // Safety timeout: prevent hanging forever on slow or restricted mobile networks

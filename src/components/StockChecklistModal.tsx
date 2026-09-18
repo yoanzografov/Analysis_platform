@@ -582,6 +582,27 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setCheckedRows(prev => ({ ...prev, ...initialChecked }));
   };
 
+  const handleClearAll = () => {
+    setSelectedTicker('');
+    setTickerSearchQuery('');
+    setIsSearchDropdownOpen(false);
+    const cleared: Record<string, string> = {};
+    EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
+    cleared['8_high'] = '';
+    cleared['10_level'] = '';
+    cleared['12_div'] = '';
+    cleared['15_10'] = '';
+    cleared['17_10'] = '';
+    cleared['20_5'] = '';
+    cleared['25_10'] = '';
+    cleared['37_10'] = '';
+    cleared['39_10'] = '';
+    setUserInputs(cleared);
+    setCheckedRows({});
+    setReturnsData(null);
+    setSelectedRow(null);
+  };
+
   useEffect(() => {
     if (isOpen) {
       if (stock?.ticker) {
@@ -770,27 +791,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
   const handleToggleCheck = (rowNum: number) => {
     setCheckedRows(prev => ({ ...prev, [rowNum]: !prev[rowNum] }));
-  };
-
-  const handleClearAll = () => {
-    setSelectedTicker('');
-    setTickerSearchQuery('');
-    setIsSearchDropdownOpen(false);
-    const cleared: Record<string, string> = {};
-    EXACT_SHEET_ROWS.forEach(r => { cleared[String(r.rowNum)] = ''; });
-    cleared['8_high'] = '';
-    cleared['10_level'] = '';
-    cleared['12_div'] = '';
-    cleared['15_10'] = '';
-    cleared['17_10'] = '';
-    cleared['20_5'] = '';
-    cleared['25_10'] = '';
-    cleared['37_10'] = '';
-    cleared['39_10'] = '';
-    setUserInputs(cleared);
-    setCheckedRows({});
-    setReturnsData(null);
-    setSelectedRow(null);
   };
 
   const handleSelectPeLevel = (level: 'low' | 'mid' | 'high' | '' | 'auto') => {
