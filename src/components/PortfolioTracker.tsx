@@ -202,6 +202,7 @@ export default function PortfolioTracker({
   const [sellTarget, setSellTarget] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState('');
+  const [mobileViewMode, setMobileViewMode] = useState<'cards' | 'table'>('cards');
 
   // Base Currency state for portfolio totals & charts (USD or EUR)
   const [baseCurrency, setBaseCurrency] = useState<'USD' | 'EUR'>(() => {
@@ -1790,9 +1791,219 @@ export default function PortfolioTracker({
           </div>
         </div>
 
+        {/* Mobile View Switcher (Cards vs Table) */}
+        <div className="flex md:hidden items-center justify-between gap-2 px-3 py-2 bg-card/60 border-b border-border">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-ink-muted">
+            <span>Режим:</span>
+            <span className="font-extrabold text-ink">{mobileViewMode === 'cards' ? '📱 Интерактивни Карти' : '📊 Таблица'}</span>
+          </div>
+          <div className="flex items-center bg-bg rounded-xl p-1 border border-border shadow-xs">
+            <button
+              type="button"
+              onClick={() => setMobileViewMode('cards')}
+              className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                mobileViewMode === 'cards'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+            >
+              <span>📱 Карти ({sortedHoldings.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileViewMode('table')}
+              className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                mobileViewMode === 'table'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+            >
+              <span>📊 Таблица</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Holdings Cards: Touch-friendly cards for iPhone & Samsung */}
+        {mobileViewMode === 'cards' && (
+          <div className="block md:hidden p-3 space-y-3 bg-bg">
+            {sortedHoldings.map(pos => {
+              const isPosProfit = pos.pnlVal >= 0;
+              const isDailyUp = (pos.matching?.dailyChangePct || 0) >= 0;
+              const shareOfPortfolioPct = totalCurrentValue > 0 ? (pos.currentValInBase / totalCurrentValue) * 100 : 0;
+              const currText = pos.posCurrency || pos.currency || pos.quoteCurrency || 'USD';
+
+              return (
+                <div 
+                  key={pos.id}
+                  className="bg-card border border-border rounded-2xl p-4 shadow-sm hover:border-indigo-500/40 transition-all duration-200 active:scale-[0.99] space-y-3"
+                >
+                  {/* Header: Logo, Ticker, Name, Currency, Edit, Delete */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <StockLogo ticker={pos.ticker} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-black text-sm text-ink uppercase tracking-tight">
+                            {pos.ticker}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono uppercase font-black border ${
+                            currText === 'EUR' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                            currText === 'GBP' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                            'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
+                          }`}>
+                            {currText}
+                          </span>
+                        </div>
+                        <div className="text-xs text-ink-muted truncate font-medium max-w-[170px]">
+                          {pos.companyName || pos.matching?.companyName || pos.ticker}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Edit & Delete quick touch buttons */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleStartEdit(pos)}
+                        className="p-2 rounded-xl bg-bg hover:bg-card-hover border border-border text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+                        title="Редактирай"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Сигурни ли сте, че искате да изтриете позицията за ${pos.ticker}?`)) {
+                            onDeletePosition(pos.id);
+                          }
+                        }}
+                        className="p-2 rounded-xl bg-bg hover:bg-rose-500/10 border border-border text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+                        title="Изтрий"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Price & PnL Strip */}
+                  <div className="flex items-center justify-between bg-bg/70 rounded-xl px-3 py-2 border border-border/50">
+                    <div>
+                      <span className="text-[10px] text-ink-faint font-bold uppercase block">Цена</span>
+                      <span className="text-sm font-black text-ink font-mono">
+                        {isPrivacyMode ? '••••' : `${pos.posSymbol}${pos.curPrice.toFixed(2)}`}
+                      </span>
+                      <span className={`text-[11px] font-bold ml-1.5 ${isDailyUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {isDailyUp ? '▲' : '▼'} {Math.abs(pos.matching?.dailyChangePct || 0).toFixed(2)}%
+                      </span>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[10px] text-ink-faint font-bold uppercase block">Нереализиран P&L</span>
+                      <span className={`text-xs font-black font-mono inline-flex items-center gap-1 ${isPosProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {isPrivacyMode ? '••••' : (
+                          <>
+                            <span>{isPosProfit ? '▲ +' : '▼ -'}{pos.posSymbol}{Math.abs(pos.pnlVal).toFixed(2)}</span>
+                            <span>({isPosProfit ? '+' : ''}{pos.pnlPct.toFixed(2)}%)</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Metrics Grid (Shares, Avg. Price, Cost Basis, Portfolio %) */}
+                  <div className="grid grid-cols-4 gap-1.5 text-center text-xs">
+                    <div className="bg-bg/40 rounded-xl p-2 border border-border/40">
+                      <div className="text-[9px] text-ink-faint font-bold uppercase">Брой</div>
+                      <div className="font-extrabold text-ink tabular-nums text-xs mt-0.5">
+                        {isPrivacyMode ? '••••' : pos.shares}
+                      </div>
+                    </div>
+
+                    <div className="bg-bg/40 rounded-xl p-2 border border-border/40">
+                      <div className="text-[9px] text-ink-faint font-bold uppercase">Ср. Цена</div>
+                      <div className="font-extrabold text-ink tabular-nums text-xs mt-0.5">
+                        {isPrivacyMode ? '••••' : `${pos.posSymbol}${pos.buyPrice.toFixed(2)}`}
+                      </div>
+                    </div>
+
+                    <div className="bg-bg/40 rounded-xl p-2 border border-border/40">
+                      <div className="text-[9px] text-ink-faint font-bold uppercase">Стойност</div>
+                      <div className="font-extrabold text-ink tabular-nums text-xs mt-0.5">
+                        {isPrivacyMode ? '••••' : `${pos.posSymbol}${(pos.shares * pos.curPrice).toFixed(0)}`}
+                      </div>
+                    </div>
+
+                    <div className="bg-bg/40 rounded-xl p-2 border border-border/40">
+                      <div className="text-[9px] text-ink-faint font-bold uppercase">Дял %</div>
+                      <div className="font-extrabold text-indigo-400 tabular-nums text-xs mt-0.5">
+                        {shareOfPortfolioPct.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Touch Action Bar: Big BUY, Big SELL, and Chart */}
+                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-border/40">
+                    <button
+                      type="button"
+                      onClick={() => handleStartTransaction(pos, 'Покупка')}
+                      className="min-h-[42px] py-2 px-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-black text-xs rounded-xl uppercase transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>BUY</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleStartTransaction(pos, 'Продажба')}
+                      className="min-h-[42px] py-2 px-3 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-black text-xs rounded-xl uppercase transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1"
+                    >
+                      <TrendingDown className="w-3.5 h-3.5" />
+                      <span>SELL</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTvModalTicker(pos.ticker)}
+                      className="min-h-[42px] py-2 px-2 bg-bg hover:bg-card-hover active:scale-95 border border-border text-ink-muted hover:text-indigo-400 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Графика</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {sortedHoldings.length === 0 && (
+              <div className="py-12 text-center text-ink-muted font-sans text-xs bg-card rounded-2xl border border-border p-6 space-y-3">
+                <p>Акаунтът е нов и няма въведени лични активи в портфейла.</p>
+                <button
+                  onClick={() => {
+                    setEditingId(null);
+                    setTxType('Покупка');
+                    setTicker('');
+                    setCompanyName('');
+                    setShares('');
+                    setBuyPrice('');
+                    setSellPrice('');
+                    setFee('0.00');
+                    setFormError('');
+                    setBuyDate(new Date().toISOString().split('T')[0]);
+                    setIsAddModalOpen(true);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs inline-flex items-center gap-1.5 shadow-md transition-all cursor-pointer mx-auto"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>＋ Добавяне на Нов Актив</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Main Table Container with Sticky Header & Smooth Scroll */}
         <div 
-          className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth"
+          className={`${mobileViewMode === 'table' ? 'block' : 'hidden md:block'} w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth`}
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <table className="w-full text-left border-collapse font-sans tabular-nums text-xs min-w-[1600px] table-auto">

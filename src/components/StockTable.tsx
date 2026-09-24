@@ -196,6 +196,9 @@ export default function StockTable({
  // Search state
  const [search, setSearch] = useState('');
 
+ // Mobile view switcher (cards vs full table)
+ const [mobileViewMode, setMobileViewMode] = useState<'cards' | 'table'>('cards');
+
  // Sorting state
  const [sortField, setSortField] = useState<SortField | null>(null);
  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -687,9 +690,209 @@ export default function StockTable({
  </div>
  </div>
 
+  {/* Mobile View Switcher (Cards vs Table) */}
+  <div className="flex md:hidden items-center justify-between gap-2 px-3 py-2 bg-card/60 border-b border-border">
+    <div className="flex items-center gap-1.5 text-xs font-bold text-ink-muted">
+      <span>Режим:</span>
+      <span className="font-extrabold text-ink">{mobileViewMode === 'cards' ? '📱 Интерактивни Карти' : '📊 Таблица'}</span>
+    </div>
+    <div className="flex items-center bg-bg rounded-xl p-1 border border-border shadow-xs">
+      <button
+        type="button"
+        onClick={() => setMobileViewMode('cards')}
+        className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+          mobileViewMode === 'cards'
+            ? 'bg-indigo-600 text-white shadow-xs'
+            : 'text-ink-muted hover:text-ink'
+        }`}
+      >
+        <span>📱 Карти ({pageStocks.length})</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setMobileViewMode('table')}
+        className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+          mobileViewMode === 'table'
+            ? 'bg-indigo-600 text-white shadow-xs'
+            : 'text-ink-muted hover:text-ink'
+        }`}
+      >
+        <span>📊 Таблица</span>
+      </button>
+    </div>
+  </div>
+
+  {/* Mobile Cards View: Super interactive mobile cards optimized for iPhone & Samsung */}
+  {mobileViewMode === 'cards' && (
+    <div className="block md:hidden p-3 space-y-3 bg-bg">
+      {pageStocks.map(stock => {
+        const isPositiveChange = (stock.dailyChangePct || 0) >= 0;
+        const isUndervalued = stock.difference !== null && stock.difference > 0;
+        const sig = stock.signal?.trim().toLowerCase();
+        const signalBg = sig === 'buy' 
+          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
+          : sig === 'sell' 
+            ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' 
+            : 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+        const signalText = sig === 'buy' ? '🟢 КУПУВАЙ' : sig === 'sell' ? '🔴 ПРОДАВАЙ' : '🟡 ИЗЧАКАЙ';
+
+        return (
+          <div 
+            key={stock.ticker}
+            className="bg-card border border-border rounded-2xl p-4 shadow-sm hover:border-indigo-500/40 transition-all duration-200 active:scale-[0.99] space-y-3"
+          >
+            {/* Row 1: Stock Logo, Ticker, Watch Badge, Current Price & Daily % */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <StockLogo ticker={stock.ticker} />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button 
+                      type="button"
+                      onClick={() => setActiveChartStock(stock)}
+                      className="font-black text-sm text-ink hover:text-indigo-400 transition-colors uppercase tracking-tight cursor-pointer"
+                    >
+                      {stock.ticker}
+                    </button>
+                    {stock.watch && (
+                      <span className={`text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md ${
+                        stock.watch === 'Buy' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                        stock.watch === 'Sell' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                        'bg-stone-500/15 text-ink-muted border border-border'
+                      }`}>
+                        {stock.watch}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-ink-muted truncate font-medium max-w-[170px]">
+                    {stock.companyName || stock.ticker}
+                  </div>
+                </div>
+              </div>
+
+              {/* Price & Daily Change */}
+              <div className="text-right shrink-0">
+                <div className="text-sm font-black text-ink tabular-nums">
+                  ${stock.currentPrice !== null ? stock.currentPrice.toFixed(2) : '-'}
+                </div>
+                <div className={`text-xs font-black inline-flex items-center gap-0.5 tabular-nums ${isPositiveChange ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  {isPositiveChange ? '+' : ''}{(stock.dailyChangePct || 0).toFixed(2)}%
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Sparkline & Signal Badge */}
+            <div className="flex items-center justify-between bg-bg/70 rounded-xl px-3 py-2 border border-border/50">
+              <button 
+                type="button"
+                onClick={() => setActiveChartStock(stock)}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                title="Отвори 365d интерактивна графика"
+              >
+                <StockSparkline changePct={stock.dailyChangePct || 0} ticker={stock.ticker} />
+                <span className="text-[10px] font-extrabold text-ink-muted uppercase">365 дни</span>
+              </button>
+
+              <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-lg border uppercase tracking-wider ${signalBg}`}>
+                {signalText}
+              </span>
+            </div>
+
+            {/* Row 3: Metrics Grid (Fair Price, Difference, P/E Ratio) */}
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="bg-bg/40 rounded-xl p-2 border border-border/40">
+                <div className="text-[10px] text-ink-faint font-bold uppercase">Fair Price</div>
+                <div className="font-extrabold text-ink tabular-nums text-xs mt-0.5">
+                  ${stock.fairPrice !== null ? stock.fairPrice.toFixed(2) : '-'}
+                </div>
+              </div>
+
+              <div className="bg-bg/40 rounded-xl p-2 border border-border/40">
+                <div className="text-[10px] text-ink-faint font-bold uppercase">Разлика</div>
+                <div className={`font-extrabold tabular-nums text-xs mt-0.5 ${isUndervalued ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  {stock.difference !== null ? `${stock.difference > 0 ? '+' : ''}${stock.difference.toFixed(1)}%` : '-'}
+                </div>
+              </div>
+
+              <div className="bg-bg/40 rounded-xl p-2 border border-border/40">
+                <div className="text-[10px] text-ink-faint font-bold uppercase">P/E Ratio</div>
+                <div className="font-extrabold text-ink tabular-nums text-xs mt-0.5">
+                  {stock.peRatio !== null ? stock.peRatio.toFixed(1) : '-'}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 4: Touch Action Bar */}
+            <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-border/40">
+              <button
+                type="button"
+                onClick={() => setActiveChartStock(stock)}
+                className="flex-1 min-h-[38px] py-1.5 px-2 rounded-xl bg-bg hover:bg-card-hover border border-border text-ink-muted hover:text-indigo-400 text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer active:scale-95"
+                title="Отвори графика"
+              >
+                <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Графика</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) {
+                    onRequireAuth?.('Checklist');
+                    return;
+                  }
+                  setChecklistModalStock(stock);
+                  setIsChecklistOpen(true);
+                }}
+                className="flex-1 min-h-[38px] py-1.5 px-2 rounded-xl bg-bg hover:bg-card-hover border border-border text-ink-muted hover:text-cyan-400 text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer active:scale-95"
+                title="Checklist"
+              >
+                <CheckSquare className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Checklist</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onSelectStockForAi(stock)}
+                className="flex-1 min-h-[38px] py-1.5 px-2 rounded-xl bg-bg hover:bg-card-hover border border-border text-ink-muted hover:text-emerald-400 text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer active:scale-95"
+                title="Новини за компанията"
+              >
+                <Newspaper className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Новини</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) {
+                    onRequireAuth?.('Ценови известия');
+                    return;
+                  }
+                  setAlertModalTicker(stock.ticker);
+                  setAlertModalTargetPrice(stock.currentPrice ? stock.currentPrice.toFixed(2) : '100.00');
+                  setIsQuickAlertOpen(true);
+                }}
+                className="min-h-[38px] px-3 rounded-xl bg-bg hover:bg-card-hover border border-border text-ink-muted hover:text-amber-400 text-xs font-bold flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+                title="Ценова аларма"
+              >
+                <Bell className="w-3.5 h-3.5 text-amber-400" />
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      {pageStocks.length === 0 && (
+        <div className="py-12 text-center text-ink-muted font-sans text-xs bg-card rounded-2xl border border-border">
+          Няма намерени резултати за "{search}". Проверете вашето търсене.
+        </div>
+      )}
+    </div>
+  )}
+
   {/* Main Grid Responsive Table with exactly 21 columns and scrollbar view */}
   <div 
-    className="w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth"
+    className={`${mobileViewMode === 'table' ? 'block' : 'hidden md:block'} w-full max-h-[65vh] md:max-h-[520px] overflow-auto border-b border-border/15 touch-pan-x touch-pan-y scroll-smooth`}
     style={{ WebkitOverflowScrolling: 'touch' }}
   >
   <table className="w-full text-left border-collapse min-w-[2000px] table-auto">
@@ -697,7 +900,7 @@ export default function StockTable({
  <thead className="sticky top-0 z-20 bg-bg rounded-2xl">
           <tr className="bg-bg rounded-2xl text-ink/90 border-b-2 border-border text-xs uppercase font-medium font-sans tabular-nums tracking-wider">
  <th className="py-3 px-4 whitespace-nowrap">Watch</th>
- <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('ticker')}>
+ <th className="py-3 px-4 cursor-pointer hover:bg-white/10/50 whitespace-nowrap md:static sticky left-0 bg-bg z-30 shadow-xs border-r md:border-r-0 border-border/40" onClick={() => handleSort('ticker')}>
  Ticker{sortField === 'ticker' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 whitespace-nowrap">Company Name</th>
@@ -816,7 +1019,7 @@ export default function StockTable({
  </td>
 
   {/* 2. TICKER */}
-  <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis">
+  <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis md:static sticky left-0 bg-bg group-hover:bg-card z-10 border-r md:border-r-0 border-border/40">
     {isEditing ? (
       <input
         type="text"

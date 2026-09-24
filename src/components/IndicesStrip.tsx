@@ -185,26 +185,26 @@ export default function IndicesStrip({ indices }: Props) {
       <div className="w-full bg-bg rounded-2xl border border-border shadow-sm flex items-center h-16 divide-x divide-border">
           
         {/* Category selector */}
-        <div ref={dropdownRef} className="w-[160px] md:w-[230px] shrink-0 h-full px-2 md:px-4 flex flex-col justify-center relative z-20 rounded-l-2xl">
-          <span className="text-xs md:text-xs text-ink/60 font-serif italic uppercase tracking-wider block mb-0.5 truncate">
+        <div ref={dropdownRef} className="w-[130px] sm:w-[170px] md:w-[230px] shrink-0 h-full px-2 md:px-4 flex flex-col justify-center relative z-20 rounded-l-2xl">
+          <span className="text-[10px] md:text-xs text-ink/60 font-serif italic uppercase tracking-wider block mb-0.5 truncate">
               Index Markets
             </span>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="flex items-center justify-between w-full text-left font-sans tabular-nums font-bold text-xs uppercase tracking-tight hover:text-indigo-500 transition-colors focus:outline-none group cursor-pointer"
             >
-              <div className="flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-ink-muted group-hover:text-indigo-500" />
-                <span className="text-xs font-sans font-extrabold text-ink leading-tight tracking-tight group-hover:text-indigo-500">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Globe className="w-3.5 h-3.5 text-ink-muted group-hover:text-indigo-500 shrink-0" />
+                <span className="text-[11px] md:text-xs font-sans font-extrabold text-ink leading-tight tracking-tight group-hover:text-indigo-500 truncate">
                   {selectedCategory}
                 </span>
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-indigo-500' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted transition-transform duration-200 shrink-0 ml-1 ${isOpen ? 'rotate-180 text-indigo-500' : ''}`} />
             </button>
 
             {/* Floating Dropdown */}
             {isOpen && (
-              <div className="absolute left-0 top-[100%] mt-2 w-full bg-card rounded-xl border border-border shadow-xl py-1.5 flex flex-col z-50">
+              <div className="absolute left-0 top-[100%] mt-2 w-[180px] sm:w-full bg-card rounded-xl border border-border shadow-xl py-1.5 flex flex-col z-50">
                 {CATEGORIES.map(cat => (
                   <button
                     key={cat}
@@ -212,7 +212,7 @@ export default function IndicesStrip({ indices }: Props) {
                       setSelectedCategory(cat);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left px-4 py-2 text-xs font-sans font-bold transition-all mx-1 w-[calc(100%-8px)] rounded-md ${
+                    className={`w-full text-left px-3 py-2 text-xs font-sans font-bold transition-all mx-1 w-[calc(100%-8px)] rounded-md ${
                       selectedCategory === cat
                         ? 'bg-indigo-500/10 text-indigo-500'
                         : 'text-ink-muted hover:bg-card-hover hover:text-ink'
@@ -226,7 +226,7 @@ export default function IndicesStrip({ indices }: Props) {
           </div>
 
           {/* Real-time Indices/Indicators Grid (8 columns) */}
-          <div className="flex-1 h-full overflow-x-auto overflow-y-hidden custom-mini-scroll flex bg-bg rounded-r-2xl">
+          <div className="flex-1 h-full overflow-x-auto overflow-y-hidden custom-mini-scroll flex bg-bg rounded-r-2xl touch-pan-x">
             <div className="min-w-[980px] flex-1 grid grid-cols-8 divide-x divide-border h-full">
             
             {/* Real items */}
