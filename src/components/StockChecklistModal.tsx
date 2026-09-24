@@ -1760,23 +1760,10 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
         {/* Live Audit Checklist Progress & Signals Summary */}
         <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          <div className="flex items-center gap-2 bg-bg px-3 py-1 rounded-lg border border-border text-xs font-mono" title="Обобщение на сигналите от фундаменталните показатели (без цената)">
-            <span className="text-ink-muted font-sans font-bold text-[11px] mr-0.5">Сигнали:</span>
-            {(flagsSummary.green + flagsSummary.yellow + flagsSummary.red === 0) ? (
-              <span className="text-ink-faint text-[11px] italic font-sans">Няма активни</span>
-            ) : (
-              <>
-                {flagsSummary.green > 0 && (
-                  <span className="text-emerald-400 font-extrabold flex items-center gap-1" title="Зелени показатели (отлични)">🟢 {flagsSummary.green}</span>
-                )}
-                {flagsSummary.yellow > 0 && (
-                  <span className="text-amber-400 font-extrabold flex items-center gap-1" title="Жълти показатели (внимание)">🟡 {flagsSummary.yellow}</span>
-                )}
-                {flagsSummary.red > 0 && (
-                  <span className="text-rose-400 font-extrabold flex items-center gap-1" title="Червени показатели (риск)">🔴 {flagsSummary.red}</span>
-                )}
-              </>
-            )}
+          <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border text-xs font-mono" title="Реално време сигнали за избраната компания">
+            <span className="text-emerald-400 font-extrabold flex items-center gap-1">🟢 {flagsSummary.green}</span>
+            <span className="text-amber-400 font-extrabold flex items-center gap-1">🟡 {flagsSummary.yellow}</span>
+            <span className="text-rose-400 font-extrabold flex items-center gap-1">🔴 {flagsSummary.red}</span>
           </div>
 
           <button
