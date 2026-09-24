@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calculator, X, Calendar, Play, RotateCcw, TrendingUp, Info } from 'lucide-react';
+import { Calculator, X, Calendar, Play, RotateCcw, TrendingUp, Info, ExternalLink } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -76,14 +76,27 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-full text-ink-faint hover:text-ink hover:bg-card-hover transition-all cursor-pointer"
-            title="Затвори"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
+              }}
+              className="px-2.5 py-1 text-[10px] font-bold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap"
+              title="Отвори в нов прозорец"
+            >
+              <ExternalLink className="w-3 h-3" />
+              <span>Нов прозорец</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-full text-ink-faint hover:text-ink hover:bg-card-hover transition-all cursor-pointer"
+              title="Затвори"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Main Grid: Inputs on Left, Results on Right */}

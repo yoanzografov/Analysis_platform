@@ -1539,114 +1539,98 @@ export default function App() {
 
               <button
                 type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  if (!currentUser) {
-                    handleRequireAuth('Stock Analysis Check List');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setShowChecklistModal(true);
-                  setIsUsefulLinksMenuOpen(false);
-                }}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (!currentUser) {
                     handleRequireAuth('Stock Analysis Check List');
                     setIsUsefulLinksMenuOpen(false);
                     return;
                   }
-                  setShowChecklistModal(true);
                   setIsUsefulLinksMenuOpen(false);
+                  window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
                 }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                title="Отвори Stock Analysis Check List в нов прозорец"
               >
                 <CheckSquare className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span>Stock Analysis Check List</span>
-                {!currentUser && <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />}
+                <span className="flex-1">Stock Analysis Check List</span>
+                {!currentUser ? (
+                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
+                ) : (
+                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 ml-auto shrink-0" />
+                )}
               </button>
 
               <button
                 type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  if (!currentUser) {
-                    handleRequireAuth('Stock Profit Calculator');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setShowProfitCalculatorModal(true);
-                  setIsUsefulLinksMenuOpen(false);
-                }}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (!currentUser) {
                     handleRequireAuth('Stock Profit Calculator');
                     setIsUsefulLinksMenuOpen(false);
                     return;
                   }
-                  setShowProfitCalculatorModal(true);
                   setIsUsefulLinksMenuOpen(false);
+                  window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
                 }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                title="Отвори Stock Profit Calculator в нов прозорец"
               >
                 <Calculator className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Stock Profit Calculator</span>
-                {!currentUser && <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />}
+                <span className="flex-1">Stock Profit Calculator</span>
+                {!currentUser ? (
+                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
+                ) : (
+                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 ml-auto shrink-0" />
+                )}
               </button>
 
               <button
                 type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  if (!currentUser) {
-                    handleRequireAuth('Return on Investment (ROI)');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setShowRoiCalculatorModal(true);
-                  setIsUsefulLinksMenuOpen(false);
-                }}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (!currentUser) {
                     handleRequireAuth('Return on Investment (ROI)');
                     setIsUsefulLinksMenuOpen(false);
                     return;
                   }
-                  setShowRoiCalculatorModal(true);
                   setIsUsefulLinksMenuOpen(false);
+                  window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
                 }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                title="Отвори Return on Investment (ROI) в нов прозорец"
               >
                 <Calculator className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Return on Investment (ROI)</span>
-                {!currentUser && <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />}
+                <span className="flex-1">Return on Investment (ROI)</span>
+                {!currentUser ? (
+                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
+                ) : (
+                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 ml-auto shrink-0" />
+                )}
               </button>
 
               <button
                 type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  if (!currentUser) {
-                    handleRequireAuth('Сложна Лихва & Растеж');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setShowInvestmentCalculatorModal(true);
-                  setIsUsefulLinksMenuOpen(false);
-                }}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (!currentUser) {
                     handleRequireAuth('Сложна Лихва & Растеж');
                     setIsUsefulLinksMenuOpen(false);
                     return;
                   }
-                  setShowInvestmentCalculatorModal(true);
                   setIsUsefulLinksMenuOpen(false);
+                  window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
                 }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                title="Отвори Сложна Лихва & Растеж в нов прозорец"
               >
                 <TrendingUp className="w-4 h-4 text-indigo-400 shrink-0" />
-                <span>Сложна Лихва & Растеж</span>
-                {!currentUser && <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />}
+                <span className="flex-1">Сложна Лихва & Растеж</span>
+                {!currentUser ? (
+                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
+                ) : (
+                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 ml-auto shrink-0" />
+                )}
               </button>
             </div>
           )}

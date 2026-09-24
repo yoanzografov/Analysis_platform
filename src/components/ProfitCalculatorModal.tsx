@@ -3,7 +3,7 @@ import { Stock } from '../types';
 import { POPULAR_STOCKS_DB } from './StockChecklistModal';
 import { RAW_SPREADSHEET_CSV, parseCSVData } from '../data/initialStocks';
 import officialProfiles from '../data/officialCompanyProfiles.json';
-import { Calculator, X, Wallet, RotateCcw } from 'lucide-react';
+import { Calculator, X, Wallet, RotateCcw, ExternalLink } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -229,6 +229,17 @@ export default function ProfitCalculatorModal({
               title="Изчисти полетата"
             >
               Изчисти
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
+              }}
+              className="px-2.5 py-1 text-[10px] font-bold text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap"
+              title="Отвори в нов прозорец"
+            >
+              <ExternalLink className="w-3 h-3" />
+              <span>Нов прозорец</span>
             </button>
             <button
               type="button"

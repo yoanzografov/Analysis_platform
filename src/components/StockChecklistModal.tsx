@@ -301,6 +301,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   };
 
   const getMetricFlagType = (rowNum: number, valStr: string): 'green' | 'yellow' | 'red' | null => {
+    // Current Price (ред 7) и базовите параметри (редове 1-9) са строго изключени от сигналите
+    if (rowNum === 7 || rowNum < 10) return null;
+
     if (rowNum === 10) {
       const lvl = userInputs['10_level'] || (valStr && valStr.toLowerCase().includes('ниско') ? 'low' : valStr && valStr.toLowerCase().includes('средно') ? 'mid' : valStr && valStr.toLowerCase().includes('високо') ? 'high' : null);
       if (lvl === 'low') return 'green';
@@ -712,9 +715,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         }
         return next;
       });
-      if (val.trim() !== '') {
-        setCheckedRows(prev => ({ ...prev, 7: true }));
-      }
       return;
     }
 
@@ -841,6 +841,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const handleAutoCheckGreen = () => {
     const newChecked = { ...checkedRows };
     EXACT_SHEET_ROWS.forEach(row => {
+      if (row.rowNum === 7 || row.rowNum < 10 || !row.flagRules) return; // Строго изключва Current Price и общите редове
       const flagVal = getEffectiveMetricVal(row.rowNum);
       const flag = getMetricFlagType(row.rowNum, flagVal);
       if (flag === 'green') {
@@ -978,6 +979,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const flagsSummary = useMemo(() => {
     let green = 0, yellow = 0, red = 0;
     EXACT_SHEET_ROWS.forEach(row => {
+      // Current Price (ред 7) и общите редове без правила за флагове са напълно изключени от калкулирането на сигнали
+      if (row.rowNum === 7 || row.rowNum < 10 || !row.flagRules) return;
       const flagVal = getEffectiveMetricVal(row.rowNum);
       const flag = getMetricFlagType(row.rowNum, flagVal);
       if (flag === 'green') green++;
@@ -1113,20 +1116,33 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         <td className="py-2.5 px-4 border-r border-border/40">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-bold ${isChecked ? 'text-emerald-400' : 'text-ink'}`}>
+              <span className={`text-xs font-bold ${isChecked ? 'text-indigo-400 font-extrabold' : 'text-ink'}`}>
                 {row.label}
               </span>
               {isReadOnlyCell && (
                 <Lock className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Автоматично изчислено" />
               )}
             </div>
-            {renderStatusBadge(rowNum, getEffectiveMetricVal(rowNum))}
+            {rowNum !== 7 && renderStatusBadge(rowNum, getEffectiveMetricVal(rowNum))}
           </div>
         </td>
 
         {/* Value Box / Split Inputs */}
         <td className="py-2 px-4 border-r border-border/40">
-          {rowNum === 8 ? (
+          {rowNum === 7 ? (
+            <div className="flex justify-end">
+              <div className="flex items-center gap-1.5 bg-bg border border-border focus-within:border-indigo-500 rounded-lg px-2.5 py-1.5 h-8 w-48 transition-colors shadow-xs">
+                <span className="text-xs text-ink-muted font-bold">$</span>
+                <input
+                  type="text"
+                  value={userInputs['7'] || ''}
+                  onChange={e => handleInputChange('7', e.target.value)}
+                  placeholder="0.00"
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+            </div>
+          ) : rowNum === 8 ? (
             <div className="flex items-center gap-2 justify-end">
               <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-8">
                 <span className="text-xs text-ink-faint font-bold">Low:</span>
@@ -1494,53 +1510,47 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
                 <button
                   type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setShowProfitCalculatorModal(true);
-                    setIsToolsMenuOpen(false);
-                  }}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    setShowProfitCalculatorModal(true);
                     setIsToolsMenuOpen(false);
+                    window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
                   }}
-                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                  title="Отвори Stock Profit Calculator в нов прозорец"
                 >
                   <Calculator className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Stock Profit Calculator</span>
+                  <span className="flex-1">Stock Profit Calculator</span>
+                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 ml-auto shrink-0" />
                 </button>
 
                 <button
                   type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setShowRoiCalculatorModal(true);
-                    setIsToolsMenuOpen(false);
-                  }}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    setShowRoiCalculatorModal(true);
                     setIsToolsMenuOpen(false);
+                    window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
                   }}
-                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                  title="Отвори Return on Investment (ROI) в нов прозорец"
                 >
                   <Calculator className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Return on Investment (ROI)</span>
+                  <span className="flex-1">Return on Investment (ROI)</span>
+                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 ml-auto shrink-0" />
                 </button>
 
                 <button
                   type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setShowInvestmentCalculatorModal(true);
-                    setIsToolsMenuOpen(false);
-                  }}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    setShowInvestmentCalculatorModal(true);
                     setIsToolsMenuOpen(false);
+                    window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
                   }}
-                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                  title="Отвори Сложна Лихва & Растеж в нов прозорец"
                 >
                   <TrendingUp className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Сложна Лихва & Растеж</span>
+                  <span className="flex-1">Сложна Лихва & Растеж</span>
+                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 ml-auto shrink-0" />
                 </button>
               </div>
             )}
@@ -1750,10 +1760,23 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
         {/* Live Audit Checklist Progress & Signals Summary */}
         <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border text-xs font-mono" title="Реално време сигнали за избраната компания">
-            <span className="text-emerald-400 font-extrabold flex items-center gap-1">🟢 {flagsSummary.green}</span>
-            <span className="text-amber-400 font-extrabold flex items-center gap-1">🟡 {flagsSummary.yellow}</span>
-            <span className="text-rose-400 font-extrabold flex items-center gap-1">🔴 {flagsSummary.red}</span>
+          <div className="flex items-center gap-2 bg-bg px-3 py-1 rounded-lg border border-border text-xs font-mono" title="Обобщение на сигналите от фундаменталните показатели (без цената)">
+            <span className="text-ink-muted font-sans font-bold text-[11px] mr-0.5">Сигнали:</span>
+            {(flagsSummary.green + flagsSummary.yellow + flagsSummary.red === 0) ? (
+              <span className="text-ink-faint text-[11px] italic font-sans">Няма активни</span>
+            ) : (
+              <>
+                {flagsSummary.green > 0 && (
+                  <span className="text-emerald-400 font-extrabold flex items-center gap-1" title="Зелени показатели (отлични)">🟢 {flagsSummary.green}</span>
+                )}
+                {flagsSummary.yellow > 0 && (
+                  <span className="text-amber-400 font-extrabold flex items-center gap-1" title="Жълти показатели (внимание)">🟡 {flagsSummary.yellow}</span>
+                )}
+                {flagsSummary.red > 0 && (
+                  <span className="text-rose-400 font-extrabold flex items-center gap-1" title="Червени показатели (риск)">🔴 {flagsSummary.red}</span>
+                )}
+              </>
+            )}
           </div>
 
           <button

@@ -15,300 +15,122 @@ import {
 } from 'lucide-react';
 
 interface NewsArticle {
- title: string;
- source: string;
- time: string;
- summary: string;
- impact: 'Positive' | 'Negative' | 'Neutral';
- url: string;
- image?: string;
+  title: string;
+  source: string;
+  time: string;
+  summary: string;
+  impact: 'Positive' | 'Negative' | 'Neutral';
+  url: string;
+  image?: string;
+  category?: 'all' | 'world' | 'reuters' | 'bg';
 }
 
 interface Props {
- stocks: Stock[];
- selectedStock: Stock | null;
- onSelectStock: (stock: Stock | null) => void;
+  stocks: Stock[];
+  selectedStock: Stock | null;
+  onSelectStock: (stock: Stock | null) => void;
 }
 
 const GENERAL_FALLBACK_NEWS: NewsArticle[] = [
- {
- title: "Инфлацията в САЩ (CPI) продължава да се охлажда по-бързо от очакванията на Уолстрийт",
- source: "Yahoo Finance",
- time: "Преди 45 минути",
- summary: "Годишният индекс на потребителските цени се понижи до 2.9%, което засилва пазарните прогнози, че Федералният резерв ще започне серия от съкращения на лихвените проценти през есента.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Федералният резерв на САЩ запазва лихвените нива, но дава ясен сигнал за предстоящо понижение",
- source: "Yahoo Finance",
- time: "Преди 2 часа",
- summary: "Председателят Джером Пауъл подчерта, че икономиката се движи към целевата инфлация от 2%, а пазарът на труда се балансира, което отваря вратата за облекчаване на монетарната политика.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Доклад за заетостта в САЩ (Non-Farm Payrolls) показва неочаквана устойчивост и умерено заплащане",
- source: "Yahoo Finance",
- time: "Преди 4 часа",
- summary: "През изминалия месец бяха разкрити 185,000 нови работни места, поддържайки безработицата стабилна на ниво от 4.0%. Умереният ръст на заплатите намалява опасенията от инфлационна спирала.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Доходността по 10-годишните щатски държавни облигации се понижава рязко след изявления на ФЕД",
- source: "Yahoo Finance",
- time: "Преди 6 часа",
- summary: "Пазарът на облигации реагира мигновено на сигналите за по-ниски лихви. Доходността на бенчмарковите 10-годишни съкровищни бонове падна под 4.10%, което подкрепи акциите с висок растеж.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Лихвените проценти на централните банки остават под строго наблюдение от глобалните инвеститори",
- source: "Yahoo Finance",
- time: "Преди 1 час",
- summary: "Глобалните пазари показват смесени настроения, докато икономистите анализират последните коментари от представители на Федералния резерв и ЕЦБ относно бъдещата траектория на инфлацията и лихвите.",
- impact: "Neutral",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Технологичният сектор продължава да води пазарното рали, подкрепен от масивни AI иновации",
- source: "Yahoo Finance",
- time: "Преди 3 часа",
- summary: "Инвестициите в изкуствен интелект и облачни инфраструктури достигат рекордни нива през това тримесечие. Компаниите за полупроводници и софтуерни услуги отчитат силно търсене.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Регулаторните органи затягат контрола върху антимонополните практики на големите платформи",
- source: "Yahoo Finance",
- time: "Преди 5 часа",
- summary: "Нови разследвания в САЩ и ЕС поставят под въпрос пазарната доминация на някои от най-големите технологични конгломерати. Очаква се това да доведе до по-високи правни разходи.",
- impact: "Negative",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Доклад за пазара на суровини: Цените на енергоносителите се стабилизират на фона на геополитиката",
- source: "Yahoo Finance",
- time: "Днес",
- summary: "Цените на петрола и природния газ се движат в тесен диапазон, балансирани между производствените нива и геополитическите фактори в Близкия Изток.",
- impact: "Neutral",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Златото отбелязва нов исторически връх на фона на геополитически риск и засилено търсене",
- source: "Yahoo Finance",
- time: "Днес",
- summary: "Цената на благородния метал премина границата от $2450 за тройунция, стимулирана от търсенето на активи убежища от страна на централните банки и дългосрочните инвеститори.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "БВП на САЩ нараства с 2.8% за последното тримесечие, надхвърляйки предварителните очаквания",
- source: "Yahoo Finance",
- time: "Днес",
- summary: "Силното потребителско търсене и бизнес инвестициите улесняват сценария за 'меко кацане' на американската икономика без изпадане в рецесия.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Търговия на дребно в САЩ: Потребителските разходи остават изненадващо силни",
- source: "Yahoo Finance",
- time: "Днес",
- summary: "Последните статистически данни показват ръст от 0.6% в продажбите на дребно, воден от онлайн търговията и разходите за услуги, което демонстрира икономическата устойчивост на домакинствата.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "ОПЕК+ постигна съгласие за удължаване на доброволните съкращения на добива на суров петрол",
- source: "Yahoo Finance",
- time: "Вчера",
- summary: "С цел поддържане стабилността на пазарите и противодействие на нарастващото производство от страни извън картела, страните членки ще запазят настоящите нива на ограничение до края на годината.",
- impact: "Neutral",
- url: "https://finance.yahoo.com"
- },
- {
- title: "МВФ актуализира глобалната си прогноза: Икономическото възстановяване остава стабилно, но неравномерно",
- source: "Yahoo Finance",
- time: "Вчера",
- summary: "Международният валутен фонд прогнозира 3.2% глобален растеж. Докладът посочва, че инфлационните рискове намаляват, но високите нива на държавен дълг изискват фискална предпазливост.",
- impact: "Neutral",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Инвестиционна активност в Европа: Очаква се сериозен ръст в зелената енергия",
- source: "Yahoo Finance",
- time: "Днес",
- summary: "Нови данни показват, че инвестиционните фондове увеличават експозициите си към устойчиви и зелени активи, в съответствие с новите регулаторни изисквания на ЕС.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Индексът Fear and Greed преминава в зоната на 'Екстремна алчност'",
- source: "Yahoo Finance",
- time: "Днес",
- summary: "Пазарният индикатор за страх и алчност (CNN Fear & Greed Index) достигна нива от 82 пункта, сигнализирайки за навлизане в зоната на 'Екстремна алчност' на фона на силния импулс на пазарите.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Анализ на пазарната оценка: Моделите на дисконтираните парични потоци за големите активи",
- source: "Yahoo Finance",
- time: "Вчера",
- summary: "Скорошните анализи показват, че някои водещи компании се търгуват близо до справедливата си пазарна стойност, оставяйки по-малък марж на безопасност за нови инвестиции.",
- impact: "Neutral",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Ръст на броя на първичните публични предлагания (IPO) на пазара",
- source: "Yahoo Finance",
- time: "Преди 2 дни",
- summary: "Няколко нови обещаващи стартъпи обявиха плановете си да излязат на борсата през следващия месец. Инвеститорите очакват засилване на конкуренцията в секторите на софтуера и здравеопазването.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Разширяване на глобалните вериги за доставки на полупроводници",
- source: "Yahoo Finance",
- time: "Преди 3 дни",
- summary: "Нови производствени мощности в САЩ и Азия започват работа за облекчаване на логистичните предизвикателства и задоволяване на огромното търсене на пазара на чипове.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Икономически предизвикателства: Влиянието на инфлационния натиск върху малкия бизнес",
- source: "Yahoo Finance",
- time: "Преди 4 дни",
- summary: "Въпреки стабилизирането на основните суровини, разходите за заплати и наеми продължават да оказват натиск върху маржовете на по-малките търговски вериги.",
- impact: "Negative",
- url: "https://finance.yahoo.com"
- },
- {
- title: "ФЕД обмисля по-сериозно намаляване на лихвите след нови данни за трудовия пазар",
- source: "Bloomberg",
- time: "Преди 2 часа",
- summary: "Членове на Федералния резерв загатват за възможна стъпка от 50 базисни пункта през септември, с цел превантивно укрепване на икономическия растеж и заетостта.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Пазарен анализ: Глобалният AI хардуерен сектор се очаква да нарасне с 35% през 2026 г.",
- source: "Reuters",
- time: "Преди 5 часа",
- summary: "Проучвания на пазара показват непрекъснато търсене на ускорители за дълбоко обучение и специализиран хардуер в корпоративните центрове за данни по целия свят.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "ETF на злато и дигитални активи отбелязват рекорден седмичен приток на институционален капитал",
- source: "Financial Times",
- time: "Днес",
- summary: "Увеличаващата се макроикономическа несигурност насочва големите фондове към алтернативни активи и сигурни убежища за съхранение на стойност.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Сезонът на отчетите: Големите компании запазват здрави маржове чрез автоматизация и ИИ",
- source: "Wall Street Journal",
- time: "Вчера",
- summary: "Повече от 75% от корпорациите в S&P 500 надвишиха консенсусните прогнози за нетна печалба за последното тримесечие благодарение на сериозни оптимизации.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Европейската централна банка (ЕЦБ) намалява лихвените проценти с 25 базисни пункта",
- source: "Bloomberg",
- time: "Вчера",
- summary: "Управителният съвет на ЕЦБ взе решение за ново намаляване на лихвените нива след забавяне на общата инфлация в Еврозоната до целевия диапазон от 2.2%.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "S&P 500 достига нов исторически рекорд, воден от компаниите за облачни изчисления",
- source: "Reuters",
- time: "Днес",
- summary: "Широкият американски индекс премина поредния си крайъгълен камък. Инвеститорите остават изключително оптимистично настроени за приходите на технологичния сектор през следващата година.",
- impact: "Positive",
- url: "https://finance.yahoo.com"
- },
- {
- title: "Анализатори очакват повишена волатилност поради наближаващите фискални промени",
- source: "Financial Times",
- time: "Преди 1 ден",
- summary: "Преструктурирането на данъчните облекчения и бюджетните спорове в Сената могат да предизвикат временни разпродажби на пазарите на акции, предупреждават финансови съветници.",
- impact: "Negative",
- url: "https://finance.yahoo.com"
- }
+  {
+    title: "Пазарите на Уолстрийт реагират на новите монетарни сигнали от Федералния резерв",
+    source: "CNBC",
+    time: "Преди 25 минути",
+    summary: "Основните борсови индекси S&P 500 и Nasdaq отчитат повишена волатилност, докато инвеститорите оценяват перспективите за лихвените нива и корпоративните отчети.",
+    impact: "Positive",
+    url: "https://www.cnbc.com/finance/",
+    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=80",
+    category: "world"
+  },
+  {
+    title: "Технологичният сектор води ралито с ръст в търсенето на AI чипове и облачни услуги",
+    source: "MarketWatch",
+    time: "Преди 45 минути",
+    summary: "Акциите на производителите на полупроводници и инфраструктурен софтуер отбелязват стабилен интерес след публикувани нови партньорства в сектора.",
+    impact: "Positive",
+    url: "https://www.marketwatch.com/",
+    image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&auto=format&fit=crop&q=80",
+    category: "world"
+  },
+  {
+    title: "Петролът и златото се стабилизират след геополитически развития и срещи на ОПЕК+",
+    source: "Reuters",
+    time: "Преди 1 час",
+    summary: "Суровият петрол сорт Брент се търгува около ключови нива на подкрепа, а инвеститорите следят динамиката в глобалното индустриално търсене.",
+    impact: "Neutral",
+    url: "https://www.investing.com/commodities/crude-oil",
+    image: "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=600&auto=format&fit=crop&q=80",
+    category: "reuters"
+  },
+  {
+    title: "Европейските борси и БФБ отчитат засилен интерес към финансовия и енергийния сектор",
+    source: "Investor.bg",
+    time: "Преди 2 часа",
+    summary: "Българският индекс SOFIX и европейските пазари затварят сесията с положителен тренд на фона на нови дивиденти и стабилни тримесечни финансови отчети.",
+    impact: "Positive",
+    url: "https://www.investor.bg/rss/latest",
+    image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=80",
+    category: "bg"
+  }
 ];
 
 export default function CompanyNewsContainer({ stocks, selectedStock, onSelectStock }: Props) {
  const [news, setNews] = useState<NewsArticle[]>([]);
  const [loading, setLoading] = useState(false);
  const [error, setError] = useState('');
+ const [selectedCategory, setSelectedCategory] = useState<'all' | 'world' | 'reuters' | 'bg'>('all');
 
- const fetchNews = async () => {
- setLoading(true);
- setError('');
- 
- try {
-    let rssUrl = 'https://finance.yahoo.com/news/rssindex';
-    if (selectedStock) {
-      rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(selectedStock.ticker + ' stock finance')}&hl=en-US`;
-    }
+  const fetchNews = async (forceRefresh: boolean = false) => {
+    setLoading(true);
+    setError('');
 
-    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
-    const response = await fetch(apiUrl);
-    if (!response.ok) throw new Error('Network error');
+    try {
+      let endpoint = forceRefresh ? '/api/global-news?refresh=true' : '/api/global-news';
+      let options: RequestInit = { method: 'GET' };
 
-    const data = await response.json();
-    if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
-      const parsedNews: NewsArticle[] = data.items.map((item: any) => {
-        const rawDesc = item.description || item.content || '';
-        const cleanDesc = rawDesc.replace(/<[^>]*>?/gm, '').trim();
-
-        const text = (item.title + ' ' + cleanDesc).toLowerCase();
-        let impact: 'Positive' | 'Negative' | 'Neutral' = 'Neutral';
-        if (text.match(/surge|soar|gain|beat|high|growth|profit|record|up|jump|buy|bull|rall|top/)) {
-          impact = 'Positive';
-        } else if (text.match(/fall|drop|loss|cut|risk|down|warn|decline|sink|bear|sell|plunge|crash/)) {
-          impact = 'Negative';
-        }
-
-        let formattedTime = 'Преди малко';
-        if (item.pubDate) {
-          const diffMinutes = Math.floor((Date.now() - new Date(item.pubDate).getTime()) / (1000 * 60));
-          if (diffMinutes < 60) {
-            formattedTime = `Преди ${Math.max(1, diffMinutes)} мин.`;
-          } else if (diffMinutes < 1440) {
-            formattedTime = `Преди ${Math.floor(diffMinutes / 60)} ч.`;
-          } else {
-            formattedTime = `Преди ${Math.floor(diffMinutes / 1440)} дни`;
-          }
-        }
-
-        return {
-          title: item.title || 'Yahoo Finance Новини',
-          source: item.author || (selectedStock ? 'Yahoo Finance / Market News' : 'Yahoo Finance RSS'),
-          time: formattedTime,
-          summary: cleanDesc.length > 220 ? cleanDesc.slice(0, 220) + '...' : cleanDesc,
-          impact,
-          url: item.link || (selectedStock ? `https://finance.yahoo.com/quote/${selectedStock.ticker}` : 'https://finance.yahoo.com'),
-          image: item.thumbnail || item.enclosure?.link
+      if (selectedStock) {
+        endpoint = '/api/company-news';
+        options = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ticker: selectedStock.ticker,
+            companyName: selectedStock.companyName
+          })
         };
-      });
+      }
 
-      setNews(parsedNews);
-    } else {
-      throw new Error('No RSS items returned');
+      const response = await fetch(endpoint, options);
+      if (!response.ok) throw new Error('Неуспешна заявка към сървъра за новини');
+
+      const data = await response.json();
+      const rawArticles = Array.isArray(data) ? data : (data.news && Array.isArray(data.news)) ? data.news : [];
+
+      if (rawArticles.length > 0) {
+        const parsedNews: NewsArticle[] = rawArticles.map((item: any) => ({
+          title: item.title || 'Финансова новина',
+          source: item.source || (selectedStock ? 'Пазарен източник' : 'Световни пазари'),
+          time: item.time || 'Днес',
+          summary: item.summary || '',
+          impact: (item.impact === 'Positive' || item.impact === 'Negative') ? item.impact : 'Neutral',
+          url: (item.url && item.url.startsWith('http'))
+            ? item.url
+            : (selectedStock ? `https://finance.yahoo.com/quote/${selectedStock.ticker}` : 'https://www.cnbc.com/finance/'),
+          image: item.image,
+          category: item.category || 'world'
+        }));
+        setNews(parsedNews);
+      } else {
+        throw new Error('Няма върнати новини от сървъра');
+      }
+    } catch (err: any) {
+      console.error("Error fetching news:", err);
+      setError('Неуспешна връзка със сървъра. Използваме резервен информационен поток.');
+      setNews(selectedStock ? getFallbackNewsLocal(selectedStock.ticker, selectedStock.companyName) : GENERAL_FALLBACK_NEWS);
+    } finally {
+      setLoading(false);
     }
- } catch (err: any) {
- console.error("Error fetching news:", err);
- setError('Неуспешна връзка със сървъра. Използваме сигурен резервен поток.');
- setNews(selectedStock ? getFallbackNewsLocal(selectedStock.ticker, selectedStock.companyName) : GENERAL_FALLBACK_NEWS);
- } finally {
- setLoading(false);
- }
- };
+  };
 
  useEffect(() => {
  fetchNews();
@@ -426,183 +248,304 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
  }
  };
 
- return (
- <div id="company-news-container" className="bg-bg rounded-2xl border border-border p-4 mt-5 shadow-xs">
- {/* Header section */}
- <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4 mb-4">
- <div>
- <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
- <Newspaper className="w-3.5 h-3.5 text-[#10b981]" />
- {selectedStock ? `Най-важни новини за ${selectedStock.companyName} (${selectedStock.ticker})` : 'Глобални финансови & пазарни новини'}
- </h3>
- <p className="text-xs text-ink-faint mt-0.5">
-  Актуални световни финансови новини в реално време от Yahoo Finance Live RSS поток.
-  </p>
- </div>
+  const getSourceBadge = (source: string) => {
+    const s = (source || '').toLowerCase();
+    if (s.includes('cnbc')) {
+      return (
+        <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-xs font-extrabold uppercase rounded-2xl font-sans tracking-tight">
+          CNBC
+        </span>
+      );
+    }
+    if (s.includes('marketwatch') || s.includes('dow jones')) {
+      return (
+        <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-300 px-2 py-0.5 text-xs font-extrabold uppercase rounded-2xl font-sans tracking-tight">
+          MarketWatch
+        </span>
+      );
+    }
+    if (s.includes('reuters')) {
+      return (
+        <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 text-xs font-extrabold uppercase rounded-2xl font-sans tracking-tight">
+          Reuters
+        </span>
+      );
+    }
+    if (s.includes('investor')) {
+      return (
+        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-xs font-extrabold uppercase rounded-2xl font-sans tracking-tight">
+          Investor.bg
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 bg-card text-ink-muted border border-border px-2 py-0.5 text-xs font-bold uppercase rounded-2xl font-sans tracking-tight">
+        {source}
+      </span>
+    );
+  };
 
- <div className="flex flex-wrap items-center gap-2.5">
- {/* Dropdown for quick stock selection */}
- <div className="flex items-center gap-2 bg-bg p-1.5 border border-border rounded-2xl text-xs">
- <label className="text-xs font-sans tabular-nums font-bold text-ink-muted uppercase whitespace-nowrap">АКТИВ:</label>
- <select
- value={selectedStock ? selectedStock.ticker : ''}
- onChange={(e) => {
- const tick = e.target.value;
- const found = stocks.find((s) => s.ticker === tick);
- onSelectStock(found || null);
- }}
- className="bg-bg rounded-2xl border border-border px-2 py-0.5 text-xs text-ink font-bold focus:outline-none min-w-[120px] max-w-[180px]"
- >
- <option value="">-- Общ Пазар --</option>
- {stocks.map((s, idx) => (
- <option key={`${s.ticker}-${idx}`} value={s.ticker}>
- {s.ticker} - {s.companyName}
- </option>
- ))}
- </select>
- </div>
+  const displayedNews = selectedStock
+    ? news
+    : news.filter(item => {
+        if (selectedCategory === 'all') return true;
+        if (selectedCategory === 'world') {
+          return item.category === 'world' || item.source.includes('CNBC') || item.source.includes('MarketWatch');
+        }
+        if (selectedCategory === 'reuters') {
+          return item.category === 'reuters' || item.source.includes('Reuters') || item.source.includes('Investing');
+        }
+        if (selectedCategory === 'bg') {
+          return item.category === 'bg' || item.source.includes('Investor');
+        }
+        return true;
+      });
 
- <button
- onClick={fetchNews}
- disabled={loading}
- className="bg-bg rounded-2xl hover:bg-bg border border-border text-ink font-extrabold text-xs px-3 py-1.5 flex items-center gap-1.5 uppercase transition-all cursor-pointer disabled:opacity-50"
- title="Обновяване на новинарския поток"
- >
- <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
- Опресни
- </button>
+  return (
+    <div id="company-news-container" className="bg-bg rounded-2xl border border-border p-4 mt-5 shadow-xs">
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4 mb-4">
+        <div>
+          <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums tracking-tight flex items-center gap-1.5">
+            <Newspaper className="w-3.5 h-3.5 text-[#10b981]" />
+            {selectedStock ? `Най-важни новини за ${selectedStock.companyName} (${selectedStock.ticker})` : 'Глобални финансови & пазарни новини'}
+          </h3>
+          <p className="text-xs text-ink-faint mt-0.5">
+            Актуални световни финансови новини от CNBC, MarketWatch, Reuters и Investor.bg с директни работещи връзки.
+          </p>
+        </div>
 
- {selectedStock && (
- <button
- onClick={() => onSelectStock(null)}
- className="bg-bg hover:bg-card-hover border border-border-hover text-ink-muted font-bold text-xs px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all cursor-pointer"
- >
- <X className="w-3 h-3" />
- Общи новини
- </button>
- )}
- </div>
- </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Dropdown for quick stock selection */}
+          <div className="flex items-center gap-2 bg-bg p-1.5 border border-border rounded-2xl text-xs">
+            <label className="text-xs font-sans tabular-nums font-bold text-ink-muted uppercase whitespace-nowrap">АКТИВ:</label>
+            <select
+              value={selectedStock ? selectedStock.ticker : ''}
+              onChange={(e) => {
+                const tick = e.target.value;
+                const found = stocks.find((s) => s.ticker === tick);
+                onSelectStock(found || null);
+              }}
+              className="bg-bg rounded-2xl border border-border px-2 py-0.5 text-xs text-ink font-bold focus:outline-none min-w-[120px] max-w-[180px]"
+            >
+              <option value="">-- Общ Пазар --</option>
+              {stocks.map((s, idx) => (
+                <option key={`${s.ticker}-${idx}`} value={s.ticker}>
+                  {s.ticker} - {s.companyName}
+                </option>
+              ))}
+            </select>
+          </div>
 
- {/* Main Content list */}
- <div className="bg-bg border border-border p-4 rounded-2xl min-h-[220px]">
- {loading ? (
- <div className="flex flex-col items-center justify-center text-center py-12">
- <RefreshCw className="w-8 h-8 text-[#10b981] animate-spin mb-4" />
- <h4 className="text-xs font-extrabold font-sans tabular-nums uppercase text-ink tracking-tight">
- Извличане на проверени новини...
- </h4>
- <p className="text-xs text-ink-faint max-w-md mt-2 leading-relaxed">
- Google AI сканира надеждни източници в реално време, за да открие най-влиятелните статии и регулаторни събития за {selectedStock ? selectedStock.companyName : 'глобалните пазари'}...
- </p>
- </div>
- ) : error ? (
- <div className="bg-bg border border-border p-4 rounded-2xl">
- <div className="flex items-center gap-2 text-amber-800 font-sans tabular-nums text-xs font-bold mb-2">
- <AlertTriangle className="w-4 h-4 shrink-0" />
- <span>{error}</span>
- </div>
- 
- {/* Displaying fallbacks inside error screen automatically */}
- <div className="mt-4 space-y-4">
- <h4 className="text-xs uppercase font-bold text-ink-faint font-sans tabular-nums tracking-wider">Резервни актуални новини:</h4>
- <div className="flex flex-col gap-3 max-h-[520px] overflow-y-auto pr-1">
- {news.map((item, idx) => (
- <div key={idx} className="bg-bg rounded-2xl border border-border p-3">
- <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-1.5 mb-2 font-sans tabular-nums text-xs">
- <div className="flex items-center gap-1.5">
- <span className="font-bold text-ink uppercase">{item.source}</span>
- <span className="text-ink0">•</span>
- <span className="text-ink-faint">{item.time}</span>
- </div>
- {getImpactBadge(item.impact)}
- </div>
- <h5 className="text-xs font-bold text-ink font-sans leading-snug">{item.title}</h5>
- <p className="text-xs text-ink-faint mt-1.5 leading-relaxed">{item.summary}</p>
- <a
- href={item.url}
- target="_blank"
- referrerPolicy="no-referrer"
- className="inline-flex items-center gap-1 text-xs font-bold text-[#10b981] hover:underline mt-2"
- >
- Прочетете цялата статия на {item.source} <ExternalLink className="w-3 h-3" />
- </a>
- </div>
- ))}
- </div>
- </div>
- </div>
- ) : news.length === 0 ? (
- <div className="flex flex-col items-center justify-center text-center py-10">
- <HelpCircle className="w-8 h-8 text-ink-faint mb-3" />
- <h4 className="text-xs font-extrabold font-sans tabular-nums uppercase text-ink tracking-tight">
- Няма налични новини в момента
- </h4>
- <p className="text-xs text-ink-faint max-w-md mt-1">
- Не бяха открити скорошни събития за този актив. Моля, проверете отново по-късно или изберете друг актив.
- </p>
- </div>
- ) : (
- <div className="flex flex-col gap-3.5 max-h-[520px] overflow-y-auto pr-1">
- {news.map((item, idx) => (
- <div 
- key={idx} 
- className="bg-bg rounded-2xl border border-border p-4 flex flex-col md:flex-row gap-4 hover:border-emerald-800 transition-all shadow-xs group"
- >
- {item.image && (
-   <div className="w-full md:w-32 h-24 shrink-0 rounded-xl overflow-hidden bg-card border border-border">
-     <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-   </div>
- )}
- <div className="flex-1 flex flex-col justify-between">
- <div>
- <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2 mb-3 font-sans tabular-nums text-xs">
- <div className="flex items-center gap-1.5">
- <span className="font-extrabold text-[#10b981] uppercase tracking-tight">{item.source}</span>
- <span className="text-ink0">•</span>
- <div className="flex items-center gap-1 text-ink-faint">
- <Clock className="w-3 h-3" />
- <span>{item.time}</span>
- </div>
- </div>
- {getImpactBadge(item.impact)}
- </div>
+          <button
+            onClick={() => fetchNews(true)}
+            disabled={loading}
+            className="bg-bg rounded-2xl hover:bg-card-hover border border-border text-ink font-extrabold text-xs px-3 py-1.5 flex items-center gap-1.5 uppercase transition-all cursor-pointer disabled:opacity-50"
+            title="Обновяване на новинарския поток от медиите"
+          >
+            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+            Опресни
+          </button>
 
- <h4 className="text-xs font-extrabold text-ink font-sans leading-snug group-hover:text-[#10b981] transition-colors">
- {item.title}
- </h4>
- 
- <p className="text-xs text-ink-faint mt-2 leading-relaxed font-sans">
- {item.summary}
- </p>
- </div>
+          {selectedStock && (
+            <button
+              onClick={() => onSelectStock(null)}
+              className="bg-bg hover:bg-card-hover border border-border-hover text-ink-muted font-bold text-xs px-3 py-1.5 rounded-2xl flex items-center gap-1.5 uppercase transition-all cursor-pointer"
+            >
+              <X className="w-3 h-3" />
+              Общи новини
+            </button>
+          )}
+        </div>
+      </div>
 
- <div className="mt-4 pt-2.5 border-t border-dashed border-border/50 flex items-center justify-between">
- <span className="text-xs font-sans tabular-nums text-ink-faint uppercase">Официален източник</span>
- <a
- href={item.url}
- target="_blank"
- rel="noopener noreferrer"
- referrerPolicy="no-referrer"
- className="inline-flex items-center gap-1.5 text-xs font-bold text-[#10b981] hover:text-emerald-950 hover:underline cursor-pointer"
- >
- Линк към статията <ExternalLink className="w-3 h-3 text-[#10b981]" />
- </a>
- </div>
- </div>
- </div>
- ))}
- </div>
- )}
- </div>
+      {/* Category filter tabs for global market view */}
+      {!selectedStock && (
+        <div className="flex flex-wrap items-center gap-1.5 pb-3 mb-3 border-b border-border/50">
+          <button
+            onClick={() => setSelectedCategory('all')}
+            className={`px-3 py-1 rounded-2xl text-xs font-bold uppercase transition-all cursor-pointer font-sans tabular-nums ${
+              selectedCategory === 'all'
+                ? 'bg-[#10b981] text-white shadow-xs'
+                : 'bg-card hover:bg-card-hover border border-border text-ink-muted'
+            }`}
+          >
+            Всички ({news.length})
+          </button>
+          <button
+            onClick={() => setSelectedCategory('world')}
+            className={`px-3 py-1 rounded-2xl text-xs font-bold uppercase transition-all cursor-pointer font-sans tabular-nums ${
+              selectedCategory === 'world'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-card hover:bg-card-hover border border-border text-ink-muted'
+            }`}
+          >
+            Уолстрийт & Свят (CNBC / MarketWatch)
+          </button>
+          <button
+            onClick={() => setSelectedCategory('reuters')}
+            className={`px-3 py-1 rounded-2xl text-xs font-bold uppercase transition-all cursor-pointer font-sans tabular-nums ${
+              selectedCategory === 'reuters'
+                ? 'bg-orange-600 text-white shadow-xs'
+                : 'bg-card hover:bg-card-hover border border-border text-ink-muted'
+            }`}
+          >
+            Reuters & Борси
+          </button>
+          <button
+            onClick={() => setSelectedCategory('bg')}
+            className={`px-3 py-1 rounded-2xl text-xs font-bold uppercase transition-all cursor-pointer font-sans tabular-nums ${
+              selectedCategory === 'bg'
+                ? 'bg-emerald-700 text-white shadow-xs'
+                : 'bg-card hover:bg-card-hover border border-border text-ink-muted'
+            }`}
+          >
+            България & БФБ (Investor.bg)
+          </button>
+        </div>
+      )}
 
- {/* Footer disclaimer */}
- <div className="mt-3 bg-bg border border-border p-2.5 text-xs text-ink-faint leading-normal font-sans tabular-nums flex items-start gap-1.5">
- <HelpCircle className="w-3.5 h-3.5 text-[#10b981] shrink-0 mt-0.5" />
- <span>
- Всички изведени новини се извличат автоматично в реално време чрез Google Search Grounding и са строго ограничени до единствения официален източник Yahoo Finance. Анализът на ценовия импулс („Положително“, „Отрицателно“, „Неутрално“) се определя от изкуствения интелект и е с чисто информационен характер.
- </span>
- </div>
- </div>
- );
+      {/* Main Content list */}
+      <div className="bg-bg border border-border p-4 rounded-2xl min-h-[220px]">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center text-center py-12">
+            <RefreshCw className="w-8 h-8 text-[#10b981] animate-spin mb-4" />
+            <h4 className="text-xs font-extrabold font-sans tabular-nums uppercase text-ink tracking-tight">
+              Извличане на проверени финансови новини...
+            </h4>
+            <p className="text-xs text-ink-faint max-w-md mt-2 leading-relaxed">
+              Свързване с CNBC, MarketWatch, Reuters и Investor.bg в реално време за най-актуалните статии...
+            </p>
+          </div>
+        ) : error ? (
+          <div className="bg-bg border border-border p-4 rounded-2xl">
+            <div className="flex items-center gap-2 text-amber-800 font-sans tabular-nums text-xs font-bold mb-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+            
+            <div className="mt-4 space-y-4">
+              <h4 className="text-xs uppercase font-bold text-ink-faint font-sans tabular-nums tracking-wider">Резервни актуални новини:</h4>
+              <div className="flex flex-col gap-3 max-h-[520px] overflow-y-auto pr-1">
+                {news.map((item, idx) => (
+                  <div key={idx} className="bg-bg rounded-2xl border border-border p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-1.5 mb-2 font-sans tabular-nums text-xs">
+                      <div className="flex items-center gap-1.5">
+                        {getSourceBadge(item.source)}
+                        <span className="text-ink0">•</span>
+                        <span className="text-ink-faint">{item.time}</span>
+                      </div>
+                      {getImpactBadge(item.impact)}
+                    </div>
+                    <h5 className="text-xs font-bold text-ink font-sans leading-snug">
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        {item.title}
+                      </a>
+                    </h5>
+                    <p className="text-xs text-ink-faint mt-1.5 leading-relaxed">{item.summary}</p>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      referrerPolicy="no-referrer"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#10b981] hover:underline mt-2"
+                    >
+                      Прочетете в {item.source} <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : displayedNews.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center py-10">
+            <HelpCircle className="w-8 h-8 text-ink-faint mb-3" />
+            <h4 className="text-xs font-extrabold font-sans tabular-nums uppercase text-ink tracking-tight">
+              Няма намерени новини за тази категория
+            </h4>
+            <p className="text-xs text-ink-faint max-w-md mt-1">
+              Моля, изберете „Всички“ или опреснете потока за да заредите най-новите статии.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3.5 max-h-[560px] overflow-y-auto pr-1">
+            {displayedNews.map((item, idx) => (
+              <div 
+                key={idx} 
+                className="bg-card rounded-2xl border border-border p-4 flex flex-col sm:flex-row gap-4 hover:border-emerald-800 transition-all shadow-xs group"
+              >
+                {item.image && (
+                  <div className="w-full sm:w-36 h-28 shrink-0 rounded-xl overflow-hidden bg-bg border border-border/80 relative">
+                    <img 
+                      src={item.image} 
+                      alt={item.title} 
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2 mb-2.5 font-sans tabular-nums text-xs">
+                      <div className="flex items-center gap-2">
+                        {getSourceBadge(item.source)}
+                        <span className="text-ink0">•</span>
+                        <div className="flex items-center gap-1 text-ink-faint">
+                          <Clock className="w-3 h-3" />
+                          <span>{item.time}</span>
+                        </div>
+                      </div>
+                      {getImpactBadge(item.impact)}
+                    </div>
+
+                    <h4 className="text-xs font-black text-ink font-sans leading-snug group-hover:text-[#10b981] transition-colors">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        referrerPolicy="no-referrer"
+                        className="hover:underline cursor-pointer block"
+                      >
+                        {item.title}
+                      </a>
+                    </h4>
+                    
+                    <p className="text-xs text-ink-faint mt-1.5 leading-relaxed font-sans line-clamp-2">
+                      {item.summary}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-dashed border-border/50 flex items-center justify-between">
+                    <span className="text-xs font-sans tabular-nums text-ink-faint uppercase">
+                      {item.source}
+                    </span>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      referrerPolicy="no-referrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#10b981] hover:text-emerald-950 hover:underline cursor-pointer"
+                    >
+                      Към статията в {item.source} <ExternalLink className="w-3 h-3 text-[#10b981]" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer disclaimer */}
+      <div className="mt-3 bg-bg border border-border p-2.5 text-xs text-ink-faint leading-normal font-sans tabular-nums flex items-start gap-1.5">
+        <HelpCircle className="w-3.5 h-3.5 text-[#10b981] shrink-0 mt-0.5" />
+        <span>
+          Всички изведени новини се извличат автоматично в реално време от водещите световни и български финансови медии (CNBC, MarketWatch, Reuters, Investor.bg) и водят директно към официалните статии. Пазарният анализ на импулса („Положително“, „Отрицателно“, „Неутрално“) се определя от изкуствен интелект и е с чисто информационен характер.
+        </span>
+      </div>
+    </div>
+  );
 }

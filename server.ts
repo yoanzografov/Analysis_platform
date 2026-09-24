@@ -12,7 +12,19 @@ const YahooFinance = (yfModule as any).default?.default || (yfModule as any).def
 const yahooFinance = new YahooFinance({
   suppressNotices: ['yahooSurvey']
 });
-const rssParser = new Parser();
+const rssParser = new Parser({
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+  },
+  customFields: {
+    item: [
+      ['media:content', 'mediaContent'],
+      ['media:thumbnail', 'mediaThumbnail'],
+      ['enclosure', 'enclosure']
+    ]
+  }
+});
 
 dotenv.config();
 
@@ -259,205 +271,392 @@ function determineLocalImpact(title: string, desc: string): string {
   return score > 0 ? "Positive" : score < 0 ? "Negative" : "Neutral";
 }
 
-async function fetchYahooRssNews(ticker: string): Promise<any[]> {
-  try {
-    const response = await fetch(`https://finance.yahoo.com/rss/headline?s=${encodeURIComponent(ticker)}`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-      }
-    });
-    if (!response.ok) return [];
-    const xmlText = await response.text();
-    
-    const items: any[] = [];
-    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-    let match;
-    
-    while ((match = itemRegex.exec(xmlText)) !== null) {
-      const itemContent = match[1];
-      const titleMatch = itemContent.match(/<title>([\s\S]*?)<\/title>/);
-      const descMatch = itemContent.match(/<description>([\s\S]*?)<\/description>/);
-      const linkMatch = itemContent.match(/<link>([\s\S]*?)<\/link>/);
-      const dateMatch = itemContent.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
-      
-      const title = titleMatch ? cleanXmlString(titleMatch[1]) : "";
-      const description = descMatch ? cleanXmlString(descMatch[1]) : "";
-      const link = linkMatch ? cleanXmlString(linkMatch[1]) : "";
-      const pubDate = dateMatch ? cleanXmlString(dateMatch[1]) : "";
-      
-      if (title && link) {
-        items.push({
-          title,
-          source: "Yahoo Finance",
-          time: formatRssDate(pubDate),
-          summary: description,
-          impact: determineLocalImpact(title, description),
-          url: link
-        });
-      }
-    }
-    return items;
-  } catch (e: any) {
-    console.error("Грешка при извличане на RSS новини от Yahoo:", e.message);
-    return [];
-  }
+export interface RealNewsItem {
+  title: string;
+  source: string;
+  time: string;
+  summary: string;
+  impact: 'Positive' | 'Negative' | 'Neutral';
+  url: string;
+  image?: string;
+  category?: 'all' | 'world' | 'reuters' | 'bg';
+  publishedDate?: string;
 }
 
-// Endpoint for fetching high-quality verified news about stocks or global markets using Yahoo Finance RSS + Gemini translation
-app.post("/api/company-news", async (req, res) => {
-  try {
-    const { ticker, companyName } = req.body;
-    let newsData: any[] = [];
-    let apiSuccess = false;
+// In-memory news caches with 8-minute TTL to ensure sub-50ms responses and prevent rate-limiting
+interface NewsCacheEntry {
+  timestamp: number;
+  news: RealNewsItem[];
+}
+let globalNewsCache: NewsCacheEntry | null = null;
+const companyNewsCache = new Map<string, NewsCacheEntry>();
+const NEWS_CACHE_TTL_MS = 8 * 60 * 1000; // 8 minutes
 
-    // 1. Try to fetch direct RSS Yahoo Finance news if ticker is provided
-    if (ticker) {
-      const rssItems = await fetchYahooRssNews(ticker);
-      if (rssItems.length > 0) {
-        const topRssItems = rssItems.slice(0, 5);
-        try {
-          const ai = getGeminiClient();
-          const prompt = `Преведи следните финансови новини на български език и определи тяхното пазарно влияние (impact: "Positive" | "Negative" | "Neutral").
-Запази съответните оригинални линкове (url) и източници (source) непроменени. Върни отговора САМО като валиден JSON масив, без никакви обяснения или допълнителен текст извън JSON формата.
+const fetchWithTimeout = (promise: Promise<any>, ms: number) => {
+  let timeoutId: NodeJS.Timeout;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('RSS Feed Timeout')), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+};
 
-Входни новини (JSON масив):
-${JSON.stringify(topRssItems)}
+function extractItemImage(item: any): string | undefined {
+  if (item.enclosure && item.enclosure.url && typeof item.enclosure.url === 'string') {
+    return item.enclosure.url;
+  }
+  if (item.mediaContent && item.mediaContent.$ && item.mediaContent.$.url) {
+    return item.mediaContent.$.url;
+  }
+  if (item['media:content'] && item['media:content'].$ && item['media:content'].$.url) {
+    return item['media:content'].$.url;
+  }
+  if (item.mediaThumbnail && item.mediaThumbnail.$ && item.mediaThumbnail.$.url) {
+    return item.mediaThumbnail.$.url;
+  }
+  if (item['media:thumbnail'] && item['media:thumbnail'].$ && item['media:thumbnail'].$.url) {
+    return item['media:thumbnail'].$.url;
+  }
+  const rawHtml = (item.description || item.content || '');
+  const imgMatch = rawHtml.match(/<img[^>]+src=["'](https?:\/\/[^"']+)["']/i);
+  if (imgMatch && imgMatch[1]) {
+    return imgMatch[1];
+  }
+  return undefined;
+}
+
+const DEFAULT_SOURCE_IMAGES: Record<string, string> = {
+  'CNBC': 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=80',
+  'MarketWatch': 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&auto=format&fit=crop&q=80',
+  'Reuters': 'https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=600&auto=format&fit=crop&q=80',
+  'Investing.com': 'https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=600&auto=format&fit=crop&q=80',
+  'Investor.bg': 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=80'
+};
+
+async function fetchTopGlobalFinancialFeeds(): Promise<RealNewsItem[]> {
+  const feedConfigs = [
+    {
+      url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
+      sourceName: "CNBC",
+      category: "world" as const,
+      lang: "en" as const
+    },
+    {
+      url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10001147",
+      sourceName: "CNBC",
+      category: "world" as const,
+      lang: "en" as const
+    },
+    {
+      url: "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+      sourceName: "MarketWatch",
+      category: "world" as const,
+      lang: "en" as const
+    },
+    {
+      url: "https://www.investing.com/rss/news_25.rss",
+      sourceName: "Reuters / Investing",
+      category: "reuters" as const,
+      lang: "en" as const
+    },
+    {
+      url: "https://www.investor.bg/rss/latest",
+      sourceName: "Investor.bg",
+      category: "bg" as const,
+      lang: "bg" as const
+    },
+    {
+      url: "https://www.investor.bg/rss/c/578-top-novini",
+      sourceName: "Investor.bg",
+      category: "bg" as const,
+      lang: "bg" as const
+    }
+  ];
+
+  const results = await Promise.allSettled(
+    feedConfigs.map(c => fetchWithTimeout(rssParser.parseURL(c.url), 6000))
+  );
+
+  const rawArticles: any[] = [];
+  results.forEach((res, index) => {
+    if (res.status === 'fulfilled' && res.value && Array.isArray(res.value.items)) {
+      const config = feedConfigs[index];
+      res.value.items.slice(0, 12).forEach((item: any) => {
+        const rawLink = item.link || item.guid;
+        if (rawLink && item.title && typeof rawLink === 'string' && rawLink.startsWith('http')) {
+          const rawSnippet = item.contentSnippet || item.content || item.summary || item.title || "";
+          const cleanSnippet = cleanXmlString(rawSnippet).replace(/<[^>]*>?/gm, '').trim();
+          
+          let pubDateObj = new Date();
+          if (item.pubDate) {
+            const parsedD = new Date(item.pubDate);
+            if (!isNaN(parsedD.getTime())) pubDateObj = parsedD;
+          }
+
+          let finalSource = config.sourceName;
+          if (item.author && item.author.toLowerCase().includes('reuters')) {
+            finalSource = 'Reuters';
+          }
+
+          const extractedImg = extractItemImage(item) || DEFAULT_SOURCE_IMAGES[finalSource] || DEFAULT_SOURCE_IMAGES['CNBC'];
+
+          rawArticles.push({
+            title: cleanXmlString(item.title),
+            link: rawLink.trim(),
+            pubDate: pubDateObj.toISOString(),
+            source: finalSource,
+            summary: cleanSnippet,
+            image: extractedImg,
+            category: config.category,
+            lang: config.lang
+          });
+        }
+      });
+    }
+  });
+
+  // Sort by pubDate descending (newest first)
+  rawArticles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
+  // Deduplicate by normalized title
+  const seen = new Set<string>();
+  const uniqueArticles: any[] = [];
+  for (const item of rawArticles) {
+    const norm = item.title.toLowerCase().replace(/[^a-z0-9а-я]/gi, '').slice(0, 45);
+    if (!seen.has(norm) && norm.length > 5) {
+      seen.add(norm);
+      uniqueArticles.push(item);
+    }
+    if (uniqueArticles.length >= 24) break;
+  }
+
+  // Format into RealNewsItem
+  return uniqueArticles.map(item => ({
+    title: item.title,
+    source: item.source,
+    time: formatRssDate(item.pubDate),
+    summary: item.summary ? (item.summary.length > 220 ? item.summary.slice(0, 220) + '...' : item.summary) : item.title,
+    impact: determineLocalImpact(item.title, item.summary || "") as 'Positive' | 'Negative' | 'Neutral',
+    url: item.link,
+    image: item.image,
+    category: item.category,
+    publishedDate: item.pubDate,
+    lang: item.lang
+  }));
+}
+
+async function fetchTickerRssNews(ticker: string, companyName?: string): Promise<RealNewsItem[]> {
+  const cleanTicker = ticker.includes(':') ? ticker.split(':')[1] : ticker;
+  const urls = [
+    { url: `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(cleanTicker)}&region=US&lang=en-US`, src: "Yahoo Finance" },
+    { url: `https://finance.yahoo.com/rss/headline?s=${encodeURIComponent(cleanTicker)}`, src: "Yahoo Finance" },
+    { url: `https://news.google.com/rss/search?q=${encodeURIComponent((companyName || cleanTicker) + ' stock news')}&hl=en-US&gl=US&ceid=US:en`, src: "Google News" }
+  ];
+
+  const results = await Promise.allSettled(
+    urls.map(u => fetchWithTimeout(rssParser.parseURL(u.url), 6000))
+  );
+
+  const rawItems: any[] = [];
+  results.forEach((res, index) => {
+    if (res.status === 'fulfilled' && res.value && Array.isArray(res.value.items)) {
+      const srcName = urls[index].src;
+      res.value.items.slice(0, 8).forEach((item: any) => {
+        const link = item.link || item.guid;
+        if (link && item.title && typeof link === 'string' && link.startsWith('http') && !link.includes("consent.yahoo.com")) {
+          const rawSnippet = item.contentSnippet || item.content || item.summary || item.title || "";
+          const cleanSnippet = cleanXmlString(rawSnippet).replace(/<[^>]*>?/gm, '').trim();
+          const img = extractItemImage(item) || DEFAULT_SOURCE_IMAGES['CNBC'];
+          rawItems.push({
+            title: cleanXmlString(item.title),
+            link: link.trim(),
+            pubDate: item.pubDate || new Date().toISOString(),
+            source: item.creator || item.author || srcName,
+            summary: cleanSnippet,
+            image: img,
+            category: 'world' as const,
+            lang: 'en' as const
+          });
+        }
+      });
+    }
+  });
+
+  const seenTitles = new Set<string>();
+  const uniqueItems: any[] = [];
+  for (const item of rawItems) {
+    const norm = item.title.toLowerCase().trim().replace(/[^a-z0-9]/g, '').slice(0, 45);
+    if (!seenTitles.has(norm) && norm.length > 5) {
+      seenTitles.add(norm);
+      uniqueItems.push(item);
+    }
+    if (uniqueItems.length >= 10) break;
+  }
+
+  return uniqueItems.map(item => ({
+    title: item.title,
+    source: item.source || "Yahoo Finance",
+    time: formatRssDate(item.pubDate),
+    summary: item.summary ? (item.summary.length > 220 ? item.summary.slice(0, 220) + '...' : item.summary) : item.title,
+    impact: determineLocalImpact(item.title, item.summary || "") as 'Positive' | 'Negative' | 'Neutral',
+    url: item.link,
+    image: item.image,
+    category: item.category,
+    publishedDate: item.pubDate
+  }));
+}
+
+async function processAndTranslateNews(items: (RealNewsItem & { lang?: string })[]): Promise<RealNewsItem[]> {
+  if (items.length === 0) return [];
+
+  // Separate items that are already Bulgarian (Investor.bg) vs English items
+  const bgArticles: RealNewsItem[] = [];
+  const enArticles: RealNewsItem[] = [];
+
+  for (const it of items) {
+    if (it.lang === 'bg' || it.source === 'Investor.bg') {
+      bgArticles.push({
+        title: it.title,
+        source: it.source,
+        time: it.time,
+        summary: it.summary,
+        impact: determineLocalImpact(it.title, it.summary) as 'Positive' | 'Negative' | 'Neutral',
+        url: it.url,
+        image: it.image,
+        category: it.category,
+        publishedDate: it.publishedDate
+      });
+    } else {
+      enArticles.push(it);
+    }
+  }
+
+  let translatedEn: RealNewsItem[] = [];
+  if (enArticles.length > 0) {
+    try {
+      const ai = getGeminiClient();
+      const prompt = `Преведи следните финансови новини на български език и определи пазарното им влияние (impact: "Positive" | "Negative" | "Neutral").
+Направи кратко и ясно резюме на всяка новина (1-2 изречения).
+КРИТИЧНО ПРАВИЛО: ЗАПАЗИ ТОЧНИТЕ ОРИГИНАЛНИ ЛИНКОВЕ (url) И СНИМКИ (image) И ИЗТОЧНИЦИ (source) НАПЪЛНО НЕПРОМЕНЕНИ! Върни отговора САМО като валиден JSON масив.
+
+Входни новини:
+${JSON.stringify(enArticles.map(it => ({ title: it.title, summary: it.summary, source: it.source, url: it.url, image: it.image, time: it.time })))}
 
 Очакван изход (JSON масив):
 [
   {
     "title": "Преведено заглавие на български",
-    "source": "Yahoo Finance",
-    "time": "Преведено време (напр. 'Преди 2 часа', 'Днес', 'Вчера')",
-    "summary": "Преведено резюме на български",
+    "source": "Оригинален източник (CNBC, MarketWatch, Reuters и т.н.)",
+    "time": "Преведено време",
+    "summary": "Кратко резюме на български",
     "impact": "Positive" | "Negative" | "Neutral",
-    "url": "Оригиналният url"
+    "url": "ТОЧНИЯТ ОРИГИНАЛЕН URL",
+    "image": "ТОЧНИЯТ ОРИГИНАЛЕН IMAGE URL"
   }
 ]`;
-          console.log(`[News AI] Translating Yahoo Finance RSS news for ${ticker}...`);
-          const response = await ai.models.generateContent({
-            model: "gemini-3.5-flash",
-            contents: prompt,
-            config: {
-              responseMimeType: "application/json",
-            },
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+        },
+      });
+
+      if (response && response.text) {
+        let cleanText = response.text.trim();
+        if (cleanText.startsWith("```json")) cleanText = cleanText.substring(7);
+        if (cleanText.endsWith("```")) cleanText = cleanText.substring(0, cleanText.length - 3);
+        cleanText = cleanText.trim();
+        const parsed = JSON.parse(cleanText);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          translatedEn = parsed.map((p: any, idx: number) => {
+            const original = enArticles[idx] || {};
+            return {
+              title: p.title || original.title || "Финансова новина",
+              source: p.source || original.source || "Пазарен източник",
+              time: p.time || original.time || "Днес",
+              summary: p.summary || original.summary || "",
+              impact: (p.impact === "Positive" || p.impact === "Negative") ? p.impact : "Neutral",
+              url: (p.url && p.url.startsWith("http")) ? p.url : original.url,
+              image: original.image || p.image,
+              category: original.category || 'world',
+              publishedDate: original.publishedDate
+            };
           });
-
-          if (response && response.text) {
-            let cleanText = response.text.trim();
-            if (cleanText.startsWith("```json")) {
-              cleanText = cleanText.substring(7);
-            }
-            if (cleanText.endsWith("```")) {
-              cleanText = cleanText.substring(0, cleanText.length - 3);
-            }
-            cleanText = cleanText.trim();
-            const parsed = JSON.parse(cleanText);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              newsData = parsed;
-              apiSuccess = true;
-              console.log(`[News AI] Successfully translated ${newsData.length} RSS items for ${ticker}!`);
-            }
-          }
-        } catch (translationError: any) {
-          console.warn(`[News AI] Gemini translation failed: ${translationError.message}. Falling back to raw English Yahoo RSS news.`);
         }
+      }
+    } catch (err: any) {
+      console.warn("[News AI] Gemini translation failed, using clean original English items:", err.message);
+    }
 
-        // If translation failed, use raw English RSS items
-        if (newsData.length === 0) {
-          newsData = topRssItems;
-          apiSuccess = true;
-        }
+    if (translatedEn.length === 0) {
+      translatedEn = enArticles;
+    }
+  }
+
+  // Combine Bulgarian and translated English articles
+  const allCombined = [...bgArticles, ...translatedEn];
+
+  // Sort combined by publishedDate descending
+  allCombined.sort((a, b) => {
+    const timeA = a.publishedDate ? new Date(a.publishedDate).getTime() : 0;
+    const timeB = b.publishedDate ? new Date(b.publishedDate).getTime() : 0;
+    return timeB - timeA;
+  });
+
+  return allCombined;
+}
+
+// Endpoint for fetching high-quality verified news with authentic direct article links
+app.post("/api/company-news", async (req, res) => {
+  try {
+    const { ticker, companyName } = req.body;
+    const now = Date.now();
+
+    if (!ticker) {
+      // Global news requested via company-news endpoint
+      if (globalNewsCache && (now - globalNewsCache.timestamp < NEWS_CACHE_TTL_MS) && globalNewsCache.news.length > 0) {
+        return res.json({ news: globalNewsCache.news, cached: true });
+      }
+      const rawItems = await fetchTopGlobalFinancialFeeds();
+      if (rawItems.length > 0) {
+        const processed = await processAndTranslateNews(rawItems);
+        globalNewsCache = { timestamp: now, news: processed };
+        return res.json({ news: processed });
+      }
+      if (globalNewsCache && globalNewsCache.news.length > 0) {
+        return res.json({ news: globalNewsCache.news });
+      }
+    } else {
+      // Specific ticker news requested
+      const cacheKey = ticker.toUpperCase();
+      const cached = companyNewsCache.get(cacheKey);
+      if (cached && (now - cached.timestamp < NEWS_CACHE_TTL_MS) && cached.news.length > 0) {
+        return res.json({ news: cached.news, cached: true });
+      }
+
+      const rssItems = await fetchTickerRssNews(ticker, companyName);
+      if (rssItems.length > 0) {
+        const processed = await processAndTranslateNews(rssItems);
+        companyNewsCache.set(cacheKey, { timestamp: now, news: processed });
+        return res.json({ news: processed });
+      }
+
+      if (cached && cached.news.length > 0) {
+        return res.json({ news: cached.news });
       }
     }
 
-    // 2. If no ticker, or RSS returned nothing, try Search Grounding (original path)
-    if (!apiSuccess) {
-      let prompt = "";
-      if (ticker) {
-        prompt = `Използвай Google Search Grounding за уеб търсене и намери най-новите, актуални и изключително важни РЕАЛНИ новини за компанията ${companyName || ticker} (${ticker}) ЕДИНСТВЕНО от следния източник на данни:
-        - Yahoo Finance (https://finance.yahoo.com/)
-
-        КРИТИЧНО ПРАВИЛО: ТИ СИ ПРОФЕСИОНАЛЕН ФИНАНСОВ АНАЛИЗАТОР. АБСОЛЮТНО СТРИКТНО СЕ ЗАБРАНЯВА ИЗМИСЛЯНЕТО, СИМУЛИРАНЕТО ИЛИ ГЕНЕРИРАНЕТО НА ФИКТИВНИ (ИЗМИСЛЕНИ) СЪБИТИЯ ИЛИ НОВИНИ! Използвай САМО и единствено реално публикувана информация от посочения източник (Yahoo Finance).
-        Всяка новина трябва да има истинско заглавие, истинско резюме и напълно реален и валиден директен линк (URL) към съответната статия на Yahoo Finance, получен от Google Search Grounding.
-        Ако успееш да намериш по-малко от 10 напълно реални новини, върни само намерения брой (например 3, 4 или 5), но в никакъв случай не измисляй фалшиви новини за запълване на бройката.
-
-        Върни списъка във формат на JSON масив от обекти с точно следните полета:
-        [
-          {
-            "title": "Кратко и силно заглавие на български",
-            "source": "Yahoo Finance",
-            "time": "Преди колко часа/дни е публикувано на български (напр. 'Преди 2 часа', 'Днес', 'Вчера')",
-            "summary": "Кратко резюме на новината на български (1-2 изречения)",
-            "impact": "Positive" или "Negative" или "Neutral" (определи според влиянието на новината върху цената на акцията),
-            "url": "Истински, валиден директен линк към статията в Yahoo Finance"
-          }
-        ]`;
-      } else {
-        prompt = `Използвай Google Search Grounding за уеб търсене и намери най-актуалните и изключително важни РЕАЛНИ глобални пазарни и финансови новини или пазарни индекси ЕДИНСТВЕНО от следния източник на данни:
-        - Yahoo Finance (https://finance.yahoo.com/)
-
-        КРИТИЧНО ПРАВИЛО: ТИ СИ ПРОФЕСИОНАЛЕН ФИНАНСОВ АНАЛИЗАТОР. АБСОЛЮТНО СТРИКТНО СЕ ЗАБРАНЯВА ИЗМИСЛЯНЕТО, СИМУЛИРАНЕТО ИЛИ ГЕНЕРИРАНЕТО НА ФИКТИВНИ (ИЗМИСЛЕНИ) СЪБИТИЯ ИЛИ НОВИНИ! Използвай САМО и единствено реално публикувана информация от посочения източник (Yahoo Finance).
-        Всяка новина трябва да съдържа истинско заглавие, истинско резюме и напълно реален и валиден линк (URL) към съответната статия или страница на Yahoo Finance, получен от Google Search Grounding.
-        Ако успееш да намериш по-малко от 10 напълно реални новини, върни само намерения брой (например 3, 4 или 5), но в никакъв случай не измисляй фалшиви новини за запълване на бройката.
-
-        Върни списъка във формат на JSON масив от обекти с точно следните полета:
-        [
-          {
-            "title": "Кратко и силно заглавие на български",
-            "source": "Yahoo Finance",
-            "time": "Преди колко часа/дни е публикувано на български (напр. 'Преди 2 часа', 'Днес', 'Вчера')",
-            "summary": "Кратко резюме на новината на български (1-2 изречения)",
-            "impact": "Positive" или "Negative" или "Neutral" (определи според влиянието на новината върху пазара),
-            "url": "Истински, валиден директен линк към статията или съответната страница в Yahoo Finance"
-          }
-        ]`;
-      }
-
-      try {
-        const ai = getGeminiClient();
-        console.log(`[News AI] Attempting Search Grounding fallback for ${ticker || 'General Market'}...`);
-        const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
-          contents: prompt,
-          config: {
-            tools: [{ googleSearch: {} }],
-            responseMimeType: "application/json",
-          },
-        });
-
-        if (response && response.text) {
-          let cleanText = response.text.trim();
-          if (cleanText.startsWith("```json")) {
-            cleanText = cleanText.substring(7);
-          }
-          if (cleanText.endsWith("```")) {
-            cleanText = cleanText.substring(0, cleanText.length - 3);
-          }
-          cleanText = cleanText.trim();
-          const parsed = JSON.parse(cleanText);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            newsData = parsed;
-            apiSuccess = true;
-          }
-        }
-      } catch (groundingError: any) {
-        console.warn(`[News AI] Search Grounding failed: ${groundingError.message}`);
-      }
-    }
-
-    // 3. Last resort fallback
-    if (!apiSuccess || !newsData || newsData.length === 0) {
-      newsData = getLocalFallbackNews(ticker, companyName);
-    }
-
-    res.json({ news: newsData });
+    // Fallback if RSS had no items
+    const fallback = getLocalFallbackNews(ticker, companyName);
+    res.json({ news: fallback });
   } catch (error: any) {
     console.error("Грешка при извличане на новини:", error);
     const fallback = getLocalFallbackNews(req.body.ticker, req.body.companyName);
-    res.json({ news: fallback, warning: "Грешка при AI обработка. Използван локален поток." });
+    res.json({ news: fallback, warning: "Използван локален поток." });
   }
 });
+
 
 // Global server-side cache for stocks and indices prices to provide continuous realistic fallback prices
 const serverPriceCache: Record<string, number> = {};
@@ -766,94 +965,42 @@ app.get("/api/vix", async (req, res) => {
 
 app.get("/api/global-news", async (req, res) => {
   try {
-    let rawNews: any[] = [];
-    if (process.env.FMP_API_KEY) {
-      try {
-        const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v4/general_news?page=0&apikey=${process.env.FMP_API_KEY}`);
-        if (fmpResponse.ok) {
-          const fmpData = await fmpResponse.json();
-          if (Array.isArray(fmpData) && fmpData.length > 0) {
-            rawNews = fmpData.slice(0, 10).map((item: any) => ({
-              title: item.title || '',
-              link: item.url || '',
-              pubDate: item.publishedDate || new Date().toISOString(),
-              source: item.site || 'FMP News',
-              image: item.image || ''
-            }));
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching from FMP General News API:", err);
-      }
+    const now = Date.now();
+    const forceRefresh = req.query.refresh === 'true';
+
+    // 1. Check in-memory cache first for sub-50ms response (unless force refresh requested)
+    if (!forceRefresh && globalNewsCache && (now - globalNewsCache.timestamp < NEWS_CACHE_TTL_MS) && globalNewsCache.news.length > 0) {
+      return res.json({ news: globalNewsCache.news, cached: true });
     }
 
-    if (rawNews.length === 0) {
-      const fallback = getLocalFallbackNews("", "");
-      return res.json({
-        news: fallback.map(n => ({
-          title: n.title,
-          url: n.url,
-          time: n.time,
-          source: n.source,
-          image: "",
-          summary: n.summary,
-          impact: n.impact
-        }))
-      });
+    // 2. Fetch live multi-source feeds from CNBC, MarketWatch, Investing.com/Reuters, and Investor.bg
+    const rawNews = await fetchTopGlobalFinancialFeeds();
+
+    // 3. Process Bulgarian vs English feeds and translate
+    if (rawNews.length > 0) {
+      const processed = await processAndTranslateNews(rawNews);
+      globalNewsCache = {
+        timestamp: now,
+        news: processed
+      };
+      return res.json({ news: processed });
     }
 
-    try {
-      const ai = getGeminiClient();
-      const prompt = `Преведи следните глобални финансови новини на български език и определи тяхното пазарно влияние (impact: "Positive" | "Negative" | "Neutral"). Извлечи кратко резюме от заглавието.
-Запази оригиналните линкове (url), източници (source) и изображения (image) непроменени. Върни отговора САМО като валиден JSON масив.
-
-Входни новини (JSON масив):
-${JSON.stringify(rawNews)}
-
-Очакван изход (JSON масив):
-[
-  {
-    "title": "Преведено заглавие",
-    "source": "Източник (напр. FMP News)",
-    "time": "Преди колко време (напр. 'Днес')",
-    "summary": "Кратко резюме (1-2 изречения)",
-    "impact": "Positive" | "Negative" | "Neutral",
-    "url": "Оригиналният url",
-    "image": "Оригиналното image url"
-  }
-]`;
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json" }
-      });
-      if (response && response.text) {
-        let cleanText = response.text.trim();
-        if (cleanText.startsWith("\`\`\`json")) cleanText = cleanText.substring(7);
-        if (cleanText.endsWith("\`\`\`")) cleanText = cleanText.substring(0, cleanText.length - 3);
-        const parsed = JSON.parse(cleanText.trim());
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return res.json({ news: parsed });
-        }
-      }
-    } catch(e: any) {
-      console.warn("Gemini translation for global news failed:", e.message);
+    // 4. If fresh fetch returned nothing, return previous cache if any
+    if (globalNewsCache && globalNewsCache.news.length > 0) {
+      return res.json({ news: globalNewsCache.news });
     }
 
-    const englishFallback = rawNews.map(n => ({
-      title: n.title,
-      url: n.link,
-      time: "Днес",
-      source: n.source,
-      image: n.image,
-      summary: "Market news.",
-      impact: "Neutral"
-    }));
-    return res.json({ news: englishFallback });
-
-  } catch (error) {
-    console.error("Error in /api/global-news:", error);
-    res.status(500).json({ error: "Internal server error" });
+    // 5. Last resort fallback
+    const fallback = getLocalFallbackNews("", "");
+    return res.json({ news: fallback });
+  } catch (error: any) {
+    console.error("Error in /api/global-news:", error.message);
+    if (globalNewsCache && globalNewsCache.news.length > 0) {
+      return res.json({ news: globalNewsCache.news });
+    }
+    const fallback = getLocalFallbackNews("", "");
+    res.json({ news: fallback });
   }
 });
 
