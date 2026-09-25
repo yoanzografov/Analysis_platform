@@ -131,15 +131,7 @@ html:not(.dark) .border-cyan-500\/20 {
 
 /* Base styling */
 html {
-  font-size: 16px;
-  overflow-x: hidden;
-  max-width: 100vw;
-  -webkit-text-size-adjust: 100%;
-}
-@media (min-width: 1024px) {
-  html {
-    font-size: 17px;
-  }
+  font-size: 17px; /* Slightly larger base font size to scale all rem values */
 }
 body {
   background-color: var(--color-bg);
@@ -148,37 +140,6 @@ body {
   font-weight: 400;
   position: relative;
   min-height: 100vh;
-  min-height: 100dvh;
-  overflow-x: hidden;
-  max-width: 100vw;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* Safe area padding utilities for iPhone notch, dynamic island & bottom home bar */
-.pb-safe {
-  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
-}
-.pt-safe {
-  padding-top: max(0.5rem, env(safe-area-inset-top, 0.5rem));
-}
-
-/* Mobile Input Zoom Fix: iOS Safari automatically zooms in on text inputs with font-size < 16px */
-@media (max-width: 768px) {
-  input, select, textarea {
-    font-size: 16px !important;
-  }
-}
-
-/* Smooth touch scrolling and tap feedback for Samsung & iPhone */
-button, a, select, input {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.touch-pan-x {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
 }
 
 /* Scrollbars matching Investolens theme */
@@ -198,6 +159,11 @@ button, a, select, input {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-hover);
+}
+
+/* Button transitions */
+button, select, input {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Responsive Table Columns - hidden on screens < 1280px */

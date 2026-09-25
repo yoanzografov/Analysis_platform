@@ -85,7 +85,6 @@ export default function App() {
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showFinancialFlagsModal, setShowFinancialFlagsModal] = useState(false);
   const [showLogoModal, setShowLogoModal] = useState(false);
-  const [isMobileToolsSheetOpen, setIsMobileToolsSheetOpen] = useState(false);
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -1305,7 +1304,7 @@ export default function App() {
   }
 
   return (
-  <div className="min-h-screen bg-bg text-ink flex flex-col pb-24 md:pb-12 antialiased overflow-x-hidden w-full">
+  <div className="min-h-screen bg-bg text-ink flex flex-col pb-12 antialiased overflow-x-hidden w-full">
 
   {/* Main Container */}
   <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5 flex-1 space-y-5">
@@ -1385,8 +1384,7 @@ export default function App() {
             <h1 className="text-lg sm:text-2xl font-black text-indigo-400 font-sans tracking-tight uppercase leading-none group-hover:text-indigo-300 transition-colors">
               RAYVES.COM
             </h1>
-            <span className="text-[11px] font-bold text-ink-muted tracking-wide hidden sm:block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</span>
-            <span className="text-[10px] font-bold text-ink-muted tracking-wide block sm:hidden">Investing Today. Building Tomorrow.</span>
+            <span className="text-[11px] font-bold text-ink-muted tracking-wide block">Investing Today. Building Tomorrow. For Our Children. For Their Future.</span>
           </div>
         </a>
 
@@ -1398,7 +1396,7 @@ export default function App() {
               setAuthModalInitialTab('login');
               setIsAuthModalOpen(true);
             }}
-            className={`h-9 px-3 sm:px-3.5 rounded-xl border font-sans text-xs font-extrabold transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+            className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
               currentUser
                 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
                 : 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/25 uppercase'
@@ -1406,16 +1404,16 @@ export default function App() {
             title={currentUser ? `Влезли сте като ${currentUser.email || currentUser.displayName} • Профил / Изход` : 'Вход / Синхронизация'}
           >
             <Cloud className={`w-3.5 h-3.5 shrink-0 ${currentUser ? 'text-emerald-400 animate-pulse' : 'text-indigo-400'}`} />
-            <span className="max-w-[110px] sm:max-w-none truncate inline-block">
+            <span>
               {currentUser 
-                ? `👤 ${currentUser.displayName || (currentUser.email ? (currentUser.email.toLowerCase().startsWith('yoan') ? 'Yoan Zografov' : currentUser.email.split('@')[0]) : 'Yoan Zografov')}`
-                : '🔑 Вход'}
+                ? `👤 ${currentUser.displayName || (currentUser.email ? (currentUser.email.toLowerCase().startsWith('yoan') ? 'Yoan Zografov' : currentUser.email.split('@')[0]) : 'Yoan Zografov')} (🟢 ON)`
+                : '🔑 Вход / Синхронизация'}
             </span>
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto w-full pb-1 touch-pan-x no-scrollbar shrink-0 sm:flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap justify-start">
 
         {/* 1. Auto live updates toggler */}
         <button
@@ -2118,282 +2116,6 @@ export default function App() {
     </div>
   )}
  </main>
-
-  {/* Mobile Tools Action Sheet Modal */}
-  {isMobileToolsSheetOpen && (
-    <div 
-      className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm flex items-end justify-center p-0 animate-in fade-in duration-200"
-      onClick={() => setIsMobileToolsSheetOpen(false)}
-    >
-      <div 
-        className="w-full bg-card border-t border-border rounded-t-3xl p-5 pb-safe shadow-2xl flex flex-col gap-3 animate-in slide-in-from-bottom duration-250 max-h-[85vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-border/50 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
-              <Wrench className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-black text-ink uppercase tracking-tight">Инструменти & Калкулатори</h3>
-              <p className="text-[11px] text-ink-muted">Бърз достъп до финансови модели и калкулатори</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setIsMobileToolsSheetOpen(false)}
-            className="p-2 rounded-full hover:bg-card-hover text-ink-muted transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 pt-1">
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileToolsSheetOpen(false);
-              if (!currentUser) {
-                handleRequireAuth('Stock Analysis Check List');
-                return;
-              }
-              window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
-            }}
-            className="w-full p-3 rounded-2xl bg-bg hover:bg-card-hover border border-border flex items-center justify-between text-left transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-cyan-500/15 text-cyan-400">
-                <CheckSquare className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-black text-ink group-hover:text-cyan-400 transition-colors">Stock Analysis Check List</div>
-                <div className="text-[11px] text-ink-muted">16-точков чек лист за дълбочинен анализ</div>
-              </div>
-            </div>
-            <ExternalLink className="w-4 h-4 text-ink-faint group-hover:text-cyan-400" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileToolsSheetOpen(false);
-              if (!currentUser) {
-                handleRequireAuth('Stock Profit Calculator');
-                return;
-              }
-              window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
-            }}
-            className="w-full p-3 rounded-2xl bg-bg hover:bg-card-hover border border-border flex items-center justify-between text-left transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-400">
-                <Calculator className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-black text-ink group-hover:text-amber-400 transition-colors">Stock Profit Calculator</div>
-                <div className="text-[11px] text-ink-muted">Калкулатор за потенциална чиста печалба</div>
-              </div>
-            </div>
-            <ExternalLink className="w-4 h-4 text-ink-faint group-hover:text-amber-400" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileToolsSheetOpen(false);
-              if (!currentUser) {
-                handleRequireAuth('Return on Investment (ROI)');
-                return;
-              }
-              window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
-            }}
-            className="w-full p-3 rounded-2xl bg-bg hover:bg-card-hover border border-border flex items-center justify-between text-left transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-400">
-                <Calculator className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-black text-ink group-hover:text-emerald-400 transition-colors">Return on Investment (ROI)</div>
-                <div className="text-[11px] text-ink-muted">Възвръщаемост на инвестицията с такси</div>
-              </div>
-            </div>
-            <ExternalLink className="w-4 h-4 text-ink-faint group-hover:text-emerald-400" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileToolsSheetOpen(false);
-              if (!currentUser) {
-                handleRequireAuth('Сложна Лихва & Растеж');
-                return;
-              }
-              window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
-            }}
-            className="w-full p-3 rounded-2xl bg-bg hover:bg-card-hover border border-border flex items-center justify-between text-left transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-400">
-                <TrendingUp className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-black text-ink group-hover:text-indigo-400 transition-colors">Сложна Лихва & Растеж</div>
-                <div className="text-[11px] text-ink-muted">Дългосрочна прогноза и симулация на капитал</div>
-              </div>
-            </div>
-            <ExternalLink className="w-4 h-4 text-ink-faint group-hover:text-indigo-400" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileToolsSheetOpen(false);
-              setShowEconomicCalendarModal(true);
-            }}
-            className="w-full p-3 rounded-2xl bg-bg hover:bg-card-hover border border-border flex items-center justify-between text-left transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-violet-500/15 text-violet-400">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-black text-ink group-hover:text-violet-400 transition-colors">TradingView Economic Calendar</div>
-                <div className="text-[11px] text-ink-muted">Предстоящи макроикономически събития и лихви</div>
-              </div>
-            </div>
-            <ChevronDown className="w-4 h-4 text-ink-faint -rotate-90" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileToolsSheetOpen(false);
-              exportCSVFile();
-            }}
-            className="w-full p-3 rounded-2xl bg-bg hover:bg-card-hover border border-border flex items-center justify-between text-left transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-stone-500/15 text-stone-400">
-                <Download className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-black text-ink group-hover:text-indigo-400 transition-colors">Експорт в CSV</div>
-                <div className="text-[11px] text-ink-muted">Изтеглете таблицата на вашето устройство</div>
-              </div>
-            </div>
-            <Download className="w-4 h-4 text-ink-faint" />
-          </button>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {/* Mobile Bottom Navigation Dock - Native App Feel on iPhone & Samsung */}
-  <div className="md:hidden fixed bottom-0 left-0 right-0 z-[999] bg-card/95 backdrop-blur-xl border-t border-border px-2 py-1.5 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.25)] flex items-center justify-around select-none">
-    {/* Tab 1: Таблица */}
-    <button
-      type="button"
-      onClick={() => {
-        switchTab('table');
-        const el = document.getElementById('stock-table-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }}
-      className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer min-w-[58px] ${
-        activeMainTab === 'table'
-          ? 'text-indigo-400 font-black'
-          : 'text-ink-muted hover:text-ink font-bold'
-      }`}
-    >
-      <div className={`p-1 rounded-lg ${activeMainTab === 'table' ? 'bg-indigo-500/20' : ''}`}>
-        <Table className="w-5 h-5" />
-      </div>
-      <span className="text-[10px] tracking-tight mt-0.5">Таблица</span>
-    </button>
-
-    {/* Tab 2: Аларми */}
-    <button
-      type="button"
-      onClick={() => {
-        if (!currentUser) {
-          handleRequireAuth('PRICE ALERTS SCHEDULE');
-          return;
-        }
-        switchTab('alerts');
-        const el = document.getElementById('stock-table-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }}
-      className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer relative min-w-[58px] ${
-        activeMainTab === 'alerts'
-          ? 'text-indigo-400 font-black'
-          : 'text-ink-muted hover:text-ink font-bold'
-      }`}
-    >
-      <div className={`p-1 rounded-lg relative ${activeMainTab === 'alerts' ? 'bg-indigo-500/20' : ''}`}>
-        <Bell className="w-5 h-5" />
-        {alerts.length > 0 && (
-          <span className="absolute -top-0.5 -right-1 bg-indigo-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-            {alerts.length}
-          </span>
-        )}
-      </div>
-      <span className="text-[10px] tracking-tight mt-0.5">Аларми</span>
-    </button>
-
-    {/* Tab 3: Портфейл */}
-    <button
-      type="button"
-      onClick={() => {
-        switchTab('portfolio');
-        const el = document.getElementById('stock-table-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }}
-      className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer relative min-w-[58px] ${
-        activeMainTab === 'portfolio'
-          ? 'text-indigo-400 font-black'
-          : 'text-ink-muted hover:text-ink font-bold'
-      }`}
-    >
-      <div className={`p-1 rounded-lg relative ${activeMainTab === 'portfolio' ? 'bg-indigo-500/20' : ''}`}>
-        <Briefcase className="w-5 h-5" />
-        {positions.length > 0 && (
-          <span className="absolute -top-0.5 -right-1 bg-emerald-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-            {positions.length}
-          </span>
-        )}
-      </div>
-      <span className="text-[10px] tracking-tight mt-0.5">Портфейл</span>
-    </button>
-
-    {/* Tab 4: Календар */}
-    <button
-      type="button"
-      onClick={() => setShowEconomicCalendarModal(true)}
-      className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer text-ink-muted hover:text-ink font-bold min-w-[58px]"
-    >
-      <div className="p-1 rounded-lg">
-        <Calendar className="w-5 h-5" />
-      </div>
-      <span className="text-[10px] tracking-tight mt-0.5">Календар</span>
-    </button>
-
-    {/* Tab 5: Tools */}
-    <button
-      type="button"
-      onClick={() => {
-        setIsMobileToolsSheetOpen(true);
-      }}
-      className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer min-w-[58px] ${
-        isMobileToolsSheetOpen
-          ? 'text-indigo-400 font-black'
-          : 'text-ink-muted hover:text-ink font-bold'
-      }`}
-    >
-      <div className={`p-1 rounded-lg ${isMobileToolsSheetOpen ? 'bg-indigo-500/20' : ''}`}>
-        <Wrench className="w-5 h-5" />
-      </div>
-      <span className="text-[10px] tracking-tight mt-0.5">Tools</span>
-    </button>
-  </div>
 
 
  </div>
