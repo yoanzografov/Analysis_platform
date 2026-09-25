@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Stock } from '../types';
-import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown, TrendingUp, Clock, Wrench, Calculator, Search, Smartphone, Table } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown, TrendingUp, Clock, Wrench, Calculator, Search, Smartphone, Table, RotateCcw } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 import { fetchStockReturns, StockReturnsResult, AVAILABLE_RETURN_MONTHS } from '../utils/stockReturnsFetcher';
 import ProfitCalculatorModal from './ProfitCalculatorModal';
@@ -805,6 +805,96 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setCheckedRows(prev => ({ ...prev, [rowNum]: !prev[rowNum] }));
   };
 
+  // Keyboard Edit Snapshot & Handlers: Enter to Save row, ESC to Cancel / Revert
+  const editingRowSnapshotRef = useRef<{
+    rowNum: number;
+    values: Record<string, string>;
+    wasChecked: boolean;
+  } | null>(null);
+
+  const getRowInputKeys = (rowNum: number): string[] => {
+    const str = String(rowNum);
+    if (rowNum === 8) return ['8', '8_high'];
+    if (rowNum === 10) return ['10', '10_level'];
+    if (rowNum === 12) return ['12', '12_div'];
+    if (rowNum === 15) return ['15', '15_10'];
+    if (rowNum === 20) return ['20', '20_5'];
+    if (rowNum === 17 || rowNum === 25 || rowNum === 37 || rowNum === 39) {
+      return [str, `${str}_10`];
+    }
+    return [str];
+  };
+
+  const handleFocusRow = (rowNum: number) => {
+    if (editingRowSnapshotRef.current && editingRowSnapshotRef.current.rowNum === rowNum) {
+      return;
+    }
+    const keys = getRowInputKeys(rowNum);
+    const snapValues: Record<string, string> = {};
+    keys.forEach(k => {
+      snapValues[k] = userInputs[k] || '';
+    });
+    editingRowSnapshotRef.current = {
+      rowNum,
+      values: snapValues,
+      wasChecked: !!checkedRows[rowNum],
+    };
+  };
+
+  const handleKeyDownRow = (e: React.KeyboardEvent, rowNum: number) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // 1. Automatically check / mark row as saved & audited
+      setCheckedRows(prev => ({ ...prev, [rowNum]: true }));
+      // 2. Clear snapshot so changes are committed
+      editingRowSnapshotRef.current = null;
+      // 3. Blur the input
+      (e.target as HTMLElement)?.blur();
+      // 4. Toast notification
+      const rowDef = EXACT_SHEET_ROWS.find(r => r.rowNum === rowNum);
+      const label = rowDef ? `Ред ${rowNum} (${rowDef.label})` : `Ред ${rowNum}`;
+      setSavedSuccessMsg(`${label} е запазен! ✓`);
+      setTimeout(() => {
+        setSavedSuccessMsg(prev => (prev?.includes(`Ред ${rowNum}`) ? null : prev));
+      }, 2500);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      // 1. Revert values from snapshot
+      if (editingRowSnapshotRef.current && editingRowSnapshotRef.current.rowNum === rowNum) {
+        const snap = editingRowSnapshotRef.current;
+        setUserInputs(prev => ({
+          ...prev,
+          ...snap.values,
+        }));
+        setCheckedRows(prev => {
+          const next = { ...prev };
+          if (snap.wasChecked) {
+            next[rowNum] = true;
+          } else {
+            delete next[rowNum];
+          }
+          return next;
+        });
+        if (rowNum === 2) {
+          const oldTicker = snap.values['2'] || '';
+          setSelectedTicker(oldTicker);
+          setTickerSearchQuery(oldTicker);
+        }
+        editingRowSnapshotRef.current = null;
+      }
+      // 2. Blur the input
+      (e.target as HTMLElement)?.blur();
+      // 3. Toast notification for cancellation
+      const rowDef = EXACT_SHEET_ROWS.find(r => r.rowNum === rowNum);
+      const label = rowDef ? `Ред ${rowNum}` : `Ред`;
+      setSavedSuccessMsg(`Промените по ${label} бяха отменени (ESC)`);
+      setTimeout(() => {
+        setSavedSuccessMsg(prev => (prev?.includes('отменени') ? null : prev));
+      }, 2000);
+    }
+  };
+
   const handleSelectPeLevel = (level: 'low' | 'mid' | 'high' | '' | 'auto') => {
     if (level === 'auto' || level === '') {
       setUserInputs(prev => {
@@ -1148,6 +1238,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['7'] || ''}
+                  onFocus={() => handleFocusRow(7)}
+                  onKeyDown={e => handleKeyDownRow(e, 7)}
                   onChange={e => handleInputChange('7', e.target.value)}
                   placeholder="0.00"
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1161,6 +1253,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['8'] || ''}
+                  onFocus={() => handleFocusRow(8)}
+                  onKeyDown={e => handleKeyDownRow(e, 8)}
                   onChange={e => handleInputChange('8', e.target.value)}
                   placeholder="..."
                   className="w-16 sm:w-20 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1171,6 +1265,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['8_high'] || ''}
+                  onFocus={() => handleFocusRow(8)}
+                  onKeyDown={e => handleKeyDownRow(e, 8)}
                   onChange={e => handleInputChange('8_high', e.target.value)}
                   placeholder="..."
                   className="w-16 sm:w-20 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1182,6 +1278,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               <input
                 type="text"
                 value={userInputs['10'] || ''}
+                onFocus={() => handleFocusRow(10)}
+                onKeyDown={e => handleKeyDownRow(e, 10)}
                 onChange={e => handleInputChange('10', e.target.value)}
                 placeholder="P/E..."
                 className="w-20 sm:w-24 h-8 px-2.5 py-1.5 rounded-lg border bg-bg border-border focus:border-indigo-500 font-mono font-bold text-xs outline-none text-right text-ink transition-all"
@@ -1189,6 +1287,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               <div className="relative inline-flex items-center">
                 <select
                   value={currentPeLevel || ''}
+                  onFocus={() => handleFocusRow(10)}
+                  onKeyDown={e => handleKeyDownRow(e, 10)}
                   onChange={e => handleSelectPeLevel(e.target.value as any)}
                   className={`h-8 pl-3 pr-8 rounded-lg border text-xs font-extrabold appearance-none transition-all cursor-pointer outline-none shadow-xs select-none hover:scale-102 active:scale-98 ${
                     currentPeLevel === 'low'
@@ -1217,6 +1317,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['12_div'] || ''}
+                  onFocus={() => handleFocusRow(12)}
+                  onKeyDown={e => handleKeyDownRow(e, 12)}
                   onChange={e => handleInputChange('12_div', e.target.value)}
                   placeholder="0.00"
                   className="w-16 sm:w-20 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1227,6 +1329,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['12'] || ''}
+                  onFocus={() => handleFocusRow(12)}
+                  onKeyDown={e => handleKeyDownRow(e, 12)}
                   onChange={e => handleInputChange('12', e.target.value)}
                   placeholder="0.00"
                   className="w-14 sm:w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1241,6 +1345,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['15'] || ''}
+                  onFocus={() => handleFocusRow(15)}
+                  onKeyDown={e => handleKeyDownRow(e, 15)}
                   onChange={e => handleInputChange('15', e.target.value)}
                   placeholder="..."
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1251,6 +1357,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['15_10'] || ''}
+                  onFocus={() => handleFocusRow(15)}
+                  onKeyDown={e => handleKeyDownRow(e, 15)}
                   onChange={e => handleInputChange('15_10', e.target.value)}
                   placeholder="..."
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1264,6 +1372,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['20'] || ''}
+                  onFocus={() => handleFocusRow(20)}
+                  onKeyDown={e => handleKeyDownRow(e, 20)}
                   onChange={e => handleInputChange('20', e.target.value)}
                   placeholder="..."
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1274,6 +1384,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['20_5'] || ''}
+                  onFocus={() => handleFocusRow(20)}
+                  onKeyDown={e => handleKeyDownRow(e, 20)}
                   onChange={e => handleInputChange('20_5', e.target.value)}
                   placeholder="..."
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1287,6 +1399,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs[String(rowNum)] || ''}
+                  onFocus={() => handleFocusRow(rowNum)}
+                  onKeyDown={e => handleKeyDownRow(e, rowNum)}
                   onChange={e => handleInputChange(rowNum, e.target.value)}
                   placeholder="..."
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1297,6 +1411,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs[`${rowNum}_10`] || ''}
+                  onFocus={() => handleFocusRow(rowNum)}
+                  onKeyDown={e => handleKeyDownRow(e, rowNum)}
                   onChange={e => handleInputChange(`${rowNum}_10`, e.target.value)}
                   placeholder="..."
                   className="w-16 bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1311,6 +1427,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 readOnly={isReadOnlyCell}
                 disabled={isReadOnlyCell}
                 placeholder={isReadOnlyCell ? "🔒 Изчислено" : "Попълнете..."}
+                onFocus={() => !isReadOnlyCell && handleFocusRow(rowNum)}
+                onKeyDown={e => !isReadOnlyCell && handleKeyDownRow(e, rowNum)}
                 onChange={e => handleInputChange(rowNum, e.target.value)}
                 className={`w-48 h-8 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs outline-none text-right transition-all ${
                   isReadOnlyCell
@@ -1427,6 +1545,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               <input
                 type="text"
                 value={userInputs['7'] || ''}
+                onFocus={() => handleFocusRow(7)}
+                onKeyDown={e => handleKeyDownRow(e, 7)}
                 onChange={e => handleInputChange('7', e.target.value)}
                 placeholder="0.00"
                 className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink"
@@ -1439,6 +1559,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['8'] || ''}
+                  onFocus={() => handleFocusRow(8)}
+                  onKeyDown={e => handleKeyDownRow(e, 8)}
                   onChange={e => handleInputChange('8', e.target.value)}
                   placeholder="..."
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1449,6 +1571,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['8_high'] || ''}
+                  onFocus={() => handleFocusRow(8)}
+                  onKeyDown={e => handleKeyDownRow(e, 8)}
                   onChange={e => handleInputChange('8_high', e.target.value)}
                   placeholder="..."
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1460,6 +1584,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               <input
                 type="text"
                 value={userInputs['10'] || ''}
+                onFocus={() => handleFocusRow(10)}
+                onKeyDown={e => handleKeyDownRow(e, 10)}
                 onChange={e => handleInputChange('10', e.target.value)}
                 placeholder="P/E стойност..."
                 className="w-full h-9 px-3 py-1.5 rounded-lg border bg-bg border-border focus:border-indigo-500 font-mono font-bold text-xs outline-none text-ink transition-all"
@@ -1467,6 +1593,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               <div className="relative inline-flex items-center w-full">
                 <select
                   value={currentPeLevel || ''}
+                  onFocus={() => handleFocusRow(10)}
+                  onKeyDown={e => handleKeyDownRow(e, 10)}
                   onChange={e => handleSelectPeLevel(e.target.value as any)}
                   className={`w-full h-9 pl-3 pr-8 rounded-lg border text-xs font-extrabold appearance-none transition-all cursor-pointer outline-none shadow-xs select-none ${
                     currentPeLevel === 'low'
@@ -1494,6 +1622,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['12_div'] || ''}
+                  onFocus={() => handleFocusRow(12)}
+                  onKeyDown={e => handleKeyDownRow(e, 12)}
                   onChange={e => handleInputChange('12_div', e.target.value)}
                   placeholder="0.00"
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1504,6 +1634,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['12'] || ''}
+                  onFocus={() => handleFocusRow(12)}
+                  onKeyDown={e => handleKeyDownRow(e, 12)}
                   onChange={e => handleInputChange('12', e.target.value)}
                   placeholder="0.00"
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1518,6 +1650,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['15'] || ''}
+                  onFocus={() => handleFocusRow(15)}
+                  onKeyDown={e => handleKeyDownRow(e, 15)}
                   onChange={e => handleInputChange('15', e.target.value)}
                   placeholder="..."
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1528,6 +1662,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['15_10'] || ''}
+                  onFocus={() => handleFocusRow(15)}
+                  onKeyDown={e => handleKeyDownRow(e, 15)}
                   onChange={e => handleInputChange('15_10', e.target.value)}
                   placeholder="..."
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1541,6 +1677,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['20'] || ''}
+                  onFocus={() => handleFocusRow(20)}
+                  onKeyDown={e => handleKeyDownRow(e, 20)}
                   onChange={e => handleInputChange('20', e.target.value)}
                   placeholder="..."
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1551,6 +1689,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs['20_5'] || ''}
+                  onFocus={() => handleFocusRow(20)}
+                  onKeyDown={e => handleKeyDownRow(e, 20)}
                   onChange={e => handleInputChange('20_5', e.target.value)}
                   placeholder="..."
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1564,6 +1704,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs[String(rowNum)] || ''}
+                  onFocus={() => handleFocusRow(rowNum)}
+                  onKeyDown={e => handleKeyDownRow(e, rowNum)}
                   onChange={e => handleInputChange(rowNum, e.target.value)}
                   placeholder="..."
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1574,6 +1716,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <input
                   type="text"
                   value={userInputs[`${rowNum}_10`] || ''}
+                  onFocus={() => handleFocusRow(rowNum)}
+                  onKeyDown={e => handleKeyDownRow(e, rowNum)}
                   onChange={e => handleInputChange(`${rowNum}_10`, e.target.value)}
                   placeholder="..."
                   className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
@@ -1587,6 +1731,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               readOnly={isReadOnlyCell}
               disabled={isReadOnlyCell}
               placeholder={isReadOnlyCell ? "🔒 Автоматично изчислено" : "Попълнете стойност..."}
+              onFocus={() => !isReadOnlyCell && handleFocusRow(rowNum)}
+              onKeyDown={e => !isReadOnlyCell && handleKeyDownRow(e, rowNum)}
               onChange={e => handleInputChange(rowNum, e.target.value)}
               className={`w-full h-9 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs outline-none transition-all ${
                 isReadOnlyCell
@@ -1870,6 +2016,16 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             </button>
           </div>
 
+          {/* Keyboard Shortcut Hint */}
+          <div className="hidden xl:flex items-center gap-1.5 text-[11px] text-ink-muted bg-bg px-2.5 py-1 rounded-lg border border-border/60 font-mono select-none">
+            <span className="text-ink-faint">Клавиши:</span>
+            <kbd className="bg-bg-card px-1.5 py-0.5 rounded border border-border text-[10px] font-bold text-ink">Enter</kbd>
+            <span>Запазва ред</span>
+            <span className="text-border">|</span>
+            <kbd className="bg-bg-card px-1.5 py-0.5 rounded border border-border text-[10px] font-bold text-ink">Esc</kbd>
+            <span>Отменя</span>
+          </div>
+
           {/* Secondary Quick Buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
             <button
@@ -1908,9 +2064,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
       {/* Toast Notification Banner */}
       {savedSuccessMsg && (
-        <div className="bg-emerald-500 text-white px-4 sm:px-6 py-2 flex items-center justify-between text-xs font-bold shadow-md animate-in slide-in-from-top duration-200">
+        <div className={`px-4 sm:px-6 py-2 flex items-center justify-between text-xs font-bold shadow-md animate-in slide-in-from-top duration-200 text-white ${
+          savedSuccessMsg.includes('отменени') ? 'bg-amber-600/95' : 'bg-emerald-500'
+        }`}>
           <span className="flex items-center gap-2">
-            <Check className="w-4 h-4" />
+            {savedSuccessMsg.includes('отменени') ? (
+              <RotateCcw className="w-4 h-4" />
+            ) : (
+              <Check className="w-4 h-4" />
+            )}
             {savedSuccessMsg}
           </span>
           <button onClick={() => setSavedSuccessMsg(null)} className="opacity-80 hover:opacity-100 cursor-pointer">
