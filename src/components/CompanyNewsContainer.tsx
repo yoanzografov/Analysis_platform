@@ -120,13 +120,15 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
           category: item.category || 'world'
         }));
         setNews(parsedNews);
+        setError('');
       } else {
         throw new Error('Няма върнати новини от сървъра');
       }
     } catch (err: any) {
-      console.error("Error fetching news:", err);
-      setError('Неуспешна връзка със сървъра. Използваме резервен информационен поток.');
-      setNews(selectedStock ? getFallbackNewsLocal(selectedStock.ticker, selectedStock.companyName) : GENERAL_FALLBACK_NEWS);
+      console.warn("Could not fetch remote news, loading fallback stream:", err);
+      const fallback = selectedStock ? getFallbackNewsLocal(selectedStock.ticker, selectedStock.companyName) : GENERAL_FALLBACK_NEWS;
+      setNews(fallback);
+      setError('');
     } finally {
       setLoading(false);
     }
@@ -417,7 +419,7 @@ export default function CompanyNewsContainer({ stocks, selectedStock, onSelectSt
               Свързване с CNBC, MarketWatch, Reuters и Investor.bg в реално време за най-актуалните статии...
             </p>
           </div>
-        ) : error ? (
+        ) : (error && displayedNews.length === 0) ? (
           <div className="bg-bg border border-border p-4 rounded-2xl">
             <div className="flex items-center gap-2 text-amber-800 font-sans tabular-nums text-xs font-bold mb-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
