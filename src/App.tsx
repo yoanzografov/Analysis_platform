@@ -77,6 +77,22 @@ export default function App() {
  const [isAutoLiveRefresh, setIsAutoLiveRefresh] = useState(true);
  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
  const [isUsefulLinksMenuOpen, setIsUsefulLinksMenuOpen] = useState(false);
+ const settingsMenuRef = useRef<HTMLDivElement>(null);
+ const usefulLinksMenuRef = useRef<HTMLDivElement>(null);
+
+ useEffect(() => {
+   const handleClickOutside = (e: MouseEvent) => {
+     if (settingsMenuRef.current && !settingsMenuRef.current.contains(e.target as Node)) {
+       setIsSettingsMenuOpen(false);
+     }
+     if (usefulLinksMenuRef.current && !usefulLinksMenuRef.current.contains(e.target as Node)) {
+       setIsUsefulLinksMenuOpen(false);
+     }
+   };
+   document.addEventListener('mousedown', handleClickOutside);
+   return () => document.removeEventListener('mousedown', handleClickOutside);
+ }, []);
+
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
  const [isCsvUploaderOpen, setIsCsvUploaderOpen] = useState(false);
   const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
@@ -118,13 +134,45 @@ export default function App() {
     }
   };
 
-  const clearHashUrl = () => {
-    if (window.location.hash) {
-      try {
-        history.replaceState(null, '', window.location.pathname + window.location.search);
-      } catch (e) {
-        window.location.hash = '';
+  const getInitialTab = (): 'table' | 'alerts' | 'portfolio' => {
+    const hash = window.location.hash.toLowerCase().replace('#', '');
+    if (hash === 'alerts' || hash === 'portfolio') return hash;
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab')?.toLowerCase();
+    if (tabParam === 'alerts' || tabParam === 'portfolio') return tabParam;
+    return 'table';
+  };
+
+  const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio'>(getInitialTab);
+  const activeMainTabRef = useRef<'table' | 'alerts' | 'portfolio'>(activeMainTab);
+  activeMainTabRef.current = activeMainTab;
+
+  const switchTab = (tab: 'table' | 'alerts' | 'portfolio') => {
+    setActiveMainTab(tab);
+    activeMainTabRef.current = tab;
+    const targetHash = tab === 'table' ? '' : `#${tab}`;
+    const targetUrl = tab === 'table' 
+      ? window.location.pathname + window.location.search 
+      : `${window.location.pathname}${window.location.search}#${tab}`;
+    
+    if (window.location.hash !== targetHash) {
+      if (window.history.pushState) {
+        window.history.pushState(null, '', targetUrl);
+      } else {
+        window.location.hash = targetHash;
       }
+    }
+  };
+
+  const clearHashUrl = () => {
+    const currentTab = activeMainTabRef.current;
+    const targetUrl = currentTab === 'table' 
+      ? window.location.pathname + window.location.search 
+      : `${window.location.pathname}${window.location.search}#${currentTab}`;
+    try {
+      history.replaceState(null, '', targetUrl);
+    } catch (e) {
+      window.location.hash = currentTab === 'table' ? '' : `#${currentTab}`;
     }
   };
 
@@ -137,6 +185,7 @@ export default function App() {
     const handleHashChange = () => {
       const hash = window.location.hash.toLowerCase().replace('#', '');
       const user = currentUser;
+
       if (hash === 'stock-profit-calculator') {
         if (!user) {
           handleRequireAuth('Stock Profit Calculator');
@@ -158,32 +207,52 @@ export default function App() {
           return;
         }
         setShowInvestmentCalculatorModal(true);
-      } else if (hash === 'checklist' || hash === 'check-list') {
+      } else if (hash === 'checklist' || hash === 'check-list' || hash === 'stock-checklist') {
         if (!user) {
           handleRequireAuth('Stock Analysis Check List');
           clearHashUrl();
           return;
         }
         setShowChecklistModal(true);
-      } else if (hash === 'alerts' || hash === 'price-alerts') {
-        if (!user) {
-          handleRequireAuth('PRICE ALERTS SCHEDULE');
-          clearHashUrl();
-          switchTab('table');
-          return;
-        }
-        switchTab('alerts');
       } else if (hash === 'flags' || hash === 'financial-flags') {
         setShowFinancialFlagsModal(true);
       } else {
-        const tab = getInitialTab();
-        if (tab === 'alerts' && !user) {
-          switchTab('table');
+        // Modal hash no longer present in URL (e.g. user pressed back button in browser)
+        setShowProfitCalculatorModal(false);
+        setShowRoiCalculatorModal(false);
+        setShowInvestmentCalculatorModal(false);
+        setShowChecklistModal(false);
+        setShowFinancialFlagsModal(false);
+
+        if (hash === 'alerts' || hash === 'price-alerts') {
+          if (!user) {
+            handleRequireAuth('PRICE ALERTS SCHEDULE');
+            clearHashUrl();
+            setActiveMainTab('table');
+            activeMainTabRef.current = 'table';
+            return;
+          }
+          setActiveMainTab('alerts');
+          activeMainTabRef.current = 'alerts';
+        } else if (hash === 'portfolio') {
+          setActiveMainTab('portfolio');
+          activeMainTabRef.current = 'portfolio';
+        } else if (hash === 'table' || hash === '') {
+          setActiveMainTab('table');
+          activeMainTabRef.current = 'table';
         } else {
-          setActiveMainTab(tab);
+          const tab = getInitialTab();
+          if (tab === 'alerts' && !user) {
+            setActiveMainTab('table');
+            activeMainTabRef.current = 'table';
+          } else {
+            setActiveMainTab(tab);
+            activeMainTabRef.current = tab;
+          }
         }
       }
     };
+
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
     window.addEventListener('popstate', handleHashChange);
@@ -330,43 +399,24 @@ export default function App() {
       console.error('Error saving alerts to localStorage', e);
     }
   }, [alerts]);
- const [logs, setLogs] = useState<NotificationLog[]>([]);
- const [activeAlertToast, setActiveAlertToast] = useState<string | null>(null);
-
-  const getInitialTab = (): 'table' | 'alerts' | 'portfolio' => {
-    const hash = window.location.hash.toLowerCase().replace('#', '');
-    if (hash === 'alerts' || hash === 'portfolio') return hash;
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab')?.toLowerCase();
-    if (tabParam === 'alerts' || tabParam === 'portfolio') return tabParam;
-    return 'table';
-  };
+  const [logs, setLogs] = useState<NotificationLog[]>([]);
+  const [activeAlertToast, setActiveAlertToast] = useState<string | null>(null);
 
   // Filter state for the Stock Table, customizable by Bento charts
   const [activeFilter, setActiveFilter] = useState<TableFilter>({ type: 'all', value: 'all' });
-  const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio'>(getInitialTab);
-
-  const switchTab = (tab: 'table' | 'alerts' | 'portfolio') => {
-    setActiveMainTab(tab);
-    if (window.history.pushState) {
-      window.history.pushState(null, '', `#${tab}`);
-    } else {
-      window.location.hash = `#${tab}`;
-    }
-  };
 
   const handleGoHome = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    clearHashUrl();
     try {
-      window.history.pushState(null, '', window.location.pathname);
+      window.history.pushState(null, '', window.location.pathname + window.location.search);
     } catch (err) {
       // fallback
     }
     setActiveMainTab('table');
+    activeMainTabRef.current = 'table';
     setActiveFilter({ type: 'all', value: 'all' });
     setSearchQuery('');
     setSelectedStockForAi(null);
@@ -1151,7 +1201,7 @@ export default function App() {
     };
     setLogs(prev => [newLog, ...prev]);
     setActiveAlertToast(`🔔 Сигналът за ${ticker} (${criteria === 'ABOVE' ? 'над' : 'под'} $${targetPrice}) беше добавен успешно!`);
-    setActiveMainTab('alerts');
+    switchTab('alerts');
   };
 
   const handleUpdateAlert = (id: string, ticker: string, criteria: 'ABOVE' | 'BELOW', targetPrice: number, isActive?: boolean) => {
@@ -1450,7 +1500,7 @@ export default function App() {
         </button>
 
         {/* 3. System Settings Dropdown */}
-        <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsSettingsMenuOpen(false); }}>
+        <div ref={settingsMenuRef} className="relative">
           <button
             onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
             className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
@@ -1466,7 +1516,10 @@ export default function App() {
           </button>
 
           {isSettingsMenuOpen && (
-            <div className="absolute left-0 top-full mt-2 w-56 bg-bg border border-border rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-1 origin-top-left animate-in fade-in zoom-in-95 duration-100">
+            <div 
+              onMouseDown={(e) => e.stopPropagation()}
+              className="absolute left-0 top-full mt-2 w-56 bg-bg border border-border rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-1 origin-top-left animate-in fade-in zoom-in-95 duration-100"
+            >
               <button
                 onClick={() => { exportCSVFile(); setIsSettingsMenuOpen(false); }}
                 className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
@@ -1506,7 +1559,7 @@ export default function App() {
         </button>
 
         {/* 6. Tools Dropdown Button */}
-        <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsUsefulLinksMenuOpen(false); }}>
+        <div ref={usefulLinksMenuRef} className="relative">
           <button
             onClick={() => {
               if (!currentUser) {

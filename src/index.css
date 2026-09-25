@@ -191,3 +191,12 @@ button, select, input {
     display: none;
   }
 }
+
+/* Utility to hide scrollbars while allowing touch/wheel horizontal scrolling */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

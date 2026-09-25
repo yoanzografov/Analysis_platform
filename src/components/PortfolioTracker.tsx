@@ -1026,6 +1026,18 @@ export default function PortfolioTracker({
           </button>
 
           <button
+            onClick={() => setActiveSubTab('holdings')}
+            className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              activeSubTab === 'holdings'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+            }`}
+          >
+            <Briefcase className="w-4 h-4 text-amber-300" />
+            Holdings
+          </button>
+
+          <button
             onClick={() => setActiveSubTab('diversification')}
             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeSubTab === 'diversification'
@@ -1047,6 +1059,18 @@ export default function PortfolioTracker({
           >
             <Flame className="w-4 h-4 text-emerald-400" />
             Dividend Calendar
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('transactions')}
+            className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              activeSubTab === 'transactions'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+            }`}
+          >
+            <History className="w-4 h-4 text-purple-300" />
+            История
           </button>
         </div>
 
