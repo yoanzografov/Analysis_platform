@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Stock } from '../types';
-import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown, TrendingUp, Clock, Wrench, Calculator, Search } from 'lucide-react';
+import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown, TrendingUp, Clock, Wrench, Calculator, Search, Smartphone, Table } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
 import { fetchStockReturns, StockReturnsResult, AVAILABLE_RETURN_MONTHS } from '../utils/stockReturnsFetcher';
 import ProfitCalculatorModal from './ProfitCalculatorModal';
@@ -182,6 +182,34 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [isLoadingReturns, setIsLoadingReturns] = useState(false);
   const [customPeriodMonths, setCustomPeriodMonths] = useState<number>(12);
   const [showReturnsBar, setShowReturnsBar] = useState(true);
+
+  // View mode: 'cards' on mobile screens by default, 'table' on desktop
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return 'cards';
+    }
+    return 'table';
+  });
+
+  const toolsMenuRef = useRef<HTMLDivElement>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (toolsMenuRef.current && !toolsMenuRef.current.contains(e.target as Node)) {
+        setIsToolsMenuOpen(false);
+      }
+      if (searchDropdownRef.current && !searchDropdownRef.current.contains(e.target as Node)) {
+        setIsSearchDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   // Tools Menu & Calculators Modals State
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
@@ -1313,33 +1341,391 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     );
   };
 
-  return (
-    <div className="fixed inset-0 z-[999999] w-screen h-screen bg-bg flex flex-col font-sans text-ink overflow-hidden animate-in fade-in duration-150" onClick={e => e.stopPropagation()}>
-      
-      {/* Clean App Header Bar */}
-      <div className="bg-bg-card border-b border-border px-6 py-3 flex items-center justify-between shrink-0 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <CheckSquare className="w-5 h-5" />
+  // Helper to render responsive mobile card for each metric
+  const renderRowCard = (rowNum: number) => {
+    const row = EXACT_SHEET_ROWS.find(r => r.rowNum === rowNum);
+    if (!row) return null;
+
+    const isSelected = selectedRow === rowNum;
+    const isChecked = !!checkedRows[rowNum];
+    const rawUserVal = userInputs[String(rowNum)];
+    const displayVal = computedValues[String(rowNum)] !== undefined 
+      ? computedValues[String(rowNum)] 
+      : (rawUserVal !== undefined ? rawUserVal : '');
+
+    const isReadOnlyCell = row.cellType === 'green-formula' || row.cellType.startsWith('flag-') || [24, 27, 40, 41, 42, 43, 44].includes(row.rowNum);
+    const effectiveVal = getEffectiveMetricVal(rowNum);
+
+    return (
+      <div
+        key={`card-${rowNum}`}
+        onClick={() => setSelectedRow(rowNum)}
+        className={`p-3 rounded-xl border transition-all space-y-2.5 ${
+          isSelected 
+            ? 'bg-indigo-500/15 border-indigo-500/50 shadow-md ring-1 ring-indigo-500/30' 
+            : isChecked
+            ? 'bg-emerald-500/5 border-emerald-500/25'
+            : 'bg-card/70 border-border/80 hover:border-indigo-500/30'
+        }`}
+      >
+        {/* Top Header of Card: Checkbox, Row #, Label & Info Button */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleCheck(rowNum);
+              }}
+              className="mt-0.5 w-6 h-6 rounded-lg text-ink-muted hover:text-emerald-400 cursor-pointer transition-all inline-flex items-center justify-center shrink-0 active:scale-90"
+              title={isChecked ? "Маркиран като прегледан" : "Маркирай като прегледан"}
+            >
+              {isChecked ? (
+                <CheckSquare className="w-5 h-5 text-emerald-400 fill-emerald-500/20" />
+              ) : (
+                <Square className="w-5 h-5 text-ink-faint hover:text-ink" />
+              )}
+            </button>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-bg border border-border text-ink-faint">
+                  #{row.rowNum}
+                </span>
+                <span className={`text-xs font-bold leading-snug ${isChecked ? 'text-indigo-400 font-extrabold' : 'text-ink'}`}>
+                  {row.label}
+                </span>
+                {isReadOnlyCell && (
+                  <Lock className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Автоматично изчислено" />
+                )}
+              </div>
+            </div>
           </div>
-          <div>
-            <h2 className="font-black text-base text-ink tracking-tight flex items-center gap-2">
-              Stock Valuation Checklist Table
-            </h2>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {rowNum !== 7 && renderStatusBadge(rowNum, effectiveVal)}
+            {(row.note || row.formulaStr || row.flagRules) && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveInfoModalRow(row);
+                }}
+                className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 inline-flex items-center justify-center cursor-pointer hover:bg-indigo-500/20 active:scale-95"
+                title="Формула, правила за оцветяване & разяснения"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Top Controls & Live Signals Counter Badge */}
-        <div className="flex items-center gap-3">
+        {/* Value Input Area */}
+        <div className="pt-0.5">
+          {rowNum === 7 ? (
+            <div className="flex items-center gap-1.5 bg-bg border border-border focus-within:border-indigo-500 rounded-lg px-2.5 py-1.5 h-9 w-full transition-colors shadow-xs">
+              <span className="text-xs text-ink-muted font-bold">$</span>
+              <input
+                type="text"
+                value={userInputs['7'] || ''}
+                onChange={e => handleInputChange('7', e.target.value)}
+                placeholder="0.00"
+                className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink"
+              />
+            </div>
+          ) : rowNum === 8 ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9">
+                <span className="text-xs text-ink-faint font-bold">Low:</span>
+                <input
+                  type="text"
+                  value={userInputs['8'] || ''}
+                  onChange={e => handleInputChange('8', e.target.value)}
+                  placeholder="..."
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9">
+                <span className="text-xs text-ink-faint font-bold">High:</span>
+                <input
+                  type="text"
+                  value={userInputs['8_high'] || ''}
+                  onChange={e => handleInputChange('8_high', e.target.value)}
+                  placeholder="..."
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+            </div>
+          ) : rowNum === 10 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input
+                type="text"
+                value={userInputs['10'] || ''}
+                onChange={e => handleInputChange('10', e.target.value)}
+                placeholder="P/E стойност..."
+                className="w-full h-9 px-3 py-1.5 rounded-lg border bg-bg border-border focus:border-indigo-500 font-mono font-bold text-xs outline-none text-ink transition-all"
+              />
+              <div className="relative inline-flex items-center w-full">
+                <select
+                  value={currentPeLevel || ''}
+                  onChange={e => handleSelectPeLevel(e.target.value as any)}
+                  className={`w-full h-9 pl-3 pr-8 rounded-lg border text-xs font-extrabold appearance-none transition-all cursor-pointer outline-none shadow-xs select-none ${
+                    currentPeLevel === 'low'
+                      ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                      : currentPeLevel === 'mid'
+                      ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
+                      : currentPeLevel === 'high'
+                      ? 'bg-rose-500/15 border-rose-500/40 text-rose-400'
+                      : 'bg-bg border-border text-ink-muted'
+                  }`}
+                  title="Изберете оценка за P/E: Ниско (≤ 15), Средно (15 - 25), Високо (> 25)"
+                >
+                  <option value="" className="bg-bg-card text-ink-muted">-- P/E Ниво --</option>
+                  <option value="low" className="bg-bg-card text-emerald-400 font-bold">🟢 Ниско (≤ 15)</option>
+                  <option value="mid" className="bg-bg-card text-amber-400 font-bold">🟡 Средно (15 - 25)</option>
+                  <option value="high" className="bg-bg-card text-rose-400 font-bold">🔴 Високо (&gt; 25)</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 pointer-events-none text-current opacity-70" />
+              </div>
+            </div>
+          ) : rowNum === 12 ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9 focus-within:border-indigo-500 transition-colors">
+                <span className="text-[11px] text-ink-faint font-bold">Div: $</span>
+                <input
+                  type="text"
+                  value={userInputs['12_div'] || ''}
+                  onChange={e => handleInputChange('12_div', e.target.value)}
+                  placeholder="0.00"
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9 focus-within:border-indigo-500 transition-colors">
+                <span className="text-[11px] text-ink-faint font-bold">Yield:</span>
+                <input
+                  type="text"
+                  value={userInputs['12'] || ''}
+                  onChange={e => handleInputChange('12', e.target.value)}
+                  placeholder="0.00"
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+                <span className="text-xs text-ink-muted font-bold">%</span>
+              </div>
+            </div>
+          ) : rowNum === 15 ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9">
+                <span className="text-xs text-ink-faint font-bold">5y:</span>
+                <input
+                  type="text"
+                  value={userInputs['15'] || ''}
+                  onChange={e => handleInputChange('15', e.target.value)}
+                  placeholder="..."
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9">
+                <span className="text-xs text-ink-faint font-bold">10y:</span>
+                <input
+                  type="text"
+                  value={userInputs['15_10'] || ''}
+                  onChange={e => handleInputChange('15_10', e.target.value)}
+                  placeholder="..."
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+            </div>
+          ) : rowNum === 20 ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9">
+                <span className="text-xs text-ink-faint font-bold">3y:</span>
+                <input
+                  type="text"
+                  value={userInputs['20'] || ''}
+                  onChange={e => handleInputChange('20', e.target.value)}
+                  placeholder="..."
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9">
+                <span className="text-xs text-ink-faint font-bold">5y:</span>
+                <input
+                  type="text"
+                  value={userInputs['20_5'] || ''}
+                  onChange={e => handleInputChange('20_5', e.target.value)}
+                  placeholder="..."
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+            </div>
+          ) : (rowNum === 17 || rowNum === 25 || rowNum === 37 || rowNum === 39) ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9">
+                <span className="text-xs text-ink-faint font-bold">5y:</span>
+                <input
+                  type="text"
+                  value={userInputs[String(rowNum)] || ''}
+                  onChange={e => handleInputChange(rowNum, e.target.value)}
+                  placeholder="..."
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2.5 py-1.5 h-9">
+                <span className="text-xs text-ink-faint font-bold">10y:</span>
+                <input
+                  type="text"
+                  value={userInputs[`${rowNum}_10`] || ''}
+                  onChange={e => handleInputChange(`${rowNum}_10`, e.target.value)}
+                  placeholder="..."
+                  className="w-full bg-transparent text-xs font-mono font-bold outline-none text-ink text-right"
+                />
+              </div>
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={displayVal}
+              readOnly={isReadOnlyCell}
+              disabled={isReadOnlyCell}
+              placeholder={isReadOnlyCell ? "🔒 Автоматично изчислено" : "Попълнете стойност..."}
+              onChange={e => handleInputChange(rowNum, e.target.value)}
+              className={`w-full h-9 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs outline-none transition-all ${
+                isReadOnlyCell
+                  ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 cursor-not-allowed'
+                  : 'bg-bg border-border focus:border-indigo-500 text-ink'
+              }`}
+            />
+          )}
+        </div>
+      </div>
+    );
+  };
 
+  return (
+    <div className="fixed inset-0 z-[999999] w-full h-[100dvh] max-h-[100dvh] bg-bg flex flex-col font-sans text-ink overflow-hidden animate-in fade-in duration-150" onClick={e => e.stopPropagation()}>
+      
+      {/* Clean App Header Bar - Fully Responsive */}
+      <div className="bg-bg-card border-b border-border px-3 sm:px-6 py-2 sm:py-2.5 flex flex-col gap-2 shrink-0 shadow-md">
+        
+        {/* Top Row: Title, Ticker, Primary Actions & Close Button */}
+        <div className="flex items-center justify-between gap-2 w-full">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1.5 sm:p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shrink-0">
+              <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="font-black text-sm sm:text-base text-ink tracking-tight truncate">
+                <span className="hidden sm:inline">Stock Valuation Checklist Table</span>
+                <span className="sm:hidden">Check List</span>
+              </h2>
+            </div>
+            {selectedTicker && (
+              <span className="font-mono font-extrabold text-[11px] sm:text-xs px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
+                {selectedTicker}
+              </span>
+            )}
+          </div>
+
+          {/* Action Buttons: Add, Tools, Close */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Save to Table Button */}
+            <button
+              onClick={handleSaveToMainTable}
+              className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs inline-flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/20 cursor-pointer select-none"
+              title="Запази пресметнатата акция в Интерактивната Таблица на платформата"
+            >
+              <PlusCircle className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">➕ Добави към Таблицата</span>
+              <span className="sm:hidden">Запази</span>
+            </button>
+
+            {/* Tools Dropdown Button */}
+            <div ref={toolsMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsToolsMenuOpen(!isToolsMenuOpen)}
+                className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+                  isToolsMenuOpen
+                    ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+                    : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
+                }`}
+                title="Tools & Calculators"
+              >
+                <Wrench className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <span className="hidden sm:inline">Tools</span>
+                <ChevronDown className={`w-3 h-3 text-ink-faint transition-transform duration-200 shrink-0 ${isToolsMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isToolsMenuOpen && (
+                <div 
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-xl shadow-2xl p-2 z-[1000001] flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100"
+                >
+                  <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
+                    🛠️ Tools & Calculators
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsToolsMenuOpen(false);
+                      window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
+                    }}
+                    className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                    title="Отвори Stock Profit Calculator в нов прозорец"
+                  >
+                    <Calculator className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="flex-1">Stock Profit Calculator</span>
+                    <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 ml-auto shrink-0" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsToolsMenuOpen(false);
+                      window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
+                    }}
+                    className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                    title="Отвори Return on Investment (ROI) в нов прозорец"
+                  >
+                    <Calculator className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="flex-1">Return on Investment (ROI)</span>
+                    <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 ml-auto shrink-0" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsToolsMenuOpen(false);
+                      window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
+                    }}
+                    className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                    title="Отвори Сложна Лихва & Растеж в нов прозорец"
+                  >
+                    <TrendingUp className="w-4 h-4 text-indigo-400 shrink-0" />
+                    <span className="flex-1">Сложна Лихва & Растеж</span>
+                    <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 ml-auto shrink-0" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Close Button - ALWAYS visible and thumb-friendly */}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-border bg-card/80 hover:bg-border/60 transition-colors text-ink-muted hover:text-ink cursor-pointer inline-flex items-center justify-center select-none shrink-0"
+              title="Затвори"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Row: Ticker Search Bar + View Mode Switcher + Secondary Actions */}
+        <div className="flex items-center gap-2 w-full flex-wrap sm:flex-nowrap">
           {/* Ticker Search Bar with Instant Autocomplete */}
           <div 
-            className="relative flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border focus-within:border-indigo-500/50 transition-colors shadow-xs"
-            onBlur={(e) => { 
-              if (!e.currentTarget.contains(e.relatedTarget)) {
-                setIsSearchDropdownOpen(false); 
-              }
-            }}
+            ref={searchDropdownRef}
+            className="relative flex-1 min-w-[180px] flex items-center gap-2 bg-bg px-3 py-1.5 rounded-xl border border-border focus-within:border-indigo-500/50 transition-colors shadow-xs"
           >
             <Search className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
             <input
@@ -1366,13 +1752,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   setIsSearchDropdownOpen(false);
                 }
               }}
-              className="w-44 sm:w-56 bg-transparent text-ink font-mono font-bold text-xs outline-none uppercase placeholder:normal-case placeholder:font-sans placeholder:text-ink-faint placeholder:font-medium"
+              className="w-full bg-transparent text-ink font-mono font-bold text-xs outline-none uppercase placeholder:normal-case placeholder:font-sans placeholder:text-ink-faint placeholder:font-medium"
             />
 
             {tickerSearchQuery && (
               <button
                 type="button"
-                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setTickerSearchQuery('');
                   handleClearAll();
@@ -1397,7 +1782,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             {/* Dropdown Suggestions Menu */}
             {isSearchDropdownOpen && (
               <div 
-                className="absolute left-0 top-full mt-2 w-72 sm:w-80 bg-card border border-border rounded-xl shadow-2xl p-1.5 z-[1000002] flex flex-col gap-0.5 max-h-72 overflow-y-auto origin-top-left animate-in fade-in zoom-in-95 duration-100 custom-scrollbar"
+                className="absolute left-0 top-full mt-2 w-full sm:w-80 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-xl shadow-2xl p-1.5 z-[1000002] flex flex-col gap-0.5 max-h-72 overflow-y-auto origin-top-left animate-in fade-in zoom-in-95 duration-100 custom-scrollbar"
               >
                 <div className="px-2 py-1 text-[10px] uppercase font-bold text-ink-faint border-b border-border/40 flex items-center justify-between">
                   <span>Търсене по тикър символ</span>
@@ -1408,8 +1793,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   <button
                     key={s.ticker}
                     type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       void handleSelectTicker(s.ticker);
                       setIsSearchDropdownOpen(false);
                     }}
@@ -1440,8 +1824,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 {tickerSearchQuery.trim() && !allAvailableStocks.some(s => s.ticker === tickerSearchQuery.trim().toUpperCase()) && (
                   <button
                     type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       void handleSelectTicker(tickerSearchQuery.trim().toUpperCase());
                       setIsSearchDropdownOpen(false);
                     }}
@@ -1457,155 +1840,96 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             )}
           </div>
 
-          <button
-            onClick={handleSaveToMainTable}
-            className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs inline-flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/20 cursor-pointer hover:scale-102 active:scale-98 select-none"
-            title="Запази пресметнатата акция в Интерактивната Таблица на платформата"
-          >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span>➕ Добави към Таблицата</span>
-          </button>
-
-          {/* Tools Dropdown Button */}
-          <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsToolsMenuOpen(false); }}>
+          {/* View Mode Switcher [ 📱 Карти | 📊 Таблица ] */}
+          <div className="flex items-center bg-bg border border-border rounded-xl p-0.5 text-xs font-bold shrink-0 shadow-2xs">
             <button
               type="button"
-              onClick={() => setIsToolsMenuOpen(!isToolsMenuOpen)}
-              className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
-                isToolsMenuOpen
-                  ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
-                  : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
+              onClick={() => setViewMode('cards')}
+              className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                viewMode === 'cards'
+                  ? 'bg-indigo-600 text-white font-black shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
               }`}
-              title="Tools & Calculators"
+              title="Преглед като адаптивни мобилни карти (без скрити елементи)"
             >
-              <Wrench className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-              <span>Tools</span>
-              <ChevronDown className={`w-3 h-3 text-ink-faint transition-transform duration-200 shrink-0 ${isToolsMenuOpen ? 'rotate-180' : ''}`} />
+              <span>📱</span>
+              <span className="text-[11px]">Карти</span>
             </button>
-
-            {isToolsMenuOpen && (
-              <div 
-                onMouseDown={(e) => e.stopPropagation()}
-                className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-xl shadow-2xl p-2 z-[1000001] flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100"
-              >
-                <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
-                  🛠️ Tools & Calculators
-                </div>
-
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    setIsToolsMenuOpen(false);
-                    window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
-                  }}
-                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
-                  title="Отвори Stock Profit Calculator в нов прозорец"
-                >
-                  <Calculator className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="flex-1">Stock Profit Calculator</span>
-                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 ml-auto shrink-0" />
-                </button>
-
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    setIsToolsMenuOpen(false);
-                    window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
-                  }}
-                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
-                  title="Отвори Return on Investment (ROI) в нов прозорец"
-                >
-                  <Calculator className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="flex-1">Return on Investment (ROI)</span>
-                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 ml-auto shrink-0" />
-                </button>
-
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    setIsToolsMenuOpen(false);
-                    window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
-                  }}
-                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
-                  title="Отвори Сложна Лихва & Растеж в нов прозорец"
-                >
-                  <TrendingUp className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span className="flex-1">Сложна Лихва & Растеж</span>
-                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 ml-auto shrink-0" />
-                </button>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                viewMode === 'table'
+                  ? 'bg-indigo-600 text-white font-black shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+              title="Преглед като класическа електронна таблица"
+            >
+              <span>📊</span>
+              <span className="text-[11px]">Таблица</span>
+            </button>
           </div>
 
-          <button
-            onClick={() => {
-              window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
-            }}
-            className="h-9 px-3.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:scale-102 active:scale-98 select-none shadow-xs"
-            title="Отвори в нов прозорец"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>Нов прозорец</span>
-          </button>
-
-          {!showReturnsBar && (
+          {/* Secondary Quick Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={() => setShowReturnsBar(true)}
-              className="h-9 px-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:scale-102 active:scale-98 select-none shadow-xs"
-              title="Покажи лентата за историческа доходност"
+              onClick={() => {
+                window.open(window.location.origin + window.location.pathname + '#checklist', '_blank');
+              }}
+              className="h-8 px-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 inline-flex items-center justify-center gap-1 transition-all cursor-pointer select-none shadow-xs"
+              title="Отвори в нов прозорец"
             >
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Доходност (3Y, 5Y, 10Y)</span>
-              <span className="sm:hidden">Доходност</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Нов прозорец</span>
             </button>
-          )}
 
-          <button
-            onClick={handleClearAll}
-            className="h-9 px-3.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold text-xs border border-red-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:scale-102 active:scale-98 select-none shadow-xs"
-            title="Изчисти данните"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Изчисти</span>
-          </button>
+            {!showReturnsBar && (
+              <button
+                onClick={() => setShowReturnsBar(true)}
+                className="h-8 px-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/20 inline-flex items-center justify-center gap-1 transition-all cursor-pointer select-none shadow-xs"
+                title="Покажи лентата за историческа доходност"
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Доходност</span>
+              </button>
+            )}
 
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-xl border border-border hover:bg-border/60 transition-colors text-ink-muted hover:text-ink cursor-pointer inline-flex items-center justify-center select-none"
-            title="Затвори"
-          >
-            <X className="w-5 h-5" />
-          </button>
+            <button
+              onClick={handleClearAll}
+              className="h-8 px-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold text-xs border border-red-500/20 inline-flex items-center justify-center gap-1 transition-all cursor-pointer select-none shadow-xs"
+              title="Изчисти данните"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Изчисти</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Toast Notification Banner */}
       {savedSuccessMsg && (
-        <div className="bg-emerald-500 text-white px-6 py-2 flex items-center justify-between text-xs font-bold shadow-md animate-in slide-in-from-top duration-200">
+        <div className="bg-emerald-500 text-white px-4 sm:px-6 py-2 flex items-center justify-between text-xs font-bold shadow-md animate-in slide-in-from-top duration-200">
           <span className="flex items-center gap-2">
             <Check className="w-4 h-4" />
             {savedSuccessMsg}
           </span>
-          <button onClick={() => setSavedSuccessMsg(null)} className="opacity-80 hover:opacity-100">
+          <button onClick={() => setSavedSuccessMsg(null)} className="opacity-80 hover:opacity-100 cursor-pointer">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* Historical Returns Performance Bar (3Y, 5Y, 10Y & Custom Period: 1, 3, 6, 12, 24, 36, 48, 60, 72, 120, 144 Months) */}
+      {/* Historical Returns Performance Bar */}
       {showReturnsBar && (
-        <div className="bg-bg-card border-b border-border px-6 py-2 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 shadow-xs animate-in fade-in duration-150">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="flex items-center gap-1.5 text-indigo-400 font-extrabold text-[11px] uppercase tracking-wider bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20">
+        <div className="bg-bg-card border-b border-border px-3 sm:px-6 py-2 flex items-center justify-between gap-3 text-xs shrink-0 shadow-xs overflow-x-auto touch-pan-x no-scrollbar">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 text-indigo-400 font-extrabold text-[11px] uppercase tracking-wider bg-indigo-500/10 px-2 py-1 rounded-lg border border-indigo-500/20 shrink-0">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>Историческа Доходност:</span>
+              <span className="whitespace-nowrap">Доходност:</span>
             </div>
 
             {/* 3 Year Return Card */}
-            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border" title="3-годишна обща възвръщаемост (3 Year Return) и средногодишен темп (CAGR)">
+            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" title="3-годишна обща възвръщаемост (3 Year Return) и средногодишен темп (CAGR)">
               <span className="text-[11px] text-ink-faint font-bold">3Y:</span>
               {isLoadingReturns ? (
                 <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
@@ -1626,7 +1950,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             </div>
 
             {/* 5 Year Return Card */}
-            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border" title="5-годишна обща възвръщаемост (5 Year Return) и средногодишен темп (CAGR)">
+            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" title="5-годишна обща възвръщаемост (5 Year Return) и средногодишен темп (CAGR)">
               <span className="text-[11px] text-ink-faint font-bold">5Y:</span>
               {isLoadingReturns ? (
                 <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
@@ -1647,7 +1971,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             </div>
 
             {/* 10 Year Return Card */}
-            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border" title="10-годишна обща възвръщаемост (10 Year Return) и средногодишен темп (CAGR)">
+            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" title="10-годишна обща възвръщаемост (10 Year Return) и средногодишен темп (CAGR)">
               <span className="text-[11px] text-ink-faint font-bold">10Y:</span>
               {isLoadingReturns ? (
                 <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
@@ -1669,11 +1993,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           </div>
 
           {/* Custom Period: 1, 3, 6, 12, 24, 36, 48, 60, 72, 120, 144 Months */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0">
               <label className="text-[11px] font-bold text-ink-faint uppercase flex items-center gap-1">
                 <Clock className="w-3 h-3 text-indigo-400" />
-                Период:
+                <span className="hidden sm:inline">Период:</span>
               </label>
               <select
                 value={customPeriodMonths}
@@ -1690,9 +2014,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
             {/* Custom Result Badge */}
             {isLoadingReturns ? (
-              <span className="text-xs font-mono text-ink-faint animate-pulse px-2 py-1">Изчисляване...</span>
+              <span className="text-xs font-mono text-ink-faint animate-pulse px-2 py-1 shrink-0">Изчисляване...</span>
             ) : selectedCustomReturn ? (
-              <div className="flex items-center gap-2 bg-bg px-2.5 py-1 rounded-lg border border-border">
+              <div className="flex items-center gap-2 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0">
                 <span className={`font-mono text-xs font-extrabold ${selectedCustomReturn.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {selectedCustomReturn.returnPct >= 0 ? '+' : ''}{selectedCustomReturn.returnPct.toFixed(2)}%
                 </span>
@@ -1701,22 +2025,17 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                     CAGR: <strong className={selectedCustomReturn.cagr >= 0 ? 'text-emerald-400' : 'text-rose-400'}>{selectedCustomReturn.cagr >= 0 ? '+' : ''}{selectedCustomReturn.cagr.toFixed(2)}%/г</strong>
                   </span>
                 )}
-                {selectedCustomReturn.pastPrice > 0 && (
-                  <span className="text-[10px] text-ink-faint font-mono hidden xl:inline">
-                    (${selectedCustomReturn.pastPrice.toFixed(2)} ➔ ${selectedCustomReturn.currentPrice.toFixed(2)})
-                  </span>
-                )}
               </div>
             ) : (
-              <span className="text-xs font-mono text-ink-faint px-2 py-1">—</span>
+              <span className="text-xs font-mono text-ink-faint px-2 py-1 shrink-0">—</span>
             )}
 
-            {/* Quick Hide Button so user can easily dismiss it if they prefer */}
+            {/* Quick Hide Button */}
             <button
               type="button"
               onClick={() => setShowReturnsBar(false)}
-              className="w-6 h-6 rounded-md hover:bg-border/60 text-ink-faint hover:text-ink transition-colors inline-flex items-center justify-center cursor-pointer ml-1"
-              title="Скрий лентата за доходност (може да се включи отново от бутон 'Доходност' горе вдясно)"
+              className="w-6 h-6 rounded-md hover:bg-border/60 text-ink-faint hover:text-ink transition-colors inline-flex items-center justify-center cursor-pointer ml-1 shrink-0"
+              title="Скрий лентата за доходност"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -1725,26 +2044,26 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       )}
 
       {/* Progress & Quick Actions Bar */}
-      <div className="bg-bg-card/60 border-b border-border/80 px-6 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shrink-0">
+      <div className="bg-bg-card/60 border-b border-border/80 px-3 sm:px-6 py-2 flex flex-col md:flex-row md:items-center justify-between gap-2.5 text-xs shrink-0">
         
         {/* Audit Checklist Status */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-extrabold text-ink">Анализ на Компанията</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-extrabold text-ink whitespace-nowrap">Анализ на Компанията</span>
           {selectedTicker && (
-            <span className="text-xs font-mono font-extrabold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+            <span className="text-xs font-mono font-extrabold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
               {selectedTicker.toUpperCase()}
             </span>
           )}
           {selectedRow && (
-            <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center gap-1 animate-in fade-in duration-150">
-              📍 Селектиран ред #{selectedRow}: {EXACT_SHEET_ROWS.find(r => r.rowNum === selectedRow)?.label}
+            <span className="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center gap-1 truncate max-w-[240px] sm:max-w-none">
+              📍 #{selectedRow}: {EXACT_SHEET_ROWS.find(r => r.rowNum === selectedRow)?.label}
             </span>
           )}
         </div>
 
         {/* Live Audit Checklist Progress & Signals Summary */}
-        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border text-xs font-mono" title="Реално време сигнали за избраната компания">
+        <div className="flex items-center gap-2 shrink-0 overflow-x-auto touch-pan-x no-scrollbar pb-0.5">
+          <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border text-xs font-mono shrink-0" title="Реално време сигнали">
             <span className="text-emerald-400 font-extrabold flex items-center gap-1">🟢 {flagsSummary.green}</span>
             <span className="text-amber-400 font-extrabold flex items-center gap-1">🟡 {flagsSummary.yellow}</span>
             <span className="text-rose-400 font-extrabold flex items-center gap-1">🔴 {flagsSummary.red}</span>
@@ -1753,49 +2072,49 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           <button
             type="button"
             onClick={handleAutoCheckGreen}
-            className="h-8 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 active:scale-98 select-none"
+            className="h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/20 inline-flex items-center justify-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap shrink-0 select-none"
             title="Автоматично отметни всички зелени показатели"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Отметни зелени</span>
+            <span>Зелени</span>
           </button>
 
           <button
             type="button"
             onClick={handleAutoCheckFilled}
-            className="h-8 px-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-xs border border-indigo-500/20 inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 active:scale-98 select-none"
+            className="h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-xs border border-indigo-500/20 inline-flex items-center justify-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap shrink-0 select-none"
             title="Автоматично отметни всички редове с въведени или изчислени стойности"
           >
             <Check className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Отметни попълнени</span>
+            <span>Попълнени</span>
           </button>
 
           <button
             type="button"
             onClick={handleToggleAllRows}
-            className={`h-8 px-3 rounded-lg font-bold text-xs border inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 active:scale-98 select-none ${
+            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg font-bold text-xs border inline-flex items-center justify-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap shrink-0 select-none ${
               isAllChecked
                 ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/30'
                 : 'bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border-indigo-500/30'
             }`}
-            title={isAllChecked ? "Премахни всички отметки" : "Отметни всички 51 реда в таблицата (100%)"}
+            title={isAllChecked ? "Премахни всички отметки" : "Отметни всички 51 реда в таблицата"}
           >
             {isAllChecked ? (
               <>
                 <Square className="w-3.5 h-3.5" />
-                <span>Изчисти всички</span>
+                <span>Изчисти</span>
               </>
             ) : (
               <>
                 <CheckSquare className="w-3.5 h-3.5" />
-                <span>Отметни цялата таблица</span>
+                <span>Всички</span>
               </>
             )}
           </button>
 
-          <div className="flex items-center gap-2 bg-bg px-3 py-1 rounded-lg border border-border">
-            <span className="text-xs font-bold text-ink-muted">Прогрес:</span>
-            <div className="w-28 bg-border/60 rounded-full h-2.5 overflow-hidden">
+          <div className="flex items-center gap-2 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0">
+            <span className="text-[11px] font-bold text-ink-muted">Прогрес:</span>
+            <div className="w-16 sm:w-24 bg-border/60 rounded-full h-2 overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-300 ${
                   progressPercent === 100 ? 'bg-emerald-400' : 'bg-emerald-500'
@@ -1808,92 +2127,141 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             }`}>
               {progressPercent}%
             </span>
-            <span className="text-[11px] text-ink-faint font-mono font-semibold">
+            <span className="text-[10px] text-ink-faint font-mono font-semibold">
               ({totalAudited}/{totalCheckableRows})
             </span>
           </div>
         </div>
       </div>
 
-      {/* Main Checklist Table */}
-      <div className="flex-1 overflow-auto p-6 bg-bg">
-        <div className="max-w-6xl mx-auto bg-bg-card rounded-2xl border border-border shadow-xl overflow-hidden">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="bg-border/40 text-ink-muted text-xs font-bold uppercase tracking-wider border-b border-border">
-                <th className="py-3 px-3 text-center w-12 border-r border-border/40">#</th>
-                <th className="py-3 px-3 text-center w-10 border-r border-border/40">
-                  <button
-                    type="button"
-                    onClick={handleToggleAllRows}
-                    className="w-7 h-7 rounded-lg hover:bg-indigo-500/20 transition-colors cursor-pointer inline-flex items-center justify-center text-ink-muted hover:text-indigo-400"
-                    title={isAllChecked ? "Премахни всички отметки" : "Отметни цялата таблица (100%)"}
-                  >
-                    {isAllChecked ? (
-                      <CheckSquare className="w-4 h-4 text-emerald-400" />
-                    ) : isPartiallyChecked ? (
-                      <div className="w-3.5 h-3.5 rounded-xs border-2 border-indigo-400 flex items-center justify-center bg-indigo-500/20">
-                        <div className="w-1.5 h-1.5 bg-indigo-400 rounded-xs" />
-                      </div>
-                    ) : (
-                      <Square className="w-4 h-4 text-ink-faint" />
-                    )}
-                  </button>
-                </th>
-                <th className="py-3 px-4 border-r border-border/40">Показател (Financial Metric)</th>
-                <th className="py-3 px-4 text-right border-r border-border/40">Стойност (Value / Input)</th>
-                <th className="py-3 px-2 text-center w-12">Инфо</th>
-              </tr>
-            </thead>
-            <tbody>
-              {CHECKLIST_SECTIONS.map(section => {
-                const sectionChecked = section.rows.filter(r => checkedRows[r]).length;
-                const isSectionComplete = sectionChecked === section.rows.length;
-                return (
-                  <React.Fragment key={section.id}>
-                    <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
-                      <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
-                        <div className="flex items-center justify-between">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleSection(section.rows)}
-                            className="hover:opacity-80 transition-opacity cursor-pointer inline-flex items-center gap-1.5 text-left"
-                            title={isSectionComplete ? "Премахни отметките за тази секция" : "Отметни цялата секция"}
-                          >
-                            {isSectionComplete ? (
-                              <CheckSquare className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            ) : sectionChecked > 0 ? (
-                              <div className="w-3.5 h-3.5 rounded-xs border-2 border-indigo-400 flex items-center justify-center bg-indigo-500/20 shrink-0">
-                                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-xs" />
-                              </div>
-                            ) : (
-                              <Square className="w-3.5 h-3.5 text-indigo-400/60 shrink-0" />
-                            )}
-                            <span>{section.title}</span>
-                          </button>
-                          <span className={`text-[11px] font-mono px-2 py-0.5 rounded-md border font-bold ${
-                            isSectionComplete
-                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                              : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
-                          }`}>
-                            {sectionChecked} / {section.rows.length}
-                          </span>
+      {/* Main Checklist Content Area */}
+      <div className="flex-1 overflow-auto p-2 sm:p-4 md:p-6 bg-bg pb-safe">
+        {viewMode === 'cards' ? (
+          /* Cards View: Perfectly optimized for Mobile & Touch screens - Nothing is hidden! */
+          <div className="max-w-4xl mx-auto space-y-4">
+            {CHECKLIST_SECTIONS.map(section => {
+              const sectionChecked = section.rows.filter(r => checkedRows[r]).length;
+              const isSectionComplete = sectionChecked === section.rows.length;
+              return (
+                <div key={section.id} className="bg-bg-card rounded-2xl border border-border p-3 sm:p-4 space-y-3 shadow-md">
+                  <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-2.5 sm:p-3 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSection(section.rows)}
+                      className="hover:opacity-80 transition-opacity cursor-pointer inline-flex items-center gap-2 text-left"
+                      title={isSectionComplete ? "Премахни отметките за тази секция" : "Отметни цялата секция"}
+                    >
+                      {isSectionComplete ? (
+                        <CheckSquare className="w-4 h-4 text-emerald-400 shrink-0" />
+                      ) : sectionChecked > 0 ? (
+                        <div className="w-4 h-4 rounded-xs border-2 border-indigo-400 flex items-center justify-center bg-indigo-500/20 shrink-0">
+                          <div className="w-1.5 h-1.5 bg-indigo-400 rounded-xs" />
                         </div>
-                      </td>
-                    </tr>
-                    {section.rows.map(r => renderRowItem(r))}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      ) : (
+                        <Square className="w-4 h-4 text-indigo-400/60 shrink-0" />
+                      )}
+                      <span className="text-xs font-extrabold text-indigo-400 uppercase tracking-wide">
+                        {section.title}
+                      </span>
+                    </button>
+                    <span className={`text-[11px] font-mono px-2 py-0.5 rounded-md border font-bold shrink-0 ${
+                      isSectionComplete
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                        : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                    }`}>
+                      {sectionChecked} / {section.rows.length}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {section.rows.map(r => renderRowCard(r))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* Table View: Full Spreadsheet Table with Horizontal Scroll */
+          <div className="max-w-6xl mx-auto bg-bg-card rounded-2xl border border-border shadow-xl overflow-hidden">
+            <div className="overflow-x-auto touch-pan-x no-scrollbar">
+              <table className="min-w-[680px] w-full border-collapse text-left">
+                <thead>
+                  <tr className="bg-border/40 text-ink-muted text-xs font-bold uppercase tracking-wider border-b border-border">
+                    <th className="py-3 px-3 text-center w-12 border-r border-border/40">#</th>
+                    <th className="py-3 px-3 text-center w-10 border-r border-border/40">
+                      <button
+                        type="button"
+                        onClick={handleToggleAllRows}
+                        className="w-7 h-7 rounded-lg hover:bg-indigo-500/20 transition-colors cursor-pointer inline-flex items-center justify-center text-ink-muted hover:text-indigo-400"
+                        title={isAllChecked ? "Премахни всички отметки" : "Отметни цялата таблица (100%)"}
+                      >
+                        {isAllChecked ? (
+                          <CheckSquare className="w-4 h-4 text-emerald-400" />
+                        ) : isPartiallyChecked ? (
+                          <div className="w-3.5 h-3.5 rounded-xs border-2 border-indigo-400 flex items-center justify-center bg-indigo-500/20">
+                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-xs" />
+                          </div>
+                        ) : (
+                          <Square className="w-4 h-4 text-ink-faint" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="py-3 px-4 border-r border-border/40">Показател (Financial Metric)</th>
+                    <th className="py-3 px-4 text-right border-r border-border/40">Стойност (Value / Input)</th>
+                    <th className="py-3 px-2 text-center w-12">Инфо</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CHECKLIST_SECTIONS.map(section => {
+                    const sectionChecked = section.rows.filter(r => checkedRows[r]).length;
+                    const isSectionComplete = sectionChecked === section.rows.length;
+                    return (
+                      <React.Fragment key={section.id}>
+                        <tr className="bg-indigo-500/10 border-y border-indigo-500/20">
+                          <td colSpan={5} className="py-2 px-4 text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
+                            <div className="flex items-center justify-between">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleSection(section.rows)}
+                                className="hover:opacity-80 transition-opacity cursor-pointer inline-flex items-center gap-1.5 text-left"
+                                title={isSectionComplete ? "Премахни отметките за тази секция" : "Отметни цялата секция"}
+                              >
+                                {isSectionComplete ? (
+                                  <CheckSquare className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                ) : sectionChecked > 0 ? (
+                                  <div className="w-3.5 h-3.5 rounded-xs border-2 border-indigo-400 flex items-center justify-center bg-indigo-500/20 shrink-0">
+                                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-xs" />
+                                  </div>
+                                ) : (
+                                  <Square className="w-3.5 h-3.5 text-indigo-400/60 shrink-0" />
+                                )}
+                                <span>{section.title}</span>
+                              </button>
+                              <span className={`text-[11px] font-mono px-2 py-0.5 rounded-md border font-bold ${
+                                isSectionComplete
+                                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                  : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                              }`}>
+                                {sectionChecked} / {section.rows.length}
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                        {section.rows.map(r => renderRowItem(r))}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Info Popover Modal for (i) Button */}
       {activeInfoModalRow && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={() => setActiveInfoModalRow(null)}>
-          <div className="relative w-full max-w-md bg-bg-card border border-border/80 rounded-2xl shadow-2xl p-5 space-y-4" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[1000005] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150" onClick={() => setActiveInfoModalRow(null)}>
+          <div className="relative w-full max-w-md max-h-[85vh] overflow-y-auto custom-scrollbar bg-bg-card border border-border/80 rounded-2xl shadow-2xl p-4 sm:p-5 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-border/60 pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
