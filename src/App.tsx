@@ -1986,7 +1986,7 @@ export default function App() {
             <span>Financial Statements Flags • 🟢🟡🔴</span>
           </div>
           <p className="text-xs sm:text-sm text-ink-muted font-sans leading-relaxed group-hover:text-ink transition-colors px-2 mb-3">
-            Пълен одит на Income Statement, Balance Sheet и Cash Flow по методологията на BojanFin.
+            Пълен одит на Income Statement, Balance Sheet и Cash Flow.
           </p>
           <span className="text-[10px] text-ink-faint font-sans font-extrabold uppercase tracking-wide flex items-center gap-1 group-hover:text-emerald-400 transition-colors mt-auto">
             Отвори Financial Flags матрица →

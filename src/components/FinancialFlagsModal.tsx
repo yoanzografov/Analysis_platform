@@ -307,7 +307,7 @@ export default function FinancialFlagsModal({ isOpen, onClose, stock, stocks = [
                 </span>
               </div>
               <p className="text-xs text-ink-muted mt-0.5">
-                Пълен одит на финансовите отчети по критериите на BojanFin (21 ключови правила)
+                Пълен одит на финансовите отчети (21 ключови правила)
               </p>
             </div>
           </div>
@@ -584,7 +584,7 @@ export default function FinancialFlagsModal({ isOpen, onClose, stock, stocks = [
           <div className="flex items-center gap-2 text-xs text-ink-muted">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
-              Всички критерии за 🟢 Green, 🟡 Yellow и 🔴 Red Flags са базирани на фундаменталния анализ на <strong>BojanFin</strong>.
+              Всички критерии за 🟢 Green, 🟡 Yellow и 🔴 Red Flags са базирани на фундаментален финансов анализ.
             </span>
           </div>
 
