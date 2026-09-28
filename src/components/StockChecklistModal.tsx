@@ -2110,7 +2110,10 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             </div>
 
             {/* 3 Year Return Card */}
-            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" title="3-годишна обща възвръщаемост (3 Year Return) и средногодишен темп (CAGR)">
+            <div 
+              className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" 
+              title={returnsData?.ret3y?.isFromInception ? `Възвръщаемост от IPO (${returnsData.ret3y.inceptionYears || ''} г.) и темп (CAGR)` : "3-годишна обща възвръщаемост (3 Year Return) и средногодишен темп (CAGR)"}
+            >
               <span className="text-[11px] text-ink-faint font-bold">3Y:</span>
               {isLoadingReturns ? (
                 <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
@@ -2119,6 +2122,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   <span className={returnsData.ret3y.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}>
                     {returnsData.ret3y.returnPct >= 0 ? '+' : ''}{returnsData.ret3y.returnPct.toFixed(1)}%
                   </span>
+                  {returnsData.ret3y.isFromInception && (
+                    <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" title={`От листване (IPO ${returnsData.ret3y.inceptionYears ? returnsData.ret3y.inceptionYears + ' г.' : ''})`}>
+                      IPO
+                    </span>
+                  )}
                   {returnsData.ret3y.cagr != null && (
                     <span className="text-[10px] text-ink-faint font-medium">
                       ({returnsData.ret3y.cagr >= 0 ? '+' : ''}{returnsData.ret3y.cagr.toFixed(1)}%/г)
@@ -2126,12 +2134,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   )}
                 </div>
               ) : (
-                <span className="text-xs font-mono text-ink-faint">—</span>
+                <span className="text-xs font-mono text-ink-faint" title="Няма налични исторически данни">N/A</span>
               )}
             </div>
 
             {/* 5 Year Return Card */}
-            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" title="5-годишна обща възвръщаемост (5 Year Return) и средногодишен темп (CAGR)">
+            <div 
+              className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" 
+              title={returnsData?.ret5y?.isFromInception ? `Възвръщаемост от IPO (${returnsData.ret5y.inceptionYears || ''} г.) и темп (CAGR)` : "5-годишна обща възвръщаемост (5 Year Return) и средногодишен темп (CAGR)"}
+            >
               <span className="text-[11px] text-ink-faint font-bold">5Y:</span>
               {isLoadingReturns ? (
                 <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
@@ -2140,6 +2151,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   <span className={returnsData.ret5y.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}>
                     {returnsData.ret5y.returnPct >= 0 ? '+' : ''}{returnsData.ret5y.returnPct.toFixed(1)}%
                   </span>
+                  {returnsData.ret5y.isFromInception && (
+                    <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" title={`От листване (IPO ${returnsData.ret5y.inceptionYears ? returnsData.ret5y.inceptionYears + ' г.' : ''})`}>
+                      IPO
+                    </span>
+                  )}
                   {returnsData.ret5y.cagr != null && (
                     <span className="text-[10px] text-ink-faint font-medium">
                       ({returnsData.ret5y.cagr >= 0 ? '+' : ''}{returnsData.ret5y.cagr.toFixed(1)}%/г)
@@ -2147,12 +2163,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   )}
                 </div>
               ) : (
-                <span className="text-xs font-mono text-ink-faint">—</span>
+                <span className="text-xs font-mono text-ink-faint" title="Няма налични исторически данни">N/A</span>
               )}
             </div>
 
             {/* 10 Year Return Card */}
-            <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" title="10-годишна обща възвръщаемост (10 Year Return) и средногодишен темп (CAGR)">
+            <div 
+              className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" 
+              title={returnsData?.ret10y?.isFromInception ? `Възвръщаемост от IPO (${returnsData.ret10y.inceptionYears || ''} г.) и темп (CAGR)` : "10-годишна обща възвръщаемост (10 Year Return) и средногодишен темп (CAGR)"}
+            >
               <span className="text-[11px] text-ink-faint font-bold">10Y:</span>
               {isLoadingReturns ? (
                 <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
@@ -2161,6 +2180,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   <span className={returnsData.ret10y.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}>
                     {returnsData.ret10y.returnPct >= 0 ? '+' : ''}{returnsData.ret10y.returnPct.toFixed(1)}%
                   </span>
+                  {returnsData.ret10y.isFromInception && (
+                    <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" title={`От листване (IPO ${returnsData.ret10y.inceptionYears ? returnsData.ret10y.inceptionYears + ' г.' : ''})`}>
+                      IPO
+                    </span>
+                  )}
                   {returnsData.ret10y.cagr != null && (
                     <span className="text-[10px] text-ink-faint font-medium">
                       ({returnsData.ret10y.cagr >= 0 ? '+' : ''}{returnsData.ret10y.cagr.toFixed(1)}%/г)
@@ -2168,7 +2192,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   )}
                 </div>
               ) : (
-                <span className="text-xs font-mono text-ink-faint">—</span>
+                <span className="text-xs font-mono text-ink-faint" title="Няма налични исторически данни">N/A</span>
               )}
             </div>
           </div>
@@ -2201,6 +2225,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 <span className={`font-mono text-xs font-extrabold ${selectedCustomReturn.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {selectedCustomReturn.returnPct >= 0 ? '+' : ''}{selectedCustomReturn.returnPct.toFixed(2)}%
                 </span>
+                {selectedCustomReturn.isFromInception && (
+                  <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" title={`От листване (IPO ${selectedCustomReturn.inceptionYears ? selectedCustomReturn.inceptionYears + ' г.' : ''})`}>
+                    IPO
+                  </span>
+                )}
                 {selectedCustomReturn.cagr != null && (
                   <span className="text-[11px] font-mono text-ink-muted">
                     CAGR: <strong className={selectedCustomReturn.cagr >= 0 ? 'text-emerald-400' : 'text-rose-400'}>{selectedCustomReturn.cagr >= 0 ? '+' : ''}{selectedCustomReturn.cagr.toFixed(2)}%/г</strong>
@@ -2208,7 +2237,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 )}
               </div>
             ) : (
-              <span className="text-xs font-mono text-ink-faint px-2 py-1 shrink-0">—</span>
+              <span className="text-xs font-mono text-ink-faint px-2 py-1 shrink-0">N/A</span>
             )}
 
             {/* Quick Hide Button */}
