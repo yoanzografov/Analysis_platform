@@ -21,6 +21,9 @@ export interface Stock {
   calcLink?: string; // Link to Google Sheets calculation
   earningsTimestamp?: number;
   currency?: string;
+  sector?: string;
+  industry?: string;
+  dividendYield?: number;
 }
 
 export interface MarketIndex {

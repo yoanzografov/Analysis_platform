@@ -1775,41 +1775,115 @@ app.get("/api/stock-history", async (req, res) => {
   }
 });
 
+// Exchange maps for server-side returns calculation
+const RETURNS_EXCHANGE_MAP: Record<string, string> = {
+  "EPA": ".PA", "ETR": ".DE", "FRA": ".F", "LON": ".L", "AMS": ".AS",
+  "EBR": ".BR", "BIT": ".MI", "BME": ".MC", "VIE": ".VI", "CPH": ".CO",
+  "HEL": ".HE", "STO": ".ST", "SWX": ".SW", "OSL": ".OL", "LIS": ".LS",
+  "ATH": ".AT", "IST": ".IS", "WSE": ".WA", "PRG": ".PR", "TSE": ".T",
+  "HKG": ".HK", "BSE": ".BO", "NSE": ".NS", "TPE": ".TW", "ASX": ".AX",
+  "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO"
+};
+
+const RETURNS_PLAIN_EUROPEAN_MAP: Record<string, string> = {
+  "XNAS": "XNAS.DE", "XNAS.DE": "XNAS.DE", "VHYL": "VHYL.AS", "VHYL.DE": "VHYL.AS",
+  "VGWD": "VGWD.DE", "VGWD.DE": "VGWD.DE", "JGPI": "JGPI.DE", "JGPI.DE": "JGPI.DE",
+  "SXR8": "SXR8.DE", "SXR8.DE": "SXR8.DE", "EUNL": "EUNL.DE", "VWCE": "VWCE.DE",
+  "QDVE": "QDVE.DE", "IS3N": "IS3N.DE", "CSPX": "CSPX.L", "CSSPX": "CSSPX.MI",
+  "VUSA": "VUSA.DE", "MEUD": "MEUD.PA", "4GLD": "4GLD.DE", "IWDA": "IWDA.AS",
+  "EMIM": "EMIM.L", "INRG": "INRG.L", "RBOT": "RBOT.L", "IUIT": "IUIT.L",
+  "SX8P": "SX8P.DE", "DHL": "DHL.DE", "BRBY": "BRBY.L"
+};
+
+const RETURNS_US_EXCHANGES = new Set(["NASDAQ", "NYSE", "BATS", "AMEX", "ARCA", "OTCMKTS"]);
+
+function normalizeReturnsSymbol(ticker: string): string {
+  const upper = ticker.trim().toUpperCase();
+  if (RETURNS_PLAIN_EUROPEAN_MAP[upper]) return RETURNS_PLAIN_EUROPEAN_MAP[upper];
+  if (!upper.includes(":")) return upper.replace(/\./g, "-");
+  const colonIdx = upper.indexOf(":");
+  const prefix = upper.slice(0, colonIdx);
+  let raw = upper.slice(colonIdx + 1);
+  if (RETURNS_US_EXCHANGES.has(prefix)) {
+    return raw.replace(/\./g, "-");
+  }
+  if (prefix === "ETR" && (raw === "DHL" || raw === "DPW")) return "DHL.DE";
+  if (RETURNS_EXCHANGE_MAP[prefix]) return raw + RETURNS_EXCHANGE_MAP[prefix];
+  return raw.replace(/\./g, "-");
+}
+
+const YAHOO_RETURNS_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept": "application/json, text/plain, */*",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Origin": "https://finance.yahoo.com",
+  "Referer": "https://finance.yahoo.com/",
+};
+
 // Endpoint for fetching stock historical returns (3y, 5y, 10y, custom months)
 app.get("/api/stock-returns", async (req, res) => {
-  const ticker = (req.query.ticker as string || req.query.symbol as string || "").toUpperCase().trim();
+  let ticker = (req.query.ticker as string || req.query.symbol as string || "").toUpperCase().trim();
+  if (!ticker) {
+    try {
+      const parsedUrl = new URL(req.url, "http://localhost");
+      ticker = (parsedUrl.searchParams.get("ticker") || parsedUrl.searchParams.get("symbol") || "").toUpperCase().trim();
+    } catch {}
+  }
   if (!ticker) return res.status(400).json({ error: "Липсва символ (ticker)" });
 
-  let yahooSymbol = ticker;
-  if (ticker.startsWith("EPA:")) {
-    yahooSymbol = ticker.replace("EPA:", "") + ".PA";
-  } else if (ticker.startsWith("ETR:")) {
-    const raw = ticker.replace("ETR:", "");
-    yahooSymbol = (raw === "DHL" ? "DPW" : raw) + ".DE";
-  } else if (ticker.startsWith("STO:")) {
-    yahooSymbol = ticker.replace("STO:", "") + ".ST";
-  } else if (ticker.startsWith("SWX:")) {
-    yahooSymbol = ticker.replace("SWX:", "") + ".SW";
-  } else if (ticker.includes(":")) {
-    const parts = ticker.split(":");
-    yahooSymbol = parts[1] + "." + parts[0];
-  }
-
+  const yahooSymbol = normalizeReturnsSymbol(ticker);
   const periods = [1, 3, 6, 12, 24, 36, 48, 60, 72, 120, 144];
+
+  // Helper to build return periods from sorted bars: [{ price, time }]
+  const computeReturnsFromBars = (validBars: { price: number; time?: number }[]) => {
+    if (!validBars || validBars.length <= 1) return null;
+    const latestPrice = validBars[validBars.length - 1].price;
+    const allPeriods: Record<number, any> = {};
+
+    for (const m of periods) {
+      const idx = validBars.length - 1 - m;
+      if (idx >= 0) {
+        const pastPrice = validBars[idx].price;
+        if (pastPrice > 0) {
+          const returnPct = parseFloat((((latestPrice - pastPrice) / pastPrice) * 100).toFixed(2));
+          const years = m / 12;
+          let cagr: number | null = null;
+          if (years >= 1 && latestPrice > 0) {
+            cagr = parseFloat(((Math.pow(latestPrice / pastPrice, 1 / years) - 1) * 100).toFixed(2));
+          }
+          allPeriods[m] = {
+            months: m,
+            label: `${m}M`,
+            returnPct,
+            cagr,
+            pastPrice,
+            currentPrice: latestPrice
+          };
+        }
+      }
+    }
+
+    return {
+      ticker,
+      currentPrice: latestPrice,
+      ret3y: allPeriods[36] || null,
+      ret5y: allPeriods[60] || null,
+      ret10y: allPeriods[120] || null,
+      allPeriods
+    };
+  };
+
+  // Tier 1: Direct Yahoo v8 chart query
   const urls = [
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=15y&interval=1mo`,
     `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=15y&interval=1mo`,
-    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=15y&interval=1mo`
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=10y&interval=1mo`,
+    `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=10y&interval=1mo`
   ];
 
   for (const u of urls) {
     try {
-      const response = await fetch(u, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-          "Accept": "application/json"
-        }
-      });
-
+      const response = await fetch(u, { headers: YAHOO_RETURNS_HEADERS });
       if (response.ok) {
         const data = await response.json() as any;
         const result = data?.chart?.result?.[0];
@@ -1823,48 +1897,85 @@ app.get("/api/stock-returns", async (req, res) => {
               validBars.push({ price: parseFloat(quotes[i].toFixed(2)), time: timestamps?.[i] || 0 });
             }
           }
-
-          if (validBars.length > 1) {
-            const latestPrice = validBars[validBars.length - 1].price;
-            const allPeriods: Record<number, any> = {};
-
-            for (const m of periods) {
-              const idx = validBars.length - 1 - m;
-              const targetBar = idx >= 0 ? validBars[idx] : validBars[0];
-              const pastPrice = targetBar.price;
-
-              if (pastPrice > 0) {
-                const returnPct = parseFloat((((latestPrice - pastPrice) / pastPrice) * 100).toFixed(2));
-                const years = m / 12;
-                let cagr: number | null = null;
-                if (years >= 1 && latestPrice > 0) {
-                  cagr = parseFloat(((Math.pow(latestPrice / pastPrice, 1 / years) - 1) * 100).toFixed(2));
-                }
-
-                allPeriods[m] = {
-                  months: m,
-                  label: `${m}M`,
-                  returnPct,
-                  cagr,
-                  pastPrice,
-                  currentPrice: latestPrice
-                };
-              }
-            }
-
-            return res.json({
-              ticker,
-              currentPrice: latestPrice,
-              ret3y: allPeriods[36] || null,
-              ret5y: allPeriods[60] || null,
-              ret10y: allPeriods[120] || null,
-              allPeriods
-            });
-          }
+          const computed = computeReturnsFromBars(validBars);
+          if (computed) return res.json(computed);
         }
       }
     } catch {}
   }
+
+  // Tier 2: Yahoo-finance2 library instance
+  try {
+    const yfRes = await (yahooFinance as any).chart(yahooSymbol, { period1: '2010-01-01', interval: '1mo' }).catch(() => null);
+    if (yfRes?.quotes && yfRes.quotes.length > 1) {
+      const validBars: { price: number; time: number }[] = [];
+      for (const q of yfRes.quotes) {
+        const p = q.adjclose ?? q.close;
+        if (p !== null && p !== undefined && !isNaN(p)) {
+          const time = q.date instanceof Date ? q.date.getTime() : 0;
+          validBars.push({ price: parseFloat(p.toFixed(2)), time });
+        }
+      }
+      const computed = computeReturnsFromBars(validBars);
+      if (computed) return res.json(computed);
+    }
+  } catch {}
+
+  // Tier 3: TradingView Scanner fallback
+  try {
+    const rawSym = ticker.includes(':') ? ticker.split(':').pop()! : ticker;
+    const dotSym = rawSym.includes('.') ? rawSym.split('.')[0] : rawSym;
+    const candidateNames = Array.from(new Set([rawSym, dotSym, ticker]));
+    const markets = ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland'];
+
+    for (const m of markets) {
+      try {
+        const tvResp = await fetch(`https://scanner.tradingview.com/${m}/scan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filter: [{ left: 'name', operation: 'in_range', right: candidateNames }],
+            columns: ['name', 'close', 'Perf.1M', 'Perf.3M', 'Perf.6M', 'Perf.Y', 'Perf.3Y', 'Perf.5Y', 'Perf.10Y']
+          })
+        });
+
+        if (tvResp.ok) {
+          const tvJson = await tvResp.json() as any;
+          if (tvJson?.data?.length > 0) {
+            const row = tvJson.data[0]?.d;
+            if (row && row[1] != null) {
+              const curPrice = parseFloat(row[1]) || 100;
+              const buildPeriod = (months: number, label: string, ret: number | null) => {
+                if (ret == null) return null;
+                const past = parseFloat((curPrice / (1 + ret / 100)).toFixed(2));
+                const years = months / 12;
+                const cagr = (years >= 1 && past > 0 && curPrice > 0) ? parseFloat(((Math.pow(curPrice / past, 1 / years) - 1) * 100).toFixed(2)) : null;
+                return { months, label, returnPct: ret, cagr, pastPrice: past, currentPrice: curPrice };
+              };
+
+              const allPeriods: Record<number, any> = {};
+              if (row[2] != null) allPeriods[1] = buildPeriod(1, '1M', row[2]);
+              if (row[3] != null) allPeriods[3] = buildPeriod(3, '3M', row[3]);
+              if (row[4] != null) allPeriods[6] = buildPeriod(6, '6M', row[4]);
+              if (row[5] != null) allPeriods[12] = buildPeriod(12, '12M', row[5]);
+              if (row[6] != null) allPeriods[36] = buildPeriod(36, '36M', row[6]);
+              if (row[7] != null) allPeriods[60] = buildPeriod(60, '60M', row[7]);
+              if (row[8] != null) allPeriods[120] = buildPeriod(120, '120M', row[8]);
+
+              return res.json({
+                ticker,
+                currentPrice: curPrice,
+                ret3y: allPeriods[36] || null,
+                ret5y: allPeriods[60] || null,
+                ret10y: allPeriods[120] || null,
+                allPeriods
+              });
+            }
+          }
+        }
+      } catch {}
+    }
+  } catch {}
 
   return res.status(404).json({ error: "Could not fetch returns for " + ticker });
 });

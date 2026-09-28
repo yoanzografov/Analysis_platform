@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Stock } from '../types';
 import { X, ExternalLink, Info, Lock, CheckSquare, Square, RefreshCw, CheckCircle2, PlusCircle, Check, ChevronRight, ChevronDown, TrendingUp, Clock, Wrench, Calculator, Search, Smartphone, Table, RotateCcw } from 'lucide-react';
 import { getSectorForStock } from '../utils/sectorHelper';
-import { fetchStockReturns, StockReturnsResult, AVAILABLE_RETURN_MONTHS } from '../utils/stockReturnsFetcher';
+import { fetchStockReturns, clearReturnsCache, StockReturnsResult, AVAILABLE_RETURN_MONTHS } from '../utils/stockReturnsFetcher';
 import ProfitCalculatorModal from './ProfitCalculatorModal';
 import RoiCalculatorModal from './RoiCalculatorModal';
 import InvestmentCalculatorModal from './InvestmentCalculatorModal';
@@ -269,14 +269,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     return [...exactTicker, ...startsTicker, ...containsTicker, ...nameMatches].slice(0, 20);
   }, [allAvailableStocks, tickerSearchQuery]);
 
-  const loadReturnsForTicker = async (tickerToFetch: string) => {
+  const loadReturnsForTicker = async (tickerToFetch: string, priceHint?: number) => {
     if (!tickerToFetch) {
       setReturnsData(null);
       return;
     }
     setIsLoadingReturns(true);
     try {
-      const curPrice = parseNum(userInputs['7']);
+      const curPrice = priceHint && priceHint > 0 ? priceHint : parseNum(userInputs['7']);
       const data = await fetchStockReturns(tickerToFetch, curPrice > 0 ? curPrice : undefined);
       setReturnsData(data);
     } catch (e) {
@@ -634,7 +634,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         setSelectedTicker(clean);
         setTickerSearchQuery(clean);
         void handleSelectTicker(clean); // live fetch P/E TTM + other data from Yahoo Finance
-        void loadReturnsForTicker(clean);
+        void loadReturnsForTicker(clean, stock.currentPrice > 0 ? stock.currentPrice : undefined);
       } else {
         // Opened via top Checklist button: LOAD COMPLETELY EMPTY!
         handleClearAll();
@@ -713,6 +713,10 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             const nextChecked = { ...prev, 8: true, 10: true };
             return nextChecked;
           });
+
+          if (q.currentPrice > 0) {
+            void loadReturnsForTicker(cleanSym, q.currentPrice);
+          }
         }
       }
     } catch (e) {
@@ -2088,6 +2092,21 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             <div className="flex items-center gap-1.5 text-indigo-400 font-extrabold text-[11px] uppercase tracking-wider bg-indigo-500/10 px-2 py-1 rounded-lg border border-indigo-500/20 shrink-0">
               <TrendingUp className="w-3.5 h-3.5" />
               <span className="whitespace-nowrap">Доходност:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const targetSym = selectedTicker || userInputs['2'] || (stock?.ticker ? stock.ticker.toUpperCase().trim() : '');
+                  if (targetSym) {
+                    clearReturnsCache(targetSym);
+                    void loadReturnsForTicker(targetSym);
+                  }
+                }}
+                disabled={isLoadingReturns}
+                className="p-0.5 rounded hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer ml-0.5"
+                title="Презареди историческата доходност"
+              >
+                <RotateCcw className={`w-3 h-3 ${isLoadingReturns ? 'animate-spin' : ''}`} />
+              </button>
             </div>
 
             {/* 3 Year Return Card */}
