@@ -61,50 +61,8 @@ const POPULAR_BASELINE_RETURNS: Record<string, { r3y: number; r5y: number; r10y?
   'BRK.B': { r3y: 62.4, r5y: 98.7, r10y: 245.2, r1y: 16.5 },
   'BRK-B': { r3y: 62.4, r5y: 98.7, r10y: 245.2, r1y: 16.5 },
   'CPRX': { r3y: 42.5, r5y: 85.0, r10y: 210.0, r1y: 18.0 },
+  'SYK': { r3y: 1.95, r5y: 3.54, r10y: 138.83, r1y: -22.67 },
 };
-
-function generateDeterministicReturns(ticker: string, currentPrice = 100): StockReturnsResult {
-  let hash = 0;
-  for (let i = 0; i < ticker.length; i++) {
-    hash = (hash << 5) - hash + ticker.charCodeAt(i);
-    hash |= 0;
-  }
-  const posHash = Math.abs(hash);
-  const r1y = parseFloat((8 + (posHash % 25)).toFixed(2));
-  const r3y = parseFloat((25 + ((posHash >> 2) % 65)).toFixed(2));
-  const r5y = parseFloat((55 + ((posHash >> 4) % 110)).toFixed(2));
-  const r10y = parseFloat((120 + ((posHash >> 6) % 250)).toFixed(2));
-
-  const buildPeriod = (months: number, label: string, ret: number): PeriodReturnInfo => {
-    const past = parseFloat((currentPrice / (1 + ret / 100)).toFixed(2));
-    const years = months / 12;
-    const cagr = parseFloat(((Math.pow(currentPrice / past, 1 / years) - 1) * 100).toFixed(2));
-    return { months, label, returnPct: ret, cagr, pastPrice: past, currentPrice, isEstimated: true };
-  };
-
-  const allPeriods: Record<number, PeriodReturnInfo> = {
-    1: buildPeriod(1, '1M (1 месец)', parseFloat((r1y / 12).toFixed(2))),
-    3: buildPeriod(3, '3M (3 месеца)', parseFloat((r1y / 4).toFixed(2))),
-    6: buildPeriod(6, '6M (6 месеца)', parseFloat((r1y / 2).toFixed(2))),
-    12: buildPeriod(12, '12M (1 година)', r1y),
-    24: buildPeriod(24, '24M (2 години)', parseFloat((r3y * 0.65).toFixed(2))),
-    36: buildPeriod(36, '36M (3 години)', r3y),
-    48: buildPeriod(48, '48M (4 години)', parseFloat((r5y * 0.8).toFixed(2))),
-    60: buildPeriod(60, '60M (5 години)', r5y),
-    72: buildPeriod(72, '72M (6 години)', parseFloat((r10y * 0.65).toFixed(2))),
-    120: buildPeriod(120, '120M (10 години)', r10y),
-    144: buildPeriod(144, '144M (12 години)', parseFloat((r10y * 1.2).toFixed(2)))
-  };
-
-  return {
-    ticker,
-    currentPrice,
-    ret3y: allPeriods[36],
-    ret5y: allPeriods[60],
-    ret10y: allPeriods[120],
-    allPeriods
-  };
-}
 
 // In-memory cache to avoid duplicate requests during the session
 const returnsCache: Record<string, { timestamp: number; data: StockReturnsResult }> = {};
@@ -167,13 +125,16 @@ export async function fetchStockReturns(ticker: string, currentPriceHint?: numbe
     const rawSym = cleanTicker.includes(':') ? cleanTicker.split(':').pop()! : cleanTicker;
     const dotSym = rawSym.includes('.') ? rawSym.split('.')[0] : rawSym;
     const candidateNames = Array.from(new Set([rawSym, dotSym, cleanTicker]));
-    const tvMarkets = ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland'];
+    const isEu = cleanTicker.includes('.DE') || cleanTicker.includes('.PA') || cleanTicker.includes('.SW') || cleanTicker.includes('.ST') || cleanTicker.startsWith('ETR:') || cleanTicker.startsWith('EPA:') || cleanTicker.startsWith('SWX:') || cleanTicker.startsWith('STO:');
+    const tvMarkets = isEu
+      ? ['germany', 'france', 'switzerland', 'sweden', 'uk', 'america']
+      : ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland'];
 
     for (const market of tvMarkets) {
       try {
         const tvResp = await fetch(`https://scanner.tradingview.com/${market}/scan`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
             filter: [{ left: 'name', operation: 'in_range', right: candidateNames }],
             columns: ['name', 'close', 'Perf.1M', 'Perf.3M', 'Perf.6M', 'Perf.Y', 'Perf.3Y', 'Perf.5Y', 'Perf.10Y']
@@ -290,9 +251,5 @@ export async function fetchStockReturns(ticker: string, currentPriceHint?: numbe
     return resObj;
   }
 
-  // 4. Deterministic Synthetic Baseline (guarantees non-null, stable figures for any stock)
-  const curPrice = currentPriceHint && currentPriceHint > 0 ? currentPriceHint : 100;
-  const fallbackObj = generateDeterministicReturns(cleanTicker, curPrice);
-  returnsCache[cleanTicker] = { timestamp: Date.now(), data: fallbackObj };
-  return fallbackObj;
+  return null;
 }

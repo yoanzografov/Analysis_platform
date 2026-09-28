@@ -555,51 +555,8 @@ const POPULAR_BASELINE_RETURNS: Record<string, { r3y: number; r5y: number; r10y?
   'BRK.B': { r3y: 62.4, r5y: 98.7, r10y: 245.2, r1y: 16.5 },
   'BRK-B': { r3y: 62.4, r5y: 98.7, r10y: 245.2, r1y: 16.5 },
   'CPRX': { r3y: 42.5, r5y: 85.0, r10y: 210.0, r1y: 18.0 },
+  'SYK': { r3y: 1.95, r5y: 3.54, r10y: 138.83, r1y: -22.67 },
 };
-
-function generateDeterministicReturns(ticker: string, currentPrice = 100) {
-  let hash = 0;
-  for (let i = 0; i < ticker.length; i++) {
-    hash = (hash << 5) - hash + ticker.charCodeAt(i);
-    hash |= 0;
-  }
-  const posHash = Math.abs(hash);
-  const r1y = parseFloat((8 + (posHash % 25)).toFixed(2));
-  const r3y = parseFloat((25 + ((posHash >> 2) % 65)).toFixed(2));
-  const r5y = parseFloat((55 + ((posHash >> 4) % 110)).toFixed(2));
-  const r10y = parseFloat((120 + ((posHash >> 6) % 250)).toFixed(2));
-
-  const buildPeriod = (months: number, label: string, ret: number) => {
-    const past = parseFloat((currentPrice / (1 + ret / 100)).toFixed(2));
-    const years = months / 12;
-    const cagr = parseFloat(((Math.pow(currentPrice / past, 1 / years) - 1) * 100).toFixed(2));
-    return { months, label, returnPct: ret, cagr, pastPrice: past, currentPrice, isEstimated: true };
-  };
-
-  const allPeriods: Record<number, any> = {
-    1: buildPeriod(1, '1M', parseFloat((r1y / 12).toFixed(2))),
-    3: buildPeriod(3, '3M', parseFloat((r1y / 4).toFixed(2))),
-    6: buildPeriod(6, '6M', parseFloat((r1y / 2).toFixed(2))),
-    12: buildPeriod(12, '12M', r1y),
-    24: buildPeriod(24, '24M', parseFloat((r3y * 0.65).toFixed(2))),
-    36: buildPeriod(36, '36M', r3y),
-    48: buildPeriod(48, '48M', parseFloat((r5y * 0.8).toFixed(2))),
-    60: buildPeriod(60, '60M', r5y),
-    72: buildPeriod(72, '72M', parseFloat((r10y * 0.65).toFixed(2))),
-    120: buildPeriod(120, '120M', r10y),
-    144: buildPeriod(144, '144M', parseFloat((r10y * 1.2).toFixed(2)))
-  };
-
-  return {
-    ticker,
-    currentPrice,
-    ret3y: allPeriods[36],
-    ret5y: allPeriods[60],
-    ret10y: allPeriods[120],
-    allPeriods,
-    isEstimated: true
-  };
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -637,7 +594,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Tier 1: Direct Yahoo v8 chart query with YAHOO_HEADERS
     for (const u of urls) {
       try {
-        const response = await fetch(u, { headers: YAHOO_HEADERS });
+        const response = await fetch(u, { 
+          headers: YAHOO_HEADERS,
+          signal: AbortSignal.timeout(2500)
+        });
         if (response.ok) {
           const data = await response.json() as any;
           const result = data?.chart?.result?.[0];
@@ -714,13 +674,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const rawSym = ticker.includes(':') ? ticker.split(':').pop()! : ticker;
       const dotSym = rawSym.includes('.') ? rawSym.split('.')[0] : rawSym;
       const candidateNames = Array.from(new Set([rawSym, dotSym, ticker]));
-      const markets = ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland'];
+      const isEu = ticker.includes('.DE') || ticker.includes('.PA') || ticker.includes('.SW') || ticker.includes('.ST') || ticker.startsWith('ETR:') || ticker.startsWith('EPA:') || ticker.startsWith('SWX:') || ticker.startsWith('STO:');
+      const markets = isEu
+        ? ['germany', 'france', 'switzerland', 'sweden', 'uk', 'america']
+        : ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland'];
 
       for (const m of markets) {
         try {
           const tvResp = await fetch(`https://scanner.tradingview.com/${m}/scan`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              'Referer': 'https://www.tradingview.com/',
+              'Origin': 'https://www.tradingview.com'
+            },
+            signal: AbortSignal.timeout(3000),
             body: JSON.stringify({
               filter: [{ left: 'name', operation: 'in_range', right: candidateNames }],
               columns: ['name', 'close', 'Perf.1M', 'Perf.3M', 'Perf.6M', 'Perf.Y', 'Perf.3Y', 'Perf.5Y', 'Perf.10Y']
@@ -804,9 +773,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Tier 4: Deterministic synthetic baseline for unknown / newly added assets
-    const fallback = generateDeterministicReturns(ticker);
-    return res.json(fallback);
+    return res.json({
+      ticker,
+      currentPrice: 100,
+      ret3y: null,
+      ret5y: null,
+      ret10y: null,
+      allPeriods: {}
+    });
   }
 
   if (url.includes("dividends")) {
