@@ -1,13 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calculator, X, Calendar, Play, RotateCcw, TrendingUp, Info, ExternalLink } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   baseCurrency?: 'USD' | 'EUR';
+  initialInvested?: number;
+  initialReturned?: number;
+  initialYears?: number;
 }
 
-export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'USD' }: Props) {
+export default function RoiCalculatorModal({ 
+  isOpen, 
+  onClose, 
+  baseCurrency = 'USD',
+  initialInvested,
+  initialReturned,
+  initialYears
+}: Props) {
   const [amountInvested, setAmountInvested] = useState('118.19');
   const [amountReturned, setAmountReturned] = useState('346.18');
   const [timeMode, setTimeMode] = useState<'dates' | 'length'>('dates');
@@ -15,6 +25,21 @@ export default function RoiCalculatorModal({ isOpen, onClose, baseCurrency = 'US
   const [toDate, setToDate] = useState('2026-08-25');
   const [lengthYears, setLengthYears] = useState('5');
   const [showCagrTooltip, setShowCagrTooltip] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialInvested && initialInvested > 0) {
+        setAmountInvested(initialInvested.toFixed(2));
+      }
+      if (initialReturned && initialReturned > 0) {
+        setAmountReturned(initialReturned.toFixed(2));
+      }
+      if (initialYears && initialYears > 0) {
+        setTimeMode('length');
+        setLengthYears(String(initialYears));
+      }
+    }
+  }, [isOpen, initialInvested, initialReturned, initialYears]);
 
   if (!isOpen) return null;
 

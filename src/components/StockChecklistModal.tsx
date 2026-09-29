@@ -113,8 +113,24 @@ Dividend Yield = (Годишен дивидент на акция / Цена н�
   { rowNum: 13, label: "Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100", flagRules: { green: "≤ 50%", yellow: "50% - 75%", red: "> 75%" }, note: "Dividend Payout Ratio = (Dividends Paid / Net Income) x 100" },
   { rowNum: 14, label: "CASH Dividend Payout Ratio", defaultVal: "", cellType: "default", formulaStr: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100", flagRules: { green: "≤ 50%", yellow: "50% - 70%", red: "> 70%" }, note: "Cash Dividend Payout Ratio = Dividends paid / Free Cash Flow x 100\n\nПоказва ни по-истинското Payout Ratio и ни касае пряко като дивидентни инвеститори." },
   { rowNum: 15, label: "Dividend Growth Rate 5 - 10 year avg", defaultVal: "", cellType: "yellow-input", flagRules: { green: "8%+", yellow: "4% - 8%", red: "< 4%" }, note: "Среден годишен темп на растеж на дивидента за 5-10 години.\nПоказва стабилността на увеличаване на изплащаните парични суми към акционерите." },
-  { rowNum: 16, label: "Annualized ROI", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" }, note: "Годишна норма на възвръщаемост на инвестицията (Annualized Return on Investment)." },
-  { rowNum: 17, label: "Annualized ROI 5 - 10 years avg", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" }, note: "Средна годишна възвръщаемост на инвестицията за дълъг период от 5 до 10 години." },
+  { 
+    rowNum: 16, 
+    label: "Annualized ROI", 
+    defaultVal: "", 
+    cellType: "yellow-input", 
+    formulaStr: "Annualized ROI (CAGR) = ((Крайна цена / Начална цена) ^ (1 / 3) - 1) * 100%", 
+    flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" }, 
+    note: "Годишна норма на възвръщаемост на инвестицията (Annualized Return on Investment / CAGR).\n\nИзчислява се автоматично от 3 Year Return на база историческата цена на акцията.\n\nЗелен флаг: над 10% годишно\nЖълт флаг: 6% - 10%\nЧервен флаг: под 6%" 
+  },
+  { 
+    rowNum: 17, 
+    label: "Annualized ROI 5 - 10 years avg", 
+    defaultVal: "", 
+    cellType: "yellow-input", 
+    formulaStr: "Annualized ROI 5Y/10Y = ((Крайна цена / Начална цена) ^ (1 / N) - 1) * 100%", 
+    flagRules: { green: "10%+", yellow: "6% - 10%", red: "< 6%" }, 
+    note: "Средна годишна възвръщаемост на инвестицията (Annualized ROI / CAGR) за 5 и 10 години.\n\nИзчислява се автоматично от 5 Year Return (поле 5y) и 10 Year Return (поле 10y).\n\nЗелен флаг: над 10% годишно\nЖълт флаг: 6% - 10%\nЧервен флаг: под 6%" 
+  },
   { rowNum: 18, label: "Shares Outstanding", defaultVal: "", cellType: "yellow-input", note: "Общ брой акции в обращение (Shares Outstanding).\nОпределя базовия брой дялове за капитализация и изчисляване на EPS." },
   { rowNum: 19, label: "Revenue", defaultVal: "", cellType: "yellow-input", note: "Общи годишни приходи на компанията (Total Revenue / Sales).\nПоказва брутния паричен поток от продажби преди разходи." },
   { rowNum: 20, label: "Revenue avg increase 3 - 5 yrs", defaultVal: "", cellType: "yellow-input", flagRules: { green: "10%+", yellow: "5% - 10%", red: "< 5%" }, note: "Среден годишен темп на растеж на приходите за последните 3 до 5 години." },
@@ -215,6 +231,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
   const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
+  const [roiCalcInitial, setRoiCalcInitial] = useState<{ invested?: number; returned?: number; years?: number }>({});
   const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
 
   // Ticker Search Bar State
@@ -279,6 +296,31 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       const curPrice = priceHint && priceHint > 0 ? priceHint : parseNum(userInputs['7']);
       const data = await fetchStockReturns(tickerToFetch, curPrice > 0 ? curPrice : undefined);
       setReturnsData(data);
+      if (data) {
+        setUserInputs(prev => {
+          const next = { ...prev };
+          // Row 16: Annualized ROI (от 3-годишната възвръщаемост)
+          if (data.ret3y?.cagr != null) {
+            next['16'] = `${data.ret3y.cagr >= 0 ? '+' : ''}${data.ret3y.cagr.toFixed(1)}%`;
+          }
+          // Row 17: Annualized ROI 5 - 10 years avg (5Y & 10Y темп)
+          if (data.ret5y?.cagr != null) {
+            next['17'] = `${data.ret5y.cagr >= 0 ? '+' : ''}${data.ret5y.cagr.toFixed(1)}%`;
+          }
+          if (data.ret10y?.cagr != null) {
+            next['17_10'] = `${data.ret10y.cagr >= 0 ? '+' : ''}${data.ret10y.cagr.toFixed(1)}%`;
+          }
+          return next;
+        });
+
+        // Автоматично отмятане на редовете за възвръщаемост (ROI) като проверени
+        setCheckedRows(prev => {
+          const next = { ...prev };
+          if (data.ret3y?.cagr != null) next[16] = true;
+          if (data.ret5y?.cagr != null || data.ret10y?.cagr != null) next[17] = true;
+          return next;
+        });
+      }
     } catch (e) {
       console.warn('Could not load returns for', tickerToFetch, e);
     } finally {
@@ -2091,7 +2133,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex items-center gap-1.5 text-indigo-400 font-extrabold text-[11px] uppercase tracking-wider bg-indigo-500/10 px-2 py-1 rounded-lg border border-indigo-500/20 shrink-0">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span className="whitespace-nowrap">Доходност:</span>
+              <span className="whitespace-nowrap">Доходност / ROI:</span>
               <button
                 type="button"
                 onClick={() => {
@@ -2103,7 +2145,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 }}
                 disabled={isLoadingReturns}
                 className="p-0.5 rounded hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer ml-0.5"
-                title="Презареди историческата доходност"
+                title="Презареди историческата доходност и изчисли ROI"
               >
                 <RotateCcw className={`w-3 h-3 ${isLoadingReturns ? 'animate-spin' : ''}`} />
               </button>
@@ -2111,10 +2153,24 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
             {/* 3 Year Return Card */}
             <div 
-              className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" 
-              title={returnsData?.ret3y?.isFromInception ? `Възвръщаемост от IPO (${returnsData.ret3y.inceptionYears || ''} г.) и темп (CAGR)` : "3-годишна обща възвръщаемост (3 Year Return) и средногодишен темп (CAGR)"}
+              onClick={() => {
+                setSelectedRow(16);
+                if (returnsData?.ret3y?.cagr != null) {
+                  setUserInputs(prev => ({ ...prev, '16': `${returnsData.ret3y!.cagr! >= 0 ? '+' : ''}${returnsData.ret3y!.cagr!.toFixed(1)}%` }));
+                  setCheckedRows(prev => ({ ...prev, 16: true }));
+                }
+                if (returnsData?.ret3y?.pastPrice && returnsData?.ret3y?.currentPrice) {
+                  setRoiCalcInitial({
+                    invested: returnsData.ret3y.pastPrice,
+                    returned: returnsData.ret3y.currentPrice,
+                    years: 3
+                  });
+                }
+              }}
+              className="flex items-center gap-1.5 bg-bg hover:bg-bg-hover hover:border-indigo-500/40 px-2.5 py-1.5 rounded-lg border border-border shrink-0 cursor-pointer transition-colors shadow-2xs group" 
+              title={returnsData?.ret3y?.isFromInception ? `Възвръщаемост от IPO (${returnsData.ret3y.inceptionYears || ''} г.) и темп (CAGR)` : "3 Year Return: 3-годишна обща възвръщаемост (Total ROI) и средногодишен темп (CAGR/Годишен ROI). Кликнете за Ред 16."}
             >
-              <span className="text-[11px] text-ink-faint font-bold">3Y:</span>
+              <span className="text-[11px] text-ink-faint font-bold group-hover:text-indigo-400 transition-colors whitespace-nowrap">3 Year Return:</span>
               {isLoadingReturns ? (
                 <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
               ) : returnsData?.ret3y ? (
@@ -2122,6 +2178,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   <span className={returnsData.ret3y.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}>
                     {returnsData.ret3y.returnPct >= 0 ? '+' : ''}{returnsData.ret3y.returnPct.toFixed(1)}%
                   </span>
+                  <span className="text-[10px] text-ink-faint font-semibold">ROI</span>
                   {returnsData.ret3y.isFromInception && (
                     <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" title={`От листване (IPO ${returnsData.ret3y.inceptionYears ? returnsData.ret3y.inceptionYears + ' г.' : ''})`}>
                       IPO
@@ -2140,10 +2197,24 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
             {/* 5 Year Return Card */}
             <div 
-              className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" 
-              title={returnsData?.ret5y?.isFromInception ? `Възвръщаемост от IPO (${returnsData.ret5y.inceptionYears || ''} г.) и темп (CAGR)` : "5-годишна обща възвръщаемост (5 Year Return) и средногодишен темп (CAGR)"}
+              onClick={() => {
+                setSelectedRow(17);
+                if (returnsData?.ret5y?.cagr != null) {
+                  setUserInputs(prev => ({ ...prev, '17': `${returnsData.ret5y!.cagr! >= 0 ? '+' : ''}${returnsData.ret5y!.cagr!.toFixed(1)}%` }));
+                  setCheckedRows(prev => ({ ...prev, 17: true }));
+                }
+                if (returnsData?.ret5y?.pastPrice && returnsData?.ret5y?.currentPrice) {
+                  setRoiCalcInitial({
+                    invested: returnsData.ret5y.pastPrice,
+                    returned: returnsData.ret5y.currentPrice,
+                    years: 5
+                  });
+                }
+              }}
+              className="flex items-center gap-1.5 bg-bg hover:bg-bg-hover hover:border-indigo-500/40 px-2.5 py-1.5 rounded-lg border border-border shrink-0 cursor-pointer transition-colors shadow-2xs group" 
+              title={returnsData?.ret5y?.isFromInception ? `Възвръщаемост от IPO (${returnsData.ret5y.inceptionYears || ''} г.) и темп (CAGR)` : "5 Year Return: 5-годишна обща възвръщаемост (Total ROI) и средногодишен темп (CAGR/Годишен ROI). Кликнете за Ред 17 (5y)."}
             >
-              <span className="text-[11px] text-ink-faint font-bold">5Y:</span>
+              <span className="text-[11px] text-ink-faint font-bold group-hover:text-indigo-400 transition-colors whitespace-nowrap">5 Year Return:</span>
               {isLoadingReturns ? (
                 <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
               ) : returnsData?.ret5y ? (
@@ -2151,6 +2222,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   <span className={returnsData.ret5y.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}>
                     {returnsData.ret5y.returnPct >= 0 ? '+' : ''}{returnsData.ret5y.returnPct.toFixed(1)}%
                   </span>
+                  <span className="text-[10px] text-ink-faint font-semibold">ROI</span>
                   {returnsData.ret5y.isFromInception && (
                     <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" title={`От листване (IPO ${returnsData.ret5y.inceptionYears ? returnsData.ret5y.inceptionYears + ' г.' : ''})`}>
                       IPO
@@ -2169,10 +2241,24 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
             {/* 10 Year Return Card */}
             <div 
-              className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0" 
-              title={returnsData?.ret10y?.isFromInception ? `Възвръщаемост от IPO (${returnsData.ret10y.inceptionYears || ''} г.) и темп (CAGR)` : "10-годишна обща възвръщаемост (10 Year Return) и средногодишен темп (CAGR)"}
+              onClick={() => {
+                setSelectedRow(17);
+                if (returnsData?.ret10y?.cagr != null) {
+                  setUserInputs(prev => ({ ...prev, '17_10': `${returnsData.ret10y!.cagr! >= 0 ? '+' : ''}${returnsData.ret10y!.cagr!.toFixed(1)}%` }));
+                  setCheckedRows(prev => ({ ...prev, 17: true }));
+                }
+                if (returnsData?.ret10y?.pastPrice && returnsData?.ret10y?.currentPrice) {
+                  setRoiCalcInitial({
+                    invested: returnsData.ret10y.pastPrice,
+                    returned: returnsData.ret10y.currentPrice,
+                    years: 10
+                  });
+                }
+              }}
+              className="flex items-center gap-1.5 bg-bg hover:bg-bg-hover hover:border-indigo-500/40 px-2.5 py-1.5 rounded-lg border border-border shrink-0 cursor-pointer transition-colors shadow-2xs group" 
+              title={returnsData?.ret10y?.isFromInception ? `Възвръщаемост от IPO (${returnsData.ret10y.inceptionYears || ''} г.) и темп (CAGR)` : "10 Year Return: 10-годишна обща възвръщаемост (Total ROI) и средногодишен темп (CAGR/Годишен ROI). Кликнете за Ред 17 (10y)."}
             >
-              <span className="text-[11px] text-ink-faint font-bold">10Y:</span>
+              <span className="text-[11px] text-ink-faint font-bold group-hover:text-indigo-400 transition-colors whitespace-nowrap">10 Year Return:</span>
               {isLoadingReturns ? (
                 <span className="text-xs font-mono text-ink-faint animate-pulse">...</span>
               ) : returnsData?.ret10y ? (
@@ -2180,6 +2266,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   <span className={returnsData.ret10y.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}>
                     {returnsData.ret10y.returnPct >= 0 ? '+' : ''}{returnsData.ret10y.returnPct.toFixed(1)}%
                   </span>
+                  <span className="text-[10px] text-ink-faint font-semibold">ROI</span>
                   {returnsData.ret10y.isFromInception && (
                     <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" title={`От листване (IPO ${returnsData.ret10y.inceptionYears ? returnsData.ret10y.inceptionYears + ' г.' : ''})`}>
                       IPO
@@ -2197,8 +2284,34 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             </div>
           </div>
 
-          {/* Custom Period: 1, 3, 6, 12, 24, 36, 48, 60, 72, 120, 144 Months */}
+          {/* Custom Period: 1, 3, 6, 12, 24, 36, 48, 60, 72, 120, 144 Months & ROI Calculator */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Quick Open ROI Calculator */}
+            <button
+              type="button"
+              onClick={() => {
+                if (returnsData?.ret3y?.pastPrice && returnsData?.ret3y?.currentPrice) {
+                  setRoiCalcInitial({
+                    invested: returnsData.ret3y.pastPrice,
+                    returned: returnsData.ret3y.currentPrice,
+                    years: 3
+                  });
+                } else if (returnsData?.ret5y?.pastPrice && returnsData?.ret5y?.currentPrice) {
+                  setRoiCalcInitial({
+                    invested: returnsData.ret5y.pastPrice,
+                    returned: returnsData.ret5y.currentPrice,
+                    years: 5
+                  });
+                }
+                setShowRoiCalculatorModal(true);
+              }}
+              className="flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-lg transition-colors cursor-pointer font-bold text-[11px] shrink-0"
+              title="Отвори детайлния ROI калкулатор"
+            >
+              <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">ROI Калкулатор</span>
+            </button>
+
             <div className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0">
               <label className="text-[11px] font-bold text-ink-faint uppercase flex items-center gap-1">
                 <Clock className="w-3 h-3 text-indigo-400" />
@@ -2221,10 +2334,21 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             {isLoadingReturns ? (
               <span className="text-xs font-mono text-ink-faint animate-pulse px-2 py-1 shrink-0">Изчисляване...</span>
             ) : selectedCustomReturn ? (
-              <div className="flex items-center gap-2 bg-bg px-2.5 py-1 rounded-lg border border-border shrink-0">
+              <div 
+                onClick={() => {
+                  if (selectedCustomReturn.cagr != null) {
+                    setSelectedRow(16);
+                    setUserInputs(prev => ({ ...prev, '16': `${selectedCustomReturn.cagr! >= 0 ? '+' : ''}${selectedCustomReturn.cagr!.toFixed(1)}%` }));
+                    setCheckedRows(prev => ({ ...prev, 16: true }));
+                  }
+                }}
+                className="flex items-center gap-1.5 bg-bg hover:bg-bg-hover hover:border-indigo-500/40 px-2.5 py-1 rounded-lg border border-border shrink-0 cursor-pointer transition-colors"
+                title="Кликнете за прилагане в Ред 16 (Annualized ROI)"
+              >
                 <span className={`font-mono text-xs font-extrabold ${selectedCustomReturn.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {selectedCustomReturn.returnPct >= 0 ? '+' : ''}{selectedCustomReturn.returnPct.toFixed(2)}%
                 </span>
+                <span className="text-[10px] text-ink-faint font-semibold">ROI</span>
                 {selectedCustomReturn.isFromInception && (
                   <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" title={`От листване (IPO ${selectedCustomReturn.inceptionYears ? selectedCustomReturn.inceptionYears + ' г.' : ''})`}>
                     IPO
@@ -2604,6 +2728,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         isOpen={showRoiCalculatorModal}
         onClose={() => setShowRoiCalculatorModal(false)}
         baseCurrency={baseCurrency}
+        initialInvested={roiCalcInitial.invested}
+        initialReturned={roiCalcInitial.returned}
+        initialYears={roiCalcInitial.years}
       />
 
       {/* 3. Compound Interest & Investment Calculator Modal */}
