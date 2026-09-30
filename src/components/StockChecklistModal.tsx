@@ -183,15 +183,73 @@ export const CHECKLIST_SECTIONS = [
 
 export const ALL_CHECKABLE_ROW_NUMS = CHECKLIST_SECTIONS.flatMap(s => s.rows);
 
+export const CHECKLIST_STORAGE_PREFIX = 'stock_checklist_v1_';
+
+export function getChecklistStorageKey(ticker: string): string {
+  return `${CHECKLIST_STORAGE_PREFIX}${ticker.toUpperCase().trim()}`;
+}
+
+export function loadSavedChecklist(ticker: string): {
+  userInputs: Record<string, string>;
+  checkedRows: Record<number, boolean>;
+  updatedAt: number;
+} | null {
+  const cleanSym = ticker.toUpperCase().trim();
+  if (!cleanSym) return null;
+  try {
+    const raw = localStorage.getItem(getChecklistStorageKey(cleanSym));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.userInputs) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error('Error loading checklist from localStorage', e);
+  }
+  return null;
+}
+
+export function saveChecklistToStorage(
+  ticker: string,
+  userInputs: Record<string, string>,
+  checkedRows: Record<number, boolean>
+): boolean {
+  const cleanSym = ticker.toUpperCase().trim();
+  if (!cleanSym) return false;
+  try {
+    const payload = {
+      ticker: cleanSym,
+      userInputs,
+      checkedRows,
+      updatedAt: Date.now()
+    };
+    localStorage.setItem(getChecklistStorageKey(cleanSym), JSON.stringify(payload));
+    return true;
+  } catch (e) {
+    console.error('Error saving checklist to localStorage', e);
+    return false;
+  }
+}
+
 export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [], onSaveToTable, baseCurrency = 'USD' }: StockChecklistModalProps) {
   const [selectedTicker, setSelectedTicker] = useState<string>(stock?.ticker || '');
   const [activeInfoModalRow, setActiveInfoModalRow] = useState<SheetRowDefinition | null>(null);
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [isFetchingQuote, setIsFetchingQuote] = useState(false);
+  const [isAutoSaved, setIsAutoSaved] = useState(false);
   
-  // Interactive Checklist State: Track checked rows
-  const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>({});
+  // Interactive Checklist State: Track checked rows (load from storage if stock exists)
+  const [checkedRows, setCheckedRows] = useState<Record<number, boolean>>(() => {
+    if (stock?.ticker) {
+      const saved = loadSavedChecklist(stock.ticker);
+      if (saved && saved.checkedRows) {
+        return saved.checkedRows;
+      }
+    }
+    return {};
+  });
 
   // Historical Returns State (3Y, 5Y, 10Y and custom monthly periods)
   const [returnsData, setReturnsData] = useState<StockReturnsResult | null>(null);
@@ -334,6 +392,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   }, [returnsData, customPeriodMonths]);
 
   const [userInputs, setUserInputs] = useState<Record<string, string>>(() => {
+    if (stock?.ticker) {
+      const saved = loadSavedChecklist(stock.ticker);
+      if (saved && saved.userInputs) {
+        return saved.userInputs;
+      }
+    }
     const init: Record<string, string> = {};
     EXACT_SHEET_ROWS.forEach(r => { init[String(r.rowNum)] = ''; });
     init['8_high'] = '';
@@ -347,6 +411,45 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     init['39_10'] = '';
     return init;
   });
+
+  // Synchronous refs to guarantee latest state upon modal exit / unmount
+  const userInputsRef = useRef(userInputs);
+  userInputsRef.current = userInputs;
+
+  const checkedRowsRef = useRef(checkedRows);
+  checkedRowsRef.current = checkedRows;
+
+  const selectedTickerRef = useRef(selectedTicker);
+  selectedTickerRef.current = selectedTicker;
+
+  // Debounced Auto-Save effect: save whenever userInputs or checkedRows change
+  useEffect(() => {
+    const curTicker = (selectedTicker || userInputs['2'] || (stock?.ticker ? stock.ticker.toUpperCase().trim() : '')).trim();
+    if (!curTicker) return;
+    const timer = setTimeout(() => {
+      saveChecklistToStorage(curTicker, userInputs, checkedRows);
+      setIsAutoSaved(true);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [userInputs, checkedRows, selectedTicker, stock]);
+
+  // Save immediately on window unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const curTicker = (selectedTickerRef.current || userInputsRef.current['2'] || (stock?.ticker ? stock.ticker.toUpperCase().trim() : '')).trim();
+      if (curTicker) {
+        saveChecklistToStorage(curTicker, userInputsRef.current, checkedRowsRef.current);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      const curTicker = (selectedTickerRef.current || userInputsRef.current['2'] || (stock?.ticker ? stock.ticker.toUpperCase().trim() : '')).trim();
+      if (curTicker) {
+        saveChecklistToStorage(curTicker, userInputsRef.current, checkedRowsRef.current);
+      }
+    };
+  }, [stock]);
 
   const parseNum = (val: string | undefined): number => {
     if (!val) return 0;
@@ -647,7 +750,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setCheckedRows(prev => ({ ...prev, ...initialChecked }));
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = (removeFromStorage = false) => {
+    const curSym = (selectedTicker || userInputs['2']).toUpperCase().trim();
+    if (removeFromStorage && curSym) {
+      try {
+        localStorage.removeItem(getChecklistStorageKey(curSym));
+      } catch (e) {}
+    }
     setSelectedTicker('');
     setTickerSearchQuery('');
     setIsSearchDropdownOpen(false);
@@ -666,6 +775,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setCheckedRows({});
     setReturnsData(null);
     setSelectedRow(null);
+    setIsAutoSaved(false);
   };
 
   useEffect(() => {
@@ -675,22 +785,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         const clean = stock.ticker.toUpperCase().trim();
         setSelectedTicker(clean);
         setTickerSearchQuery(clean);
-        void handleSelectTicker(clean); // live fetch P/E TTM + other data from Yahoo Finance
+        void handleSelectTicker(clean);
         void loadReturnsForTicker(clean, stock.currentPrice > 0 ? stock.currentPrice : undefined);
       } else {
         // Opened via top Checklist button: LOAD COMPLETELY EMPTY!
         handleClearAll();
       }
-      setUserInputs(prev => ({
-        ...prev,
-        '12': '',
-        '12_div': '',
-      }));
-      setCheckedRows(prev => {
-        const next = { ...prev };
-        delete next[12];
-        return next;
-      });
     }
   }, [isOpen, stock]);
 
@@ -700,9 +800,32 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       return;
     }
     const cleanSym = sym.toUpperCase().trim();
+
+    // Auto-save previous ticker before switching
+    const prevTicker = selectedTickerRef.current;
+    if (prevTicker && prevTicker !== cleanSym) {
+      saveChecklistToStorage(prevTicker, userInputsRef.current, checkedRowsRef.current);
+    }
+
     setSelectedTicker(cleanSym);
     setTickerSearchQuery(cleanSym);
-    updateStockRowDetails(cleanSym); // fill immediately from local stocks/DB as baseline
+
+    // 1. Check if we already have saved checklist data for this ticker in localStorage!
+    const saved = loadSavedChecklist(cleanSym);
+    if (saved && saved.userInputs) {
+      const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym) || (stock?.ticker?.toUpperCase() === cleanSym ? stock : undefined);
+      const curPrice = found?.currentPrice || parseNum(saved.userInputs['7']);
+
+      setUserInputs({
+        ...saved.userInputs,
+        ...(curPrice > 0 ? { '7': curPrice.toFixed(2) } : {})
+      });
+      setCheckedRows(saved.checkedRows || {});
+      setIsAutoSaved(true);
+    } else {
+      updateStockRowDetails(cleanSym); // fill immediately from local stocks/DB as baseline
+    }
+
     void loadReturnsForTicker(cleanSym);
 
     // Live fetch from /api/stock-quotes — same source as Interactive Table (Yahoo Finance)
@@ -723,36 +846,39 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             // Row 8: 52 week low / 52 week high (split into Low: '8' and High: '8_high')
             const lowVal = q.low52 ?? q.fiftyTwoWeekLow;
             const highVal = q.high52 ?? q.fiftyTwoWeekHigh;
-            if (lowVal != null && Number(lowVal) > 0) {
+            if (lowVal != null && Number(lowVal) > 0 && !next['8']) {
               next['8'] = Number(lowVal).toFixed(2);
             } else if (!next['8'] && q.currentPrice > 0) {
               next['8'] = (q.currentPrice * 0.75).toFixed(2);
             }
 
-            if (highVal != null && Number(highVal) > 0) {
+            if (highVal != null && Number(highVal) > 0 && !next['8_high']) {
               next['8_high'] = Number(highVal).toFixed(2);
             } else if (!next['8_high'] && q.currentPrice > 0) {
               next['8_high'] = (q.currentPrice * 1.35).toFixed(2);
             }
             // Row 9: Market Cap (in thousands)
-            if (q.marketCap && q.marketCap > 0) {
+            if (q.marketCap && q.marketCap > 0 && !next['9']) {
               next['9'] = Math.round(q.marketCap / 1000).toLocaleString('en-US');
             }
             // Row 10: P/E Ratio — live from TradingView / Yahoo
-            if (q.peRatio && q.peRatio > 0) {
+            if (q.peRatio && q.peRatio > 0 && !next['10']) {
               next['10'] = q.peRatio.toFixed(2);
-              if (q.peRatio <= 15) next['10_level'] = 'low';
-              else if (q.peRatio <= 25) next['10_level'] = 'mid';
-              else next['10_level'] = 'high';
+              if (!next['10_level']) {
+                if (q.peRatio <= 15) next['10_level'] = 'low';
+                else if (q.peRatio <= 25) next['10_level'] = 'mid';
+                else next['10_level'] = 'high';
+              }
             }
             // Row 24: EPS
-            if (q.eps && q.eps !== 0) next['24'] = q.eps.toFixed(2);
+            if (q.eps && q.eps !== 0 && !next['24']) next['24'] = q.eps.toFixed(2);
             return next;
           });
 
           // Check rows in checklist
           setCheckedRows(prev => {
-            const nextChecked = { ...prev, 8: true, 10: true };
+            const nextChecked = { ...prev, 1: true, 2: true, 7: true };
+            if (q.peRatio) nextChecked[10] = true;
             return nextChecked;
           });
 
@@ -999,22 +1125,18 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setCheckedRows(newChecked);
   };
 
-  // Save / Sync audited company data to main Interactive Table
-  const handleSaveToMainTable = () => {
-    const cleanSym = (selectedTicker || userInputs['2'] || '').toUpperCase().trim();
-    if (!cleanSym) {
-      alert('Моля, изберете или въведете тикер на компания първо!');
-      return;
-    }
-
-    const compName = userInputs['1'] || `${cleanSym} Corp.`;
-    const sectorName = userInputs['4'] || 'Technology';
-    const price = parseNum(userInputs['7']);
-    const low52 = parseNum(userInputs['8']);
-    const high52 = parseNum(userInputs['8_high']);
-    const pe = parseNum(userInputs['10']);
-    const divYield = parseNum(userInputs['12']);
-    const divAmt = parseNum(userInputs['12_div']);
+  // Sync audited company metrics to main Interactive Table without modal alert (used on exit)
+  const syncToMainTable = (cleanSym: string) => {
+    if (!cleanSym || !onSaveToTable) return;
+    const inputs = userInputsRef.current;
+    const compName = inputs['1'] || `${cleanSym} Corp.`;
+    const sectorName = inputs['4'] || 'Technology';
+    const price = parseNum(inputs['7']);
+    const low52 = parseNum(inputs['8']);
+    const high52 = parseNum(inputs['8_high']);
+    const pe = parseNum(inputs['10']);
+    const divYield = parseNum(inputs['12']);
+    const divAmt = parseNum(inputs['12_div']);
     let finalDividendStr = '';
     if (divAmt > 0 && divYield > 0) {
       finalDividendStr = `$${divAmt.toFixed(2)} (${divYield.toFixed(2)}%)`;
@@ -1023,25 +1145,75 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     } else if (divAmt > 0) {
       finalDividendStr = `$${divAmt.toFixed(2)}`;
     }
-    const mcapRawVal = parseNum(userInputs['9']);
-    const mcap = mcapRawVal > 0 ? (mcapRawVal < 1e9 ? mcapRawVal * 1000 : mcapRawVal) : 1000000000;
+    const mcapRawVal = parseNum(inputs['9']);
+    const mcap = mcapRawVal > 0 ? (mcapRawVal < 1e9 ? mcapRawVal * 1000 : mcapRawVal) : undefined;
 
-    if (onSaveToTable) {
+    try {
       onSaveToTable({
         ticker: cleanSym,
         companyName: compName,
         sector: sectorName,
-        currentPrice: price > 0 ? price : 100,
-        low52: low52 > 0 ? low52 : null,
-        high52: high52 > 0 ? high52 : null,
-        peRatio: pe > 0 ? pe : 15,
-        dividend: finalDividendStr || undefined,
-        dividendYield: divYield > 0 ? divYield : 0,
-        marketCap: mcap
+        ...(price > 0 ? { currentPrice: price } : {}),
+        ...(low52 > 0 ? { low52 } : {}),
+        ...(high52 > 0 ? { high52 } : {}),
+        ...(pe > 0 ? { peRatio: pe } : {}),
+        ...(finalDividendStr ? { dividend: finalDividendStr, dividendYield: divYield } : {}),
+        ...(mcap ? { marketCap: mcap } : {}),
       });
+    } catch (e) {
+      console.warn('Could not sync to main table on close', e);
+    }
+  };
+
+  // Exit Checklist and guarantee data is saved to localStorage and synced to table
+  const handleCloseAndSave = () => {
+    const curTicker = (selectedTickerRef.current || userInputsRef.current['2'] || (stock?.ticker ? stock.ticker.toUpperCase().trim() : '')).trim();
+    if (curTicker) {
+      saveChecklistToStorage(curTicker, userInputsRef.current, checkedRowsRef.current);
+      syncToMainTable(curTicker);
+    }
+    onClose();
+  };
+
+  // Global ESC key listener to exit and save when not actively editing an input
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const activeTag = (document.activeElement as HTMLElement)?.tagName;
+        if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
+          return; // Let the input-specific handler revert or cancel the input
+        }
+        if (activeInfoModalRow) {
+          setActiveInfoModalRow(null);
+          return;
+        }
+        if (isSearchDropdownOpen) {
+          setIsSearchDropdownOpen(false);
+          return;
+        }
+        if (isToolsMenuOpen) {
+          setIsToolsMenuOpen(false);
+          return;
+        }
+        handleCloseAndSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeInfoModalRow, isSearchDropdownOpen, isToolsMenuOpen, onClose, stock]);
+
+  // Save / Sync audited company data to main Interactive Table manually
+  const handleSaveToMainTable = () => {
+    const cleanSym = (selectedTicker || userInputs['2'] || '').toUpperCase().trim();
+    if (!cleanSym) {
+      alert('Моля, изберете или въведете тикер на компания първо!');
+      return;
     }
 
-    setSavedSuccessMsg(`Акцията ${cleanSym} е пресметната и запазена в Интерактивната Таблица!`);
+    saveChecklistToStorage(cleanSym, userInputs, checkedRows);
+    syncToMainTable(cleanSym);
+
+    setSavedSuccessMsg(`Акцията ${cleanSym} и данните от чек-листа са запазени успешно! ✓`);
     setTimeout(() => setSavedSuccessMsg(null), 4000);
   };
 
@@ -1811,9 +1983,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               </h2>
             </div>
             {selectedTicker && (
-              <span className="font-mono font-extrabold text-[11px] sm:text-xs px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
-                {selectedTicker}
-              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="font-mono font-extrabold text-[11px] sm:text-xs px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  {selectedTicker}
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 shadow-2xs" title="Всички въведени стойности и отметки се запазват автоматично при изход">
+                  <Check className="w-3 h-3" />
+                  Запазено
+                </span>
+              </div>
             )}
           </div>
 
@@ -1903,9 +2081,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
             {/* Close Button - ALWAYS visible and thumb-friendly */}
             <button
-              onClick={onClose}
+              onClick={handleCloseAndSave}
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-border bg-card/80 hover:bg-border/60 transition-colors text-ink-muted hover:text-ink cursor-pointer inline-flex items-center justify-center select-none shrink-0"
-              title="Затвори"
+              title="Запази и затвори (Save & Close)"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
@@ -2097,7 +2275,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             )}
 
             <button
-              onClick={handleClearAll}
+              onClick={() => {
+                const sym = selectedTicker || userInputs['2'];
+                if (window.confirm(`Сигурни ли сте, че искате да изчистите чек-листа${sym ? ` за ${sym}` : ''}?`)) {
+                  handleClearAll(true);
+                }
+              }}
               className="h-8 px-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-extrabold text-xs border border-red-500/20 inline-flex items-center justify-center gap-1 transition-all cursor-pointer select-none shadow-xs"
               title="Изчисти данните"
             >
