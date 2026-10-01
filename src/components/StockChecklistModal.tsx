@@ -474,15 +474,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   };
 
   const getMetricFlagType = (rowNum: number, valStr: string): 'green' | 'yellow' | 'red' | null => {
-    // Current Price (ред 7), ценово-зависими формули (ред 43) и базовите параметри (редове 1-9) са строго изключени от сигналите
-    if (rowNum === 7 || rowNum === 43 || rowNum < 10) return null;
+    // Current Price (ред 7) и базовите параметри (редове 1-9) са строго изключени от сигналите
+    if (rowNum === 7 || rowNum < 10) return null;
 
     if (rowNum === 10) {
       const lvl = userInputs['10_level'] || (valStr && valStr.toLowerCase().includes('ниско') ? 'low' : valStr && valStr.toLowerCase().includes('средно') ? 'mid' : valStr && valStr.toLowerCase().includes('високо') ? 'high' : null);
       if (lvl === 'low') return 'green';
       if (lvl === 'mid') return 'yellow';
       if (lvl === 'high') return 'red';
-      if (!valStr || valStr.trim() === '') return null;
+      if (!valStr || valStr.trim() === '' || valStr.trim() === '—' || valStr.trim() === '-' || valStr.trim() === 'N/A') return null;
       const numVal = parseNum(valStr);
       if (numVal <= 0) return 'red';
       if (numVal <= 15) return 'green';
@@ -503,7 +503,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       return 'red';
     }
 
-    if (!valStr || valStr.trim() === '') return null;
+    if (!valStr || valStr.trim() === '' || valStr.trim() === '—' || valStr.trim() === '-' || valStr.trim() === 'N/A') return null;
     const numVal = parseNum(valStr);
     if (isNaN(numVal)) return null;
 
@@ -1115,7 +1115,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const handleAutoCheckGreen = () => {
     const newChecked = { ...checkedRows };
     EXACT_SHEET_ROWS.forEach(row => {
-      if (row.rowNum === 7 || row.rowNum === 43 || row.rowNum < 10 || !row.flagRules) return; // Строго изключва Current Price и ценовите формули
+      if (row.rowNum === 7 || row.rowNum < 10 || !row.flagRules) return; // Строго изключва Current Price и общите редове
       const flagVal = getEffectiveMetricVal(row.rowNum);
       const flag = getMetricFlagType(row.rowNum, flagVal);
       if (flag === 'green') {
@@ -1240,7 +1240,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     if (rev > 0 && cffo > 0) calculated['40'] = `${((cffo / rev) * 100).toFixed(2)}%`;
     if (rev > 0 && fcf > 0) calculated['41'] = `${((fcf / rev) * 100).toFixed(2)}%`;
     if (mcap > 0 && fcf > 0) calculated['42'] = `${((fcf / mcap) * 100).toFixed(2)}%`;
-    if (price > 0 && epsCalc > 0) calculated['43'] = `${((epsCalc / price) * 100).toFixed(2)}%`;
+    if (price > 0 && (epsCalc !== 0 || (userInputs['24'] !== undefined && userInputs['24'].trim() !== ''))) calculated['43'] = `${((epsCalc / price) * 100).toFixed(2)}%`;
     if (netInc !== 0 && fcf > 0) calculated['44'] = `${((fcf / netInc) * 100).toFixed(2)}%`;
 
 
@@ -1299,8 +1299,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const flagsSummary = useMemo(() => {
     let green = 0, yellow = 0, red = 0;
     EXACT_SHEET_ROWS.forEach(row => {
-      // Current Price (ред 7), формули от цената (ред 43) и общите редове са напълно изключени от калкулирането на сигнали
-      if (row.rowNum === 7 || row.rowNum === 43 || row.rowNum < 10 || !row.flagRules) return;
+      // Current Price (ред 7) и общите редове са напълно изключени от калкулирането на сигнали
+      if (row.rowNum === 7 || row.rowNum < 10 || !row.flagRules) return;
       const flagVal = getEffectiveMetricVal(row.rowNum);
       const flag = getMetricFlagType(row.rowNum, flagVal);
       if (flag === 'green') green++;
