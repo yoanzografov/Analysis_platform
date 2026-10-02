@@ -53,7 +53,7 @@ export interface NotificationLog {
 }
 
 export interface TableFilter {
-  type: 'all' | 'signal' | 'buySell' | 'watch' | 'ticker';
+  type: 'all' | 'signal' | 'buySell' | 'watch' | 'ticker' | 'range52';
   value: string;
 }
 

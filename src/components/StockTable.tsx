@@ -155,6 +155,54 @@ export function formatDateDDMMYYYY(dateStr?: string | number | null): string {
   return str;
 }
 
+export interface Status52Week {
+  is52Low: boolean;
+  isNewLow: boolean;
+  is52High: boolean;
+  isNewHigh: boolean;
+  distToLowPct: number | null;
+  distToHighPct: number | null;
+  rangePct: number | null;
+}
+
+export function check52WeekStatus(stock: { currentPrice?: number; low52?: number | null; high52?: number | null }): Status52Week {
+  const p = stock.currentPrice;
+  const l = stock.low52;
+  const h = stock.high52;
+
+  if (p === undefined || p === null || !l || !h || l <= 0 || h <= l) {
+    return {
+      is52Low: false,
+      isNewLow: false,
+      is52High: false,
+      isNewHigh: false,
+      distToLowPct: null,
+      distToHighPct: null,
+      rangePct: null,
+    };
+  }
+
+  const distToLowPct = ((p - l) / l) * 100;
+  const distToHighPct = ((h - p) / h) * 100;
+  const rangePct = Math.max(0, Math.min(100, Math.round(((p - l) / (h - l)) * 100)));
+
+  const isNewLow = p <= l;
+  const is52Low = p <= l * 1.03;
+
+  const isNewHigh = p >= h;
+  const is52High = p >= h * 0.97;
+
+  return {
+    is52Low,
+    isNewLow,
+    is52High,
+    isNewHigh,
+    distToLowPct,
+    distToHighPct,
+    rangePct,
+  };
+}
+
 const StockLogo = ({ ticker }: { ticker: string }) => {
   const [error, setError] = useState(false);
   
@@ -480,6 +528,18 @@ export default function StockTable({
  setNewCalcLink('');
  };
 
+  // Count of 52W Low & High stocks
+  const { count52Low, count52High } = useMemo(() => {
+    let lowCount = 0;
+    let highCount = 0;
+    stocks.forEach(s => {
+      const st = check52WeekStatus(s);
+      if (st.is52Low) lowCount++;
+      if (st.is52High) highCount++;
+    });
+    return { count52Low: lowCount, count52High: highCount };
+  }, [stocks]);
+
  // Filter logic
  const filteredStocks = stocks.filter(stock => {
  const matchesSearch =
@@ -514,6 +574,16 @@ export default function StockTable({
 
  if (activeFilter.type === 'ticker') {
  return (stock.ticker || '').toLowerCase() === (activeFilter.value || '').toLowerCase();
+ }
+
+ if (activeFilter.type === 'range52') {
+   const st = check52WeekStatus(stock);
+   if (activeFilter.value === 'low') {
+     return st.is52Low;
+   }
+   if (activeFilter.value === 'high') {
+     return st.is52High;
+   }
  }
 
  return true;
@@ -664,6 +734,53 @@ export default function StockTable({
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
 
+  {/* 52-Week Low & 52-Week High Quick Filter Buttons */}
+  <button
+    onClick={() => {
+      if (activeFilter.type === 'range52' && activeFilter.value === 'low') {
+        onSetActiveFilter({ type: 'all', value: 'all' });
+      } else {
+        onSetActiveFilter({ type: 'range52', value: 'low' });
+        setCurrentPage(1);
+      }
+    }}
+    className={`px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border flex items-center gap-1.5 cursor-pointer shrink-0 ${
+      activeFilter.type === 'range52' && activeFilter.value === 'low'
+        ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/30 ring-1 ring-emerald-400'
+        : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300'
+    }`}
+    title="Филтрирай компании на или близо до 52-седмично дъно (<= 3% от дъното)"
+  >
+    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+    <span>52W Дъно</span>
+    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-emerald-950/70 border border-emerald-500/30 text-emerald-300">
+      {count52Low}
+    </span>
+  </button>
+
+  <button
+    onClick={() => {
+      if (activeFilter.type === 'range52' && activeFilter.value === 'high') {
+        onSetActiveFilter({ type: 'all', value: 'all' });
+      } else {
+        onSetActiveFilter({ type: 'range52', value: 'high' });
+        setCurrentPage(1);
+      }
+    }}
+    className={`px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border flex items-center gap-1.5 cursor-pointer shrink-0 ${
+      activeFilter.type === 'range52' && activeFilter.value === 'high'
+        ? 'bg-amber-600 text-white border-amber-500 shadow-sm shadow-amber-500/30 ring-1 ring-amber-400'
+        : 'border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300'
+    }`}
+    title="Филтрирай компании на или близо до 52-седмичен връх (>= 97% от върха)"
+  >
+    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+    <span>52W Връх</span>
+    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-950/70 border border-amber-500/30 text-amber-300">
+      {count52High}
+    </span>
+  </button>
+
  {/* Special badges when filtering by signals from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
  <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-[#10b981] text-ink border-[#10b981]/50 flex items-center gap-1 shrink-0">
@@ -682,6 +799,20 @@ export default function StockTable({
  <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-indigo-600 text-ink border-indigo-950 flex items-center gap-1 shrink-0">
  Активен актив: {activeFilter.value}
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-indigo-200 ml-1 font-bold cursor-pointer">×</button>
+ </span>
+ )}
+
+ {activeFilter.type === 'range52' && activeFilter.value === 'low' && (
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-emerald-700 text-white border-emerald-500/50 flex items-center gap-1 shrink-0">
+ 🎯 52-седмично дъно ({count52Low})
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
+ </span>
+ )}
+
+ {activeFilter.type === 'range52' && activeFilter.value === 'high' && (
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-amber-700 text-white border-amber-500/50 flex items-center gap-1 shrink-0">
+ 🔥 52-седмичен връх ({count52High})
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
  </div>
@@ -738,6 +869,7 @@ export default function StockTable({
  const isEditing = editingRow === stock.ticker;
  const isPositiveChange = stock.dailyChangePct >= 0;
  const isUndervalued = stock.difference !== null && stock.difference > 0;
+ const st52 = check52WeekStatus(stock);
 
  return (
  <tr
@@ -1027,7 +1159,25 @@ export default function StockTable({
  className="w-full bg-bg rounded-2xl text-right font-bold text-ink border border-border p-0.5 rounded-md font-sans tabular-nums text-xs focus:outline-none"
  />
  ) : (
+ <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
  <span>${stock.currentPrice.toFixed(2)}</span>
+ {st52.is52Low && (
+ <span
+ className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse cursor-help shrink-0"
+ title={st52.isNewLow ? "🚨 Ново 52-седмично дъно!" : `🎯 В зоната на 52-седмично дъно (${st52.distToLowPct !== null ? `+${st52.distToLowPct.toFixed(1)}%` : ''})`}
+ >
+ {st52.isNewLow ? '⚡ NEW LOW' : '🎯 52W LOW'}
+ </span>
+ )}
+ {st52.is52High && (
+ <span
+ className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse cursor-help shrink-0"
+ title={st52.isNewHigh ? "🚀 Нов 52-седмичен връх!" : `🔥 В зоната на 52-седмичен връх (${st52.distToHighPct !== null ? `-${st52.distToHighPct.toFixed(1)}%` : ''})`}
+ >
+ {st52.isNewHigh ? '🚀 NEW HIGH' : '🔥 52W HIGH'}
+ </span>
+ )}
+ </div>
  )}
  </td>
 
@@ -1125,7 +1275,11 @@ export default function StockTable({
  </td>
 
  {/* 18. 52 LOW */}
- <td className="py-3 px-4 text-right text-gray-650">
+ <td className={`py-3 px-4 text-right transition-colors ${
+ st52.is52Low 
+   ? 'bg-emerald-500/15 text-emerald-400 font-extrabold border-l-2 border-emerald-500' 
+   : 'text-gray-650'
+ }`}>
  {isEditing ? (
  <input
  type="text"
@@ -1135,12 +1289,23 @@ export default function StockTable({
  placeholder="-"
  />
  ) : (
+ <div className="flex flex-col items-end leading-tight">
  <span>{stock.low52 !== null ? `$${stock.low52.toFixed(2)}` : '-'}</span>
+ {st52.distToLowPct !== null && (
+ <span className={`text-[10px] ${st52.is52Low ? 'text-emerald-400 font-bold' : 'text-ink-faint'}`}>
+ {st52.distToLowPct <= 0 ? '0.0%' : `+${st52.distToLowPct.toFixed(1)}%`}
+ </span>
+ )}
+ </div>
  )}
  </td>
 
  {/* 19. 52 HIGH */}
- <td className="py-3 px-4 text-right text-gray-650">
+ <td className={`py-3 px-4 text-right transition-colors ${
+ st52.is52High 
+   ? 'bg-amber-500/15 text-amber-400 font-extrabold border-r-2 border-amber-500' 
+   : 'text-gray-650'
+ }`}>
  {isEditing ? (
  <input
  type="text"
@@ -1150,6 +1315,7 @@ export default function StockTable({
  placeholder="-"
  />
  ) : (
+ <div className="flex flex-col items-end leading-tight">
  <div className="flex items-center justify-end gap-1 group/cell">
  <span>{stock.high52 !== null ? `$${stock.high52.toFixed(2)}` : '-'}</span>
  <button
@@ -1159,6 +1325,12 @@ export default function StockTable({
  >
   <span />
  </button>
+ </div>
+ {st52.distToHighPct !== null && (
+ <span className={`text-[10px] ${st52.is52High ? 'text-amber-400 font-bold' : 'text-ink-faint'}`}>
+ {st52.distToHighPct <= 0 ? '0.0%' : `-${st52.distToHighPct.toFixed(1)}%`}
+ </span>
+ )}
  </div>
  )}
  </td>

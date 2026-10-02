@@ -566,6 +566,9 @@ export default function App() {
         }
         setPortfolioPrices(prev => ({ ...prev, ...newPrices }));
 
+        const low52List: string[] = [];
+        const high52List: string[] = [];
+
         setStocks(prevStocks => {
           return prevStocks.map(stock => {
             const sym = stock.ticker.trim().toUpperCase();
@@ -600,6 +603,13 @@ export default function App() {
                 if (nextPrice <= buyLimit) signal = 'Buy';
                 else if (nextPrice >= sellLimit) signal = 'Sell';
                 else signal = 'Hold';
+
+                if (l52 > 0 && nextPrice <= l52 * 1.03) {
+                  low52List.push(stock.ticker);
+                }
+                if (h52 > 0 && nextPrice >= h52 * 0.97) {
+                  high52List.push(stock.ticker);
+                }
               } else {
                 signal = '-';
               }
@@ -675,7 +685,24 @@ export default function App() {
  message: `Пазарната таблица и индексите се опресниха с реални данни в реално време от Yahoo Finance!`,
  type: 'success'
  };
-        setLogs(prev => [newLog, ...prev]);
+        const logsToAdd: NotificationLog[] = [newLog];
+        if (low52List.length > 0 || high52List.length > 0) {
+          const detailParts: string[] = [];
+          if (low52List.length > 0) {
+            detailParts.push(`🎯 52W Дъно (${low52List.length}): ${low52List.slice(0, 4).join(', ')}${low52List.length > 4 ? '...' : ''}`);
+          }
+          if (high52List.length > 0) {
+            detailParts.push(`🔥 52W Връх (${high52List.length}): ${high52List.slice(0, 4).join(', ')}${high52List.length > 4 ? '...' : ''}`);
+          }
+          logsToAdd.unshift({
+            id: `${Date.now()}-52w`,
+            timestamp: new Date().toLocaleTimeString(),
+            ticker: '52W ALERT',
+            message: `Отчетени 52W екстремуми: ${detailParts.join(' | ')}`,
+            type: 'alert'
+          });
+        }
+        setLogs(prev => [...logsToAdd, ...prev]);
       }
     } catch (err: any) {
       console.error(err);
