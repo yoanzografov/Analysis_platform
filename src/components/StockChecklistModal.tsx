@@ -6,6 +6,9 @@ import { fetchStockReturns, clearReturnsCache, StockReturnsResult, AVAILABLE_RET
 import ProfitCalculatorModal from './ProfitCalculatorModal';
 import RoiCalculatorModal from './RoiCalculatorModal';
 import InvestmentCalculatorModal from './InvestmentCalculatorModal';
+import { db, auth } from '../lib/firebase';
+import { doc, setDoc, deleteField, updateDoc, onSnapshot } from 'firebase/firestore';
+import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
 
 interface StockChecklistModalProps {
   isOpen: boolean;
@@ -189,11 +192,36 @@ export function getChecklistStorageKey(ticker: string): string {
   return `${CHECKLIST_STORAGE_PREFIX}${ticker.toUpperCase().trim()}`;
 }
 
-export function loadSavedChecklist(ticker: string): {
+export interface SavedChecklistPayload {
+  ticker: string;
   userInputs: Record<string, string>;
   checkedRows: Record<number, boolean>;
   updatedAt: number;
-} | null {
+}
+
+export function getAllLocalChecklists(): Record<string, SavedChecklistPayload> {
+  const map: Record<string, SavedChecklistPayload> = {};
+  if (typeof window === 'undefined' || !window.localStorage) return map;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(CHECKLIST_STORAGE_PREFIX)) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.ticker && parsed.userInputs) {
+            map[parsed.ticker.toUpperCase().trim()] = parsed;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading local checklists:', e);
+  }
+  return map;
+}
+
+export function loadSavedChecklist(ticker: string): SavedChecklistPayload | null {
   const cleanSym = ticker.toUpperCase().trim();
   if (!cleanSym) return null;
   try {
@@ -217,19 +245,122 @@ export function saveChecklistToStorage(
 ): boolean {
   const cleanSym = ticker.toUpperCase().trim();
   if (!cleanSym) return false;
+  const payload: SavedChecklistPayload = {
+    ticker: cleanSym,
+    userInputs,
+    checkedRows,
+    updatedAt: Date.now()
+  };
+
   try {
-    const payload = {
-      ticker: cleanSym,
-      userInputs,
-      checkedRows,
-      updatedAt: Date.now()
-    };
     localStorage.setItem(getChecklistStorageKey(cleanSym), JSON.stringify(payload));
-    return true;
   } catch (e) {
     console.error('Error saving checklist to localStorage', e);
-    return false;
   }
+
+  // Real-time Firestore Cloud Sync across devices (Mobile, Desktop, Laptop)
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      const userDocId = `user_${user.uid}`;
+      const docRef = doc(db, 'user_checklists', userDocId);
+      setDoc(docRef, { [cleanSym]: payload }, { merge: true }).catch(err => {
+        console.warn('Firestore checklist cloud save error:', err);
+      });
+    }
+  } catch (err) {
+    console.warn('Error initiating cloud checklist save:', err);
+  }
+
+  return true;
+}
+
+export function removeChecklistFromStorage(ticker: string): boolean {
+  const cleanSym = ticker.toUpperCase().trim();
+  if (!cleanSym) return false;
+  try {
+    localStorage.removeItem(getChecklistStorageKey(cleanSym));
+  } catch (e) {
+    console.warn('Error removing checklist from localStorage', e);
+  }
+
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      const userDocId = `user_${user.uid}`;
+      const docRef = doc(db, 'user_checklists', userDocId);
+      updateDoc(docRef, { [cleanSym]: deleteField() }).catch(err => {
+        console.warn('Firestore checklist delete error:', err);
+      });
+    }
+  } catch (err) {
+    console.warn('Error deleting cloud checklist:', err);
+  }
+
+  return true;
+}
+
+export function syncChecklistsWithCloud(
+  user: FirebaseUser,
+  onChecklistsUpdated?: (updatedTicker?: string) => void
+): () => void {
+  const userDocId = `user_${user.uid}`;
+  const docRef = doc(db, 'user_checklists', userDocId);
+
+  // Read local checklists to check for items that need cloud migration
+  const localMap = getAllLocalChecklists();
+
+  const unsub = onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const cloudData = (docSnap.data() || {}) as Record<string, SavedChecklistPayload>;
+      const toUploadToCloud: Record<string, SavedChecklistPayload> = {};
+      let hasLocalChanges = false;
+
+      // 1. Sync from Cloud -> Local
+      Object.entries(cloudData).forEach(([sym, cloudPayload]) => {
+        if (!cloudPayload || !cloudPayload.ticker) return;
+        const clean = sym.toUpperCase().trim();
+        const localItem = localMap[clean];
+        if (!localItem || (cloudPayload.updatedAt || 0) >= (localItem.updatedAt || 0)) {
+          try {
+            localStorage.setItem(getChecklistStorageKey(clean), JSON.stringify(cloudPayload));
+            localMap[clean] = cloudPayload;
+            hasLocalChanges = true;
+          } catch (err) {}
+        }
+      });
+
+      // 2. Migrate any local checklists that don't exist in cloud or are newer
+      Object.entries(localMap).forEach(([sym, localPayload]) => {
+        const clean = sym.toUpperCase().trim();
+        const cloudItem = cloudData[clean];
+        if (!cloudItem || (localPayload.updatedAt || 0) > (cloudItem.updatedAt || 0)) {
+          toUploadToCloud[clean] = localPayload;
+        }
+      });
+
+      if (Object.keys(toUploadToCloud).length > 0) {
+        setDoc(docRef, toUploadToCloud, { merge: true }).catch(err => {
+          console.warn('Error uploading local checklists migration to cloud:', err);
+        });
+      }
+
+      if (hasLocalChanges) {
+        onChecklistsUpdated?.();
+      }
+    } else {
+      // Cloud document doesn't exist yet: upload all existing local checklists to initialize cloud
+      if (Object.keys(localMap).length > 0) {
+        setDoc(docRef, localMap).catch(err => {
+          console.warn('Error seeding cloud checklists:', err);
+        });
+      }
+    }
+  }, (err) => {
+    console.warn('Firebase User Checklists listener error:', err);
+  });
+
+  return unsub;
 }
 
 export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [], onSaveToTable, baseCurrency = 'USD' }: StockChecklistModalProps) {
@@ -296,11 +427,58 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   const [tickerSearchQuery, setTickerSearchQuery] = useState<string>(stock?.ticker || '');
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
 
-  // Combined list of stocks for ticker search
+  // List of all saved checklists across local and cloud
+  const [savedChecklists, setSavedChecklists] = useState<SavedChecklistPayload[]>(() => {
+    return Object.values(getAllLocalChecklists()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  });
+
+  const refreshSavedChecklists = () => {
+    setSavedChecklists(Object.values(getAllLocalChecklists()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)));
+  };
+
+  // Real-time Firestore Cloud Sync Listener
+  useEffect(() => {
+    refreshSavedChecklists();
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const unsubCloud = syncChecklistsWithCloud(user, (updatedTicker) => {
+          refreshSavedChecklists();
+          const curTicker = (selectedTickerRef.current || userInputsRef.current['2'] || (stock?.ticker ? stock.ticker.toUpperCase().trim() : '')).trim();
+          if (curTicker && (!updatedTicker || updatedTicker === curTicker)) {
+            const fresh = loadSavedChecklist(curTicker);
+            if (fresh && fresh.userInputs) {
+              setUserInputs(prev => ({ ...prev, ...fresh.userInputs }));
+              setCheckedRows(fresh.checkedRows || {});
+            }
+          }
+        });
+        return () => unsubCloud();
+      }
+    });
+    return () => unsubAuth();
+  }, [stock]);
+
+  // Combined list of stocks for ticker search - saved audits shown first!
   const allAvailableStocks = useMemo(() => {
-    const list: Array<{ ticker: string; companyName: string; price?: number }> = [];
+    const list: Array<{ ticker: string; companyName: string; price?: number; hasSavedChecklist?: boolean }> = [];
     const seen = new Set<string>();
 
+    // 1. Priority 1: any stock with a saved checklist
+    savedChecklists.forEach(saved => {
+      const sym = saved.ticker.toUpperCase().trim();
+      if (!seen.has(sym)) {
+        seen.add(sym);
+        const found = stocks.find(s => s.ticker.toUpperCase() === sym) || POPULAR_STOCKS_DB[sym];
+        list.push({
+          ticker: sym,
+          companyName: saved.userInputs['1'] || found?.companyName || sym,
+          price: parseNum(saved.userInputs['7']) || found?.price,
+          hasSavedChecklist: true
+        });
+      }
+    });
+
+    // 2. Stocks in Interactive Table
     stocks.forEach(s => {
       const sym = s.ticker.toUpperCase().trim();
       if (!seen.has(sym)) {
@@ -308,11 +486,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         list.push({
           ticker: sym,
           companyName: s.companyName || sym,
-          price: s.currentPrice
+          price: s.currentPrice,
+          hasSavedChecklist: false
         });
       }
     });
 
+    // 3. Fallback popular stocks
     Object.entries(POPULAR_STOCKS_DB).forEach(([tk, data]) => {
       const sym = tk.toUpperCase().trim();
       if (!seen.has(sym)) {
@@ -320,13 +500,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         list.push({
           ticker: sym,
           companyName: data.companyName,
-          price: data.price
+          price: data.price,
+          hasSavedChecklist: false
         });
       }
     });
 
     return list;
-  }, [stocks]);
+  }, [stocks, savedChecklists]);
 
   // Filter stocks by ticker symbol primarily
   const filteredStocks = useMemo(() => {
@@ -751,11 +932,10 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
   };
 
   const handleClearAll = (removeFromStorage = false) => {
-    const curSym = (selectedTicker || userInputs['2']).toUpperCase().trim();
+    const curSym = (selectedTicker || userInputs['2'] || '').toUpperCase().trim();
     if (removeFromStorage && curSym) {
-      try {
-        localStorage.removeItem(getChecklistStorageKey(curSym));
-      } catch (e) {}
+      removeChecklistFromStorage(curSym);
+      refreshSavedChecklists();
     }
     setSelectedTicker('');
     setTickerSearchQuery('');
@@ -1643,14 +1823,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 type="text"
                 value={displayVal}
                 readOnly={isReadOnlyCell}
-                disabled={isReadOnlyCell}
                 placeholder={isReadOnlyCell ? "🔒 Изчислено" : "Попълнете..."}
                 onFocus={() => !isReadOnlyCell && handleFocusRow(rowNum)}
                 onKeyDown={e => !isReadOnlyCell && handleKeyDownRow(e, rowNum)}
                 onChange={e => handleInputChange(rowNum, e.target.value)}
+                style={{ opacity: 1, WebkitTextFillColor: 'currentColor' }}
                 className={`w-48 h-8 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs outline-none text-right transition-all ${
                   isReadOnlyCell
-                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 cursor-not-allowed'
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300'
                     : 'bg-bg border-border focus:border-indigo-500 text-ink'
                 }`}
               />
@@ -1947,14 +2127,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               type="text"
               value={displayVal}
               readOnly={isReadOnlyCell}
-              disabled={isReadOnlyCell}
               placeholder={isReadOnlyCell ? "🔒 Автоматично изчислено" : "Попълнете стойност..."}
               onFocus={() => !isReadOnlyCell && handleFocusRow(rowNum)}
               onKeyDown={e => !isReadOnlyCell && handleKeyDownRow(e, rowNum)}
               onChange={e => handleInputChange(rowNum, e.target.value)}
+              style={{ opacity: 1, WebkitTextFillColor: 'currentColor' }}
               className={`w-full h-9 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs outline-none transition-all ${
                 isReadOnlyCell
-                  ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 cursor-not-allowed'
+                  ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300'
                   : 'bg-bg border-border focus:border-indigo-500 text-ink'
               }`}
             />
@@ -2179,9 +2359,16 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                       </span>
                       <span className="text-ink font-semibold truncate text-[11px]">{s.companyName}</span>
                     </div>
-                    {s.price ? (
-                      <span className="text-ink-faint font-mono text-[11px] ml-2 shrink-0">${s.price.toFixed(2)}</span>
-                    ) : null}
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {s.hasSavedChecklist && (
+                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">
+                          <Check className="w-2.5 h-2.5" /> Попълнен
+                        </span>
+                      )}
+                      {s.price ? (
+                        <span className="text-ink-faint font-mono text-[11px]">${s.price.toFixed(2)}</span>
+                      ) : null}
+                    </div>
                   </button>
                 ))}
 
@@ -2653,6 +2840,51 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
       {/* Main Checklist Content Area */}
       <div className="flex-1 overflow-auto p-2 sm:p-4 md:p-6 bg-bg pb-safe">
+        {/* Quick Audited Checklists Selector (especially great on mobile) */}
+        {savedChecklists.length > 0 && (
+          <div className="max-w-4xl mx-auto mb-4 bg-bg-card rounded-2xl border border-border/80 p-3 sm:p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">📋</span>
+                <span className="text-xs font-black uppercase tracking-wider text-ink">
+                  Попълнени Чек-листи ({savedChecklists.length})
+                </span>
+                <span className="hidden sm:inline-flex text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                  Облачна синхронизация ✓
+                </span>
+              </div>
+              <span className="text-[11px] text-ink-faint">Изберете за преглед</span>
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto touch-pan-x no-scrollbar pb-1">
+              {savedChecklists.map(saved => {
+                const isCurrent = (selectedTicker || '').toUpperCase() === saved.ticker;
+                const auditedCount = Object.keys(saved.checkedRows || {}).length;
+                const compName = saved.userInputs['1'] || saved.ticker;
+                return (
+                  <button
+                    key={saved.ticker}
+                    type="button"
+                    onClick={() => void handleSelectTicker(saved.ticker)}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-sans font-bold flex items-center gap-2 transition-all cursor-pointer shrink-0 shadow-2xs ${
+                      isCurrent
+                        ? 'bg-indigo-600 text-white border-indigo-400 ring-2 ring-indigo-400/40'
+                        : 'bg-bg hover:bg-card-hover border-border text-ink hover:border-indigo-500/40'
+                    }`}
+                    title={`Отвори одит за ${saved.ticker} (${compName})`}
+                  >
+                    <span className="font-mono font-black">{saved.ticker}</span>
+                    <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
+                      isCurrent ? 'bg-white/20 text-white' : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                    }`}>
+                      {auditedCount > 0 ? `${auditedCount}/${totalCheckableRows}` : 'Запазен'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {viewMode === 'cards' ? (
           /* Cards View: Perfectly optimized for Mobile & Touch screens - Nothing is hidden! */
           <div className="max-w-4xl mx-auto space-y-4">

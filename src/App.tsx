@@ -20,7 +20,7 @@ import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import RoiCalculatorModal from './components/RoiCalculatorModal';
 import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
 import ProfitCalculatorModal from './components/ProfitCalculatorModal';
-import StockChecklistModal from './components/StockChecklistModal';
+import StockChecklistModal, { syncChecklistsWithCloud } from './components/StockChecklistModal';
 import FinancialFlagsModal from './components/FinancialFlagsModal';
 import WelcomeQuoteModal from './components/WelcomeQuoteModal';
 import { 
@@ -710,6 +710,15 @@ export default function App() {
       unsub();
     };
   }, []);
+
+  // Real-time Firestore Cloud Sync for Stock Valuation Checklists across devices (mobile & desktop)
+  useEffect(() => {
+    if (!currentUser) return;
+    const unsubChecklists = syncChecklistsWithCloud(currentUser);
+    return () => {
+      unsubChecklists();
+    };
+  }, [currentUser]);
 
   // Load and listen to Firebase Firestore (User-Scoped Privacy & Cloud Sync)
   useEffect(() => {

@@ -8,7 +8,7 @@ import EarningsModal from './EarningsModal';
 import FinancialsModal from './FinancialsModal';
 import CompanyProfileModal from './CompanyProfileModal';
 import PriceAlertPlanner from './PriceAlertPlanner';
-import StockChecklistModal from './StockChecklistModal';
+import StockChecklistModal, { loadSavedChecklist } from './StockChecklistModal';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
 interface Props {
@@ -907,20 +907,35 @@ export default function StockTable({
           </button>
 
           {/* Stock Valuation Checklist Badge [C] */}
-          <button
-            onClick={() => {
-              if (!currentUser) {
-                onRequireAuth?.('Stock Valuation Checklist');
-                return;
-              }
-              setChecklistModalStock(stock);
-              setIsChecklistOpen(true);
-            }}
-            className="w-5 h-5 rounded-full bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 font-black text-[10px] leading-none transition-all flex items-center justify-center shadow-2xs cursor-pointer"
-            title={currentUser ? `Checklist (C) - Отвори Stock Valuation Checklist за ${stock.ticker}` : `Checklist (C) (Изисква регистрация)`}
-          >
-            C
-          </button>
+          {(() => {
+            const hasSaved = Boolean(stock.ticker && loadSavedChecklist(stock.ticker));
+            return (
+              <button
+                onClick={() => {
+                  if (!currentUser) {
+                    onRequireAuth?.('Stock Valuation Checklist');
+                    return;
+                  }
+                  setChecklistModalStock(stock);
+                  setIsChecklistOpen(true);
+                }}
+                className={`w-5 h-5 rounded-full font-black text-[10px] leading-none transition-all flex items-center justify-center cursor-pointer ${
+                  hasSaved
+                    ? 'bg-purple-600 hover:bg-purple-500 text-white border border-purple-400 ring-1 ring-purple-400/50 shadow-xs'
+                    : 'bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 shadow-2xs'
+                }`}
+                title={
+                  currentUser
+                    ? (hasSaved
+                        ? `Checklist (C) - Отвори попълнен Checklist за ${stock.ticker}`
+                        : `Checklist (C) - Отвори Stock Valuation Checklist за ${stock.ticker}`)
+                    : `Checklist (C) (Изисква регистрация)`
+                }
+              >
+                C
+              </button>
+            );
+          })()}
 
 
           {/* Quick Price Alert Badge [🔔] */}
