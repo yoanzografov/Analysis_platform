@@ -472,7 +472,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
         list.push({
           ticker: sym,
           companyName: saved.userInputs['1'] || found?.companyName || sym,
-          price: parseNum(saved.userInputs['7']) || found?.price,
+          price: parseNum(saved.userInputs['7']) || (found && 'currentPrice' in found ? found.currentPrice : (found as any)?.price),
           hasSavedChecklist: true
         });
       }

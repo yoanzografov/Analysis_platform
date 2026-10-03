@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Stock, TableFilter, PriceAlert } from '../types';
 import { Search, Sparkles, TrendingUp, TrendingDown, Edit3, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell, CheckSquare, Lock } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
@@ -165,12 +165,24 @@ export interface Status52Week {
   rangePct: number | null;
 }
 
-export function check52WeekStatus(stock: { currentPrice?: number; low52?: number | null; high52?: number | null }): Status52Week {
-  const p = stock.currentPrice;
-  const l = stock.low52;
-  const h = stock.high52;
+export function check52WeekStatus(stock?: { currentPrice?: number; low52?: number | null; high52?: number | null } | null): Status52Week {
+  if (!stock) {
+    return {
+      is52Low: false,
+      isNewLow: false,
+      is52High: false,
+      isNewHigh: false,
+      distToLowPct: null,
+      distToHighPct: null,
+      rangePct: null,
+    };
+  }
 
-  if (p === undefined || p === null || !l || !h || l <= 0 || h <= l) {
+  const p = typeof stock.currentPrice === 'number' ? stock.currentPrice : parseFloat(String(stock.currentPrice || ''));
+  const l = typeof stock.low52 === 'number' ? stock.low52 : parseFloat(String(stock.low52 || ''));
+  const h = typeof stock.high52 === 'number' ? stock.high52 : parseFloat(String(stock.high52 || ''));
+
+  if (isNaN(p) || isNaN(l) || isNaN(h) || l <= 0 || h <= l || p <= 0) {
     return {
       is52Low: false,
       isNewLow: false,
@@ -197,9 +209,9 @@ export function check52WeekStatus(stock: { currentPrice?: number; low52?: number
     isNewLow,
     is52High,
     isNewHigh,
-    distToLowPct,
-    distToHighPct,
-    rangePct,
+    distToLowPct: isFinite(distToLowPct) ? distToLowPct : null,
+    distToHighPct: isFinite(distToHighPct) ? distToHighPct : null,
+    rangePct: isFinite(rangePct) ? rangePct : null,
   };
 }
 
@@ -1160,7 +1172,7 @@ export default function StockTable({
  />
  ) : (
  <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
- <span>${stock.currentPrice.toFixed(2)}</span>
+ <span>${typeof stock.currentPrice === 'number' ? stock.currentPrice.toFixed(2) : (parseFloat(String(stock.currentPrice)) || 0).toFixed(2)}</span>
  {st52.is52Low && (
  <span
  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse cursor-help shrink-0"
@@ -1290,7 +1302,7 @@ export default function StockTable({
  />
  ) : (
  <div className="flex flex-col items-end leading-tight">
- <span>{stock.low52 !== null ? `$${stock.low52.toFixed(2)}` : '-'}</span>
+ <span>{stock.low52 != null && !isNaN(Number(stock.low52)) ? `$${Number(stock.low52).toFixed(2)}` : '-'}</span>
  {st52.distToLowPct !== null && (
  <span className={`text-[10px] ${st52.is52Low ? 'text-emerald-400 font-bold' : 'text-ink-faint'}`}>
  {st52.distToLowPct <= 0 ? '0.0%' : `+${st52.distToLowPct.toFixed(1)}%`}
@@ -1317,7 +1329,7 @@ export default function StockTable({
  ) : (
  <div className="flex flex-col items-end leading-tight">
  <div className="flex items-center justify-end gap-1 group/cell">
- <span>{stock.high52 !== null ? `$${stock.high52.toFixed(2)}` : '-'}</span>
+ <span>{stock.high52 != null && !isNaN(Number(stock.high52)) ? `$${Number(stock.high52).toFixed(2)}` : '-'}</span>
  <button
  onClick={() => startInlineEdit(stock)}
  className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"

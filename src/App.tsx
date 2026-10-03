@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Stock, MarketIndex, PriceAlert, NotificationLog, TableFilter, PortfolioPosition, PortfolioTransaction, PortfolioDividendRecord } from './types';
 import { RAW_SPREADSHEET_CSV, parseCSVData } from './data/initialStocks';
 import IndicesStrip from './components/IndicesStrip';
@@ -12,7 +12,7 @@ import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
 import { db, auth } from './lib/firebase';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { AuthModal } from './components/AuthModal';
 import { LandingAuthGate } from './components/LandingAuthGate';
@@ -2139,11 +2139,24 @@ export default function App() {
             return updated;
           } else {
             const newStockObj: Stock = {
+              watch: stockData.watch || '',
               ticker: cleanSym,
               companyName: stockData.companyName || cleanSym,
-              sector: stockData.sector || 'Other',
+              date: stockData.date || new Date().toISOString().split('T')[0],
+              priceOfCalc: stockData.priceOfCalc ?? stockData.currentPrice ?? 100,
+              dailyChangePct: stockData.dailyChangePct ?? 0,
               currentPrice: stockData.currentPrice || 100,
-              peRatio: stockData.peRatio || 15,
+              fairPrice: stockData.fairPrice ?? null,
+              difference: stockData.difference ?? null,
+              buySell: stockData.buySell || 'ДРУГИ',
+              sector: stockData.sector || 'Other',
+              peRatio: stockData.peRatio ?? 15,
+              eps: stockData.eps ?? null,
+              profileLink: stockData.profileLink || `https://finance.yahoo.com/quote/${cleanSym}`,
+              dividend: stockData.dividend || '-',
+              signal: stockData.signal || 'Hold',
+              low52: stockData.low52 ?? null,
+              high52: stockData.high52 ?? null,
               dividendYield: stockData.dividendYield || 0,
               marketCap: stockData.marketCap || 1000000000,
               currency: 'USD',

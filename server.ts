@@ -570,7 +570,7 @@ ${JSON.stringify(enArticles.map(it => ({ title: it.title, summary: it.summary, s
         const parsed = JSON.parse(cleanText);
         if (Array.isArray(parsed) && parsed.length > 0) {
           translatedEn = parsed.map((p: any, idx: number) => {
-            const original = enArticles[idx] || {};
+            const original: any = enArticles[idx] || {};
             return {
               title: p.title || original.title || "Финансова новина",
               source: p.source || original.source || "Пазарен източник",
