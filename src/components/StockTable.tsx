@@ -1171,25 +1171,7 @@ export default function StockTable({
  className="w-full bg-bg rounded-2xl text-right font-bold text-ink border border-border p-0.5 rounded-md font-sans tabular-nums text-xs focus:outline-none"
  />
  ) : (
- <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
  <span>${typeof stock.currentPrice === 'number' ? stock.currentPrice.toFixed(2) : (parseFloat(String(stock.currentPrice)) || 0).toFixed(2)}</span>
- {st52.is52Low && (
- <span
- className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse cursor-help shrink-0"
- title={st52.isNewLow ? "🚨 Ново 52-седмично дъно!" : `🎯 В зоната на 52-седмично дъно (${st52.distToLowPct !== null ? `+${st52.distToLowPct.toFixed(1)}%` : ''})`}
- >
- {st52.isNewLow ? '⚡ NEW LOW' : '🎯 52W LOW'}
- </span>
- )}
- {st52.is52High && (
- <span
- className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse cursor-help shrink-0"
- title={st52.isNewHigh ? "🚀 Нов 52-седмичен връх!" : `🔥 В зоната на 52-седмичен връх (${st52.distToHighPct !== null ? `-${st52.distToHighPct.toFixed(1)}%` : ''})`}
- >
- {st52.isNewHigh ? '🚀 NEW HIGH' : '🔥 52W HIGH'}
- </span>
- )}
- </div>
  )}
  </td>
 
