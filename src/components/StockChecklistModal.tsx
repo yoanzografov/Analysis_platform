@@ -363,6 +363,28 @@ export function syncChecklistsWithCloud(
   return unsub;
 }
 
+export function parseNum(val: string | undefined): number {
+  if (!val) return 0;
+  const upper = val.trim().toUpperCase();
+  let multiplier = 1;
+  if (upper.endsWith('T')) multiplier = 1e12;
+  else if (upper.endsWith('B')) multiplier = 1e9;
+  else if (upper.endsWith('M')) multiplier = 1e6;
+  else if (upper.endsWith('K')) multiplier = 1e3;
+  
+  const clean = val.replace(/[^0-9.-]/g, '');
+  const base = parseFloat(clean) || 0;
+  return base * multiplier;
+}
+
+export function formatLargeNum(num: number | null | undefined): string {
+  if (num === null || num === undefined || isNaN(num) || num === 0) return '';
+  if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+  if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+  if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+  return num.toLocaleString('en-US');
+}
+
 export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [], onSaveToTable, baseCurrency = 'USD' }: StockChecklistModalProps) {
   const [selectedTicker, setSelectedTicker] = useState<string>(stock?.ticker || '');
   const [activeInfoModalRow, setActiveInfoModalRow] = useState<SheetRowDefinition | null>(null);
@@ -631,28 +653,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       }
     };
   }, [stock]);
-
-  const parseNum = (val: string | undefined): number => {
-    if (!val) return 0;
-    const upper = val.trim().toUpperCase();
-    let multiplier = 1;
-    if (upper.endsWith('T')) multiplier = 1e12;
-    else if (upper.endsWith('B')) multiplier = 1e9;
-    else if (upper.endsWith('M')) multiplier = 1e6;
-    else if (upper.endsWith('K')) multiplier = 1e3;
-    
-    const clean = val.replace(/[^0-9.-]/g, '');
-    const base = parseFloat(clean) || 0;
-    return base * multiplier;
-  };
-
-  const formatLargeNum = (num: number | null | undefined): string => {
-    if (num === null || num === undefined || isNaN(num) || num === 0) return '';
-    if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
-    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
-    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
-    return num.toLocaleString('en-US');
-  };
 
   const getMetricFlagType = (rowNum: number, valStr: string): 'green' | 'yellow' | 'red' | null => {
     // Current Price (ред 7) и базовите параметри (редове 1-9) са строго изключени от сигналите
