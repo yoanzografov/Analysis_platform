@@ -20,6 +20,7 @@ import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import RoiCalculatorModal from './components/RoiCalculatorModal';
 import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
 import ProfitCalculatorModal from './components/ProfitCalculatorModal';
+import FairValueCalculatorModal from './components/FairValueCalculatorModal';
 import StockChecklistModal, { syncChecklistsWithCloud } from './components/StockChecklistModal';
 import FinancialFlagsModal from './components/FinancialFlagsModal';
 import WelcomeQuoteModal from './components/WelcomeQuoteModal';
@@ -98,6 +99,7 @@ export default function App() {
   const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
   const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
   const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
+  const [showFairValueModal, setShowFairValueModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showFinancialFlagsModal, setShowFinancialFlagsModal] = useState(false);
   const [showLogoModal, setShowLogoModal] = useState(false);
@@ -186,7 +188,14 @@ export default function App() {
       const hash = window.location.hash.toLowerCase().replace('#', '');
       const user = currentUser;
 
-      if (hash === 'stock-profit-calculator') {
+      if (hash === 'fair-value' || hash === 'fair-value-calculator') {
+        if (!user) {
+          handleRequireAuth('Fair Value Calculator');
+          clearHashUrl();
+          return;
+        }
+        setShowFairValueModal(true);
+      } else if (hash === 'stock-profit-calculator') {
         if (!user) {
           handleRequireAuth('Stock Profit Calculator');
           clearHashUrl();
@@ -218,6 +227,7 @@ export default function App() {
         setShowFinancialFlagsModal(true);
       } else {
         // Modal hash no longer present in URL (e.g. user pressed back button in browser)
+        setShowFairValueModal(false);
         setShowProfitCalculatorModal(false);
         setShowRoiCalculatorModal(false);
         setShowInvestmentCalculatorModal(false);
@@ -1631,6 +1641,30 @@ export default function App() {
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (!currentUser) {
+                    handleRequireAuth('Fair Value Calculator');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
+                  setIsUsefulLinksMenuOpen(false);
+                  window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
+                }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                title="Отвори Fair Value Calculator в нов прозорец"
+              >
+                <Calculator className="w-4 h-4 text-indigo-400 shrink-0" />
+                <span className="flex-1">Fair Value Calculator</span>
+                {!currentUser ? (
+                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
+                ) : (
+                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 ml-auto shrink-0" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  if (!currentUser) {
                     handleRequireAuth('Stock Analysis Check List');
                     setIsUsefulLinksMenuOpen(false);
                     return;
@@ -2166,6 +2200,50 @@ export default function App() {
           }
         });
         setActiveAlertToast(`Акцията ${cleanSym} беше пресметната и запазена в Интерактивната Таблица!`);
+        setTimeout(() => setActiveAlertToast(null), 4000);
+      }}
+    />
+  )}
+
+  {/* Fair Value Calculator Modal */}
+  {currentUser && (
+    <FairValueCalculatorModal
+      isOpen={showFairValueModal}
+      onClose={() => { setShowFairValueModal(false); clearHashUrl(); }}
+      stocks={stocks}
+      currentUser={currentUser}
+      onUpdateFairPrice={(ticker, fairPrice) => {
+        const cleanSym = ticker.toUpperCase().trim();
+        setStocks(prev => {
+          const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
+          if (existingIndex < 0) return prev;
+          const original = prev[existingIndex];
+          const cp = original.currentPrice;
+          let difference: number | null = null;
+          if (cp > 0) {
+            difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
+          }
+          let buySell = 'OVERVALUED';
+          if (cp > 0) {
+            const dev = ((cp - fairPrice) / fairPrice) * 100;
+            if (dev < -buyThreshold) {
+              buySell = 'UNDERVALUED';
+            } else if (dev > sellThreshold) {
+              buySell = 'OVERVALUED';
+            } else {
+              buySell = 'ДРУГИ';
+            }
+          }
+          const updated = [...prev];
+          updated[existingIndex] = {
+            ...original,
+            fairPrice,
+            difference,
+            buySell
+          };
+          return updated;
+        });
+        setActiveAlertToast(`Справедливата цена на ${cleanSym} ($${fairPrice.toFixed(2)}) беше запазена в таблицата!`);
         setTimeout(() => setActiveAlertToast(null), 4000);
       }}
     />

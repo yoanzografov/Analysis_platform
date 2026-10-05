@@ -9,6 +9,7 @@ import FinancialsModal from './FinancialsModal';
 import CompanyProfileModal from './CompanyProfileModal';
 import PriceAlertPlanner from './PriceAlertPlanner';
 import StockChecklistModal, { loadSavedChecklist } from './StockChecklistModal';
+import FairValueCalculatorModal from './FairValueCalculatorModal';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
 interface Props {
@@ -273,6 +274,8 @@ export default function StockTable({
   const [dividendModalStock, setDividendModalStock] = useState<Stock | null>(null);
   const [earningsModalStock, setEarningsModalStock] = useState<Stock | null>(null);
   const [financialsModalStock, setFinancialsModalStock] = useState<Stock | null>(null);
+  const [isFairValueModalOpen, setIsFairValueModalOpen] = useState(false);
+  const [fairValueModalStock, setFairValueModalStock] = useState<Stock | null>(null);
 
  const [newTicker, setNewTicker] = useState('');
  const [newCompanyName, setNewCompanyName] = useState('');
@@ -733,16 +736,26 @@ export default function StockTable({
     onClick={(e) => {
       e.preventDefault();
       if (!currentUser) {
-        onRequireAuth?.('Calculator');
+        onRequireAuth?.('Fair Value Calculator');
         return;
       }
-      window.open("https://docs.google.com/spreadsheets/d/17_6iFN5fMhaB0sWHDUkFmcSM5H8UYxovFN1GdZa020U/edit?gid=1200162805#gid=1200162805", '_blank');
+      try {
+        const opened = window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
+        if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+          setFairValueModalStock(null);
+          setIsFairValueModalOpen(true);
+        }
+      } catch (err) {
+        setFairValueModalStock(null);
+        setIsFairValueModalOpen(true);
+      }
     }}
-    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
-    title={currentUser ? "Отвори калкулатора в Google Sheets" : "Calculator (Изисква регистрация)"}
+    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+    title={currentUser ? "Отвори Fair Value Calculator в нов прозорец" : "Fair Value Calculator (Изисква регистрация)"}
   >
     <Calculator className="w-3.5 h-3.5" />
-    <span>Calculator</span>
+    <span>Fair Value</span>
+    <ExternalLink className="w-3 h-3 opacity-70" />
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
 
@@ -1734,6 +1747,43 @@ export default function StockTable({
     stock={checklistModalStock || undefined}
     stocks={stocks}
     onSaveToTable={onAddStock}
+  />
+
+  <FairValueCalculatorModal
+    isOpen={isFairValueModalOpen}
+    onClose={() => {
+      setIsFairValueModalOpen(false);
+      setFairValueModalStock(null);
+    }}
+    stocks={stocks}
+    initialStock={fairValueModalStock}
+    currentUser={currentUser}
+    onUpdateFairPrice={(ticker, fairPrice) => {
+      const original = stocks.find(s => s.ticker === ticker);
+      if (!original) return;
+      const cp = original.currentPrice;
+      let difference: number | null = null;
+      if (cp > 0) {
+        difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
+      }
+      let buySell = 'OVERVALUED';
+      if (cp > 0) {
+        const dev = ((cp - fairPrice) / fairPrice) * 100;
+        if (dev < -buyThreshold) {
+          buySell = 'UNDERVALUED';
+        } else if (dev > sellThreshold) {
+          buySell = 'OVERVALUED';
+        } else {
+          buySell = 'ДРУГИ';
+        }
+      }
+      onUpdateStock(ticker, {
+        ...original,
+        fairPrice,
+        difference,
+        buySell
+      });
+    }}
   />
  
  </div>
