@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Stock } from '../types';
-import { Calculator, X, Search, RotateCcw, TrendingUp, TrendingDown, Check, ExternalLink, Info, ShieldCheck, ArrowRight, Save, Layers, BarChart3, Table as TableIcon } from 'lucide-react';
+import { Calculator, X, Search, RotateCcw, TrendingUp, TrendingDown, Check, ExternalLink, Info, ShieldCheck, ArrowRight, Save, Layers, BarChart3, Table as TableIcon, RefreshCw } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -49,8 +49,16 @@ export default function FairValueCalculatorModal({
   const [requiredReturn, setRequiredReturn] = useState<number>(10.0);
   const [marginOfSafety, setMarginOfSafety] = useState<number>(0.0); // StockAnalysis default is 0%
 
+  // Recalculation & Pending Changes State (for the new "Преизчисли" button)
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  const [recalcFeedback, setRecalcFeedback] = useState<string | null>(null);
+  const [flashHeroHighlight, setFlashHeroHighlight] = useState(false);
+
   // Hover state for interactive SVG chart
-  const [hoveredYear, setHoveredYear] = useState<number | null>(null);
+  const [hoveredYearIndex, setHoveredYearIndex] = useState<number | null>(null);
+  const [showChartInfo, setShowChartInfo] = useState(false);
+  const chartSvgRef = useRef<SVGSVGElement>(null);
 
   // Feedback toast when saving
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
@@ -99,6 +107,7 @@ export default function FairValueCalculatorModal({
       setExitPe(18.0);
     }
     setMarginOfSafety(0.0);
+    setHasPendingChanges(false);
   };
 
   const handleClearStock = () => {
@@ -112,6 +121,7 @@ export default function FairValueCalculatorModal({
     setExitPe(18.0);
     setRequiredReturn(10.0);
     setMarginOfSafety(0.0);
+    setHasPendingChanges(false);
   };
 
   const handleResetDefaults = () => {
@@ -120,6 +130,12 @@ export default function FairValueCalculatorModal({
     } else {
       handleClearStock();
     }
+  };
+
+  // Helper to mark changes when any input field changes
+  const markInputChange = () => {
+    setHasPendingChanges(true);
+    setRecalcFeedback(null);
   };
 
   // Mathematical Model (Earnings Multiple Method with smooth decay) - Exactly matching StockAnalysis
@@ -132,6 +148,7 @@ export default function FairValueCalculatorModal({
 
     const yearData: Array<{
       year: number;
+      label: string;
       growthRate: number;
       eps: number;
       futurePrice: number;
@@ -141,6 +158,7 @@ export default function FairValueCalculatorModal({
     // Year 0 (Current benchmark)
     yearData.push({
       year: 0,
+      label: 'Current',
       growthRate: 0,
       eps: safeEps,
       futurePrice: safePrice,
@@ -161,6 +179,7 @@ export default function FairValueCalculatorModal({
 
       yearData.push({
         year: i,
+        label: `Y${i}`,
         growthRate: g,
         eps: currentEps,
         futurePrice,
@@ -212,6 +231,26 @@ export default function FairValueCalculatorModal({
       priceNeedlePct
     };
   }, [price, eps, epsGrowth, terminalEpsGrowth, years, exitPe, requiredReturn, marginOfSafety]);
+
+  // Recalculate button handler
+  const handleRecalculate = () => {
+    setIsRecalculating(true);
+    setHasPendingChanges(false);
+    setFlashHeroHighlight(true);
+    setRecalcFeedback(`Преизчислено: Fair Value $${calculation.fairValue.toFixed(2)}`);
+
+    setTimeout(() => {
+      setIsRecalculating(false);
+    }, 350);
+
+    setTimeout(() => {
+      setFlashHeroHighlight(false);
+    }, 1200);
+
+    setTimeout(() => {
+      setRecalcFeedback(null);
+    }, 4500);
+  };
 
   // 2D Sensitivity Matrix: 5 growth variations x 5 exit P/E variations (Step 2.5% for growth, Step 2.0 for PE)
   const sensitivityMatrix = useMemo(() => {
@@ -271,6 +310,31 @@ export default function FairValueCalculatorModal({
       setSavedSuccessMsg(`Справедливата цена от $${calculation.fairValue.toFixed(2)} беше записана за ${ticker}!`);
       setTimeout(() => setSavedSuccessMsg(null), 3500);
     }
+  };
+
+  // Helper to handle mouse move over SVG chart to track nearest year
+  const handleChartMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!chartSvgRef.current) return;
+    const rect = chartSvgRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const svgWidth = rect.width;
+    if (svgWidth <= 0) return;
+
+    // Convert mouseX to plot coordinate fraction
+    // Plot area starts at x=55 and ends at x=705 (viewBox 0 0 760 300)
+    const plotLeft = (55 / 760) * svgWidth;
+    const plotRight = (705 / 760) * svgWidth;
+    const plotWidth = plotRight - plotLeft;
+
+    if (mouseX < plotLeft - 20 || mouseX > plotRight + 20) {
+      setHoveredYearIndex(null);
+      return;
+    }
+
+    const ratio = Math.max(0, Math.min(1, (mouseX - plotLeft) / plotWidth));
+    const totalPoints = calculation.yearData.length;
+    const closestIdx = Math.round(ratio * (totalPoints - 1));
+    setHoveredYearIndex(closestIdx);
   };
 
   if (!isOpen) return null;
@@ -422,18 +486,27 @@ export default function FairValueCalculatorModal({
                     step="1"
                     min="0"
                     value={price}
-                    onChange={e => setPrice(parseFloat(e.target.value) || 0)}
+                    onChange={e => {
+                      setPrice(parseFloat(e.target.value) || 0);
+                      markInputChange();
+                    }}
                     className="w-full bg-card border border-border rounded-xl pl-7 pr-3 py-1.5 text-xs text-ink font-mono font-bold focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <button
                   type="button"
-                  onClick={() => setPrice(prev => Math.max(1, prev - 1))}
+                  onClick={() => {
+                    setPrice(prev => Math.max(1, prev - 1));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >−</button>
                 <button
                   type="button"
-                  onClick={() => setPrice(prev => prev + 1)}
+                  onClick={() => {
+                    setPrice(prev => prev + 1);
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >+</button>
               </div>
@@ -453,18 +526,27 @@ export default function FairValueCalculatorModal({
                     step="0.5"
                     min="0.01"
                     value={eps}
-                    onChange={e => setEps(parseFloat(e.target.value) || 0)}
+                    onChange={e => {
+                      setEps(parseFloat(e.target.value) || 0);
+                      markInputChange();
+                    }}
                     className="w-full bg-card border border-border rounded-xl pl-7 pr-3 py-1.5 text-xs text-ink font-mono font-bold focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <button
                   type="button"
-                  onClick={() => setEps(prev => Math.max(0.1, parseFloat((prev - 0.5).toFixed(2))))}
+                  onClick={() => {
+                    setEps(prev => Math.max(0.1, parseFloat((prev - 0.5).toFixed(2))));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >−</button>
                 <button
                   type="button"
-                  onClick={() => setEps(prev => parseFloat((prev + 0.5).toFixed(2)))}
+                  onClick={() => {
+                    setEps(prev => parseFloat((prev + 0.5).toFixed(2)));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >+</button>
               </div>
@@ -484,19 +566,28 @@ export default function FairValueCalculatorModal({
                     min="-50"
                     max="100"
                     value={epsGrowth}
-                    onChange={e => setEpsGrowth(parseFloat(e.target.value) || 0)}
+                    onChange={e => {
+                      setEpsGrowth(parseFloat(e.target.value) || 0);
+                      markInputChange();
+                    }}
                     className="w-full bg-card border border-border rounded-xl px-3 py-1.5 text-xs text-ink font-mono font-bold focus:outline-none focus:border-indigo-500 pr-7"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-faint font-bold">%</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setEpsGrowth(prev => prev - 1)}
+                  onClick={() => {
+                    setEpsGrowth(prev => prev - 1);
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >−</button>
                 <button
                   type="button"
-                  onClick={() => setEpsGrowth(prev => prev + 1)}
+                  onClick={() => {
+                    setEpsGrowth(prev => prev + 1);
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >+</button>
               </div>
@@ -516,19 +607,28 @@ export default function FairValueCalculatorModal({
                     min="-50"
                     max="100"
                     value={terminalEpsGrowth}
-                    onChange={e => setTerminalEpsGrowth(parseFloat(e.target.value) || 0)}
+                    onChange={e => {
+                      setTerminalEpsGrowth(parseFloat(e.target.value) || 0);
+                      markInputChange();
+                    }}
                     className="w-full bg-card border border-border rounded-xl px-3 py-1.5 text-xs text-ink font-mono font-bold focus:outline-none focus:border-indigo-500 pr-7"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-faint font-bold">%</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setTerminalEpsGrowth(prev => parseFloat((prev - 0.5).toFixed(1)))}
+                  onClick={() => {
+                    setTerminalEpsGrowth(prev => parseFloat((prev - 0.5).toFixed(1)));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >−</button>
                 <button
                   type="button"
-                  onClick={() => setTerminalEpsGrowth(prev => parseFloat((prev + 0.5).toFixed(1)))}
+                  onClick={() => {
+                    setTerminalEpsGrowth(prev => parseFloat((prev + 0.5).toFixed(1)));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >+</button>
               </div>
@@ -548,18 +648,27 @@ export default function FairValueCalculatorModal({
                     min="1"
                     max="20"
                     value={years}
-                    onChange={e => setYears(parseInt(e.target.value) || 1)}
+                    onChange={e => {
+                      setYears(parseInt(e.target.value) || 1);
+                      markInputChange();
+                    }}
                     className="w-full bg-card border border-border rounded-xl px-3 py-1.5 text-xs text-ink font-mono font-bold focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <button
                   type="button"
-                  onClick={() => setYears(prev => Math.max(1, prev - 1))}
+                  onClick={() => {
+                    setYears(prev => Math.max(1, prev - 1));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >−</button>
                 <button
                   type="button"
-                  onClick={() => setYears(prev => Math.min(20, prev + 1))}
+                  onClick={() => {
+                    setYears(prev => Math.min(20, prev + 1));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >+</button>
               </div>
@@ -579,19 +688,28 @@ export default function FairValueCalculatorModal({
                     min="1"
                     max="200"
                     value={exitPe}
-                    onChange={e => setExitPe(parseFloat(e.target.value) || 0)}
+                    onChange={e => {
+                      setExitPe(parseFloat(e.target.value) || 0);
+                      markInputChange();
+                    }}
                     className="w-full bg-card border border-border rounded-xl px-3 py-1.5 text-xs text-ink font-mono font-bold focus:outline-none focus:border-indigo-500 pr-7"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-faint font-bold">x</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setExitPe(prev => Math.max(1, prev - 1))}
+                  onClick={() => {
+                    setExitPe(prev => Math.max(1, prev - 1));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >−</button>
                 <button
                   type="button"
-                  onClick={() => setExitPe(prev => prev + 1)}
+                  onClick={() => {
+                    setExitPe(prev => prev + 1);
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >+</button>
               </div>
@@ -611,19 +729,28 @@ export default function FairValueCalculatorModal({
                     min="1"
                     max="50"
                     value={requiredReturn}
-                    onChange={e => setRequiredReturn(parseFloat(e.target.value) || 0)}
+                    onChange={e => {
+                      setRequiredReturn(parseFloat(e.target.value) || 0);
+                      markInputChange();
+                    }}
                     className="w-full bg-card border border-border rounded-xl px-3 py-1.5 text-xs text-ink font-mono font-bold focus:outline-none focus:border-indigo-500 pr-7"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-faint font-bold">%</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setRequiredReturn(prev => Math.max(1, parseFloat((prev - 0.5).toFixed(1))))}
+                  onClick={() => {
+                    setRequiredReturn(prev => Math.max(1, parseFloat((prev - 0.5).toFixed(1))));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >−</button>
                 <button
                   type="button"
-                  onClick={() => setRequiredReturn(prev => parseFloat((prev + 0.5).toFixed(1)))}
+                  onClick={() => {
+                    setRequiredReturn(prev => parseFloat((prev + 0.5).toFixed(1)));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >+</button>
               </div>
@@ -643,42 +770,89 @@ export default function FairValueCalculatorModal({
                     min="0"
                     max="90"
                     value={marginOfSafety}
-                    onChange={e => setMarginOfSafety(parseFloat(e.target.value) || 0)}
+                    onChange={e => {
+                      setMarginOfSafety(parseFloat(e.target.value) || 0);
+                      markInputChange();
+                    }}
                     className="w-full bg-card border border-border rounded-xl px-3 py-1.5 text-xs text-ink font-mono font-bold focus:outline-none focus:border-indigo-500 pr-7"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-faint font-bold">%</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setMarginOfSafety(prev => Math.max(0, prev - 5))}
+                  onClick={() => {
+                    setMarginOfSafety(prev => Math.max(0, prev - 5));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >−</button>
                 <button
                   type="button"
-                  onClick={() => setMarginOfSafety(prev => Math.min(90, prev + 5))}
+                  onClick={() => {
+                    setMarginOfSafety(prev => Math.min(90, prev + 5));
+                    markInputChange();
+                  }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg bg-card border border-border text-ink-muted hover:text-ink hover:bg-card-hover font-bold text-sm cursor-pointer"
                 >+</button>
               </div>
             </div>
 
-            {/* Save to Table Button */}
-            {onUpdateFairPrice && selectedStock && (
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleSaveToTable}
-                  className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Запази за {selectedStock.ticker} (${calculation.fairValue.toFixed(2)})</span>
-                </button>
-                {savedSuccessMsg && (
-                  <p className="text-[11px] text-emerald-400 font-bold text-center mt-1.5 animate-in fade-in">
-                    ✓ {savedSuccessMsg}
-                  </p>
+            {/* ACTION BUTTONS: Recalculate + Save */}
+            <div className="pt-3 space-y-2 border-t border-border/40">
+              
+              {/* 1. БУТОН ПРЕИЗЧИСЛИ (Recalculate Button) */}
+              <button
+                type="button"
+                onClick={handleRecalculate}
+                className={`w-full py-2.5 px-3 font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-[0.98] ${
+                  hasPendingChanges
+                    ? 'bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-amber-500/30 ring-2 ring-amber-400/80 animate-pulse'
+                    : 'bg-indigo-600/20 hover:bg-indigo-600/35 text-indigo-300 border border-indigo-500/40 hover:border-indigo-500'
+                }`}
+                title="Преизчисли всички резултати и графиката с новите входни данни"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRecalculating ? 'animate-spin' : ''}`} />
+                <span>Преизчисли</span>
+                {hasPendingChanges && (
+                  <span className="px-1.5 py-0.5 text-[9px] bg-stone-950 text-amber-300 rounded font-black tracking-normal">
+                    Нови данни
+                  </span>
                 )}
-              </div>
-            )}
+              </button>
+
+              {recalcFeedback && (
+                <div className="text-[11px] text-emerald-400 font-bold text-center py-1 bg-emerald-500/10 rounded-lg border border-emerald-500/20 animate-in fade-in">
+                  ✓ {recalcFeedback}
+                </div>
+              )}
+
+              {/* 2. БУТОН ЗАПАЗИ ЗА КОМПАНИЯТА (Save Button) */}
+              {onUpdateFairPrice && selectedStock && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleSaveToTable}
+                    className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                    title={`Запази справедлива цена от $${calculation.fairValue.toFixed(2)} за ${selectedStock.ticker} в Интерактивната Таблица`}
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Запази за {selectedStock.ticker} (${calculation.fairValue.toFixed(2)})</span>
+                  </button>
+                  {savedSuccessMsg && (
+                    <p className="text-[11px] text-emerald-400 font-bold text-center mt-1.5 animate-in fade-in">
+                      ✓ {savedSuccessMsg}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Ако няма избрана компания от търсенето */}
+              {!selectedStock && (
+                <p className="text-[10px] text-ink-faint text-center leading-tight pt-1">
+                  💡 Изберете компания от търсачката по-горе, за да активирате бутона за запазване в таблицата.
+                </p>
+              )}
+            </div>
           </div>
 
           {/* RIGHT COLUMN: Results, Hero Card & Interactive Visuals (8 cols on lg) */}
@@ -751,7 +925,11 @@ export default function FairValueCalculatorModal({
             </div>
 
             {/* Fair Value Hero Card with 1:1 StockAnalysis Buy Zone Needle & Scale */}
-            <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm space-y-4">
+            <div className={`rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4 transition-all duration-300 ${
+              flashHeroHighlight
+                ? 'border-indigo-500 ring-2 ring-indigo-500/40 bg-indigo-500/5'
+                : 'border-border'
+            }`}>
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <div className="text-sm font-medium text-ink-muted">
@@ -880,147 +1058,286 @@ export default function FairValueCalculatorModal({
               </div>
             </div>
 
-            {/* Content View 1: Projected EPS and Stock Price Chart + Sensitivity Matrix */}
+            {/* Content View 1: Projected EPS and Stock Price Chart + Sensitivity Matrix (1:1 with StockAnalysis) */}
             {viewMode === 'chart_matrix' && (
               <div className="space-y-5">
                 
-                {/* Projected EPS & Stock Price SVG Chart */}
-                <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
-                      <span>Projected EPS and stock price</span>
-                    </h3>
-                    <div className="flex items-center gap-4 text-xs font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                        <span className="text-ink-muted">EPS ($)</span>
+                {/* 1:1 StockAnalysis Projected EPS & Stock Price Chart */}
+                <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/30 pb-3">
+                    <div className="flex items-center gap-2 relative">
+                      <h3 className="text-sm sm:text-base font-bold text-ink">
+                        Projected EPS and stock price
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowChartInfo(!showChartInfo)}
+                        className="text-ink-faint hover:text-ink p-1 rounded-full hover:bg-card-hover transition-colors"
+                        title="Информация за графиката"
+                      >
+                        <Info className="w-4 h-4" />
+                      </button>
+
+                      {showChartInfo && (
+                        <div className="absolute left-0 top-full mt-2 w-72 p-3 bg-card border border-border rounded-xl shadow-2xl text-xs text-ink-muted z-50 animate-in fade-in">
+                          Очакван темп на EPS (синя крива) и прогнозна цена на акцията (зелена крива) за всяка година според заложените темпове на растеж и изходно P/E.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-4 text-xs font-semibold">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"></span>
+                        <span className="text-ink font-mono text-[11px]">EPS ($)</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                        <span className="text-ink-muted">Stock Price ($)</span>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
+                        <span className="text-ink font-mono text-[11px]">Stock Price ($)</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Responsive SVG Chart */}
-                  <div className="w-full h-56 sm:h-64 relative">
-                    <svg viewBox="0 0 600 200" className="w-full h-full overflow-visible">
-                      <defs>
-                        <linearGradient id="epsGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
-                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
-                        </linearGradient>
-                      </defs>
+                  {/* High-Fidelity Dual-Axis Chart (Exact StockAnalysis Look & Feel) */}
+                  <div className="w-full h-72 sm:h-80 relative select-none">
+                    {(() => {
+                      const pts = calculation.yearData;
+                      const numPts = pts.length;
 
-                      {/* Grid Lines */}
-                      {[0, 50, 100, 150].map((yVal, idx) => (
-                        <line
-                          key={idx}
-                          x1="30"
-                          y1={yVal + 20}
-                          x2="580"
-                          y2={yVal + 20}
-                          stroke="currentColor"
-                          className="text-border/40"
-                          strokeDasharray="3 3"
-                        />
-                      ))}
+                      // Safe ranges for Y-axes
+                      const epsValues = pts.map(p => p.eps);
+                      const maxEpsRaw = Math.max(...epsValues);
+                      const maxEps = maxEpsRaw > 0 ? maxEpsRaw * 1.15 : 10;
+                      const minEps = 0;
 
-                      {/* Chart Coordinate Calculations */}
-                      {(() => {
-                        const pts = calculation.yearData;
-                        const maxEps = Math.max(...pts.map(p => p.eps)) * 1.15;
-                        const minEps = 0;
-                        const maxPrice = Math.max(...pts.map(p => p.futurePrice)) * 1.15;
-                        const minPrice = 0;
+                      const priceValues = pts.map(p => p.futurePrice);
+                      const maxPriceRaw = Math.max(...priceValues);
+                      const maxPrice = maxPriceRaw > 0 ? maxPriceRaw * 1.15 : 200;
+                      const minPrice = 0;
 
-                        const getX = (idx: number) => 40 + (idx / (pts.length - 1)) * 530;
-                        const getY_Eps = (v: number) => 170 - ((v - minEps) / (maxEps - minEps)) * 140;
-                        const getY_Price = (v: number) => 170 - ((v - minPrice) / (maxPrice - minPrice)) * 140;
+                      // Coordinate transformations for SVG ViewBox (0 0 760 280)
+                      // Left margin: 55, Right margin: 55, Top margin: 25, Bottom margin: 40
+                      const padLeft = 55;
+                      const padRight = 55;
+                      const padTop = 25;
+                      const padBottom = 40;
+                      const plotWidth = 760 - padLeft - padRight; // 650
+                      const plotHeight = 280 - padTop - padBottom; // 215
 
-                        const epsPath = pts.reduce((acc, p, idx) => `${acc} ${idx === 0 ? 'M' : 'L'} ${getX(idx)} ${getY_Eps(p.eps)}`, '');
-                        const pricePath = pts.reduce((acc, p, idx) => `${acc} ${idx === 0 ? 'M' : 'L'} ${getX(idx)} ${getY_Price(p.futurePrice)}`, '');
+                      const getX = (idx: number) => padLeft + (idx / Math.max(1, numPts - 1)) * plotWidth;
+                      const getY_Eps = (v: number) => padTop + plotHeight - ((v - minEps) / Math.max(0.001, maxEps - minEps)) * plotHeight;
+                      const getY_Price = (v: number) => padTop + plotHeight - ((v - minPrice) / Math.max(0.001, maxPrice - minPrice)) * plotHeight;
 
-                        return (
-                          <>
-                            {/* Stock Price Line (Emerald) */}
-                            <path
-                              d={pricePath}
-                              fill="none"
-                              stroke="#10b981"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
+                      // Generate smooth Catmull-Rom to Cubic Bezier paths
+                      const buildSmoothPath = (getYFunc: (p: typeof pts[0]) => number) => {
+                        const coords = pts.map((p, idx) => ({ x: getX(idx), y: getYFunc(p) }));
+                        if (coords.length === 0) return '';
+                        if (coords.length === 1) return `M ${coords[0].x} ${coords[0].y}`;
+                        
+                        let path = `M ${coords[0].x.toFixed(1)} ${coords[0].y.toFixed(1)}`;
+                        for (let i = 0; i < coords.length - 1; i++) {
+                          const p0 = coords[Math.max(0, i - 1)];
+                          const p1 = coords[i];
+                          const p2 = coords[i + 1];
+                          const p3 = coords[Math.min(coords.length - 1, i + 2)];
+
+                          const cp1x = p1.x + (p2.x - p0.x) / 6;
+                          const cp1y = p1.y + (p2.y - p0.y) / 6;
+                          const cp2x = p2.x - (p3.x - p1.x) / 6;
+                          const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+                          path += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+                        }
+                        return path;
+                      };
+
+                      const epsCurvePath = buildSmoothPath(p => getY_Eps(p.eps));
+                      const priceCurvePath = buildSmoothPath(p => getY_Price(p.futurePrice));
+
+                      // Gradient area under EPS curve
+                      const epsAreaPath = `${epsCurvePath} L ${getX(numPts - 1)} ${padTop + plotHeight} L ${getX(0)} ${padTop + plotHeight} Z`;
+
+                      // 5 Y-ticks levels: 0%, 25%, 50%, 75%, 100%
+                      const yTicks = [0, 0.25, 0.5, 0.75, 1.0];
+
+                      return (
+                        <svg
+                          ref={chartSvgRef}
+                          viewBox="0 0 760 280"
+                          className="w-full h-full overflow-visible"
+                          onMouseMove={handleChartMouseMove}
+                          onMouseLeave={() => setHoveredYearIndex(null)}
+                        >
+                          <defs>
+                            <linearGradient id="epsAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.22" />
+                              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Horizontal Grid lines and Dual Y-axis labels */}
+                          {yTicks.map((ratio, idx) => {
+                            const yPos = padTop + plotHeight * (1 - ratio);
+                            const tickEpsVal = minEps + (maxEps - minEps) * ratio;
+                            const tickPriceVal = minPrice + (maxPrice - minPrice) * ratio;
+
+                            return (
+                              <g key={idx}>
+                                {/* Grid Line */}
+                                <line
+                                  x1={padLeft}
+                                  y1={yPos}
+                                  x2={padLeft + plotWidth}
+                                  y2={yPos}
+                                  stroke="currentColor"
+                                  className="text-border/40"
+                                  strokeDasharray="4 4"
+                                />
+
+                                {/* Left Y-Axis Label (EPS in Blue) */}
+                                <text
+                                  x={padLeft - 10}
+                                  y={yPos + 4}
+                                  textAnchor="end"
+                                  className="text-[10px] font-mono font-bold fill-blue-500/90"
+                                >
+                                  ${tickEpsVal.toFixed(2)}
+                                </text>
+
+                                {/* Right Y-Axis Label (Price in Emerald) */}
+                                <text
+                                  x={padLeft + plotWidth + 10}
+                                  y={yPos + 4}
+                                  textAnchor="start"
+                                  className="text-[10px] font-mono font-bold fill-emerald-500/90"
+                                >
+                                  ${Math.round(tickPriceVal)}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {/* Area fill under EPS curve */}
+                          <path
+                            d={epsAreaPath}
+                            fill="url(#epsAreaGradient)"
+                          />
+
+                          {/* Projected Stock Price Curve (Emerald) */}
+                          <path
+                            d={priceCurvePath}
+                            fill="none"
+                            stroke="#10b981"
+                            strokeWidth="3.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+
+                          {/* Projected EPS Curve (Blue) */}
+                          <path
+                            d={epsCurvePath}
+                            fill="none"
+                            stroke="#3b82f6"
+                            strokeWidth="3.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+
+                          {/* Vertical guide line on active hovered year */}
+                          {hoveredYearIndex !== null && (
+                            <line
+                              x1={getX(hoveredYearIndex)}
+                              y1={padTop}
+                              x2={getX(hoveredYearIndex)}
+                              y2={padTop + plotHeight}
+                              stroke="#6366f1"
+                              strokeWidth="1.5"
+                              strokeDasharray="4 4"
                             />
+                          )}
 
-                            {/* EPS Line (Blue) */}
-                            <path
-                              d={epsPath}
-                              fill="none"
-                              stroke="#3b82f6"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                            />
+                          {/* Interactive data points and X-axis ticks */}
+                          {pts.map((p, idx) => {
+                            const cx = getX(idx);
+                            const cyEps = getY_Eps(p.eps);
+                            const cyPrice = getY_Price(p.futurePrice);
+                            const isHovered = hoveredYearIndex === idx;
 
-                            {/* Data points & X-axis labels */}
-                            {pts.map((p, idx) => {
-                              const x = getX(idx);
-                              const yEps = getY_Eps(p.eps);
-                              const yPr = getY_Price(p.futurePrice);
-                              const isHovered = hoveredYear === p.year;
+                            return (
+                              <g key={p.year}>
+                                {/* X-axis Year Label */}
+                                <text
+                                  x={cx}
+                                  y={padTop + plotHeight + 22}
+                                  textAnchor="middle"
+                                  className={`text-[11px] font-mono transition-colors ${
+                                    isHovered ? 'fill-indigo-400 font-black' : 'fill-current text-ink-muted font-bold'
+                                  }`}
+                                >
+                                  {p.label}
+                                </text>
 
-                              return (
-                                <g key={p.year} onMouseEnter={() => setHoveredYear(p.year)} onMouseLeave={() => setHoveredYear(null)} className="cursor-pointer">
-                                  {/* X-axis tick label */}
-                                  <text
-                                    x={x}
-                                    y="190"
-                                    textAnchor="middle"
-                                    className="text-[10px] fill-current text-ink-faint font-mono"
-                                  >
-                                    {p.year === 0 ? 'Сега' : `Y${p.year}`}
-                                  </text>
+                                {/* Price Point (Emerald) */}
+                                <circle
+                                  cx={cx}
+                                  cy={cyPrice}
+                                  r={isHovered ? "7" : "4.5"}
+                                  fill="#10b981"
+                                  stroke="#ffffff"
+                                  strokeWidth="2"
+                                  className="transition-all duration-150 cursor-pointer"
+                                />
 
-                                  {/* EPS Point */}
-                                  <circle
-                                    cx={x}
-                                    cy={yEps}
-                                    r={isHovered ? "5" : "3.5"}
-                                    fill="#3b82f6"
-                                    className="transition-all"
-                                  />
+                                {/* EPS Point (Blue) */}
+                                <circle
+                                  cx={cx}
+                                  cy={cyEps}
+                                  r={isHovered ? "7" : "4.5"}
+                                  fill="#3b82f6"
+                                  stroke="#ffffff"
+                                  strokeWidth="2"
+                                  className="transition-all duration-150 cursor-pointer"
+                                />
+                              </g>
+                            );
+                          })}
+                        </svg>
+                      );
+                    })()}
 
-                                  {/* Stock Price Point */}
-                                  <circle
-                                    cx={x}
-                                    cy={yPr}
-                                    r={isHovered ? "5" : "3.5"}
-                                    fill="#10b981"
-                                    className="transition-all"
-                                  />
-                                </g>
-                              );
-                            })}
-                          </>
-                        );
-                      })()}
-                    </svg>
+                    {/* Rich Interactive Floating Tooltip (StockAnalysis Style) */}
+                    {hoveredYearIndex !== null && (() => {
+                      const item = calculation.yearData[hoveredYearIndex];
+                      if (!item) return null;
+                      const epsGrowthVsStart = calculation.yearData[0].eps > 0
+                        ? ((item.eps - calculation.yearData[0].eps) / calculation.yearData[0].eps) * 100
+                        : 0;
+                      const priceGrowthVsStart = calculation.safePrice > 0
+                        ? ((item.futurePrice - calculation.safePrice) / calculation.safePrice) * 100
+                        : 0;
 
-                    {/* Active Hover Tooltip */}
-                    {hoveredYear !== null && (
-                      <div className="absolute top-2 right-4 bg-card/95 border border-border shadow-lg rounded-xl p-2.5 text-xs space-y-1 pointer-events-none animate-in fade-in">
-                        <div className="font-bold text-ink">
-                          {hoveredYear === 0 ? 'Текущо състояние' : `Година ${hoveredYear}`}
+                      return (
+                        <div className="absolute top-2 right-4 bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-3 text-xs space-y-1.5 pointer-events-none animate-in fade-in duration-100 min-w-[200px] border-indigo-500/30">
+                          <div className="font-black text-ink border-b border-border/40 pb-1 flex justify-between items-center">
+                            <span>{item.year === 0 ? 'Текущо състояние' : `Година ${item.year} (${item.label})`}</span>
+                            {item.year > 0 && (
+                              <span className="text-[10px] text-emerald-400 font-mono">+{item.growthRate.toFixed(1)}% YoY</span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between text-blue-400 font-mono">
+                            <span className="font-semibold text-ink-muted">EPS:</span>
+                            <span className="font-bold">${item.eps.toFixed(2)} ({epsGrowthVsStart >= 0 ? '+' : ''}{epsGrowthVsStart.toFixed(1)}%)</span>
+                          </div>
+                          <div className="flex items-center justify-between text-emerald-400 font-mono">
+                            <span className="font-semibold text-ink-muted">Stock Price:</span>
+                            <span className="font-bold">${item.futurePrice.toFixed(2)} ({priceGrowthVsStart >= 0 ? '+' : ''}{priceGrowthVsStart.toFixed(1)}%)</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-faint font-mono text-[11px] pt-0.5 border-t border-border/30">
+                            <span>Дисконтирано днес:</span>
+                            <span>${item.discountedPrice.toFixed(2)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-blue-400 font-mono">
-                          <span>EPS:</span>
-                          <strong>${calculation.yearData.find(d => d.year === hoveredYear)?.eps.toFixed(2)}</strong>
-                        </div>
-                        <div className="flex items-center gap-2 text-emerald-400 font-mono">
-                          <span>Прогнозна цена:</span>
-                          <strong>${calculation.yearData.find(d => d.year === hoveredYear)?.futurePrice.toFixed(2)}</strong>
-                        </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -1062,6 +1379,7 @@ export default function FairValueCalculatorModal({
                                   onClick={() => {
                                     setEpsGrowth(row.growth);
                                     setExitPe(col.pe);
+                                    markInputChange();
                                   }}
                                   className={`px-3 py-2 font-mono tabular-nums transition-all cursor-pointer ${
                                     col.isBaseline
