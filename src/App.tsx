@@ -735,6 +735,10 @@ export default function App() {
       setCurrentUser(user);
       setIsUserDocLoaded(false);
       setIsAuthChecking(false);
+      if (user) {
+        setIsAuthModalOpen(false);
+        setAuthFeatureNotice('');
+      }
       if (!user) {
         setPositions([]);
         setTransactions([]);
@@ -787,7 +791,19 @@ export default function App() {
     const userDocId = `user_${currentUser.uid}`;
     const userDocRef = doc(db, "portfolio", userDocId);
 
+    // Safety timeout: prevent hanging if Firestore listener is delayed on mobile networks
+    const safetyDocTimeout = setTimeout(() => {
+      setIsUserDocLoaded(true);
+      if (!isLoaded) {
+        const { stocks: fallbackStocks, indices: fallbackIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+        setStocks(fallbackStocks);
+        setIndices(fallbackIndices);
+        setIsLoaded(true);
+      }
+    }, 3500);
+
     const unsub = onSnapshot(userDocRef, async (docSnap) => {
+      clearTimeout(safetyDocTimeout);
       if (docSnap.exists()) {
         const data = docSnap.data();
         const incomingDataString = JSON.stringify(data);
@@ -795,7 +811,7 @@ export default function App() {
         // Only update state if data is actually different from our last local save
         if (lastSavedRef.current !== incomingDataString) {
           let migratedStocks = data.stocks || [];
-          if (data.stocks && Array.isArray(data.stocks)) {
+          if (Array.isArray(data.stocks) && data.stocks.length > 0) {
             migratedStocks = data.stocks.map((s: any) => ({
               ...s,
               watch: s.watch === 'UNDERVALUED' ? 'Buy' : s.watch === 'OVERVALUED' ? 'Sell' : s.watch,
@@ -803,8 +819,18 @@ export default function App() {
               buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
             }));
             setStocks(migratedStocks);
+          } else {
+            // Fallback to default CSV stocks so user is never left with an empty or broken dashboard
+            const { stocks: fallbackStocks } = parseCSVData(RAW_SPREADSHEET_CSV);
+            migratedStocks = fallbackStocks;
+            setStocks(fallbackStocks);
           }
-          if (data.indices) setIndices(data.indices);
+          if (data.indices && Array.isArray(data.indices) && data.indices.length > 0) {
+            setIndices(data.indices);
+          } else {
+            const { indices: fallbackIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+            setIndices(fallbackIndices);
+          }
           
           if (Array.isArray(data.alerts)) setAlerts(data.alerts);
           if (Array.isArray(data.positions)) setPositions(data.positions);
@@ -824,7 +850,7 @@ export default function App() {
 
           const normalizedPayload = {
             stocks: migratedStocks,
-            indices: data.indices || [],
+            indices: (data.indices && Array.isArray(data.indices) && data.indices.length > 0) ? data.indices : [],
             alerts: Array.isArray(data.alerts) ? data.alerts : [],
             positions: Array.isArray(data.positions) ? data.positions : [],
             transactions: Array.isArray(data.transactions) ? data.transactions : [],
@@ -844,7 +870,7 @@ export default function App() {
             { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), ticker: 'SYS', message: `Успешен вход като ${currentUser.email}! Личното ви портфолио е синхронизирано.`, type: 'info' },
           ]);
           setTimeout(() => {
-            fetchRealStockPricesDirect(data.stocks || []);
+            fetchRealStockPricesDirect(migratedStocks);
           }, 300);
         }
       } else {
@@ -932,9 +958,20 @@ export default function App() {
       }
     }, (error) => {
       console.error("Firebase User Snapshot Error:", error);
+      clearTimeout(safetyDocTimeout);
+      setIsUserDocLoaded(true);
+      if (!isLoaded) {
+        const { stocks: fallbackStocks, indices: fallbackIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+        setStocks(fallbackStocks);
+        setIndices(fallbackIndices);
+        setIsLoaded(true);
+      }
     });
 
-    return () => unsub();
+    return () => {
+      clearTimeout(safetyDocTimeout);
+      unsub();
+    };
   }, [currentUser, isLoaded]);
 
   // Automatic Cloud Sync for Logged-In User

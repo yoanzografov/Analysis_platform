@@ -67,12 +67,26 @@ export const AuthModal: React.FC<Props> = ({
 
   if (!isOpen) return null;
 
-  // Helper to format email if user enters plain username like "yoan"
-  // ALWAYS lowercase and trim to prevent mobile keyboard auto-capitalization bugs
+  // Helper to format email if user enters plain username like "yoan" or Cyrillic "йоан"
+  // ALWAYS lowercase, transliterate Cyrillic, strip spaces, and trim to prevent mobile keyboard auto-capitalization bugs
   const formatEmail = (input: string) => {
-    const trimmed = input.trim().toLowerCase();
+    let trimmed = input.trim().toLowerCase();
     if (!trimmed) return '';
-    if (trimmed.includes('@')) return trimmed;
+    if (trimmed.includes('@')) {
+      return trimmed.replace(/\s+/g, '');
+    }
+
+    // Transliterate Cyrillic characters to Latin if entered in Bulgarian letters (e.g. йоан -> yoan, иван -> ivan)
+    const cyrillicMap: Record<string, string> = {
+      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ж': 'zh', 'з': 'z',
+      'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p',
+      'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch',
+      'ш': 'sh', 'щ': 'sht', 'ъ': 'u', 'ь': 'y', 'ю': 'yu', 'я': 'ya'
+    };
+    trimmed = trimmed.split('').map(char => cyrillicMap[char] || char).join('');
+    // Remove all spaces and invalid symbols
+    trimmed = trimmed.replace(/[^a-z0-9._-]/g, '');
+    if (!trimmed) return '';
     return `${trimmed}@stocktracker.app`;
   };
 
@@ -96,15 +110,13 @@ export const AuthModal: React.FC<Props> = ({
       setLoading(true);
       await signInWithEmailAndPassword(auth, formattedEmail, password);
       setSuccess('Успешен вход! Данните се синхронизират...');
-      setTimeout(() => {
-        onClose();
-      }, 800);
+      onClose();
     } catch (err: any) {
       console.error("Login error:", err);
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('Грешно потребителско име/имейл или парола! Проверете главни/малки букви или кликнете на "Нова Регистрация" горе.');
       } else if (err.code === 'auth/invalid-email') {
-        setError('Невалиден формат на имейл адреса!');
+        setError('Невалиден формат на имейл или потребителско име!');
       } else if (err.code === 'auth/too-many-requests') {
         setError('Твърде много неуспешни опити! Достъпът е временно ограничен от съображения за сигурност. Моля изчакайте малко или използвайте "Забравена парола".');
       } else if (err.code === 'auth/network-request-failed') {
