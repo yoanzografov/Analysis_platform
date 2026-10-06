@@ -146,11 +146,15 @@ export default function FairValueCalculatorModal({
     const safeExitPe = Math.max(1, exitPe);
     const safeReqReturn = Math.max(0.1, requiredReturn);
 
+    // Starting P/E ratio: moves in equal yearly steps from today's P/E to exit P/E (StockAnalysis model)
+    const startPe = safeEps > 0 && safePrice > 0 ? safePrice / safeEps : safeExitPe;
+
     const yearData: Array<{
       year: number;
       label: string;
       growthRate: number;
       eps: number;
+      peRatio: number;
       futurePrice: number;
       discountedPrice: number;
     }> = [];
@@ -158,9 +162,10 @@ export default function FairValueCalculatorModal({
     // Year 0 (Current benchmark)
     yearData.push({
       year: 0,
-      label: 'Current',
+      label: 'Year 0',
       growthRate: 0,
       eps: safeEps,
+      peRatio: startPe,
       futurePrice: safePrice,
       discountedPrice: safePrice
     });
@@ -168,20 +173,22 @@ export default function FairValueCalculatorModal({
     let currentEps = safeEps;
     for (let i = 1; i <= safeYears; i++) {
       // Linear decay from starting growth to terminal growth
-      const g = safeYears > 1
-        ? epsGrowth - ((i - 1) / (safeYears - 1)) * (epsGrowth - terminalEpsGrowth)
-        : epsGrowth;
-      const gDecimal = g / 100;
-      currentEps = currentEps * (1 + gDecimal);
-      const futurePrice = currentEps * safeExitPe;
+      const s = safeYears > 1 ? (i - 1) / (safeYears - 1) : 0;
+      const g = epsGrowth + (terminalEpsGrowth - epsGrowth) * s;
+      currentEps = currentEps * (1 + g / 100);
+
+      // P/E moves in equal yearly steps from today's P/E to exit P/E
+      const peForYear = startPe + (safeExitPe - startPe) * (i / safeYears);
+      const futurePrice = currentEps * peForYear;
       const discountFactor = Math.pow(1 + safeReqReturn / 100, i);
       const discountedPrice = futurePrice / discountFactor;
 
       yearData.push({
         year: i,
-        label: `Y${i}`,
+        label: `Year ${i}`,
         growthRate: g,
         eps: currentEps,
+        peRatio: peForYear,
         futurePrice,
         discountedPrice
       });
@@ -320,18 +327,21 @@ export default function FairValueCalculatorModal({
     const svgWidth = rect.width;
     if (svgWidth <= 0) return;
 
-    // Convert mouseX to plot coordinate fraction
-    // Plot area starts at x=55 and ends at x=705 (viewBox 0 0 760 300)
-    const plotLeft = (55 / 760) * svgWidth;
-    const plotRight = (705 / 760) * svgWidth;
-    const plotWidth = plotRight - plotLeft;
+    // ViewBox is 760 x 320 with padLeft=60, padRight=75 (plotWidth=625)
+    const padLeft = 60;
+    const padRight = 75;
+    const plotWidth = 760 - padLeft - padRight;
 
-    if (mouseX < plotLeft - 20 || mouseX > plotRight + 20) {
+    const plotLeft = (padLeft / 760) * svgWidth;
+    const plotRight = ((padLeft + plotWidth) / 760) * svgWidth;
+    const plotWidthPx = plotRight - plotLeft;
+
+    if (mouseX < plotLeft - 15 || mouseX > plotRight + 15) {
       setHoveredYearIndex(null);
       return;
     }
 
-    const ratio = Math.max(0, Math.min(1, (mouseX - plotLeft) / plotWidth));
+    const ratio = Math.max(0, Math.min(1, (mouseX - plotLeft) / plotWidthPx));
     const totalPoints = calculation.yearData.length;
     const closestIdx = Math.round(ratio * (totalPoints - 1));
     setHoveredYearIndex(closestIdx);
@@ -1062,7 +1072,7 @@ export default function FairValueCalculatorModal({
             {viewMode === 'chart_matrix' && (
               <div className="space-y-5">
                 
-                {/* 1:1 StockAnalysis Projected EPS & Stock Price Chart */}
+                {/* 1:1 StockAnalysis Projected EPS & Stock Price Chart (Combo Bar + Line) */}
                 <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/30 pb-3">
                     <div className="flex items-center gap-2 relative">
@@ -1072,33 +1082,56 @@ export default function FairValueCalculatorModal({
                       <button
                         type="button"
                         onClick={() => setShowChartInfo(!showChartInfo)}
-                        className="text-ink-faint hover:text-ink p-1 rounded-full hover:bg-card-hover transition-colors"
-                        title="Информация за графиката"
+                        className="text-ink-faint hover:text-ink p-1 rounded-full hover:bg-card-hover transition-colors cursor-pointer"
+                        title="Информация за модела на графиката"
                       >
                         <Info className="w-4 h-4" />
                       </button>
 
                       {showChartInfo && (
-                        <div className="absolute left-0 top-full mt-2 w-72 p-3 bg-card border border-border rounded-xl shadow-2xl text-xs text-ink-muted z-50 animate-in fade-in">
-                          Очакван темп на EPS (синя крива) и прогнозна цена на акцията (зелена крива) за всяка година според заложените темпове на растеж и изходно P/E.
+                        <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 p-4 bg-card border border-border rounded-2xl shadow-2xl text-xs text-ink-muted z-50 animate-in fade-in space-y-2 border-indigo-500/30">
+                          <div className="font-bold text-ink text-[13px] border-b border-border/40 pb-1.5 flex items-center justify-between">
+                            <span>Как работи графиката (StockAnalysis):</span>
+                            <button
+                              type="button"
+                              onClick={() => setShowChartInfo(false)}
+                              className="text-ink-faint hover:text-ink p-0.5"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <p className="leading-relaxed">
+                            <strong className="text-emerald-400">■ Стълбове (EPS):</strong> Показват печалбата на акция за всяка година. Растежът тръгва от началния EPS темп и се забавя на равни годишни стъпки до терминалния темп в последната година.
+                          </p>
+                          <p className="leading-relaxed">
+                            <strong className="text-sky-400">● Линия (Stock Price):</strong> Показва прогнозната цена на акцията: всяка година EPS се умножава по P/E, което се движи на равни стъпки от днешното P/E до избраното Exit P/E.
+                          </p>
+                          <p className="leading-relaxed text-ink-faint text-[11px] pt-1 border-t border-border/30">
+                            Линията тръгва от днешната цена (${calculation.safePrice.toFixed(2)}) и завършва с цената в година {years} (${calculation.finalStockPrice.toFixed(2)}), която дисконтирана с вашата изискуема доходност дава справедливата стойност (${calculation.fairValue.toFixed(2)}).
+                          </p>
                         </div>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs font-semibold">
+                    {/* StockAnalysis Legend: Bars for EPS, Line for Stock Price */}
+                    <div className="flex items-center gap-5 text-xs font-semibold">
                       <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"></span>
-                        <span className="text-ink font-mono text-[11px]">EPS ($)</span>
+                        <span className="w-3 h-3 rounded-[3px] bg-emerald-500 shadow-sm shadow-emerald-500/30"></span>
+                        <span className="text-ink font-medium text-[12px]">Earnings Per Share</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
-                        <span className="text-ink font-mono text-[11px]">Stock Price ($)</span>
+                        <div className="flex items-center">
+                          <span className="w-3.5 h-[3px] bg-sky-500 rounded-full"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-sky-500 -ml-1 border border-card"></span>
+                          <span className="w-3.5 h-[3px] bg-sky-500 rounded-full -ml-1"></span>
+                        </div>
+                        <span className="text-ink font-medium text-[12px]">Projected Stock Price</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* High-Fidelity Dual-Axis Chart (Exact StockAnalysis Look & Feel) */}
-                  <div className="w-full h-72 sm:h-80 relative select-none">
+                  {/* High-Fidelity Combo Dual-Axis Chart (1:1 with StockAnalysis Highcharts) */}
+                  <div className="w-full h-80 sm:h-96 relative select-none">
                     {(() => {
                       const pts = calculation.yearData;
                       const numPts = pts.length;
@@ -1106,74 +1139,51 @@ export default function FairValueCalculatorModal({
                       // Safe ranges for Y-axes
                       const epsValues = pts.map(p => p.eps);
                       const maxEpsRaw = Math.max(...epsValues);
-                      const maxEps = maxEpsRaw > 0 ? maxEpsRaw * 1.15 : 10;
+                      const maxEps = maxEpsRaw > 0 ? maxEpsRaw * 1.18 : 10;
                       const minEps = 0;
 
                       const priceValues = pts.map(p => p.futurePrice);
                       const maxPriceRaw = Math.max(...priceValues);
-                      const maxPrice = maxPriceRaw > 0 ? maxPriceRaw * 1.15 : 200;
+                      const maxPrice = maxPriceRaw > 0 ? maxPriceRaw * 1.18 : 200;
                       const minPrice = 0;
 
-                      // Coordinate transformations for SVG ViewBox (0 0 760 280)
-                      // Left margin: 55, Right margin: 55, Top margin: 25, Bottom margin: 40
-                      const padLeft = 55;
-                      const padRight = 55;
+                      // Coordinate transformations for SVG ViewBox (0 0 760 320)
+                      // padLeft: 60 (EPS left axis), padRight: 75 (Price right axis + highlight pill)
+                      const padLeft = 60;
+                      const padRight = 75;
                       const padTop = 25;
-                      const padBottom = 40;
-                      const plotWidth = 760 - padLeft - padRight; // 650
-                      const plotHeight = 280 - padTop - padBottom; // 215
+                      const padBottom = 45;
+                      const plotWidth = 760 - padLeft - padRight; // 625
+                      const plotHeight = 320 - padTop - padBottom; // 250
 
                       const getX = (idx: number) => padLeft + (idx / Math.max(1, numPts - 1)) * plotWidth;
                       const getY_Eps = (v: number) => padTop + plotHeight - ((v - minEps) / Math.max(0.001, maxEps - minEps)) * plotHeight;
                       const getY_Price = (v: number) => padTop + plotHeight - ((v - minPrice) / Math.max(0.001, maxPrice - minPrice)) * plotHeight;
 
-                      // Generate smooth Catmull-Rom to Cubic Bezier paths
-                      const buildSmoothPath = (getYFunc: (p: typeof pts[0]) => number) => {
-                        const coords = pts.map((p, idx) => ({ x: getX(idx), y: getYFunc(p) }));
-                        if (coords.length === 0) return '';
-                        if (coords.length === 1) return `M ${coords[0].x} ${coords[0].y}`;
-                        
-                        let path = `M ${coords[0].x.toFixed(1)} ${coords[0].y.toFixed(1)}`;
-                        for (let i = 0; i < coords.length - 1; i++) {
-                          const p0 = coords[Math.max(0, i - 1)];
-                          const p1 = coords[i];
-                          const p2 = coords[i + 1];
-                          const p3 = coords[Math.min(coords.length - 1, i + 2)];
+                      // Column bar width (proportional to spacing, capped between 16px and 34px)
+                      const colWidth = Math.min(34, Math.max(16, (plotWidth / numPts) * 0.44));
 
-                          const cp1x = p1.x + (p2.x - p0.x) / 6;
-                          const cp1y = p1.y + (p2.y - p0.y) / 6;
-                          const cp2x = p2.x - (p3.x - p1.x) / 6;
-                          const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-                          path += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
-                        }
-                        return path;
-                      };
-
-                      const epsCurvePath = buildSmoothPath(p => getY_Eps(p.eps));
-                      const priceCurvePath = buildSmoothPath(p => getY_Price(p.futurePrice));
-
-                      // Gradient area under EPS curve
-                      const epsAreaPath = `${epsCurvePath} L ${getX(numPts - 1)} ${padTop + plotHeight} L ${getX(0)} ${padTop + plotHeight} Z`;
+                      // Straight line path for Projected Stock Price (1:1 with StockAnalysis Highcharts line)
+                      const priceLineCoords = pts.map((p, idx) => ({ x: getX(idx), y: getY_Price(p.futurePrice) }));
+                      const priceLinePath = priceLineCoords.reduce((acc, pt, idx) => {
+                        return idx === 0 ? `M ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}` : `${acc} L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+                      }, '');
 
                       // 5 Y-ticks levels: 0%, 25%, 50%, 75%, 100%
                       const yTicks = [0, 0.25, 0.5, 0.75, 1.0];
 
+                      // StockAnalysis Highlight Tag on Right Y-Axis for final projected price
+                      const highlightPrice = calculation.finalStockPrice;
+                      const highlightY = getY_Price(highlightPrice);
+
                       return (
                         <svg
                           ref={chartSvgRef}
-                          viewBox="0 0 760 280"
+                          viewBox="0 0 760 320"
                           className="w-full h-full overflow-visible"
                           onMouseMove={handleChartMouseMove}
                           onMouseLeave={() => setHoveredYearIndex(null)}
                         >
-                          <defs>
-                            <linearGradient id="epsAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.22" />
-                              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
-                            </linearGradient>
-                          </defs>
-
                           {/* Horizontal Grid lines and Dual Y-axis labels */}
                           {yTicks.map((ratio, idx) => {
                             const yPos = padTop + plotHeight * (1 - ratio);
@@ -1182,7 +1192,7 @@ export default function FairValueCalculatorModal({
 
                             return (
                               <g key={idx}>
-                                {/* Grid Line */}
+                                {/* Horizontal dashed grid line across plot */}
                                 <line
                                   x1={padLeft}
                                   y1={yPos}
@@ -1193,22 +1203,22 @@ export default function FairValueCalculatorModal({
                                   strokeDasharray="4 4"
                                 />
 
-                                {/* Left Y-Axis Label (EPS in Blue) */}
+                                {/* Left Y-Axis Label: Earnings Per Share ($X.XX) */}
                                 <text
                                   x={padLeft - 10}
                                   y={yPos + 4}
                                   textAnchor="end"
-                                  className="text-[10px] font-mono font-bold fill-blue-500/90"
+                                  className="text-[11px] font-mono font-medium fill-current text-ink-muted"
                                 >
                                   ${tickEpsVal.toFixed(2)}
                                 </text>
 
-                                {/* Right Y-Axis Label (Price in Emerald) */}
+                                {/* Right Y-Axis Label: Projected Stock Price ($XXX) */}
                                 <text
                                   x={padLeft + plotWidth + 10}
                                   y={yPos + 4}
                                   textAnchor="start"
-                                  className="text-[10px] font-mono font-bold fill-emerald-500/90"
+                                  className="text-[11px] font-mono font-medium fill-current text-ink-muted"
                                 >
                                   ${Math.round(tickPriceVal)}
                                 </text>
@@ -1216,31 +1226,42 @@ export default function FairValueCalculatorModal({
                             );
                           })}
 
-                          {/* Area fill under EPS curve */}
-                          <path
-                            d={epsAreaPath}
-                            fill="url(#epsAreaGradient)"
-                          />
+                          {/* Hover Background Column Band */}
+                          {hoveredYearIndex !== null && (
+                            <rect
+                              x={getX(hoveredYearIndex) - (plotWidth / numPts) * 0.48}
+                              y={padTop}
+                              width={(plotWidth / numPts) * 0.96}
+                              height={plotHeight}
+                              fill="rgba(148, 163, 184, 0.08)"
+                              rx="4"
+                            />
+                          )}
 
-                          {/* Projected Stock Price Curve (Emerald) */}
-                          <path
-                            d={priceCurvePath}
-                            fill="none"
-                            stroke="#10b981"
-                            strokeWidth="3.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
+                          {/* 1. EPS Columns (Bars) - Rendered behind line */}
+                          {pts.map((p, idx) => {
+                            const cx = getX(idx);
+                            const barX = cx - colWidth / 2;
+                            const barY = getY_Eps(p.eps);
+                            const barHeight = Math.max(2, (padTop + plotHeight) - barY);
+                            const isHovered = hoveredYearIndex === idx;
 
-                          {/* Projected EPS Curve (Blue) */}
-                          <path
-                            d={epsCurvePath}
-                            fill="none"
-                            stroke="#3b82f6"
-                            strokeWidth="3.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
+                            return (
+                              <g key={`bar-${p.year}`}>
+                                <rect
+                                  x={barX}
+                                  y={barY}
+                                  width={colWidth}
+                                  height={barHeight}
+                                  rx="3"
+                                  ry="3"
+                                  fill={isHovered ? "#34d399" : "#10b981"}
+                                  fillOpacity={isHovered ? 1.0 : 0.85}
+                                  className="transition-colors duration-150 cursor-pointer"
+                                />
+                              </g>
+                            );
+                          })}
 
                           {/* Vertical guide line on active hovered year */}
                           {hoveredYearIndex !== null && (
@@ -1249,91 +1270,134 @@ export default function FairValueCalculatorModal({
                               y1={padTop}
                               x2={getX(hoveredYearIndex)}
                               y2={padTop + plotHeight}
-                              stroke="#6366f1"
-                              strokeWidth="1.5"
-                              strokeDasharray="4 4"
+                              stroke="#64748b"
+                              strokeWidth="1.2"
+                              strokeDasharray="3 3"
                             />
                           )}
 
-                          {/* Interactive data points and X-axis ticks */}
+                          {/* 2. Projected Stock Price Line (StockAnalysis Highcharts Solid Line) */}
+                          <path
+                            d={priceLinePath}
+                            fill="none"
+                            stroke="#0284c7"
+                            strokeWidth="3.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+
+                          {/* 3. Circular Node Markers on Stock Price Line */}
                           {pts.map((p, idx) => {
                             const cx = getX(idx);
-                            const cyEps = getY_Eps(p.eps);
                             const cyPrice = getY_Price(p.futurePrice);
                             const isHovered = hoveredYearIndex === idx;
 
                             return (
-                              <g key={p.year}>
-                                {/* X-axis Year Label */}
-                                <text
-                                  x={cx}
-                                  y={padTop + plotHeight + 22}
-                                  textAnchor="middle"
-                                  className={`text-[11px] font-mono transition-colors ${
-                                    isHovered ? 'fill-indigo-400 font-black' : 'fill-current text-ink-muted font-bold'
-                                  }`}
-                                >
-                                  {p.label}
-                                </text>
+                              <circle
+                                key={`pt-${p.year}`}
+                                cx={cx}
+                                cy={cyPrice}
+                                r={isHovered ? 6.5 : 4}
+                                fill="#0284c7"
+                                stroke="#ffffff"
+                                strokeWidth={isHovered ? 2.5 : 2}
+                                className="transition-all duration-150 cursor-pointer drop-shadow-sm"
+                              />
+                            );
+                          })}
 
-                                {/* Price Point (Emerald) */}
-                                <circle
-                                  cx={cx}
-                                  cy={cyPrice}
-                                  r={isHovered ? "7" : "4.5"}
-                                  fill="#10b981"
-                                  stroke="#ffffff"
-                                  strokeWidth="2"
-                                  className="transition-all duration-150 cursor-pointer"
-                                />
+                          {/* StockAnalysis Right-Axis Highlight Pill Badge for Final Price */}
+                          {highlightY >= padTop && highlightY <= padTop + plotHeight && (
+                            <g>
+                              <rect
+                                x={padLeft + plotWidth + 6}
+                                y={highlightY - 10}
+                                width={60}
+                                height={20}
+                                rx="4"
+                                fill="#0284c7"
+                                className="drop-shadow-sm"
+                              />
+                              <text
+                                x={padLeft + plotWidth + 36}
+                                y={highlightY + 4}
+                                textAnchor="middle"
+                                fill="#ffffff"
+                                className="text-[11px] font-bold font-mono"
+                              >
+                                ${Math.round(highlightPrice)}
+                              </text>
+                            </g>
+                          )}
 
-                                {/* EPS Point (Blue) */}
-                                <circle
-                                  cx={cx}
-                                  cy={cyEps}
-                                  r={isHovered ? "7" : "4.5"}
-                                  fill="#3b82f6"
-                                  stroke="#ffffff"
-                                  strokeWidth="2"
-                                  className="transition-all duration-150 cursor-pointer"
-                                />
-                              </g>
+                          {/* X-axis Year Labels */}
+                          {pts.map((p, idx) => {
+                            const cx = getX(idx);
+                            const isHovered = hoveredYearIndex === idx;
+
+                            return (
+                              <text
+                                key={`lbl-${p.year}`}
+                                x={cx}
+                                y={padTop + plotHeight + 24}
+                                textAnchor="middle"
+                                className={`text-[11px] font-mono transition-colors ${
+                                  isHovered ? 'fill-sky-400 font-black' : 'fill-current text-ink-muted font-medium'
+                                }`}
+                              >
+                                {p.label}
+                              </text>
                             );
                           })}
                         </svg>
                       );
                     })()}
 
-                    {/* Rich Interactive Floating Tooltip (StockAnalysis Style) */}
+                    {/* StockAnalysis Style Interactive Floating Tooltip */}
                     {hoveredYearIndex !== null && (() => {
                       const item = calculation.yearData[hoveredYearIndex];
                       if (!item) return null;
-                      const epsGrowthVsStart = calculation.yearData[0].eps > 0
-                        ? ((item.eps - calculation.yearData[0].eps) / calculation.yearData[0].eps) * 100
-                        : 0;
-                      const priceGrowthVsStart = calculation.safePrice > 0
-                        ? ((item.futurePrice - calculation.safePrice) / calculation.safePrice) * 100
-                        : 0;
+                      const epsGrowthVsPrev = hoveredYearIndex > 0 && calculation.yearData[hoveredYearIndex - 1].eps > 0
+                        ? ((item.eps - calculation.yearData[hoveredYearIndex - 1].eps) / calculation.yearData[hoveredYearIndex - 1].eps) * 100
+                        : null;
 
                       return (
-                        <div className="absolute top-2 right-4 bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-3 text-xs space-y-1.5 pointer-events-none animate-in fade-in duration-100 min-w-[200px] border-indigo-500/30">
-                          <div className="font-black text-ink border-b border-border/40 pb-1 flex justify-between items-center">
-                            <span>{item.year === 0 ? 'Текущо състояние' : `Година ${item.year} (${item.label})`}</span>
+                        <div className="absolute top-2 right-4 bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-3.5 text-xs space-y-2 pointer-events-none animate-in fade-in duration-100 min-w-[220px] border-sky-500/30">
+                          <div className="font-bold text-ink border-b border-border/40 pb-1.5 flex justify-between items-center">
+                            <span className="text-[13px]">{item.label === 'Year 0' ? 'Year 0 (Today)' : item.label}</span>
                             {item.year > 0 && (
-                              <span className="text-[10px] text-emerald-400 font-mono">+{item.growthRate.toFixed(1)}% YoY</span>
+                              <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                                {item.growthRate.toFixed(1)}% growth rate
+                              </span>
                             )}
                           </div>
-                          <div className="flex items-center justify-between text-blue-400 font-mono">
-                            <span className="font-semibold text-ink-muted">EPS:</span>
-                            <span className="font-bold">${item.eps.toFixed(2)} ({epsGrowthVsStart >= 0 ? '+' : ''}{epsGrowthVsStart.toFixed(1)}%)</span>
-                          </div>
                           <div className="flex items-center justify-between text-emerald-400 font-mono">
-                            <span className="font-semibold text-ink-muted">Stock Price:</span>
-                            <span className="font-bold">${item.futurePrice.toFixed(2)} ({priceGrowthVsStart >= 0 ? '+' : ''}{priceGrowthVsStart.toFixed(1)}%)</span>
+                            <span className="font-semibold text-ink-muted flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded-[2px] bg-emerald-500 inline-block"></span>
+                              EPS:
+                            </span>
+                            <span className="font-bold text-ink">${item.eps.toFixed(2)}</span>
                           </div>
-                          <div className="flex items-center justify-between text-ink-faint font-mono text-[11px] pt-0.5 border-t border-border/30">
+                          <div className="flex items-center justify-between text-sky-400 font-mono">
+                            <span className="font-semibold text-ink-muted flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+                              Stock Price:
+                            </span>
+                            <span className="font-bold text-ink">${item.futurePrice.toFixed(2)}</span>
+                          </div>
+                          {epsGrowthVsPrev !== null && (
+                            <div className="flex items-center justify-between text-ink-faint font-mono text-[11px] pt-1 border-t border-border/30">
+                              <span>EPS Growth YoY:</span>
+                              <span className="text-emerald-400 font-bold">+{epsGrowthVsPrev.toFixed(1)}%</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between text-ink-faint font-mono text-[11px]">
+                            <span>P/E Ratio:</span>
+                            <span className="text-ink font-bold">{item.peRatio.toFixed(1)}x</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-faint font-mono text-[11px] pt-1 border-t border-border/30">
                             <span>Дисконтирано днес:</span>
-                            <span>${item.discountedPrice.toFixed(2)}</span>
+                            <span className="text-ink font-mono font-bold">${item.discountedPrice.toFixed(2)}</span>
                           </div>
                         </div>
                       );
@@ -1433,7 +1497,8 @@ export default function FairValueCalculatorModal({
                           <th className="py-2.5 px-3">Година</th>
                           <th className="py-2.5 px-3">Темп на растеж</th>
                           <th className="py-2.5 px-3">Прогнозен EPS</th>
-                          <th className="py-2.5 px-3">Бъдеща цена ({exitPe.toFixed(1)}x)</th>
+                          <th className="py-2.5 px-3">P/E Съотношение</th>
+                          <th className="py-2.5 px-3">Бъдеща цена</th>
                           <th className="py-2.5 px-3 text-right">Дисконтирана стойност ({requiredReturn.toFixed(1)}%)</th>
                         </tr>
                       </thead>
@@ -1443,7 +1508,8 @@ export default function FairValueCalculatorModal({
                             <td className="py-2 px-3 font-sans font-bold text-ink">Година {row.year}</td>
                             <td className="py-2 px-3 text-emerald-400">+{row.growthRate.toFixed(1)}%</td>
                             <td className="py-2 px-3 text-indigo-400 font-bold">${row.eps.toFixed(2)}</td>
-                            <td className="py-2 px-3 text-ink">${row.futurePrice.toFixed(2)}</td>
+                            <td className="py-2 px-3 text-ink font-semibold">{row.peRatio.toFixed(1)}x</td>
+                            <td className="py-2 px-3 text-sky-400 font-bold">${row.futurePrice.toFixed(2)}</td>
                             <td className="py-2 px-3 text-right text-ink-muted">${row.discountedPrice.toFixed(2)}</td>
                           </tr>
                         ))}
