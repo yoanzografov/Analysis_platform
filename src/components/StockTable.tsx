@@ -323,7 +323,8 @@ export default function StockTable({
  const startInlineEdit = (stock: Stock) => {
  setEditingRow(stock.ticker);
  setEditTicker(stock.ticker);
- setEditWatch(stock.watch || '');
+ const normalizedWatch = (stock.watch || '').toLowerCase() === 'atten' ? 'Attn' : (stock.watch || '');
+ setEditWatch(normalizedWatch);
  setEditCompanyName(stock.companyName);
  setEditDate(toIsoDate(stock.date || ''));
  setEditPriceOfCalc(stock.priceOfCalc !== null ? stock.priceOfCalc.toString() : '');
@@ -565,9 +566,14 @@ export default function StockTable({
 
  if (activeFilter.type === 'all') return true;
  
- // Support filtering exactly by watch column values
+ // Support filtering exactly by watch column values (case-insensitive & Attn/Atten alias-safe)
  if (activeFilter.type === 'watch') {
-   return stock.watch === activeFilter.value;
+   const fVal = (activeFilter.value || '').toLowerCase();
+   const wVal = (stock.watch || '').toLowerCase();
+   if (fVal === 'attn' || fVal === 'atten') {
+     return wVal === 'attn' || wVal === 'atten';
+   }
+   return wVal === fVal;
  }
 
  if (activeFilter.type === 'signal') {
@@ -924,7 +930,7 @@ export default function StockTable({
  <td className="py-3 px-4 font-sans overflow-hidden text-ellipsis whitespace-nowrap">
  {isEditing ? (
  <select
- value={editWatch}
+ value={(editWatch.toLowerCase() === 'atten' || editWatch.toLowerCase() === 'attn') ? 'Attn' : editWatch}
  onChange={e => {
     const newVal = e.target.value;
     setEditWatch(newVal);
@@ -943,7 +949,7 @@ export default function StockTable({
  <option value="Interesting">Interesting</option>
  <option value="Not interesting">Not interesting</option>
  </select>
- ) : stock.watch === 'Attn' || stock.watch === 'Atten' ? (
+ ) : (stock.watch || '').toLowerCase() === 'attn' || (stock.watch || '').toLowerCase() === 'atten' ? (
  <span className="inline-block w-20 text-center bg-amber-500 text-white font-extrabold py-0.5 text-xs uppercase rounded-full shadow-sm">
  Attn
  </span>

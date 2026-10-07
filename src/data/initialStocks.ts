@@ -321,9 +321,11 @@ export function parseCSVData(csvText: string): { stocks: Stock[]; indices: Marke
     }
     cells.push(currentCell.trim());
 
-    if (cells.length < 2 || !cells[1]) continue; // Needs at least a Ticker
-
-    const watch = cells[0];
+    let rawWatch = (cells[0] || '').trim();
+    if (rawWatch.toLowerCase() === 'atten' || rawWatch.toLowerCase() === 'attn') {
+      rawWatch = 'Attn';
+    }
+    const watch = rawWatch;
     const ticker = cells[1].trim().toUpperCase();
     const companyName = cells[2] || '';
     // cells[3] is 365 Chart sparkline column

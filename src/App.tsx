@@ -812,12 +812,33 @@ export default function App() {
         if (lastSavedRef.current !== incomingDataString) {
           let migratedStocks = data.stocks || [];
           if (Array.isArray(data.stocks) && data.stocks.length > 0) {
-            migratedStocks = data.stocks.map((s: any) => ({
-              ...s,
-              watch: s.watch === 'UNDERVALUED' ? 'Buy' : s.watch === 'OVERVALUED' ? 'Sell' : s.watch,
-              signal: s.signal === 'UNDERVALUED' ? 'Buy' : s.signal === 'OVERVALUED' ? 'Sell' : s.signal,
-              buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
-            }));
+            const { stocks: defaultRefStocks } = parseCSVData(RAW_SPREADSHEET_CSV);
+            const defaultWatchMap = new Map<string, string>();
+            defaultRefStocks.forEach(st => {
+              if (st.watch) defaultWatchMap.set(st.ticker.toUpperCase(), st.watch);
+            });
+
+            migratedStocks = data.stocks.map((s: any) => {
+              const sym = (s.ticker || '').toUpperCase();
+              let watchVal = (s.watch || '').trim();
+              if (!watchVal && defaultWatchMap.has(sym)) {
+                watchVal = defaultWatchMap.get(sym) || '';
+              }
+              if (watchVal.toLowerCase() === 'atten' || watchVal.toLowerCase() === 'attn') {
+                watchVal = 'Attn';
+              } else if (watchVal === 'UNDERVALUED') {
+                watchVal = 'Buy';
+              } else if (watchVal === 'OVERVALUED') {
+                watchVal = 'Sell';
+              }
+
+              return {
+                ...s,
+                watch: watchVal,
+                signal: s.signal === 'UNDERVALUED' ? 'Buy' : s.signal === 'OVERVALUED' ? 'Sell' : s.signal,
+                buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
+              };
+            });
             setStocks(migratedStocks);
           } else {
             // Fallback to default CSV stocks so user is never left with an empty or broken dashboard
