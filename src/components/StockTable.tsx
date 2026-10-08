@@ -406,17 +406,10 @@ export default function StockTable({
  difference = parseFloat((((finalFair - parsedCurrentPrice) / parsedCurrentPrice) * 100).toFixed(2));
  }
 
- let buySell = 'OVERVALUED';
- if (finalFair !== null && parsedCurrentPrice > 0) {
- const dev = ((parsedCurrentPrice - finalFair) / finalFair) * 100;
- if (dev < -buyThreshold) {
- buySell = 'UNDERVALUED';
- } else if (dev > sellThreshold) {
- buySell = 'OVERVALUED';
- } else {
- buySell = 'ДРУГИ';
- }
- }
+  let buySell = 'OVERVALUED';
+  if (finalFair !== null && parsedCurrentPrice > 0) {
+    buySell = (finalFair >= parsedCurrentPrice) ? 'UNDERVALUED' : 'OVERVALUED';
+  }
  
   // Signal formula matching Google Sheets: =IF(P<=AW*1.05, "Buy", IF(P>=AO*0.95, "Sell", "Hold"))
   // P = currentPrice, AW = low52 (52-Week Low), AO = high52 (52-Week High)
@@ -492,17 +485,10 @@ export default function StockTable({
  diffPercent = parseFloat((((fairPriceNum - initialPrice) / initialPrice) * 100).toFixed(2));
  }
 
- let buySellValue = 'OVERVALUED';
- if (fairPriceNum !== null && initialPrice > 0) {
- const dev = ((initialPrice - fairPriceNum) / fairPriceNum) * 100;
- if (dev < -buyThreshold) {
- buySellValue = 'UNDERVALUED';
- } else if (dev > sellThreshold) {
- buySellValue = 'OVERVALUED';
- } else {
- buySellValue = 'ДРУГИ';
- }
- }
+  let buySellValue = 'OVERVALUED';
+  if (fairPriceNum !== null && initialPrice > 0) {
+    buySellValue = (fairPriceNum >= initialPrice) ? 'UNDERVALUED' : 'OVERVALUED';
+  }
   // Signal formula matching Google Sheets: Buy if currentPrice <= low52*1.05, Sell if currentPrice >= high52*0.95
   const low52Default = priceOfCalcNum ? parseFloat((priceOfCalcNum * 0.78).toFixed(2)) : 80.0;
   const high52Default = priceOfCalcNum ? parseFloat((priceOfCalcNum * 1.25).toFixed(2)) : 125.0;
@@ -1774,14 +1760,7 @@ export default function StockTable({
       }
       let buySell = 'OVERVALUED';
       if (cp > 0) {
-        const dev = ((cp - fairPrice) / fairPrice) * 100;
-        if (dev < -buyThreshold) {
-          buySell = 'UNDERVALUED';
-        } else if (dev > sellThreshold) {
-          buySell = 'OVERVALUED';
-        } else {
-          buySell = 'ДРУГИ';
-        }
+        buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
       }
       onUpdateStock(ticker, {
         ...original,
