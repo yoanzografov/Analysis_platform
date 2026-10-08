@@ -60,10 +60,21 @@ import {
 } from 'lucide-react';
 
 export default function App() {
- // Primary datasets
- const [stocks, setStocks] = useState<Stock[]>([]);
-   const [searchQuery, setSearchQuery] = useState('');
-   const [isSearching, setIsSearching] = useState(false);
+  // Primary datasets
+  const [stocks, setStocks] = useState<Stock[]>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_stocks');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading stocks from localStorage', e);
+    }
+    return [];
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
  const [indices, setIndices] = useState<MarketIndex[]>([]);
  const [isLoaded, setIsLoaded] = useState(false);
@@ -409,6 +420,16 @@ export default function App() {
       console.error('Error saving alerts to localStorage', e);
     }
   }, [alerts]);
+
+  useEffect(() => {
+    if (stocks.length > 0) {
+      try {
+        localStorage.setItem('user_portfolio_stocks', JSON.stringify(stocks));
+      } catch (e) {
+        console.error('Error saving stocks to localStorage', e);
+      }
+    }
+  }, [stocks]);
   const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [activeAlertToast, setActiveAlertToast] = useState<string | null>(null);
 
@@ -1051,7 +1072,10 @@ export default function App() {
  const handleSheetSynced = (csvText: string) => {
  const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(csvText);
  if (parsedStocks.length > 0) {
- setStocks(parsedStocks);
+   const importedTickers = new Set(parsedStocks.map(s => s.ticker.toUpperCase()));
+   const customStocks = stocks.filter(s => !importedTickers.has(s.ticker.toUpperCase()));
+   const mergedStocks = [...parsedStocks, ...customStocks];
+   setStocks(mergedStocks);
  if (parsedIndices.length > 0) {
  setIndices(parsedIndices);
  }
@@ -1123,7 +1147,10 @@ export default function App() {
     }
     
     const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
-    setStocks(parsedStocks);
+    const baseTickers = new Set(parsedStocks.map(s => s.ticker.toUpperCase()));
+    const customStocks = stocks.filter(s => !baseTickers.has(s.ticker.toUpperCase()));
+    const mergedStocks = [...parsedStocks, ...customStocks];
+    setStocks(mergedStocks);
     setIndices(parsedIndices);
     
     const newAlerts: PriceAlert[] = [
