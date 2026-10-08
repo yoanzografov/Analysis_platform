@@ -430,6 +430,21 @@ export default function App() {
       }
     }
   }, [stocks]);
+
+  const [deletedStockTickers, setDeletedStockTickers] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('user_portfolio_deleted_tickers');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('user_portfolio_deleted_tickers', JSON.stringify(deletedStockTickers));
+    } catch (e) {}
+  }, [deletedStockTickers]);
   const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [activeAlertToast, setActiveAlertToast] = useState<string | null>(null);
 
@@ -789,7 +804,31 @@ export default function App() {
       setIsUserDocLoaded(false);
       if (!isLoaded) {
         const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
-        setStocks(parsedStocks);
+        let localStocks: Stock[] = [];
+        try {
+          const raw = localStorage.getItem('user_portfolio_stocks');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) localStocks = parsed;
+          }
+        } catch (e) {}
+
+        const guestMap = new Map<string, Stock>();
+        parsedStocks.forEach(s => guestMap.set(s.ticker.toUpperCase(), s));
+        localStocks.forEach(s => {
+          if (s && s.ticker) {
+            const sym = s.ticker.toUpperCase();
+            if (guestMap.has(sym)) {
+              guestMap.set(sym, { ...guestMap.get(sym)!, ...s });
+            } else {
+              guestMap.set(sym, s);
+            }
+          }
+        });
+
+        const deletedSet = new Set(deletedStockTickers.map(t => t.toUpperCase()));
+        const guestStocks = Array.from(guestMap.values()).filter(s => !deletedSet.has(s.ticker.toUpperCase()));
+        setStocks(guestStocks);
         setIndices(parsedIndices);
         setPositions([]);
         setTransactions([]);
@@ -797,7 +836,7 @@ export default function App() {
         setCashBalance(0);
         setIsLoaded(true);
         setTimeout(() => {
-          fetchRealStockPricesDirect(parsedStocks);
+          fetchRealStockPricesDirect(guestStocks);
         }, 300);
       } else {
         setPositions([]);
@@ -817,7 +856,31 @@ export default function App() {
       setIsUserDocLoaded(true);
       if (!isLoaded) {
         const { stocks: fallbackStocks, indices: fallbackIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
-        setStocks(fallbackStocks);
+        let localStocks: Stock[] = [];
+        try {
+          const raw = localStorage.getItem('user_portfolio_stocks');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) localStocks = parsed;
+          }
+        } catch (e) {}
+
+        const fallbackMap = new Map<string, Stock>();
+        fallbackStocks.forEach(s => fallbackMap.set(s.ticker.toUpperCase(), s));
+        localStocks.forEach(s => {
+          if (s && s.ticker) {
+            const sym = s.ticker.toUpperCase();
+            if (fallbackMap.has(sym)) {
+              fallbackMap.set(sym, { ...fallbackMap.get(sym)!, ...s });
+            } else {
+              fallbackMap.set(sym, s);
+            }
+          }
+        });
+
+        const deletedSet = new Set(deletedStockTickers.map(t => t.toUpperCase()));
+        const unifiedFallback = Array.from(fallbackMap.values()).filter(s => !deletedSet.has(s.ticker.toUpperCase()));
+        setStocks(unifiedFallback);
         setIndices(fallbackIndices);
         setIsLoaded(true);
       }
@@ -829,18 +892,50 @@ export default function App() {
         const data = docSnap.data();
         const incomingDataString = JSON.stringify(data);
         
+        let activeDeletedList = deletedStockTickers;
+        if (Array.isArray(data.deletedStockTickers)) {
+          activeDeletedList = Array.from(new Set([...deletedStockTickers, ...data.deletedStockTickers]));
+          setDeletedStockTickers(activeDeletedList);
+        }
+        const deletedSet = new Set(activeDeletedList.map(t => t.toUpperCase()));
+
         // Only update state if data is actually different from our last local save
         if (lastSavedRef.current !== incomingDataString) {
-          let migratedStocks = data.stocks || [];
-          if (Array.isArray(data.stocks) && data.stocks.length > 0) {
-            const { stocks: defaultRefStocks } = parseCSVData(RAW_SPREADSHEET_CSV);
-            const defaultWatchMap = new Map<string, string>();
-            defaultRefStocks.forEach(st => {
-              if (st.watch) defaultWatchMap.set(st.ticker.toUpperCase(), st.watch);
-            });
+          const { stocks: defaultRefStocks } = parseCSVData(RAW_SPREADSHEET_CSV);
+          const defaultWatchMap = new Map<string, string>();
+          defaultRefStocks.forEach(st => {
+            if (st.watch) defaultWatchMap.set(st.ticker.toUpperCase(), st.watch);
+          });
 
-            migratedStocks = data.stocks.map((s: any) => {
-              const sym = (s.ticker || '').toUpperCase();
+          // 1. Seed unified map with all default reference stocks
+          const stocksMap = new Map<string, Stock>();
+          defaultRefStocks.forEach(s => stocksMap.set(s.ticker.toUpperCase(), s));
+
+          // 2. Overlay any stocks saved in localStorage (offline/recent additions)
+          try {
+            const rawLocal = localStorage.getItem('user_portfolio_stocks');
+            if (rawLocal) {
+              const parsedLocal: Stock[] = JSON.parse(rawLocal);
+              if (Array.isArray(parsedLocal)) {
+                parsedLocal.forEach(s => {
+                  if (s && s.ticker) {
+                    const sym = s.ticker.toUpperCase();
+                    if (stocksMap.has(sym)) {
+                      stocksMap.set(sym, { ...stocksMap.get(sym)!, ...s });
+                    } else {
+                      stocksMap.set(sym, s);
+                    }
+                  }
+                });
+              }
+            }
+          } catch (e) {}
+
+          // 3. Overlay Firestore cloud data (highest priority for user's saved edits like fairPrice, watch, etc.)
+          if (Array.isArray(data.stocks) && data.stocks.length > 0) {
+            data.stocks.forEach((s: any) => {
+              if (!s || !s.ticker) return;
+              const sym = s.ticker.toUpperCase();
               let watchVal = (s.watch || '').trim();
               if (!watchVal && defaultWatchMap.has(sym)) {
                 watchVal = defaultWatchMap.get(sym) || '';
@@ -853,20 +948,24 @@ export default function App() {
                 watchVal = 'Sell';
               }
 
-              return {
+              const processedStock: Stock = {
                 ...s,
                 watch: watchVal,
                 signal: s.signal === 'UNDERVALUED' ? 'Buy' : s.signal === 'OVERVALUED' ? 'Sell' : s.signal,
                 buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
               };
+
+              if (stocksMap.has(sym)) {
+                stocksMap.set(sym, { ...stocksMap.get(sym)!, ...processedStock });
+              } else {
+                stocksMap.set(sym, processedStock);
+              }
             });
-            setStocks(migratedStocks);
-          } else {
-            // Fallback to default CSV stocks so user is never left with an empty or broken dashboard
-            const { stocks: fallbackStocks } = parseCSVData(RAW_SPREADSHEET_CSV);
-            migratedStocks = fallbackStocks;
-            setStocks(fallbackStocks);
           }
+
+          // 4. Exclude tickers explicitly deleted by the user
+          const migratedStocks = Array.from(stocksMap.values()).filter(s => !deletedSet.has(s.ticker.toUpperCase()));
+          setStocks(migratedStocks);
           if (data.indices && Array.isArray(data.indices) && data.indices.length > 0) {
             setIndices(data.indices);
           } else {
@@ -950,13 +1049,37 @@ export default function App() {
         }
 
         const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+        let localStocks: Stock[] = [];
+        try {
+          const raw = localStorage.getItem('user_portfolio_stocks');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) localStocks = parsed;
+          }
+        } catch (e) {}
+
+        const initialMap = new Map<string, Stock>();
+        parsedStocks.forEach(s => initialMap.set(s.ticker.toUpperCase(), s));
+        localStocks.forEach(s => {
+          if (s && s.ticker) {
+            const sym = s.ticker.toUpperCase();
+            if (initialMap.has(sym)) {
+              initialMap.set(sym, { ...initialMap.get(sym)!, ...s });
+            } else {
+              initialMap.set(sym, s);
+            }
+          }
+        });
+        const deletedSet = new Set(deletedStockTickers.map(t => t.toUpperCase()));
+        const initialStocksList = Array.from(initialMap.values()).filter(s => !deletedSet.has(s.ticker.toUpperCase()));
+
         const defaultAlerts = [
           { id: '1', ticker: 'AAPL', criteria: 'ABOVE', targetPrice: 300, isActive: true, createdAt: new Date().toISOString() },
           { id: '2', ticker: 'TSLA', criteria: 'BELOW', targetPrice: 380, isActive: true, createdAt: new Date().toISOString() },
           { id: '3', ticker: 'NVDA', criteria: 'ABOVE', targetPrice: 215, isActive: true, createdAt: new Date().toISOString() },
         ];
         
-        setStocks(parsedStocks);
+        setStocks(initialStocksList);
         setIndices(parsedIndices);
         // @ts-ignore
         setAlerts(defaultAlerts);
@@ -969,7 +1092,7 @@ export default function App() {
         setIsUserDocLoaded(true);
         
         const initialUserData = { 
-          stocks: parsedStocks, 
+          stocks: initialStocksList, 
           indices: parsedIndices, 
           alerts: defaultAlerts, 
           positions: legacyPositions, 
@@ -977,6 +1100,7 @@ export default function App() {
           dividends: legacyDividends,
           cashBalance: legacyCash,
           baseCurrency: legacyBaseCurr,
+          deletedStockTickers,
           settings: { buyThreshold: 10, sellThreshold: 10 } 
         };
         lastSavedRef.current = JSON.stringify(initialUserData);
@@ -995,7 +1119,7 @@ export default function App() {
         }, { merge: true }).catch(() => {});
 
         setTimeout(() => {
-          fetchRealStockPricesDirect(parsedStocks);
+          fetchRealStockPricesDirect(initialStocksList);
         }, 300);
       }
     }, (error) => {
@@ -1019,6 +1143,7 @@ export default function App() {
   // Automatic Cloud Sync for Logged-In User
   useEffect(() => {
     if (!isLoaded || !currentUser || !isUserDocLoaded) return;
+    if (stocks.length === 0) return; // CRITICAL: NEVER overwrite cloud data with empty stocks
     
     const userDocId = `user_${currentUser.uid}`;
     const payload = { 
@@ -1030,6 +1155,7 @@ export default function App() {
       dividends,
       cashBalance,
       baseCurrency,
+      deletedStockTickers,
       settings: { buyThreshold, sellThreshold } 
     };
     const currentDataString = JSON.stringify(payload);
@@ -1040,7 +1166,7 @@ export default function App() {
       setDoc(doc(db, "portfolio", userDocId), JSON.parse(currentDataString), { merge: true })
         .catch(err => console.error("Firebase User Auto Save Error:", err));
     }
-  }, [currentUser, isUserDocLoaded, stocks, indices, alerts, positions, transactions, dividends, cashBalance, baseCurrency, buyThreshold, sellThreshold, isLoaded]);
+  }, [currentUser, isUserDocLoaded, stocks, indices, alerts, positions, transactions, dividends, cashBalance, baseCurrency, buyThreshold, sellThreshold, deletedStockTickers, isLoaded]);
 
  // Smooth scroll to AI Analysis container when a stock is selected
  useEffect(() => {
@@ -1105,36 +1231,59 @@ export default function App() {
   setStocks(prev => prev.map(s => s.ticker === oldTicker ? updatedStock : s));
   };
 
- const handleDeleteStock = (ticker: string) => {
- const confirmDelete = window.confirm(`Сигурни ли сте, че искате да изтриете акцията ${ticker}?`);
- if (!confirmDelete) return;
+  const handleDeleteStock = (ticker: string) => {
+    const confirmDelete = window.confirm(`Сигурни ли сте, че искате да изтриете акцията ${ticker}?`);
+    if (!confirmDelete) return;
 
- setStocks(prev => prev.filter(s => s.ticker !== ticker));
+    const upper = ticker.toUpperCase();
+    setDeletedStockTickers(prev => {
+      const next = Array.from(new Set([...prev, upper]));
+      try {
+        localStorage.setItem('user_portfolio_deleted_tickers', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
 
- const newLog = {
- id: `${Date.now()}-${Math.random()}`,
- timestamp: new Date().toLocaleTimeString(),
- ticker,
- message: `Изтрит актив: ${ticker}`,
- type: 'info' as const
- };
- setLogs(prev => [newLog, ...prev]);
- };
+    setStocks(prev => prev.filter(s => s.ticker.toUpperCase() !== upper));
+
+    const newLog = {
+      id: `${Date.now()}-${Math.random()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      ticker,
+      message: `Изтрит актив: ${ticker}`,
+      type: 'info' as const
+    };
+    setLogs(prev => [newLog, ...prev]);
+  };
 
   const handleNewUser = () => {
-    setStocks([]);
-    setIndices([]);
+    const { stocks: defaultStocks, indices: defaultIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+    setStocks(defaultStocks);
+    setIndices(defaultIndices);
     setAlerts([]);
+    setPositions([]);
+    setTransactions([]);
+    setDividends([]);
+    setCashBalance(0);
+    setDeletedStockTickers([]);
+    try {
+      localStorage.removeItem('user_portfolio_deleted_tickers');
+      localStorage.setItem('user_portfolio_stocks', JSON.stringify(defaultStocks));
+      localStorage.removeItem('user_portfolio_positions');
+      localStorage.removeItem('user_portfolio_transactions');
+      localStorage.removeItem('user_portfolio_dividends');
+      localStorage.removeItem('user_portfolio_cash');
+    } catch (e) {}
     
     const newLog: NotificationLog = {
       id: `${Date.now()}-${Math.random()}`,
       timestamp: new Date().toLocaleTimeString(),
       ticker: 'SYS',
-      message: 'Всички данни бяха изтрити. Успешен старт за нов потребител.',
+      message: 'Портфолиото бе нулирано успешно. Базовите пазарни активи са запазени.',
       type: 'info'
     };
     setLogs(prev => [newLog, ...prev]);
-    setActiveAlertToast('Данните бяха изчистени успешно!');
+    setActiveAlertToast('Данните бяха нулирани успешно!');
     setTimeout(() => setActiveAlertToast(null), 4000);
     setShowNewUserModal(false);
   };
@@ -1969,8 +2118,16 @@ export default function App() {
           buyThreshold={buyThreshold}
           sellThreshold={sellThreshold}
           onAddStock={(newStock) => {
+            const upper = newStock.ticker.toUpperCase();
+            setDeletedStockTickers(prev => {
+              const next = prev.filter(t => t !== upper);
+              try {
+                localStorage.setItem('user_portfolio_deleted_tickers', JSON.stringify(next));
+              } catch (e) {}
+              return next;
+            });
             setStocks(prev => {
-              const existingIdx = prev.findIndex(s => s.ticker.toUpperCase() === newStock.ticker.toUpperCase());
+              const existingIdx = prev.findIndex(s => s.ticker.toUpperCase() === upper);
               if (existingIdx >= 0) {
                 const updated = [...prev];
                 updated[existingIdx] = { ...updated[existingIdx], ...newStock };
