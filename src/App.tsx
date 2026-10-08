@@ -819,7 +819,17 @@ export default function App() {
           if (s && s.ticker) {
             const sym = s.ticker.toUpperCase();
             if (guestMap.has(sym)) {
-              guestMap.set(sym, { ...guestMap.get(sym)!, ...s });
+              const base = guestMap.get(sym)!;
+              const effectiveFair = (s.fairPrice !== null && s.fairPrice !== undefined && s.fairPrice > 0) ? s.fairPrice : base.fairPrice;
+              let effectiveDiff = s.difference;
+              let effectiveBuySell = s.buySell;
+              const cp = s.currentPrice > 0 ? s.currentPrice : base.currentPrice;
+              if (effectiveFair !== null && cp > 0) {
+                effectiveDiff = parseFloat((((effectiveFair - cp) / cp) * 100).toFixed(2));
+                const dev = ((cp - effectiveFair) / effectiveFair) * 100;
+                effectiveBuySell = dev < -10 ? 'UNDERVALUED' : dev > 10 ? 'OVERVALUED' : 'ДРУГИ';
+              }
+              guestMap.set(sym, { ...base, ...s, fairPrice: effectiveFair, difference: effectiveDiff, buySell: effectiveBuySell });
             } else {
               guestMap.set(sym, s);
             }
@@ -948,11 +958,38 @@ export default function App() {
                 watchVal = 'Sell';
               }
 
+              const existingBase = stocksMap.get(sym);
+              const effectiveFair = (s.fairPrice !== null && s.fairPrice !== undefined && s.fairPrice > 0)
+                ? s.fairPrice
+                : (existingBase?.fairPrice ?? null);
+
+              const currentP = (typeof s.currentPrice === 'number' && s.currentPrice > 0) 
+                ? s.currentPrice 
+                : (existingBase?.currentPrice ?? 100);
+
+              let effectiveDiff = s.difference;
+              let effectiveBuySell = s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : (s.buySell || 'ДРУГИ');
+
+              if (effectiveFair !== null && currentP > 0) {
+                effectiveDiff = parseFloat((((effectiveFair - currentP) / currentP) * 100).toFixed(2));
+                const dev = ((currentP - effectiveFair) / effectiveFair) * 100;
+                if (dev < -10) {
+                  effectiveBuySell = 'UNDERVALUED';
+                } else if (dev > 10) {
+                  effectiveBuySell = 'OVERVALUED';
+                } else {
+                  effectiveBuySell = 'ДРУГИ';
+                }
+              }
+
               const processedStock: Stock = {
                 ...s,
+                currentPrice: currentP,
+                fairPrice: effectiveFair,
+                difference: effectiveDiff,
+                buySell: effectiveBuySell,
                 watch: watchVal,
                 signal: s.signal === 'UNDERVALUED' ? 'Buy' : s.signal === 'OVERVALUED' ? 'Sell' : s.signal,
-                buySell: s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : s.buySell
               };
 
               if (stocksMap.has(sym)) {
