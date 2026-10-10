@@ -730,6 +730,7 @@ export default function StockTable({
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
 
+  {/* DCF Calculator Button */}
   <button
     onClick={(e) => {
       e.preventDefault();
@@ -753,6 +754,34 @@ export default function StockTable({
   >
     <Calculator className="w-3.5 h-3.5" />
     <span>DCF Calculator</span>
+    <ExternalLink className="w-3 h-3 opacity-70" />
+    {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
+  </button>
+
+  {/* Fair Value Calculator Button */}
+  <button
+    onClick={(e) => {
+      e.preventDefault();
+      if (!currentUser) {
+        onRequireAuth?.('Fair Value Calculator');
+        return;
+      }
+      try {
+        const opened = window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
+        if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+          setFairValueModalStock(null);
+          setIsFairValueModalOpen(true);
+        }
+      } catch (err) {
+        setFairValueModalStock(null);
+        setIsFairValueModalOpen(true);
+      }
+    }}
+    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+    title={currentUser ? "Отвори Fair Value Calculator в нов прозорец" : "Fair Value Calculator (Изисква регистрация)"}
+  >
+    <Calculator className="w-3.5 h-3.5" />
+    <span>Fair Value</span>
     <ExternalLink className="w-3 h-3 opacity-70" />
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
