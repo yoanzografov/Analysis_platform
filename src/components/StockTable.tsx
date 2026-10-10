@@ -655,6 +655,8 @@ export default function StockTable({
           className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-xl border border-border-hover bg-bg text-ink cursor-pointer focus:outline-none focus:border-indigo-500 h-[26px]"
         >
           <option value="all|all">Всички ({stocks.length})</option>
+          <option value="range52|low">52W Дъно ({count52Low})</option>
+          <option value="range52|high">52W Връх ({count52High})</option>
           <option value="watch|Buy">Buy ({stocks.filter(s => s.watch === 'Buy').length})</option>
           <option value="watch|Sell">Sell ({stocks.filter(s => s.watch === 'Sell').length})</option>
           <option value="watch|Watch">Watch ({stocks.filter(s => s.watch === 'Watch').length})</option>
@@ -662,6 +664,55 @@ export default function StockTable({
           <option value="watch|Interesting">Interesting ({stocks.filter(s => s.watch === 'Interesting').length})</option>
           <option value="watch|Not interesting">Not interesting ({stocks.filter(s => s.watch === 'Not interesting').length})</option>
         </select>
+
+        {/* 52-Week Low & 52-Week High Quick Filter Buttons placed next to 'Всички' filter */}
+        <button
+          onClick={() => {
+            if (activeFilter.type === 'range52' && activeFilter.value === 'low') {
+              onSetActiveFilter({ type: 'all', value: 'all' });
+            } else {
+              onSetActiveFilter({ type: 'range52', value: 'low' });
+              setCurrentPage(1);
+            }
+          }}
+          className={`px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border flex items-center gap-1.5 cursor-pointer shrink-0 ${
+            activeFilter.type === 'range52' && activeFilter.value === 'low'
+              ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/30 ring-1 ring-emerald-400'
+              : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300'
+          }`}
+          title="Филтрирай компании на или близо до 52-седмично дъно (<= 3% от дъното)"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+          <span>52W Дъно</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-emerald-950/70 border border-emerald-500/30 text-emerald-300">
+            {count52Low}
+          </span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (activeFilter.type === 'range52' && activeFilter.value === 'high') {
+              onSetActiveFilter({ type: 'all', value: 'all' });
+            } else {
+              onSetActiveFilter({ type: 'range52', value: 'high' });
+              setCurrentPage(1);
+            }
+          }}
+          className={`px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border flex items-center gap-1.5 cursor-pointer shrink-0 ${
+            activeFilter.type === 'range52' && activeFilter.value === 'high'
+              ? 'bg-amber-600 text-white border-amber-500 shadow-sm shadow-amber-500/30 ring-1 ring-amber-400'
+              : 'border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300'
+          }`}
+          title="Филтрирай компании на или близо до 52-седмичен връх (>= 97% от върха)"
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+          <span>52W Връх</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-950/70 border border-amber-500/30 text-amber-300">
+            {count52High}
+          </span>
+        </button>
+
+        <div className="w-px h-5 bg-border mx-0.5 hidden sm:block shrink-0" />
 
   <button
     onClick={() => {
@@ -749,53 +800,6 @@ export default function StockTable({
     <span>Fair Value</span>
     <ExternalLink className="w-3 h-3 opacity-70" />
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
-  </button>
-
-  {/* 52-Week Low & 52-Week High Quick Filter Buttons */}
-  <button
-    onClick={() => {
-      if (activeFilter.type === 'range52' && activeFilter.value === 'low') {
-        onSetActiveFilter({ type: 'all', value: 'all' });
-      } else {
-        onSetActiveFilter({ type: 'range52', value: 'low' });
-        setCurrentPage(1);
-      }
-    }}
-    className={`px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border flex items-center gap-1.5 cursor-pointer shrink-0 ${
-      activeFilter.type === 'range52' && activeFilter.value === 'low'
-        ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/30 ring-1 ring-emerald-400'
-        : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300'
-    }`}
-    title="Филтрирай компании на или близо до 52-седмично дъно (<= 3% от дъното)"
-  >
-    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-    <span>52W Дъно</span>
-    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-emerald-950/70 border border-emerald-500/30 text-emerald-300">
-      {count52Low}
-    </span>
-  </button>
-
-  <button
-    onClick={() => {
-      if (activeFilter.type === 'range52' && activeFilter.value === 'high') {
-        onSetActiveFilter({ type: 'all', value: 'all' });
-      } else {
-        onSetActiveFilter({ type: 'range52', value: 'high' });
-        setCurrentPage(1);
-      }
-    }}
-    className={`px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border flex items-center gap-1.5 cursor-pointer shrink-0 ${
-      activeFilter.type === 'range52' && activeFilter.value === 'high'
-        ? 'bg-amber-600 text-white border-amber-500 shadow-sm shadow-amber-500/30 ring-1 ring-amber-400'
-        : 'border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300'
-    }`}
-    title="Филтрирай компании на или близо до 52-седмичен връх (>= 97% от върха)"
-  >
-    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
-    <span>52W Връх</span>
-    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-950/70 border border-amber-500/30 text-amber-300">
-      {count52High}
-    </span>
   </button>
 
  {/* Special badges when filtering by signals from the charts */}
