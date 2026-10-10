@@ -10,6 +10,7 @@ import CompanyProfileModal from './CompanyProfileModal';
 import PriceAlertPlanner from './PriceAlertPlanner';
 import StockChecklistModal, { loadSavedChecklist } from './StockChecklistModal';
 import FairValueCalculatorModal from './FairValueCalculatorModal';
+import DcfCalculatorModal from './DcfCalculatorModal';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 
 interface Props {
@@ -276,6 +277,8 @@ export default function StockTable({
   const [financialsModalStock, setFinancialsModalStock] = useState<Stock | null>(null);
   const [isFairValueModalOpen, setIsFairValueModalOpen] = useState(false);
   const [fairValueModalStock, setFairValueModalStock] = useState<Stock | null>(null);
+  const [isDcfModalOpen, setIsDcfModalOpen] = useState(false);
+  const [dcfModalStock, setDcfModalStock] = useState<Stock | null>(null);
 
  const [newTicker, setNewTicker] = useState('');
  const [newCompanyName, setNewCompanyName] = useState('');
@@ -731,25 +734,25 @@ export default function StockTable({
     onClick={(e) => {
       e.preventDefault();
       if (!currentUser) {
-        onRequireAuth?.('Fair Value Calculator');
+        onRequireAuth?.('DCF Calculator');
         return;
       }
       try {
-        const opened = window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
+        const opened = window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
         if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-          setFairValueModalStock(null);
-          setIsFairValueModalOpen(true);
+          setDcfModalStock(null);
+          setIsDcfModalOpen(true);
         }
       } catch (err) {
-        setFairValueModalStock(null);
-        setIsFairValueModalOpen(true);
+        setDcfModalStock(null);
+        setIsDcfModalOpen(true);
       }
     }}
-    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
-    title={currentUser ? "Отвори Fair Value Calculator в нов прозорец" : "Fair Value Calculator (Изисква регистрация)"}
+    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-blue-500/40 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+    title={currentUser ? "Отвори DCF Calculator (Discounted Cash Flow) в нов прозорец" : "DCF Calculator (Изисква регистрация)"}
   >
     <Calculator className="w-3.5 h-3.5" />
-    <span>Fair Value</span>
+    <span>DCF Calculator</span>
     <ExternalLink className="w-3 h-3 opacity-70" />
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
@@ -1697,6 +1700,40 @@ export default function StockTable({
     onSaveToTable={onAddStock}
   />
 
+  <DcfCalculatorModal
+    isOpen={isDcfModalOpen}
+    onClose={() => {
+      setIsDcfModalOpen(false);
+      setDcfModalStock(null);
+    }}
+    stocks={stocks}
+    initialStock={dcfModalStock}
+    currentUser={currentUser}
+    onSwitchToPeModel={() => {
+      setIsDcfModalOpen(false);
+      setIsFairValueModalOpen(true);
+    }}
+    onUpdateFairPrice={(ticker, fairPrice) => {
+      const original = stocks.find(s => s.ticker === ticker);
+      if (!original) return;
+      const cp = original.currentPrice;
+      let difference: number | null = null;
+      if (cp > 0) {
+        difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
+      }
+      let buySell = 'OVERVALUED';
+      if (cp > 0) {
+        buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
+      }
+      onUpdateStock(ticker, {
+        ...original,
+        fairPrice,
+        difference,
+        buySell
+      });
+    }}
+  />
+
   <FairValueCalculatorModal
     isOpen={isFairValueModalOpen}
     onClose={() => {
@@ -1706,6 +1743,10 @@ export default function StockTable({
     stocks={stocks}
     initialStock={fairValueModalStock}
     currentUser={currentUser}
+    onSwitchToDcfModel={() => {
+      setIsFairValueModalOpen(false);
+      setIsDcfModalOpen(true);
+    }}
     onUpdateFairPrice={(ticker, fairPrice) => {
       const original = stocks.find(s => s.ticker === ticker);
       if (!original) return;

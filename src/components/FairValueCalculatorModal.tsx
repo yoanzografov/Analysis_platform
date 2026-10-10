@@ -9,6 +9,7 @@ interface Props {
   initialStock?: Stock | null;
   onUpdateFairPrice?: (ticker: string, fairPrice: number) => void;
   currentUser?: any;
+  onSwitchToDcfModel?: () => void;
 }
 
 export default function FairValueCalculatorModal({
@@ -17,7 +18,8 @@ export default function FairValueCalculatorModal({
   stocks = [],
   initialStock = null,
   onUpdateFairPrice,
-  currentUser
+  currentUser,
+  onSwitchToDcfModel
 }: Props) {
   // Selected Stock from Search (null = clean benchmark model like StockAnalysis defaults)
   const [selectedStock, setSelectedStock] = useState<Stock | null>(initialStock);
@@ -375,6 +377,17 @@ export default function FairValueCalculatorModal({
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            {onSwitchToDcfModel && (
+              <button
+                type="button"
+                onClick={onSwitchToDcfModel}
+                className="px-2.5 py-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                title="Отвори DCF Calculator (Discounted Cash Flow)"
+              >
+                <Calculator className="w-3.5 h-3.5" />
+                <span>DCF Model (Cash Flow)</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {

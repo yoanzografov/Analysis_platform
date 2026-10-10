@@ -21,6 +21,7 @@ import RoiCalculatorModal from './components/RoiCalculatorModal';
 import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
 import ProfitCalculatorModal from './components/ProfitCalculatorModal';
 import FairValueCalculatorModal from './components/FairValueCalculatorModal';
+import DcfCalculatorModal from './components/DcfCalculatorModal';
 import StockChecklistModal, { syncChecklistsWithCloud } from './components/StockChecklistModal';
 import FinancialFlagsModal from './components/FinancialFlagsModal';
 import WelcomeQuoteModal from './components/WelcomeQuoteModal';
@@ -111,6 +112,7 @@ export default function App() {
   const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
   const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
   const [showFairValueModal, setShowFairValueModal] = useState(false);
+  const [showDcfModal, setShowDcfModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showFinancialFlagsModal, setShowFinancialFlagsModal] = useState(false);
   const [showLogoModal, setShowLogoModal] = useState(false);
@@ -199,7 +201,14 @@ export default function App() {
       const hash = window.location.hash.toLowerCase().replace('#', '');
       const user = currentUser;
 
-      if (hash === 'fair-value' || hash === 'fair-value-calculator') {
+      if (hash === 'dcf' || hash === 'dcf-calculator') {
+        if (!user) {
+          handleRequireAuth('DCF Calculator');
+          clearHashUrl();
+          return;
+        }
+        setShowDcfModal(true);
+      } else if (hash === 'fair-value' || hash === 'fair-value-calculator') {
         if (!user) {
           handleRequireAuth('Fair Value Calculator');
           clearHashUrl();
@@ -238,6 +247,7 @@ export default function App() {
         setShowFinancialFlagsModal(true);
       } else {
         // Modal hash no longer present in URL (e.g. user pressed back button in browser)
+        setShowDcfModal(false);
         setShowFairValueModal(false);
         setShowProfitCalculatorModal(false);
         setShowRoiCalculatorModal(false);
@@ -1897,6 +1907,30 @@ export default function App() {
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (!currentUser) {
+                    handleRequireAuth('DCF Calculator');
+                    setIsUsefulLinksMenuOpen(false);
+                    return;
+                  }
+                  setIsUsefulLinksMenuOpen(false);
+                  window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
+                }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
+                title="Отвори DCF Calculator (Discounted Cash Flow) в нов прозорец"
+              >
+                <Calculator className="w-4 h-4 text-blue-400 shrink-0" />
+                <span className="flex-1">DCF Calculator (Cash Flow)</span>
+                {!currentUser ? (
+                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
+                ) : (
+                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-blue-400 ml-auto shrink-0" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  if (!currentUser) {
                     handleRequireAuth('Fair Value Calculator');
                     setIsUsefulLinksMenuOpen(false);
                     return;
@@ -1908,7 +1942,7 @@ export default function App() {
                 title="Отвори Fair Value Calculator в нов прозорец"
               >
                 <Calculator className="w-4 h-4 text-indigo-400 shrink-0" />
-                <span className="flex-1">Fair Value Calculator</span>
+                <span className="flex-1">Fair Value (P/E Multiple)</span>
                 {!currentUser ? (
                   <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
                 ) : (
@@ -2469,13 +2503,17 @@ export default function App() {
     />
   )}
 
-  {/* Fair Value Calculator Modal */}
+  {/* DCF Calculator Modal */}
   {currentUser && (
-    <FairValueCalculatorModal
-      isOpen={showFairValueModal}
-      onClose={() => { setShowFairValueModal(false); clearHashUrl(); }}
+    <DcfCalculatorModal
+      isOpen={showDcfModal}
+      onClose={() => { setShowDcfModal(false); clearHashUrl(); }}
       stocks={stocks}
       currentUser={currentUser}
+      onSwitchToPeModel={() => {
+        setShowDcfModal(false);
+        setShowFairValueModal(true);
+      }}
       onUpdateFairPrice={(ticker, fairPrice) => {
         const cleanSym = ticker.toUpperCase().trim();
         setStocks(prev => {
@@ -2487,17 +2525,45 @@ export default function App() {
           if (cp > 0) {
             difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
           }
-          let buySell = 'OVERVALUED';
+          const buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
+          const updated = [...prev];
+          updated[existingIndex] = {
+            ...original,
+            fairPrice,
+            difference,
+            buySell
+          };
+          return updated;
+        });
+        setActiveAlertToast(`Справедливата цена на ${cleanSym} ($${fairPrice.toFixed(2)}) беше запазена в таблицата!`);
+        setTimeout(() => setActiveAlertToast(null), 4000);
+      }}
+    />
+  )}
+
+  {/* Fair Value Calculator Modal */}
+  {currentUser && (
+    <FairValueCalculatorModal
+      isOpen={showFairValueModal}
+      onClose={() => { setShowFairValueModal(false); clearHashUrl(); }}
+      stocks={stocks}
+      currentUser={currentUser}
+      onSwitchToDcfModel={() => {
+        setShowFairValueModal(false);
+        setShowDcfModal(true);
+      }}
+      onUpdateFairPrice={(ticker, fairPrice) => {
+        const cleanSym = ticker.toUpperCase().trim();
+        setStocks(prev => {
+          const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
+          if (existingIndex < 0) return prev;
+          const original = prev[existingIndex];
+          const cp = original.currentPrice;
+          let difference: number | null = null;
           if (cp > 0) {
-            const dev = ((cp - fairPrice) / fairPrice) * 100;
-            if (dev < -buyThreshold) {
-              buySell = 'UNDERVALUED';
-            } else if (dev > sellThreshold) {
-              buySell = 'OVERVALUED';
-            } else {
-              buySell = 'ДРУГИ';
-            }
+            difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
           }
+          const buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
           const updated = [...prev];
           updated[existingIndex] = {
             ...original,
