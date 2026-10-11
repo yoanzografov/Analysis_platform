@@ -114,6 +114,7 @@ export default function App() {
   const [showFairValueModal, setShowFairValueModal] = useState(false);
   const [showDcfModal, setShowDcfModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [checklistSelectedStock, setChecklistSelectedStock] = useState<Stock | null>(null);
   const [showFinancialFlagsModal, setShowFinancialFlagsModal] = useState(false);
   const [showLogoModal, setShowLogoModal] = useState(false);
 
@@ -198,7 +199,10 @@ export default function App() {
     }
 
     const handleHashChange = () => {
-      const hash = window.location.hash.toLowerCase().replace('#', '');
+      const rawHash = window.location.hash.toLowerCase().replace('#', '');
+      const hash = rawHash.split('?')[0];
+      const params = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search);
+      const tickerParam = params.get('ticker')?.toUpperCase();
       const user = currentUser;
 
       if (hash === 'dcf' || hash === 'dcf-calculator') {
@@ -241,6 +245,12 @@ export default function App() {
           handleRequireAuth('Stock Analysis Check List');
           clearHashUrl();
           return;
+        }
+        if (tickerParam) {
+          const found = stocks.find(s => s.ticker.toUpperCase() === tickerParam);
+          setChecklistSelectedStock(found || ({ ticker: tickerParam, companyName: tickerParam, currentPrice: 100 } as Stock));
+        } else {
+          setChecklistSelectedStock(null);
         }
         setShowChecklistModal(true);
       } else if (hash === 'flags' || hash === 'financial-flags') {
@@ -2457,7 +2467,12 @@ export default function App() {
   {currentUser && (
     <StockChecklistModal
       isOpen={showChecklistModal}
-      onClose={() => { setShowChecklistModal(false); clearHashUrl(); }}
+      onClose={() => {
+        setShowChecklistModal(false);
+        setChecklistSelectedStock(null);
+        clearHashUrl();
+      }}
+      stock={checklistSelectedStock}
       stocks={stocks}
       baseCurrency={baseCurrency}
       onSaveToTable={(stockData) => {

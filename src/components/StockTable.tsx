@@ -712,6 +712,7 @@ export default function StockTable({
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
 
+  {/* Check List Button */}
   <button
     onClick={(e) => {
       e.preventDefault();
@@ -719,14 +720,23 @@ export default function StockTable({
         onRequireAuth?.('Stock Analysis Check List');
         return;
       }
-      setChecklistModalStock(null);
-      setIsChecklistOpen(true);
+      try {
+        const opened = window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
+        if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+          setChecklistModalStock(null);
+          setIsChecklistOpen(true);
+        }
+      } catch (err) {
+        setChecklistModalStock(null);
+        setIsChecklistOpen(true);
+      }
     }}
-    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
-    title={currentUser ? "Отвори Check List за анализ на акции" : "Check List (Изисква регистрация)"}
+    className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+    title={currentUser ? "Отвори Check List за анализ на акции в нов прозорец" : "Check List (Изисква регистрация)"}
   >
     <CheckSquare className="w-3.5 h-3.5" />
     <span>Check List</span>
+    <ExternalLink className="w-3 h-3 opacity-70" />
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
 
@@ -1053,8 +1063,16 @@ export default function StockTable({
                     onRequireAuth?.('Stock Valuation Checklist');
                     return;
                   }
-                  setChecklistModalStock(stock);
-                  setIsChecklistOpen(true);
+                  try {
+                    const opened = window.open(`${window.location.origin}${window.location.pathname}#checklist?ticker=${encodeURIComponent(stock.ticker)}`, '_blank');
+                    if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+                      setChecklistModalStock(stock);
+                      setIsChecklistOpen(true);
+                    }
+                  } catch (err) {
+                    setChecklistModalStock(stock);
+                    setIsChecklistOpen(true);
+                  }
                 }}
                 className={`w-5 h-5 rounded-full font-black text-[10px] leading-none transition-all flex items-center justify-center cursor-pointer ${
                   hasSaved
@@ -1064,8 +1082,8 @@ export default function StockTable({
                 title={
                   currentUser
                     ? (hasSaved
-                        ? `Checklist (C) - Отвори попълнен Checklist за ${stock.ticker}`
-                        : `Checklist (C) - Отвори Stock Valuation Checklist за ${stock.ticker}`)
+                        ? `Checklist (C) - Отвори попълнен Checklist за ${stock.ticker} в нов прозорец`
+                        : `Checklist (C) - Отвори Stock Valuation Checklist за ${stock.ticker} в нов прозорец`)
                     : `Checklist (C) (Изисква регистрация)`
                 }
               >
