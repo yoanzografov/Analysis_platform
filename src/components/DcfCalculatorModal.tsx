@@ -56,7 +56,8 @@ export default function DcfCalculatorModal({
   const [recalcFeedback, setRecalcFeedback] = useState<string | null>(null);
   const [flashHeroHighlight, setFlashHeroHighlight] = useState(false);
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
-  const [hoveredYear, setHoveredYear] = useState<number | null>(null);
+  const [hoveredYearIndex, setHoveredYearIndex] = useState<number | null>(null);
+  const chartSvgRef = useRef<SVGSVGElement>(null);
 
   const markInputChange = () => {
     setHasChanged(true);
@@ -252,6 +253,25 @@ export default function DcfCalculatorModal({
       sensitivityGrid
     };
   }, [price, fcfPerShare, growthRate, growthRateLate, terminalGrowth, discountRate, marginOfSafety]);
+
+  // Helper to handle mouse move over SVG chart to track nearest year
+  const handleChartMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!chartSvgRef.current) return;
+    const rect = chartSvgRef.current.getBoundingClientRect();
+    const clientX = e.clientX - rect.left;
+    const padLeft = 60;
+    const padRight = 30;
+    const plotWidth = rect.width * ((760 - padLeft - padRight) / 760);
+    const plotLeft = rect.width * (padLeft / 760);
+    const relX = clientX - plotLeft;
+    const numPts = dcf.yearlyCashFlows.length;
+    if (relX >= 0 && relX <= plotWidth && numPts > 0) {
+      const idx = Math.min(numPts - 1, Math.max(0, Math.floor((relX / plotWidth) * numPts)));
+      setHoveredYearIndex(idx);
+    } else {
+      setHoveredYearIndex(null);
+    }
+  };
 
   // Stepper handlers
   const stepPrice = (delta: number) => {
@@ -992,56 +1012,208 @@ export default function DcfCalculatorModal({
                     </div>
                   </div>
 
-                  {/* SVG Bar Chart */}
-                  <div className="h-56 sm:h-64 w-full pt-4">
-                    <div className="h-full w-full flex items-end justify-between gap-1 sm:gap-2 px-2 border-b border-stone-800">
-                      {dcf.yearlyCashFlows.map((cf, idx) => {
-                        const projHeight = Math.max(10, (cf.projectedFcf / maxChartFcf) * 85);
-                        const pvHeight = Math.max(8, (cf.pv / maxChartFcf) * 85);
-                        const isHovered = hoveredYear === cf.year;
+                  {/* High-Fidelity Interactive SVG Bar Chart (1:1 with StockAnalysis) */}
+                  <div className="w-full h-72 sm:h-80 relative select-none">
+                    {(() => {
+                      const pts = dcf.yearlyCashFlows;
+                      const numPts = pts.length;
+                      const maxFcfRaw = Math.max(...pts.map(p => Math.max(p.projectedFcf, p.pv)), 1);
+                      const maxY = maxFcfRaw * 1.18;
 
-                        return (
-                          <div
-                            key={cf.year}
-                            onMouseEnter={() => setHoveredYear(cf.year)}
-                            onMouseLeave={() => setHoveredYear(null)}
-                            className="flex-1 flex flex-col items-center h-full justify-end group relative cursor-pointer"
-                          >
-                            {/* Hover Tooltip */}
-                            {isHovered && (
-                              <div className="absolute -top-12 z-50 bg-stone-900 border border-stone-700 rounded-lg p-1.5 text-[10px] whitespace-nowrap shadow-xl pointer-events-none">
-                                <div className="font-bold text-white mb-0.5">Година {cf.year}</div>
-                                <div className="text-blue-300">FCF: ${cf.projectedFcf.toFixed(2)}</div>
-                                <div className="text-emerald-300">Днешна ст-ст: ${cf.pv.toFixed(2)}</div>
-                              </div>
-                            )}
+                      const padLeft = 60;
+                      const padRight = 30;
+                      const padTop = 25;
+                      const padBottom = 45;
+                      const plotWidth = 760 - padLeft - padRight; // 670
+                      const plotHeight = 300 - padTop - padBottom; // 230
 
-                            {/* Side-by-side bars */}
-                            <div className="w-full flex items-end justify-center gap-0.5 sm:gap-1">
-                              {/* Projected FCF Bar */}
-                              <div
-                                style={{ height: `${projHeight}%` }}
-                                className={`w-1/2 rounded-t-xs transition-all ${
-                                  isHovered ? 'bg-blue-400 shadow-sm shadow-blue-500/50' : 'bg-blue-500/80 hover:bg-blue-400'
-                                }`}
-                              />
-                              {/* Discounted FCF Bar */}
-                              <div
-                                style={{ height: `${pvHeight}%` }}
-                                className={`w-1/2 rounded-t-xs transition-all ${
-                                  isHovered ? 'bg-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-emerald-500/80 hover:bg-emerald-400'
-                                }`}
-                              />
-                            </div>
+                      const getSlotX = (idx: number) => padLeft + (idx / numPts) * plotWidth;
+                      const getSlotCenterX = (idx: number) => padLeft + ((idx + 0.5) / numPts) * plotWidth;
+                      const slotWidth = plotWidth / numPts;
+                      const barWidth = Math.min(22, Math.max(12, slotWidth * 0.36));
+                      const barGap = 4;
 
-                            {/* X-axis label */}
-                            <span className="text-[10px] text-stone-500 group-hover:text-stone-300 mt-2 font-medium">
-                              Y{cf.year}
+                      const getY = (val: number) => padTop + plotHeight - (Math.max(0, val) / maxY) * plotHeight;
+
+                      // 5 Y-ticks (0%, 25%, 50%, 75%, 100%)
+                      const yTicks = [0, 0.25, 0.5, 0.75, 1.0];
+
+                      return (
+                        <svg
+                          ref={chartSvgRef}
+                          viewBox="0 0 760 300"
+                          className="w-full h-full overflow-visible"
+                          onMouseMove={handleChartMouseMove}
+                          onMouseLeave={() => setHoveredYearIndex(null)}
+                        >
+                          {/* Horizontal grid lines & Y-axis labels */}
+                          {yTicks.map((ratio, idx) => {
+                            const yPos = padTop + plotHeight * (1 - ratio);
+                            const tickVal = maxY * ratio;
+                            return (
+                              <g key={idx}>
+                                <line
+                                  x1={padLeft}
+                                  y1={yPos}
+                                  x2={padLeft + plotWidth}
+                                  y2={yPos}
+                                  stroke="currentColor"
+                                  className="text-stone-800"
+                                  strokeDasharray="4 4"
+                                />
+                                <text
+                                  x={padLeft - 10}
+                                  y={yPos + 4}
+                                  textAnchor="end"
+                                  className="text-[11px] font-mono font-medium fill-stone-400"
+                                >
+                                  ${tickVal.toFixed(2)}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {/* Hover Background Column Band */}
+                          {hoveredYearIndex !== null && (
+                            <rect
+                              x={getSlotX(hoveredYearIndex) + 2}
+                              y={padTop}
+                              width={slotWidth - 4}
+                              height={plotHeight}
+                              fill="rgba(59, 130, 246, 0.08)"
+                              rx="6"
+                            />
+                          )}
+
+                          {/* Dual Column Bars for each Year */}
+                          {pts.map((p, idx) => {
+                            const cx = getSlotCenterX(idx);
+                            const isHovered = hoveredYearIndex === idx;
+
+                            // Bar 1: Projected FCF (Blue)
+                            const projBarX = cx - barWidth - barGap / 2;
+                            const projBarY = getY(p.projectedFcf);
+                            const projBarHeight = Math.max(3, (padTop + plotHeight) - projBarY);
+
+                            // Bar 2: Discounted FCF / Present Value (Green)
+                            const pvBarX = cx + barGap / 2;
+                            const pvBarY = getY(p.pv);
+                            const pvBarHeight = Math.max(3, (padTop + plotHeight) - pvBarY);
+
+                            return (
+                              <g key={p.year}>
+                                {/* Projected FCF Bar */}
+                                <rect
+                                  x={projBarX}
+                                  y={projBarY}
+                                  width={barWidth}
+                                  height={projBarHeight}
+                                  rx="3"
+                                  ry="3"
+                                  fill={isHovered ? "#60a5fa" : "#3b82f6"}
+                                  fillOpacity={isHovered ? 1.0 : 0.85}
+                                  className="transition-colors duration-150 cursor-pointer"
+                                />
+
+                                {/* Discounted FCF Bar */}
+                                <rect
+                                  x={pvBarX}
+                                  y={pvBarY}
+                                  width={barWidth}
+                                  height={pvBarHeight}
+                                  rx="3"
+                                  ry="3"
+                                  fill={isHovered ? "#34d399" : "#10b981"}
+                                  fillOpacity={isHovered ? 1.0 : 0.85}
+                                  className="transition-colors duration-150 cursor-pointer"
+                                />
+
+                                {/* Projected FCF Value on top of bar on hover */}
+                                {isHovered && (
+                                  <text
+                                    x={projBarX + barWidth / 2}
+                                    y={projBarY - 6}
+                                    textAnchor="middle"
+                                    fill="#93c5fa"
+                                    className="text-[10px] font-mono font-bold"
+                                  >
+                                    ${p.projectedFcf.toFixed(1)}
+                                  </text>
+                                )}
+
+                                {/* Discounted FCF Value on top of bar on hover */}
+                                {isHovered && (
+                                  <text
+                                    x={pvBarX + barWidth / 2}
+                                    y={pvBarY - 6}
+                                    textAnchor="middle"
+                                    fill="#6ee7b7"
+                                    className="text-[10px] font-mono font-bold"
+                                  >
+                                    ${p.pv.toFixed(1)}
+                                  </text>
+                                )}
+
+                                {/* X-axis Label */}
+                                <text
+                                  x={cx}
+                                  y={padTop + plotHeight + 24}
+                                  textAnchor="middle"
+                                  className={`text-[11px] font-mono transition-colors ${
+                                    isHovered ? 'fill-blue-400 font-bold' : 'fill-stone-400 font-medium'
+                                  }`}
+                                >
+                                  Y{p.year}
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </svg>
+                      );
+                    })()}
+
+                    {/* StockAnalysis Style Interactive Floating Tooltip */}
+                    {hoveredYearIndex !== null && (() => {
+                      const item = dcf.yearlyCashFlows[hoveredYearIndex];
+                      if (!item) return null;
+                      const discountFactorPct = item.projectedFcf > 0 ? (item.pv / item.projectedFcf) * 100 : 0;
+                      const cumulativePv = dcf.yearlyCashFlows
+                        .slice(0, hoveredYearIndex + 1)
+                        .reduce((sum, c) => sum + c.pv, 0);
+
+                      return (
+                        <div className="absolute top-2 right-4 bg-stone-900/95 backdrop-blur-md border border-stone-700 shadow-2xl rounded-xl p-3 text-xs space-y-1.5 pointer-events-none min-w-[220px] animate-in fade-in duration-100 z-10 border-blue-500/40">
+                          <div className="font-bold text-white border-b border-stone-800 pb-1.5 flex justify-between items-center">
+                            <span>Година {item.year}</span>
+                            <span className="text-[10px] text-blue-400 font-mono font-bold">
+                              +{item.growthRatePct.toFixed(1)}% ръст
                             </span>
                           </div>
-                        );
-                      })}
-                    </div>
+                          <div className="flex items-center justify-between text-blue-400 font-mono">
+                            <span className="font-semibold text-stone-300 flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded-xs bg-blue-500 inline-block" />
+                              Прогнозиран FCF:
+                            </span>
+                            <span className="font-bold text-white">${item.projectedFcf.toFixed(2)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-emerald-400 font-mono">
+                            <span className="font-semibold text-stone-300 flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500 inline-block" />
+                              Дисконтиран (Днес):
+                            </span>
+                            <span className="font-bold text-white">${item.pv.toFixed(2)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-stone-400 font-mono text-[11px] pt-1 border-t border-stone-800/80">
+                            <span>Дисконтов коефициент:</span>
+                            <span className="text-stone-300 font-bold">{discountFactorPct.toFixed(1)}%</span>
+                          </div>
+                          <div className="flex items-center justify-between text-stone-400 font-mono text-[11px]">
+                            <span>Натрупване до Год. {item.year}:</span>
+                            <span className="text-emerald-300 font-bold">${cumulativePv.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
