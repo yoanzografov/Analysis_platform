@@ -49,10 +49,20 @@ export default function DcfCalculatorModal({
   const [discountRate, setDiscountRate] = useState<number>(9.0); // Discount rate / WACC
   const [marginOfSafety, setMarginOfSafety] = useState<number>(0.0); // Margin of safety %
 
-  // Changes state & feedback
+  // Changes state & feedback (matching FairValueCalculatorModal)
   const [hasChanged, setHasChanged] = useState(false);
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  const [recalcFeedback, setRecalcFeedback] = useState<string | null>(null);
+  const [flashHeroHighlight, setFlashHeroHighlight] = useState(false);
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
   const [hoveredYear, setHoveredYear] = useState<number | null>(null);
+
+  const markInputChange = () => {
+    setHasChanged(true);
+    setHasPendingChanges(true);
+    setRecalcFeedback(null);
+  };
 
   // Sync if initialStock changes
   useEffect(() => {
@@ -99,6 +109,8 @@ export default function DcfCalculatorModal({
     setDiscountRate(9.0);
     setMarginOfSafety(0.0);
     setHasChanged(false);
+    setHasPendingChanges(false);
+    setRecalcFeedback(null);
   };
 
   const handleResetToBenchmark = () => {
@@ -112,6 +124,8 @@ export default function DcfCalculatorModal({
     setDiscountRate(9.0);
     setMarginOfSafety(0.0);
     setHasChanged(false);
+    setHasPendingChanges(false);
+    setRecalcFeedback(null);
   };
 
   // Math Calculations (1:1 with StockAnalysis DCF Calculator Model)
@@ -242,37 +256,57 @@ export default function DcfCalculatorModal({
   // Stepper handlers
   const stepPrice = (delta: number) => {
     setPrice(prev => Math.max(0, parseFloat((prev + delta).toFixed(2))));
-    setHasChanged(true);
+    markInputChange();
   };
 
   const stepFcf = (delta: number) => {
     setFcfPerShare(prev => Math.max(0.01, parseFloat((prev + delta).toFixed(2))));
-    setHasChanged(true);
+    markInputChange();
   };
 
   const stepGrowth1 = (delta: number) => {
     setGrowthRate(prev => Math.min(100, Math.max(-50, parseFloat((prev + delta).toFixed(1)))));
-    setHasChanged(true);
+    markInputChange();
   };
 
   const stepGrowth2 = (delta: number) => {
     setGrowthRateLate(prev => Math.min(100, Math.max(-50, parseFloat((prev + delta).toFixed(1)))));
-    setHasChanged(true);
+    markInputChange();
   };
 
   const stepTerminal = (delta: number) => {
     setTerminalGrowth(prev => Math.min(10, Math.max(-5, parseFloat((prev + delta).toFixed(1)))));
-    setHasChanged(true);
+    markInputChange();
   };
 
   const stepDiscount = (delta: number) => {
     setDiscountRate(prev => Math.min(50, Math.max(1, parseFloat((prev + delta).toFixed(1)))));
-    setHasChanged(true);
+    markInputChange();
   };
 
   const stepMoS = (delta: number) => {
     setMarginOfSafety(prev => Math.min(90, Math.max(0, Math.round(prev + delta))));
-    setHasChanged(true);
+    markInputChange();
+  };
+
+  // Recalculate button handler (matching Fair Value Calculator)
+  const handleRecalculate = () => {
+    setIsRecalculating(true);
+    setHasPendingChanges(false);
+    setFlashHeroHighlight(true);
+    setRecalcFeedback(`Преизчислено: Fair Value $${dcf.finalFairValue.toFixed(2)}`);
+
+    setTimeout(() => {
+      setIsRecalculating(false);
+    }, 350);
+
+    setTimeout(() => {
+      setFlashHeroHighlight(false);
+    }, 1200);
+
+    setTimeout(() => {
+      setRecalcFeedback(null);
+    }, 4500);
   };
 
   // Save to stock table handler
@@ -459,7 +493,7 @@ export default function DcfCalculatorModal({
                     value={price}
                     onChange={(e) => {
                       setPrice(parseFloat(e.target.value) || 0);
-                      setHasChanged(true);
+                      markInputChange();
                     }}
                     className="w-full bg-stone-900 border border-stone-800 rounded-lg pl-6 pr-2 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
                   />
@@ -497,7 +531,7 @@ export default function DcfCalculatorModal({
                     value={fcfPerShare}
                     onChange={(e) => {
                       setFcfPerShare(parseFloat(e.target.value) || 0);
-                      setHasChanged(true);
+                      markInputChange();
                     }}
                     className="w-full bg-stone-900 border border-stone-800 rounded-lg pl-6 pr-2 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
                   />
@@ -535,7 +569,7 @@ export default function DcfCalculatorModal({
                     value={growthRate}
                     onChange={(e) => {
                       setGrowthRate(parseFloat(e.target.value) || 0);
-                      setHasChanged(true);
+                      markInputChange();
                     }}
                     className="w-full bg-stone-900 border border-stone-800 rounded-lg pl-3 pr-6 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
                   />
@@ -574,7 +608,7 @@ export default function DcfCalculatorModal({
                     value={growthRateLate}
                     onChange={(e) => {
                       setGrowthRateLate(parseFloat(e.target.value) || 0);
-                      setHasChanged(true);
+                      markInputChange();
                     }}
                     className="w-full bg-stone-900 border border-stone-800 rounded-lg pl-3 pr-6 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
                   />
@@ -613,7 +647,7 @@ export default function DcfCalculatorModal({
                     value={terminalGrowth}
                     onChange={(e) => {
                       setTerminalGrowth(parseFloat(e.target.value) || 0);
-                      setHasChanged(true);
+                      markInputChange();
                     }}
                     className="w-full bg-stone-900 border border-stone-800 rounded-lg pl-3 pr-6 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
                   />
@@ -652,7 +686,7 @@ export default function DcfCalculatorModal({
                     value={discountRate}
                     onChange={(e) => {
                       setDiscountRate(parseFloat(e.target.value) || 0);
-                      setHasChanged(true);
+                      markInputChange();
                     }}
                     className="w-full bg-stone-900 border border-stone-800 rounded-lg pl-3 pr-6 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
                   />
@@ -691,7 +725,7 @@ export default function DcfCalculatorModal({
                     value={marginOfSafety}
                     onChange={(e) => {
                       setMarginOfSafety(parseFloat(e.target.value) || 0);
-                      setHasChanged(true);
+                      markInputChange();
                     }}
                     className="w-full bg-stone-900 border border-stone-800 rounded-lg pl-3 pr-6 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
                   />
@@ -722,6 +756,56 @@ export default function DcfCalculatorModal({
                 </span>
               </div>
             )}
+
+            {/* ACTION BUTTONS: Recalculate + Save (Matching Fair Value Calculator) */}
+            <div className="pt-3 space-y-2 border-t border-stone-800/80">
+              {/* 1. БУТОН ПРЕИЗЧИСЛИ (Recalculate Button) */}
+              <button
+                type="button"
+                onClick={handleRecalculate}
+                className={`w-full py-2.5 px-3 font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-[0.98] ${
+                  hasPendingChanges
+                    ? 'bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-amber-500/30 ring-2 ring-amber-400/80 animate-pulse'
+                    : 'bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-500/40 hover:border-blue-500'
+                }`}
+                title="Преизчисли всички резултати и дисконтираните парични потоци с новите входни данни"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRecalculating ? 'animate-spin' : ''}`} />
+                <span>Преизчисли</span>
+                {hasPendingChanges && (
+                  <span className="px-1.5 py-0.5 text-[9px] bg-stone-950 text-amber-300 rounded font-black tracking-normal">
+                    Нови данни
+                  </span>
+                )}
+              </button>
+
+              {recalcFeedback && (
+                <div className="text-[11px] text-emerald-400 font-bold text-center py-1.5 bg-emerald-500/10 rounded-lg border border-emerald-500/20 animate-in fade-in">
+                  ✓ {recalcFeedback}
+                </div>
+              )}
+
+              {/* 2. БУТОН ЗАПАЗИ ЗА КОМПАНИЯТА (Save Button) */}
+              {onUpdateFairPrice && selectedStock && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleSaveToTable}
+                    className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                    title={`Запази DCF Fair Value от $${dcf.finalFairValue.toFixed(2)} за ${selectedStock.ticker} в Интерактивната Таблица`}
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Запази за {selectedStock.ticker} (${dcf.finalFairValue.toFixed(2)})</span>
+                  </button>
+                </div>
+              )}
+
+              {!selectedStock && (
+                <p className="text-[10px] text-stone-500 text-center leading-tight pt-1">
+                  💡 Изберете компания от търсачката по-горе, за да запазите оценката в таблицата.
+                </p>
+              )}
+            </div>
           </div>
 
           {/* RIGHT COLUMN: Results, Hero Card, Chart & Sensitivity Matrix */}
@@ -752,7 +836,11 @@ export default function DcfCalculatorModal({
             </div>
 
             {/* HERO VALUATION CARD */}
-            <div className="bg-stone-950/80 border border-stone-800 rounded-xl p-4 sm:p-5 flex flex-col gap-4">
+            <div className={`bg-stone-950/80 border rounded-xl p-4 sm:p-5 flex flex-col gap-4 transition-all duration-300 ${
+              flashHeroHighlight
+                ? 'border-blue-500 ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/20 bg-blue-950/20'
+                : 'border-stone-800'
+            }`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="text-xs text-stone-400 font-medium">
