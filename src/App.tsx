@@ -108,6 +108,7 @@ export default function App() {
 
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
  const [isCsvUploaderOpen, setIsCsvUploaderOpen] = useState(false);
+ const [isSidebarToolsOpen, setIsSidebarToolsOpen] = useState(false);
   const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
   const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
   const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
@@ -2167,130 +2168,144 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Quick Tools & Models Card (StockAnalysis Style - desktop only) */}
-        <div className="hidden lg:flex flex-col bg-card border border-border rounded-2xl p-3 sm:p-3.5 shadow-xs space-y-2">
-          <div className="px-2 py-1 flex items-center justify-between border-b border-border/50 text-[11px] font-black uppercase tracking-wider text-ink-muted">
-            <span className="flex items-center gap-1.5">
-              <Calculator className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Калкулатори & Модели</span>
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-1 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => {
-                if (!currentUser) {
-                  handleRequireAuth('DCF Calculator');
-                  return;
-                }
-                window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
-              }}
-              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-              title="Отвори DCF Calculator (Discounted Cash Flow) в нов прозорец"
-            >
-              <span className="flex items-center gap-2">
-                <Calculator className="w-3.5 h-3.5 text-blue-400" />
-                <span>DCF Calculator</span>
+        {/* Tools Dropdown Menu (StockAnalysis Style - desktop only) */}
+        <div className="hidden lg:flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+          <button
+            type="button"
+            onClick={() => setIsSidebarToolsOpen(!isSidebarToolsOpen)}
+            className="w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink hover:bg-card-hover group select-none"
+            title="Отвори / затвори падащо меню Tools"
+          >
+            <div className="flex items-center gap-2">
+              <Wrench className="w-4 h-4 text-emerald-400 group-hover:rotate-45 transition-transform shrink-0" />
+              <span>Tools</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold">
+                6
               </span>
-              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-blue-400 transition-colors" />
-            </button>
+              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSidebarToolsOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+            </div>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (!currentUser) {
-                  handleRequireAuth('Fair Value Calculator');
-                  return;
-                }
-                window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
-              }}
-              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-              title="Отвори Fair Value Calculator в нов прозорец"
-            >
-              <span className="flex items-center gap-2">
-                <Calculator className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Fair Value (P/E)</span>
-              </span>
-              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 transition-colors" />
-            </button>
+          {/* Collapsible Dropdown Content */}
+          {isSidebarToolsOpen && (
+            <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('DCF Calculator');
+                    return;
+                  }
+                  window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
+                }}
+                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                title="Отвори DCF Calculator (Discounted Cash Flow) в нов прозорец"
+              >
+                <span className="flex items-center gap-2">
+                  <Calculator className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>DCF Calculator</span>
+                </span>
+                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-blue-400 transition-colors shrink-0" />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (!currentUser) {
-                  handleRequireAuth('Stock Analysis Check List');
-                  return;
-                }
-                window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
-              }}
-              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-              title="Отвори Stock Analysis Check List в нов прозорец"
-            >
-              <span className="flex items-center gap-2">
-                <CheckSquare className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Stock Check List</span>
-              </span>
-              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors" />
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('Fair Value Calculator');
+                    return;
+                  }
+                  window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
+                }}
+                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                title="Отвори Fair Value Calculator в нов прозорец"
+              >
+                <span className="flex items-center gap-2">
+                  <Calculator className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                  <span>Fair Value (P/E)</span>
+                </span>
+                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 transition-colors shrink-0" />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (!currentUser) {
-                  handleRequireAuth('Stock Profit Calculator');
-                  return;
-                }
-                window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
-              }}
-              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-              title="Отвори Stock Profit Calculator в нов прозорец"
-            >
-              <span className="flex items-center gap-2">
-                <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
-                <span>Profit Calculator</span>
-              </span>
-              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 transition-colors" />
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('Stock Analysis Check List');
+                    return;
+                  }
+                  window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
+                }}
+                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                title="Отвори Stock Analysis Check List в нов прозорец"
+              >
+                <span className="flex items-center gap-2">
+                  <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>Stock Check List</span>
+                </span>
+                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors shrink-0" />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (!currentUser) {
-                  handleRequireAuth('Return on Investment (ROI)');
-                  return;
-                }
-                window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
-              }}
-              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-              title="Отвори ROI Calculator в нов прозорец"
-            >
-              <span className="flex items-center gap-2">
-                <Calculator className="w-3.5 h-3.5 text-emerald-400" />
-                <span>ROI Calculator</span>
-              </span>
-              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 transition-colors" />
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('Stock Profit Calculator');
+                    return;
+                  }
+                  window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
+                }}
+                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                title="Отвори Stock Profit Calculator в нов прозорец"
+              >
+                <span className="flex items-center gap-2">
+                  <TrendingUp className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>Profit Calculator</span>
+                </span>
+                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 transition-colors shrink-0" />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (!currentUser) {
-                  handleRequireAuth('Сложна Лихва & Растеж');
-                  return;
-                }
-                window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
-              }}
-              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-              title="Отвори Сложна Лихва & Растеж в нов прозорец"
-            >
-              <span className="flex items-center gap-2">
-                <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
-                <span>Сложна Лихва</span>
-              </span>
-              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-purple-400 transition-colors" />
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('Return on Investment (ROI)');
+                    return;
+                  }
+                  window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
+                }}
+                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                title="Отвори ROI Calculator в нов прозорец"
+              >
+                <span className="flex items-center gap-2">
+                  <Calculator className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>ROI Calculator</span>
+                </span>
+                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 transition-colors shrink-0" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) {
+                    handleRequireAuth('Сложна Лихва & Растеж');
+                    return;
+                  }
+                  window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
+                }}
+                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                title="Отвори Сложна Лихва & Растеж в нов прозорец"
+              >
+                <span className="flex items-center gap-2">
+                  <TrendingUp className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                  <span>Сложна Лихва</span>
+                </span>
+                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-purple-400 transition-colors shrink-0" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Market Status Quick Glance Card (StockAnalysis Style - desktop only) */}
