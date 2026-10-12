@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Percent, X, ExternalLink, RefreshCw } from 'lucide-react';
+import { Percent, X, ExternalLink, RefreshCw, ChevronDown } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -12,6 +12,8 @@ type CalcTab = 'pctdifference' | 'pctincrease';
 
 export default function PercentCalculatorModal({ isOpen, onClose, initialV1, initialV2 }: Props) {
   const [activeTab, setActiveTab] = useState<CalcTab>('pctdifference');
+  const [showDiffSteps, setShowDiffSteps] = useState<boolean>(false);
+  const [showChangeSteps, setShowChangeSteps] = useState<boolean>(false);
 
   // ==============================================================
   // 1. Percentage Difference Calculator (#pctdifference)
@@ -44,6 +46,7 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
     setC3par1('');
     setC3par2('');
     setDiffCalculated(false);
+    setShowDiffSteps(false);
   };
 
   const handleResetDiff = () => {
@@ -162,6 +165,7 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
     setC2par3('');
     setChangeCalculated(false);
     setChangeResult(null);
+    setShowChangeSteps(false);
   };
 
   if (!isOpen) return null;
@@ -300,89 +304,95 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
 
               {/* Results for Percentage Difference */}
               {diffCalculated && isValidDiff && (
-                <div className="space-y-4 pt-1">
+                <div className="space-y-3 pt-1">
                   {/* Green Result Header */}
                   <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-lg sm:text-xl">
                     Result: {formatNum(pctDiffVal)}%
                   </div>
 
-                  {/* Statement 1: Symmetric Percentage Difference */}
-                  <div className="space-y-2">
+                  {/* Clean Summary Statements */}
+                  <div className="p-3.5 rounded-xl bg-card border border-border/80 space-y-2">
                     <p className="text-base text-ink">
                       Difference of <b>{c3par1}</b> and <b>{c3par2}</b> are{' '}
                       <span className="text-emerald-500 dark:text-emerald-400 font-bold">
                         {formatNum(pctDiffVal)}%
                       </span>
                     </p>
-
-                    <div className="p-3 rounded-xl bg-card border border-border text-xs sm:text-sm font-sans space-y-2">
-                      <div className="font-bold text-ink-muted">Steps:</div>
-                      <div className="overflow-x-auto font-mono text-xs sm:text-sm py-1 space-y-2 text-ink-muted">
-                        <div className="flex items-center gap-2">
-                          <span>Difference of {c3par1} and {c3par2} =</span>
-                          <div className="inline-flex flex-col items-center leading-none text-ink">
-                            <span className="border-b border-ink/40 pb-1 px-2">|{c3par1} - {c3par2}|</span>
-                            <span className="pt-1 text-[11px]">({c3par1} + {c3par2}) / 2</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 pl-4">
-                          <span>=</span>
-                          <div className="inline-flex flex-col items-center leading-none text-ink">
-                            <span className="border-b border-ink/40 pb-1 px-2">{absDiff}</span>
-                            <span className="pt-1">{avgDiff}</span>
-                          </div>
-                        </div>
-
-                        <div className="pl-4 text-ink">
-                          = {formatNum(pctDiffDec)}
-                        </div>
-
-                        <div className="pl-4 font-bold text-emerald-500 dark:text-emerald-400">
-                          = {formatNum(pctDiffVal)}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Statement 2: Directional Increase / Decrease */}
-                  <div className="space-y-2 pt-2 border-t border-border/50">
-                    <p className="text-base text-ink">
+                    <p className="text-base text-ink pt-1.5 border-t border-border/50">
                       <b>{c3par2}</b> is a{' '}
                       <span className="text-emerald-500 dark:text-emerald-400 font-bold">
                         {formatNum(pctChangeVal)}%
                       </span>{' '}
                       {isDecrease ? 'decrease' : isIncrease ? 'increase' : 'change'} of <b>{c3par1}</b>.
                     </p>
+                  </div>
 
-                    <div className="p-3 rounded-xl bg-card border border-border text-xs sm:text-sm font-sans space-y-2">
-                      <div className="font-bold text-ink-muted">Steps:</div>
-                      <div className="overflow-x-auto font-mono text-xs sm:text-sm py-1 space-y-2 text-ink-muted">
-                        <div className="flex items-center gap-2">
-                          <span>Percentage of {isDecrease ? 'decrease' : isIncrease ? 'increase' : 'change'} =</span>
-                          <div className="inline-flex flex-col items-center leading-none text-ink">
-                            <span className="border-b border-ink/40 pb-1 px-2">|{c3par1} - {c3par2}|</span>
-                            <span className="pt-1">{c3par1}</span>
+                  {/* Collapsible Dropdown for Steps & Formulas at the bottom */}
+                  <div className="border border-border/80 rounded-xl overflow-hidden bg-card/50">
+                    <button
+                      type="button"
+                      onClick={() => setShowDiffSteps(!showDiffSteps)}
+                      className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-bold text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer select-none"
+                    >
+                      <span>Show Steps &amp; Formulas</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showDiffSteps ? 'rotate-180 text-emerald-400' : ''}`} />
+                    </button>
+
+                    {showDiffSteps && (
+                      <div className="p-4 border-t border-border/60 space-y-4 bg-card text-xs sm:text-sm animate-in fade-in duration-150">
+                        {/* Step 1 */}
+                        <div className="space-y-1.5">
+                          <div className="font-bold text-ink-muted">1. Percentage Difference Steps:</div>
+                          <div className="overflow-x-auto font-mono text-xs py-1 space-y-2 text-ink-muted">
+                            <div className="flex items-center gap-2">
+                              <span>Difference of {c3par1} and {c3par2} =</span>
+                              <div className="inline-flex flex-col items-center leading-none text-ink">
+                                <span className="border-b border-ink/40 pb-1 px-2">|{c3par1} - {c3par2}|</span>
+                                <span className="pt-1 text-[11px]">({c3par1} + {c3par2}) / 2</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 pl-4">
+                              <span>=</span>
+                              <div className="inline-flex flex-col items-center leading-none text-ink">
+                                <span className="border-b border-ink/40 pb-1 px-2">{absDiff}</span>
+                                <span className="pt-1">{avgDiff}</span>
+                              </div>
+                            </div>
+                            <div className="pl-4 text-ink">= {formatNum(pctDiffDec)}</div>
+                            <div className="pl-4 font-bold text-emerald-500 dark:text-emerald-400">
+                              = {formatNum(pctDiffVal)}%
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 pl-4">
-                          <span>=</span>
-                          <div className="inline-flex flex-col items-center leading-none text-ink">
-                            <span className="border-b border-ink/40 pb-1 px-2">{absDiff}</span>
-                            <span className="pt-1">{c3par1}</span>
+                        {/* Step 2 */}
+                        <div className="space-y-1.5 pt-3 border-t border-border/50">
+                          <div className="font-bold text-ink-muted">
+                            2. Percentage {isDecrease ? 'Decrease' : isIncrease ? 'Increase' : 'Change'} Steps:
                           </div>
-                        </div>
-
-                        <div className="pl-4 text-ink">
-                          = {formatNum(pctChangeDec)}
-                        </div>
-
-                        <div className="pl-4 font-bold text-emerald-500 dark:text-emerald-400">
-                          = {formatNum(pctChangeVal)}%
+                          <div className="overflow-x-auto font-mono text-xs py-1 space-y-2 text-ink-muted">
+                            <div className="flex items-center gap-2">
+                              <span>Percentage of {isDecrease ? 'decrease' : isIncrease ? 'increase' : 'change'} =</span>
+                              <div className="inline-flex flex-col items-center leading-none text-ink">
+                                <span className="border-b border-ink/40 pb-1 px-2">|{c3par1} - {c3par2}|</span>
+                                <span className="pt-1">{c3par1}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 pl-4">
+                              <span>=</span>
+                              <div className="inline-flex flex-col items-center leading-none text-ink">
+                                <span className="border-b border-ink/40 pb-1 px-2">{absDiff}</span>
+                                <span className="pt-1">{c3par1}</span>
+                              </div>
+                            </div>
+                            <div className="pl-4 text-ink">= {formatNum(pctChangeDec)}</div>
+                            <div className="pl-4 font-bold text-emerald-500 dark:text-emerald-400">
+                              = {formatNum(pctChangeVal)}%
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -464,21 +474,37 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
                     Result: {changeResult.resultBanner}
                   </div>
 
-                  <p className="text-base text-ink">
-                    {changeResult.statementMain}
-                    <span className="text-emerald-500 dark:text-emerald-400 font-bold">
-                      {changeResult.highlightVal}
-                    </span>
-                    {changeResult.statementSuffix}
-                  </p>
+                  <div className="p-3.5 rounded-xl bg-card border border-border/80">
+                    <p className="text-base text-ink">
+                      {changeResult.statementMain}
+                      <span className="text-emerald-500 dark:text-emerald-400 font-bold">
+                        {changeResult.highlightVal}
+                      </span>
+                      {changeResult.statementSuffix}
+                    </p>
+                  </div>
 
-                  <div className="p-3 rounded-xl bg-card border border-border text-xs sm:text-sm font-sans space-y-1.5">
-                    <div className="font-bold text-ink-muted">Steps:</div>
-                    <div className="font-mono text-xs sm:text-sm space-y-1 text-ink">
-                      {changeResult.stepsLines.map((line, idx) => (
-                        <div key={idx}>{line}</div>
-                      ))}
-                    </div>
+                  {/* Collapsible Dropdown for Steps & Formulas at the bottom */}
+                  <div className="border border-border/80 rounded-xl overflow-hidden bg-card/50">
+                    <button
+                      type="button"
+                      onClick={() => setShowChangeSteps(!showChangeSteps)}
+                      className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-bold text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer select-none"
+                    >
+                      <span>Show Steps &amp; Formula</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showChangeSteps ? 'rotate-180 text-emerald-400' : ''}`} />
+                    </button>
+
+                    {showChangeSteps && (
+                      <div className="p-4 border-t border-border/60 space-y-1.5 bg-card animate-in fade-in duration-150">
+                        <div className="font-bold text-ink-muted text-xs">Steps:</div>
+                        <div className="font-mono text-xs sm:text-sm space-y-1 text-ink">
+                          {changeResult.stepsLines.map((line, idx) => (
+                            <div key={idx}>{line}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
