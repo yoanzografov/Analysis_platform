@@ -1871,16 +1871,6 @@ export default function App() {
           )}
         </div>
 
-        {/* 4. Header button for TradingView Economic Calendar Modal */}
-        <button
-          onClick={() => setShowEconomicCalendarModal(true)}
-          className="h-9 px-3.5 rounded-xl border border-border bg-card text-ink-muted hover:text-ink hover:bg-card-hover hover:border-indigo-500/30 font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none"
-          title="Economic Calendar"
-        >
-          <Calendar className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-          <span>Calendar</span>
-        </button>
-
         {/* 6. Tools Dropdown Button */}
         <div ref={usefulLinksMenuRef} className="relative">
           <button
@@ -2168,8 +2158,8 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Tools Dropdown Menu (StockAnalysis Style - desktop only) */}
-        <div className="hidden lg:flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+        {/* Tools Dropdown Menu (StockAnalysis Style) */}
+        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
           <button
             type="button"
             onClick={() => setIsSidebarToolsOpen(!isSidebarToolsOpen)}
@@ -2306,6 +2296,24 @@ export default function App() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Economic Calendar Card (StockAnalysis Style - under Tools) */}
+        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+          <button
+            type="button"
+            onClick={() => setShowEconomicCalendarModal(true)}
+            className="w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink hover:bg-card-hover group select-none"
+            title="Отвори Economic Calendar (TradingView)"
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span>Calendar</span>
+            </div>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold">
+              LIVE
+            </span>
+          </button>
         </div>
 
         {/* Market Status Quick Glance Card (StockAnalysis Style - desktop only) */}
