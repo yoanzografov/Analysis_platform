@@ -33,6 +33,7 @@ import {
   Download, 
   Bell, 
   Briefcase,
+  Newspaper,
   Sparkles,
   ShieldCheck,
   Play, 
@@ -154,20 +155,20 @@ export default function App() {
     }
   };
 
-  const getInitialTab = (): 'table' | 'alerts' | 'portfolio' => {
+  const getInitialTab = (): 'table' | 'alerts' | 'portfolio' | 'news' => {
     const hash = window.location.hash.toLowerCase().replace('#', '');
-    if (hash === 'alerts' || hash === 'portfolio') return hash;
+    if (hash === 'alerts' || hash === 'portfolio' || hash === 'news') return hash;
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab')?.toLowerCase();
-    if (tabParam === 'alerts' || tabParam === 'portfolio') return tabParam;
+    if (tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news') return tabParam;
     return 'table';
   };
 
-  const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio'>(getInitialTab);
-  const activeMainTabRef = useRef<'table' | 'alerts' | 'portfolio'>(activeMainTab);
+  const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio' | 'news'>(getInitialTab);
+  const activeMainTabRef = useRef<'table' | 'alerts' | 'portfolio' | 'news'>(activeMainTab);
   activeMainTabRef.current = activeMainTab;
 
-  const switchTab = (tab: 'table' | 'alerts' | 'portfolio') => {
+  const switchTab = (tab: 'table' | 'alerts' | 'portfolio' | 'news') => {
     setActiveMainTab(tab);
     activeMainTabRef.current = tab;
     const targetHash = tab === 'table' ? '' : `#${tab}`;
@@ -285,6 +286,9 @@ export default function App() {
         } else if (hash === 'portfolio') {
           setActiveMainTab('portfolio');
           activeMainTabRef.current = 'portfolio';
+        } else if (hash === 'news') {
+          setActiveMainTab('news');
+          activeMainTabRef.current = 'news';
         } else if (hash === 'table' || hash === '') {
           setActiveMainTab('table');
           activeMainTabRef.current = 'table';
@@ -1933,6 +1937,31 @@ export default function App() {
                 {positions.length}
               </span>
             </a>
+
+            {/* Tab 4: NEWS */}
+            <a
+              href="#news"
+              onClick={(e) => {
+                e.preventDefault();
+                switchTab('news');
+              }}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                activeMainTab === 'news'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Newspaper className={`w-4 h-4 shrink-0 ${activeMainTab === 'news' ? 'text-white' : 'text-sky-400 group-hover:scale-110 transition-transform'}`} />
+                <span className="truncate">NEWS</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 flex items-center gap-1 ${
+                activeMainTab === 'news' ? 'bg-white/20 text-white' : 'bg-sky-500/20 text-sky-400'
+              }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                LIVE
+              </span>
+            </a>
           </nav>
         </div>
 
@@ -2312,13 +2341,15 @@ export default function App() {
       />
     </div>
 
-    {/* Verified Business & Stock News Feed (Table tab only) */}
-    {activeMainTab === 'table' && (
-      <CompanyNewsContainer
-        stocks={stocks}
-        selectedStock={selectedStockForAi}
-        onSelectStock={setSelectedStockForAi}
-      />
+    {/* Dedicated Business & Stock News Tab (StockAnalysis Style) */}
+    {activeMainTab === 'news' && (
+      <div className="space-y-6 animate-in fade-in zoom-in-95 duration-150">
+        <CompanyNewsContainer
+          stocks={stocks}
+          selectedStock={selectedStockForAi}
+          onSelectStock={setSelectedStockForAi}
+        />
+      </div>
     )}
 
     {/* Real-time Notification Logs monitor at the bottom of Table tab */}
