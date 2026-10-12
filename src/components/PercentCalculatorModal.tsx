@@ -8,12 +8,19 @@ interface Props {
   initialV2?: number;
 }
 
-type CalcTab = 'pctdifference' | 'pctincrease';
+type CalcTab = 'pctdifference' | 'pctincrease' | 'pctcommon';
 
 export default function PercentCalculatorModal({ isOpen, onClose, initialV1, initialV2 }: Props) {
   const [activeTab, setActiveTab] = useState<CalcTab>('pctdifference');
   const [showDiffSteps, setShowDiffSteps] = useState<boolean>(false);
   const [showChangeSteps, setShowChangeSteps] = useState<boolean>(false);
+  const [showCommonSteps, setShowCommonSteps] = useState<boolean>(false);
+
+  function formatNum(val: number, maxDecimals: number = 12): string {
+    if (isNaN(val)) return '0';
+    const s = val.toFixed(maxDecimals);
+    return s.replace(/\.?0+$/, '');
+  }
 
   // ==============================================================
   // 1. Percentage Difference Calculator (#pctdifference)
@@ -80,12 +87,6 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
       '100 × (1 + 15%) = 100 × (1 + 0.15) = 115'
     ]
   });
-
-  function formatNum(val: number, maxDecimals: number = 12): string {
-    if (isNaN(val)) return '0';
-    const s = val.toFixed(maxDecimals);
-    return s.replace(/\.?0+$/, '');
-  }
 
   const handleCalcChange = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -168,12 +169,70 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
     setShowChangeSteps(false);
   };
 
+  // ==============================================================
+  // 3. Percentage Calculator in Common Phrases (#pctcommon)
+  // Phrase 1: what is [ c21par1 ] % of [ c21par2 ] ?
+  // Phrase 2: [ c22par1 ] is what % of [ c22par2 ] ?
+  // Phrase 3: [ c23par1 ] is [ c23par2 ] % of what ?
+  // ==============================================================
+  const [c21par1, setC21par1] = useState<string>('15');
+  const [c21par2, setC21par2] = useState<string>('200');
+  const [res21, setRes21] = useState<string | null>('30');
+
+  const [c22par1, setC22par1] = useState<string>('30');
+  const [c22par2, setC22par2] = useState<string>('120');
+  const [res22, setRes22] = useState<string | null>('25%');
+
+  const [c23par1, setC23par1] = useState<string>('25');
+  const [c23par2, setC23par2] = useState<string>('10');
+  const [res23, setRes23] = useState<string | null>('250');
+
+  const handleCalc21 = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const p = parseFloat(c21par1);
+    const total = parseFloat(c21par2);
+    if (!isNaN(p) && !isNaN(total)) {
+      setRes21(formatNum((p / 100) * total));
+    }
+  };
+
+  const handleCalc22 = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const part = parseFloat(c22par1);
+    const total = parseFloat(c22par2);
+    if (!isNaN(part) && !isNaN(total) && total !== 0) {
+      setRes22(`${formatNum((part / total) * 100)}%`);
+    }
+  };
+
+  const handleCalc23 = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const part = parseFloat(c23par1);
+    const p = parseFloat(c23par2);
+    if (!isNaN(part) && !isNaN(p) && p !== 0) {
+      setRes23(formatNum(part / (p / 100)));
+    }
+  };
+
+  const handleClearCommon = () => {
+    setC21par1('');
+    setC21par2('');
+    setRes21(null);
+    setC22par1('');
+    setC22par2('');
+    setRes22(null);
+    setC23par1('');
+    setC23par2('');
+    setRes23(null);
+    setShowCommonSteps(false);
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-md animate-in fade-in duration-150">
       <div 
-        className="bg-bg border border-border rounded-2xl max-w-xl w-full shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95 duration-150 font-sans"
+        className="bg-bg border border-border rounded-2xl max-w-2xl w-full shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95 duration-150 font-sans"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -211,8 +270,8 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
           </div>
         </div>
 
-        {/* Two Tabs Only: Percentage Difference Calculator & Percentage Change Calculator */}
-        <div className="px-5 py-2.5 border-b border-border/60 bg-card/30 grid grid-cols-2 gap-2 text-xs font-bold">
+        {/* 3 Separate Menu Tabs */}
+        <div className="px-4 py-2.5 border-b border-border/60 bg-card/30 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-bold">
           <button
             type="button"
             onClick={() => setActiveTab('pctdifference')}
@@ -235,13 +294,24 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
           >
             Percentage Change Calculator
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('pctcommon')}
+            className={`px-3 py-2 rounded-xl transition-all cursor-pointer text-center truncate ${
+              activeTab === 'pctcommon'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-ink-muted hover:text-ink bg-card hover:bg-card-hover border border-border/60'
+            }`}
+          >
+            Percentage Calculator in Common Phrases
+          </button>
         </div>
 
         {/* Body */}
         <div className="p-5 overflow-y-auto space-y-5 flex-1 text-sm text-ink">
 
           {/* ============================================================== */}
-          {/* TAB 1: Percentage Difference Calculator                         */}
+          {/* MENU 1: Percentage Difference Calculator                        */}
           {/* ============================================================== */}
           {activeTab === 'pctdifference' && (
             <div className="space-y-4">
@@ -400,7 +470,7 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
           )}
 
           {/* ============================================================== */}
-          {/* TAB 2: Percentage Change Calculator                            */}
+          {/* MENU 2: Percentage Change Calculator                            */}
           {/* ============================================================== */}
           {activeTab === 'pctincrease' && (
             <div className="space-y-4">
@@ -511,11 +581,179 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
             </div>
           )}
 
+          {/* ============================================================== */}
+          {/* MENU 3: Percentage Calculator in Common Phrases                 */}
+          {/* ============================================================== */}
+          {activeTab === 'pctcommon' && (
+            <div className="space-y-4">
+              <div className="border-b border-border/60 pb-1.5 flex items-center justify-between">
+                <h3 className="text-base font-bold text-ink">
+                  Percentage Calculator in Common Phrases
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleClearCommon}
+                  className="px-3 py-1 rounded-lg bg-card hover:bg-card-hover border border-border text-ink-muted hover:text-ink font-semibold text-xs transition-all cursor-pointer"
+                >
+                  Clear All
+                </button>
+              </div>
+
+              {/* Phrase 1: what is [P] % of [Y] */}
+              <form onSubmit={handleCalc21} className="p-4 rounded-xl bg-card border border-border/80 space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap text-sm font-medium">
+                    <span>what is</span>
+                    <input
+                      type="text"
+                      value={c21par1}
+                      onChange={(e) => setC21par1(e.target.value)}
+                      placeholder="15"
+                      className="w-20 px-2.5 py-1.5 rounded-lg bg-bg border border-border text-center font-mono text-ink text-sm focus:outline-none focus:border-emerald-500"
+                    />
+                    <span>% of</span>
+                    <input
+                      type="text"
+                      value={c21par2}
+                      onChange={(e) => setC21par2(e.target.value)}
+                      placeholder="200"
+                      className="w-24 px-2.5 py-1.5 rounded-lg bg-bg border border-border text-center font-mono text-ink text-sm focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wide transition-all cursor-pointer ml-auto"
+                  >
+                    Calculate
+                  </button>
+                </div>
+                {res21 !== null && (
+                  <div className="p-2.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-sm">
+                    Result: {res21}
+                  </div>
+                )}
+              </form>
+
+              {/* Phrase 2: [X] is what % of [Y] */}
+              <form onSubmit={handleCalc22} className="p-4 rounded-xl bg-card border border-border/80 space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap text-sm font-medium">
+                    <input
+                      type="text"
+                      value={c22par1}
+                      onChange={(e) => setC22par1(e.target.value)}
+                      placeholder="30"
+                      className="w-20 px-2.5 py-1.5 rounded-lg bg-bg border border-border text-center font-mono text-ink text-sm focus:outline-none focus:border-emerald-500"
+                    />
+                    <span>is what % of</span>
+                    <input
+                      type="text"
+                      value={c22par2}
+                      onChange={(e) => setC22par2(e.target.value)}
+                      placeholder="120"
+                      className="w-24 px-2.5 py-1.5 rounded-lg bg-bg border border-border text-center font-mono text-ink text-sm focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wide transition-all cursor-pointer ml-auto"
+                  >
+                    Calculate
+                  </button>
+                </div>
+                {res22 !== null && (
+                  <div className="p-2.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-sm">
+                    Result: {res22}
+                  </div>
+                )}
+              </form>
+
+              {/* Phrase 3: [X] is [P] % of what */}
+              <form onSubmit={handleCalc23} className="p-4 rounded-xl bg-card border border-border/80 space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap text-sm font-medium">
+                    <input
+                      type="text"
+                      value={c23par1}
+                      onChange={(e) => setC23par1(e.target.value)}
+                      placeholder="25"
+                      className="w-20 px-2.5 py-1.5 rounded-lg bg-bg border border-border text-center font-mono text-ink text-sm focus:outline-none focus:border-emerald-500"
+                    />
+                    <span>is</span>
+                    <input
+                      type="text"
+                      value={c23par2}
+                      onChange={(e) => setC23par2(e.target.value)}
+                      placeholder="10"
+                      className="w-20 px-2.5 py-1.5 rounded-lg bg-bg border border-border text-center font-mono text-ink text-sm focus:outline-none focus:border-emerald-500"
+                    />
+                    <span>% of what</span>
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wide transition-all cursor-pointer ml-auto"
+                  >
+                    Calculate
+                  </button>
+                </div>
+                {res23 !== null && (
+                  <div className="p-2.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-sm">
+                    Result: {res23}
+                  </div>
+                )}
+              </form>
+
+              {/* Collapsible Dropdown for Steps & Formulas at the bottom */}
+              <div className="border border-border/80 rounded-xl overflow-hidden bg-card/50">
+                <button
+                  type="button"
+                  onClick={() => setShowCommonSteps(!showCommonSteps)}
+                  className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-bold text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer select-none"
+                >
+                  <span>Show Steps &amp; Formulas</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showCommonSteps ? 'rotate-180 text-emerald-400' : ''}`} />
+                </button>
+
+                {showCommonSteps && (
+                  <div className="p-4 border-t border-border/60 space-y-3 bg-card font-mono text-xs text-ink animate-in fade-in duration-150">
+                    <div>
+                      <div className="font-sans font-bold text-ink-muted mb-0.5">1. What is P% of Y:</div>
+                      <div>Result = (P / 100) × Y</div>
+                      {res21 !== null && (
+                        <div className="text-emerald-400 font-bold">
+                          = ({c21par1} / 100) × {c21par2} = {res21}
+                        </div>
+                      )}
+                    </div>
+                    <div className="pt-2 border-t border-border/50">
+                      <div className="font-sans font-bold text-ink-muted mb-0.5">2. X is what % of Y:</div>
+                      <div>Result = (X / Y) × 100%</div>
+                      {res22 !== null && (
+                        <div className="text-emerald-400 font-bold">
+                          = ({c22par1} / {c22par2}) × 100% = {res22}
+                        </div>
+                      )}
+                    </div>
+                    <div className="pt-2 border-t border-border/50">
+                      <div className="font-sans font-bold text-ink-muted mb-0.5">3. X is P% of what:</div>
+                      <div>Result = X / (P / 100)</div>
+                      {res23 !== null && (
+                        <div className="text-emerald-400 font-bold">
+                          = {c23par1} / ({c23par2} / 100) = {res23}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-border/80 bg-card/50 flex items-center justify-between text-xs text-ink-faint">
-          <span>Percentage Difference &amp; Change Calculator</span>
+          <span>Percentage Calculator</span>
           <button
             type="button"
             onClick={onClose}
