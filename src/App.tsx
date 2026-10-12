@@ -24,6 +24,7 @@ import FairValueCalculatorModal from './components/FairValueCalculatorModal';
 import DcfCalculatorModal from './components/DcfCalculatorModal';
 import StockChecklistModal, { syncChecklistsWithCloud } from './components/StockChecklistModal';
 import FinancialFlagsModal from './components/FinancialFlagsModal';
+import PercentCalculatorModal from './components/PercentCalculatorModal';
 import WelcomeQuoteModal from './components/WelcomeQuoteModal';
 import { 
   Table,
@@ -57,7 +58,8 @@ import {
   Calculator,
   TrendingUp,
   Database,
-  Compass
+  Compass,
+  Percent
 } from 'lucide-react';
 
 export default function App() {
@@ -109,6 +111,7 @@ export default function App() {
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
  const [isCsvUploaderOpen, setIsCsvUploaderOpen] = useState(false);
  const [isSidebarToolsOpen, setIsSidebarToolsOpen] = useState(false);
+ const [showPercentCalculatorModal, setShowPercentCalculatorModal] = useState(false);
   const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
   const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
   const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
@@ -256,12 +259,15 @@ export default function App() {
         setShowChecklistModal(true);
       } else if (hash === 'flags' || hash === 'financial-flags') {
         setShowFinancialFlagsModal(true);
+      } else if (hash === 'percent-calculator' || hash === 'percentage-calculator' || hash === 'pctdifference') {
+        setShowPercentCalculatorModal(true);
       } else {
         // Modal hash no longer present in URL (e.g. user pressed back button in browser)
         setShowDcfModal(false);
         setShowFairValueModal(false);
         setShowProfitCalculatorModal(false);
         setShowRoiCalculatorModal(false);
+        setShowPercentCalculatorModal(false);
         setShowInvestmentCalculatorModal(false);
         setShowChecklistModal(false);
         setShowFinancialFlagsModal(false);
@@ -489,6 +495,7 @@ export default function App() {
     setSelectedStockForAi(null);
     setShowProfitCalculatorModal(false);
     setShowRoiCalculatorModal(false);
+    setShowPercentCalculatorModal(false);
     setShowInvestmentCalculatorModal(false);
     setShowChecklistModal(false);
     setShowFinancialFlagsModal(false);
@@ -1943,7 +1950,7 @@ export default function App() {
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold">
-                6
+                7
               </span>
               <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSidebarToolsOpen ? 'rotate-180 text-emerald-400' : ''}`} />
             </div>
@@ -1952,6 +1959,21 @@ export default function App() {
           {/* Collapsible Dropdown Content */}
           {isSidebarToolsOpen && (
             <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
+              <button
+                type="button"
+                onClick={() => {
+                  window.open(`${window.location.origin}${window.location.pathname}#percent-calculator`, '_blank');
+                }}
+                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                title="Отвори Percentage Calculator в нов прозорец"
+              >
+                <span className="flex items-center gap-2">
+                  <Percent className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>Percent Calculator</span>
+                </span>
+                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors shrink-0" />
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -2460,6 +2482,12 @@ export default function App() {
       setAuthFeatureNotice('');
       try { localStorage.setItem('app_guest_mode', 'true'); } catch (e) {}
     }}
+  />
+
+  {/* Percentage Calculator Modal (Difference & Change - Calculator.net algorithm) */}
+  <PercentCalculatorModal
+    isOpen={showPercentCalculatorModal}
+    onClose={() => { setShowPercentCalculatorModal(false); clearHashUrl(); }}
   />
 
   {/* ROI Calculator Modal */}
