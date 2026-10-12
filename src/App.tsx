@@ -1821,237 +1821,8 @@ export default function App() {
           <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isFetchingLivePrices ? 'animate-spin text-emerald-400' : 'text-indigo-400'}`} />
           <span>{isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}</span>
         </button>
-
-        {/* 3. System Settings Dropdown */}
-        <div ref={settingsMenuRef} className="relative">
-          <button
-            onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
-            className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
-              isSettingsMenuOpen
-                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
-                : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
-            }`}
-            title="Системни настройки и данни"
-          >
-            <Settings2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-            <span>Настройки</span>
-            <ChevronDown className={`w-3 h-3 text-ink-faint transition-transform duration-200 shrink-0 ${isSettingsMenuOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {isSettingsMenuOpen && (
-            <div 
-              onMouseDown={(e) => e.stopPropagation()}
-              className="absolute left-0 top-full mt-2 w-56 bg-bg border border-border rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-1 origin-top-left animate-in fade-in zoom-in-95 duration-100"
-            >
-              <button
-                onClick={() => { exportCSVFile(); setIsSettingsMenuOpen(false); }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                Експорт CSV
-              </button>
-              <button
-                onClick={() => { handleRestoreDefaults(); setIsSettingsMenuOpen(false); }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
-                title="Върнете началните фабрични данни"
-              >
-                <ArchiveRestore className="w-4 h-4 text-stone-500" />
-                Фабрични данни
-              </button>
-              <div className="h-px bg-border/50 my-1 mx-1" />
-              <button
-                onClick={() => { setShowNewUserModal(true); setIsSettingsMenuOpen(false); }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#f43f5e] hover:bg-[#f43f5e]/10 rounded-lg transition-colors cursor-pointer"
-                title="Изтрийте всичко и започнете начисто"
-              >
-                <Trash2 className="w-4 h-4" />
-                Нов потребител (Изчисти)
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* 6. Tools Dropdown Button */}
-        <div ref={usefulLinksMenuRef} className="relative">
-          <button
-            onClick={() => {
-              if (!currentUser) {
-                handleRequireAuth('TOOLS');
-                return;
-              }
-              setIsUsefulLinksMenuOpen(!isUsefulLinksMenuOpen);
-            }}
-            className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
-              isUsefulLinksMenuOpen
-                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
-                : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
-            }`}
-            title={currentUser ? "Tools" : "Tools (Изисква регистрация)"}
-          >
-            <Wrench className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-            <span>Tools</span>
-            {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
-            <ChevronDown className={`w-3 h-3 text-ink-faint transition-transform duration-200 shrink-0 ${isUsefulLinksMenuOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {isUsefulLinksMenuOpen && (
-            <div 
-              onMouseDown={(e) => e.stopPropagation()}
-              className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in-95 duration-100"
-            >
-              <div className="px-2 py-1 border-b border-border/40 text-[10px] uppercase font-bold text-ink-faint">
-                🛠️ Tools & Calculators
-              </div>
-
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('DCF Calculator');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setIsUsefulLinksMenuOpen(false);
-                  window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
-                }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
-                title="Отвори DCF Calculator (Discounted Cash Flow) в нов прозорец"
-              >
-                <Calculator className="w-4 h-4 text-blue-400 shrink-0" />
-                <span className="flex-1">DCF Calculator (Cash Flow)</span>
-                {!currentUser ? (
-                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
-                ) : (
-                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-blue-400 ml-auto shrink-0" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Fair Value Calculator');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setIsUsefulLinksMenuOpen(false);
-                  window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
-                }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
-                title="Отвори Fair Value Calculator в нов прозорец"
-              >
-                <Calculator className="w-4 h-4 text-indigo-400 shrink-0" />
-                <span className="flex-1">Fair Value (P/E Multiple)</span>
-                {!currentUser ? (
-                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
-                ) : (
-                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 ml-auto shrink-0" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Stock Analysis Check List');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setIsUsefulLinksMenuOpen(false);
-                  window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
-                }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
-                title="Отвори Stock Analysis Check List в нов прозорец"
-              >
-                <CheckSquare className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span className="flex-1">Stock Analysis Check List</span>
-                {!currentUser ? (
-                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
-                ) : (
-                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 ml-auto shrink-0" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Stock Profit Calculator');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setIsUsefulLinksMenuOpen(false);
-                  window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
-                }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
-                title="Отвори Stock Profit Calculator в нов прозорец"
-              >
-                <Calculator className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="flex-1">Stock Profit Calculator</span>
-                {!currentUser ? (
-                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
-                ) : (
-                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 ml-auto shrink-0" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Return on Investment (ROI)');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setIsUsefulLinksMenuOpen(false);
-                  window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
-                }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
-                title="Отвори Return on Investment (ROI) в нов прозорец"
-              >
-                <Calculator className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="flex-1">Return on Investment (ROI)</span>
-                {!currentUser ? (
-                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
-                ) : (
-                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 ml-auto shrink-0" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Сложна Лихва & Растеж');
-                    setIsUsefulLinksMenuOpen(false);
-                    return;
-                  }
-                  setIsUsefulLinksMenuOpen(false);
-                  window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
-                }}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-bold text-ink hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors cursor-pointer group"
-                title="Отвори Сложна Лихва & Растеж в нов прозорец"
-              >
-                <TrendingUp className="w-4 h-4 text-indigo-400 shrink-0" />
-                <span className="flex-1">Сложна Лихва & Растеж</span>
-                {!currentUser ? (
-                  <Lock className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
-                ) : (
-                  <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 ml-auto shrink-0" />
-                )}
-              </button>
-            </div>
-          )}
-        </div>
-
       </div>
- </div>
+  </div>
 
     {/* Dynamic indices banner strip (Index Markets / US Markets) */}
     <IndicesStrip 
@@ -2314,6 +2085,54 @@ export default function App() {
               LIVE
             </span>
           </button>
+        </div>
+
+        {/* System Settings Dropdown Card (StockAnalysis Style - under Calendar) */}
+        <div ref={settingsMenuRef} className="relative flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+          <button
+            type="button"
+            onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
+            className="w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink hover:bg-card-hover group select-none"
+            title="Отвори системни настройки и операции"
+          >
+            <div className="flex items-center gap-2">
+              <Settings2 className="w-4 h-4 text-indigo-400 group-hover:rotate-90 transition-transform duration-300 shrink-0" />
+              <span>Настройки</span>
+            </div>
+            <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSettingsMenuOpen ? 'rotate-180 text-indigo-400' : ''}`} />
+          </button>
+
+          {isSettingsMenuOpen && (
+            <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
+              <button
+                type="button"
+                onClick={() => { exportCSVFile(); setIsSettingsMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+              >
+                <Download className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <span>Експорт CSV</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { handleRestoreDefaults(); setIsSettingsMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+                title="Върнете началните фабрични данни"
+              >
+                <ArchiveRestore className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Фабрични данни</span>
+              </button>
+              <div className="h-px bg-border/40 my-0.5 mx-1" />
+              <button
+                type="button"
+                onClick={() => { setShowNewUserModal(true); setIsSettingsMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer group"
+                title="Изтрийте всичко и започнете начисто"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                <span>Нов потребител (Изчисти)</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Market Status Quick Glance Card (StockAnalysis Style - desktop only) */}
