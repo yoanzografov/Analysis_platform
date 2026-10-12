@@ -56,8 +56,8 @@ import {
   HelpCircle,
   Calculator,
   TrendingUp,
-  TrendingDown,
-  Database
+  Database,
+  Compass
 } from 'lucide-react';
 
 export default function App() {
@@ -1679,7 +1679,7 @@ export default function App() {
   <div className="min-h-screen bg-bg text-ink flex flex-col pb-12 antialiased overflow-x-hidden w-full">
 
   {/* Main Container */}
-  <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5 flex-1 space-y-5">
+  <main className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 pt-5 flex-1 space-y-5">
  
   {/* New User Confirmation Modal */}
   {showNewUserModal && (
@@ -2068,80 +2068,262 @@ export default function App() {
      isSimulating={isSimulating} 
     />
 
-    {/* Main Section Tabs Switcher: Sleek Capsule Buttons directly under Index Markets / US Markets */}
-    <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full touch-pan-x scroll-smooth no-scrollbar mb-5 mt-2" id="stock-table-section">
-      
-      {/* Tab 1: INTERACTIVE TABLE */}
-      <a
-        href="#table"
-        onClick={(e) => {
-          e.preventDefault();
-          switchTab('table');
-        }}
-        className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
-          activeMainTab === 'table'
-            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-            : 'bg-card/70 hover:bg-card text-ink-muted hover:text-ink border-border/80 font-bold'
-        }`}
-      >
-        <Table className="w-4 h-4 shrink-0" />
-        <span>INTERACTIVE TABLE</span>
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-          activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-        }`}>
-          {stocks.length}
-        </span>
-      </a>
+    {/* Main Dashboard Layout: StockAnalysis-Style Left Sidebar Navigation + Right Main Content Area */}
+    <div className="flex flex-col lg:flex-row gap-5 items-start w-full mt-2" id="stock-table-section">
 
-      {/* Tab 2: PRICE ALERTS SCHEDULE */}
-      <a
-        href="#alerts"
-        onClick={(e) => {
-          e.preventDefault();
-          if (!currentUser) {
-            handleRequireAuth('PRICE ALERTS SCHEDULE');
-            return;
-          }
-          switchTab('alerts');
-        }}
-        className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
-          activeMainTab === 'alerts'
-            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-            : 'bg-card/70 hover:bg-card text-ink-muted hover:text-ink border-border/80 font-bold'
-        }`}
-      >
-        <Bell className="w-4 h-4 shrink-0" />
-        <span>PRICE ALERTS SCHEDULE</span>
-        {!currentUser && <Lock className="w-3 h-3 text-amber-400 shrink-0" />}
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-          activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-        }`}>
-          {alerts.length}
-        </span>
-      </a>
+      {/* LEFT SIDEBAR NAVIGATION (StockAnalysis.com Style) */}
+      <aside className="w-full lg:w-64 xl:w-72 shrink-0 lg:sticky lg:top-4 z-20 flex flex-col gap-3">
+        {/* Navigation Menu Card */}
+        <div className="bg-card border border-border rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col gap-2">
+          {/* Header Title / Platform Nav label */}
+          <div className="px-2 py-1.5 flex items-center justify-between border-b border-border/50 text-[11px] font-black uppercase tracking-wider text-ink-muted">
+            <span className="flex items-center gap-1.5">
+              <Compass className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Навигация</span>
+            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold">
+              Меню
+            </span>
+          </div>
 
-      {/* Tab 3: PORTFOLIO TRACKER */}
-      <a
-        href="#portfolio"
-        onClick={(e) => {
-          e.preventDefault();
-          switchTab('portfolio');
-        }}
-        className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center gap-2 border shrink-0 ${
-          activeMainTab === 'portfolio'
-            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-            : 'bg-card/70 hover:bg-card text-ink-muted hover:text-ink border-border/80 font-bold'
-        }`}
-      >
-        <Briefcase className="w-4 h-4 shrink-0" />
-        <span>PORTFOLIO TRACKER</span>
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-          activeMainTab === 'portfolio' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-        }`}>
-          {positions.length}
-        </span>
-      </a>
-    </div>
+          {/* Navigation Items (Stacked vertically on desktop, horizontally scrollable on mobile) */}
+          <nav className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-x-visible pb-1 lg:pb-0 no-scrollbar">
+            {/* Tab 1: INTERACTIVE TABLE */}
+            <a
+              href="#table"
+              onClick={(e) => {
+                e.preventDefault();
+                switchTab('table');
+              }}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                activeMainTab === 'table'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Table className={`w-4 h-4 shrink-0 ${activeMainTab === 'table' ? 'text-white' : 'text-indigo-400 group-hover:scale-110 transition-transform'}`} />
+                <span className="truncate">INTERACTIVE TABLE</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
+              }`}>
+                {stocks.length}
+              </span>
+            </a>
+
+            {/* Tab 2: PRICE ALERTS SCHEDULE */}
+            <a
+              href="#alerts"
+              onClick={(e) => {
+                e.preventDefault();
+                if (!currentUser) {
+                  handleRequireAuth('PRICE ALERTS SCHEDULE');
+                  return;
+                }
+                switchTab('alerts');
+              }}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                activeMainTab === 'alerts'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Bell className={`w-4 h-4 shrink-0 ${activeMainTab === 'alerts' ? 'text-white' : 'text-amber-400 group-hover:scale-110 transition-transform'}`} />
+                <span className="truncate">PRICE ALERTS</span>
+                {!currentUser && <Lock className="w-3 h-3 text-amber-400 shrink-0" />}
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
+              }`}>
+                {alerts.length}
+              </span>
+            </a>
+
+            {/* Tab 3: PORTFOLIO TRACKER */}
+            <a
+              href="#portfolio"
+              onClick={(e) => {
+                e.preventDefault();
+                switchTab('portfolio');
+              }}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                activeMainTab === 'portfolio'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Briefcase className={`w-4 h-4 shrink-0 ${activeMainTab === 'portfolio' ? 'text-white' : 'text-emerald-400 group-hover:scale-110 transition-transform'}`} />
+                <span className="truncate">PORTFOLIO TRACKER</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                activeMainTab === 'portfolio' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
+              }`}>
+                {positions.length}
+              </span>
+            </a>
+          </nav>
+        </div>
+
+        {/* Quick Tools & Models Card (StockAnalysis Style - desktop only) */}
+        <div className="hidden lg:flex flex-col bg-card border border-border rounded-2xl p-3 sm:p-3.5 shadow-xs space-y-2">
+          <div className="px-2 py-1 flex items-center justify-between border-b border-border/50 text-[11px] font-black uppercase tracking-wider text-ink-muted">
+            <span className="flex items-center gap-1.5">
+              <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Калкулатори & Модели</span>
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => {
+                if (!currentUser) {
+                  handleRequireAuth('DCF Calculator');
+                  return;
+                }
+                window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
+              }}
+              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+              title="Отвори DCF Calculator (Discounted Cash Flow) в нов прозорец"
+            >
+              <span className="flex items-center gap-2">
+                <Calculator className="w-3.5 h-3.5 text-blue-400" />
+                <span>DCF Calculator</span>
+              </span>
+              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-blue-400 transition-colors" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!currentUser) {
+                  handleRequireAuth('Fair Value Calculator');
+                  return;
+                }
+                window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
+              }}
+              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+              title="Отвори Fair Value Calculator в нов прозорец"
+            >
+              <span className="flex items-center gap-2">
+                <Calculator className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Fair Value (P/E)</span>
+              </span>
+              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 transition-colors" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!currentUser) {
+                  handleRequireAuth('Stock Analysis Check List');
+                  return;
+                }
+                window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
+              }}
+              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+              title="Отвори Stock Analysis Check List в нов прозорец"
+            >
+              <span className="flex items-center gap-2">
+                <CheckSquare className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Stock Check List</span>
+              </span>
+              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!currentUser) {
+                  handleRequireAuth('Stock Profit Calculator');
+                  return;
+                }
+                window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
+              }}
+              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+              title="Отвори Stock Profit Calculator в нов прозорец"
+            >
+              <span className="flex items-center gap-2">
+                <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+                <span>Profit Calculator</span>
+              </span>
+              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 transition-colors" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!currentUser) {
+                  handleRequireAuth('Return on Investment (ROI)');
+                  return;
+                }
+                window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
+              }}
+              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+              title="Отвори ROI Calculator в нов прозорец"
+            >
+              <span className="flex items-center gap-2">
+                <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+                <span>ROI Calculator</span>
+              </span>
+              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 transition-colors" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!currentUser) {
+                  handleRequireAuth('Сложна Лихва & Растеж');
+                  return;
+                }
+                window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
+              }}
+              className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+              title="Отвори Сложна Лихва & Растеж в нов прозорец"
+            >
+              <span className="flex items-center gap-2">
+                <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
+                <span>Сложна Лихва</span>
+              </span>
+              <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-purple-400 transition-colors" />
+            </button>
+          </div>
+        </div>
+
+        {/* Market Status Quick Glance Card (StockAnalysis Style - desktop only) */}
+        <div className="hidden lg:flex flex-col bg-card/60 border border-border/70 rounded-2xl p-3 shadow-xs space-y-2 text-xs">
+          <div className="flex items-center justify-between text-[11px] font-bold text-ink-muted">
+            <span className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              </span>
+              <span>Статус Пазар</span>
+            </span>
+            <span className="text-emerald-400 font-mono font-bold">LIVE 24/7</span>
+          </div>
+          <div className="space-y-1 pt-1.5 border-t border-border/40 text-[11px]">
+            <div className="text-ink-faint flex justify-between">
+              <span>Активи в таблицата:</span>
+              <span className="font-bold text-ink">{stocks.length}</span>
+            </div>
+            <div className="text-ink-faint flex justify-between">
+              <span>Ценови известия:</span>
+              <span className="font-bold text-amber-400">{alerts.length}</span>
+            </div>
+            <div className="text-ink-faint flex justify-between">
+              <span>Портфолио активи:</span>
+              <span className="font-bold text-indigo-400">{positions.length}</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* RIGHT MAIN CONTENT AREA */}
+      <div className="flex-1 min-w-0 w-full space-y-5">
 
       {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
       {activeMainTab === 'table' && (
@@ -2310,6 +2492,9 @@ export default function App() {
         </div>
       </div>
     )}
+
+      </div>
+    </div>
 
     {/* Sleek Collapsible CSV & Google Sheets Uploader Footer (Available across all 3 windows/tabs) */}
     <div className="mt-8 border-t border-border/40 pt-6 pb-8 flex flex-col items-center gap-4">
