@@ -60,7 +60,8 @@ import {
   TrendingUp,
   Database,
   Compass,
-  Percent
+  Percent,
+  Scale
 } from 'lucide-react';
 
 export default function App() {
@@ -112,6 +113,7 @@ export default function App() {
  const [showEconomicCalendarModal, setShowEconomicCalendarModal] = useState(false);
  const [isCsvUploaderOpen, setIsCsvUploaderOpen] = useState(false);
  const [isSidebarToolsOpen, setIsSidebarToolsOpen] = useState(false);
+ const [isSidebarFairValueOpen, setIsSidebarFairValueOpen] = useState(false);
  const [showPercentCalculatorModal, setShowPercentCalculatorModal] = useState(false);
   const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
   const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
@@ -507,6 +509,7 @@ export default function App() {
     setShowLogoModal(false);
     setShowNewUserModal(false);
     setIsSettingsMenuOpen(false);
+    setIsSidebarFairValueOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1965,44 +1968,29 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Tools Dropdown Menu (StockAnalysis Style) */}
+        {/* Fair Value Calculators Dropdown Menu (StockAnalysis Style) */}
         <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
           <button
             type="button"
-            onClick={() => setIsSidebarToolsOpen(!isSidebarToolsOpen)}
+            onClick={() => setIsSidebarFairValueOpen(!isSidebarFairValueOpen)}
             className="w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink hover:bg-card-hover group select-none"
-            title="Отвори / затвори падащо меню Tools"
+            title="Отвори / затвори падащо меню Fair Value Calculators"
           >
             <div className="flex items-center gap-2">
-              <Wrench className="w-4 h-4 text-emerald-400 group-hover:rotate-45 transition-transform shrink-0" />
-              <span>Tools</span>
+              <Scale className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span>Fair Value Calculators</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold">
-                7
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 font-mono font-bold">
+                3
               </span>
-              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSidebarToolsOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSidebarFairValueOpen ? 'rotate-180 text-blue-400' : ''}`} />
             </div>
           </button>
 
           {/* Collapsible Dropdown Content */}
-          {isSidebarToolsOpen && (
+          {isSidebarFairValueOpen && (
             <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={() => {
-                  window.open(`${window.location.origin}${window.location.pathname}#percent-calculator`, '_blank');
-                }}
-                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Percentage Calculator в нов прозорец"
-              >
-                <span className="flex items-center gap-2">
-                  <Percent className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>Percent Calculator</span>
-                </span>
-                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors shrink-0" />
-              </button>
-
               <button
                 type="button"
                 onClick={() => {
@@ -2056,6 +2044,47 @@ export default function App() {
                 <span className="flex items-center gap-2">
                   <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span>Stock Check List</span>
+                </span>
+                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors shrink-0" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Tools Dropdown Menu (StockAnalysis Style) */}
+        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+          <button
+            type="button"
+            onClick={() => setIsSidebarToolsOpen(!isSidebarToolsOpen)}
+            className="w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink hover:bg-card-hover group select-none"
+            title="Отвори / затвори падащо меню Tools"
+          >
+            <div className="flex items-center gap-2">
+              <Wrench className="w-4 h-4 text-emerald-400 group-hover:rotate-45 transition-transform shrink-0" />
+              <span>Tools</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold">
+                4
+              </span>
+              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSidebarToolsOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+            </div>
+          </button>
+
+          {/* Collapsible Dropdown Content */}
+          {isSidebarToolsOpen && (
+            <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
+              <button
+                type="button"
+                onClick={() => {
+                  window.open(`${window.location.origin}${window.location.pathname}#percent-calculator`, '_blank');
+                }}
+                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                title="Отвори Percentage Calculator в нов прозорец"
+              >
+                <span className="flex items-center gap-2">
+                  <Percent className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>Percent Calculator</span>
                 </span>
                 <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors shrink-0" />
               </button>
