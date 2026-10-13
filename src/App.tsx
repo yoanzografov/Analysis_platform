@@ -114,13 +114,34 @@ export default function App() {
  const [isCsvUploaderOpen, setIsCsvUploaderOpen] = useState(false);
  const [isSidebarToolsOpen, setIsSidebarToolsOpen] = useState(false);
  const [isSidebarFairValueOpen, setIsSidebarFairValueOpen] = useState(false);
- const [showPercentCalculatorModal, setShowPercentCalculatorModal] = useState(false);
-  const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(false);
-  const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(false);
-  const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(false);
-  const [showFairValueModal, setShowFairValueModal] = useState(false);
-  const [showDcfModal, setShowDcfModal] = useState(false);
-  const [showChecklistModal, setShowChecklistModal] = useState(false);
+ const [showPercentCalculatorModal, setShowPercentCalculatorModal] = useState(() => {
+    const h = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
+    return h.includes('percent-calculator') || h.includes('percentage-calculator') || h.includes('pctdifference');
+  });
+  const [showRoiCalculatorModal, setShowRoiCalculatorModal] = useState(() => {
+    const h = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
+    return h.includes('roi-calculator');
+  });
+  const [showInvestmentCalculatorModal, setShowInvestmentCalculatorModal] = useState(() => {
+    const h = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
+    return h.includes('investment-calculator');
+  });
+  const [showProfitCalculatorModal, setShowProfitCalculatorModal] = useState(() => {
+    const h = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
+    return h.includes('stock-profit-calculator');
+  });
+  const [showFairValueModal, setShowFairValueModal] = useState(() => {
+    const h = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
+    return h.includes('fair-value');
+  });
+  const [showDcfModal, setShowDcfModal] = useState(() => {
+    const h = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
+    return h.includes('dcf');
+  });
+  const [showChecklistModal, setShowChecklistModal] = useState(() => {
+    const h = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
+    return h.includes('checklist') || h.includes('check-list');
+  });
   const [checklistSelectedStock, setChecklistSelectedStock] = useState<Stock | null>(null);
   const [showFinancialFlagsModal, setShowFinancialFlagsModal] = useState(false);
   const [showLogoModal, setShowLogoModal] = useState(false);
@@ -200,11 +221,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (isAuthChecking) {
-      // Do not check auth-gated hashes while Firebase is verifying user session
-      return;
-    }
-
     const handleHashChange = () => {
       const rawHash = window.location.hash.toLowerCase().replace('#', '');
       const hash = rawHash.split('?')[0];
@@ -246,6 +262,7 @@ export default function App() {
         setShowFinancialFlagsModal(false);
 
         if (hash === 'alerts' || hash === 'price-alerts') {
+          if (isAuthChecking) return;
           if (!user) {
             handleRequireAuth('PRICE ALERTS SCHEDULE');
             clearHashUrl();
@@ -1962,15 +1979,11 @@ export default function App() {
           {isSidebarFairValueOpen && (
             <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
               <a
-                href={`${window.location.origin}${window.location.pathname}#dcf-calculator`}
+                href="#dcf-calculator"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
-                }}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори DCF Calculator (Discounted Cash Flow) в нов прозорец"
+                title="Отвори DCF Calculator в New Tab (нов таб)"
               >
                 <span className="flex items-center gap-2">
                   <Calculator className="w-3.5 h-3.5 text-blue-400 shrink-0" />
@@ -1980,15 +1993,11 @@ export default function App() {
               </a>
 
               <a
-                href={`${window.location.origin}${window.location.pathname}#fair-value`}
+                href="#fair-value"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
-                }}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Fair Value Calculator в нов прозорец"
+                title="Отвори Fair Value (P/E) в New Tab (нов таб)"
               >
                 <span className="flex items-center gap-2">
                   <Calculator className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
@@ -1998,15 +2007,11 @@ export default function App() {
               </a>
 
               <a
-                href={`${window.location.origin}${window.location.pathname}#checklist`}
+                href="#checklist"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
-                }}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Stock Analysis Check List в нов прозорец"
+                title="Отвори Stock Check List в New Tab (нов таб)"
               >
                 <span className="flex items-center gap-2">
                   <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
@@ -2041,77 +2046,61 @@ export default function App() {
           {/* Collapsible Dropdown Content */}
           {isSidebarToolsOpen && (
             <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={() => {
-                  window.open(`${window.location.origin}${window.location.pathname}#percent-calculator`, '_blank');
-                }}
+              <a
+                href="#percent-calculator"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Percentage Calculator в нов прозорец"
+                title="Отвори Percentage Calculator в New Tab (нов таб)"
               >
                 <span className="flex items-center gap-2">
                   <Percent className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span>Percent Calculator</span>
                 </span>
                 <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors shrink-0" />
-              </button>
+              </a>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Stock Profit Calculator');
-                    return;
-                  }
-                  window.open(`${window.location.origin}${window.location.pathname}#stock-profit-calculator`, '_blank');
-                }}
+              <a
+                href="#stock-profit-calculator"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Stock Profit Calculator в нов прозорец"
+                title="Отвори Stock Profit Calculator в New Tab (нов таб)"
               >
                 <span className="flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>Profit Calculator</span>
                 </span>
                 <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 transition-colors shrink-0" />
-              </button>
+              </a>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Return on Investment (ROI)');
-                    return;
-                  }
-                  window.open(`${window.location.origin}${window.location.pathname}#roi-calculator`, '_blank');
-                }}
+              <a
+                href="#roi-calculator"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори ROI Calculator в нов прозорец"
+                title="Отвори ROI Calculator в New Tab (нов таб)"
               >
                 <span className="flex items-center gap-2">
                   <Calculator className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>ROI Calculator</span>
                 </span>
                 <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 transition-colors shrink-0" />
-              </button>
+              </a>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Сложна Лихва & Растеж');
-                    return;
-                  }
-                  window.open(`${window.location.origin}${window.location.pathname}#investment-calculator`, '_blank');
-                }}
+              <a
+                href="#investment-calculator"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Сложна Лихва & Растеж в нов прозорец"
+                title="Отвори Сложна Лихва & Растеж в New Tab (нов таб)"
               >
                 <span className="flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                   <span>Сложна Лихва</span>
                 </span>
                 <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-purple-400 transition-colors shrink-0" />
-              </button>
+              </a>
             </div>
           )}
         </div>
