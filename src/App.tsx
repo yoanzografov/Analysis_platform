@@ -2159,7 +2159,7 @@ export default function App() {
           >
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
-              <span>Calendar</span>
+              <span>Economic Calendar</span>
             </div>
             <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold">
               LIVE
