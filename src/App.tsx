@@ -213,46 +213,16 @@ export default function App() {
       const user = currentUser;
 
       if (hash === 'dcf' || hash === 'dcf-calculator') {
-        if (!user) {
-          handleRequireAuth('DCF Calculator');
-          clearHashUrl();
-          return;
-        }
         setShowDcfModal(true);
       } else if (hash === 'fair-value' || hash === 'fair-value-calculator') {
-        if (!user) {
-          handleRequireAuth('Fair Value Calculator');
-          clearHashUrl();
-          return;
-        }
         setShowFairValueModal(true);
       } else if (hash === 'stock-profit-calculator') {
-        if (!user) {
-          handleRequireAuth('Stock Profit Calculator');
-          clearHashUrl();
-          return;
-        }
         setShowProfitCalculatorModal(true);
       } else if (hash === 'roi-calculator') {
-        if (!user) {
-          handleRequireAuth('Return on Investment (ROI)');
-          clearHashUrl();
-          return;
-        }
         setShowRoiCalculatorModal(true);
       } else if (hash === 'investment-calculator') {
-        if (!user) {
-          handleRequireAuth('Сложна Лихва & Растеж');
-          clearHashUrl();
-          return;
-        }
         setShowInvestmentCalculatorModal(true);
       } else if (hash === 'checklist' || hash === 'check-list' || hash === 'stock-checklist') {
-        if (!user) {
-          handleRequireAuth('Stock Analysis Check List');
-          clearHashUrl();
-          return;
-        }
         if (tickerParam) {
           const found = stocks.find(s => s.ticker.toUpperCase() === tickerParam);
           setChecklistSelectedStock(found || ({ ticker: tickerParam, companyName: tickerParam, currentPrice: 100 } as Stock));
@@ -1991,13 +1961,12 @@ export default function App() {
           {/* Collapsible Dropdown Content */}
           {isSidebarFairValueOpen && (
             <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('DCF Calculator');
-                    return;
-                  }
+              <a
+                href={`${window.location.origin}${window.location.pathname}#dcf-calculator`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
                   window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
                 }}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
@@ -2008,15 +1977,14 @@ export default function App() {
                   <span>DCF Calculator</span>
                 </span>
                 <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-blue-400 transition-colors shrink-0" />
-              </button>
+              </a>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Fair Value Calculator');
-                    return;
-                  }
+              <a
+                href={`${window.location.origin}${window.location.pathname}#fair-value`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
                   window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
                 }}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
@@ -2027,15 +1995,14 @@ export default function App() {
                   <span>Fair Value (P/E)</span>
                 </span>
                 <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 transition-colors shrink-0" />
-              </button>
+              </a>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!currentUser) {
-                    handleRequireAuth('Stock Analysis Check List');
-                    return;
-                  }
+              <a
+                href={`${window.location.origin}${window.location.pathname}#checklist`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
                   window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
                 }}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
@@ -2046,7 +2013,7 @@ export default function App() {
                   <span>Stock Check List</span>
                 </span>
                 <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors shrink-0" />
-              </button>
+              </a>
             </div>
           )}
         </div>
@@ -2579,135 +2546,129 @@ export default function App() {
   )}
 
   {/* Stock Valuation Checklist Modal */}
-  {currentUser && (
-    <StockChecklistModal
-      isOpen={showChecklistModal}
-      onClose={() => {
-        setShowChecklistModal(false);
-        setChecklistSelectedStock(null);
-        clearHashUrl();
-      }}
-      stock={checklistSelectedStock}
-      stocks={stocks}
-      baseCurrency={baseCurrency}
-      onSaveToTable={(stockData) => {
-        if (!stockData.ticker) return;
-        const cleanSym = stockData.ticker.toUpperCase().trim();
-        setStocks(prev => {
-          const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
-          if (existingIndex >= 0) {
-            const updated = [...prev];
-            updated[existingIndex] = { ...updated[existingIndex], ...stockData };
-            return updated;
-          } else {
-            const newStockObj: Stock = {
-              watch: stockData.watch || '',
-              ticker: cleanSym,
-              companyName: stockData.companyName || cleanSym,
-              date: stockData.date || new Date().toISOString().split('T')[0],
-              priceOfCalc: stockData.priceOfCalc ?? stockData.currentPrice ?? 100,
-              dailyChangePct: stockData.dailyChangePct ?? 0,
-              currentPrice: stockData.currentPrice || 100,
-              fairPrice: stockData.fairPrice ?? null,
-              difference: stockData.difference ?? null,
-              buySell: stockData.buySell || 'ДРУГИ',
-              sector: stockData.sector || 'Other',
-              peRatio: stockData.peRatio ?? 15,
-              eps: stockData.eps ?? null,
-              profileLink: stockData.profileLink || `https://finance.yahoo.com/quote/${cleanSym}`,
-              dividend: stockData.dividend || '-',
-              signal: stockData.signal || 'Hold',
-              low52: stockData.low52 ?? null,
-              high52: stockData.high52 ?? null,
-              dividendYield: stockData.dividendYield || 0,
-              marketCap: stockData.marketCap || 1000000000,
-              currency: 'USD',
-              ...stockData
-            };
-            return [...prev, newStockObj];
-          }
-        });
-        setActiveAlertToast(`Акцията ${cleanSym} беше пресметната и запазена в Интерактивната Таблица!`);
-        setTimeout(() => setActiveAlertToast(null), 4000);
-      }}
-    />
-  )}
+  <StockChecklistModal
+    isOpen={showChecklistModal}
+    onClose={() => {
+      setShowChecklistModal(false);
+      setChecklistSelectedStock(null);
+      clearHashUrl();
+    }}
+    stock={checklistSelectedStock}
+    stocks={stocks}
+    baseCurrency={baseCurrency}
+    onSaveToTable={(stockData) => {
+      if (!stockData.ticker) return;
+      const cleanSym = stockData.ticker.toUpperCase().trim();
+      setStocks(prev => {
+        const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = { ...updated[existingIndex], ...stockData };
+          return updated;
+        } else {
+          const newStockObj: Stock = {
+            watch: stockData.watch || '',
+            ticker: cleanSym,
+            companyName: stockData.companyName || cleanSym,
+            date: stockData.date || new Date().toISOString().split('T')[0],
+            priceOfCalc: stockData.priceOfCalc ?? stockData.currentPrice ?? 100,
+            dailyChangePct: stockData.dailyChangePct ?? 0,
+            currentPrice: stockData.currentPrice || 100,
+            fairPrice: stockData.fairPrice ?? null,
+            difference: stockData.difference ?? null,
+            buySell: stockData.buySell || 'ДРУГИ',
+            sector: stockData.sector || 'Other',
+            peRatio: stockData.peRatio ?? 15,
+            eps: stockData.eps ?? null,
+            profileLink: stockData.profileLink || `https://finance.yahoo.com/quote/${cleanSym}`,
+            dividend: stockData.dividend || '-',
+            signal: stockData.signal || 'Hold',
+            low52: stockData.low52 ?? null,
+            high52: stockData.high52 ?? null,
+            dividendYield: stockData.dividendYield || 0,
+            marketCap: stockData.marketCap || 1000000000,
+            currency: 'USD',
+            ...stockData
+          };
+          return [...prev, newStockObj];
+        }
+      });
+      setActiveAlertToast(`Акцията ${cleanSym} беше пресметната и запазена в Интерактивната Таблица!`);
+      setTimeout(() => setActiveAlertToast(null), 4000);
+    }}
+  />
 
   {/* DCF Calculator Modal */}
-  {currentUser && (
-    <DcfCalculatorModal
-      isOpen={showDcfModal}
-      onClose={() => { setShowDcfModal(false); clearHashUrl(); }}
-      stocks={stocks}
-      currentUser={currentUser}
-      onSwitchToPeModel={() => {
-        setShowDcfModal(false);
-        setShowFairValueModal(true);
-      }}
-      onUpdateFairPrice={(ticker, fairPrice) => {
-        const cleanSym = ticker.toUpperCase().trim();
-        setStocks(prev => {
-          const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
-          if (existingIndex < 0) return prev;
-          const original = prev[existingIndex];
-          const cp = original.currentPrice;
-          let difference: number | null = null;
-          if (cp > 0) {
-            difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
-          }
-          const buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
-          const updated = [...prev];
-          updated[existingIndex] = {
-            ...original,
-            fairPrice,
-            difference,
-            buySell
-          };
-          return updated;
-        });
-        setActiveAlertToast(`Справедливата цена на ${cleanSym} ($${fairPrice.toFixed(2)}) беше запазена в таблицата!`);
-        setTimeout(() => setActiveAlertToast(null), 4000);
-      }}
-    />
-  )}
+  <DcfCalculatorModal
+    isOpen={showDcfModal}
+    onClose={() => { setShowDcfModal(false); clearHashUrl(); }}
+    stocks={stocks}
+    currentUser={currentUser}
+    onSwitchToPeModel={() => {
+      setShowDcfModal(false);
+      setShowFairValueModal(true);
+    }}
+    onUpdateFairPrice={(ticker, fairPrice) => {
+      const cleanSym = ticker.toUpperCase().trim();
+      setStocks(prev => {
+        const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
+        if (existingIndex < 0) return prev;
+        const original = prev[existingIndex];
+        const cp = original.currentPrice;
+        let difference: number | null = null;
+        if (cp > 0) {
+          difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
+        }
+        const buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...original,
+          fairPrice,
+          difference,
+          buySell
+        };
+        return updated;
+      });
+      setActiveAlertToast(`Справедливата цена на ${cleanSym} ($${fairPrice.toFixed(2)}) беше запазена в таблицата!`);
+      setTimeout(() => setActiveAlertToast(null), 4000);
+    }}
+  />
 
   {/* Fair Value Calculator Modal */}
-  {currentUser && (
-    <FairValueCalculatorModal
-      isOpen={showFairValueModal}
-      onClose={() => { setShowFairValueModal(false); clearHashUrl(); }}
-      stocks={stocks}
-      currentUser={currentUser}
-      onSwitchToDcfModel={() => {
-        setShowFairValueModal(false);
-        setShowDcfModal(true);
-      }}
-      onUpdateFairPrice={(ticker, fairPrice) => {
-        const cleanSym = ticker.toUpperCase().trim();
-        setStocks(prev => {
-          const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
-          if (existingIndex < 0) return prev;
-          const original = prev[existingIndex];
-          const cp = original.currentPrice;
-          let difference: number | null = null;
-          if (cp > 0) {
-            difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
-          }
-          const buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
-          const updated = [...prev];
-          updated[existingIndex] = {
-            ...original,
-            fairPrice,
-            difference,
-            buySell
-          };
-          return updated;
-        });
-        setActiveAlertToast(`Справедливата цена на ${cleanSym} ($${fairPrice.toFixed(2)}) беше запазена в таблицата!`);
-        setTimeout(() => setActiveAlertToast(null), 4000);
-      }}
-    />
-  )}
+  <FairValueCalculatorModal
+    isOpen={showFairValueModal}
+    onClose={() => { setShowFairValueModal(false); clearHashUrl(); }}
+    stocks={stocks}
+    currentUser={currentUser}
+    onSwitchToDcfModel={() => {
+      setShowFairValueModal(false);
+      setShowDcfModal(true);
+    }}
+    onUpdateFairPrice={(ticker, fairPrice) => {
+      const cleanSym = ticker.toUpperCase().trim();
+      setStocks(prev => {
+        const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
+        if (existingIndex < 0) return prev;
+        const original = prev[existingIndex];
+        const cp = original.currentPrice;
+        let difference: number | null = null;
+        if (cp > 0) {
+          difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
+        }
+        const buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...original,
+          fairPrice,
+          difference,
+          buySell
+        };
+        return updated;
+      });
+      setActiveAlertToast(`Справедливата цена на ${cleanSym} ($${fairPrice.toFixed(2)}) беше запазена в таблицата!`);
+      setTimeout(() => setActiveAlertToast(null), 4000);
+    }}
+  />
 
   {/* Financial Statements Flags Modal */}
   <FinancialFlagsModal

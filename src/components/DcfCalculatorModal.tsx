@@ -390,6 +390,17 @@ export default function DcfCalculatorModal({
             )}
 
             <button
+              type="button"
+              onClick={() => {
+                window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
+              }}
+              className="p-1.5 text-stone-400 hover:text-white hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+              title="Отвори в нов прозорец"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </button>
+
+            <button
               onClick={onClose}
               className="p-1.5 text-stone-400 hover:text-white hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
               title="Затвори"
