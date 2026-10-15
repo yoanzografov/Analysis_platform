@@ -693,12 +693,15 @@ const baselinePrices: Record<string, { price: number; name: string; pe?: number;
   "MSTR": { price: 1450.40, name: "MicroStrategy Incorporated", pe: null, eps: -2.31 },
 
   // Indices
-  "^GSPC": { price: 5122.40, name: "S&P 500" },
-  "^DJI": { price: 38991.60, name: "Dow Jones Industrial Average" },
-  "^IXIC": { price: 16012.30, name: "NASDAQ Composite" },
-  "^GDAXI": { price: 18124.50, name: "DAX Index" },
-  "^N225": { price: 39122.10, name: "Nikkei 225" },
-  "^FTSE": { price: 7932.40, name: "FTSE 100" }
+  "^GSPC": { price: 7748.40, name: "S&P 500" },
+  "^NDX": { price: 29917.60, name: "NASDAQ 100" },
+  "^IXIC": { price: 26713.00, name: "NASDAQ Composite" },
+  "^DJI": { price: 52213.70, name: "Dow Jones Industrial Average" },
+  "^RUT": { price: 2753.30, name: "Russell 2000" },
+  "^VIX": { price: 16.62, name: "CBOE Volatility Index" },
+  "^GDAXI": { price: 25382.60, name: "DAX Index" },
+  "^N225": { price: 64426.00, name: "Nikkei 225" },
+  "^FTSE": { price: 10840.40, name: "FTSE 100" }
 };
 
 interface StockQuoteData {
@@ -2479,14 +2482,19 @@ app.get("/api/stock-quotes", async (req, res) => {
         if (tvResponse.ok) {
           const tvData = await tvResponse.json();
           if (tvData?.data?.[0]?.d) {
-            const vixData = tvData.data[0].d;
+            const vixClose = parseFloat(vixData[0].toFixed(2));
+            const vixPct = parseFloat(vixData[1].toFixed(2));
+            const vixChangeAbs = typeof vixData[2] === 'number' 
+              ? parseFloat(vixData[2].toFixed(2)) 
+              : parseFloat((vixClose - (vixClose / (1 + vixPct / 100))).toFixed(2));
             results["^VIX"] = {
               ...(results["^VIX"] || {}),
-              currentPrice: parseFloat(vixData[0].toFixed(2)),
-              dailyChangePct: parseFloat(vixData[1].toFixed(2)),
+              currentPrice: vixClose,
+              dailyChangePct: vixPct,
+              changeVal: vixChangeAbs,
               companyName: "CBOE Volatility Index",
             };
-            serverPriceCache["^VIX"] = vixData[0];
+            serverPriceCache["^VIX"] = vixClose;
           }
         }
       } catch (err) {

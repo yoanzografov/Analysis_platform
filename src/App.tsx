@@ -605,15 +605,18 @@ export default function App() {
     try {
       const mappedStockTickers = combinedTickers.map(t => TICKER_YAHOO_MAP[t.trim().toUpperCase()] || t);
       const defaultIndexTickers = [
-        '^GSPC', '^NDX', '^IXIC', '^DJI', '^VIX',
-        '^FTSE', '^FCHI', '^GDAXI', '^N100', '^STOXX50E',
+        '^GSPC', '^NDX', '^IXIC', '^DJI', '^RUT', '^VIX', 'DX-Y.NYB',
+        '^FTSE', '^FCHI', '^GDAXI', '^N100', '^STOXX50E', '^IBEX', '^SSMI',
         '000001.SS', '^N225', '^HSI', '^AXJO', '^KS11',
         'CL=F', 'BZ=F', 'GC=F', 'SI=F', 'HG=F', 'NG=F', 'PL=F',
-        'EURUSD=X', 'JPY=X', 'GBP=X', 'USDAUD=X', 'USDCAD=X', 'USDMXN=X', 'USDHKD=X', 'BTC-USD'
+        'EURUSD=X', 'JPY=X', 'GBPUSD=X', 'USDAUD=X', 'USDCAD=X', 'USDMXN=X', 'USDHKD=X', 'USDCHF=X',
+        'BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD', 'ADA-USD', 'DOGE-USD',
+        '^TNX', '^TYX', '^FVX', '^IRX'
       ];
-      const indexTickers = indices.length > 0
-        ? (indices.map(idx => idx.ticker).filter(Boolean) as string[])
-        : defaultIndexTickers;
+      const indexTickers = Array.from(new Set([
+        ...defaultIndexTickers,
+        ...(indices.map(idx => idx.ticker).filter(Boolean) as string[])
+      ]));
       const allSymbols = Array.from(new Set([...combinedTickers, ...mappedStockTickers, ...indexTickers]));
 
       const response = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(allSymbols.join(','))}`, { cache: 'no-store' });
@@ -717,17 +720,30 @@ export default function App() {
        if (typeof quote.currentPrice === 'number' && quote.currentPrice > 0) {
          currentPrice = quote.currentPrice;
        }
-       if (typeof quote.dailyChangePct === 'number' && !isNaN(quote.dailyChangePct) && quote.dailyChangePct !== 0) {
+       if (typeof quote.dailyChangePct === 'number' && !isNaN(quote.dailyChangePct)) {
          dailyChangePct = quote.dailyChangePct;
        }
-       if (typeof quote.changeVal === 'number' && !isNaN(quote.changeVal) && quote.changeVal !== 0) {
+       if (typeof quote.changeVal === 'number' && !isNaN(quote.changeVal)) {
          changeVal = quote.changeVal;
+       } else if (currentPrice > 0 && typeof quote.dailyChangePct === 'number') {
+         const prevPrice = currentPrice / (1 + quote.dailyChangePct / 100);
+         changeVal = currentPrice - prevPrice;
        }
      }
 
+     // Mathematical consistency guard: ensure changeVal matches dailyChangePct
      if (changeVal === 0 && currentPrice > 0 && dailyChangePct !== 0) {
        const prevPrice = currentPrice / (1 + dailyChangePct / 100);
        changeVal = currentPrice - prevPrice;
+     }
+
+     // Strict sign consistency guard: changeVal must NEVER contradict dailyChangePct
+     if (dailyChangePct > 0 && changeVal < 0) {
+       changeVal = Math.abs(changeVal);
+     } else if (dailyChangePct < 0 && changeVal > 0) {
+       changeVal = -Math.abs(changeVal);
+     } else if (dailyChangePct === 0) {
+       changeVal = 0;
      }
 
      return {
@@ -1010,11 +1026,16 @@ export default function App() {
           // 4. Exclude tickers explicitly deleted by the user
           const migratedStocks = Array.from(stocksMap.values()).filter(s => !deletedSet.has(s.ticker.toUpperCase()));
           setStocks(migratedStocks);
-          if (data.indices && Array.isArray(data.indices) && data.indices.length > 0) {
+          const { indices: fallbackIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
+          if (data.indices && Array.isArray(data.indices) && data.indices.length >= fallbackIndices.length) {
             setIndices(data.indices);
           } else {
-            const { indices: fallbackIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
-            setIndices(fallbackIndices);
+            const userIndexMap = new Map((data.indices || []).map((idx: MarketIndex) => [idx.ticker || idx.name, idx]));
+            const mergedIndices = fallbackIndices.map(defIdx => {
+              const key = defIdx.ticker || defIdx.name;
+              return userIndexMap.get(key) || defIdx;
+            });
+            setIndices(mergedIndices);
           }
           
           if (Array.isArray(data.alerts)) setAlerts(data.alerts);
@@ -1433,10 +1454,20 @@ export default function App() {
  return currentIndexs.map(idx => {
  if (Math.random() > 0.5) {
  const change = (Math.random() * 0.1 - 0.05);
+ const nextVal = parseFloat((idx.value * (1 + change / 100)).toFixed(2));
+ const nextPct = parseFloat((idx.changePct + change).toFixed(2));
+ let nextChangeVal = idx.changeVal ?? 0;
+ if (nextVal > 0 && nextPct !== 0) {
+   const prevPrice = nextVal / (1 + nextPct / 100);
+   nextChangeVal = parseFloat((nextVal - prevPrice).toFixed(2));
+ }
+ if (nextPct > 0 && nextChangeVal < 0) nextChangeVal = Math.abs(nextChangeVal);
+ if (nextPct < 0 && nextChangeVal > 0) nextChangeVal = -Math.abs(nextChangeVal);
  return {
  ...idx,
- value: parseFloat((idx.value * (1 + change / 100)).toFixed(2)),
- changePct: parseFloat((idx.changePct + change).toFixed(2)),
+ value: nextVal,
+ changePct: nextPct,
+ changeVal: nextChangeVal,
  };
  }
  return idx;
@@ -1447,6 +1478,14 @@ export default function App() {
 
  return () => clearInterval(interval);
  }, [isSimulating, alerts]);
+
+ // Periodic background auto-refresh of live stock & index quotes (every 60 seconds)
+ useEffect(() => {
+   const autoRefreshInterval = setInterval(() => {
+     fetchRealStockPricesDirect();
+   }, 60000);
+   return () => clearInterval(autoRefreshInterval);
+ }, []);
 
  // Alert threshold logic evaluator
  const prevPricesRef = useRef<Record<string, number>>({});

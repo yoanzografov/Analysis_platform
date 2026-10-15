@@ -23,16 +23,20 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     // US Markets
     '^GSPC': 'OANDA:SPX500USD',
     '^NDX': 'OANDA:NAS100USD',
-    '^IXIC': 'OANDA:NAS100USD',
+    '^IXIC': 'NASDAQ:IXIC',
     '^DJI': 'OANDA:US30USD',
+    '^RUT': 'OANDA:US2000USD',
     '^VIX': 'TVC:VIX',
+    'DX-Y.NYB': 'TVC:DXY',
 
     // European Markets
     '^FTSE': 'OANDA:UK100GBP',
     '^FCHI': 'OANDA:FR40EUR',
     '^GDAXI': 'OANDA:DE30EUR',
-    '^N100': 'OANDA:EU50EUR',
+    '^N100': 'INDEX:N100',
     '^STOXX50E': 'OANDA:EU50EUR', 
+    '^IBEX': 'OANDA:ES35EUR',
+    '^SSMI': 'OANDA:CH20CHF',
 
     // Asian Markets
     '000001.SS': 'TVC:SHCOMP',
@@ -61,7 +65,6 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     'USDAUD=X': 'OANDA:USDAUD',
     'USDMXN=X': 'OANDA:USDMXN',
     'USDHKD=X': 'OANDA:USDHKD',
-    'DX-Y.NYB': 'TVC:DXY',
 
     // Crypto
     'BTC-USD': 'COINBASE:BTCUSD',
@@ -74,8 +77,9 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
 
     // Bonds
     '^TNX': 'TVC:US10Y',
-    '^IRX': 'TVC:US02Y',
     '^TYX': 'TVC:US30Y',
+    '^FVX': 'TVC:US05Y',
+    '^IRX': 'TVC:US03M',
     // Popular European ETFs & Stocks
     'XNAS': 'XETR:XNAS',
     'XNAS.DE': 'XETR:XNAS',

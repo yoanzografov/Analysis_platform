@@ -120,28 +120,30 @@ export default function IndicesStrip({ indices }: Props) {
   ];
 
   const FALLBACK_CRYPTO: MarketIndex[] = [
-    { name: 'Bitcoin (BTC)', value: 62919.60, changePct: -2.79, ticker: 'BTC-USD', changeVal: -1804.43, category: 'Crypto' },
-    { name: 'Ethereum (ETH)', value: 3450.20, changePct: 1.85, ticker: 'ETH-USD', changeVal: 62.70, category: 'Crypto' },
-    { name: 'Solana (SOL)', value: 152.40, changePct: 4.12, ticker: 'SOL-USD', changeVal: 6.02, category: 'Crypto' },
-    { name: 'Binance Coin (BNB)', value: 575.80, changePct: 0.95, ticker: 'BNB-USD', changeVal: 5.40, category: 'Crypto' },
+    { name: 'Bitcoin (BTC)', value: 82376.15, changePct: 0.79, ticker: 'BTC-USD', changeVal: 649.18, category: 'Crypto' },
+    { name: 'Ethereum (ETH)', value: 2448.84, changePct: 0.86, ticker: 'ETH-USD', changeVal: 20.99, category: 'Crypto' },
+    { name: 'Solana (SOL)', value: 105.95, changePct: 1.80, ticker: 'SOL-USD', changeVal: 1.87, category: 'Crypto' },
+    { name: 'Binance Coin (BNB)', value: 733.36, changePct: 0.59, ticker: 'BNB-USD', changeVal: 4.28, category: 'Crypto' },
+    { name: 'Ripple (XRP)', value: 1.45, changePct: 1.12, ticker: 'XRP-USD', changeVal: 0.02, category: 'Crypto' },
+    { name: 'Cardano (ADA)', value: 0.72, changePct: 0.45, ticker: 'ADA-USD', changeVal: 0.00, category: 'Crypto' },
+    { name: 'Dogecoin (DOGE)', value: 0.22, changePct: 2.30, ticker: 'DOGE-USD', changeVal: 0.01, category: 'Crypto' },
   ];
 
   const FALLBACK_CURRENCIES: MarketIndex[] = [
-    { name: 'EUR/USD', value: 1.15, changePct: 0.06, ticker: 'EURUSD=X', changeVal: 0.00, category: 'Currencies' },
-    { name: 'USD/JPY', value: 157.99, changePct: -1.01, ticker: 'JPY=X', changeVal: -1.62, category: 'Currencies' },
-    { name: 'USD/GBP', value: 0.74, changePct: -0.17, ticker: 'GBP=X', changeVal: -0.00, category: 'Currencies' },
-    { name: 'USD/AUD', value: 1.42, changePct: -0.19, ticker: 'USDAUD=X', changeVal: -0.00, category: 'Currencies' },
-    { name: 'USD/CAD', value: 1.40, changePct: 0.05, ticker: 'USDCAD=X', changeVal: 0.00, category: 'Currencies' },
-    { name: 'USD/MXN', value: 17.31, changePct: -0.10, ticker: 'USDMXN=X', changeVal: -0.02, category: 'Currencies' },
-    { name: 'USD/HKD', value: 7.84, changePct: -0.01, ticker: 'USDHKD=X', changeVal: -0.00, category: 'Currencies' },
+    { name: 'EUR/USD', value: 1.1212, changePct: 0.49, ticker: 'EURUSD=X', changeVal: 0.01, category: 'Currencies' },
+    { name: 'GBP/USD', value: 1.3270, changePct: 0.61, ticker: 'GBPUSD=X', changeVal: 0.01, category: 'Currencies' },
+    { name: 'USD/JPY', value: 158.14, changePct: -0.09, ticker: 'JPY=X', changeVal: -0.15, category: 'Currencies' },
+    { name: 'USD/CAD', value: 1.4189, changePct: -0.31, ticker: 'USDCAD=X', changeVal: -0.00, category: 'Currencies' },
+    { name: 'USD/AUD', value: 1.4448, changePct: 0.77, ticker: 'USDAUD=X', changeVal: 0.01, category: 'Currencies' },
+    { name: 'USD/CHF', value: 0.9025, changePct: -0.20, ticker: 'USDCHF=X', changeVal: -0.00, category: 'Currencies' },
+    { name: 'USD/MXN', value: 18.41, changePct: -0.33, ticker: 'USDMXN=X', changeVal: -0.06, category: 'Currencies' },
   ];
 
   const FALLBACK_BONDS: MarketIndex[] = [
-    { name: 'US 10Y Yield', value: 4.22, changePct: -0.85, ticker: '^TNX', changeVal: -0.036, category: 'Bonds (Облигации)' },
-    { name: 'US 2Y Yield', value: 4.48, changePct: -0.62, ticker: '^IRX', changeVal: -0.028, category: 'Bonds (Облигации)' },
-    { name: 'US 30Y Yield', value: 4.45, changePct: -0.71, ticker: '^TYX', changeVal: -0.032, category: 'Bonds (Облигации)' },
-    { name: 'Germany 10Y Yield', value: 2.51, changePct: -0.40, ticker: 'TMBMKDE-10Y', changeVal: -0.01, category: 'Bonds (Облигации)' },
-    { name: 'UK 10Y Yield', value: 4.16, changePct: -0.32, ticker: 'TMBMKGB-10Y', changeVal: -0.013, category: 'Bonds (Облигации)' },
+    { name: 'US 10Y Yield', value: 5.09, changePct: -1.99, ticker: '^TNX', changeVal: -0.10, category: 'Bonds (Облигации)' },
+    { name: 'US 30Y Yield', value: 5.43, changePct: -1.79, ticker: '^TYX', changeVal: -0.10, category: 'Bonds (Облигации)' },
+    { name: 'US 5Y Yield', value: 4.90, changePct: -1.50, ticker: '^FVX', changeVal: -0.07, category: 'Bonds (Облигации)' },
+    { name: 'US 13W T-Bill', value: 4.09, changePct: 0.07, ticker: '^IRX', changeVal: 0.00, category: 'Bonds (Облигации)' },
   ];
 
   // Filter indices based on active category with guaranteed item lists
@@ -260,7 +262,7 @@ export default function IndicesStrip({ indices }: Props) {
                     }`}
                   >
                     <span>
-                      {isPositive ? '+' : ''}{safeVal.toFixed(2)} {isPositive ? '+' : ''}{safePct.toFixed(2)}%
+                      {isPositive ? '+' : ''}{safeVal.toFixed(2)} ({isPositive ? '+' : ''}{safePct.toFixed(2)}%)
                     </span>
                   </div>
 
