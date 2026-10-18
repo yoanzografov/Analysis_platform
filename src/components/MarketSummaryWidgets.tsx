@@ -390,22 +390,22 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
   // All 12 macro indicator stats — official data from BLS, BEA, Fed, Conference Board
   // Format: investing.com style — Release Date (publication date), Actual, Forecast, Previous
-  // Last updated: August 2026
+  // Last updated: October 2026
   useEffect(() => {
-    // Verified fallback stats (updated August 2026)
+    // Verified fallback stats (updated October 2026)
     const initialStats: Record<number, IndicatorStats> = {
-      1:  { releaseDate: 'Aug 12, 2026', actual: '2.9%',   forecast: '3.0%',   previous: '3.0%',   lowerIsBetter: true  },
-      2:  { releaseDate: 'Aug 12, 2026', actual: '3.2%',   forecast: '3.2%',   previous: '3.3%',   lowerIsBetter: true  },
-      3:  { releaseDate: 'Aug 26, 2026', actual: '3.3%',   forecast: '3.3%',   previous: '3.3%',   lowerIsBetter: true  },
-      4:  { releaseDate: 'Aug 26, 2026', actual: '3.3%',   forecast: '3.3%',   previous: '3.3%',   lowerIsBetter: true  },
-      5:  { releaseDate: 'Jul 30, 2026', actual: '5.25%',  forecast: '5.25%',  previous: '5.50%',  lowerIsBetter: true  },
-      6:  { releaseDate: 'Aug 7, 2026',  actual: '+114K',  forecast: '+175K',  previous: '+179K',  lowerIsBetter: false },
-      7:  { releaseDate: 'Aug 7, 2026',  actual: '+114K',  forecast: '+175K',  previous: '+179K',  lowerIsBetter: false },
-      8:  { releaseDate: 'Aug 7, 2026',  actual: '4.3%',   forecast: '4.1%',   previous: '4.1%',   lowerIsBetter: true  },
-      9:  { releaseDate: 'Jul 30, 2026', actual: '+2.8%',  forecast: '+2.0%',  previous: '+1.4%',  lowerIsBetter: false },
-      10: { releaseDate: 'Aug 15, 2026', actual: '+1.0%',  forecast: '+0.3%',  previous: '-0.2%',  lowerIsBetter: false },
-      11: { releaseDate: 'Jul 30, 2026', actual: '100.3',  forecast: '99.7',   previous: '97.8',   lowerIsBetter: false },
-      12: { releaseDate: 'Aug 16, 2026', actual: '1.238M', forecast: '1.330M', previous: '1.329M', lowerIsBetter: false },
+      1:  { releaseDate: 'Oct 14, 2026', actual: '3.7%',   forecast: '3.6%',   previous: '3.4%',   lowerIsBetter: false },
+      2:  { releaseDate: 'Oct 14, 2026', actual: '2.6%',   forecast: '2.6%',   previous: '2.4%',   lowerIsBetter: false },
+      3:  { releaseDate: 'Sep 25, 2026', actual: '3.4%',   forecast: '3.4%',   previous: '3.4%',   lowerIsBetter: true  },
+      4:  { releaseDate: 'Sep 25, 2026', actual: '3.0%',   forecast: '3.0%',   previous: '3.0%',   lowerIsBetter: true  },
+      5:  { releaseDate: 'Sep 16, 2026', actual: '3.64%',  forecast: '3.75%',  previous: '3.64%',  lowerIsBetter: true  },
+      6:  { releaseDate: 'Oct 2, 2026',  actual: '+29K',   forecast: '+140K',  previous: '+133K',  lowerIsBetter: false },
+      7:  { releaseDate: 'Oct 2, 2026',  actual: '+29K',   forecast: '+140K',  previous: '+133K',  lowerIsBetter: false },
+      8:  { releaseDate: 'Oct 2, 2026',  actual: '4.2%',   forecast: '4.2%',   previous: '4.1%',   lowerIsBetter: true  },
+      9:  { releaseDate: 'Sep 24, 2026', actual: '+2.2%',  forecast: '+2.2%',  previous: '+2.5%',  lowerIsBetter: false },
+      10: { releaseDate: 'Oct 15, 2026', actual: '+0.8%',  forecast: '+0.4%',  previous: '+1.3%',  lowerIsBetter: false },
+      11: { releaseDate: 'Sep 29, 2026', actual: '51.7',   forecast: '53.0',   previous: '55.2',   lowerIsBetter: false },
+      12: { releaseDate: 'Sep 18, 2026', actual: '1.275M', forecast: '1.310M', previous: '1.309M', lowerIsBetter: false },
     };
 
     setIndicatorStats(initialStats);
@@ -439,6 +439,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 if (targetId && nextStats[targetId]) {
                   nextStats[targetId] = {
                     ...nextStats[targetId],
+                    releaseDate: (item.releaseDate && item.releaseDate !== 'N/A') ? item.releaseDate : nextStats[targetId].releaseDate,
                     actual: (item.actual && item.actual !== 'N/A') ? item.actual : nextStats[targetId].actual,
                     previous: (item.previous && item.previous !== 'N/A') ? item.previous : nextStats[targetId].previous,
                     forecast: (item.forecast && item.forecast !== 'N/A') ? item.forecast : nextStats[targetId].forecast
