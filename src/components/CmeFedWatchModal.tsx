@@ -105,23 +105,23 @@ export default function CmeFedWatchModal({ onClose }: Props) {
                 <Percent size={14} className="text-emerald-400" />
                 Очаквана Лихва (Target Rate Probabilities)
               </span>
-              <span className="text-xs text-stone-400 font-mono">Текуща: 5.25% - 5.50%</span>
+              <span className="text-xs text-stone-400 font-mono">Текуща: 3.75% - 4.00%</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-1">
               <div className="bg-[#131722] p-3 rounded-lg border border-[#2a2e39] flex flex-col gap-1">
-                <span className="text-[11px] text-stone-400">Без промяна (5.25% - 5.50%)</span>
-                <span className="text-base font-extrabold text-emerald-400 font-mono">87.5%</span>
+                <span className="text-[11px] text-stone-400">Без промяна (3.75% - 4.00%)</span>
+                <span className="text-base font-extrabold text-emerald-400 font-mono">85.0%</span>
                 <div className="w-full bg-stone-800 h-1.5 rounded-full overflow-hidden mt-1">
-                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '87.5%' }}></div>
+                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '85%' }}></div>
                 </div>
               </div>
 
               <div className="bg-[#131722] p-3 rounded-lg border border-[#2a2e39] flex flex-col gap-1">
-                <span className="text-[11px] text-stone-400">Намаление -25 bps (5.00% - 5.25%)</span>
-                <span className="text-base font-extrabold text-indigo-400 font-mono">12.5%</span>
+                <span className="text-[11px] text-stone-400">Намаление -25 bps (3.50% - 3.75%)</span>
+                <span className="text-base font-extrabold text-indigo-400 font-mono">15.0%</span>
                 <div className="w-full bg-stone-800 h-1.5 rounded-full overflow-hidden mt-1">
-                  <div className="bg-indigo-500 h-full rounded-full" style={{ width: '12.5%' }}></div>
+                  <div className="bg-indigo-500 h-full rounded-full" style={{ width: '15%' }}></div>
                 </div>
               </div>
             </div>

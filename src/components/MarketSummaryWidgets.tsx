@@ -252,18 +252,18 @@ function getNextIndicatorDate(id: number, now: Date = new Date()): Date {
     case 1: // CPI
     case 2: // Core CPI
     {
-      let date = new Date(Date.UTC(currentYear, currentMonth, 12, 12, 30, 0));
+      let date = new Date(Date.UTC(currentYear, currentMonth, 12, 13, 30, 0));
       if (date.getTime() <= now.getTime()) {
-        date = new Date(Date.UTC(currentYear, currentMonth + 1, 12, 12, 30, 0));
+        date = new Date(Date.UTC(currentYear, currentMonth + 1, 12, 13, 30, 0));
       }
       return date;
     }
     case 3: // PCE
     case 4: // Core PCE
     {
-      let date = new Date(Date.UTC(currentYear, currentMonth, 28, 12, 30, 0));
+      let date = new Date(Date.UTC(currentYear, currentMonth, 30, 12, 30, 0));
       if (date.getTime() <= now.getTime()) {
-        date = new Date(Date.UTC(currentYear, currentMonth + 1, 28, 12, 30, 0));
+        date = new Date(Date.UTC(currentYear, currentMonth + 1, 30, 12, 30, 0));
       }
       return date;
     }
@@ -288,43 +288,47 @@ function getNextIndicatorDate(id: number, now: Date = new Date()): Date {
       }
       return date;
     }
-    case 9: // GDP Growth Rate
+    case 9: // GDP Growth Rate (monthly Advance / Second / Third BEA estimate)
     {
-      const gdpMonths = [0, 3, 6, 9];
-      for (const m of gdpMonths) {
-        const date = new Date(Date.UTC(currentYear, m, 27, 12, 30, 0));
-        if (date.getTime() > now.getTime()) return date;
+      let date = new Date(Date.UTC(currentYear, currentMonth, 29, 12, 30, 0));
+      if (date.getTime() <= now.getTime()) {
+        date = new Date(Date.UTC(currentYear, currentMonth + 1, 29, 12, 30, 0));
       }
-      return new Date(Date.UTC(currentYear + 1, 0, 27, 12, 30, 0));
+      return date;
     }
     case 10: // Retail Sales
     {
-      let date = new Date(Date.UTC(currentYear, currentMonth, 14, 12, 30, 0));
+      let date = new Date(Date.UTC(currentYear, currentMonth, 15, 13, 30, 0));
       if (date.getTime() <= now.getTime()) {
-        date = new Date(Date.UTC(currentYear, currentMonth + 1, 14, 12, 30, 0));
+        date = new Date(Date.UTC(currentYear, currentMonth + 1, 15, 13, 30, 0));
       }
       return date;
     }
-    case 11: // Consumer Confidence (CCI)
+    case 11: // Consumer Sentiment (UMich — 2nd & 4th Friday of each month at 14:00 UTC)
     {
-      const getLastTuesday = (y: number, m: number) => {
-        let d = new Date(Date.UTC(y, m + 1, 0, 14, 0, 0));
-        while (d.getUTCDay() !== 2) {
-          d.setUTCDate(d.getUTCDate() - 1);
+      const getNthFriday = (y: number, m: number, n: number) => {
+        let d = new Date(Date.UTC(y, m, 1, 14, 0, 0));
+        while (d.getUTCDay() !== 5) {
+          d.setUTCDate(d.getUTCDate() + 1);
         }
+        d.setUTCDate(d.getUTCDate() + (n - 1) * 7);
         return d;
       };
-      let date = getLastTuesday(currentYear, currentMonth);
-      if (date.getTime() <= now.getTime()) {
-        date = getLastTuesday(currentYear, currentMonth + 1);
+      const candidates = [
+        getNthFriday(currentYear, currentMonth, 2),
+        getNthFriday(currentYear, currentMonth, 4),
+        getNthFriday(currentYear, currentMonth + 1, 2),
+      ];
+      for (const c of candidates) {
+        if (c.getTime() > now.getTime()) return c;
       }
-      return date;
+      return candidates[candidates.length - 1];
     }
     case 12: // Housing Starts & Permits
     {
-      let date = new Date(Date.UTC(currentYear, currentMonth, 18, 12, 30, 0));
+      let date = new Date(Date.UTC(currentYear, currentMonth, 19, 12, 30, 0));
       if (date.getTime() <= now.getTime()) {
-        date = new Date(Date.UTC(currentYear, currentMonth + 1, 18, 12, 30, 0));
+        date = new Date(Date.UTC(currentYear, currentMonth + 1, 19, 12, 30, 0));
       }
       return date;
     }
@@ -388,7 +392,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     return () => clearInterval(interval);
   }, []);
 
-  // All 12 macro indicator stats — official data from BLS, BEA, Fed, Conference Board
+  // All 12 macro indicator stats — official data from BLS, BEA, Fed, Univ. of Michigan
   // Format: investing.com style — Release Date (publication date), Actual, Forecast, Previous
   // Last updated: October 2026
   useEffect(() => {
@@ -396,16 +400,16 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
     const initialStats: Record<number, IndicatorStats> = {
       1:  { releaseDate: 'Oct 14, 2026', actual: '3.7%',   forecast: '3.6%',   previous: '3.4%',   lowerIsBetter: false },
       2:  { releaseDate: 'Oct 14, 2026', actual: '2.6%',   forecast: '2.6%',   previous: '2.4%',   lowerIsBetter: false },
-      3:  { releaseDate: 'Sep 25, 2026', actual: '3.4%',   forecast: '3.4%',   previous: '3.4%',   lowerIsBetter: true  },
-      4:  { releaseDate: 'Sep 25, 2026', actual: '3.0%',   forecast: '3.0%',   previous: '3.0%',   lowerIsBetter: true  },
-      5:  { releaseDate: 'Sep 16, 2026', actual: '3.64%',  forecast: '3.75%',  previous: '3.64%',  lowerIsBetter: true  },
+      3:  { releaseDate: 'Sep 30, 2026', actual: '3.4%',   forecast: '3.4%',   previous: '3.4%',   lowerIsBetter: true  },
+      4:  { releaseDate: 'Sep 30, 2026', actual: '3.0%',   forecast: '3.0%',   previous: '3.0%',   lowerIsBetter: true  },
+      5:  { releaseDate: 'Sep 16, 2026', actual: '3.75%',  forecast: '3.75%',  previous: '3.63%',  lowerIsBetter: true  },
       6:  { releaseDate: 'Oct 2, 2026',  actual: '+29K',   forecast: '+140K',  previous: '+133K',  lowerIsBetter: false },
       7:  { releaseDate: 'Oct 2, 2026',  actual: '+29K',   forecast: '+140K',  previous: '+133K',  lowerIsBetter: false },
       8:  { releaseDate: 'Oct 2, 2026',  actual: '4.2%',   forecast: '4.2%',   previous: '4.1%',   lowerIsBetter: true  },
-      9:  { releaseDate: 'Sep 24, 2026', actual: '+2.2%',  forecast: '+2.2%',  previous: '+2.5%',  lowerIsBetter: false },
+      9:  { releaseDate: 'Sep 30, 2026', actual: '+2.2%',  forecast: '+2.2%',  previous: '+2.5%',  lowerIsBetter: false },
       10: { releaseDate: 'Oct 15, 2026', actual: '+0.8%',  forecast: '+0.4%',  previous: '+1.3%',  lowerIsBetter: false },
-      11: { releaseDate: 'Sep 29, 2026', actual: '51.7',   forecast: '53.0',   previous: '55.2',   lowerIsBetter: false },
-      12: { releaseDate: 'Sep 18, 2026', actual: '1.275M', forecast: '1.310M', previous: '1.309M', lowerIsBetter: false },
+      11: { releaseDate: 'Oct 6, 2026',  actual: '51.7',   forecast: '53.0',   previous: '55.2',   lowerIsBetter: false },
+      12: { releaseDate: 'Sep 22, 2026', actual: '1.275M', forecast: '1.310M', previous: '1.309M', lowerIsBetter: false },
     };
 
     setIndicatorStats(initialStats);
@@ -433,7 +437,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 else if (nameUpper.includes('UNEMPLOYMENT')) targetId = 8;
                 else if (nameUpper.includes('GDP')) targetId = 9;
                 else if (nameUpper.includes('RETAIL')) targetId = 10;
-                else if (nameUpper.includes('CONSUMER CONFIDENCE')) targetId = 11;
+                else if (nameUpper.includes('CONSUMER CONFIDENCE') || nameUpper.includes('CONSUMER SENTIMENT')) targetId = 11;
                 else if (nameUpper.includes('HOUSING')) targetId = 12;
 
                 if (targetId && nextStats[targetId]) {
@@ -725,7 +729,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
 
           {/* Section Divider */}
           <div className="pt-2 border-t border-border/30">
-            <span className="text-[11px] font-extrabold uppercase text-white tracking-wider block mb-1">
+            <span className="text-[11px] font-extrabold uppercase text-ink tracking-wider block mb-1">
               Макроикономически Индикатори
             </span>
           </div>
@@ -783,9 +787,9 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 const missesForecast =
                   !isNaN(actualNum) && !isNaN(forecastNum) &&
                   (d.lowerIsBetter ? actualNum > forecastNum : actualNum < forecastNum);
-                const actualColor = beatsForecast ? 'text-emerald-400' : missesForecast ? 'text-red-400' : 'text-white';
+                const actualColor = beatsForecast ? 'text-emerald-400' : missesForecast ? 'text-red-400' : 'text-ink';
                 return (
-                  <div className="mt-2 grid grid-cols-4 bg-bg/60 rounded-lg border border-border/30 overflow-hidden" onClick={e => e.preventDefault()}>
+                  <div className="mt-2 grid grid-cols-4 bg-bg/60 rounded-lg border border-border/30 overflow-hidden">
                     <div className="flex flex-col items-center px-1 py-1.5 border-r border-border/30">
                       <span className="text-[8px] text-ink-faint uppercase tracking-wide font-bold whitespace-nowrap">Release</span>
                       <span className="text-[8px] text-ink-faint font-mono text-center leading-tight mt-0.5">{d.releaseDate}</span>

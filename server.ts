@@ -1016,34 +1016,51 @@ let cachedInflationData: any = null;
 let lastInflationFetch: number = 0;
 const CACHE_MS = 1000 * 60 * 60 * 24; // 24 hours cache (FRED data updates daily)
 
+function formatFredDate(isoDate?: string): string | undefined {
+  if (!isoDate) return undefined;
+  const parts = isoDate.split('-');
+  if (parts.length !== 3) return undefined;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  if (m < 0 || m > 11 || isNaN(d)) return undefined;
+  return `${months[m]} ${d}, ${parts[0]}`;
+}
+
 // Fetch N latest observations for a FRED series
-async function fredFetch(seriesId: string, limit: number = 2): Promise<number[]> {
+async function fredFetch(seriesId: string, limit: number = 2): Promise<{ values: number[]; releaseDate?: string }> {
   const url = `${FRED_BASE}?series_id=${seriesId}&api_key=${FRED_API_KEY}&sort_order=desc&limit=${limit}&file_type=json`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`FRED ${seriesId} HTTP ${res.status}`);
   const json = await res.json();
   const obs: any[] = json.observations || [];
-  return obs
-    .filter((o: any) => o.value !== '.' && o.value !== '')
-    .map((o: any) => parseFloat(o.value));
+  const valid = obs.filter((o: any) => o.value !== '.' && o.value !== '');
+  const releaseDate = formatFredDate(valid[0]?.realtime_start || json.realtime_start);
+  return {
+    values: valid.map((o: any) => parseFloat(o.value)),
+    releaseDate
+  };
 }
 
 // Fetch N latest observations with dates for exact year-over-year matching
-async function fredFetchWithDates(seriesId: string, limit: number = 24): Promise<{ date: string; value: number }[]> {
+async function fredFetchWithDates(seriesId: string, limit: number = 24): Promise<{ obs: { date: string; value: number }[]; releaseDate?: string }> {
   const url = `${FRED_BASE}?series_id=${seriesId}&api_key=${FRED_API_KEY}&sort_order=desc&limit=${limit}&file_type=json`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`FRED ${seriesId} HTTP ${res.status}`);
   const json = await res.json();
-  const obs: any[] = json.observations || [];
-  return obs
-    .filter((o: any) => o.value !== '.' && o.value !== '' && o.date)
-    .map((o: any) => ({ date: String(o.date), value: parseFloat(o.value) }));
+  const rawObs: any[] = json.observations || [];
+  const valid = rawObs.filter((o: any) => o.value !== '.' && o.value !== '' && o.date);
+  const releaseDate = formatFredDate(valid[0]?.realtime_start || json.realtime_start);
+  return {
+    obs: valid.map((o: any) => ({ date: String(o.date), value: parseFloat(o.value) })),
+    releaseDate
+  };
 }
 
 // Calculate Year-over-Year % change matching exact year-ago date (prevents shift when FRED has missing '.' months)
-async function fredYoY(seriesId: string): Promise<{ actual: string; previous: string }> {
-  const obs = await fredFetchWithDates(seriesId, 24);
-  if (obs.length < 13) return { actual: 'N/A', previous: 'N/A' };
+async function fredYoY(seriesId: string): Promise<{ actual: string; previous: string; releaseDate?: string }> {
+  const { obs, releaseDate } = await fredFetchWithDates(seriesId, 24);
+  if (obs.length < 13) return { actual: 'N/A', previous: 'N/A', releaseDate };
 
   const byDate = new Map<string, number>();
   for (const item of obs) {
@@ -1066,57 +1083,62 @@ async function fredYoY(seriesId: string): Promise<{ actual: string; previous: st
   const yearAgoVal     = getYearAgoVal(latestObs.date, 12);
   const prevYearAgoVal = getYearAgoVal(prevObs.date, 13) ?? yearAgoVal;
 
-  if (!yearAgoVal || !prevYearAgoVal) return { actual: 'N/A', previous: 'N/A' };
+  if (!yearAgoVal || !prevYearAgoVal) return { actual: 'N/A', previous: 'N/A', releaseDate };
 
   const actual   = ((latestObs.value / yearAgoVal - 1) * 100).toFixed(1) + '%';
   const previous = ((prevObs.value / prevYearAgoVal - 1) * 100).toFixed(1) + '%';
-  return { actual, previous };
+  return { actual, previous, releaseDate };
 }
 
 // Get direct value (already a rate / index)
-async function fredDirect(seriesId: string, suffix: string = '%', decimals: number = 2): Promise<{ actual: string; previous: string }> {
-  const vals = await fredFetch(seriesId, 2);
-  if (vals.length < 1) return { actual: 'N/A', previous: 'N/A' };
+async function fredDirect(seriesId: string, suffix: string = '%', decimals: number = 2, plusSign: boolean = false): Promise<{ actual: string; previous: string; releaseDate?: string }> {
+  const { values: vals, releaseDate } = await fredFetch(seriesId, 2);
+  if (vals.length < 1) return { actual: 'N/A', previous: 'N/A', releaseDate };
+  const fmt = (v: number) => (plusSign && v >= 0 ? '+' : '') + v.toFixed(decimals) + suffix;
   return {
-    actual:   vals[0].toFixed(decimals) + suffix,
-    previous: vals.length > 1 ? vals[1].toFixed(decimals) + suffix : 'N/A'
+    actual:   fmt(vals[0]),
+    previous: vals.length > 1 ? fmt(vals[1]) : 'N/A',
+    releaseDate
   };
 }
 
 // NFP: monthly absolute change in thousands
-async function fredNFP(): Promise<{ actual: string; previous: string }> {
-  const vals = await fredFetch('PAYEMS', 3);
-  if (vals.length < 2) return { actual: 'N/A', previous: 'N/A' };
+async function fredNFP(): Promise<{ actual: string; previous: string; releaseDate?: string }> {
+  const { values: vals, releaseDate } = await fredFetch('PAYEMS', 3);
+  if (vals.length < 2) return { actual: 'N/A', previous: 'N/A', releaseDate };
   const latestChange = Math.round(vals[0] - vals[1]);
   const prevChange   = vals.length > 2 ? Math.round(vals[1] - vals[2]) : null;
   const fmt = (n: number) => (n >= 0 ? '+' : '') + n + 'K';
   return {
     actual:   fmt(latestChange),
-    previous: prevChange !== null ? fmt(prevChange) : 'N/A'
+    previous: prevChange !== null ? fmt(prevChange) : 'N/A',
+    releaseDate
   };
 }
 
 // Retail Sales: MoM % change
-async function fredRetailMoM(): Promise<{ actual: string; previous: string }> {
-  const vals = await fredFetch('RSAFS', 3);
-  if (vals.length < 2) return { actual: 'N/A', previous: 'N/A' };
+async function fredRetailMoM(): Promise<{ actual: string; previous: string; releaseDate?: string }> {
+  const { values: vals, releaseDate } = await fredFetch('RSAFS', 3);
+  if (vals.length < 2) return { actual: 'N/A', previous: 'N/A', releaseDate };
   const latestNum   = (vals[0] / vals[1] - 1) * 100;
   const previousNum = vals.length > 2 ? (vals[1] / vals[2] - 1) * 100 : null;
   const fmt = (n: number) => (n >= 0 ? '+' : '') + n.toFixed(1) + '%';
   return {
     actual:   fmt(latestNum),
-    previous: previousNum !== null ? fmt(previousNum) : 'N/A'
+    previous: previousNum !== null ? fmt(previousNum) : 'N/A',
+    releaseDate
   };
 }
 
 // Housing Starts: convert from thousands to M format
-async function fredHousing(): Promise<{ actual: string; previous: string }> {
-  const vals = await fredFetch('HOUST', 2);
-  if (vals.length < 1) return { actual: 'N/A', previous: 'N/A' };
+async function fredHousing(): Promise<{ actual: string; previous: string; releaseDate?: string }> {
+  const { values: vals, releaseDate } = await fredFetch('HOUST', 2);
+  if (vals.length < 1) return { actual: 'N/A', previous: 'N/A', releaseDate };
   const fmt = (v: number) => (v / 1000).toFixed(3) + 'M';
   return {
     actual:   fmt(vals[0]),
-    previous: vals.length > 1 ? fmt(vals[1]) : 'N/A'
+    previous: vals.length > 1 ? fmt(vals[1]) : 'N/A',
+    releaseDate
   };
 }
 
@@ -1133,35 +1155,45 @@ app.get("/api/inflation-data", async (req, res) => {
       fedFunds, nfp, unemployment, gdp,
       retail, confidence, housing
     ] = await Promise.allSettled([
-      fredYoY('CPIAUCSL'),                   // 1. CPI YoY%
-      fredYoY('CPILFESL'),                   // 2. Core CPI YoY%
-      fredYoY('PCEPI'),                      // 3. PCE YoY%
-      fredYoY('PCEPILFE'),                   // 4. Core PCE YoY%
-      fredDirect('FEDFUNDS', '%', 2),        // 5. Fed Funds Rate
-      fredNFP(),                              // 6&7. NFP monthly change
-      fredDirect('UNRATE', '%', 1),          // 8. Unemployment Rate
-      fredDirect('A191RL1Q225SBEA', '%', 1), // 9. GDP Growth Rate (annualized)
-      fredRetailMoM(),                        // 10. Retail Sales MoM
-      fredDirect('UMCSENT', '', 1),         // 11. Consumer Sentiment (Univ. of Michigan)
-      fredHousing()                           // 12. Housing Starts
+      fredYoY('CPIAUCSL'),                          // 1. CPI YoY%
+      fredYoY('CPILFESL'),                          // 2. Core CPI YoY%
+      fredYoY('PCEPI'),                             // 3. PCE YoY%
+      fredYoY('PCEPILFE'),                          // 4. Core PCE YoY%
+      fredDirect('FEDFUNDS', '%', 2),               // 5. Fed Funds Rate
+      fredNFP(),                                     // 6&7. NFP monthly change
+      fredDirect('UNRATE', '%', 1),                 // 8. Unemployment Rate
+      fredDirect('A191RL1Q225SBEA', '%', 1, true),  // 9. GDP Growth Rate (annualized)
+      fredRetailMoM(),                               // 10. Retail Sales MoM
+      fredDirect('UMCSENT', '', 1),                 // 11. Consumer Sentiment (Univ. of Michigan)
+      fredHousing()                                  // 12. Housing Starts
     ]);
 
-    const get = (r: PromiseSettledResult<any>, fallback: { actual: string; previous: string }) =>
-      r.status === 'fulfilled' ? r.value : fallback;
+    const get = (r: PromiseSettledResult<any>, fallback: { actual: string; previous: string; releaseDate: string }) => {
+      if (r.status === 'fulfilled' && r.value) {
+        return {
+          actual: r.value.actual !== 'N/A' ? r.value.actual : fallback.actual,
+          previous: r.value.previous !== 'N/A' ? r.value.previous : fallback.previous,
+          releaseDate: r.value.releaseDate || fallback.releaseDate
+        };
+      }
+      return fallback;
+    };
+
+    const fedRes = get(fedFunds, { actual: "3.75%", previous: "3.63%", releaseDate: "Sep 16, 2026" });
 
     const data = [
-      { name: "CPI (Inflation) YoY",      releaseDate: "Oct 14, 2026", forecast: "3.6%",   url: "https://www.bls.gov/cpi/",                                                                              ...get(cpi,        { actual: "3.7%",   previous: "3.4%"   }) },
-      { name: "Core CPI YoY",             releaseDate: "Oct 14, 2026", forecast: "2.6%",   url: "https://www.bls.gov/cpi/",                                                                              ...get(coreCpi,    { actual: "2.6%",   previous: "2.4%"   }) },
-      { name: "PCE Price Index YoY",      releaseDate: "Sep 25, 2026", forecast: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures",                                            ...get(pce,        { actual: "3.4%",   previous: "3.4%"   }) },
-      { name: "Core PCE Price Index YoY", releaseDate: "Sep 25, 2026", forecast: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy",      ...get(corePce,    { actual: "3.0%",   previous: "3.0%"   }) },
-      { name: "Fed Funds Rate",           releaseDate: "Sep 16, 2026", forecast: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",                                          ...get(fedFunds,   { actual: "3.64%",  previous: "3.64%"  }) },
-      { name: "Employment Situation",     releaseDate: "Oct 2, 2026",  forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,        { actual: "+29K",   previous: "+133K"  }) },
-      { name: "Non-Farm Payrolls",        releaseDate: "Oct 2, 2026",  forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,        { actual: "+29K",   previous: "+133K"  }) },
-      { name: "Unemployment Rate",        releaseDate: "Oct 2, 2026",  forecast: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment,{ actual: "4.2%",   previous: "4.1%"   }) },
-      { name: "GDP Growth Rate",          releaseDate: "Sep 24, 2026", forecast: "+2.2%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product",                                                   ...get(gdp,        { actual: "2.2%",   previous: "2.5%"   }) },
-      { name: "Retail Sales MoM",         releaseDate: "Oct 15, 2026", forecast: "+0.4%",  url: "https://www.census.gov/retail/index.html",                                                              ...get(retail,     { actual: "+0.8%",  previous: "+1.3%"  }) },
-      { name: "Consumer Confidence",      releaseDate: "Sep 29, 2026", forecast: "53.0",   url: "https://www.conference-board.org/topics/consumer-confidence",                                            ...get(confidence, { actual: "51.7",   previous: "55.2"   }) },
-      { name: "Housing Starts",           releaseDate: "Sep 18, 2026", forecast: "1.310M", url: "https://www.census.gov/construction/nres/index.html",                                                   ...get(housing,    { actual: "1.275M", previous: "1.309M" }) }
+      { name: "CPI (Inflation) YoY",      forecast: "3.6%",   url: "https://www.bls.gov/cpi/",                                                                              ...get(cpi,          { actual: "3.7%",   previous: "3.4%",   releaseDate: "Oct 14, 2026" }) },
+      { name: "Core CPI YoY",             forecast: "2.6%",   url: "https://www.bls.gov/cpi/",                                                                              ...get(coreCpi,      { actual: "2.6%",   previous: "2.4%",   releaseDate: "Oct 14, 2026" }) },
+      { name: "PCE Price Index YoY",      forecast: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures",                                            ...get(pce,          { actual: "3.4%",   previous: "3.4%",   releaseDate: "Sep 30, 2026" }) },
+      { name: "Core PCE Price Index YoY", forecast: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy",      ...get(corePce,      { actual: "3.0%",   previous: "3.0%",   releaseDate: "Sep 30, 2026" }) },
+      { name: "Fed Funds Rate",           forecast: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",                                          actual: fedRes.actual, previous: fedRes.previous, releaseDate: "Sep 16, 2026" },
+      { name: "Employment Situation",     forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
+      { name: "Non-Farm Payrolls",        forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
+      { name: "Unemployment Rate",        forecast: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment, { actual: "4.2%",   previous: "4.1%",   releaseDate: "Oct 2, 2026"  }) },
+      { name: "GDP Growth Rate",          forecast: "+2.2%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product",                                                   ...get(gdp,          { actual: "+2.2%",  previous: "+2.5%",  releaseDate: "Sep 30, 2026" }) },
+      { name: "Retail Sales MoM",         forecast: "+0.4%",  url: "https://www.census.gov/retail/index.html",                                                              ...get(retail,       { actual: "+0.8%",  previous: "+1.3%",  releaseDate: "Oct 15, 2026" }) },
+      { name: "Consumer Sentiment",       forecast: "53.0",   url: "https://data.sca.isr.umich.edu/",                                                                       ...get(confidence,   { actual: "51.7",   previous: "55.2",   releaseDate: "Oct 6, 2026"  }) },
+      { name: "Housing Starts",           forecast: "1.310M", url: "https://www.census.gov/construction/nres/index.html",                                                   ...get(housing,      { actual: "1.275M", previous: "1.309M", releaseDate: "Sep 22, 2026" }) }
     ];
 
     cachedInflationData = data;
@@ -1173,16 +1205,16 @@ app.get("/api/inflation-data", async (req, res) => {
     res.json([
       { name: "CPI (Inflation) YoY",      releaseDate: "Oct 14, 2026", actual: "3.7%",   forecast: "3.6%",   previous: "3.4%",   url: "https://www.bls.gov/cpi/" },
       { name: "Core CPI YoY",             releaseDate: "Oct 14, 2026", actual: "2.6%",   forecast: "2.6%",   previous: "2.4%",   url: "https://www.bls.gov/cpi/" },
-      { name: "PCE Price Index YoY",      releaseDate: "Sep 25, 2026", actual: "3.4%",   forecast: "3.4%",   previous: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures" },
-      { name: "Core PCE Price Index YoY", releaseDate: "Sep 25, 2026", actual: "3.0%",   forecast: "3.0%",   previous: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy" },
-      { name: "Fed Funds Rate",           releaseDate: "Sep 16, 2026", actual: "3.64%",  forecast: "3.75%",  previous: "3.64%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
+      { name: "PCE Price Index YoY",      releaseDate: "Sep 30, 2026", actual: "3.4%",   forecast: "3.4%",   previous: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures" },
+      { name: "Core PCE Price Index YoY", releaseDate: "Sep 30, 2026", actual: "3.0%",   forecast: "3.0%",   previous: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy" },
+      { name: "Fed Funds Rate",           releaseDate: "Sep 16, 2026", actual: "3.75%",  forecast: "3.75%",  previous: "3.63%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
       { name: "Employment Situation",     releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
       { name: "Non-Farm Payrolls",        releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
       { name: "Unemployment Rate",        releaseDate: "Oct 2, 2026",  actual: "4.2%",   forecast: "4.2%",   previous: "4.1%",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
-      { name: "GDP Growth Rate",          releaseDate: "Sep 24, 2026", actual: "2.2%",   forecast: "+2.2%",  previous: "2.5%",   url: "https://www.bea.gov/data/gdp/gross-domestic-product" },
+      { name: "GDP Growth Rate",          releaseDate: "Sep 30, 2026", actual: "+2.2%",  forecast: "+2.2%",  previous: "+2.5%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product" },
       { name: "Retail Sales MoM",         releaseDate: "Oct 15, 2026", actual: "+0.8%",  forecast: "+0.4%",  previous: "+1.3%",  url: "https://www.census.gov/retail/index.html" },
-      { name: "Consumer Confidence",      releaseDate: "Sep 29, 2026", actual: "51.7",   forecast: "53.0",   previous: "55.2",   url: "https://www.conference-board.org/topics/consumer-confidence" },
-      { name: "Housing Starts",           releaseDate: "Sep 18, 2026", actual: "1.275M", forecast: "1.310M", previous: "1.309M", url: "https://www.census.gov/construction/nres/index.html" }
+      { name: "Consumer Sentiment",       releaseDate: "Oct 6, 2026",  actual: "51.7",   forecast: "53.0",   previous: "55.2",   url: "https://data.sca.isr.umich.edu/" },
+      { name: "Housing Starts",           releaseDate: "Sep 22, 2026", actual: "1.275M", forecast: "1.310M", previous: "1.309M", url: "https://www.census.gov/construction/nres/index.html" }
     ]);
   }
 });
