@@ -14,14 +14,15 @@ const yahooFinance = new YahooFinance({
 });
 const rssParser = new Parser({
   headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*'
   },
   customFields: {
     item: [
       ['media:content', 'mediaContent'],
       ['media:thumbnail', 'mediaThumbnail'],
-      ['enclosure', 'enclosure']
+      ['enclosure', 'enclosure'],
+      ['category', 'categories', { keepArray: true }]
     ]
   }
 });
@@ -229,12 +230,16 @@ function getLocalFallbackNews(ticker: string, companyName: string): any[] {
 }
 
 function cleanXmlString(str: string): string {
+  if (!str) return '';
   let clean = str.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
   clean = clean.replace(/&lt;/g, '<')
                .replace(/&gt;/g, '>')
                .replace(/&amp;/g, '&')
                .replace(/&quot;/g, '"')
-               .replace(/&apos;/g, "'");
+               .replace(/&apos;/g, "'")
+               .replace(/&#39;/g, "'")
+               .replace(/&#x27;/g, "'")
+               .replace(/&nbsp;/g, ' ');
   return clean.trim();
 }
 
@@ -242,24 +247,51 @@ function formatRssDate(dateStr: string): string {
   try {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return "Наскоро";
-    const diffMs = Date.now() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
+    const diffMs = Math.max(0, Date.now() - date.getTime());
+    const diffMins = Math.max(1, Math.floor(diffMs / 60000));
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
     
     if (diffMins < 60) return `Преди ${diffMins} мин`;
-    if (diffHours < 24) return `Преди ${diffHours} часа`;
+    if (diffHours < 24) return `Преди ${diffHours} ${diffHours === 1 ? 'час' : 'часа'}`;
     if (diffDays === 1) return "Вчера";
     return `Преди ${diffDays} дни`;
-  } catch (e) {
+  } catch {
     return "Наскоро";
   }
 }
 
-function determineLocalImpact(title: string, desc: string): string {
+function formatRssDateEn(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "Recently";
+    const diffMs = Math.max(0, Date.now() - date.getTime());
+    const diffMins = Math.max(1, Math.floor(diffMs / 60000));
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return "Recently";
+  }
+}
+
+function determineLocalImpact(title: string, desc: string): 'Positive' | 'Negative' | 'Neutral' {
   const text = (title + " " + desc).toLowerCase();
-  const positiveWords = ["upgrade", "buy", "growth", "profit", "beats", "above", "bullish", "record", "strong", "растеж", "ръст", "печалба", "рекорд", "положителна"];
-  const negativeWords = ["downgrade", "sell", "loss", "misses", "below", "bearish", "drop", "weak", "спад", "загуба", "слаб", "отрицателна"];
+  const positiveWords = [
+    "upgrade", "buy", "growth", "profit", "beats", "above", "bullish", "record", "strong",
+    "surge", "soar", "rally", "jump", "gain", "outperform", "dividend", "approval", "launch",
+    "partnership", "acquisition", "breakthrough", "растеж", "ръст", "печалба", "рекорд", "положителна"
+  ];
+  const negativeWords = [
+    "downgrade", "sell", "loss", "misses", "below", "bearish", "drop", "weak", "plunge",
+    "fall", "decline", "slump", "crash", "lawsuit", "probe", "recall", "layoff", "tariff",
+    "warning", "cut", "deficit", "спад", "загуба", "слаб", "отрицателна"
+  ];
   
   let score = 0;
   for (const w of positiveWords) {
@@ -273,14 +305,19 @@ function determineLocalImpact(title: string, desc: string): string {
 
 export interface RealNewsItem {
   title: string;
+  titleBg?: string;
   source: string;
   time: string;
+  timeEn?: string;
   summary: string;
+  summaryBg?: string;
   impact: 'Positive' | 'Negative' | 'Neutral';
   url: string;
   image?: string;
-  category?: 'all' | 'world' | 'reuters' | 'bg';
+  category?: string;
+  tickers?: string[];
   publishedDate?: string;
+  lang?: string;
 }
 
 // In-memory news caches with 8-minute TTL to ensure sub-50ms responses and prevent rate-limiting
@@ -288,24 +325,162 @@ interface NewsCacheEntry {
   timestamp: number;
   news: RealNewsItem[];
 }
-let globalNewsCache: NewsCacheEntry | null = null;
+const globalNewsCacheByTab = new Map<string, NewsCacheEntry>();
 const companyNewsCache = new Map<string, NewsCacheEntry>();
 const NEWS_CACHE_TTL_MS = 8 * 60 * 1000; // 8 minutes
 
-const fetchWithTimeout = (promise: Promise<any>, ms: number) => {
+const fetchWithTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
   let timeoutId: NodeJS.Timeout;
-  const timeoutPromise = new Promise((_, reject) => {
+  const timeoutPromise = new Promise<T>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error('RSS Feed Timeout')), ms);
   });
   return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
 };
 
+const COMPANY_KEYWORD_TO_TICKER: Array<[RegExp, string]> = [
+  [/\b(?:apple|iphone|ipad|macbook|tim cook)\b/i, 'AAPL'],
+  [/\b(?:nvidia|geforce|jensen huang|blackwell|cuda)\b/i, 'NVDA'],
+  [/\b(?:microsoft|azure|copilot|satya nadella|xbox)\b/i, 'MSFT'],
+  [/\b(?:alphabet|google|youtube|waymo|deepmind|sundar pichai)\b/i, 'GOOGL'],
+  [/\b(?:amazon|aws|prime video|andy jassy)\b/i, 'AMZN'],
+  [/\b(?:meta platforms|facebook|instagram|whatsapp|zuckerberg)\b/i, 'META'],
+  [/\b(?:tesla|cybertruck|elon musk|spacEx)\b/i, 'TSLA'],
+  [/\b(?:netflix)\b/i, 'NFLX'],
+  [/\b(?:broadcom)\b/i, 'AVGO'],
+  [/\b(?:advanced micro devices|\bamd\b|lisa su)\b/i, 'AMD'],
+  [/\b(?:intel\b|foundry)\b/i, 'INTC'],
+  [/\b(?:tsmc|taiwan semiconductor)\b/i, 'TSM'],
+  [/\b(?:asml)\b/i, 'ASML'],
+  [/\b(?:micron technology|\bmicron\b)\b/i, 'MU'],
+  [/\b(?:qualcomm)\b/i, 'QCOM'],
+  [/\b(?:arm holdings)\b/i, 'ARM'],
+  [/\b(?:palantir)\b/i, 'PLTR'],
+  [/\b(?:microstrategy|michael saylor)\b/i, 'MSTR'],
+  [/\b(?:coinbase)\b/i, 'COIN'],
+  [/\b(?:berkshire hathaway|warren buffett)\b/i, 'BRK-B'],
+  [/\b(?:jpmorgan|jp morgan|jamie dimon)\b/i, 'JPM'],
+  [/\b(?:goldman sachs)\b/i, 'GS'],
+  [/\b(?:morgan stanley)\b/i, 'MS'],
+  [/\b(?:bank of america)\b/i, 'BAC'],
+  [/\b(?:citigroup|\bciti\b)\b/i, 'C'],
+  [/\b(?:wells fargo)\b/i, 'WFC'],
+  [/\b(?:blackrock|larry fink)\b/i, 'BLK'],
+  [/\b(?:visa\b)\b/i, 'V'],
+  [/\b(?:mastercard)\b/i, 'MA'],
+  [/\b(?:paypal)\b/i, 'PYPL'],
+  [/\b(?:american express|\bamex\b)\b/i, 'AXP'],
+  [/\b(?:walt disney|\bdisney\b)\b/i, 'DIS'],
+  [/\b(?:walmart)\b/i, 'WMT'],
+  [/\b(?:costco)\b/i, 'COST'],
+  [/\b(?:target corp)\b/i, 'TGT'],
+  [/\b(?:home depot)\b/i, 'HD'],
+  [/\b(?:nike)\b/i, 'NKE'],
+  [/\b(?:starbucks)\b/i, 'SBUX'],
+  [/\b(?:mcdonald's|mcdonalds)\b/i, 'MCD'],
+  [/\b(?:coca-cola|coca cola)\b/i, 'KO'],
+  [/\b(?:pepsico|\bpepsi\b)\b/i, 'PEP'],
+  [/\b(?:procter & gamble)\b/i, 'PG'],
+  [/\b(?:johnson & johnson)\b/i, 'JNJ'],
+  [/\b(?:eli lilly|zepbound|mounjaro)\b/i, 'LLY'],
+  [/\b(?:novo nordisk|ozempic|wegovy)\b/i, 'NVO'],
+  [/\b(?:pfizer)\b/i, 'PFE'],
+  [/\b(?:moderna)\b/i, 'MRNA'],
+  [/\b(?:abbvie)\b/i, 'ABBV'],
+  [/\b(?:merck)\b/i, 'MRK'],
+  [/\b(?:unitedhealth)\b/i, 'UNH'],
+  [/\b(?:stryker)\b/i, 'SYK'],
+  [/\b(?:catalyst pharma)\b/i, 'CPRX'],
+  [/\b(?:exxonmobil|exxon mobil|\bexxon\b)\b/i, 'XOM'],
+  [/\b(?:chevron)\b/i, 'CVX'],
+  [/\b(?:shell plc|\bshell\b)\b/i, 'SHEL'],
+  [/\b(?:conocophillips)\b/i, 'COP'],
+  [/\b(?:lockheed martin|\blockheed\b)\b/i, 'LMT'],
+  [/\b(?:boeing)\b/i, 'BA'],
+  [/\b(?:raytheon|\brtx\b)\b/i, 'RTX'],
+  [/\b(?:general dynamics)\b/i, 'GD'],
+  [/\b(?:northrop grumman)\b/i, 'NOC'],
+  [/\b(?:caterpillar)\b/i, 'CAT'],
+  [/\b(?:ge aerospace|general electric)\b/i, 'GE'],
+  [/\b(?:john deere|\bdeere\b)\b/i, 'DE'],
+  [/\b(?:uber technologies|\buber\b)\b/i, 'UBER'],
+  [/\b(?:airbnb)\b/i, 'ABNB'],
+  [/\b(?:booking holdings)\b/i, 'BKNG'],
+  [/\b(?:salesforce)\b/i, 'CRM'],
+  [/\b(?:oracle)\b/i, 'ORCL'],
+  [/\b(?:adobe)\b/i, 'ADBE'],
+  [/\b(?:crowdstrike)\b/i, 'CRWD'],
+  [/\b(?:palo alto networks)\b/i, 'PANW'],
+  [/\b(?:snowflake)\b/i, 'SNOW'],
+  [/\b(?:shopify)\b/i, 'SHOP'],
+  [/\b(?:spotify)\b/i, 'SPOT'],
+  [/\b(?:alibaba)\b/i, 'BABA'],
+  [/\b(?:baidu)\b/i, 'BIDU'],
+  [/\b(?:jd\.com)\b/i, 'JD'],
+  [/\b(?:byd)\b/i, 'BYDDY'],
+  [/\b(?:deutsche post|\bdhl\b)\b/i, 'DHL.DE'],
+  [/\b(?:lvmh|louis vuitton)\b/i, 'EPA:MC'],
+  [/\b(?:nestle|nestlé)\b/i, 'SWX:NESN'],
+  [/\b(?:evolution ab)\b/i, 'STO:EVO'],
+  [/\b(?:burberry)\b/i, 'BRBY'],
+];
+
+const NON_TICKER_WORDS = new Set([
+  'CEO', 'CFO', 'CTO', 'COO', 'USA', 'USD', 'EUR', 'GBP', 'JPY', 'CNY', 'GDP', 'CPI',
+  'PCE', 'FED', 'ECB', 'BOE', 'BOJ', 'SEC', 'DOJ', 'FTC', 'FDA', 'EPA', 'IPO', 'ETF',
+  'AI', 'API', 'LLM', 'GPU', 'CPU', 'EV', 'ESG', 'DEI', 'YOY', 'MOM', 'QOQ', 'TTM',
+  'EPS', 'ROE', 'ROI', 'DCF', 'IMF', 'WTO', 'WHO', 'NATO', 'OPEC', 'NYSE', 'AMEX',
+  'THE', 'AND', 'FOR', 'NEW', 'NOW', 'TOP', 'ALL', 'INC', 'CORP', 'LTD', 'PLC', 'LLC'
+]);
+
+function extractTickersFromText(title: string, summary: string, existing?: string[]): string[] {
+  const found = new Set<string>();
+  if (Array.isArray(existing)) {
+    for (const t of existing) {
+      if (typeof t === 'string') {
+        const clean = t.trim().toUpperCase().replace(/^\$/, '');
+        if (clean && clean.length <= 10 && !NON_TICKER_WORDS.has(clean)) {
+          found.add(clean);
+        }
+      }
+    }
+  }
+
+  const text = `${title || ''} ${summary || ''}`;
+
+  const exRegex = /\b(?:NASDAQ|NYSE|AMEX|NYSEAMERICAN|BATS|ARCA|TSX|LSE|XETRA|ETR|EPA|SWX|STO)\s*:\s*([A-Z]{1,5}(?:\.[A-Z]{1,2})?)\b/gi;
+  let m: RegExpExecArray | null;
+  while ((m = exRegex.exec(text)) !== null) {
+    const sym = m[1].toUpperCase();
+    if (!NON_TICKER_WORDS.has(sym)) found.add(sym);
+  }
+
+  const parenRegex = /(?:\$([A-Z]{2,5})\b|\(([A-Z]{2,5})\))/g;
+  while ((m = parenRegex.exec(text)) !== null) {
+    const sym = (m[1] || m[2] || '').toUpperCase();
+    if (sym && !NON_TICKER_WORDS.has(sym)) found.add(sym);
+  }
+
+  for (const [pattern, ticker] of COMPANY_KEYWORD_TO_TICKER) {
+    if (pattern.test(text)) {
+      found.add(ticker);
+    }
+    if (found.size >= 5) break;
+  }
+
+  return Array.from(found).slice(0, 5);
+}
+
 function extractItemImage(item: any): string | undefined {
   if (item.enclosure && item.enclosure.url && typeof item.enclosure.url === 'string') {
     return item.enclosure.url;
   }
-  if (item.mediaContent && item.mediaContent.$ && item.mediaContent.$.url) {
-    return item.mediaContent.$.url;
+  if (item.mediaContent) {
+    if (Array.isArray(item.mediaContent)) {
+      const found = item.mediaContent.find((m: any) => m?.$?.url);
+      if (found?.$?.url) return found.$.url;
+    } else if (item.mediaContent.$ && item.mediaContent.$.url) {
+      return item.mediaContent.$.url;
+    }
   }
   if (item['media:content'] && item['media:content'].$ && item['media:content'].$.url) {
     return item['media:content'].$.url;
@@ -316,97 +491,259 @@ function extractItemImage(item: any): string | undefined {
   if (item['media:thumbnail'] && item['media:thumbnail'].$ && item['media:thumbnail'].$.url) {
     return item['media:thumbnail'].$.url;
   }
-  const rawHtml = (item.description || item.content || '');
+  const rawHtml = (item.description || item.content || item['content:encoded'] || '');
   const imgMatch = rawHtml.match(/<img[^>]+src=["'](https?:\/\/[^"']+)["']/i);
-  if (imgMatch && imgMatch[1]) {
+  if (imgMatch && imgMatch[1] && !imgMatch[1].includes('1x1') && !imgMatch[1].includes('pixel')) {
     return imgMatch[1];
   }
   return undefined;
 }
 
-const DEFAULT_SOURCE_IMAGES: Record<string, string> = {
-  'CNBC': 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=80',
-  'MarketWatch': 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&auto=format&fit=crop&q=80',
-  'Reuters': 'https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=600&auto=format&fit=crop&q=80',
-  'Investing.com': 'https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=600&auto=format&fit=crop&q=80',
-  'Investor.bg': 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=80'
-};
+const PUBLISHER_FALLBACK_IMAGES: string[] = [
+  'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=640&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=640&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=640&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=640&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=640&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=640&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=640&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=640&auto=format&fit=crop&q=80'
+];
 
-async function fetchTopGlobalFinancialFeeds(): Promise<RealNewsItem[]> {
-  const feedConfigs = [
-    {
-      url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
-      sourceName: "CNBC",
-      category: "world" as const,
-      lang: "en" as const
-    },
-    {
-      url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10001147",
-      sourceName: "CNBC",
-      category: "world" as const,
-      lang: "en" as const
-    },
-    {
-      url: "https://feeds.content.dowjones.io/public/rss/mw_topstories",
-      sourceName: "MarketWatch",
-      category: "world" as const,
-      lang: "en" as const
-    },
-    {
-      url: "https://www.investing.com/rss/news_25.rss",
-      sourceName: "Reuters / Investing",
-      category: "reuters" as const,
-      lang: "en" as const
-    },
-    {
-      url: "https://www.investor.bg/rss/latest",
-      sourceName: "Investor.bg",
-      category: "bg" as const,
-      lang: "bg" as const
-    },
-    {
-      url: "https://www.investor.bg/rss/c/578-top-novini",
-      sourceName: "Investor.bg",
-      category: "bg" as const,
-      lang: "bg" as const
+function getFallbackImageForArticle(title: string, source: string): string {
+  const s = (source || '').toLowerCase();
+  if (s.includes('investor')) return 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=640&auto=format&fit=crop&q=80';
+  let hash = 0;
+  const str = (title || source || 'news');
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return PUBLISHER_FALLBACK_IMAGES[hash % PUBLISHER_FALLBACK_IMAGES.length];
+}
+
+async function fetchStockAnalysisJsonFeed(routePath: string, category: string): Promise<any[]> {
+  try {
+    const cleanPath = routePath.replace(/^\/+|\/+$/g, '');
+    const url = `https://stockanalysis.com/${cleanPath}/__data.json`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Referer': 'https://stockanalysis.com/news/'
+      },
+      signal: AbortSignal.timeout(3500)
+    });
+    if (!res.ok) return [];
+    const json = await res.json() as any;
+    const nodes = json?.nodes;
+    if (!Array.isArray(nodes)) return [];
+
+    const extracted: any[] = [];
+    for (const node of nodes) {
+      const dataArr = node?.data;
+      if (!Array.isArray(dataArr) || dataArr.length < 3) continue;
+
+      const resolveVal = (v: any, depth = 0): any => {
+        if (depth > 4) return v;
+        if (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v < dataArr.length) {
+          const target = dataArr[v];
+          if (Array.isArray(target)) return target.map(x => resolveVal(x, depth + 1));
+          if (target && typeof target === 'object') {
+            const obj: Record<string, any> = {};
+            for (const [k, val] of Object.entries(target)) {
+              obj[k] = resolveVal(val, depth + 1);
+            }
+            return obj;
+          }
+          return target;
+        }
+        return v;
+      };
+
+      for (let i = 0; i < dataArr.length; i++) {
+        const entry = dataArr[i];
+        if (entry && typeof entry === 'object' && !Array.isArray(entry) && 'title' in entry && ('url' in entry || 'link' in entry)) {
+          const item = resolveVal(i);
+          const rawTitle = typeof item?.title === 'string' ? item.title.trim() : '';
+          let rawUrl = typeof item?.url === 'string' ? item.url.trim() : (typeof item?.link === 'string' ? item.link.trim() : '');
+          if (!rawTitle || !rawUrl) continue;
+          if (rawUrl.startsWith('/')) rawUrl = `https://stockanalysis.com${rawUrl}`;
+          if (!rawUrl.startsWith('http')) continue;
+
+          const rawText = typeof item?.text === 'string' ? item.text : (typeof item?.description === 'string' ? item.description : '');
+          const rawSource = typeof item?.source === 'string' ? item.source : 'Stock Analysis';
+          const rawImg = typeof item?.image === 'string' ? item.image : (typeof item?.img === 'string' ? item.img : undefined);
+          const rawTime = typeof item?.time === 'string' ? item.time : (typeof item?.ago === 'string' ? item.ago : (typeof item?.date === 'string' ? item.date : ''));
+          const rawTickers = Array.isArray(item?.tickers)
+            ? item.tickers.map((t: any) => typeof t === 'string' ? t.replace(/^\$/, '').toUpperCase() : (t?.s || t?.symbol || '')).filter(Boolean)
+            : [];
+
+          let parsedIso = new Date().toISOString();
+          if (rawTime) {
+            const d = new Date(rawTime);
+            if (!isNaN(d.getTime())) {
+              parsedIso = d.toISOString();
+            } else {
+              const minMatch = rawTime.match(/(\d+)\s*min/i);
+              const hrMatch = rawTime.match(/(\d+)\s*hour/i);
+              const dayMatch = rawTime.match(/(\d+)\s*day/i);
+              if (minMatch) parsedIso = new Date(Date.now() - parseInt(minMatch[1], 10) * 60000).toISOString();
+              else if (hrMatch) parsedIso = new Date(Date.now() - parseInt(hrMatch[1], 10) * 3600000).toISOString();
+              else if (dayMatch) parsedIso = new Date(Date.now() - parseInt(dayMatch[1], 10) * 86400000).toISOString();
+            }
+          }
+
+          extracted.push({
+            title: cleanXmlString(rawTitle),
+            link: rawUrl,
+            pubDate: parsedIso,
+            timeEnOverride: rawTime && rawTime.includes('ago') ? rawTime : undefined,
+            source: rawSource,
+            summary: cleanXmlString(rawText) || cleanXmlString(rawTitle),
+            image: rawImg || getFallbackImageForArticle(rawTitle, rawSource),
+            category,
+            tickers: extractTickersFromText(rawTitle, rawText, rawTickers),
+            lang: 'en'
+          });
+        }
+      }
     }
+    return extracted.slice(0, 25);
+  } catch {
+    return [];
+  }
+}
+
+async function translateArticlesBatchToBg(articles: RealNewsItem[]): Promise<RealNewsItem[]> {
+  return Promise.all(articles.map(async (item) => {
+    if (item.lang === 'bg' || item.source === 'Investor.bg') {
+      return {
+        ...item,
+        titleBg: item.title,
+        summaryBg: item.summary
+      };
+    }
+    try {
+      const combined = `${item.title} ||| ${item.summary || ''}`;
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=bg&dt=t&q=${encodeURIComponent(combined)}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(2200) });
+      if (res.ok) {
+        const data = await res.json() as any;
+        if (Array.isArray(data?.[0])) {
+          const translatedFull = data[0].map((seg: any) => seg?.[0] || '').join('');
+          const parts = translatedFull.split('|||');
+          const titleBg = (parts[0] || item.title).trim();
+          const summaryBg = (parts.slice(1).join(' ') || item.summary).trim();
+          return {
+            ...item,
+            titleBg: titleBg || item.title,
+            summaryBg: summaryBg || item.summary
+          };
+        }
+      }
+    } catch {}
+    return {
+      ...item,
+      titleBg: item.title,
+      summaryBg: item.summary
+    };
+  }));
+}
+
+async function fetchTopGlobalFinancialFeeds(tab: string = 'all'): Promise<RealNewsItem[]> {
+  const normalizedTab = (tab || 'all').toLowerCase();
+
+  const allFeedConfigs = [
+    // Markets & Newsroom feeds
+    { url: "https://feeds.content.dowjones.io/public/rss/RSSMarketsMain", sourceName: "The Wall Street Journal", category: "markets", tabs: ["all", "newsroom", "markets"], lang: "en" },
+    { url: "https://feeds.content.dowjones.io/public/rss/WSJcomUSBusiness", sourceName: "The Wall Street Journal", category: "markets", tabs: ["all", "newsroom", "markets", "all-stocks"], lang: "en" },
+    { url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664", sourceName: "CNBC", category: "markets", tabs: ["all", "newsroom", "markets"], lang: "en" },
+    { url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258", sourceName: "CNBC", category: "markets", tabs: ["all", "markets"], lang: "en" },
+    { url: "https://feeds.content.dowjones.io/public/rss/mw_topstories", sourceName: "MarketWatch", category: "markets", tabs: ["all", "newsroom", "markets"], lang: "en" },
+    { url: "https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines", sourceName: "MarketWatch", category: "markets", tabs: ["all", "markets"], lang: "en" },
+    { url: "https://www.investing.com/rss/news_25.rss", sourceName: "Reuters", category: "markets", tabs: ["all", "markets"], lang: "en" },
+
+    // All Stocks feeds
+    { url: "https://seekingalpha.com/market_currents.xml", sourceName: "Seeking Alpha", category: "all-stocks", tabs: ["all", "all-stocks"], lang: "en" },
+    { url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10001147", sourceName: "CNBC", category: "all-stocks", tabs: ["all", "all-stocks"], lang: "en" },
+    { url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19854910", sourceName: "CNBC Tech", category: "all-stocks", tabs: ["all", "all-stocks"], lang: "en" },
+    { url: "https://techcrunch.com/feed/", sourceName: "TechCrunch", category: "all-stocks", tabs: ["all-stocks"], lang: "en" },
+
+    // Press Releases feeds
+    { url: "https://www.globenewswire.com/AtomFeed/orgclass/1/feedTitle/GlobeNewswire%20-%20News%20about%20Public%20Companies", sourceName: "GlobeNewsWire", category: "press-releases", tabs: ["all", "press-releases"], lang: "en" },
+    { url: "https://www.prnewswire.com/rss/financial-services-latest-news/financial-services-latest-news-list.rss", sourceName: "PRNewsWire", category: "press-releases", tabs: ["all", "press-releases"], lang: "en" },
+    { url: "https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFpRWA==", sourceName: "Business Wire", category: "press-releases", tabs: ["all", "press-releases"], lang: "en" },
+
+    // Bulgarian feeds (Investor.bg)
+    { url: "https://www.investor.bg/rss/c/578-top-novini", sourceName: "Investor.bg", category: "bg", tabs: ["all", "newsroom", "bg"], lang: "bg" },
+    { url: "https://www.investor.bg/rss/latest", sourceName: "Investor.bg", category: "bg", tabs: ["all", "bg"], lang: "bg" }
   ];
 
-  const results = await Promise.allSettled(
-    feedConfigs.map(c => fetchWithTimeout(rssParser.parseURL(c.url), 6000))
-  );
+  const activeConfigs = allFeedConfigs.filter(c => c.tabs.includes(normalizedTab));
 
-  const rawArticles: any[] = [];
-  results.forEach((res, index) => {
-    if (res.status === 'fulfilled' && res.value && Array.isArray(res.value.items)) {
-      const config = feedConfigs[index];
-      res.value.items.slice(0, 12).forEach((item: any) => {
+  const saRouteMap: Record<string, { path: string; cat: string }> = {
+    'newsroom': { path: 'news', cat: 'newsroom' },
+    'markets': { path: 'news/markets', cat: 'markets' },
+    'all-stocks': { path: 'news/all-stocks', cat: 'all-stocks' },
+    'press-releases': { path: 'news/press-releases', cat: 'press-releases' },
+    'all': { path: 'news/markets', cat: 'markets' }
+  };
+
+  const saTarget = saRouteMap[normalizedTab];
+
+  const [saArticles, ...rssResults] = await Promise.all([
+    saTarget ? fetchStockAnalysisJsonFeed(saTarget.path, saTarget.cat) : Promise.resolve([]),
+    ...activeConfigs.map(c => fetchWithTimeout(rssParser.parseURL(c.url), 4500).catch(() => null))
+  ]);
+
+  const rawArticles: any[] = [...saArticles];
+
+  rssResults.forEach((feed: any, index: number) => {
+    if (feed && Array.isArray(feed.items)) {
+      const config = activeConfigs[index];
+      feed.items.slice(0, 12).forEach((item: any) => {
         const rawLink = item.link || item.guid;
         if (rawLink && item.title && typeof rawLink === 'string' && rawLink.startsWith('http')) {
-          const rawSnippet = item.contentSnippet || item.content || item.summary || item.title || "";
+          const rawSnippet = item.contentSnippet || item.content || item.summary || item.description || item.title || "";
           const cleanSnippet = cleanXmlString(rawSnippet).replace(/<[^>]*>?/gm, '').trim();
+          const cleanTitle = cleanXmlString(item.title);
           
           let pubDateObj = new Date();
-          if (item.pubDate) {
-            const parsedD = new Date(item.pubDate);
+          if (item.pubDate || item.isoDate) {
+            const parsedD = new Date(item.pubDate || item.isoDate);
             if (!isNaN(parsedD.getTime())) pubDateObj = parsedD;
           }
 
           let finalSource = config.sourceName;
-          if (item.author && item.author.toLowerCase().includes('reuters')) {
+          if (item.author && typeof item.author === 'string' && item.author.toLowerCase().includes('reuters')) {
             finalSource = 'Reuters';
           }
 
-          const extractedImg = extractItemImage(item) || DEFAULT_SOURCE_IMAGES[finalSource] || DEFAULT_SOURCE_IMAGES['CNBC'];
+          const catTickers: string[] = [];
+          if (Array.isArray(item.categories)) {
+            for (const c of item.categories) {
+              const str = typeof c === 'string' ? c : (c?._ || '');
+              if (/^[A-Z]{1,5}$/.test(str.trim())) {
+                catTickers.push(str.trim());
+              } else if (str.includes(':')) {
+                const afterColon = str.split(':').pop()?.trim() || '';
+                if (/^[A-Z]{1,5}$/.test(afterColon)) catTickers.push(afterColon);
+              }
+            }
+          }
+
+          const tickers = extractTickersFromText(cleanTitle, cleanSnippet, catTickers);
+          const extractedImg = extractItemImage(item) || getFallbackImageForArticle(cleanTitle, finalSource);
 
           rawArticles.push({
-            title: cleanXmlString(item.title),
+            title: cleanTitle,
             link: rawLink.trim(),
             pubDate: pubDateObj.toISOString(),
             source: finalSource,
-            summary: cleanSnippet,
+            summary: cleanSnippet || cleanTitle,
             image: extractedImg,
             category: config.category,
+            tickers,
             lang: config.lang
           });
         }
@@ -414,10 +751,8 @@ async function fetchTopGlobalFinancialFeeds(): Promise<RealNewsItem[]> {
     }
   });
 
-  // Sort by pubDate descending (newest first)
   rawArticles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 
-  // Deduplicate by normalized title
   const seen = new Set<string>();
   const uniqueArticles: any[] = [];
   for (const item of rawArticles) {
@@ -426,60 +761,105 @@ async function fetchTopGlobalFinancialFeeds(): Promise<RealNewsItem[]> {
       seen.add(norm);
       uniqueArticles.push(item);
     }
-    if (uniqueArticles.length >= 24) break;
+    if (uniqueArticles.length >= 28) break;
   }
 
-  // Format into RealNewsItem
-  return uniqueArticles.map(item => ({
-    title: item.title,
-    source: item.source,
-    time: formatRssDate(item.pubDate),
-    summary: item.summary ? (item.summary.length > 220 ? item.summary.slice(0, 220) + '...' : item.summary) : item.title,
-    impact: determineLocalImpact(item.title, item.summary || "") as 'Positive' | 'Negative' | 'Neutral',
-    url: item.link,
-    image: item.image,
-    category: item.category,
-    publishedDate: item.pubDate,
-    lang: item.lang
-  }));
+  const formatted: RealNewsItem[] = uniqueArticles.map(item => {
+    const summaryClean = item.summary ? (item.summary.length > 260 ? item.summary.slice(0, 260) + '...' : item.summary) : item.title;
+    return {
+      title: item.title,
+      source: item.source,
+      time: formatRssDate(item.pubDate),
+      timeEn: item.timeEnOverride || formatRssDateEn(item.pubDate),
+      summary: summaryClean,
+      impact: determineLocalImpact(item.title, summaryClean),
+      url: item.link,
+      image: item.image,
+      category: item.category,
+      tickers: item.tickers || [],
+      publishedDate: item.pubDate,
+      lang: item.lang || 'en'
+    };
+  });
+
+  return translateArticlesBatchToBg(formatted);
 }
 
 async function fetchTickerRssNews(ticker: string, companyName?: string): Promise<RealNewsItem[]> {
-  const cleanTicker = ticker.includes(':') ? ticker.split(':')[1] : ticker;
+  const cleanTicker = (ticker.includes(':') ? ticker.split(':')[1] : ticker.split('.')[0]).trim().toUpperCase();
   const urls = [
+    { url: `https://seekingalpha.com/api/sa/combined/${encodeURIComponent(cleanTicker)}.xml`, src: "Seeking Alpha" },
     { url: `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(cleanTicker)}&region=US&lang=en-US`, src: "Yahoo Finance" },
-    { url: `https://finance.yahoo.com/rss/headline?s=${encodeURIComponent(cleanTicker)}`, src: "Yahoo Finance" },
     { url: `https://news.google.com/rss/search?q=${encodeURIComponent((companyName || cleanTicker) + ' stock news')}&hl=en-US&gl=US&ceid=US:en`, src: "Google News" }
   ];
 
-  const results = await Promise.allSettled(
-    urls.map(u => fetchWithTimeout(rssParser.parseURL(u.url), 6000))
-  );
+  const finnhubKey = process.env.FINNHUB_API_KEY;
+  const fetchFinnhubCompanyNews = async (): Promise<any[]> => {
+    if (!finnhubKey || !/^[A-Z]{1,5}$/.test(cleanTicker)) return [];
+    try {
+      const toDate = new Date().toISOString().split('T')[0];
+      const fromDate = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+      const r = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(cleanTicker)}&from=${fromDate}&to=${toDate}&token=${finnhubKey}`, {
+        signal: AbortSignal.timeout(3500)
+      });
+      if (!r.ok) return [];
+      const arr = await r.json();
+      if (!Array.isArray(arr)) return [];
+      return arr.slice(0, 12).map((it: any) => ({
+        title: cleanXmlString(it.headline || ''),
+        link: it.url || '',
+        pubDate: it.datetime ? new Date(it.datetime * 1000).toISOString() : new Date().toISOString(),
+        source: it.source || 'Finnhub',
+        summary: cleanXmlString(it.summary || it.headline || ''),
+        image: it.image || getFallbackImageForArticle(it.headline || '', it.source || ''),
+        category: 'all-stocks',
+        tickers: extractTickersFromText(it.headline || '', it.summary || '', [cleanTicker]),
+        lang: 'en'
+      })).filter((x: any) => x.title && x.link.startsWith('http'));
+    } catch {
+      return [];
+    }
+  };
 
-  const rawItems: any[] = [];
-  results.forEach((res, index) => {
-    if (res.status === 'fulfilled' && res.value && Array.isArray(res.value.items)) {
+  const [saTickerItems, finnhubItems, ...rssResults] = await Promise.all([
+    fetchStockAnalysisJsonFeed(`stocks/${cleanTicker.toLowerCase()}`, 'all-stocks'),
+    fetchFinnhubCompanyNews(),
+    ...urls.map(u => fetchWithTimeout(rssParser.parseURL(u.url), 4500).catch(() => null))
+  ]);
+
+  const rawItems: any[] = [
+    ...saTickerItems.map(it => ({ ...it, tickers: Array.from(new Set([cleanTicker, ...(it.tickers || [])])).slice(0, 5) })),
+    ...finnhubItems
+  ];
+
+  rssResults.forEach((feed: any, index: number) => {
+    if (feed && Array.isArray(feed.items)) {
       const srcName = urls[index].src;
-      res.value.items.slice(0, 8).forEach((item: any) => {
+      feed.items.slice(0, 10).forEach((item: any) => {
         const link = item.link || item.guid;
         if (link && item.title && typeof link === 'string' && link.startsWith('http') && !link.includes("consent.yahoo.com")) {
           const rawSnippet = item.contentSnippet || item.content || item.summary || item.title || "";
           const cleanSnippet = cleanXmlString(rawSnippet).replace(/<[^>]*>?/gm, '').trim();
-          const img = extractItemImage(item) || DEFAULT_SOURCE_IMAGES['CNBC'];
+          const cleanTitle = cleanXmlString(item.title);
+          const source = item.creator || item.author || srcName;
+          const img = extractItemImage(item) || getFallbackImageForArticle(cleanTitle, source);
           rawItems.push({
-            title: cleanXmlString(item.title),
+            title: cleanTitle,
             link: link.trim(),
             pubDate: item.pubDate || new Date().toISOString(),
-            source: item.creator || item.author || srcName,
-            summary: cleanSnippet,
+            source,
+            summary: cleanSnippet || cleanTitle,
             image: img,
-            category: 'world' as const,
+            category: 'all-stocks' as const,
+            tickers: extractTickersFromText(cleanTitle, cleanSnippet, [cleanTicker]),
             lang: 'en' as const
           });
         }
       });
     }
   });
+
+  rawItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 
   const seenTitles = new Set<string>();
   const uniqueItems: any[] = [];
@@ -489,155 +869,59 @@ async function fetchTickerRssNews(ticker: string, companyName?: string): Promise
       seenTitles.add(norm);
       uniqueItems.push(item);
     }
-    if (uniqueItems.length >= 10) break;
+    if (uniqueItems.length >= 18) break;
   }
 
-  return uniqueItems.map(item => ({
-    title: item.title,
-    source: item.source || "Yahoo Finance",
-    time: formatRssDate(item.pubDate),
-    summary: item.summary ? (item.summary.length > 220 ? item.summary.slice(0, 220) + '...' : item.summary) : item.title,
-    impact: determineLocalImpact(item.title, item.summary || "") as 'Positive' | 'Negative' | 'Neutral',
-    url: item.link,
-    image: item.image,
-    category: item.category,
-    publishedDate: item.pubDate
-  }));
-}
-
-async function processAndTranslateNews(items: (RealNewsItem & { lang?: string })[]): Promise<RealNewsItem[]> {
-  if (items.length === 0) return [];
-
-  // Separate items that are already Bulgarian (Investor.bg) vs English items
-  const bgArticles: RealNewsItem[] = [];
-  const enArticles: RealNewsItem[] = [];
-
-  for (const it of items) {
-    if (it.lang === 'bg' || it.source === 'Investor.bg') {
-      bgArticles.push({
-        title: it.title,
-        source: it.source,
-        time: it.time,
-        summary: it.summary,
-        impact: determineLocalImpact(it.title, it.summary) as 'Positive' | 'Negative' | 'Neutral',
-        url: it.url,
-        image: it.image,
-        category: it.category,
-        publishedDate: it.publishedDate
-      });
-    } else {
-      enArticles.push(it);
-    }
-  }
-
-  let translatedEn: RealNewsItem[] = [];
-  if (enArticles.length > 0) {
-    try {
-      const ai = getGeminiClient();
-      const prompt = `Преведи следните финансови новини на български език и определи пазарното им влияние (impact: "Positive" | "Negative" | "Neutral").
-Направи кратко и ясно резюме на всяка новина (1-2 изречения).
-КРИТИЧНО ПРАВИЛО: ЗАПАЗИ ТОЧНИТЕ ОРИГИНАЛНИ ЛИНКОВЕ (url) И СНИМКИ (image) И ИЗТОЧНИЦИ (source) НАПЪЛНО НЕПРОМЕНЕНИ! Върни отговора САМО като валиден JSON масив.
-
-Входни новини:
-${JSON.stringify(enArticles.map(it => ({ title: it.title, summary: it.summary, source: it.source, url: it.url, image: it.image, time: it.time })))}
-
-Очакван изход (JSON масив):
-[
-  {
-    "title": "Преведено заглавие на български",
-    "source": "Оригинален източник (CNBC, MarketWatch, Reuters и т.н.)",
-    "time": "Преведено време",
-    "summary": "Кратко резюме на български",
-    "impact": "Positive" | "Negative" | "Neutral",
-    "url": "ТОЧНИЯТ ОРИГИНАЛЕН URL",
-    "image": "ТОЧНИЯТ ОРИГИНАЛЕН IMAGE URL"
-  }
-]`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-        },
-      });
-
-      if (response && response.text) {
-        let cleanText = response.text.trim();
-        if (cleanText.startsWith("```json")) cleanText = cleanText.substring(7);
-        if (cleanText.endsWith("```")) cleanText = cleanText.substring(0, cleanText.length - 3);
-        cleanText = cleanText.trim();
-        const parsed = JSON.parse(cleanText);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          translatedEn = parsed.map((p: any, idx: number) => {
-            const original: any = enArticles[idx] || {};
-            return {
-              title: p.title || original.title || "Финансова новина",
-              source: p.source || original.source || "Пазарен източник",
-              time: p.time || original.time || "Днес",
-              summary: p.summary || original.summary || "",
-              impact: (p.impact === "Positive" || p.impact === "Negative") ? p.impact : "Neutral",
-              url: (p.url && p.url.startsWith("http")) ? p.url : original.url,
-              image: original.image || p.image,
-              category: original.category || 'world',
-              publishedDate: original.publishedDate
-            };
-          });
-        }
-      }
-    } catch (err: any) {
-      console.warn("[News AI] Gemini translation failed, using clean original English items:", err.message);
-    }
-
-    if (translatedEn.length === 0) {
-      translatedEn = enArticles;
-    }
-  }
-
-  // Combine Bulgarian and translated English articles
-  const allCombined = [...bgArticles, ...translatedEn];
-
-  // Sort combined by publishedDate descending
-  allCombined.sort((a, b) => {
-    const timeA = a.publishedDate ? new Date(a.publishedDate).getTime() : 0;
-    const timeB = b.publishedDate ? new Date(b.publishedDate).getTime() : 0;
-    return timeB - timeA;
+  const formatted: RealNewsItem[] = uniqueItems.map(item => {
+    const summaryClean = item.summary ? (item.summary.length > 260 ? item.summary.slice(0, 260) + '...' : item.summary) : item.title;
+    return {
+      title: item.title,
+      source: item.source || "Yahoo Finance",
+      time: formatRssDate(item.pubDate),
+      timeEn: item.timeEnOverride || formatRssDateEn(item.pubDate),
+      summary: summaryClean,
+      impact: determineLocalImpact(item.title, summaryClean),
+      url: item.link,
+      image: item.image,
+      category: item.category,
+      tickers: item.tickers || [cleanTicker],
+      publishedDate: item.pubDate,
+      lang: 'en'
+    };
   });
 
-  return allCombined;
+  return translateArticlesBatchToBg(formatted);
 }
 
 // Endpoint for fetching high-quality verified news with authentic direct article links
 app.post("/api/company-news", async (req, res) => {
   try {
-    const { ticker, companyName } = req.body;
+    const { ticker, companyName, tab = 'all' } = req.body;
     const now = Date.now();
 
     if (!ticker) {
-      // Global news requested via company-news endpoint
-      if (globalNewsCache && (now - globalNewsCache.timestamp < NEWS_CACHE_TTL_MS) && globalNewsCache.news.length > 0) {
-        return res.json({ news: globalNewsCache.news, cached: true });
+      const normalizedTab = String(tab || 'all').toLowerCase();
+      const cachedTab = globalNewsCacheByTab.get(normalizedTab);
+      if (cachedTab && (now - cachedTab.timestamp < NEWS_CACHE_TTL_MS) && cachedTab.news.length > 0) {
+        return res.json({ news: cachedTab.news, cached: true, tab: normalizedTab });
       }
-      const rawItems = await fetchTopGlobalFinancialFeeds();
-      if (rawItems.length > 0) {
-        const processed = await processAndTranslateNews(rawItems);
-        globalNewsCache = { timestamp: now, news: processed };
-        return res.json({ news: processed });
+      const processed = await fetchTopGlobalFinancialFeeds(normalizedTab);
+      if (processed.length > 0) {
+        globalNewsCacheByTab.set(normalizedTab, { timestamp: now, news: processed });
+        return res.json({ news: processed, tab: normalizedTab });
       }
-      if (globalNewsCache && globalNewsCache.news.length > 0) {
-        return res.json({ news: globalNewsCache.news });
+      if (cachedTab && cachedTab.news.length > 0) {
+        return res.json({ news: cachedTab.news, tab: normalizedTab });
       }
     } else {
-      // Specific ticker news requested
       const cacheKey = ticker.toUpperCase();
       const cached = companyNewsCache.get(cacheKey);
       if (cached && (now - cached.timestamp < NEWS_CACHE_TTL_MS) && cached.news.length > 0) {
         return res.json({ news: cached.news, cached: true });
       }
 
-      const rssItems = await fetchTickerRssNews(ticker, companyName);
-      if (rssItems.length > 0) {
-        const processed = await processAndTranslateNews(rssItems);
+      const processed = await fetchTickerRssNews(ticker, companyName);
+      if (processed.length > 0) {
         companyNewsCache.set(cacheKey, { timestamp: now, news: processed });
         return res.json({ news: processed });
       }
@@ -647,12 +931,11 @@ app.post("/api/company-news", async (req, res) => {
       }
     }
 
-    // Fallback if RSS had no items
     const fallback = getLocalFallbackNews(ticker, companyName);
     res.json({ news: fallback });
   } catch (error: any) {
     console.error("Грешка при извличане на новини:", error);
-    const fallback = getLocalFallbackNews(req.body.ticker, req.body.companyName);
+    const fallback = getLocalFallbackNews(req.body?.ticker, req.body?.companyName);
     res.json({ news: fallback, warning: "Използван локален поток." });
   }
 });
@@ -967,43 +1250,43 @@ app.get("/api/vix", async (req, res) => {
 });
 
 app.get("/api/global-news", async (req, res) => {
+  const tab = String(req.query.tab || 'all').toLowerCase();
   try {
     const now = Date.now();
     const forceRefresh = req.query.refresh === 'true';
 
-    // 1. Check in-memory cache first for sub-50ms response (unless force refresh requested)
-    if (!forceRefresh && globalNewsCache && (now - globalNewsCache.timestamp < NEWS_CACHE_TTL_MS) && globalNewsCache.news.length > 0) {
-      return res.json({ news: globalNewsCache.news, cached: true });
+    // 1. Check per-tab in-memory cache first for sub-50ms response
+    const cachedTab = globalNewsCacheByTab.get(tab);
+    if (!forceRefresh && cachedTab && (now - cachedTab.timestamp < NEWS_CACHE_TTL_MS) && cachedTab.news.length > 0) {
+      return res.json({ news: cachedTab.news, cached: true, tab });
     }
 
-    // 2. Fetch live multi-source feeds from CNBC, MarketWatch, Investing.com/Reuters, and Investor.bg
-    const rawNews = await fetchTopGlobalFinancialFeeds();
-
-    // 3. Process Bulgarian vs English feeds and translate
-    if (rawNews.length > 0) {
-      const processed = await processAndTranslateNews(rawNews);
-      globalNewsCache = {
+    // 2. Fetch live multi-source feeds + bilingual translation
+    const processed = await fetchTopGlobalFinancialFeeds(tab);
+    if (processed.length > 0) {
+      globalNewsCacheByTab.set(tab, {
         timestamp: now,
         news: processed
-      };
-      return res.json({ news: processed });
+      });
+      return res.json({ news: processed, tab });
     }
 
-    // 4. If fresh fetch returned nothing, return previous cache if any
-    if (globalNewsCache && globalNewsCache.news.length > 0) {
-      return res.json({ news: globalNewsCache.news });
+    // 3. If fresh fetch returned nothing, return previous cache if any
+    if (cachedTab && cachedTab.news.length > 0) {
+      return res.json({ news: cachedTab.news, tab });
     }
 
-    // 5. Last resort fallback
+    // 4. Last resort fallback
     const fallback = getLocalFallbackNews("", "");
-    return res.json({ news: fallback });
+    return res.json({ news: fallback, tab });
   } catch (error: any) {
     console.error("Error in /api/global-news:", error.message);
-    if (globalNewsCache && globalNewsCache.news.length > 0) {
-      return res.json({ news: globalNewsCache.news });
+    const cachedTab = globalNewsCacheByTab.get(tab);
+    if (cachedTab && cachedTab.news.length > 0) {
+      return res.json({ news: cachedTab.news, tab });
     }
     const fallback = getLocalFallbackNews("", "");
-    res.json({ news: fallback });
+    res.json({ news: fallback, tab });
   }
 });
 
