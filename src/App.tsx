@@ -114,6 +114,7 @@ export default function App() {
  const [isCsvUploaderOpen, setIsCsvUploaderOpen] = useState(false);
  const [isSidebarToolsOpen, setIsSidebarToolsOpen] = useState(false);
  const [isSidebarFairValueOpen, setIsSidebarFairValueOpen] = useState(false);
+ const [isSidebarOtherOpen, setIsSidebarOtherOpen] = useState(false);
  const [showPercentCalculatorModal, setShowPercentCalculatorModal] = useState(() => {
     const h = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
     return h.includes('percent-calculator') || h.includes('percentage-calculator') || h.includes('pctdifference');
@@ -178,20 +179,20 @@ export default function App() {
     }
   };
 
-  const getInitialTab = (): 'table' | 'alerts' | 'portfolio' | 'news' => {
+  const getInitialTab = (): 'table' | 'alerts' | 'portfolio' | 'news' | 'other' => {
     const hash = window.location.hash.toLowerCase().replace('#', '');
-    if (hash === 'alerts' || hash === 'portfolio' || hash === 'news') return hash;
+    if (hash === 'alerts' || hash === 'portfolio' || hash === 'news' || hash === 'other') return hash;
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab')?.toLowerCase();
-    if (tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news') return tabParam;
+    if (tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news' || tabParam === 'other') return tabParam;
     return 'table';
   };
 
-  const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio' | 'news'>(getInitialTab);
-  const activeMainTabRef = useRef<'table' | 'alerts' | 'portfolio' | 'news'>(activeMainTab);
+  const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio' | 'news' | 'other'>(getInitialTab);
+  const activeMainTabRef = useRef<'table' | 'alerts' | 'portfolio' | 'news' | 'other'>(activeMainTab);
   activeMainTabRef.current = activeMainTab;
 
-  const switchTab = (tab: 'table' | 'alerts' | 'portfolio' | 'news') => {
+  const switchTab = (tab: 'table' | 'alerts' | 'portfolio' | 'news' | 'other') => {
     setActiveMainTab(tab);
     activeMainTabRef.current = tab;
     const targetHash = tab === 'table' ? '' : `#${tab}`;
@@ -278,6 +279,9 @@ export default function App() {
         } else if (hash === 'news') {
           setActiveMainTab('news');
           activeMainTabRef.current = 'news';
+        } else if (hash === 'other') {
+          setActiveMainTab('other');
+          activeMainTabRef.current = 'other';
         } else if (hash === 'table' || hash === '') {
           setActiveMainTab('table');
           activeMainTabRef.current = 'table';
@@ -2210,6 +2214,78 @@ export default function App() {
           )}
         </div>
 
+        {/* Other Category Dropdown Card (StockAnalysis Style) */}
+        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+          <button
+            type="button"
+            onClick={() => {
+              setIsSidebarOtherOpen(!isSidebarOtherOpen);
+              switchTab('other');
+            }}
+            className={`w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 group select-none ${
+              activeMainTab === 'other'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                : 'text-ink hover:bg-card-hover'
+            }`}
+            title="Отвори категория Other"
+          >
+            <div className="flex items-center gap-2">
+              <Layers className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${activeMainTab === 'other' ? 'text-white' : 'text-purple-400'}`} />
+              <span>Other</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold ${
+                activeMainTab === 'other' ? 'bg-white/20 text-white' : 'bg-purple-500/10 text-purple-400'
+              }`}>
+                4
+              </span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
+                activeMainTab === 'other' ? 'text-white' : 'text-ink-muted group-hover:text-ink'
+              } ${isSidebarOtherOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </button>
+
+          {isSidebarOtherOpen && (
+            <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
+              <button
+                type="button"
+                onClick={() => switchTab('other')}
+                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+              >
+                <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="truncate">Лог на известията</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  switchTab('other');
+                  setIsCsvUploaderOpen(true);
+                }}
+                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate">Google Sheets & CSV</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsQuoteModalOpen(true)}
+                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="truncate">Цитат на Деня</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowFinancialFlagsModal(true)}
+                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate">Financial Flags 🟢🟡🔴</span>
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Market Status Quick Glance Card (StockAnalysis Style - desktop only) */}
         <div className="hidden lg:flex flex-col bg-card/60 border border-border/70 rounded-2xl p-3 shadow-xs space-y-2 text-xs">
           <div className="flex items-center justify-between text-[11px] font-bold text-ink-muted">
@@ -2376,104 +2452,120 @@ export default function App() {
       </div>
     )}
 
-    {/* Real-time Notification Logs monitor at the bottom of Table tab */}
-    {activeMainTab === 'table' && (
-      <div className="bg-bg rounded-2xl border border-border p-4 flex flex-col justify-between shadow-xs mt-6">
-        <div>
-          <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums flex items-center gap-1.5">
-            <Bell className="w-3.5 h-3.5 text-amber-800" />
-            Лог на известията & задействания
-          </h3>
-          <p className="text-xs text-ink-faint font-sans tabular-nums mt-0.5">
-            Хроника на пазарните промени и филтри на заложени аларми.
-          </p>
+    {/* Dedicated Other Category Tab */}
+    {activeMainTab === 'other' && (
+      <div className="space-y-6 animate-in fade-in zoom-in-95 duration-150">
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-black uppercase text-ink flex items-center gap-2">
+              <Layers className="w-5 h-5 text-purple-400" />
+              <span>Категория Other</span>
+            </h2>
+            <p className="text-xs text-ink-muted mt-1">
+              Допълнителни модули, синхронизация на данни, хроника на известията и финансови матрици.
+            </p>
+          </div>
+          <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            4 модула
+          </span>
         </div>
 
-        <div className="h-28 overflow-y-auto mt-3.5 space-y-1.5 pr-1 text-xs font-sans tabular-nums">
-          {logs.map(log => (
-            <div 
-              key={log.id} 
-              className={`p-1.5 rounded-2xl border text-xs leading-relaxed flex items-start gap-1.5 ${
-                log.type === 'alert' 
-                  ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
-                  : log.type === 'success'
-                  ? 'bg-emerald-50 border-emerald-600 text-emerald-950 font-extrabold'
-                  : 'bg-bg/30 border-border/20 text-ink-muted'
-              }`}
-            >
-              <span className="text-ink-faint block shrink-0">[{log.timestamp}]</span>
-              <p>
-                <span className="font-bold text-ink mr-1 uppercase">[{log.ticker}]</span>
-                {log.message}
-              </p>
+        {/* 1. Real-time Notification Logs monitor */}
+        <div className="bg-card rounded-2xl border border-border p-4 flex flex-col justify-between shadow-xs">
+          <div>
+            <h3 className="text-xs uppercase font-extrabold text-ink font-sans tabular-nums flex items-center gap-1.5">
+              <Bell className="w-3.5 h-3.5 text-amber-500" />
+              Лог на известията & задействания
+            </h3>
+            <p className="text-xs text-ink-faint font-sans tabular-nums mt-0.5">
+              Хроника на пазарните промени и филтри на заложени аларми.
+            </p>
+          </div>
+
+          <div className="h-40 overflow-y-auto mt-3.5 space-y-1.5 pr-1 text-xs font-sans tabular-nums">
+            {logs.map(log => (
+              <div 
+                key={log.id} 
+                className={`p-1.5 rounded-2xl border text-xs leading-relaxed flex items-start gap-1.5 ${
+                  log.type === 'alert' 
+                    ? 'bg-amber-50 border-amber-600 text-amber-950 font-extrabold' 
+                    : log.type === 'success'
+                    ? 'bg-emerald-50 border-emerald-600 text-emerald-950 font-extrabold'
+                    : 'bg-bg/30 border-border/20 text-ink-muted'
+                }`}
+              >
+                <span className="text-ink-faint block shrink-0">[{log.timestamp}]</span>
+                <p>
+                  <span className="font-bold text-ink mr-1 uppercase">[{log.ticker}]</span>
+                  {log.message}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. Collapsible CSV & Google Sheets Uploader */}
+        <div className="bg-card rounded-2xl border border-border p-5 flex flex-col items-center gap-4 shadow-xs">
+          <button
+            type="button"
+            onClick={() => setIsCsvUploaderOpen(!isCsvUploaderOpen)}
+            className="px-5 py-2.5 rounded-2xl bg-bg hover:bg-card-hover border border-border/80 text-ink-muted hover:text-ink text-xs font-extrabold transition-all flex items-center gap-2.5 cursor-pointer shadow-xs"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <span>📊 Синхронизиране с Google Sheets & CSV данни</span>
+            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCsvUploaderOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+          </button>
+
+          {isCsvUploaderOpen && (
+            <div className="w-full max-w-4xl animate-in fade-in zoom-in-95 duration-200">
+              <CsvUploader onDataLoaded={handleSheetSynced} />
             </div>
-          ))}
+          )}
+        </div>
+
+        {/* 3 & 4. Quote of the Day & Financial Statements Flags */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Quote of the Day Card */}
+          <button
+            type="button"
+            onClick={() => setIsQuoteModalOpen(true)}
+            className="group flex flex-col items-center justify-between text-center p-5 rounded-2xl bg-card hover:bg-card-hover border border-border hover:border-amber-500/40 transition-all cursor-pointer shadow-xs"
+            title="Отвори пълния цитат и инвестиционна мъдрост"
+          >
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[11px] font-black uppercase tracking-wider mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Цитат на Деня • Уорън Бъфет</span>
+            </div>
+            <p className="text-xs sm:text-sm text-ink-muted font-serif italic leading-relaxed group-hover:text-ink transition-colors px-2 mb-3">
+              „Цената е това, което плащаш; стойността е това, което получаваш.“
+            </p>
+            <span className="text-[10px] text-ink-faint font-sans font-extrabold uppercase tracking-wide flex items-center gap-1 group-hover:text-amber-400 transition-colors mt-auto">
+              Виж пълен цитат (BG / EN) →
+            </span>
+          </button>
+
+          {/* Financial Flags Matrix Card */}
+          <button
+            type="button"
+            onClick={() => setShowFinancialFlagsModal(true)}
+            className="group flex flex-col items-center justify-between text-center p-5 rounded-2xl bg-card hover:bg-card-hover border border-border hover:border-emerald-500/40 transition-all cursor-pointer shadow-xs"
+            title="Отвори пълен одит и критерии за финансови флагове (Green, Yellow, Red Flags)"
+          >
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[11px] font-black uppercase tracking-wider mb-2">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Financial Statements Flags • 🟢🟡🔴</span>
+            </div>
+            <p className="text-xs sm:text-sm text-ink-muted font-sans leading-relaxed group-hover:text-ink transition-colors px-2 mb-3">
+              Пълен одит на Income Statement, Balance Sheet и Cash Flow.
+            </p>
+            <span className="text-[10px] text-ink-faint font-sans font-extrabold uppercase tracking-wide flex items-center gap-1 group-hover:text-emerald-400 transition-colors mt-auto">
+              Отвори Financial Flags матрица →
+            </span>
+          </button>
         </div>
       </div>
     )}
 
-      </div>
-    </div>
-
-    {/* Sleek Collapsible CSV & Google Sheets Uploader Footer (Available across all 3 windows/tabs) */}
-    <div className="mt-8 border-t border-border/40 pt-6 pb-8 flex flex-col items-center gap-4">
-      <button
-        type="button"
-        onClick={() => setIsCsvUploaderOpen(!isCsvUploaderOpen)}
-        className="px-5 py-2.5 rounded-2xl bg-card hover:bg-card-hover border border-border/80 text-ink-muted hover:text-ink text-xs font-extrabold transition-all flex items-center gap-2.5 cursor-pointer shadow-xs"
-      >
-        <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-        <span>📊 Синхронизиране с Google Sheets & CSV данни</span>
-        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCsvUploaderOpen ? 'rotate-180 text-emerald-400' : ''}`} />
-      </button>
-
-      {isCsvUploaderOpen && (
-        <div className="w-full max-w-4xl animate-in fade-in zoom-in-95 duration-200">
-          <CsvUploader onDataLoaded={handleSheetSynced} />
-        </div>
-      )}
-    </div>
-
-    {/* Footer Navigation Cards: Quote of the Day & Financial Statements Flags */}
-    <div className="border-t border-border/30 pt-6 pb-12 max-w-4xl mx-auto px-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Quote of the Day Card */}
-        <button
-          type="button"
-          onClick={() => setIsQuoteModalOpen(true)}
-          className="group flex flex-col items-center justify-between text-center p-4 rounded-2xl bg-card/40 hover:bg-card/80 border border-border/50 hover:border-amber-500/40 transition-all cursor-pointer shadow-2xs"
-          title="Отвори пълния цитат и инвестиционна мъдрост"
-        >
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[11px] font-black uppercase tracking-wider mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Цитат на Деня • Уорън Бъфет</span>
-          </div>
-          <p className="text-xs sm:text-sm text-ink-muted font-serif italic leading-relaxed group-hover:text-ink transition-colors px-2 mb-3">
-            „Цената е това, което плащаш; стойността е това, което получаваш.“
-          </p>
-          <span className="text-[10px] text-ink-faint font-sans font-extrabold uppercase tracking-wide flex items-center gap-1 group-hover:text-amber-400 transition-colors mt-auto">
-            Виж пълен цитат (BG / EN) →
-          </span>
-        </button>
-
-        {/* Financial Flags Matrix Card */}
-        <button
-          type="button"
-          onClick={() => setShowFinancialFlagsModal(true)}
-          className="group flex flex-col items-center justify-between text-center p-4 rounded-2xl bg-card/40 hover:bg-card/80 border border-border/50 hover:border-emerald-500/40 transition-all cursor-pointer shadow-2xs"
-          title="Отвори пълен одит и критерии за финансови флагове (Green, Yellow, Red Flags)"
-        >
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[11px] font-black uppercase tracking-wider mb-2">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Financial Statements Flags • 🟢🟡🔴</span>
-          </div>
-          <p className="text-xs sm:text-sm text-ink-muted font-sans leading-relaxed group-hover:text-ink transition-colors px-2 mb-3">
-            Пълен одит на Income Statement, Balance Sheet и Cash Flow.
-          </p>
-          <span className="text-[10px] text-ink-faint font-sans font-extrabold uppercase tracking-wide flex items-center gap-1 group-hover:text-emerald-400 transition-colors mt-auto">
-            Отвори Financial Flags матрица →
-          </span>
-        </button>
       </div>
     </div>
 
