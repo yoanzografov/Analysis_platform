@@ -2840,51 +2840,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
       {/* Main Checklist Content Area */}
       <div className="flex-1 overflow-auto p-2 sm:p-4 md:p-6 bg-bg pb-safe">
-        {/* Quick Audited Checklists Selector (especially great on mobile) */}
-        {savedChecklists.length > 0 && (
-          <div className="max-w-4xl mx-auto mb-4 bg-bg-card rounded-2xl border border-border/80 p-3 sm:p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-2 mb-2.5">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">📋</span>
-                <span className="text-xs font-black uppercase tracking-wider text-ink">
-                  Попълнени Чек-листи ({savedChecklists.length})
-                </span>
-                <span className="hidden sm:inline-flex text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
-                  Облачна синхронизация ✓
-                </span>
-              </div>
-              <span className="text-[11px] text-ink-faint">Изберете за преглед</span>
-            </div>
-            <div className="flex items-center gap-2 overflow-x-auto touch-pan-x no-scrollbar pb-1">
-              {savedChecklists.map(saved => {
-                const isCurrent = (selectedTicker || '').toUpperCase() === saved.ticker;
-                const auditedCount = Object.keys(saved.checkedRows || {}).length;
-                const compName = saved.userInputs['1'] || saved.ticker;
-                return (
-                  <button
-                    key={saved.ticker}
-                    type="button"
-                    onClick={() => void handleSelectTicker(saved.ticker)}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-sans font-bold flex items-center gap-2 transition-all cursor-pointer shrink-0 shadow-2xs ${
-                      isCurrent
-                        ? 'bg-indigo-600 text-white border-indigo-400 ring-2 ring-indigo-400/40'
-                        : 'bg-bg hover:bg-card-hover border-border text-ink hover:border-indigo-500/40'
-                    }`}
-                    title={`Отвори одит за ${saved.ticker} (${compName})`}
-                  >
-                    <span className="font-mono font-black">{saved.ticker}</span>
-                    <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
-                      isCurrent ? 'bg-white/20 text-white' : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                    }`}>
-                      {auditedCount > 0 ? `${auditedCount}/${totalCheckableRows}` : 'Запазен'}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {viewMode === 'cards' ? (
           /* Cards View: Perfectly optimized for Mobile & Touch screens - Nothing is hidden! */
           <div className="max-w-4xl mx-auto space-y-4">
