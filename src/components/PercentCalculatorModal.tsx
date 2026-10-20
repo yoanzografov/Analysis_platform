@@ -254,10 +254,11 @@ export default function PercentCalculatorModal({ isOpen, onClose, initialV1, ini
               onClick={() => {
                 window.open(`${window.location.origin}${window.location.pathname}#percent-calculator`, '_blank');
               }}
-              className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-card-hover border border-border/60 transition-colors cursor-pointer"
-              title="Open in new window"
+              className="px-2.5 py-1 text-[10px] font-bold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap"
+              title="Отвори в нов прозорец"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-3 h-3" />
+              <span>Нов прозорец</span>
             </button>
             <button
               type="button"

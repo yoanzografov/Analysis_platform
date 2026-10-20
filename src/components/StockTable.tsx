@@ -720,23 +720,14 @@ export default function StockTable({
         onRequireAuth?.('Stock Analysis Check List');
         return;
       }
-      try {
-        const opened = window.open(`${window.location.origin}${window.location.pathname}#checklist`, '_blank');
-        if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-          setChecklistModalStock(null);
-          setIsChecklistOpen(true);
-        }
-      } catch (err) {
-        setChecklistModalStock(null);
-        setIsChecklistOpen(true);
-      }
+      setChecklistModalStock(null);
+      setIsChecklistOpen(true);
     }}
     className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
-    title={currentUser ? "Отвори Check List за анализ на акции в нов прозорец" : "Check List (Изисква регистрация)"}
+    title={currentUser ? "Отвори Check List за анализ на акции" : "Check List (Изисква регистрация)"}
   >
     <CheckSquare className="w-3.5 h-3.5" />
     <span>Check List</span>
-    <ExternalLink className="w-3 h-3 opacity-70" />
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
 
@@ -748,23 +739,14 @@ export default function StockTable({
         onRequireAuth?.('DCF Calculator');
         return;
       }
-      try {
-        const opened = window.open(`${window.location.origin}${window.location.pathname}#dcf-calculator`, '_blank');
-        if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-          setDcfModalStock(null);
-          setIsDcfModalOpen(true);
-        }
-      } catch (err) {
-        setDcfModalStock(null);
-        setIsDcfModalOpen(true);
-      }
+      setDcfModalStock(null);
+      setIsDcfModalOpen(true);
     }}
     className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-blue-500/40 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
-    title={currentUser ? "Отвори DCF Calculator (Discounted Cash Flow) в нов прозорец" : "DCF Calculator (Изисква регистрация)"}
+    title={currentUser ? "Отвори DCF Calculator (Discounted Cash Flow)" : "DCF Calculator (Изисква регистрация)"}
   >
     <Calculator className="w-3.5 h-3.5" />
     <span>DCF Calculator</span>
-    <ExternalLink className="w-3 h-3 opacity-70" />
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
 
@@ -776,23 +758,14 @@ export default function StockTable({
         onRequireAuth?.('Fair Value Calculator');
         return;
       }
-      try {
-        const opened = window.open(`${window.location.origin}${window.location.pathname}#fair-value`, '_blank');
-        if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-          setFairValueModalStock(null);
-          setIsFairValueModalOpen(true);
-        }
-      } catch (err) {
-        setFairValueModalStock(null);
-        setIsFairValueModalOpen(true);
-      }
+      setFairValueModalStock(null);
+      setIsFairValueModalOpen(true);
     }}
     className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase transition-all rounded-md border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
-    title={currentUser ? "Отвори Fair Value Calculator в нов прозорец" : "Fair Value Calculator (Изисква регистрация)"}
+    title={currentUser ? "Отвори Fair Value Calculator" : "Fair Value Calculator (Изисква регистрация)"}
   >
     <Calculator className="w-3.5 h-3.5" />
     <span>Fair Value</span>
-    <ExternalLink className="w-3 h-3 opacity-70" />
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
 

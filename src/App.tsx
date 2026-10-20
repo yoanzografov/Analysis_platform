@@ -2021,47 +2021,41 @@ export default function App() {
           {/* Collapsible Dropdown Content */}
           {isSidebarFairValueOpen && (
             <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
-              <a
-                href="#dcf-calculator"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowDcfModal(true)}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори DCF Calculator в New Tab (нов таб)"
+                title="Отвори DCF Calculator"
               >
                 <span className="flex items-center gap-2">
                   <Calculator className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                   <span>DCF Calculator</span>
                 </span>
-                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-blue-400 transition-colors shrink-0" />
-              </a>
+              </button>
 
-              <a
-                href="#fair-value"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowFairValueModal(true)}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Fair Value (P/E) в New Tab (нов таб)"
+                title="Отвори Fair Value (P/E)"
               >
                 <span className="flex items-center gap-2">
                   <Calculator className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                   <span>Fair Value (P/E)</span>
                 </span>
-                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-indigo-400 transition-colors shrink-0" />
-              </a>
+              </button>
 
-              <a
-                href="#checklist"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowChecklistModal(true)}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Stock Check List в New Tab (нов таб)"
+                title="Отвори Stock Check List"
               >
                 <span className="flex items-center gap-2">
                   <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span>Stock Check List</span>
                 </span>
-                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors shrink-0" />
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -2089,61 +2083,53 @@ export default function App() {
           {/* Collapsible Dropdown Content */}
           {isSidebarToolsOpen && (
             <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
-              <a
-                href="#percent-calculator"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowPercentCalculatorModal(true)}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Percentage Calculator в New Tab (нов таб)"
+                title="Отвори Percentage Calculator"
               >
                 <span className="flex items-center gap-2">
                   <Percent className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span>Percent Calculator</span>
                 </span>
-                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-cyan-400 transition-colors shrink-0" />
-              </a>
+              </button>
 
-              <a
-                href="#stock-profit-calculator"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowProfitCalculatorModal(true)}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Stock Profit Calculator в New Tab (нов таб)"
+                title="Отвори Stock Profit Calculator"
               >
                 <span className="flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>Profit Calculator</span>
                 </span>
-                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-amber-400 transition-colors shrink-0" />
-              </a>
+              </button>
 
-              <a
-                href="#roi-calculator"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowRoiCalculatorModal(true)}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори ROI Calculator в New Tab (нов таб)"
+                title="Отвори ROI Calculator"
               >
                 <span className="flex items-center gap-2">
                   <Calculator className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>ROI Calculator</span>
                 </span>
-                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-emerald-400 transition-colors shrink-0" />
-              </a>
+              </button>
 
-              <a
-                href="#investment-calculator"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowInvestmentCalculatorModal(true)}
                 className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Сложна Лихва & Растеж в New Tab (нов таб)"
+                title="Отвори Сложна Лихва & Растеж"
               >
                 <span className="flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                   <span>Сложна Лихва</span>
                 </span>
-                <ExternalLink className="w-3 h-3 text-ink-faint group-hover:text-purple-400 transition-colors shrink-0" />
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -2638,32 +2624,26 @@ export default function App() {
   />
 
   {/* ROI Calculator Modal */}
-  {currentUser && (
-    <RoiCalculatorModal
-      isOpen={showRoiCalculatorModal}
-      onClose={() => { setShowRoiCalculatorModal(false); clearHashUrl(); }}
-      baseCurrency={baseCurrency}
-    />
-  )}
+  <RoiCalculatorModal
+    isOpen={showRoiCalculatorModal}
+    onClose={() => { setShowRoiCalculatorModal(false); clearHashUrl(); }}
+    baseCurrency={baseCurrency}
+  />
 
   {/* Investment Compound Growth Calculator Modal */}
-  {currentUser && (
-    <InvestmentCalculatorModal
-      isOpen={showInvestmentCalculatorModal}
-      onClose={() => { setShowInvestmentCalculatorModal(false); clearHashUrl(); }}
-      baseCurrency={baseCurrency}
-    />
-  )}
+  <InvestmentCalculatorModal
+    isOpen={showInvestmentCalculatorModal}
+    onClose={() => { setShowInvestmentCalculatorModal(false); clearHashUrl(); }}
+    baseCurrency={baseCurrency}
+  />
 
   {/* Profit Calculator Modal (Spreadsheet Style) */}
-  {currentUser && (
-    <ProfitCalculatorModal
-      isOpen={showProfitCalculatorModal}
-      onClose={() => { setShowProfitCalculatorModal(false); clearHashUrl(); }}
-      stocks={stocks}
-      baseCurrency={baseCurrency}
-    />
-  )}
+  <ProfitCalculatorModal
+    isOpen={showProfitCalculatorModal}
+    onClose={() => { setShowProfitCalculatorModal(false); clearHashUrl(); }}
+    stocks={stocks}
+    baseCurrency={baseCurrency}
+  />
 
   {/* Stock Valuation Checklist Modal */}
   <StockChecklistModal
