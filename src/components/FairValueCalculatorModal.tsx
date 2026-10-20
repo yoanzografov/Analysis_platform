@@ -12,6 +12,77 @@ interface Props {
   onSwitchToDcfModel?: () => void;
 }
 
+/**
+ * Interactive 1:1 StockAnalysis-style `i` info badge with rich tooltip popover (hover + click support)
+ */
+function FairValueInfoBadge({
+  textBg,
+  textEn,
+  align = 'left'
+}: {
+  textBg: string;
+  textEn?: string;
+  align?: 'left' | 'right' | 'center';
+}) {
+  const [open, setOpen] = useState(false);
+  const badgeRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (badgeRef.current && !badgeRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [open]);
+
+  const positionClass =
+    align === 'right'
+      ? 'right-0'
+      : align === 'center'
+      ? 'left-1/2 -translate-x-1/2'
+      : 'left-0';
+
+  return (
+    <span
+      ref={badgeRef}
+      className="relative inline-flex items-center align-middle ml-1 select-none"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        aria-label="Информация"
+        className="w-3.5 h-3.5 rounded-full border border-ink-faint/50 bg-card/80 text-ink-muted hover:text-indigo-400 hover:border-indigo-400 flex items-center justify-center text-[9px] font-serif italic font-black leading-none transition-colors cursor-pointer"
+      >
+        i
+      </button>
+      {open && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={`absolute bottom-full mb-2 ${positionClass} z-50 w-64 sm:w-72 p-2.5 rounded-xl bg-stone-950/95 border border-indigo-500/40 shadow-2xl text-left normal-case tracking-normal pointer-events-auto animate-in fade-in zoom-in-95 duration-150`}
+        >
+          <p className="text-[11px] font-medium text-stone-100 leading-relaxed">
+            {textBg}
+          </p>
+          {textEn && (
+            <p className="text-[10px] font-normal text-stone-400 leading-snug mt-1.5 pt-1.5 border-t border-stone-800 italic">
+              {textEn}
+            </p>
+          )}
+        </div>
+      )}
+    </span>
+  );
+}
+
 export default function FairValueCalculatorModal({
   isOpen,
   onClose,
@@ -497,8 +568,14 @@ export default function FairValueCalculatorModal({
 
             {/* Input 1: Current Stock Price */}
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between">
-                <span>Current Stock Price</span>
+              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between items-center">
+                <span className="inline-flex items-center">
+                  Current Stock Price
+                  <FairValueInfoBadge
+                    textBg="Пазарната цена на акцията, спрямо която се сравнява изчислената справедлива стойност (Fair Value). Започва с примерна стойност — потърсете компания горе за автоматично попълване."
+                    textEn="The share price the fair value is compared against. Starts from an example value. Search for a stock above to pre-fill it."
+                  />
+                </span>
                 <span className="text-indigo-400 font-mono">${price.toFixed(2)}</span>
               </label>
               <div className="flex items-center gap-1">
@@ -537,8 +614,14 @@ export default function FairValueCalculatorModal({
 
             {/* Input 2: Earnings Per Share (EPS) */}
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between">
-                <span>Earnings per Share (EPS)</span>
+              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between items-center">
+                <span className="inline-flex items-center">
+                  Earnings per Share (EPS)
+                  <FairValueInfoBadge
+                    textBg="Разводнената печалба на акция (EPS) за последните 12 месеца (TTM). Започва с примерна стойност — потърсете компания горе за автоматично попълване."
+                    textEn="Diluted earnings per share over the last 12 months. Starts from an example value. Search for a stock above to pre-fill it."
+                  />
+                </span>
                 <span className="text-indigo-400 font-mono">${eps.toFixed(2)}</span>
               </label>
               <div className="flex items-center gap-1">
@@ -577,8 +660,14 @@ export default function FairValueCalculatorModal({
 
             {/* Input 3: EPS Growth Rate */}
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between">
-                <span>EPS Growth Rate</span>
+              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between items-center">
+                <span className="inline-flex items-center">
+                  EPS Growth Rate
+                  <FairValueInfoBadge
+                    textBg="Очакваният годишен темп на растеж на печалбата на акция (EPS) през първата година. Започва с примерна стойност — потърсете компания горе за автоматично попълване."
+                    textEn="Expected annual growth in earnings per share in the first year. Starts from an example value. Search for a stock above to pre-fill it."
+                  />
+                </span>
                 <span className="text-emerald-400 font-mono">{epsGrowth.toFixed(1)}%</span>
               </label>
               <div className="flex items-center gap-1">
@@ -618,8 +707,14 @@ export default function FairValueCalculatorModal({
 
             {/* Input 4: Terminal EPS Growth Rate */}
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between">
-                <span>Terminal EPS Growth Rate</span>
+              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between items-center">
+                <span className="inline-flex items-center">
+                  Terminal EPS Growth Rate
+                  <FairValueInfoBadge
+                    textBg="Темпът на растеж, който се достига в последната година. Растежът на EPS се забавя плавно от началния темп до този терминален темп на равни годишни стъпки."
+                    textEn="The growth rate reached in the final year. EPS growth slows from the starting rate to this rate in equal yearly steps."
+                  />
+                </span>
                 <span className="text-amber-400 font-mono">{terminalEpsGrowth.toFixed(1)}%</span>
               </label>
               <div className="flex items-center gap-1">
@@ -659,8 +754,14 @@ export default function FairValueCalculatorModal({
 
             {/* Input 5: Years */}
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between">
-                <span>Years</span>
+              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between items-center">
+                <span className="inline-flex items-center">
+                  Years
+                  <FairValueInfoBadge
+                    textBg="За колко години напред се прогнозира печалбата на акция преди прилагането на крайното съотношение Exit P/E."
+                    textEn="How many years earnings are projected before applying the exit P/E ratio."
+                  />
+                </span>
                 <span className="text-indigo-400 font-mono">{years} г.</span>
               </label>
               <div className="flex items-center gap-1">
@@ -699,8 +800,14 @@ export default function FairValueCalculatorModal({
 
             {/* Input 6: Exit P/E Ratio */}
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between">
-                <span>Exit P/E Ratio</span>
+              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between items-center">
+                <span className="inline-flex items-center">
+                  Exit P/E Ratio
+                  <FairValueInfoBadge
+                    textBg="Съотношението P/E, при което се очаква акцията да се търгува в последната година на прогнозата. Често се избира средното 5-годишно P/E на компанията."
+                    textEn="The P/E ratio the stock is expected to trade at in the final year. The 5-year average P/E is a common choice."
+                  />
+                </span>
                 <span className="text-indigo-400 font-mono">{exitPe.toFixed(1)}x</span>
               </label>
               <div className="flex items-center gap-1">
@@ -740,8 +847,14 @@ export default function FairValueCalculatorModal({
 
             {/* Input 7: Required Annual Return */}
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between">
-                <span>Required Annual Return</span>
+              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between items-center">
+                <span className="inline-flex items-center">
+                  Required Annual Return
+                  <FairValueInfoBadge
+                    textBg="Годишната възвръщаемост, която изисквате от инвестицията. Бъдещата цена в последната година се дисконтира обратно към днешна дата с този процент."
+                    textEn="The yearly return you want from the investment. The future price is discounted back at this rate."
+                  />
+                </span>
                 <span className="text-indigo-400 font-mono">{requiredReturn.toFixed(1)}%</span>
               </label>
               <div className="flex items-center gap-1">
@@ -781,8 +894,14 @@ export default function FairValueCalculatorModal({
 
             {/* Input 8: Margin of Safety */}
             <div className="space-y-1 border-t border-border/40 pt-2.5">
-              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between">
-                <span>Margin of Safety</span>
+              <label className="text-[11px] font-bold text-ink-muted uppercase flex justify-between items-center">
+                <span className="inline-flex items-center">
+                  Margin of Safety
+                  <FairValueInfoBadge
+                    textBg="Намалява справедливата стойност с този процент, за да добави буфер за сигурност при евентуални грешки в допусканията."
+                    textEn="Reduce the fair value by this percentage to add room for errors in the assumptions."
+                  />
+                </span>
                 <span className="text-emerald-400 font-mono">{marginOfSafety.toFixed(0)}%</span>
               </label>
               <div className="flex items-center gap-1">
@@ -886,8 +1005,12 @@ export default function FairValueCalculatorModal({
               
               {/* Tile 1: EPS in Year N */}
               <div className="bg-bg/60 border border-border/60 rounded-2xl p-3 flex flex-col justify-between">
-                <span className="text-xs font-medium text-ink-muted">
+                <span className="text-xs font-medium text-ink-muted inline-flex items-center">
                   EPS in Year {years}
+                  <FairValueInfoBadge
+                    textBg={`Печалбата на акция след ${years} години растеж. Табелката показва общия ръст спрямо днешния EPS.`}
+                    textEn={`Earnings per share after ${years} years of growth. The pill is the total growth from today's EPS.`}
+                  />
                 </span>
                 <div className="mt-1 flex flex-wrap items-baseline gap-2">
                   <span className="text-lg sm:text-xl font-bold font-mono text-ink">
@@ -905,8 +1028,13 @@ export default function FairValueCalculatorModal({
 
               {/* Tile 2: Stock Price in Year N */}
               <div className="bg-bg/60 border border-border/60 rounded-2xl p-3 flex flex-col justify-between">
-                <span className="text-xs font-medium text-ink-muted">
+                <span className="text-xs font-medium text-ink-muted inline-flex items-center">
                   Stock Price in Year {years}
+                  <FairValueInfoBadge
+                    align="center"
+                    textBg="Прогнозираният EPS, умножен по избраното Exit P/E съотношение. Табелката показва общата промяна спрямо днешната цена."
+                    textEn="Projected EPS multiplied by the exit P/E ratio. The pill is the total change from today's price."
+                  />
                 </span>
                 <div className="mt-1 flex flex-wrap items-baseline gap-2">
                   <span className="text-lg sm:text-xl font-bold font-mono text-ink">
@@ -924,8 +1052,13 @@ export default function FairValueCalculatorModal({
 
               {/* Tile 3: Projected Annual Return */}
               <div className="bg-bg/60 border border-border/60 rounded-2xl p-3 flex flex-col justify-between">
-                <span className="text-xs font-medium text-ink-muted">
+                <span className="text-xs font-medium text-ink-muted inline-flex items-center">
                   Annual Return
+                  <FairValueInfoBadge
+                    align="center"
+                    textBg="Годишната възвръщаемост (CAGR), която бихте реализирали, ако купите на текущата цена и продадете на прогнозираната бъдеща цена."
+                    textEn="The annual return you would earn by buying at the current price and selling at the projected price."
+                  />
                 </span>
                 <div className="mt-1 flex flex-wrap items-baseline gap-2">
                   <span className="text-lg sm:text-xl font-bold font-mono text-ink">
@@ -936,8 +1069,13 @@ export default function FairValueCalculatorModal({
 
               {/* Tile 4: Current P/E Ratio */}
               <div className="bg-bg/60 border border-border/60 rounded-2xl p-3 flex flex-col justify-between">
-                <span className="text-xs font-medium text-ink-muted">
+                <span className="text-xs font-medium text-ink-muted inline-flex items-center">
                   Current P/E Ratio
+                  <FairValueInfoBadge
+                    align="right"
+                    textBg="Текущата цена на акцията, разделена на печалбата на акция (EPS) за последните 12 месеца."
+                    textEn="Current stock price divided by trailing 12-month earnings per share (EPS)."
+                  />
                 </span>
                 <div className="mt-1 flex flex-wrap items-baseline gap-2">
                   <span className="text-lg sm:text-xl font-bold font-mono text-ink">
@@ -955,8 +1093,12 @@ export default function FairValueCalculatorModal({
             }`}>
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <div className="text-sm font-medium text-ink-muted">
+                  <div className="text-sm font-medium text-ink-muted inline-flex items-center">
                     Fair Value (Earnings Multiple)
+                    <FairValueInfoBadge
+                      textBg="Справедливата стойност днес, изчислена чрез дисконтиране на прогнозираната бъдеща цена (EPS в последната година × Exit P/E) обратно към днешна дата с желаната годишна възвръщаемост."
+                      textEn="Fair value today, calculated by discounting the projected future stock price (Year N EPS × Exit P/E) back to today at your required annual return."
+                    />
                   </div>
                   <div className="mt-1 flex flex-wrap items-baseline gap-3">
                     <span className="text-3xl sm:text-4xl font-black font-mono text-ink tracking-tight">
@@ -978,8 +1120,13 @@ export default function FairValueCalculatorModal({
                     ${calculation.safePrice.toFixed(2)}
                   </div>
                   {marginOfSafety > 0 && (
-                    <div className="text-[11px] text-emerald-400 font-mono mt-0.5">
+                    <div className="text-[11px] text-emerald-400 font-mono mt-0.5 inline-flex items-center justify-end">
                       Buy Target: ≤ ${calculation.fairValueWithSafety.toFixed(2)}
+                      <FairValueInfoBadge
+                        align="right"
+                        textBg={`Целева цена за покупка след приспадане на ${marginOfSafety}% буфер за сигурност (Margin of Safety) от справедливата стойност ($${calculation.fairValue.toFixed(2)}).`}
+                        textEn={`Target buy price after applying a ${marginOfSafety}% Margin of Safety discount to the raw Fair Value ($${calculation.fairValue.toFixed(2)}).`}
+                      />
                     </div>
                   )}
                 </div>
