@@ -16,6 +16,82 @@ interface Props {
   onSwitchToPeModel?: () => void;
 }
 
+interface InfoTooltipProps {
+  title: string;
+  textBg: string;
+  textEn?: string;
+  align?: 'left' | 'right' | 'center';
+}
+
+function DcfInfoBadge({ title, textBg, textEn, align = 'left' }: InfoTooltipProps) {
+  const [open, setOpen] = useState(false);
+  const badgeRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (badgeRef.current && !badgeRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [open]);
+
+  const posClass =
+    align === 'right'
+      ? 'right-0'
+      : align === 'center'
+      ? 'left-1/2 -translate-x-1/2'
+      : 'left-0';
+
+  return (
+    <span
+      ref={badgeRef}
+      className="relative inline-flex items-center ml-1 align-middle"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(prev => !prev);
+        }}
+        aria-label={`Информация за ${title}`}
+        className="w-4 h-4 rounded-full bg-stone-800/90 hover:bg-blue-500/25 border border-stone-700 hover:border-blue-400/60 text-stone-400 hover:text-blue-300 inline-flex items-center justify-center transition-colors cursor-pointer shrink-0"
+      >
+        <svg className="h-[9px] w-[9px]" viewBox="0 0 4 16" fill="currentColor" aria-hidden="true">
+          <path d="M0 6h4v10h-4v-10zm2-6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={`absolute bottom-full mb-2 ${posClass} z-[300] w-64 sm:w-72 rounded-xl bg-stone-900/98 backdrop-blur-md border border-stone-700/90 shadow-2xl p-3 text-left font-normal normal-case tracking-normal animate-in fade-in zoom-in-95 duration-100 pointer-events-auto`}
+        >
+          <div className="text-[11px] font-bold text-white border-b border-stone-800 pb-1 mb-1.5 flex items-center justify-between gap-2">
+            <span>{title}</span>
+            <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30">
+              Info
+            </span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-stone-200">
+            {textBg}
+          </p>
+          {textEn && (
+            <p className="text-[10px] leading-relaxed text-stone-400 mt-1.5 pt-1.5 border-t border-stone-800/80 italic">
+              {textEn}
+            </p>
+          )}
+        </div>
+      )}
+    </span>
+  );
+}
+
 export default function DcfCalculatorModal({
   isOpen,
   onClose,
@@ -511,7 +587,14 @@ export default function DcfCalculatorModal({
             {/* Current Stock Price */}
             <div>
               <label className="text-xs font-semibold text-stone-300 flex items-center justify-between mb-1">
-                <span>Current Stock Price</span>
+                <span className="inline-flex items-center">
+                  Current Stock Price
+                  <DcfInfoBadge
+                    title="Current Stock Price (Текуща цена)"
+                    textBg="Пазарната цена на акцията, спрямо която се сравнява изчислената справедлива стойност (Fair Value). Започва с примерна стойност — потърсете компания горе за автоматично попълване."
+                    textEn="The share price the fair value is compared against. Starts from an example value. Search for a stock above to pre-fill it."
+                  />
+                </span>
                 <span className="text-[10px] text-stone-500">Текуща цена</span>
               </label>
               <div className="flex items-center gap-1.5">
@@ -549,7 +632,14 @@ export default function DcfCalculatorModal({
             {/* Free Cash Flow per Share */}
             <div>
               <label className="text-xs font-semibold text-stone-300 flex items-center justify-between mb-1">
-                <span>Free Cash Flow per Share</span>
+                <span className="inline-flex items-center">
+                  Free Cash Flow per Share
+                  <DcfInfoBadge
+                    title="Free Cash Flow per Share (FCF на акция)"
+                    textBg="Свободният паричен поток за последните 12 месеца, разделен на броя акции в обращение. Започва с примерна стойност — потърсете компания горе за автоматично попълване."
+                    textEn="Free cash flow over the last 12 months divided by shares outstanding. Starts from an example value. Search for a stock above to pre-fill it."
+                  />
+                </span>
                 <span className="text-[10px] text-stone-500">FCF на акция</span>
               </label>
               <div className="flex items-center gap-1.5">
@@ -587,7 +677,14 @@ export default function DcfCalculatorModal({
             {/* Growth Rate (Years 1–5) */}
             <div>
               <label className="text-xs font-semibold text-stone-300 flex items-center justify-between mb-1">
-                <span>Growth Rate (Years 1–5)</span>
+                <span className="inline-flex items-center">
+                  Growth Rate (Years 1–5)
+                  <DcfInfoBadge
+                    title="Growth Rate (Years 1–5)"
+                    textBg="Очакваният годишен темп на растеж на свободния паричен поток през първите 5 години. Започва с примерна стойност — потърсете компания горе за автоматично попълване."
+                    textEn="Expected annual growth in free cash flow for the first five years. Starts from an example value. Search for a stock above to pre-fill it."
+                  />
+                </span>
                 <span className="text-[10px] text-stone-500">Ръст год. 1–5</span>
               </label>
               <div className="flex items-center gap-1.5">
@@ -626,7 +723,14 @@ export default function DcfCalculatorModal({
             {/* Growth Rate (Years 6–10) */}
             <div>
               <label className="text-xs font-semibold text-stone-300 flex items-center justify-between mb-1">
-                <span>Growth Rate (Years 6–10)</span>
+                <span className="inline-flex items-center">
+                  Growth Rate (Years 6–10)
+                  <DcfInfoBadge
+                    title="Growth Rate (Years 6–10)"
+                    textBg="Очакваният годишен темп на растеж за години 6 до 10 — обикновено по-нисък с узряването на бизнеса. По подразбиране започва на половината от ръста за години 1–5."
+                    textEn="Expected annual growth for years six to ten, usually lower as the business matures. Starts at half of the years 1–5 growth rate."
+                  />
+                </span>
                 <span className="text-[10px] text-stone-500">Ръст год. 6–10</span>
               </label>
               <div className="flex items-center gap-1.5">
@@ -665,7 +769,14 @@ export default function DcfCalculatorModal({
             {/* Terminal Growth Rate */}
             <div>
               <label className="text-xs font-semibold text-stone-300 flex items-center justify-between mb-1">
-                <span>Terminal Growth Rate</span>
+                <span className="inline-flex items-center">
+                  Terminal Growth Rate
+                  <DcfInfoBadge
+                    title="Terminal Growth Rate (Терминален ръст)"
+                    textBg="Темпът на растеж, който се приема за постоянен завинаги след 10-ата година. Не трябва да надвишава дългосрочния икономически растеж (БВП), затова 2–3% е типична стойност."
+                    textEn="Growth assumed forever after year ten. It should not exceed long-run economic growth, so 2–3% is typical."
+                  />
+                </span>
                 <span className="text-[10px] text-stone-500">Терминален ръст</span>
               </label>
               <div className="flex items-center gap-1.5">
@@ -704,7 +815,14 @@ export default function DcfCalculatorModal({
             {/* Discount Rate */}
             <div>
               <label className="text-xs font-semibold text-stone-300 flex items-center justify-between mb-1">
-                <span>Discount Rate</span>
+                <span className="inline-flex items-center">
+                  Discount Rate
+                  <DcfInfoBadge
+                    title="Discount Rate (Дисконтов % / WACC)"
+                    textBg="Годишната възвръщаемост, която изисквате, или среднопретеглената цена на капитала на компанията (WACC). По-високият процент намалява справедливата стойност."
+                    textEn="The annual return you require, or the company's weighted average cost of capital. Higher rates lower the fair value."
+                  />
+                </span>
                 <span className="text-[10px] text-stone-500">Дисконтов % (WACC)</span>
               </label>
               <div className="flex items-center gap-1.5">
@@ -743,7 +861,14 @@ export default function DcfCalculatorModal({
             {/* Margin of Safety */}
             <div>
               <label className="text-xs font-semibold text-stone-300 flex items-center justify-between mb-1">
-                <span>Margin of Safety</span>
+                <span className="inline-flex items-center">
+                  Margin of Safety
+                  <DcfInfoBadge
+                    title="Margin of Safety (Марж на сигурност)"
+                    textBg="Намалява справедливата стойност с този процент, за да добави буфер за сигурност при евентуални грешки в допусканията."
+                    textEn="Reduce the fair value by this percentage to add room for errors in the assumptions."
+                  />
+                </span>
                 <span className="text-[10px] text-stone-500">Марж на сигурност</span>
               </label>
               <div className="flex items-center gap-1.5">
@@ -845,23 +970,54 @@ export default function DcfCalculatorModal({
             {/* 4 Summary Metrics Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <div className="bg-stone-950/70 border border-stone-800 rounded-xl p-3">
-                <span className="text-[10px] text-stone-400 font-medium block">Value of Years 1–10</span>
-                <span className="text-base sm:text-lg font-bold text-white">${dcf.valueYears1To10.toFixed(2)}</span>
+                <span className="text-[10px] text-stone-400 font-medium inline-flex items-center">
+                  Value of Years 1–10
+                  <DcfInfoBadge
+                    title="Value of Years 1–10"
+                    textBg="Сумата от свободните парични потоци за следващите 10 години, всеки дисконтиран към днешна дата."
+                    textEn="The sum of the next ten years of free cash flow, each discounted to today."
+                  />
+                </span>
+                <span className="text-base sm:text-lg font-bold text-white block mt-0.5">${dcf.valueYears1To10.toFixed(2)}</span>
                 <span className="text-[9px] text-stone-500 block">Сума от 10-те год.</span>
               </div>
               <div className="bg-stone-950/70 border border-stone-800 rounded-xl p-3">
-                <span className="text-[10px] text-stone-400 font-medium block">Terminal Value (Today)</span>
-                <span className="text-base sm:text-lg font-bold text-white">${dcf.terminalValueToday.toFixed(2)}</span>
+                <span className="text-[10px] text-stone-400 font-medium inline-flex items-center">
+                  Terminal Value (Today)
+                  <DcfInfoBadge
+                    title="Terminal Value (Today)"
+                    textBg="Стойността на всички парични потоци след 10-ата година, дисконтирана към днешна дата."
+                    textEn="The value of all cash flow after year ten, discounted to today."
+                    align="center"
+                  />
+                </span>
+                <span className="text-base sm:text-lg font-bold text-white block mt-0.5">${dcf.terminalValueToday.toFixed(2)}</span>
                 <span className="text-[9px] text-stone-500 block">Стойност след год. 10</span>
               </div>
               <div className="bg-stone-950/70 border border-stone-800 rounded-xl p-3">
-                <span className="text-[10px] text-stone-400 font-medium block">Terminal Share of Value</span>
-                <span className="text-base sm:text-lg font-bold text-white">{dcf.terminalSharePct.toFixed(1)}%</span>
+                <span className="text-[10px] text-stone-400 font-medium inline-flex items-center">
+                  Terminal Share of Value
+                  <DcfInfoBadge
+                    title="Terminal Share of Value"
+                    textBg="Каква част от справедливата стойност зависи от годините след 10-годишната прогноза. Над 75% означава, че резултатът разчита силно на терминалните допускания."
+                    textEn="How much of the fair value depends on the years beyond the forecast. Above 75% means the result leans heavily on the terminal assumptions."
+                    align="right"
+                  />
+                </span>
+                <span className="text-base sm:text-lg font-bold text-white block mt-0.5">{dcf.terminalSharePct.toFixed(1)}%</span>
                 <span className="text-[9px] text-stone-500 block">Дял от крайната цена</span>
               </div>
               <div className="bg-stone-950/70 border border-stone-800 rounded-xl p-3">
-                <span className="text-[10px] text-stone-400 font-medium block">FCF per Share in Year 10</span>
-                <span className="text-base sm:text-lg font-bold text-white">${dcf.fcfYear10.toFixed(2)}</span>
+                <span className="text-[10px] text-stone-400 font-medium inline-flex items-center">
+                  FCF per Share in Year 10
+                  <DcfInfoBadge
+                    title="FCF per Share in Year 10"
+                    textBg="Прогнозираният свободен паричен поток на акция в 10-ата година след натрупване с двата темпа на растеж."
+                    textEn="Projected free cash flow per share in year 10 after compounding at your two growth rates."
+                    align="right"
+                  />
+                </span>
+                <span className="text-base sm:text-lg font-bold text-white block mt-0.5">${dcf.fcfYear10.toFixed(2)}</span>
                 <span className="text-[9px] text-stone-500 block">Паричен поток в год. 10</span>
               </div>
             </div>
@@ -897,8 +1053,14 @@ export default function DcfCalculatorModal({
                   <span className="text-xs text-stone-400 block">Current Price</span>
                   <span className="text-base font-bold text-white">${dcf.safePrice.toFixed(2)}</span>
                   {marginOfSafety > 0 && (
-                    <span className="text-[10px] text-amber-400 block mt-0.5">
-                      Без марж: ${dcf.rawFairValue.toFixed(2)}
+                    <span className="text-[10px] text-amber-400 inline-flex items-center justify-end mt-0.5">
+                      Fair Value (Без марж): ${dcf.rawFairValue.toFixed(2)}
+                      <DcfInfoBadge
+                        title="Fair Value (Без марж)"
+                        textBg={`Справедливата стойност по DCF модела преди прилагането на вашия ${marginOfSafety}% марж на сигурност.`}
+                        textEn={`The Discounted Cash Flow fair value before your ${marginOfSafety}% margin of safety is applied.`}
+                        align="right"
+                      />
                     </span>
                   )}
                 </div>
@@ -1005,7 +1167,12 @@ export default function DcfCalculatorModal({
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
-                        Projected free cash flow per share
+                        <span>Projected free cash flow per share</span>
+                        <DcfInfoBadge
+                          title="Projected free cash flow per share"
+                          textBg="• „Прогнозиран FCF“ увеличава свободния паричен поток на акция с вашите два темпа на растеж за 10 години. • „Дисконтиран FCF (Днес)“ е същият паричен поток след дисконтиране с дисконтовия процент — колко струва всяка година в днешни пари. • Справедливата стойност е сумата от дисконтираните стълбове плюс дисконтираната терминална стойност."
+                          textEn={'"Projected FCF" grows free cash flow per share at your two growth rates for ten years. "Discounted to Today" is the same cash flow after discounting at the discount rate. The fair value is the sum of the discounted bars plus the discounted terminal value.'}
+                        />
                         <span className="text-[10px] text-stone-400 font-normal">
                           (Прогнозирани парични потоци за 10 години)
                         </span>
