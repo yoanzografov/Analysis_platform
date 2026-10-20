@@ -2427,16 +2427,6 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             </button>
           </div>
 
-          {/* Keyboard Shortcut Hint */}
-          <div className="hidden xl:flex items-center gap-1.5 text-[11px] text-ink-muted bg-bg px-2.5 py-1 rounded-lg border border-border/60 font-mono select-none">
-            <span className="text-ink-faint">Клавиши:</span>
-            <kbd className="bg-bg-card px-1.5 py-0.5 rounded border border-border text-[10px] font-bold text-ink">Enter</kbd>
-            <span>Запазва ред</span>
-            <span className="text-border">|</span>
-            <kbd className="bg-bg-card px-1.5 py-0.5 rounded border border-border text-[10px] font-bold text-ink">Esc</kbd>
-            <span>Отменя</span>
-          </div>
-
           {/* Secondary Quick Buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
             <button
