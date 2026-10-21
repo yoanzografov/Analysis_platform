@@ -1036,16 +1036,8 @@ export default function StockTable({
                     onRequireAuth?.('Stock Valuation Checklist');
                     return;
                   }
-                  try {
-                    const opened = window.open(`${window.location.origin}${window.location.pathname}#checklist?ticker=${encodeURIComponent(stock.ticker)}`, '_blank');
-                    if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-                      setChecklistModalStock(stock);
-                      setIsChecklistOpen(true);
-                    }
-                  } catch (err) {
-                    setChecklistModalStock(stock);
-                    setIsChecklistOpen(true);
-                  }
+                  setChecklistModalStock(stock);
+                  setIsChecklistOpen(true);
                 }}
                 className={`w-5 h-5 rounded-full font-black text-[10px] leading-none transition-all flex items-center justify-center cursor-pointer ${
                   hasSaved
@@ -1055,8 +1047,8 @@ export default function StockTable({
                 title={
                   currentUser
                     ? (hasSaved
-                        ? `Checklist (C) - Отвори попълнен Checklist за ${stock.ticker} в нов прозорец`
-                        : `Checklist (C) - Отвори Stock Valuation Checklist за ${stock.ticker} в нов прозорец`)
+                        ? `Checklist (C) - Отвори попълнен Checklist за ${stock.ticker}`
+                        : `Checklist (C) - Отвори Stock Valuation Checklist за ${stock.ticker}`)
                     : `Checklist (C) (Изисква регистрация)`
                 }
               >

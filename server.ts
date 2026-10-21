@@ -2042,6 +2042,7 @@ app.get("/api/stock-history", async (req, res) => {
       yahooRange = "10y";
       yahooInterval = "1wk";
       break;
+    case "all":
     case "max":
       yahooRange = "max";
       yahooInterval = "1mo";
@@ -2051,12 +2052,13 @@ app.get("/api/stock-history", async (req, res) => {
       yahooInterval = "1d";
   }
 
-  const fallbackPrice = currentPriceQuery || serverPriceCache[ticker] || baselinePrices[ticker]?.price || 150;
+  const fallbackPrice = currentPriceQuery || serverPriceCache[ticker] || baselinePrices[ticker]?.price || (ticker === "^VIX" ? 18.5 : 150);
 
   try {
+    const encodedSym = encodeURIComponent(yahooSymbol);
     const urls = [
-      `https://query2.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?range=${yahooRange}&interval=${yahooInterval}`,
-      `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?range=${yahooRange}&interval=${yahooInterval}`
+      `https://query2.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${yahooRange}&interval=${yahooInterval}`,
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${yahooRange}&interval=${yahooInterval}`
     ];
 
     let dataLoaded = false;
@@ -2831,10 +2833,11 @@ app.get("/api/stock-quotes", async (req, res) => {
           body: JSON.stringify(body)
         });
         if (tvResponse.ok) {
-          const tvData = await tvResponse.json();
+          const tvData = await tvResponse.json() as any;
           if (tvData?.data?.[0]?.d) {
-            const vixClose = parseFloat(vixData[0].toFixed(2));
-            const vixPct = parseFloat(vixData[1].toFixed(2));
+            const vixData = tvData.data[0].d;
+            const vixClose = parseFloat(Number(vixData[0]).toFixed(2));
+            const vixPct = parseFloat(Number(vixData[1]).toFixed(2));
             const vixChangeAbs = typeof vixData[2] === 'number' 
               ? parseFloat(vixData[2].toFixed(2)) 
               : parseFloat((vixClose - (vixClose / (1 + vixPct / 100))).toFixed(2));

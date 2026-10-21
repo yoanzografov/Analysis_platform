@@ -1328,6 +1328,76 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.json({ news: getGlobalNewsFallback() });
   }
 
+  if (url.includes("stock-history")) {
+    const ticker = ((req.query.ticker as string) || (req.query.symbol as string) || "^VIX").trim();
+    const range = ((req.query.range as string) || "1y").toLowerCase();
+    const currentPriceQuery = req.query.currentPrice ? parseFloat(req.query.currentPrice as string) : 18.5;
+
+    let yahooRange = "1y";
+    let yahooInterval = "1d";
+    switch (range) {
+      case "1d": yahooRange = "1d"; yahooInterval = "5m"; break;
+      case "7d": case "5d": case "1w": yahooRange = "5d"; yahooInterval = "15m"; break;
+      case "1mo": case "1m": yahooRange = "1mo"; yahooInterval = "1d"; break;
+      case "3mo": case "3m": yahooRange = "3mo"; yahooInterval = "1d"; break;
+      case "6mo": case "6m": yahooRange = "6mo"; yahooInterval = "1d"; break;
+      case "ytd": yahooRange = "ytd"; yahooInterval = "1d"; break;
+      case "1y": yahooRange = "1y"; yahooInterval = "1d"; break;
+      case "5y": yahooRange = "5y"; yahooInterval = "1wk"; break;
+      case "all": case "max": yahooRange = "max"; yahooInterval = "1mo"; break;
+      default: yahooRange = "1y"; yahooInterval = "1d";
+    }
+
+    const yahooSym = toYahooSymbol(ticker);
+    const encodedSym = encodeURIComponent(yahooSym);
+    const chartUrls = [
+      `https://query2.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${yahooRange}&interval=${yahooInterval}`,
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${yahooRange}&interval=${yahooInterval}`
+    ];
+
+    for (const u of chartUrls) {
+      try {
+        const r = await fetch(u, { headers: YAHOO_HEADERS, signal: AbortSignal.timeout(4000) });
+        if (r.ok) {
+          const data = await r.json() as any;
+          const result = data?.chart?.result?.[0];
+          const timestamps = result?.timestamp;
+          const quotes = result?.indicators?.quote?.[0];
+          const prices = quotes?.close || quotes?.open || quotes?.high;
+          if (timestamps && prices && timestamps.length > 0) {
+            const validTimestamps: number[] = [];
+            const validPrices: number[] = [];
+            for (let i = 0; i < timestamps.length; i++) {
+              if (timestamps[i] != null && prices[i] != null && !isNaN(prices[i])) {
+                validTimestamps.push(timestamps[i]);
+                validPrices.push(parseFloat(Number(prices[i]).toFixed(2)));
+              }
+            }
+            if (validTimestamps.length > 0) {
+              return res.json({ timestamps: validTimestamps, prices: validPrices, source: "yahoo-finance-live" });
+            }
+          }
+        }
+      } catch {}
+    }
+
+    // Fallback deterministic curve if Yahoo is unreachable
+    const numPoints = range === "1d" ? 78 : range === "1w" ? 65 : range === "1m" ? 30 : 120;
+    const intervalSec = range === "1d" ? 300 : range === "1w" ? 3600 : 86400;
+    const nowSec = Math.floor(Date.now() / 1000);
+    const tsList: number[] = [];
+    const prList: number[] = [];
+    let seed = 42;
+    for (let i = 0; i < numPoints; i++) {
+      tsList.push(nowSec - (numPoints - 1 - i) * intervalSec);
+      seed = (seed * 9301 + 49297) % 233280;
+      const wave = Math.sin((i / numPoints) * Math.PI * 3) * 0.12 + ((seed / 233280) - 0.5) * 0.05;
+      prList.push(parseFloat((currentPriceQuery * (1 + wave)).toFixed(2)));
+    }
+    if (prList.length > 0) prList[prList.length - 1] = currentPriceQuery;
+    return res.json({ timestamps: tsList, prices: prList, source: "fallback" });
+  }
+
   if (!url.includes("stock-quotes")) {
     return res.status(404).json({ error: "Not found" });
   }
