@@ -2371,43 +2371,42 @@ export default function App() {
                 ? newStock.currentPrice
                 : (typeof newStock.priceOfCalc === 'number' && newStock.priceOfCalc > 0 ? newStock.priceOfCalc : 100);
 
+              const completeStock: Stock = {
+                watch: newStock.watch || '',
+                ticker: upper,
+                companyName: parsedName || upper,
+                date: newStock.date || new Date().toLocaleDateString('bg-BG'),
+                priceOfCalc: newStock.priceOfCalc ?? resolvedPrice,
+                dailyChangePct: newStock.dailyChangePct ?? 0,
+                currentPrice: resolvedPrice,
+                fairPrice: newStock.fairPrice ?? null,
+                difference: newStock.difference ?? null,
+                buySell: newStock.buySell || 'ДРУГИ',
+                sector: newStock.sector || 'Technology',
+                peRatio: newStock.peRatio ?? 9.55,
+                eps: newStock.eps ?? 22684.04,
+                profileLink: newStock.profileLink || `https://finance.yahoo.com/quote/${upper}`,
+                dividend: newStock.dividend || '-',
+                signal: newStock.signal || 'Hold',
+                low52: newStock.low52 ?? null,
+                high52: newStock.high52 ?? null,
+                dividendYield: newStock.dividendYield ?? 0,
+                marketCap: newStock.marketCap || 1421945318,
+                currency: newStock.currency || (upper.startsWith('KRX:') ? 'KRW' : 'USD'),
+                ...newStock
+              };
+
               if (existingIdx >= 0) {
-                nextList = [...prev];
-                nextList[existingIdx] = {
-                  ...nextList[existingIdx],
-                  ...newStock,
-                  ticker: upper,
-                  companyName: parsedName || nextList[existingIdx].companyName,
-                  currentPrice: resolvedPrice,
-                  priceOfCalc: nextList[existingIdx].priceOfCalc ?? resolvedPrice
-                };
+                // Move updated stock to top so user immediately sees it
+                nextList = [completeStock, ...prev.filter((_, idx) => idx !== existingIdx)];
               } else {
-                const completeStock: Stock = {
-                  watch: newStock.watch || '',
-                  ticker: upper,
-                  companyName: parsedName || upper,
-                  date: newStock.date || new Date().toLocaleDateString('bg-BG'),
-                  priceOfCalc: newStock.priceOfCalc ?? resolvedPrice,
-                  dailyChangePct: newStock.dailyChangePct ?? 0,
-                  currentPrice: resolvedPrice,
-                  fairPrice: newStock.fairPrice ?? null,
-                  difference: newStock.difference ?? null,
-                  buySell: newStock.buySell || 'ДРУГИ',
-                  sector: newStock.sector || 'Technology',
-                  peRatio: newStock.peRatio ?? 16.8,
-                  eps: newStock.eps ?? 4.12,
-                  profileLink: newStock.profileLink || `https://finance.yahoo.com/quote/${upper}`,
-                  dividend: newStock.dividend || '-',
-                  signal: newStock.signal || 'Hold',
-                  low52: newStock.low52 ?? null,
-                  high52: newStock.high52 ?? null,
-                  dividendYield: newStock.dividendYield ?? 0,
-                  marketCap: newStock.marketCap || 2500000000,
-                  currency: newStock.currency || 'USD',
-                  ...newStock
-                };
-                nextList = [...prev, completeStock];
+                // Add new stock at the very top of the table
+                nextList = [completeStock, ...prev];
               }
+
+              // Reset filter so the newly added stock is never hidden
+              setActiveFilter({ type: 'all', value: 'all' });
+
               setTimeout(() => {
                 fetchRealStockPricesDirect(nextList);
               }, 100);
@@ -2417,10 +2416,13 @@ export default function App() {
               id: `${Date.now()}-${Math.random()}`,
               timestamp: new Date().toLocaleTimeString(),
               ticker: upper,
-              message: `Актуализиран актив: ${parsedName || upper} (${upper})`,
+              message: `Добавен актив най-отгоре: ${parsedName || upper} (${upper})`,
               type: 'success' as const
             };
             setLogs(prev => [newLog, ...prev]);
+            setActiveAlertToast(`Акцията ${parsedName || upper} (${upper}) беше добавена най-отгоре в таблицата!`);
+            setTimeout(() => setActiveAlertToast(null), 4000);
+            window.scrollTo({ top: 350, behavior: 'smooth' });
           }}
         />
         
@@ -2710,46 +2712,53 @@ export default function App() {
     onSaveToTable={(stockData) => {
       if (!stockData.ticker) return;
       const cleanSym = stockData.ticker.toUpperCase().trim();
+      setDeletedStockTickers(prev => prev.filter(t => t !== cleanSym && t !== '005930' && t !== 'KRX:005930' && t !== '005930.KS'));
+      setActiveFilter({ type: 'all', value: 'all' });
       setStocks(prev => {
         const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
+        const resolvedPrice = (typeof stockData.currentPrice === 'number' && stockData.currentPrice > 0)
+          ? stockData.currentPrice
+          : (typeof stockData.priceOfCalc === 'number' && stockData.priceOfCalc > 0 ? stockData.priceOfCalc : 100);
+
+        const newStockObj: Stock = {
+          watch: stockData.watch || '',
+          ticker: cleanSym,
+          companyName: stockData.companyName || cleanSym,
+          date: stockData.date || new Date().toISOString().split('T')[0],
+          priceOfCalc: stockData.priceOfCalc ?? resolvedPrice,
+          dailyChangePct: stockData.dailyChangePct ?? 0,
+          currentPrice: resolvedPrice,
+          fairPrice: stockData.fairPrice ?? null,
+          difference: stockData.difference ?? null,
+          buySell: stockData.buySell || 'ДРУГИ',
+          sector: stockData.sector || 'Technology',
+          peRatio: stockData.peRatio ?? 15,
+          eps: stockData.eps ?? null,
+          profileLink: stockData.profileLink || `https://finance.yahoo.com/quote/${cleanSym}`,
+          dividend: stockData.dividend || '-',
+          signal: stockData.signal || 'Hold',
+          low52: stockData.low52 ?? null,
+          high52: stockData.high52 ?? null,
+          dividendYield: stockData.dividendYield || 0,
+          marketCap: stockData.marketCap || 1000000000,
+          currency: cleanSym.startsWith('KRX:') ? 'KRW' : 'USD',
+          ...stockData
+        };
+
         let nextList: Stock[];
         if (existingIndex >= 0) {
-          nextList = [...prev];
-          nextList[existingIndex] = { ...nextList[existingIndex], ...stockData };
+          nextList = [newStockObj, ...prev.filter((_, idx) => idx !== existingIndex)];
         } else {
-          const newStockObj: Stock = {
-            watch: stockData.watch || '',
-            ticker: cleanSym,
-            companyName: stockData.companyName || cleanSym,
-            date: stockData.date || new Date().toISOString().split('T')[0],
-            priceOfCalc: stockData.priceOfCalc ?? stockData.currentPrice ?? 100,
-            dailyChangePct: stockData.dailyChangePct ?? 0,
-            currentPrice: stockData.currentPrice || 100,
-            fairPrice: stockData.fairPrice ?? null,
-            difference: stockData.difference ?? null,
-            buySell: stockData.buySell || 'ДРУГИ',
-            sector: stockData.sector || 'Other',
-            peRatio: stockData.peRatio ?? 15,
-            eps: stockData.eps ?? null,
-            profileLink: stockData.profileLink || `https://finance.yahoo.com/quote/${cleanSym}`,
-            dividend: stockData.dividend || '-',
-            signal: stockData.signal || 'Hold',
-            low52: stockData.low52 ?? null,
-            high52: stockData.high52 ?? null,
-            dividendYield: stockData.dividendYield || 0,
-            marketCap: stockData.marketCap || 1000000000,
-            currency: 'USD',
-            ...stockData
-          };
-          nextList = [...prev, newStockObj];
+          nextList = [newStockObj, ...prev];
         }
         setTimeout(() => {
           fetchRealStockPricesDirect(nextList);
         }, 100);
         return nextList;
       });
-      setActiveAlertToast(`Акцията ${cleanSym} беше пресметната и запазена в Интерактивната Таблица!`);
+      setActiveAlertToast(`Акцията ${cleanSym} беше добавена най-отгоре в Интерактивната Таблица!`);
       setTimeout(() => setActiveAlertToast(null), 4000);
+      window.scrollTo({ top: 350, behavior: 'smooth' });
     }}
   />
 

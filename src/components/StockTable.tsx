@@ -613,6 +613,7 @@ export default function StockTable({
 
  onAddStock(newStock);
  setIsAddModalOpen(false);
+ setSearch('');
 
  // Reset states
  setNewTicker('');
