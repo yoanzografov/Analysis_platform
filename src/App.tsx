@@ -2383,25 +2383,24 @@ export default function App() {
                 difference: newStock.difference ?? null,
                 buySell: newStock.buySell || 'ДРУГИ',
                 sector: newStock.sector || 'Technology',
-                peRatio: newStock.peRatio ?? 9.55,
-                eps: newStock.eps ?? 22684.04,
+                peRatio: newStock.peRatio ?? null,
+                eps: newStock.eps ?? null,
                 profileLink: newStock.profileLink || `https://finance.yahoo.com/quote/${upper}`,
                 dividend: newStock.dividend || '-',
                 signal: newStock.signal || 'Hold',
                 low52: newStock.low52 ?? null,
                 high52: newStock.high52 ?? null,
                 dividendYield: newStock.dividendYield ?? 0,
-                marketCap: newStock.marketCap || 1421945318,
+                marketCap: newStock.marketCap || 0,
                 currency: newStock.currency || (upper.startsWith('KRX:') ? 'KRW' : 'USD'),
                 ...newStock
               };
 
               if (existingIdx >= 0) {
-                // Move updated stock to top so user immediately sees it
-                nextList = [completeStock, ...prev.filter((_, idx) => idx !== existingIdx)];
+                nextList = [...prev];
+                nextList[existingIdx] = { ...nextList[existingIdx], ...completeStock };
               } else {
-                // Add new stock at the very top of the table
-                nextList = [completeStock, ...prev];
+                nextList = [...prev, completeStock];
               }
 
               // Reset filter so the newly added stock is never hidden
@@ -2416,13 +2415,12 @@ export default function App() {
               id: `${Date.now()}-${Math.random()}`,
               timestamp: new Date().toLocaleTimeString(),
               ticker: upper,
-              message: `Добавен актив най-отгоре: ${parsedName || upper} (${upper})`,
+              message: `Добавен актив: ${parsedName || upper} (${upper})`,
               type: 'success' as const
             };
             setLogs(prev => [newLog, ...prev]);
-            setActiveAlertToast(`Акцията ${parsedName || upper} (${upper}) беше добавена най-отгоре в таблицата!`);
+            setActiveAlertToast(`Акцията ${parsedName || upper} (${upper}) беше добавена в таблицата!`);
             setTimeout(() => setActiveAlertToast(null), 4000);
-            window.scrollTo({ top: 350, behavior: 'smooth' });
           }}
         />
         
@@ -2747,18 +2745,18 @@ export default function App() {
 
         let nextList: Stock[];
         if (existingIndex >= 0) {
-          nextList = [newStockObj, ...prev.filter((_, idx) => idx !== existingIndex)];
+          nextList = [...prev];
+          nextList[existingIndex] = { ...nextList[existingIndex], ...newStockObj };
         } else {
-          nextList = [newStockObj, ...prev];
+          nextList = [...prev, newStockObj];
         }
         setTimeout(() => {
           fetchRealStockPricesDirect(nextList);
         }, 100);
         return nextList;
       });
-      setActiveAlertToast(`Акцията ${cleanSym} беше добавена най-отгоре в Интерактивната Таблица!`);
+      setActiveAlertToast(`Акцията ${cleanSym} беше запазена в Интерактивната Таблица!`);
       setTimeout(() => setActiveAlertToast(null), 4000);
-      window.scrollTo({ top: 350, behavior: 'smooth' });
     }}
   />
 

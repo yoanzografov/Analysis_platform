@@ -18,7 +18,6 @@ export const RAW_SPREADSHEET_CSV = `Platform 2026,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,
 Watch,Ticker,Company Name,365 Chart,Date,Price of Calc.,Daily Change %,Current Price,Fair Price,Difference,BUY/SELL,Market Cap,P/E Ratio,EPS,Profil,Dividend,Signal,52 Low,52 High,AI Analis
-,KRX:005930,Samsung Electronics Co., Ltd.,,22.10.2026 г.,"214,500.00$",▼ -4.03%,"214,500.00$","280,000.00$",30.54%,BUY,1421945318,9.55,"22,684.04$",Линк, 0.75% ,Hold,"94,500.00$","374,500.00$",
 ,AAPL,Apple Inc,,23.01.2025 г.,223.00$,▲ +0.70%,298.01$,108.00$,-63.76%,SELL,4376977317,36.05,8.27$,Линк,,Hold,196.86$,317.40$,
 ,ABBV,AbbVie Common Stock,,08.05.2025 г.,185.00$,▼ -2.14%,216.49$,152.00$,-29.79%,SELL,382492810,106.84,2.03$,Линк,,Hold,181.73$,244.81$,
 Atten,ABNB,Airbnb Inc,,10.07.2025 г.,137.00$,▲ +1.33%,142.41$,99.00$,-30.48%,SELL,84521035,35.09,4.06$,Линк,,Sell,110.81$,147.25$,
