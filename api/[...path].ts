@@ -10,7 +10,8 @@ const EXCHANGE_MAP: Record<string, string> = {
   "HEL": ".HE", "STO": ".ST", "SWX": ".SW", "OSL": ".OL", "LIS": ".LS",
   "ATH": ".AT", "IST": ".IS", "WSE": ".WA", "PRG": ".PR", "TSE": ".T",
   "HKG": ".HK", "BSE": ".BO", "NSE": ".NS", "TPE": ".TW", "ASX": ".AX",
-  "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO"
+  "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO",
+  "KRX": ".KS", "KOSDAQ": ".KQ", "SHA": ".SS", "SHE": ".SZ", "SGX": ".SI"
 };
 
 // Known plain European/International ticker to Yahoo Finance symbol mapping
@@ -51,7 +52,12 @@ function toYahooSymbol(ticker: string): string {
   if (PLAIN_EUROPEAN_MAP[upper]) {
     return PLAIN_EUROPEAN_MAP[upper];
   }
-  if (!upper.includes(":")) return upper.replace(/\./g, "-");
+  if (!upper.includes(":")) {
+    if (/\.(KS|KQ|DE|PA|F|L|AS|BR|MI|MC|VI|CO|HE|ST|SW|OL|LS|AT|IS|WA|PR|T|HK|BO|NS|TW|AX|NZ|TO|V|SA|JO|IL|SS|SZ|SI)$/.test(upper)) {
+      return upper;
+    }
+    return upper.replace(/\./g, "-");
+  }
   const colonIdx = upper.indexOf(":");
   const prefix = upper.slice(0, colonIdx);
   let raw = upper.slice(colonIdx + 1);
@@ -117,6 +123,7 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
   const swedenTickers: string[] = [];
   const swissTickers: string[] = [];
   const ukTickers: string[] = [];
+  const koreaTickers: string[] = [];
 
   for (const t of tickers) {
     const upper = t.toUpperCase().trim();
@@ -125,6 +132,9 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
     else if (upper.startsWith('STO:')) swedenTickers.push(upper.slice(4));
     else if (upper.startsWith('SWX:')) swissTickers.push(upper.slice(4));
     else if (upper.startsWith('LON:') || upper === 'BRBY' || upper.endsWith('.L')) ukTickers.push(upper.replace('LON:', '').replace('.L', ''));
+    else if (upper.startsWith('KRX:') || upper.startsWith('KOSDAQ:') || upper.endsWith('.KS') || upper.endsWith('.KQ')) {
+      koreaTickers.push(upper.replace('KRX:', '').replace('KOSDAQ:', '').replace('.KS', '').replace('.KQ', ''));
+    }
     else if (!upper.includes(':') && !upper.includes('.')) usTickers.push(upper);
   }
 
@@ -134,7 +144,8 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
     { market: 'germany', list: germanyTickers, prefix: 'ETR:' },
     { market: 'sweden', list: swedenTickers, prefix: 'STO:' },
     { market: 'switzerland', list: swissTickers, prefix: 'SWX:' },
-    { market: 'uk', list: ukTickers, prefix: '' }
+    { market: 'uk', list: ukTickers, prefix: '' },
+    { market: 'korea', list: koreaTickers, prefix: 'KRX:' }
   ];
 
   await Promise.allSettled(marketScanners.map(async ({ market, list, prefix }) => {
@@ -173,6 +184,11 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
             result[fullKey] = item;
             if (prefix === 'ETR:') {
               result[`${name}.DE`] = item;
+            }
+            if (prefix === 'KRX:') {
+              result[`KOSDAQ:${name}`] = item;
+              result[`${name}.KS`] = item;
+              result[`${name}.KQ`] = item;
             }
             if (!prefix) {
               result[name] = item;

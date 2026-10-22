@@ -6,16 +6,32 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     "HEL": "OMXHEL", "STO": "OMXSTO", "SWX": "SIX", "OSL": "OSL", "LIS": "EURONEXT",
     "ATH": "ATHEX", "IST": "BIST", "WSE": "GPW", "PRG": "PVS", "TSE": "TSE",
     "HKG": "HKEX", "BSE": "BSE", "NSE": "NSE", "TPE": "TWSE", "ASX": "ASX",
-    "NZZE": "NZX", "TSX": "TSX", "CVE": "TSXV", "JSE": "JSE"
+    "NZZE": "NZX", "TSX": "TSX", "CVE": "TSXV", "JSE": "JSE",
+    "KRX": "KRX", "KOSDAQ": "KOSDAQ", "SHA": "SSE", "SHE": "SZSE", "SGX": "SGX"
   };
 
   if (ticker && ticker.includes(':')) {
     const parts = ticker.split(':');
-    const prefix = parts[0];
-    const rawSym = parts[1];
+    const prefix = parts[0].trim().toUpperCase();
+    const rawSym = parts[1].trim().toUpperCase();
     if (gfToTvMap[prefix]) {
       return `${gfToTvMap[prefix]}:${rawSym}`;
     }
+  }
+
+  if (ticker && ticker.includes('.')) {
+    const upperTicker = ticker.trim().toUpperCase();
+    if (upperTicker.endsWith('.KS')) return `KRX:${upperTicker.slice(0, -3)}`;
+    if (upperTicker.endsWith('.KQ')) return `KOSDAQ:${upperTicker.slice(0, -3)}`;
+    if (upperTicker.endsWith('.DE')) return `XETR:${upperTicker.slice(0, -3)}`;
+    if (upperTicker.endsWith('.L') || upperTicker.endsWith('.IL')) return `LSE:${upperTicker.replace(/\.(IL|L)$/, '')}`;
+    if (upperTicker.endsWith('.PA')) return `EURONEXT:${upperTicker.slice(0, -3)}`;
+    if (upperTicker.endsWith('.AS')) return `EURONEXT:${upperTicker.slice(0, -3)}`;
+    if (upperTicker.endsWith('.SW')) return `SIX:${upperTicker.slice(0, -3)}`;
+    if (upperTicker.endsWith('.ST')) return `OMXSTO:${upperTicker.slice(0, -3)}`;
+    if (upperTicker.endsWith('.T')) return `TSE:${upperTicker.slice(0, -2)}`;
+    if (upperTicker.endsWith('.HK')) return `HKEX:${upperTicker.slice(0, -3)}`;
+    if (upperTicker.endsWith('.TW')) return `TWSE:${upperTicker.slice(0, -3)}`;
   }
 
   // Handle Indexes, Commodities, Crypto, Currencies (use 100% free TVC / OANDA un-restricted symbols for widgets)

@@ -647,7 +647,7 @@ export default function App() {
         setStocks(prevStocks => {
           return prevStocks.map(stock => {
             const sym = stock.ticker.trim().toUpperCase();
-            const mappedSym = TICKER_YAHOO_MAP[sym] || sym;
+            const mappedSym = TICKER_YAHOO_MAP[sym] || (sym.startsWith('KRX:') ? `${sym.slice(4)}.KS` : sym.startsWith('KOSDAQ:') ? `${sym.slice(7)}.KQ` : sym);
             const baseSym = sym.split('.')[0].split(':')[1] || sym.split('.')[0];
             const quote = data.quotes[sym] || data.quotes[mappedSym] || (data.quotes[baseSym] && !data.quotes[baseSym]?.companyName?.includes('ETP') ? data.quotes[baseSym] : undefined);
             if (quote) {
@@ -2355,12 +2355,17 @@ export default function App() {
             });
             setStocks(prev => {
               const existingIdx = prev.findIndex(s => s.ticker.toUpperCase() === upper);
+              let nextList: Stock[];
               if (existingIdx >= 0) {
-                const updated = [...prev];
-                updated[existingIdx] = { ...updated[existingIdx], ...newStock };
-                return updated;
+                nextList = [...prev];
+                nextList[existingIdx] = { ...nextList[existingIdx], ...newStock };
+              } else {
+                nextList = [...prev, newStock];
               }
-              return [...prev, newStock];
+              setTimeout(() => {
+                fetchRealStockPricesDirect(nextList);
+              }, 100);
+              return nextList;
             });
             const newLog = {
               id: `${Date.now()}-${Math.random()}`,
@@ -2661,10 +2666,10 @@ export default function App() {
       const cleanSym = stockData.ticker.toUpperCase().trim();
       setStocks(prev => {
         const existingIndex = prev.findIndex(s => s.ticker.toUpperCase() === cleanSym);
+        let nextList: Stock[];
         if (existingIndex >= 0) {
-          const updated = [...prev];
-          updated[existingIndex] = { ...updated[existingIndex], ...stockData };
-          return updated;
+          nextList = [...prev];
+          nextList[existingIndex] = { ...nextList[existingIndex], ...stockData };
         } else {
           const newStockObj: Stock = {
             watch: stockData.watch || '',
@@ -2690,8 +2695,12 @@ export default function App() {
             currency: 'USD',
             ...stockData
           };
-          return [...prev, newStockObj];
+          nextList = [...prev, newStockObj];
         }
+        setTimeout(() => {
+          fetchRealStockPricesDirect(nextList);
+        }, 100);
+        return nextList;
       });
       setActiveAlertToast(`Акцията ${cleanSym} беше пресметната и запазена в Интерактивната Таблица!`);
       setTimeout(() => setActiveAlertToast(null), 4000);

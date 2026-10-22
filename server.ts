@@ -1978,18 +1978,28 @@ app.get("/api/stock-history", async (req, res) => {
 
   // Translate original symbol to Yahoo Symbol representation
   let yahooSymbol = ticker;
-  if (ticker.startsWith("EPA:")) {
-    yahooSymbol = ticker.replace("EPA:", "") + ".PA";
-  } else if (ticker.startsWith("ETR:")) {
-    const raw = ticker.replace("ETR:", "");
-    yahooSymbol = (raw === "DHL" ? "DPW" : raw) + ".DE";
-  } else if (ticker.startsWith("STO:")) {
-    yahooSymbol = ticker.replace("STO:", "") + ".ST";
-  } else if (ticker.startsWith("SWX:")) {
-    yahooSymbol = ticker.replace("SWX:", "") + ".SW";
-  } else if (ticker.includes(":")) {
+  const historyExchangeMap: Record<string, string> = {
+    "EPA": ".PA", "ETR": ".DE", "FRA": ".F", "LON": ".L", "AMS": ".AS",
+    "EBR": ".BR", "BIT": ".MI", "BME": ".MC", "VIE": ".VI", "CPH": ".CO",
+    "HEL": ".HE", "STO": ".ST", "SWX": ".SW", "OSL": ".OL", "LIS": ".LS",
+    "ATH": ".AT", "IST": ".IS", "WSE": ".WA", "PRG": ".PR", "TSE": ".T",
+    "HKG": ".HK", "BSE": ".BO", "NSE": ".NS", "TPE": ".TW", "ASX": ".AX",
+    "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO",
+    "KRX": ".KS", "KOSDAQ": ".KQ", "SHA": ".SS", "SHE": ".SZ", "SGX": ".SI"
+  };
+  if (ticker.includes(":")) {
     const parts = ticker.split(":");
-    yahooSymbol = parts[1] + "." + parts[0];
+    const prefix = parts[0];
+    const raw = parts[1];
+    if (prefix === "ETR" && raw === "DHL") {
+      yahooSymbol = "DPW.DE";
+    } else if (historyExchangeMap[prefix]) {
+      yahooSymbol = raw + historyExchangeMap[prefix];
+    } else if (["NASDAQ", "NYSE", "BATS", "AMEX", "ARCA", "OTCMKTS"].includes(prefix)) {
+      yahooSymbol = raw;
+    } else {
+      yahooSymbol = raw + "." + prefix;
+    }
   }
 
   // Determine Yahoo range & interval parameters
@@ -2138,7 +2148,8 @@ const RETURNS_EXCHANGE_MAP: Record<string, string> = {
   "HEL": ".HE", "STO": ".ST", "SWX": ".SW", "OSL": ".OL", "LIS": ".LS",
   "ATH": ".AT", "IST": ".IS", "WSE": ".WA", "PRG": ".PR", "TSE": ".T",
   "HKG": ".HK", "BSE": ".BO", "NSE": ".NS", "TPE": ".TW", "ASX": ".AX",
-  "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO"
+  "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO",
+  "KRX": ".KS", "KOSDAQ": ".KQ", "SHA": ".SS", "SHE": ".SZ", "SGX": ".SI"
 };
 
 const RETURNS_PLAIN_EUROPEAN_MAP: Record<string, string> = {
@@ -2156,7 +2167,12 @@ const RETURNS_US_EXCHANGES = new Set(["NASDAQ", "NYSE", "BATS", "AMEX", "ARCA", 
 function normalizeReturnsSymbol(ticker: string): string {
   const upper = ticker.trim().toUpperCase();
   if (RETURNS_PLAIN_EUROPEAN_MAP[upper]) return RETURNS_PLAIN_EUROPEAN_MAP[upper];
-  if (!upper.includes(":")) return upper.replace(/\./g, "-");
+  if (!upper.includes(":")) {
+    if (/\.(KS|KQ|DE|PA|F|L|AS|BR|MI|MC|VI|CO|HE|ST|SW|OL|LS|AT|IS|WA|PR|T|HK|BO|NS|TW|AX|NZ|TO|V|SA|JO|IL|SS|SZ|SI)$/.test(upper)) {
+      return upper;
+    }
+    return upper.replace(/\./g, "-");
+  }
   const colonIdx = upper.indexOf(":");
   const prefix = upper.slice(0, colonIdx);
   let raw = upper.slice(colonIdx + 1);
@@ -2624,7 +2640,8 @@ app.get("/api/stock-quotes", async (req, res) => {
         "HEL": ".HE", "STO": ".ST", "SWX": ".SW", "OSL": ".OL", "LIS": ".LS",
         "ATH": ".AT", "IST": ".IS", "WSE": ".WA", "PRG": ".PR", "TSE": ".T",
         "HKG": ".HK", "BSE": ".BO", "NSE": ".NS", "TPE": ".TW", "ASX": ".AX",
-        "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO"
+        "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO",
+        "KRX": ".KS", "KOSDAQ": ".KQ", "SHA": ".SS", "SHE": ".SZ", "SGX": ".SI"
       };
 
       if (plainEuropeanMap[t]) {
@@ -2864,6 +2881,7 @@ app.get("/api/stock-quotes", async (req, res) => {
       const swedenTickers: string[] = [];
       const swissTickers: string[] = [];
       const ukTickers: string[] = [];
+      const koreaTickers: string[] = [];
 
       for (const t of tickers) {
         const upper = t.toUpperCase().trim();
@@ -2872,6 +2890,9 @@ app.get("/api/stock-quotes", async (req, res) => {
         else if (upper.startsWith('STO:')) swedenTickers.push(upper.slice(4));
         else if (upper.startsWith('SWX:')) swissTickers.push(upper.slice(4));
         else if (upper.startsWith('LON:') || upper === 'BRBY' || upper.endsWith('.L')) ukTickers.push(upper.replace('LON:', '').replace('.L', ''));
+        else if (upper.startsWith('KRX:') || upper.startsWith('KOSDAQ:') || upper.endsWith('.KS') || upper.endsWith('.KQ')) {
+          koreaTickers.push(upper.replace('KRX:', '').replace('KOSDAQ:', '').replace('.KS', '').replace('.KQ', ''));
+        }
         else if (!upper.includes(':') && !upper.includes('.')) usTickers.push(upper);
       }
 
@@ -2881,7 +2902,8 @@ app.get("/api/stock-quotes", async (req, res) => {
         { market: 'germany', list: germanyTickers, prefix: 'ETR:' },
         { market: 'sweden', list: swedenTickers, prefix: 'STO:' },
         { market: 'switzerland', list: swissTickers, prefix: 'SWX:' },
-        { market: 'uk', list: ukTickers, prefix: '' }
+        { market: 'uk', list: ukTickers, prefix: '' },
+        { market: 'korea', list: koreaTickers, prefix: 'KRX:' }
       ];
 
       await Promise.allSettled(marketScanners.map(async ({ market, list, prefix }) => {
@@ -2907,7 +2929,12 @@ app.get("/api/stock-quotes", async (req, res) => {
                 const fullKey = prefix ? prefix + name : name;
                 for (const origTicker of tickers) {
                   const upperOrig = origTicker.toUpperCase().trim();
-                  if (upperOrig === fullKey || (!prefix && upperOrig === name) || (prefix === 'ETR:' && upperOrig === `${name}.DE`)) {
+                  if (
+                    upperOrig === fullKey ||
+                    (!prefix && upperOrig === name) ||
+                    (prefix === 'ETR:' && upperOrig === `${name}.DE`) ||
+                    (prefix === 'KRX:' && (upperOrig === `KOSDAQ:${name}` || upperOrig === `${name}.KS` || upperOrig === `${name}.KQ`))
+                  ) {
                     if (!results[origTicker]) results[origTicker] = { currentPrice: 0, dailyChangePct: 0 };
                     if (typeof pe === 'number' && pe > 0) results[origTicker].peRatio = parseFloat(pe.toFixed(2));
                     if (typeof eps === 'number') results[origTicker].eps = parseFloat(eps.toFixed(2));
