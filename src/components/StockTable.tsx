@@ -286,6 +286,65 @@ export default function StockTable({
  const [newPriceOfCalc, setNewPriceOfCalc] = useState('');
  const [newFairPrice, setNewFairPrice] = useState('');
  const [newCalcLink, setNewCalcLink] = useState('');
+ const [isFetchingNewTickerQuote, setIsFetchingNewTickerQuote] = useState(false);
+ const [newLiveQuote, setNewLiveQuote] = useState<any | null>(null);
+
+ const parseSmartStockInput = (raw: string): { ticker: string; companyName?: string } => {
+   const trimmed = raw.trim();
+   // Match patterns like "Samsung Electronics Co., Ltd. (KRX:005930)" or "Microsoft (NASDAQ: MSFT)"
+   const parenMatch = trimmed.match(/^(.*?)\(\s*([A-Za-z0-9_.:\-\s]+)\s*\)\s*$/);
+   if (parenMatch) {
+     const namePart = parenMatch[1].trim().replace(/[-–—]+$/, '').trim();
+     let symPart = parenMatch[2].trim().toUpperCase().replace(/\s+/g, '');
+     if (/^\d{6}$/.test(symPart)) symPart = `KRX:${symPart}`;
+     return {
+       ticker: symPart,
+       companyName: namePart || undefined,
+     };
+   }
+   let sym = trimmed.toUpperCase().replace(/\s+/g, '');
+   if (/^\d{6}$/.test(sym)) sym = `KRX:${sym}`;
+   return { ticker: sym };
+ };
+
+ useEffect(() => {
+   if (!isAddModalOpen) {
+     setNewLiveQuote(null);
+     setIsFetchingNewTickerQuote(false);
+     return;
+   }
+   const parsed = parseSmartStockInput(newTicker);
+   const sym = parsed.ticker;
+   if (!sym || sym.length < 2) {
+     setNewLiveQuote(null);
+     return;
+   }
+   let cancelled = false;
+   const timer = setTimeout(async () => {
+     setIsFetchingNewTickerQuote(true);
+     try {
+       const res = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(sym)}`, { cache: 'no-store' });
+       if (!res.ok || cancelled) return;
+       const data = await res.json();
+       const quotes = data?.quotes || {};
+       const baseSym = sym.split('.')[0].split(':')[1] || sym.split('.')[0];
+       const q = quotes[sym] || quotes[baseSym] || (Object.values(quotes)[0] as any);
+       if (q && !cancelled && typeof q.currentPrice === 'number' && q.currentPrice > 0) {
+         setNewLiveQuote(q);
+         if (q.companyName && q.companyName !== sym) {
+           setNewCompanyName(prev => prev.trim() ? prev : q.companyName);
+         }
+         setNewPriceOfCalc(prev => prev.trim() ? prev : String(q.currentPrice));
+       }
+     } catch {} finally {
+       if (!cancelled) setIsFetchingNewTickerQuote(false);
+     }
+   }, 300);
+   return () => {
+     cancelled = true;
+     clearTimeout(timer);
+   };
+ }, [newTicker, isAddModalOpen]);
 
  // Inline pricing edits state for all editable cells
  const [editingRow, setEditingRow] = useState<string | null>(null);
@@ -454,21 +513,43 @@ export default function StockTable({
  setShowConfirmFair(null);
  };
 
- const handleAddNewStockSubmit = (e: React.FormEvent) => {
+ const handleAddNewStockSubmit = async (e: React.FormEvent) => {
  e.preventDefault();
- const tickerUpper = newTicker.trim().toUpperCase();
+ const parsedTicker = parseSmartStockInput(newTicker);
+ const parsedFromName = !parsedTicker.companyName && newCompanyName.includes('(') ? parseSmartStockInput(newCompanyName) : null;
+ const tickerUpper = (parsedFromName?.ticker && parsedFromName.ticker.includes(':') ? parsedFromName.ticker : parsedTicker.ticker).trim().toUpperCase();
+ const resolvedCompanyName = parsedTicker.companyName || parsedFromName?.companyName || newCompanyName.trim();
+
  if (!tickerUpper) {
  alert('Моля, въведете валиден тикер.');
  return;
  }
 
- if (stocks.some(s => s.ticker === tickerUpper)) {
+ if (stocks.some(s => s.ticker.toUpperCase() === tickerUpper)) {
  alert(`Акция с тикер ${tickerUpper} вече съществува в списъка!`);
  return;
  }
 
- const priceOfCalcNum = newPriceOfCalc === '' ? null : parseFloat(newPriceOfCalc);
- const fairPriceNum = newFairPrice === '' ? null : parseFloat(newFairPrice);
+ let quote = newLiveQuote;
+ if (!quote || !(quote.currentPrice > 0)) {
+   try {
+     setIsFetchingNewTickerQuote(true);
+     const res = await fetch(`/api/stock-quotes?symbols=${encodeURIComponent(tickerUpper)}`, { cache: 'no-store' });
+     if (res.ok) {
+       const data = await res.json();
+       const quotes = data?.quotes || {};
+       const baseSym = tickerUpper.split('.')[0].split(':')[1] || tickerUpper.split('.')[0];
+       quote = quotes[tickerUpper] || quotes[baseSym] || (Object.values(quotes)[0] as any);
+     }
+   } catch {} finally {
+     setIsFetchingNewTickerQuote(false);
+   }
+ }
+
+ const priceOfCalcNum = newPriceOfCalc.trim() === ''
+   ? (quote?.currentPrice > 0 ? Number(quote.currentPrice) : null)
+   : parseFloat(newPriceOfCalc);
+ const fairPriceNum = newFairPrice.trim() === '' ? null : parseFloat(newFairPrice);
 
  if (priceOfCalcNum !== null && isNaN(priceOfCalcNum)) {
  alert('Моля, въведете валидна цена на изчисление.');
@@ -479,8 +560,10 @@ export default function StockTable({
  return;
  }
 
- // Default current price to priceOfCalcNum or 100 if none given
- const initialPrice = priceOfCalcNum !== null ? priceOfCalcNum : 100.0;
+ // Default current price to live quote or priceOfCalcNum or 100 if none given
+ const initialPrice = (quote?.currentPrice && quote.currentPrice > 0)
+   ? Number(quote.currentPrice)
+   : (priceOfCalcNum !== null ? priceOfCalcNum : 100.0);
 
  // Calculate difference
  let diffPercent: number | null = null;
@@ -488,36 +571,43 @@ export default function StockTable({
  diffPercent = parseFloat((((fairPriceNum - initialPrice) / initialPrice) * 100).toFixed(2));
  }
 
-  let buySellValue = 'OVERVALUED';
+  let buySellValue = 'ДРУГИ';
   if (fairPriceNum !== null && initialPrice > 0) {
     buySellValue = (fairPriceNum >= initialPrice) ? 'UNDERVALUED' : 'OVERVALUED';
   }
-  // Signal formula matching Google Sheets: Buy if currentPrice <= low52*1.05, Sell if currentPrice >= high52*0.95
-  const low52Default = priceOfCalcNum ? parseFloat((priceOfCalcNum * 0.78).toFixed(2)) : 80.0;
-  const high52Default = priceOfCalcNum ? parseFloat((priceOfCalcNum * 1.25).toFixed(2)) : 125.0;
+  const low52Default = (quote?.low52 && quote.low52 > 0)
+    ? Number(quote.low52)
+    : (initialPrice ? parseFloat((initialPrice * 0.78).toFixed(2)) : 80.0);
+  const high52Default = (quote?.high52 && quote.high52 > 0)
+    ? Number(quote.high52)
+    : (initialPrice ? parseFloat((initialPrice * 1.25).toFixed(2)) : 125.0);
   let autoSignal = 'Hold';
   if (initialPrice <= low52Default * 1.05) autoSignal = 'Buy';
   else if (initialPrice >= high52Default * 0.95) autoSignal = 'Sell';
 
+ const finalName = resolvedCompanyName || quote?.companyName || tickerUpper;
+ const resolvedDate = newDate ? fromIsoDate(newDate) : fromIsoDate(new Date().toISOString().split('T')[0]);
+
  const newStock: Stock = {
  watch: '',
  ticker: tickerUpper,
- companyName: newCompanyName.trim() || tickerUpper,
- date: fromIsoDate(newDate),
- priceOfCalc: priceOfCalcNum,
- dailyChangePct: 0.0,
+ companyName: finalName,
+ date: resolvedDate,
+ priceOfCalc: priceOfCalcNum !== null ? priceOfCalcNum : initialPrice,
+ dailyChangePct: typeof quote?.dailyChangePct === 'number' ? quote.dailyChangePct : 0.0,
  currentPrice: initialPrice,
  fairPrice: fairPriceNum,
  difference: diffPercent,
  buySell: buySellValue,
- marketCap: 2500000000, // typical Google Finance synced placeholder or simulation base values
- peRatio: 16.8,
- eps: 4.12,
- profileLink: `https://www.google.com/finance/quote/${tickerUpper}:NASDAQ`,
- dividend: '1.2% (0.50$)',
+ marketCap: (quote?.marketCap && quote.marketCap > 0) ? quote.marketCap : 2500000000,
+ peRatio: (quote?.peRatio && quote.peRatio > 0) ? quote.peRatio : 16.8,
+ eps: (typeof quote?.eps === 'number') ? quote.eps : 4.12,
+ profileLink: getSectorForStock(tickerUpper, undefined, finalName),
+ dividend: quote?.dividend ? String(quote.dividend) : '-',
+ dividendYield: typeof quote?.dividendYield === 'number' ? quote.dividendYield : undefined,
  signal: autoSignal,
- low52: priceOfCalcNum ? parseFloat((priceOfCalcNum * 0.78).toFixed(2)) : 80.0,
- high52: priceOfCalcNum ? parseFloat((priceOfCalcNum * 1.25).toFixed(2)) : 125.0,
+ low52: low52Default,
+ high52: high52Default,
  calcLink: newCalcLink,
  };
 
@@ -531,6 +621,7 @@ export default function StockTable({
  setNewPriceOfCalc('');
  setNewFairPrice('');
  setNewCalcLink('');
+ setNewLiveQuote(null);
  };
 
   // Count of 52W Low & High stocks
@@ -623,8 +714,8 @@ export default function StockTable({
  // Direct non-paginated output to support continuous scrolling
  const pageStocks = sortedStocks;
 
- const formatLargeNum = (num: number | null) => {
- if (num === null) return '-';
+ const formatLargeNum = (num: number | null | undefined) => {
+ if (num == null || isNaN(Number(num))) return '-';
  if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
  if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
  return num.toLocaleString();
@@ -1117,7 +1208,7 @@ export default function StockTable({
  placeholder="-"
  />
  ) : (
- <span>{stock.priceOfCalc !== null ? `$${stock.priceOfCalc.toFixed(2)}` : '-'}</span>
+ <span>{stock.priceOfCalc != null && !isNaN(Number(stock.priceOfCalc)) ? `$${Number(stock.priceOfCalc).toFixed(2)}` : '-'}</span>
  )}
  </td>
 
@@ -1162,14 +1253,14 @@ export default function StockTable({
  placeholder="-"
  />
  ) : (
- <span>{stock.fairPrice !== null ? `$${stock.fairPrice.toFixed(2)}` : 'N/A'}</span>
+ <span>{stock.fairPrice != null && !isNaN(Number(stock.fairPrice)) ? `$${Number(stock.fairPrice).toFixed(2)}` : 'N/A'}</span>
  )}
  </td>
 
  {/* 10. DIFFERENCE */}
  <td className={`py-3 px-4 text-right font-extrabold ${isUndervalued ? 'text-[#10b981]' : 'text-[#f43f5e]'}`}>
- {stock.difference !== null ? (
- <span>{stock.difference > 0 ? '▲ +' : '▼ '}{stock.difference.toFixed(2)}%</span>
+ {stock.difference != null && !isNaN(Number(stock.difference)) ? (
+ <span>{stock.difference > 0 ? '▲ +' : '▼ '}{Number(stock.difference).toFixed(2)}%</span>
  ) : (
  <span className="text-ink0">#N/A</span>
  )}
@@ -1451,9 +1542,20 @@ export default function StockTable({
  <input
  type="text"
  required
- placeholder="напр. MSFT"
+ placeholder="напр. MSFT или KRX:005930"
  value={newTicker}
- onChange={e => setNewTicker(e.target.value)}
+ onChange={e => {
+   const val = e.target.value;
+   if (val.includes('(') && val.includes(')')) {
+     const parsed = parseSmartStockInput(val);
+     setNewTicker(parsed.ticker);
+     if (parsed.companyName) {
+       setNewCompanyName(parsed.companyName);
+     }
+   } else {
+     setNewTicker(val);
+   }
+ }}
  className="w-full bg-bg rounded-2xl border border-border font-bold uppercase p-2 focus:outline-none focus:border-blue-900"
  />
  </div>
@@ -1465,22 +1567,49 @@ export default function StockTable({
  </label>
  <input
  type="text"
- placeholder="напр. Microsoft"
+ placeholder="напр. Samsung Electronics"
  value={newCompanyName}
- onChange={e => setNewCompanyName(e.target.value)}
+ onChange={e => {
+   const val = e.target.value;
+   if (val.includes('(') && val.includes(')')) {
+     const parsed = parseSmartStockInput(val);
+     if (parsed.companyName) {
+       setNewCompanyName(parsed.companyName);
+       if (!newTicker.trim()) setNewTicker(parsed.ticker);
+       return;
+     }
+   }
+   setNewCompanyName(val);
+ }}
  className="w-full bg-bg rounded-2xl border border-border p-2 focus:outline-none focus:border-blue-900"
  />
  </div>
  </div>
 
+ {(isFetchingNewTickerQuote || newLiveQuote) && (
+   <div className="px-3 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-[11px] flex items-center justify-between gap-2">
+     {isFetchingNewTickerQuote ? (
+       <span className="text-indigo-400 font-bold animate-pulse">Зареждане на пазарна котировка на живо...</span>
+     ) : newLiveQuote ? (
+       <>
+         <span className="text-emerald-400 font-bold truncate">
+           ✓ {newLiveQuote.companyName || newTicker.toUpperCase()}
+         </span>
+         <span className="font-mono font-extrabold text-ink shrink-0">
+           Цена: {Number(newLiveQuote.currentPrice).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+         </span>
+       </>
+     ) : null}
+   </div>
+ )}
+
  {/* DATE Calendar widget */}
  <div>
  <label className="block text-xs font-bold uppercase text-ink/90 mb-1">
- Дата / Date *
+ Дата / Date
  </label>
  <input
  type="date"
- required
  value={newDate}
  onChange={e => setNewDate(e.target.value)}
  onClick={(e) => { try { (e.target as any).showPicker(); } catch (err) {} }}
@@ -1492,13 +1621,12 @@ export default function StockTable({
  {/* Price of Calc */}
  <div>
  <label className="block text-xs font-bold uppercase text-ink/90 mb-1">
- Цена на калкулация *
+ Цена на калкулация (Авто)
  </label>
  <input
  type="number"
- step="0.01"
- required
- placeholder="напр. 385.50"
+ step="any"
+ placeholder="Автоматично от борсата"
  value={newPriceOfCalc}
  onChange={e => setNewPriceOfCalc(e.target.value)}
  className="w-full bg-bg rounded-2xl border border-border p-2 focus:outline-none focus:border-blue-900"
@@ -1508,13 +1636,12 @@ export default function StockTable({
  {/* Fair Price */}
  <div>
  <label className="block text-xs font-bold uppercase text-ink/90 mb-1">
- Справедлива цена *
+ Справедлива цена (Опц.)
  </label>
  <input
  type="number"
- step="0.01"
- required
- placeholder="напр. 410.00"
+ step="any"
+ placeholder="напр. 410.00 (по избор)"
  value={newFairPrice}
  onChange={e => setNewFairPrice(e.target.value)}
  className="w-full bg-bg rounded-2xl border border-border p-2 focus:outline-none focus:border-blue-900"

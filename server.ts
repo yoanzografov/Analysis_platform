@@ -2346,10 +2346,13 @@ app.get("/api/stock-returns", async (req, res) => {
     const rawSym = ticker.includes(':') ? ticker.split(':').pop()! : ticker;
     const dotSym = rawSym.includes('.') ? rawSym.split('.')[0] : rawSym;
     const candidateNames = Array.from(new Set([rawSym, dotSym, ticker]));
+    const isKorea = ticker.startsWith('KRX:') || ticker.startsWith('KOSDAQ:') || ticker.endsWith('.KS') || ticker.endsWith('.KQ') || /^\d{6}$/.test(rawSym);
     const isEu = ticker.includes('.DE') || ticker.includes('.PA') || ticker.includes('.SW') || ticker.includes('.ST') || ticker.startsWith('ETR:') || ticker.startsWith('EPA:') || ticker.startsWith('SWX:') || ticker.startsWith('STO:');
-    const markets = isEu
-      ? ['germany', 'france', 'switzerland', 'sweden', 'uk', 'america']
-      : ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland'];
+    const markets = isKorea
+      ? ['korea', 'america']
+      : isEu
+        ? ['germany', 'france', 'switzerland', 'sweden', 'uk', 'america']
+        : ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland', 'korea'];
 
     for (const m of markets) {
       try {
@@ -2734,6 +2737,7 @@ app.get("/api/stock-quotes", async (req, res) => {
       await Promise.allSettled(stillMissingTickers.map(async (t) => {
         const baseSym = t.split('.')[0].split(':')[1] || t.split('.')[0];
         const candidates = [
+          originalToYahoo[t],
           plainEuropeanMap[t],
           t,
           `${baseSym}.DE`,
@@ -2914,7 +2918,7 @@ app.get("/api/stock-quotes", async (req, res) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               filter: [{ left: 'name', operation: 'in_range', right: list }],
-              columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic']
+              columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic', 'description', 'change', 'price_52_week_low', 'price_52_week_high']
             })
           });
           if (tvRes.ok) {
@@ -2925,6 +2929,10 @@ app.get("/api/stock-quotes", async (req, res) => {
               const pe = row.d?.[2];
               const eps = row.d?.[3];
               const mcap = row.d?.[4];
+              const desc = row.d?.[5];
+              const changePct = row.d?.[6];
+              const low52 = row.d?.[7];
+              const high52 = row.d?.[8];
               if (name) {
                 const fullKey = prefix ? prefix + name : name;
                 for (const origTicker of tickers) {
@@ -2933,9 +2941,21 @@ app.get("/api/stock-quotes", async (req, res) => {
                     upperOrig === fullKey ||
                     (!prefix && upperOrig === name) ||
                     (prefix === 'ETR:' && upperOrig === `${name}.DE`) ||
-                    (prefix === 'KRX:' && (upperOrig === `KOSDAQ:${name}` || upperOrig === `${name}.KS` || upperOrig === `${name}.KQ`))
+                    (prefix === 'KRX:' && (upperOrig === `KOSDAQ:${name}` || upperOrig === `${name}.KS` || upperOrig === `${name}.KQ` || upperOrig === name))
                   ) {
                     if (!results[origTicker]) results[origTicker] = { currentPrice: 0, dailyChangePct: 0 };
+                    if (typeof desc === 'string' && desc.trim() && (!results[origTicker].companyName || results[origTicker].companyName === origTicker)) {
+                      results[origTicker].companyName = desc.trim();
+                    }
+                    if (typeof changePct === 'number' && !results[origTicker].dailyChangePct) {
+                      results[origTicker].dailyChangePct = parseFloat(changePct.toFixed(2));
+                    }
+                    if (typeof low52 === 'number' && low52 > 0 && (!results[origTicker].low52 || results[origTicker].low52 <= 0)) {
+                      results[origTicker].low52 = parseFloat(low52.toFixed(2));
+                    }
+                    if (typeof high52 === 'number' && high52 > 0 && (!results[origTicker].high52 || results[origTicker].high52 <= 0)) {
+                      results[origTicker].high52 = parseFloat(high52.toFixed(2));
+                    }
                     if (typeof pe === 'number' && pe > 0) results[origTicker].peRatio = parseFloat(pe.toFixed(2));
                     if (typeof eps === 'number') results[origTicker].eps = parseFloat(eps.toFixed(2));
                     if (typeof mcap === 'number' && mcap > 0) results[origTicker].marketCap = mcap;

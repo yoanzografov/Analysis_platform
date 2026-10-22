@@ -979,7 +979,11 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       handleClearAll();
       return;
     }
-    const cleanSym = sym.toUpperCase().trim();
+    // Smart parse: "Samsung Electronics Co., Ltd. (KRX:005930)" -> cleanSym: "KRX:005930", parsedName: "Samsung Electronics Co., Ltd."
+    const parenMatch = sym.match(/^(.*?)\(\s*([A-Za-z0-9_.:\-\s]+)\s*\)\s*$/);
+    const parsedName = parenMatch ? parenMatch[1].trim().replace(/[-–—]+$/, '').trim() : undefined;
+    let cleanSym = (parenMatch ? parenMatch[2] : sym).trim().toUpperCase().replace(/\s+/g, '');
+    if (/^\d{6}$/.test(cleanSym)) cleanSym = `KRX:${cleanSym}`;
 
     // Auto-save previous ticker before switching
     const prevTicker = selectedTickerRef.current;
@@ -998,12 +1002,16 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
 
       setUserInputs({
         ...saved.userInputs,
+        ...(parsedName && (!saved.userInputs['1'] || saved.userInputs['1'].includes('Corp.')) ? { '1': parsedName } : {}),
         ...(curPrice > 0 ? { '7': curPrice.toFixed(2) } : {})
       });
       setCheckedRows(saved.checkedRows || {});
       setIsAutoSaved(true);
     } else {
       updateStockRowDetails(cleanSym); // fill immediately from local stocks/DB as baseline
+      if (parsedName) {
+        setUserInputs(prev => ({ ...prev, '1': parsedName }));
+      }
     }
 
     void loadReturnsForTicker(cleanSym);
@@ -1327,12 +1335,31 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     }
     const mcapRawVal = parseNum(inputs['9']);
     const mcap = mcapRawVal > 0 ? (mcapRawVal < 1e9 ? mcapRawVal * 1000 : mcapRawVal) : undefined;
+    const defaultPrice = price > 0 ? price : 100;
 
     try {
       onSaveToTable({
+        watch: '',
         ticker: cleanSym,
         companyName: compName,
+        date: new Date().toLocaleDateString('bg-BG'),
+        priceOfCalc: price > 0 ? price : defaultPrice,
+        dailyChangePct: 0,
+        currentPrice: defaultPrice,
+        fairPrice: null,
+        difference: null,
+        buySell: 'ДРУГИ',
         sector: sectorName,
+        peRatio: pe > 0 ? pe : 16,
+        eps: 4.0,
+        profileLink: `https://finance.yahoo.com/quote/${cleanSym}`,
+        dividend: finalDividendStr || '-',
+        signal: 'Hold',
+        low52: low52 > 0 ? low52 : null,
+        high52: high52 > 0 ? high52 : null,
+        dividendYield: divYield > 0 ? divYield : 0,
+        marketCap: mcap || 2500000000,
+        currency: 'USD',
         ...(price > 0 ? { currentPrice: price } : {}),
         ...(low52 > 0 ? { low52 } : {}),
         ...(high52 > 0 ? { high52 } : {}),

@@ -47,8 +47,16 @@ const PLAIN_EUROPEAN_MAP: Record<string, string> = {
 
 const US_EXCHANGES = new Set(["NASDAQ", "NYSE", "BATS", "AMEX", "ARCA", "OTCMKTS"]);
 
+function cleanTickerInput(raw: string): string {
+  const trimmed = raw.trim();
+  const parenMatch = trimmed.match(/\(([A-Za-z0-9_.:\-]+)\)\s*$/);
+  const token = (parenMatch ? parenMatch[1] : trimmed).trim().toUpperCase().replace(/\s+/g, '');
+  if (/^\d{6}$/.test(token)) return `KRX:${token}`;
+  return token;
+}
+
 function toYahooSymbol(ticker: string): string {
-  const upper = ticker.trim().toUpperCase();
+  const upper = cleanTickerInput(ticker);
   if (PLAIN_EUROPEAN_MAP[upper]) {
     return PLAIN_EUROPEAN_MAP[upper];
   }
@@ -114,8 +122,8 @@ async function fetchYahooV8Single(symbol: string): Promise<any | null> {
 }
 
 // TradingView Scanner for live P/E (TTM), EPS (TTM), Price and Market Cap
-async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string, { peRatio?: number; eps?: number; marketCap?: number; currentPrice?: number; dividend?: number; dividendYield?: number }>> {
-  const result: Record<string, { peRatio?: number; eps?: number; marketCap?: number; currentPrice?: number; dividend?: number; dividendYield?: number }> = {};
+async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string, { companyName?: string; dailyChangePct?: number; low52?: number; high52?: number; peRatio?: number; eps?: number; marketCap?: number; currentPrice?: number; dividend?: number; dividendYield?: number }>> {
+  const result: Record<string, { companyName?: string; dailyChangePct?: number; low52?: number; high52?: number; peRatio?: number; eps?: number; marketCap?: number; currentPrice?: number; dividend?: number; dividendYield?: number }> = {};
   
   const usTickers: string[] = [];
   const franceTickers: string[] = [];
@@ -126,7 +134,7 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
   const koreaTickers: string[] = [];
 
   for (const t of tickers) {
-    const upper = t.toUpperCase().trim();
+    const upper = cleanTickerInput(t);
     if (upper.startsWith('EPA:')) franceTickers.push(upper.slice(4));
     else if (upper.startsWith('ETR:') || upper.endsWith('.DE')) germanyTickers.push(upper.replace('ETR:', '').replace('.DE', ''));
     else if (upper.startsWith('STO:')) swedenTickers.push(upper.slice(4));
@@ -156,7 +164,20 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           filter: [{ left: 'name', operation: 'in_range', right: list }],
-          columns: ['name', 'close', 'price_earnings_ttm', 'earnings_per_share_basic_ttm', 'market_cap_basic', 'dps_common_stock_prim_issue_fq', 'dps_common_stock_prim_issue_fy', 'dividends_yield_current']
+          columns: [
+            'name',
+            'close',
+            'price_earnings_ttm',
+            'earnings_per_share_basic_ttm',
+            'market_cap_basic',
+            'dps_common_stock_prim_issue_fq',
+            'dps_common_stock_prim_issue_fy',
+            'dividends_yield_current',
+            'description',
+            'change',
+            'price_52_week_low',
+            'price_52_week_high'
+          ]
         })
       });
       if (res.ok) {
@@ -170,10 +191,18 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
           const divFq = row.d?.[5];
           const divFy = row.d?.[6];
           const divYield = row.d?.[7];
+          const desc = row.d?.[8];
+          const changePct = row.d?.[9];
+          const low52 = row.d?.[10];
+          const high52 = row.d?.[11];
           if (name) {
             const divRate = (typeof divFq === 'number' && divFq > 0) ? divFq : ((typeof divFy === 'number' && divFy > 0) ? (divFy / 4) : undefined);
             const item = {
+              companyName: typeof desc === 'string' && desc.trim() ? desc.trim() : undefined,
               currentPrice: typeof close === 'number' && close > 0 ? parseFloat(close.toFixed(2)) : undefined,
+              dailyChangePct: typeof changePct === 'number' ? parseFloat(changePct.toFixed(2)) : undefined,
+              low52: typeof low52 === 'number' && low52 > 0 ? parseFloat(low52.toFixed(2)) : undefined,
+              high52: typeof high52 === 'number' && high52 > 0 ? parseFloat(high52.toFixed(2)) : undefined,
               peRatio: typeof pe === 'number' && pe > 0 ? parseFloat(pe.toFixed(2)) : undefined,
               eps: typeof eps === 'number' ? parseFloat(eps.toFixed(2)) : undefined,
               marketCap: typeof mcap === 'number' && mcap > 0 ? mcap : undefined,
@@ -189,6 +218,7 @@ async function fetchTradingViewScanner(tickers: string[]): Promise<Record<string
               result[`KOSDAQ:${name}`] = item;
               result[`${name}.KS`] = item;
               result[`${name}.KQ`] = item;
+              result[name] = item;
             }
             if (!prefix) {
               result[name] = item;
@@ -1152,10 +1182,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const rawSym = ticker.includes(':') ? ticker.split(':').pop()! : ticker;
       const dotSym = rawSym.includes('.') ? rawSym.split('.')[0] : rawSym;
       const candidateNames = Array.from(new Set([rawSym, dotSym, ticker]));
+      const isKorea = ticker.startsWith('KRX:') || ticker.startsWith('KOSDAQ:') || ticker.endsWith('.KS') || ticker.endsWith('.KQ') || /^\d{6}$/.test(rawSym);
       const isEu = ticker.includes('.DE') || ticker.includes('.PA') || ticker.includes('.SW') || ticker.includes('.ST') || ticker.startsWith('ETR:') || ticker.startsWith('EPA:') || ticker.startsWith('SWX:') || ticker.startsWith('STO:');
-      const markets = isEu
-        ? ['germany', 'france', 'switzerland', 'sweden', 'uk', 'america']
-        : ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland'];
+      const markets = isKorea
+        ? ['korea', 'america']
+        : isEu
+          ? ['germany', 'france', 'switzerland', 'sweden', 'uk', 'america']
+          : ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland', 'korea'];
 
       for (const m of markets) {
         try {
@@ -1517,16 +1550,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const tvData = await fetchTradingViewScanner(tickers);
       for (const t of tickers) {
-        const upper = t.toUpperCase().trim();
-        const plain = t.split('.')[0].split(':')[1] || t.split('.')[0];
-        const tv = tvData[upper] || tvData[t] || (!t.includes(':') ? tvData[plain] : undefined);
+        const upper = cleanTickerInput(t);
+        const plain = upper.split('.')[0].split(':')[1] || upper.split('.')[0];
+        const tv = tvData[upper] || tvData[t] || tvData[plain];
         if (tv) {
           if (!results[t]) {
             results[t] = {
               currentPrice: tv.currentPrice ?? 0,
-              dailyChangePct: 0,
-              companyName: t
+              dailyChangePct: tv.dailyChangePct ?? 0,
+              companyName: tv.companyName || t
             };
+          }
+          if (tv.companyName && (!results[t].companyName || results[t].companyName === t)) {
+            results[t].companyName = tv.companyName;
+          }
+          if (tv.dailyChangePct !== undefined && !results[t].dailyChangePct) {
+            results[t].dailyChangePct = tv.dailyChangePct;
+          }
+          if (tv.low52 !== undefined && (!results[t].low52 || results[t].low52 <= 0)) {
+            results[t].low52 = tv.low52;
+          }
+          if (tv.high52 !== undefined && (!results[t].high52 || results[t].high52 <= 0)) {
+            results[t].high52 = tv.high52;
           }
           if (tv.peRatio !== undefined) results[t].peRatio = tv.peRatio;
           if (tv.eps !== undefined) results[t].eps = tv.eps;

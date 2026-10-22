@@ -2345,7 +2345,18 @@ export default function App() {
           buyThreshold={buyThreshold}
           sellThreshold={sellThreshold}
           onAddStock={(newStock) => {
-            const upper = newStock.ticker.toUpperCase();
+            // Smart extraction in case someone passed "Samsung Electronics Co., Ltd. (KRX:005930)"
+            let sym = newStock.ticker.trim();
+            let parsedName = newStock.companyName;
+            const parenMatch = sym.match(/^(.*?)\(\s*([A-Za-z0-9_.:\-\s]+)\s*\)\s*$/);
+            if (parenMatch) {
+              const namePart = parenMatch[1].trim().replace(/[-–—]+$/, '').trim();
+              if (namePart && (!parsedName || parsedName === sym)) parsedName = namePart;
+              sym = parenMatch[2].trim().toUpperCase().replace(/\s+/g, '');
+            }
+            if (/^\d{6}$/.test(sym)) sym = `KRX:${sym}`;
+            const upper = sym.toUpperCase();
+
             setDeletedStockTickers(prev => {
               const next = prev.filter(t => t !== upper);
               try {
@@ -2356,11 +2367,46 @@ export default function App() {
             setStocks(prev => {
               const existingIdx = prev.findIndex(s => s.ticker.toUpperCase() === upper);
               let nextList: Stock[];
+              const resolvedPrice = (typeof newStock.currentPrice === 'number' && newStock.currentPrice > 0)
+                ? newStock.currentPrice
+                : (typeof newStock.priceOfCalc === 'number' && newStock.priceOfCalc > 0 ? newStock.priceOfCalc : 100);
+
               if (existingIdx >= 0) {
                 nextList = [...prev];
-                nextList[existingIdx] = { ...nextList[existingIdx], ...newStock };
+                nextList[existingIdx] = {
+                  ...nextList[existingIdx],
+                  ...newStock,
+                  ticker: upper,
+                  companyName: parsedName || nextList[existingIdx].companyName,
+                  currentPrice: resolvedPrice,
+                  priceOfCalc: nextList[existingIdx].priceOfCalc ?? resolvedPrice
+                };
               } else {
-                nextList = [...prev, newStock];
+                const completeStock: Stock = {
+                  watch: newStock.watch || '',
+                  ticker: upper,
+                  companyName: parsedName || upper,
+                  date: newStock.date || new Date().toLocaleDateString('bg-BG'),
+                  priceOfCalc: newStock.priceOfCalc ?? resolvedPrice,
+                  dailyChangePct: newStock.dailyChangePct ?? 0,
+                  currentPrice: resolvedPrice,
+                  fairPrice: newStock.fairPrice ?? null,
+                  difference: newStock.difference ?? null,
+                  buySell: newStock.buySell || 'ДРУГИ',
+                  sector: newStock.sector || 'Technology',
+                  peRatio: newStock.peRatio ?? 16.8,
+                  eps: newStock.eps ?? 4.12,
+                  profileLink: newStock.profileLink || `https://finance.yahoo.com/quote/${upper}`,
+                  dividend: newStock.dividend || '-',
+                  signal: newStock.signal || 'Hold',
+                  low52: newStock.low52 ?? null,
+                  high52: newStock.high52 ?? null,
+                  dividendYield: newStock.dividendYield ?? 0,
+                  marketCap: newStock.marketCap || 2500000000,
+                  currency: newStock.currency || 'USD',
+                  ...newStock
+                };
+                nextList = [...prev, completeStock];
               }
               setTimeout(() => {
                 fetchRealStockPricesDirect(nextList);
@@ -2370,8 +2416,8 @@ export default function App() {
             const newLog = {
               id: `${Date.now()}-${Math.random()}`,
               timestamp: new Date().toLocaleTimeString(),
-              ticker: newStock.ticker,
-              message: `Актуализиран актив: ${newStock.companyName || newStock.ticker} (${newStock.ticker})`,
+              ticker: upper,
+              message: `Актуализиран актив: ${parsedName || upper} (${upper})`,
               type: 'success' as const
             };
             setLogs(prev => [newLog, ...prev]);
