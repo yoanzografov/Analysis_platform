@@ -148,11 +148,16 @@ export async function fetchStockReturns(ticker: string, currentPriceHint?: numbe
   try {
     const rawSym = cleanTicker.includes(':') ? cleanTicker.split(':').pop()! : cleanTicker;
     const dotSym = rawSym.includes('.') ? rawSym.split('.')[0] : rawSym;
-    const candidateNames = Array.from(new Set([rawSym, dotSym, cleanTicker]));
-    const isEu = cleanTicker.includes('.DE') || cleanTicker.includes('.PA') || cleanTicker.includes('.SW') || cleanTicker.includes('.ST') || cleanTicker.startsWith('ETR:') || cleanTicker.startsWith('EPA:') || cleanTicker.startsWith('SWX:') || cleanTicker.startsWith('STO:');
-    const tvMarkets = isEu
-      ? ['germany', 'france', 'switzerland', 'sweden', 'uk', 'america']
-      : ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland'];
+    const altSym = rawSym === 'GOOG' ? 'GOOGL' : (rawSym === 'GOOGL' ? 'GOOG' : null);
+    const candidateNames = Array.from(new Set([rawSym, dotSym, cleanTicker, ...(altSym ? [altSym] : [])]));
+
+    const isKorea = cleanTicker.startsWith('KRX:') || cleanTicker.startsWith('KOSDAQ:') || cleanTicker.endsWith('.KS') || cleanTicker.endsWith('.KQ') || /^\d{6}$/.test(rawSym);
+    const isEu = cleanTicker.includes('.DE') || cleanTicker.includes('.PA') || cleanTicker.includes('.SW') || cleanTicker.includes('.ST') || cleanTicker.includes('.AS') || cleanTicker.includes('.L') || cleanTicker.startsWith('ETR:') || cleanTicker.startsWith('EPA:') || cleanTicker.startsWith('SWX:') || cleanTicker.startsWith('STO:');
+    const tvMarkets = isKorea
+      ? ['korea', 'america']
+      : isEu
+        ? ['germany', 'france', 'switzerland', 'sweden', 'uk', 'netherlands', 'america']
+        : ['america', 'germany', 'france', 'uk', 'sweden', 'switzerland', 'netherlands', 'korea'];
 
     for (const market of tvMarkets) {
       try {
