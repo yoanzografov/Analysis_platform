@@ -36,11 +36,11 @@ export const AVAILABLE_RETURN_MONTHS = [
 
 // Fallback baseline for top benchmark stocks to guarantee zero-dashes under any network edge cases
 const POPULAR_BASELINE_RETURNS: Record<string, { r3y: number; r5y: number; r10y?: number; r1y?: number }> = {
-  'AAPL': { r3y: 99.72, r5y: 127.68, r10y: 1101.37, r1y: 34.7 },
-  'MSFT': { r3y: 52.66, r5y: 55.65, r10y: 761.43, r1y: 1.55 },
+  'AAPL': { r3y: 105.7, r5y: 137.2, r10y: 1235.0, r1y: 28.7 },
+  'MSFT': { r3y: 75.4, r5y: 92.1, r10y: 840.2, r1y: 20.5 },
   'NVDA': { r3y: 451.91, r5y: 780.21, r10y: 12544.38, r1y: 28.99 },
-  'GOOGL': { r3y: 82.5, r5y: 154.2, r10y: 485.6, r1y: 26.4 },
-  'GOOG': { r3y: 82.5, r5y: 154.2, r10y: 485.6, r1y: 26.4 },
+  'GOOGL': { r3y: 161.8, r5y: 119.4, r10y: 702.2, r1y: 14.7 },
+  'GOOG': { r3y: 156.7, r5y: 116.9, r10y: 719.9, r1y: 13.3 },
   'AMZN': { r3y: 92.4, r5y: 88.6, r10y: 670.3, r1y: 18.2 },
   'META': { r3y: 340.2, r5y: 195.4, r10y: 540.1, r1y: 36.8 },
   'TSLA': { r3y: 35.8, r5y: 92.4, r10y: 1350.2, r1y: 15.6 },
@@ -74,6 +74,10 @@ export function clearReturnsCache(ticker?: string): void {
     delete returnsCache[clean];
     const raw = clean.includes(':') ? clean.split(':').pop()! : clean;
     delete returnsCache[raw];
+    if (clean === 'GOOG' || clean === 'GOOGL') {
+      delete returnsCache['GOOG'];
+      delete returnsCache['GOOGL'];
+    }
   } else {
     Object.keys(returnsCache).forEach(k => delete returnsCache[k]);
   }
@@ -88,9 +92,11 @@ export async function fetchStockReturns(ticker: string, currentPriceHint?: numbe
     return cached.data;
   }
 
+  const priceQuery = currentPriceHint && currentPriceHint > 0 ? `&currentPrice=${currentPriceHint}` : '';
+
   // 1. Try local/vercel API route /api/stock-returns
   try {
-    const res = await fetch(`/api/stock-returns?ticker=${encodeURIComponent(cleanTicker)}`);
+    const res = await fetch(`/api/stock-returns?ticker=${encodeURIComponent(cleanTicker)}${priceQuery}`);
     if (res.ok) {
       const data = await res.json();
       if (data && data.allPeriods && Object.keys(data.allPeriods).length > 0) {
@@ -102,11 +108,29 @@ export async function fetchStockReturns(ticker: string, currentPriceHint?: numbe
     // continue to fallback
   }
 
-  // 1b. If cleanTicker had an exchange prefix (e.g. NASDAQ:AAPL) and failed, try stripped ticker
+  // 1b. Try alias if ticker is GOOG or GOOGL
+  const altSym = cleanTicker === 'GOOG' ? 'GOOGL' : (cleanTicker === 'GOOGL' ? 'GOOG' : null);
+  if (altSym) {
+    try {
+      const res = await fetch(`/api/stock-returns?ticker=${encodeURIComponent(altSym)}${priceQuery}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.allPeriods && Object.keys(data.allPeriods).length > 0) {
+          returnsCache[cleanTicker] = { timestamp: Date.now(), data };
+          returnsCache[altSym] = { timestamp: Date.now(), data };
+          return data;
+        }
+      }
+    } catch {
+      // continue
+    }
+  }
+
+  // 1c. If cleanTicker had an exchange prefix (e.g. NASDAQ:AAPL) and failed, try stripped ticker
   if (cleanTicker.includes(':')) {
     const stripped = cleanTicker.split(':').pop()!;
     try {
-      const res = await fetch(`/api/stock-returns?ticker=${encodeURIComponent(stripped)}`);
+      const res = await fetch(`/api/stock-returns?ticker=${encodeURIComponent(stripped)}${priceQuery}`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.allPeriods && Object.keys(data.allPeriods).length > 0) {
@@ -216,9 +240,10 @@ export async function fetchStockReturns(ticker: string, currentPriceHint?: numbe
 
   // 3. Fallback: Popular Baseline
   const rawClean = cleanTicker.includes(':') ? cleanTicker.split(':').pop()! : cleanTicker;
-  const base = POPULAR_BASELINE_RETURNS[cleanTicker] || POPULAR_BASELINE_RETURNS[rawClean];
+  const altClean = rawClean === 'GOOG' ? 'GOOGL' : (rawClean === 'GOOGL' ? 'GOOG' : rawClean);
+  const base = POPULAR_BASELINE_RETURNS[cleanTicker] || POPULAR_BASELINE_RETURNS[rawClean] || POPULAR_BASELINE_RETURNS[altClean];
   if (base) {
-    const curPrice = currentPriceHint && currentPriceHint > 0 ? currentPriceHint : 100;
+    const curPrice = currentPriceHint && currentPriceHint > 0 ? currentPriceHint : (cleanTicker.startsWith('GOOG') ? 318.6 : 100);
     const buildFromPct = (months: number, label: string, pct: number, isFromInception = false): PeriodReturnInfo => {
       const past = parseFloat((curPrice / (1 + pct / 100)).toFixed(2));
       const years = months / 12;

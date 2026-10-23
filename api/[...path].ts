@@ -1038,11 +1038,11 @@ function getCompanyNewsFallback(ticker: string, companyName?: string): any[] {
 const serverlessGlobalNewsCacheByTab = new Map<string, { timestamp: number; news: any[] }>();
 
 const POPULAR_BASELINE_RETURNS: Record<string, { r3y: number; r5y: number; r10y?: number; r1y?: number }> = {
-  'AAPL': { r3y: 99.72, r5y: 127.68, r10y: 1101.37, r1y: 34.7 },
-  'MSFT': { r3y: 52.66, r5y: 55.65, r10y: 761.43, r1y: 1.55 },
+  'AAPL': { r3y: 105.7, r5y: 137.2, r10y: 1235.0, r1y: 28.7 },
+  'MSFT': { r3y: 75.4, r5y: 92.1, r10y: 840.2, r1y: 20.5 },
   'NVDA': { r3y: 451.91, r5y: 780.21, r10y: 12544.38, r1y: 28.99 },
-  'GOOGL': { r3y: 82.5, r5y: 154.2, r10y: 485.6, r1y: 26.4 },
-  'GOOG': { r3y: 82.5, r5y: 154.2, r10y: 485.6, r1y: 26.4 },
+  'GOOGL': { r3y: 161.8, r5y: 119.4, r10y: 702.2, r1y: 14.7 },
+  'GOOG': { r3y: 156.7, r5y: 116.9, r10y: 719.9, r1y: 13.3 },
   'AMZN': { r3y: 92.4, r5y: 88.6, r10y: 670.3, r1y: 18.2 },
   'META': { r3y: 340.2, r5y: 195.4, r10y: 540.1, r1y: 36.8 },
   'TSLA': { r3y: 35.8, r5y: 92.4, r10y: 1350.2, r1y: 15.6 },
@@ -1082,6 +1082,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (isStockReturns) {
     let ticker = (req.query.ticker as string || req.query.symbol as string || "").toUpperCase().trim();
+    const currentPriceHint = parseFloat(req.query.currentPrice as string) || 0;
     if (!ticker) {
       try {
         const parsedUrl = new URL(req.url ?? "", "http://localhost");
@@ -1099,6 +1100,70 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=10y&interval=1mo`
     ];
 
+    // Helper to build return periods from sorted bars: [{ price, time }]
+    const computeReturnsFromBars = (validBars: { price: number; time: number }[]) => {
+      if (!validBars || validBars.length <= 1) return null;
+      const latestBar = validBars[validBars.length - 1];
+      const latestPrice = latestBar.price;
+      const latestTime = latestBar.time || Math.floor(Date.now() / 1000);
+      const totalMonthsAvailable = Math.max(1, Math.round((latestTime - (validBars[0].time || latestTime)) / (30.4375 * 86400)));
+      const allPeriods: Record<number, any> = {};
+
+      for (const m of periods) {
+        const targetDate = new Date(latestTime * 1000);
+        targetDate.setMonth(targetDate.getMonth() - m);
+        const targetSec = Math.floor(targetDate.getTime() / 1000);
+
+        let pastBar: { price: number; time: number } | null = null;
+        for (let i = validBars.length - 2; i >= 0; i--) {
+          if (validBars[i].time <= targetSec) {
+            pastBar = validBars[i];
+            break;
+          }
+        }
+
+        let actualMonths = m;
+        let isFromInception = false;
+        if (!pastBar) {
+          pastBar = validBars[0];
+          actualMonths = totalMonthsAvailable;
+          isFromInception = true;
+        }
+
+        const pastPrice = pastBar.price;
+
+        if (pastPrice > 0 && latestPrice > 0) {
+          const returnPct = parseFloat((((latestPrice - pastPrice) / pastPrice) * 100).toFixed(2));
+          const years = actualMonths / 12;
+          let cagr: number | null = null;
+          if (years >= 0.5) {
+            cagr = parseFloat(((Math.pow(latestPrice / pastPrice, 1 / years) - 1) * 100).toFixed(2));
+          }
+
+          allPeriods[m] = {
+            months: m,
+            actualMonths,
+            label: isFromInception ? `${m}M (IPO)` : `${m}M`,
+            returnPct,
+            cagr,
+            pastPrice,
+            currentPrice: latestPrice,
+            isFromInception,
+            inceptionYears: parseFloat((totalMonthsAvailable / 12).toFixed(1))
+          };
+        }
+      }
+
+      return {
+        ticker,
+        currentPrice: latestPrice,
+        ret3y: allPeriods[36] || null,
+        ret5y: allPeriods[60] || null,
+        ret10y: allPeriods[120] || null,
+        allPeriods
+      };
+    };
+
     // Tier 1: Direct Yahoo v8 chart query with YAHOO_HEADERS
     for (const u of urls) {
       try {
@@ -1110,68 +1175,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const data = await response.json() as any;
           const result = data?.chart?.result?.[0];
           const quotes = result?.indicators?.quote?.[0]?.close;
+          const adj = result?.indicators?.adjclose?.[0]?.adjclose;
           const timestamps = result?.timestamp;
 
           if (quotes && quotes.length > 0) {
             const validBars: { price: number; time: number }[] = [];
             for (let i = 0; i < quotes.length; i++) {
-              if (quotes[i] !== null && quotes[i] !== undefined && !isNaN(quotes[i])) {
-                validBars.push({ price: parseFloat(quotes[i].toFixed(2)), time: timestamps?.[i] || 0 });
+              const p = (adj && adj[i] != null && !isNaN(adj[i])) ? adj[i] : quotes[i];
+              if (p !== null && p !== undefined && !isNaN(p)) {
+                validBars.push({ price: parseFloat(p.toFixed(2)), time: timestamps?.[i] || 0 });
               }
             }
 
-            if (validBars.length > 1) {
-              const latestPrice = validBars[validBars.length - 1].price;
-              const totalBars = validBars.length;
-              const totalMonthsAvailable = totalBars - 1;
-              const allPeriods: Record<number, any> = {};
-
-              for (const m of periods) {
-                const idx = validBars.length - 1 - m;
-                let pastPrice = 0;
-                let actualMonths = m;
-                let isFromInception = false;
-
-                if (idx >= 0) {
-                  pastPrice = validBars[idx].price;
-                } else if (totalMonthsAvailable >= 6) {
-                  // Company has been public for less than m months: return from IPO
-                  pastPrice = validBars[0].price;
-                  actualMonths = totalMonthsAvailable;
-                  isFromInception = true;
-                }
-
-                if (pastPrice > 0 && latestPrice > 0) {
-                  const returnPct = parseFloat((((latestPrice - pastPrice) / pastPrice) * 100).toFixed(2));
-                  const years = actualMonths / 12;
-                  let cagr: number | null = null;
-                  if (years >= 0.5) {
-                    cagr = parseFloat(((Math.pow(latestPrice / pastPrice, 1 / years) - 1) * 100).toFixed(2));
-                  }
-
-                  allPeriods[m] = {
-                    months: m,
-                    actualMonths,
-                    label: isFromInception ? `${m}M (IPO)` : `${m}M`,
-                    returnPct,
-                    cagr,
-                    pastPrice,
-                    currentPrice: latestPrice,
-                    isFromInception,
-                    inceptionYears: parseFloat((totalMonthsAvailable / 12).toFixed(1))
-                  };
-                }
-              }
-
-              return res.json({
-                ticker,
-                currentPrice: latestPrice,
-                ret3y: allPeriods[36] || null,
-                ret5y: allPeriods[60] || null,
-                ret10y: allPeriods[120] || null,
-                allPeriods
-              });
-            }
+            const computed = computeReturnsFromBars(validBars);
+            if (computed) return res.json(computed);
           }
         }
       } catch {}
@@ -1257,9 +1274,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Tier 3: Predefined Baseline for Popular Assets
     const rawClean = ticker.includes(':') ? ticker.split(':').pop()! : ticker;
-    const base = POPULAR_BASELINE_RETURNS[ticker] || POPULAR_BASELINE_RETURNS[rawClean];
+    const altClean = rawClean === 'GOOG' ? 'GOOGL' : (rawClean === 'GOOGL' ? 'GOOG' : rawClean);
+    const base = POPULAR_BASELINE_RETURNS[ticker] || POPULAR_BASELINE_RETURNS[rawClean] || POPULAR_BASELINE_RETURNS[altClean];
     if (base) {
-      const curPrice = 100;
+      const curPrice = currentPriceHint > 0 ? currentPriceHint : (ticker.startsWith('GOOG') ? 318.6 : 100);
       const buildFromPct = (months: number, label: string, pct: number) => {
         const past = parseFloat((curPrice / (1 + pct / 100)).toFixed(2));
         const years = months / 12;

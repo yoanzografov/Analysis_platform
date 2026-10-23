@@ -50,7 +50,8 @@ export const POPULAR_STOCKS_DB: Record<string, {
   TSLA: { companyName: 'Tesla, Inc.', industry: 'Automotive', sector: 'Consumer Cyclical', price: 215.40, low52: 138.80, high52: 271.00, marketCap: 686000000000, pe: 62.4, shares: 3190000000, revenue: 96700000000, netIncome: 14900000000, fcf: 4400000000 },
   MSFT: { companyName: 'Microsoft Corporation', industry: 'Software - Infrastructure', sector: 'Technology', price: 412.30, low52: 309.45, high52: 468.35, marketCap: 3060000000000, pe: 35.8, shares: 7430000000, revenue: 245100000000, netIncome: 88100000000, fcf: 74100000000 },
   AMZN: { companyName: 'Amazon.com, Inc.', industry: 'Internet Retail', sector: 'Consumer Cyclical', price: 175.60, low52: 118.35, high52: 201.20, marketCap: 1830000000000, pe: 41.2, shares: 10400000000, revenue: 574800000000, netIncome: 30400000000, fcf: 36800000000 },
-  GOOGL: { companyName: 'Alphabet Inc.', industry: 'Internet Content & Information', sector: 'Communication Services', price: 165.20, low52: 120.21, high52: 191.75, marketCap: 2040000000000, pe: 24.1, shares: 12300000000, revenue: 307400000000, netIncome: 73700000000, fcf: 69500000000 },
+  GOOG: { companyName: 'Alphabet Inc.', industry: 'Internet Content & Information', sector: 'Communication Services', price: 318.60, low52: 162.07, high52: 408.61, marketCap: 3950000000000, pe: 28.1, shares: 12390000000, revenue: 350000000000, netIncome: 88000000000, fcf: 75000000000 },
+  GOOGL: { companyName: 'Alphabet Inc.', industry: 'Internet Content & Information', sector: 'Communication Services', price: 321.70, low52: 162.07, high52: 408.61, marketCap: 3980000000000, pe: 28.1, shares: 12390000000, revenue: 350000000000, netIncome: 88000000000, fcf: 75000000000 },
   META: { companyName: 'Meta Platforms, Inc.', industry: 'Internet Content & Information', sector: 'Communication Services', price: 510.10, low52: 279.40, high52: 542.80, marketCap: 1290000000000, pe: 26.3, shares: 2530000000, revenue: 134900000000, netIncome: 39100000000, fcf: 43000000000 },
   NFLX: { companyName: 'Netflix, Inc.', industry: 'Entertainment', sector: 'Communication Services', price: 680.50, low52: 385.00, high52: 700.00, marketCap: 29200000000, pe: 42.1, shares: 429000000, revenue: 33700000000, netIncome: 5400000000, fcf: 6900000000 },
   AMD: { companyName: 'Advanced Micro Devices, Inc.', industry: 'Semiconductors', sector: 'Technology', price: 148.20, low52: 93.12, high52: 227.30, marketCap: 240000000000, pe: 110.5, shares: 1620000000, revenue: 22600000000, netIncome: 854000000, fcf: 1100000000 },
@@ -554,7 +555,9 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     }
     setIsLoadingReturns(true);
     try {
-      const curPrice = priceHint && priceHint > 0 ? priceHint : parseNum(userInputs['7']);
+      const curPrice = priceHint && priceHint > 0 
+        ? priceHint 
+        : (parseNum(userInputsRef.current['7']) || (tickerToFetch.startsWith('GOOG') ? 318.6 : 0));
       const data = await fetchStockReturns(tickerToFetch, curPrice > 0 ? curPrice : undefined);
       setReturnsData(data);
       if (data) {
@@ -848,9 +851,12 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     const cleanSym = sym.toUpperCase().trim();
     if (!cleanSym) return;
 
-    // Search directly in main INTERACTIVE TABLE stocks array first, fallback to passed stock prop or popular DB
-    const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym) || (stock?.ticker?.toUpperCase() === cleanSym ? stock : undefined);
-    const dbStock = POPULAR_STOCKS_DB[cleanSym];
+    // Search directly in main INTERACTIVE TABLE stocks array first, fallback to passed stock prop or popular DB (handling GOOG <-> GOOGL aliases)
+    const altSym = cleanSym === 'GOOG' ? 'GOOGL' : (cleanSym === 'GOOGL' ? 'GOOG' : null);
+    const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym) 
+      || (altSym ? stocks.find(s => s.ticker.toUpperCase() === altSym) : undefined)
+      || (stock?.ticker?.toUpperCase() === cleanSym ? stock : undefined);
+    const dbStock = POPULAR_STOCKS_DB[cleanSym] || (altSym ? POPULAR_STOCKS_DB[altSym] : undefined);
 
     const compName = found?.companyName || dbStock?.companyName || `${cleanSym} Corp.`;
     const sectorName = getSectorForStock(cleanSym, found?.sector || dbStock?.sector, compName);
@@ -995,10 +1001,15 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
     setTickerSearchQuery(cleanSym);
 
     // 1. Check if we already have saved checklist data for this ticker in localStorage!
-    const saved = loadSavedChecklist(cleanSym);
+    const altSym = cleanSym === 'GOOG' ? 'GOOGL' : (cleanSym === 'GOOGL' ? 'GOOG' : null);
+    const saved = loadSavedChecklist(cleanSym) || (altSym ? loadSavedChecklist(altSym) : null);
+    let resolvedInitialPrice = 0;
     if (saved && saved.userInputs) {
-      const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym) || (stock?.ticker?.toUpperCase() === cleanSym ? stock : undefined);
+      const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym) 
+        || (altSym ? stocks.find(s => s.ticker.toUpperCase() === altSym) : undefined)
+        || (stock?.ticker?.toUpperCase() === cleanSym ? stock : undefined);
       const curPrice = found?.currentPrice || parseNum(saved.userInputs['7']);
+      resolvedInitialPrice = curPrice;
 
       setUserInputs({
         ...saved.userInputs,
@@ -1012,9 +1023,13 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
       if (parsedName) {
         setUserInputs(prev => ({ ...prev, '1': parsedName }));
       }
+      const found = stocks.find(s => s.ticker.toUpperCase() === cleanSym) 
+        || (altSym ? stocks.find(s => s.ticker.toUpperCase() === altSym) : undefined)
+        || (stock?.ticker?.toUpperCase() === cleanSym ? stock : undefined);
+      resolvedInitialPrice = found?.currentPrice || POPULAR_STOCKS_DB[cleanSym]?.price || (altSym ? POPULAR_STOCKS_DB[altSym]?.price : 0) || 0;
     }
 
-    void loadReturnsForTicker(cleanSym);
+    void loadReturnsForTicker(cleanSym, resolvedInitialPrice > 0 ? resolvedInitialPrice : undefined);
 
     // Live fetch from /api/stock-quotes — same source as Interactive Table (Yahoo Finance)
     setIsFetchingQuote(true);
@@ -2538,7 +2553,8 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                   const targetSym = selectedTicker || userInputs['2'] || (stock?.ticker ? stock.ticker.toUpperCase().trim() : '');
                   if (targetSym) {
                     clearReturnsCache(targetSym);
-                    void loadReturnsForTicker(targetSym);
+                    const curP = parseNum(userInputsRef.current['7']) || (targetSym.startsWith('GOOG') ? 318.6 : 0);
+                    void loadReturnsForTicker(targetSym, curP > 0 ? curP : undefined);
                   }
                 }}
                 disabled={isLoadingReturns}
@@ -2688,16 +2704,17 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             <button
               type="button"
               onClick={() => {
-                if (returnsData?.ret3y?.pastPrice && returnsData?.ret3y?.currentPrice) {
+                const currentP = returnsData?.currentPrice || parseNum(userInputsRef.current['7']) || (selectedTicker?.startsWith('GOOG') ? 318.6 : 100);
+                if (returnsData?.ret3y?.pastPrice) {
                   setRoiCalcInitial({
                     invested: returnsData.ret3y.pastPrice,
-                    returned: returnsData.ret3y.currentPrice,
+                    returned: returnsData.ret3y.currentPrice || currentP,
                     years: 3
                   });
-                } else if (returnsData?.ret5y?.pastPrice && returnsData?.ret5y?.currentPrice) {
+                } else if (returnsData?.ret5y?.pastPrice) {
                   setRoiCalcInitial({
                     invested: returnsData.ret5y.pastPrice,
-                    returned: returnsData.ret5y.currentPrice,
+                    returned: returnsData.ret5y.currentPrice || currentP,
                     years: 5
                   });
                 }
