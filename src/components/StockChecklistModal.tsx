@@ -2704,8 +2704,14 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
             <button
               type="button"
               onClick={() => {
-                const currentP = returnsData?.currentPrice || parseNum(userInputsRef.current['7']) || (selectedTicker?.startsWith('GOOG') ? 318.6 : 100);
-                if (returnsData?.ret3y?.pastPrice) {
+                const currentP = selectedCustomReturn?.currentPrice || returnsData?.currentPrice || parseNum(userInputsRef.current['7']) || (selectedTicker?.startsWith('GOOG') ? 318.6 : 100);
+                if (selectedCustomReturn?.pastPrice) {
+                  setRoiCalcInitial({
+                    invested: selectedCustomReturn.pastPrice,
+                    returned: selectedCustomReturn.currentPrice || currentP,
+                    years: Number((selectedCustomReturn.months / 12).toFixed(2))
+                  });
+                } else if (returnsData?.ret3y?.pastPrice) {
                   setRoiCalcInitial({
                     invested: returnsData.ret3y.pastPrice,
                     returned: returnsData.ret3y.currentPrice || currentP,
@@ -2721,7 +2727,7 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
                 setShowRoiCalculatorModal(true);
               }}
               className="flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-lg transition-colors cursor-pointer font-bold text-[11px] shrink-0"
-              title="Отвори детайлния ROI калкулатор"
+              title="Отвори детайлния ROI калкулатор за избрания период"
             >
               <Calculator className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden sm:inline">ROI Калкулатор</span>
@@ -2752,13 +2758,30 @@ export default function StockChecklistModal({ isOpen, onClose, stock, stocks = [
               <div 
                 onClick={() => {
                   if (selectedCustomReturn.cagr != null) {
-                    setSelectedRow(16);
-                    setUserInputs(prev => ({ ...prev, '16': `${selectedCustomReturn.cagr! >= 0 ? '+' : ''}${selectedCustomReturn.cagr!.toFixed(1)}%` }));
-                    setCheckedRows(prev => ({ ...prev, 16: true }));
+                    if (customPeriodMonths >= 60) {
+                      setSelectedRow(17);
+                      if (customPeriodMonths >= 120) {
+                        setUserInputs(prev => ({ ...prev, '17_10': `${selectedCustomReturn.cagr! >= 0 ? '+' : ''}${selectedCustomReturn.cagr!.toFixed(1)}%` }));
+                      } else {
+                        setUserInputs(prev => ({ ...prev, '17': `${selectedCustomReturn.cagr! >= 0 ? '+' : ''}${selectedCustomReturn.cagr!.toFixed(1)}%` }));
+                      }
+                      setCheckedRows(prev => ({ ...prev, 17: true }));
+                    } else {
+                      setSelectedRow(16);
+                      setUserInputs(prev => ({ ...prev, '16': `${selectedCustomReturn.cagr! >= 0 ? '+' : ''}${selectedCustomReturn.cagr!.toFixed(1)}%` }));
+                      setCheckedRows(prev => ({ ...prev, 16: true }));
+                    }
+                  }
+                  if (selectedCustomReturn.pastPrice && (selectedCustomReturn.currentPrice || parseNum(userInputsRef.current['7']))) {
+                    setRoiCalcInitial({
+                      invested: selectedCustomReturn.pastPrice,
+                      returned: selectedCustomReturn.currentPrice || parseNum(userInputsRef.current['7']) || 100,
+                      years: Number((selectedCustomReturn.months / 12).toFixed(2))
+                    });
                   }
                 }}
                 className="flex items-center gap-1.5 bg-bg hover:bg-bg-hover hover:border-indigo-500/40 px-2.5 py-1 rounded-lg border border-border shrink-0 cursor-pointer transition-colors"
-                title="Кликнете за прилагане в Ред 16 (Annualized ROI)"
+                title={`Минала цена: ${selectedCustomReturn.pastPrice} | Текуща цена: ${selectedCustomReturn.currentPrice} | Кликнете за прилагане в ${customPeriodMonths >= 60 ? 'Ред 17' : 'Ред 16'} и ROI Калкулатора`}
               >
                 <span className={`font-mono text-xs font-extrabold ${selectedCustomReturn.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {selectedCustomReturn.returnPct >= 0 ? '+' : ''}{selectedCustomReturn.returnPct.toFixed(2)}%

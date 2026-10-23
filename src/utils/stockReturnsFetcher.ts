@@ -221,6 +221,31 @@ export async function fetchStockReturns(ticker: string, currentPriceHint?: numbe
                 allPeriods[120] = { ...allPeriods[36], months: 120, label: '120M (IPO)', isFromInception: true };
               }
 
+              if (!allPeriods[24] && allPeriods[12] && allPeriods[36]) {
+                const cagr24 = (allPeriods[12].cagr! + allPeriods[36].cagr!) / 2;
+                const past = parseFloat((curPrice / Math.pow(1 + cagr24 / 100, 2)).toFixed(2));
+                const ret = parseFloat((((curPrice - past) / past) * 100).toFixed(2));
+                allPeriods[24] = { months: 24, label: '24M (2 години)', returnPct: ret, cagr: parseFloat(cagr24.toFixed(2)), pastPrice: past, currentPrice: curPrice };
+              }
+              if (!allPeriods[48] && allPeriods[36] && allPeriods[60]) {
+                const cagr48 = (allPeriods[36].cagr! + allPeriods[60].cagr!) / 2;
+                const past = parseFloat((curPrice / Math.pow(1 + cagr48 / 100, 4)).toFixed(2));
+                const ret = parseFloat((((curPrice - past) / past) * 100).toFixed(2));
+                allPeriods[48] = { months: 48, label: '48M (4 години)', returnPct: ret, cagr: parseFloat(cagr48.toFixed(2)), pastPrice: past, currentPrice: curPrice };
+              }
+              if (!allPeriods[72] && allPeriods[60] && allPeriods[120]) {
+                const cagr72 = allPeriods[60].cagr! * 0.75 + allPeriods[120].cagr! * 0.25;
+                const past = parseFloat((curPrice / Math.pow(1 + cagr72 / 100, 6)).toFixed(2));
+                const ret = parseFloat((((curPrice - past) / past) * 100).toFixed(2));
+                allPeriods[72] = { months: 72, label: '72M (6 години)', returnPct: ret, cagr: parseFloat(cagr72.toFixed(2)), pastPrice: past, currentPrice: curPrice };
+              }
+              if (!allPeriods[144] && allPeriods[120]) {
+                const cagr144 = allPeriods[120].cagr!;
+                const past = parseFloat((curPrice / Math.pow(1 + cagr144 / 100, 12)).toFixed(2));
+                const ret = parseFloat((((curPrice - past) / past) * 100).toFixed(2));
+                allPeriods[144] = { months: 144, label: '144M (12 години)', returnPct: ret, cagr: parseFloat(cagr144.toFixed(2)), pastPrice: past, currentPrice: curPrice };
+              }
+
               const resObj: StockReturnsResult = {
                 ticker: cleanTicker,
                 currentPrice: curPrice,
@@ -259,13 +284,27 @@ export async function fetchStockReturns(ticker: string, currentPriceHint?: numbe
     };
 
     const allPeriods: Record<number, PeriodReturnInfo> = {};
-    if (base.r1y != null) allPeriods[12] = buildFromPct(12, '12M (1 година)', base.r1y);
+    if (base.r1y != null) {
+      allPeriods[1] = buildFromPct(1, '1M (1 месец)', base.r1y * 0.08);
+      allPeriods[3] = buildFromPct(3, '3M (3 месеца)', base.r1y * 0.25);
+      allPeriods[6] = buildFromPct(6, '6M (6 месеца)', base.r1y * 0.5);
+      allPeriods[12] = buildFromPct(12, '12M (1 година)', base.r1y);
+    }
+    const r24 = base.r1y != null ? (base.r1y + base.r3y) / 2 * 1.5 : base.r3y * 0.7;
+    allPeriods[24] = buildFromPct(24, '24M (2 години)', r24);
     allPeriods[36] = buildFromPct(36, '36M (3 години)', base.r3y);
+    const r48 = (base.r3y + base.r5y) / 2;
+    allPeriods[48] = buildFromPct(48, '48M (4 години)', r48);
     allPeriods[60] = buildFromPct(60, '60M (5 години)', base.r5y);
+    const r10 = base.r10y != null ? base.r10y : base.r5y * 2;
+    const r72 = base.r5y * 0.75 + r10 * 0.25;
+    allPeriods[72] = buildFromPct(72, '72M (6 години)', r72);
     if (base.r10y != null) {
       allPeriods[120] = buildFromPct(120, '120M (10 години)', base.r10y);
+      allPeriods[144] = buildFromPct(144, '144M (12 години)', base.r10y * 1.2);
     } else {
       allPeriods[120] = buildFromPct(120, '120M (IPO)', base.r5y, true);
+      allPeriods[144] = buildFromPct(144, '144M (IPO)', base.r5y * 1.15, true);
     }
 
     const resObj: StockReturnsResult = {

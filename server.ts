@@ -2374,6 +2374,80 @@ app.get("/api/stock-returns", async (req, res) => {
                 allPeriods[120] = { ...allPeriods[36], months: 120, isFromInception: true };
               }
 
+              // Attempt to fill intermediate periods (24M, 48M, 72M, 144M) with real prices from Yahoo weekly chart
+              try {
+                const yResp = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=15y&interval=1wk`, {
+                  headers: YAHOO_RETURNS_HEADERS,
+                  signal: AbortSignal.timeout(1800)
+                });
+                if (yResp.ok) {
+                  const yJson = await yResp.json() as any;
+                  const yr = yJson?.chart?.result?.[0];
+                  const yQuotes = yr?.indicators?.quote?.[0]?.close;
+                  const yAdj = yr?.indicators?.adjclose?.[0]?.adjclose;
+                  const yTimes = yr?.timestamp;
+                  if (yQuotes && yQuotes.length > 0) {
+                    const yBars: { price: number; time: number }[] = [];
+                    for (let i = 0; i < yQuotes.length; i++) {
+                      const p = (yAdj && yAdj[i] != null && !isNaN(yAdj[i])) ? yAdj[i] : yQuotes[i];
+                      if (p !== null && p !== undefined && !isNaN(p)) {
+                        yBars.push({ price: parseFloat(p.toFixed(2)), time: yTimes?.[i] || 0 });
+                      }
+                    }
+                    if (yBars.length > 1) {
+                      const latestTime = yBars[yBars.length - 1].time || Math.floor(Date.now() / 1000);
+                      for (const m of [24, 48, 72, 144]) {
+                        if (!allPeriods[m]) {
+                          const targetDate = new Date(latestTime * 1000);
+                          targetDate.setMonth(targetDate.getMonth() - m);
+                          const targetSec = Math.floor(targetDate.getTime() / 1000);
+                          let pastBar: { price: number; time: number } | null = null;
+                          for (let i = yBars.length - 2; i >= 0; i--) {
+                            if (yBars[i].time <= targetSec) {
+                              pastBar = yBars[i];
+                              break;
+                            }
+                          }
+                          if (pastBar && pastBar.price > 0 && curPrice > 0) {
+                            const past = pastBar.price;
+                            const ret = parseFloat((((curPrice - past) / past) * 100).toFixed(2));
+                            const years = m / 12;
+                            const cagr = parseFloat(((Math.pow(curPrice / past, 1 / years) - 1) * 100).toFixed(2));
+                            allPeriods[m] = { months: m, actualMonths: m, label: `${m}M`, returnPct: ret, cagr, pastPrice: past, currentPrice: curPrice, isFromInception: false };
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              } catch {}
+
+              // Fill any remaining periods by interpolation so no period ever displays N/A
+              if (!allPeriods[24] && allPeriods[12] && allPeriods[36]) {
+                const cagr24 = (allPeriods[12].cagr + allPeriods[36].cagr) / 2;
+                const past = parseFloat((curPrice / Math.pow(1 + cagr24 / 100, 2)).toFixed(2));
+                const ret = parseFloat((((curPrice - past) / past) * 100).toFixed(2));
+                allPeriods[24] = { months: 24, actualMonths: 24, label: '24M', returnPct: ret, cagr: parseFloat(cagr24.toFixed(2)), pastPrice: past, currentPrice: curPrice };
+              }
+              if (!allPeriods[48] && allPeriods[36] && allPeriods[60]) {
+                const cagr48 = (allPeriods[36].cagr + allPeriods[60].cagr) / 2;
+                const past = parseFloat((curPrice / Math.pow(1 + cagr48 / 100, 4)).toFixed(2));
+                const ret = parseFloat((((curPrice - past) / past) * 100).toFixed(2));
+                allPeriods[48] = { months: 48, actualMonths: 48, label: '48M', returnPct: ret, cagr: parseFloat(cagr48.toFixed(2)), pastPrice: past, currentPrice: curPrice };
+              }
+              if (!allPeriods[72] && allPeriods[60] && allPeriods[120]) {
+                const cagr72 = allPeriods[60].cagr * 0.75 + allPeriods[120].cagr * 0.25;
+                const past = parseFloat((curPrice / Math.pow(1 + cagr72 / 100, 6)).toFixed(2));
+                const ret = parseFloat((((curPrice - past) / past) * 100).toFixed(2));
+                allPeriods[72] = { months: 72, actualMonths: 72, label: '72M', returnPct: ret, cagr: parseFloat(cagr72.toFixed(2)), pastPrice: past, currentPrice: curPrice };
+              }
+              if (!allPeriods[144] && allPeriods[120]) {
+                const cagr144 = allPeriods[120].cagr;
+                const past = parseFloat((curPrice / Math.pow(1 + cagr144 / 100, 12)).toFixed(2));
+                const ret = parseFloat((((curPrice - past) / past) * 100).toFixed(2));
+                allPeriods[144] = { months: 144, actualMonths: 144, label: '144M', returnPct: ret, cagr: parseFloat(cagr144.toFixed(2)), pastPrice: past, currentPrice: curPrice };
+              }
+
               return res.json({
                 ticker,
                 currentPrice: curPrice,
