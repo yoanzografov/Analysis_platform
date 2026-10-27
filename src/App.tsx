@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Stock, MarketIndex, PriceAlert, NotificationLog, TableFilter, PortfolioPosition, PortfolioTransaction, PortfolioDividendRecord } from './types';
 import { RAW_SPREADSHEET_CSV, parseCSVData } from './data/initialStocks';
+import { 
+  IBKR_POSITIONS, 
+  IBKR_TRANSACTIONS, 
+  IBKR_DIVIDENDS, 
+  IBKR_CASH_BALANCE_EUR, 
+  IBKR_BASE_CURRENCY 
+} from './data/ibkrPortfolioData';
 import IndicesStrip from './components/IndicesStrip';
 import { getSectorForStock, formatDividend } from './utils/sectorHelper';
 import CsvUploader from './components/CsvUploader';
@@ -342,11 +349,14 @@ export default function App() {
   const [positions, setPositions] = useState<PortfolioPosition[]>(() => {
     try {
       const saved = localStorage.getItem('user_portfolio_positions');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch (e) {
       console.error('Error loading positions from localStorage', e);
     }
-    return [];
+    return IBKR_POSITIONS;
   });
 
   useEffect(() => {
@@ -361,11 +371,14 @@ export default function App() {
   const [transactions, setTransactions] = useState<PortfolioTransaction[]>(() => {
     try {
       const saved = localStorage.getItem('user_portfolio_transactions');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch (e) {
       console.error('Error loading transactions from localStorage', e);
     }
-    return [];
+    return IBKR_TRANSACTIONS;
   });
 
   useEffect(() => {
@@ -379,11 +392,14 @@ export default function App() {
   const [dividends, setDividends] = useState<PortfolioDividendRecord[]>(() => {
     try {
       const saved = localStorage.getItem('user_portfolio_dividends');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch (e) {
       console.error('Error loading dividends from localStorage', e);
     }
-    return [];
+    return IBKR_DIVIDENDS;
   });
 
   useEffect(() => {
@@ -399,7 +415,7 @@ export default function App() {
       const saved = localStorage.getItem('user_portfolio_cash');
       if (saved !== null) return parseFloat(saved) || 0;
     } catch (e) {}
-    return 0;
+    return IBKR_CASH_BALANCE_EUR;
   });
 
   useEffect(() => {
@@ -413,7 +429,7 @@ export default function App() {
       const saved = localStorage.getItem('user_portfolio_base_currency');
       if (saved === 'EUR' || saved === 'USD') return saved;
     } catch (e) {}
-    return 'USD';
+    return IBKR_BASE_CURRENCY;
   });
 
   useEffect(() => {
@@ -874,19 +890,43 @@ export default function App() {
         const guestStocks = Array.from(guestMap.values()).filter(s => !deletedSet.has(s.ticker.toUpperCase()));
         setStocks(guestStocks);
         setIndices(parsedIndices);
-        setPositions([]);
-        setTransactions([]);
-        setDividends([]);
-        setCashBalance(0);
+
+        let guestPositions = IBKR_POSITIONS;
+        let guestTransactions = IBKR_TRANSACTIONS;
+        let guestDividends = IBKR_DIVIDENDS;
+        let guestCash = IBKR_CASH_BALANCE_EUR;
+        let guestBaseCurr: 'EUR' | 'USD' = IBKR_BASE_CURRENCY;
+        try {
+          const savedPos = localStorage.getItem('user_portfolio_positions');
+          if (savedPos) {
+            const p = JSON.parse(savedPos);
+            if (Array.isArray(p) && p.length > 0) guestPositions = p;
+          }
+          const savedTx = localStorage.getItem('user_portfolio_transactions');
+          if (savedTx) {
+            const t = JSON.parse(savedTx);
+            if (Array.isArray(t) && t.length > 0) guestTransactions = t;
+          }
+          const savedDiv = localStorage.getItem('user_portfolio_dividends');
+          if (savedDiv) {
+            const d = JSON.parse(savedDiv);
+            if (Array.isArray(d) && d.length > 0) guestDividends = d;
+          }
+          const savedCash = localStorage.getItem('user_portfolio_cash');
+          if (savedCash !== null) guestCash = parseFloat(savedCash) || 0;
+          const savedCurr = localStorage.getItem('user_portfolio_base_currency');
+          if (savedCurr === 'EUR' || savedCurr === 'USD') guestBaseCurr = savedCurr;
+        } catch (e) {}
+
+        setPositions(guestPositions);
+        setTransactions(guestTransactions);
+        setDividends(guestDividends);
+        setCashBalance(guestCash);
+        setBaseCurrency(guestBaseCurr);
         setIsLoaded(true);
         setTimeout(() => {
           fetchRealStockPricesDirect(guestStocks);
         }, 300);
-      } else {
-        setPositions([]);
-        setTransactions([]);
-        setDividends([]);
-        setCashBalance(0);
       }
       return;
     }
@@ -1114,7 +1154,17 @@ export default function App() {
             if (localDivRaw) legacyDividends = JSON.parse(localDivRaw);
             const localCashRaw = localStorage.getItem('user_portfolio_cash');
             if (localCashRaw !== null) legacyCash = parseFloat(localCashRaw) || 0;
+            const localBaseCurrRaw = localStorage.getItem('user_portfolio_base_currency');
+            if (localBaseCurrRaw === 'EUR' || localBaseCurrRaw === 'USD') legacyBaseCurr = localBaseCurrRaw;
           } catch (e) {}
+        }
+
+        if (legacyPositions.length === 0) {
+          legacyPositions = IBKR_POSITIONS;
+          legacyTransactions = IBKR_TRANSACTIONS;
+          legacyDividends = IBKR_DIVIDENDS;
+          legacyCash = IBKR_CASH_BALANCE_EUR;
+          legacyBaseCurr = IBKR_BASE_CURRENCY;
         }
 
         const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
@@ -1355,6 +1405,55 @@ export default function App() {
     setActiveAlertToast('Данните бяха нулирани успешно!');
     setTimeout(() => setActiveAlertToast(null), 4000);
     setShowNewUserModal(false);
+  };
+
+  const handleLoadIbkrPortfolio = () => {
+    setPositions(IBKR_POSITIONS);
+    setTransactions(IBKR_TRANSACTIONS);
+    setDividends(IBKR_DIVIDENDS);
+    setCashBalance(IBKR_CASH_BALANCE_EUR);
+    setBaseCurrency(IBKR_BASE_CURRENCY);
+    try {
+      localStorage.setItem('user_portfolio_positions', JSON.stringify(IBKR_POSITIONS));
+      localStorage.setItem('user_portfolio_transactions', JSON.stringify(IBKR_TRANSACTIONS));
+      localStorage.setItem('user_portfolio_dividends', JSON.stringify(IBKR_DIVIDENDS));
+      localStorage.setItem('user_portfolio_cash', IBKR_CASH_BALANCE_EUR.toString());
+      localStorage.setItem('user_portfolio_base_currency', IBKR_BASE_CURRENCY);
+    } catch (e) {}
+
+    const posStocks = IBKR_POSITIONS.map(p => ({
+      ticker: p.ticker,
+      companyName: p.companyName || p.ticker,
+      currentPrice: p.buyPrice,
+      watch: '',
+      date: '',
+      priceOfCalc: null,
+      dailyChangePct: 0,
+      fairPrice: p.fairPrice || null,
+      difference: null,
+      buySell: 'BUY',
+      marketCap: null,
+      peRatio: null,
+      eps: null,
+      profileLink: '',
+      dividend: '',
+      signal: 'Buy',
+      low52: null,
+      high52: null,
+      calcLink: ''
+    } as Stock));
+    fetchRealStockPricesDirect(posStocks);
+
+    const newLog: NotificationLog = {
+      id: `${Date.now()}-${Math.random()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      ticker: 'IBKR',
+      message: 'Портфолиото от Interactive Brokers бе заредено успешно (14 позиции, 51 дивидента, история на трансакциите и 5,146.12 € кеш).',
+      type: 'success'
+    };
+    setLogs(prev => [newLog, ...prev]);
+    setActiveAlertToast('Успешно заредихте портфолиото от Interactive Brokers!');
+    setTimeout(() => setActiveAlertToast(null), 4000);
   };
 
   const handleRestoreDefaults = () => {
@@ -2474,6 +2573,7 @@ export default function App() {
         onSetDividends={(newDivList) => setDividends(newDivList)}
         onUpdateCash={(newCash) => setCashBalance(newCash)}
         onSetBaseCurrency={(newCurr) => setBaseCurrency(newCurr)}
+        onLoadIbkrPortfolio={handleLoadIbkrPortfolio}
         portfolioPrices={portfolioPrices}
       />
     </div>

@@ -97,6 +97,10 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     '^FVX': 'TVC:US05Y',
     '^IRX': 'TVC:US03M',
     // Popular European ETFs & Stocks
+    'BRK.B': 'NYSE:BRK.B',
+    'BRK-B': 'NYSE:BRK.B',
+    'BRK B': 'NYSE:BRK.B',
+    'O': 'NYSE:O',
     'XNAS': 'XETR:XNAS',
     'XNAS.DE': 'XETR:XNAS',
     'VHYL': 'AMS:VHYL',

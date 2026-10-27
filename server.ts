@@ -2706,6 +2706,10 @@ app.get("/api/stock-quotes", async (req, res) => {
     const yahooToOriginal: Record<string, string> = {};
 
     const plainEuropeanMap: Record<string, string> = {
+      "BRK.B": "BRK-B",
+      "BRK B": "BRK-B",
+      "BF.B": "BF-B",
+      "BF B": "BF-B",
       "XNAS": "XNAS.DE",
       "XNAS.DE": "XNAS.DE",
       "VHYL": "VHYL.AS",

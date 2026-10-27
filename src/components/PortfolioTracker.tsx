@@ -124,6 +124,7 @@ interface Props {
   onSetTransactions?: (transactions: PortfolioTransaction[]) => void;
   onSetDividends?: (dividends: PortfolioDividendRecord[]) => void;
   onSetBaseCurrency?: (baseCurrency: 'USD' | 'EUR') => void;
+  onLoadIbkrPortfolio?: () => void;
   portfolioPrices?: Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string; currency?: string }>;
 }
 
@@ -164,6 +165,7 @@ export default function PortfolioTracker({
   onSetTransactions,
   onSetDividends,
   onSetBaseCurrency,
+  onLoadIbkrPortfolio,
   portfolioPrices = {}
 }: Props) {
   // Firebase Auth User & Account Sync
@@ -1074,8 +1076,19 @@ export default function PortfolioTracker({
           </button>
         </div>
 
-        {/* Quick Action Buttons: Base Currency Switcher & Privacy Toggle */}
+        {/* Quick Action Buttons: IBKR Loader, Base Currency Switcher & Privacy Toggle */}
         <div className="flex items-center gap-2 shrink-0">
+          {onLoadIbkrPortfolio && (
+            <button
+              onClick={onLoadIbkrPortfolio}
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white text-xs font-black shadow-sm flex items-center gap-1.5 transition-all cursor-pointer border border-white/20 active:scale-95"
+              title="Зареди цялото портфолио от Interactive Brokers (14 позиции, 51 дивидента, история и кеш баланс)"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>IBKR Портфолио</span>
+            </button>
+          )}
+
           {/* Base Currency Switcher (USD / EUR) */}
           <div className="flex items-center bg-bg/80 border border-border/80 rounded-xl p-0.5 text-xs font-black shadow-2xs">
             <button

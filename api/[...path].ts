@@ -16,6 +16,10 @@ const EXCHANGE_MAP: Record<string, string> = {
 
 // Known plain European/International ticker to Yahoo Finance symbol mapping
 const PLAIN_EUROPEAN_MAP: Record<string, string> = {
+  "BRK.B": "BRK-B",
+  "BRK B": "BRK-B",
+  "BF.B": "BF-B",
+  "BF B": "BF-B",
   "XNAS": "XNAS.DE",
   "XNAS.DE": "XNAS.DE",
   "VHYL": "VHYL.AS",
