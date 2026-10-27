@@ -842,7 +842,7 @@ export default function PortfolioTracker({
         ? quote.currentPrice
         : ((matching?.priceOfCalc && matching.priceOfCalc > 0) ? matching.priceOfCalc : pos.buyPrice);
 
-    const isEurTicker = cleanTicker.endsWith('.DE') || cleanTicker.endsWith('.PA') || cleanTicker.endsWith('.AS') || cleanTicker.includes('ETR:') || cleanTicker.includes('EPA:') || cleanTicker.includes('AMS:') || ['SXR8', 'VWCE', 'QDVE', 'IS3N', 'EUNL', '4GLD', 'MEUD', 'JGPI'].includes(cleanTicker);
+    const isEurTicker = cleanTicker.endsWith('.DE') || cleanTicker.endsWith('.PA') || cleanTicker.endsWith('.AS') || cleanTicker.includes('ETR:') || cleanTicker.includes('EPA:') || cleanTicker.includes('AMS:') || ['SXR8', 'VWCE', 'QDVE', 'IS3N', 'EUNL', '4GLD', 'MEUD', 'JGPI', 'VHYL', 'XNAS'].includes(cleanTicker);
     const posCurrency: 'USD' | 'EUR' | 'GBP' = pos.currency || (isEurTicker ? 'EUR' : (cleanTicker.endsWith('.L') ? 'GBP' : 'USD'));
     const posSymbol = posCurrency === 'EUR' ? '€' : (posCurrency === 'GBP' ? '£' : '$');
 
@@ -904,7 +904,7 @@ export default function PortfolioTracker({
     };
   });
 
-  const parsedCash = convertToBase(parseFloat(cashInput) || 0, 'USD');
+  const parsedCash = parseFloat(cashInput) || 0;
   const totalPortfolioValue = totalCurrentValue + parsedCash;
   const totalReturnVal = totalCurrentValue - totalCostBasis;
   const totalReturnPct = totalCostBasis > 0 ? (totalReturnVal / totalCostBasis) * 100 : 0;
@@ -2707,7 +2707,7 @@ export default function PortfolioTracker({
 
             <div className="space-y-4 text-xs">
               <div>
-                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">НАЛИЧЕН КЕШ ($)</label>
+                <label className="block text-[10px] text-ink-faint font-extrabold uppercase mb-1">НАЛИЧЕН КЕШ ({baseSymbol})</label>
                 <input
                   type="number"
                   step="0.01"
@@ -2724,11 +2724,11 @@ export default function PortfolioTracker({
               <div className="bg-card/40 p-3 rounded-2xl border border-border/40 text-xs text-ink-faint space-y-1.5">
                 <div className="flex justify-between">
                   <span>Обща стойност на портфейла:</span>
-                  <span className="font-extrabold text-ink">${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  <span className="font-extrabold text-ink">{baseSymbol}{totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Свободен кеш:</span>
-                  <span className="font-extrabold text-emerald-400">${(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  <span className="font-extrabold text-emerald-400">{baseSymbol}{(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
               </div>
 
