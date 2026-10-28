@@ -5,6 +5,7 @@ import { db, auth } from '../lib/firebase';
 import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { AuthModal } from './AuthModal';
+import BrokerImportModal from './BrokerImportModal';
 import { getSectorForStock } from '../utils/sectorHelper';
 import { 
   Briefcase, 
@@ -230,6 +231,66 @@ export default function PortfolioTracker({
   };
 
   const baseSymbol = baseCurrency === 'EUR' ? '€' : '$';
+
+  // Universal Broker Import state & handler
+  const [isBrokerImportOpen, setIsBrokerImportOpen] = useState(false);
+
+  const handleBrokerImport = (data: {
+    positions: PortfolioPosition[];
+    transactions: PortfolioTransaction[];
+    dividends: PortfolioDividendRecord[];
+    cashBalance?: number;
+    baseCurrency?: 'EUR' | 'USD';
+    mode: 'replace' | 'merge';
+  }) => {
+    let newPos = data.positions;
+    let newTx = data.transactions;
+    let newDivs = data.dividends;
+
+    if (data.mode === 'merge') {
+      const existingMap = new Map(positions.map(p => [p.ticker.toUpperCase(), p]));
+      data.positions.forEach(p => {
+        const sym = p.ticker.toUpperCase();
+        if (existingMap.has(sym)) {
+          const cur = existingMap.get(sym)!;
+          const totalShares = cur.shares + p.shares;
+          const avgBuyPrice = totalShares > 0 ? ((cur.shares * cur.buyPrice) + (p.shares * p.buyPrice)) / totalShares : p.buyPrice;
+          existingMap.set(sym, {
+            ...cur,
+            shares: parseFloat(totalShares.toFixed(4)),
+            buyPrice: parseFloat(avgBuyPrice.toFixed(4))
+          });
+        } else {
+          existingMap.set(sym, p);
+        }
+      });
+      newPos = Array.from(existingMap.values());
+      newTx = [...data.transactions, ...history];
+      newDivs = [...data.dividends, ...divRecords];
+    }
+
+    if (onSetAllPositions) onSetAllPositions(newPos);
+    if (onSetTransactions) onSetTransactions(newTx);
+    if (onSetDividends) onSetDividends(newDivs);
+    if (data.cashBalance !== undefined && onUpdateCash) {
+      onUpdateCash(data.cashBalance);
+      setCashInput(data.cashBalance.toString());
+    }
+    if (data.baseCurrency && onSetBaseCurrency) {
+      handleSetBaseCurrency(data.baseCurrency);
+    }
+
+    try {
+      localStorage.setItem('user_portfolio_positions', JSON.stringify(newPos));
+      localStorage.setItem('user_portfolio_transactions', JSON.stringify(newTx));
+      localStorage.setItem('user_portfolio_dividends', JSON.stringify(newDivs));
+      if (data.cashBalance !== undefined) localStorage.setItem('user_portfolio_cash', data.cashBalance.toString());
+      if (data.baseCurrency) localStorage.setItem('user_portfolio_base_currency', data.baseCurrency);
+    } catch (e) {}
+
+    setHistory(newTx);
+    updateDivRecords(newDivs);
+  };
 
   // Cash management state with multi-device real-time Firebase sync
   const [cashInput, setCashInput] = useState(() => {
@@ -1076,18 +1137,16 @@ export default function PortfolioTracker({
           </button>
         </div>
 
-        {/* Quick Action Buttons: IBKR Loader, Base Currency Switcher & Privacy Toggle */}
+        {/* Quick Action Buttons: Universal Broker Importer, Base Currency Switcher & Privacy Toggle */}
         <div className="flex items-center gap-2 shrink-0">
-          {onLoadIbkrPortfolio && (
-            <button
-              onClick={onLoadIbkrPortfolio}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white text-xs font-black shadow-sm flex items-center gap-1.5 transition-all cursor-pointer border border-white/20 active:scale-95"
-              title="Зареди цялото портфолио от Interactive Brokers (14 позиции, 51 дивидента, история и кеш баланс)"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>IBKR Портфолио</span>
-            </button>
-          )}
+          <button
+            onClick={() => setIsBrokerImportOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-black shadow-sm flex items-center gap-1.5 transition-all cursor-pointer border border-white/20 active:scale-95"
+            title="Импортирай отчет от Interactive Brokers, Trading 212, Revolut или универсален CSV файл"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Импорт на портфолио</span>
+          </button>
 
           {/* Base Currency Switcher (USD / EUR) */}
           <div className="flex items-center bg-bg/80 border border-border/80 rounded-xl p-0.5 text-xs font-black shadow-2xs">
@@ -3368,6 +3427,13 @@ export default function PortfolioTracker({
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         currentUser={currentUser}
+      />
+
+      {/* Universal Broker Portfolio Import Modal */}
+      <BrokerImportModal
+        isOpen={isBrokerImportOpen}
+        onClose={() => setIsBrokerImportOpen(false)}
+        onImport={handleBrokerImport}
       />
 
     </div>
