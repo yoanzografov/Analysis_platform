@@ -1106,7 +1106,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 5. РИСКОВЕ (Топ 5)
 6. ВЪЗМОЖНОСТИ ЗА РАСТЕЖ
 7. ПОСЛЕДЕН ФИНАНСОВ ОТЧЕТ
-8. ФИНАЛЕН ИЗВОД`;
+8. ФИНАЛЕН ИЗВОД
+
+КОГАТО ПОТРЕБИТЕЛЯТ ПИТА КАК ДА СИ КАЧИ ПОРТФОЛИОТО ИЛИ КАК ДА ИЗПОЛЗВА ПЛАТФОРМАТА:
+- Обясни стъпка по стъпка как се качва портфолио в таб "PORTFOLIO TRACKER" чрез бутона "📥 Импорт на портфолио".
+- Посочи поддържаните брокери: Interactive Brokers (IBKR PDF/CSV) и Trading 212 (CSV), или ръчно чрез "+ Добави позиция".
+- В тези случаи НЕ прави анализ на акции!`;
 
       const result = await aiClient.models.generateContent({
         model: "gemini-2.5-flash",

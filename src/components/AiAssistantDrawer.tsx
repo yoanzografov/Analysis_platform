@@ -27,7 +27,10 @@ import {
   generateLocalBuffettAnalysis,
   generateLocalPortfolioAudit,
   generateLocalUndervaluedStocks,
-  generateLocalCashAllocation
+  generateLocalCashAllocation,
+  generatePortfolioUploadGuide,
+  generatePlatformHelp,
+  handleAiQuery
 } from '../utils/aiAssistantEngine';
 
 interface AiAssistantDrawerProps {
@@ -341,32 +344,7 @@ export default function AiAssistantDrawer({
 
     // 2. Resilient Local Engine Fallback (guaranteed 100% uptime with exact 8-point analysis)
     setTimeout(() => {
-      let reply = '';
-      const today = new Date().toLocaleDateString('bg-BG');
-
-      if (lowerQuery.includes('риск') || lowerQuery.includes('моето портфолио') || lowerQuery.includes('одит')) {
-        reply = generateLocalPortfolioAudit(portfolioContext);
-      } else if (lowerQuery.includes('подценени') || lowerQuery.includes('най-подценени')) {
-        reply = generateLocalUndervaluedStocks(stocks);
-      } else if (lowerQuery.includes('кеш') || lowerQuery.includes('свободен') || lowerQuery.includes('разпределя')) {
-        reply = generateLocalCashAllocation(portfolioContext, stocks);
-      } else {
-        // Find if any ticker was mentioned
-        const foundStock = stocks.find(s => 
-          lowerQuery.includes(s.ticker.toLowerCase()) || 
-          lowerQuery.includes(s.companyName.toLowerCase())
-        );
-
-        if (foundStock) {
-          reply = generateLocalBuffettAnalysis(foundStock.ticker, foundStock, today);
-        } else {
-          // Check for common tickers like BRK.B, AAPL, MSFT, GOOG, NVDA, PFE, O
-          const cleanMatch = query.match(/\b([A-Za-z]{1,5}(\.[A-Za-z])?)\b/);
-          const candidateTicker = cleanMatch ? cleanMatch[1].toUpperCase() : selectedStockTicker;
-          const matchedStock = stocks.find(s => s.ticker.toUpperCase() === candidateTicker);
-          reply = generateLocalBuffettAnalysis(candidateTicker, matchedStock, today);
-        }
-      }
+      const reply = handleAiQuery(query, portfolioContext, stocks);
 
       setMessages(prev => [
         ...prev,
@@ -377,7 +355,7 @@ export default function AiAssistantDrawer({
         }
       ]);
       setIsLoading(false);
-    }, 600);
+    }, 400);
   };
 
   const handleQuickPrompt = (promptType: 'portfolio' | 'undervalued' | 'cash' | 'company') => {

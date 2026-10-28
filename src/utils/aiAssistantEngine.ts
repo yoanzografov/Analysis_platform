@@ -297,3 +297,126 @@ export function generateLocalCashAllocation(context: AiPortfolioContext, stocks:
 2. **Пазете силата на сложната лихва**: Настройте автоматично реинвестиране на получените дивиденти.
 3. **Емоционална дисциплина**: Купувайте, когато пазарът е предпазлив или песимистичен към качествени бизнеси, а не когато всички говорят за тях на върха.`;
 }
+
+/**
+ * Step-by-step user guide for uploading and importing portfolios from brokers.
+ */
+export function generatePortfolioUploadGuide(): string {
+  return `### 📥 Как да качите вашето портфолио в платформата?
+
+В платформата имате пълен набор от възможности за автоматичен импорт или ръчно въвеждане на вашето инвестиционно портфолио:
+
+---
+
+### 1. 🚀 Автоматичен импорт от брокер (Препоръчителен метод)
+1. Отворете таб **„PORTFOLIO TRACKER“** от лявото главно меню на платформата.
+2. В горния десен ъгъл на портфолиото натиснете бутона **„📥 Импорт на портфолио“** (разположен точно до селектора за базова валута **EUR / USD**).
+3. Изберете вашия брокер от отворения прозорец:
+   * **Interactive Brokers (IBKR)**:
+     - Поддържат се както **PDF отчети за дейност (Activity Statement)**, така и **CSV отчети**.
+     - Можете да качите два файла едновременно: единият за **покупки/продажби (Trades)**, а вторият за **получени дивиденти (Dividends)**.
+     - Парсърът автоматично извлича: символ на компанията, брой дялове, цена на покупка, изплатени дивиденти, такси и наличен свободен кеш.
+   * **Trading 212**:
+     - Изтеглете вашия експортен CSV файл от историята на поръчките в Trading 212 и го прикачете в прозореца.
+4. Натиснете **„Импортирай данни“** – всички позиции, графики и дивиденти се зареждат мигновено!
+
+---
+
+### 2. ➕ Ръчно добавяне и редакция на позиции
+* Ако имате акции от друг брокер или желаете да въведете позиция ръчно:
+  - В таб **„PORTFOLIO TRACKER“** натиснете зеления бутон **„+ Добави позиция“**.
+  - Въведете тикер (напр. \`AAPL\`, \`MSFT\`, \`BRK.B\`), брой притежавани акции и средна покупна цена.
+
+---
+
+### 3. 💵 Свободен кеш и продажби
+* При продажба на позиция, нетната стойност от продажбата автоматично се кредитира към полето **„Кеш баланс“**.
+* Можете да редактирате вашия наличен свободен кеш по всяко време директно в полето горе вдясно.
+
+---
+
+### 4. 🔒 Защита и изолация на данните
+* Вашето портфолио се запазва в сигурна база данни и е видимо **само за вашия потребителски акаунт**.
+* Други потребители или гости имат свое отделно, независимо и напълно защитено портфолио.`;
+}
+
+/**
+ * Platform help and overview of AI capabilities.
+ */
+export function generatePlatformHelp(): string {
+  return `### 💡 Как мога да ви бъда полезен?
+
+Аз съм вашият **AI Инвестиционен Анализатор**, изграден върху философията на **Уорън Бъфет** и **Чарли Мънгър** за дългосрочно стойностно инвестиране.
+
+Ето част от нещата, които можем да направим:
+1. **📥 Качване на портфолио**: Попитайте *"Как мога да си кача портфолиото?"* за подробни стъпки за импорт от Interactive Brokers или Trading 212.
+2. **🚀 Анализ на риска**: Натиснете бутона *"🚀 Анализирай моето портфолио за рискове"* за пълен одит на вашите активи, сектори и диверсификация.
+3. **🎯 Подценени акции**: Натиснете *"🎯 Кои акции в таблицата са най-подценени?"* за класиране на компаниите с най-голям марж на сигурност (*Margin of Safety*).
+4. **💵 Разпределение на кеша**: Натиснете *"💵 Как да разпределя свободния си кеш?"* за структурирана стратегия за осредняване и паричен буфер.
+5. **🏢 8-точков анализ на бизнес**: Попитайте *"Анализирай компанията Apple"* (или изберете тикер от падащото меню горе и натиснете *"8-точков анализ по Бъфет"*), за да получите обстоен анализ по 8-те точки: бизнес модел, ров (moat), 5-годишни финанси, мениджмънт, рискове, растеж, последен отчет и финално заключение.`;
+}
+
+/**
+ * Master Query Classifier and Responder
+ */
+export function handleAiQuery(query: string, context: AiPortfolioContext, stocks: Stock[]): string {
+  const cleanQ = query.trim();
+  const lower = cleanQ.toLowerCase();
+  const today = new Date().toLocaleDateString('bg-BG');
+
+  // 1. Check if user asks about importing/uploading/adding portfolio
+  const isUploadKeyword = lower.includes('кача') || lower.includes('качване') || lower.includes('импорт') || lower.includes('добавя') || lower.includes('файл') || lower.includes('файлове') || lower.includes('csv') || lower.includes('pdf');
+  const isPortfolioContext = lower.includes('портфолио') || lower.includes('портфейл') || lower.includes('брокер') || lower.includes('ibkr') || lower.includes('interactive') || lower.includes('t212') || lower.includes('trading') || lower.includes('платформа');
+
+  if ((isUploadKeyword && isPortfolioContext) || lower.includes('как мога да си кача') || lower.includes('как да си кача')) {
+    return generatePortfolioUploadGuide();
+  }
+
+  // 2. Portfolio risk audit
+  if (lower.includes('риск') || lower.includes('одит') || (lower.includes('анализирай') && (lower.includes('портфолио') || lower.includes('портфейл')))) {
+    return generateLocalPortfolioAudit(context);
+  }
+
+  // 3. Undervalued stocks
+  if (lower.includes('подценени') || lower.includes('най-подценени') || lower.includes('подценена') || lower.includes('марж на сигурност')) {
+    return generateLocalUndervaluedStocks(stocks);
+  }
+
+  // 4. Cash allocation
+  if ((lower.includes('разпределя') || lower.includes('разпределение') || lower.includes('стратегия')) && (lower.includes('кеш') || lower.includes('пари'))) {
+    return generateLocalCashAllocation(context, stocks);
+  }
+
+  // 5. Explicit stock analysis requested:
+  // Match known tickers and company names
+  const matchedStock = stocks.find(s => {
+    const sym = s.ticker.toLowerCase();
+    const name = s.companyName.toLowerCase();
+    const symRegex = new RegExp(`(^|\\s|[.,!?;(])${sym}($|\\s|[.,!?;)])`, 'i');
+    return symRegex.test(lower) || (name.length > 3 && lower.includes(name));
+  });
+
+  // Check common major tickers (BRK.B, AAPL, MSFT, GOOG, etc.)
+  const commonTickers = ['BRK.B', 'BRK-B', 'AAPL', 'MSFT', 'GOOG', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'PFE', 'O', 'KO', 'PEP', 'JNJ', 'PG', 'V', 'MA'];
+  const explicitTicker = commonTickers.find(t => {
+    const reg = new RegExp(`(^|\\s|[.,!?;(])${t.replace('.', '\\.')}($|\\s|[.,!?;)])`, 'i');
+    return reg.test(query);
+  });
+
+  const isAnalysisKeyword = lower.includes('анализ') || lower.includes('анализирай') || lower.includes('компания') || lower.includes('бъфет') || lower.includes('мънгър');
+
+  if (matchedStock) {
+    return generateLocalBuffettAnalysis(matchedStock.ticker, matchedStock, today);
+  } else if (explicitTicker) {
+    const s = stocks.find(st => st.ticker.toUpperCase() === explicitTicker.toUpperCase());
+    return generateLocalBuffettAnalysis(explicitTicker, s, today);
+  } else if (isAnalysisKeyword) {
+    return `### 🏛️ Фундаментален анализ по принципите на Уорън Бъфет и Чарли Мънгър
+Моля, посочете конкретната компания или тикер, за който желаете 8-точков фундаментален анализ (например: **AAPL**, **MSFT**, **GOOG**, **BRK.B**, **NVDA**, **O** или друга от вашата таблица).
+
+Можете също да изберете компания директно от падащото меню в горната част на този прозорец и да натиснете **„🏢 8-точков анализ по Бъфет“**!`;
+  }
+
+  // 6. Helpful platform fallback
+  return generatePlatformHelp();
+}
