@@ -1111,6 +1111,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 КОГАТО ПОТРЕБИТЕЛЯТ ПИТА КАК ДА СИ КАЧИ ПОРТФОЛИОТО ИЛИ КАК ДА ИЗПОЛЗВА ПЛАТФОРМАТА:
 - Обясни стъпка по стъпка как се качва портфолио в таб "PORTFOLIO TRACKER" чрез бутона "📥 Импорт на портфолио".
 - Посочи поддържаните брокери: Interactive Brokers (IBKR PDF/CSV) и Trading 212 (CSV), или ръчно чрез "+ Добави позиция".
+- Къде отиват парите при продажба: При продажба на акция нетната сума автоматично се начислява в полето "Кеш:".
+- Защита на данните: Всяко портфолио е напълно лично, изолирано и защитено.
+- Интерактивна таблица: редактируема Fair Price с 1 клик, 52W Дъно/Връх, бутон $ за статистика и 365 Chart. За Samsung се ползва "KRX:005930".
+- Калкулатори: DCF калкулатор, Fair Value P/E, 10-точков Checklist, Percentage Calculator и Economic Calendar.
 - В тези случаи НЕ прави анализ на акции!`;
 
       const result = await aiClient.models.generateContent({
