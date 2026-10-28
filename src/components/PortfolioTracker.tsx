@@ -696,6 +696,16 @@ export default function PortfolioTracker({
       const pnlVal = netRevenue - cost;
       const pnlPct = cost > 0 ? (pnlVal / cost) * 100 : 0;
 
+      // Automatically credit the net sale proceeds to Cash Balance
+      const netRevenueInBase = convertToBase(netRevenue, positionCurrency);
+      const currentCash = parseFloat(cashInput) || 0;
+      const nextCash = parseFloat((currentCash + netRevenueInBase).toFixed(2));
+      setCashInput(nextCash.toString());
+      try {
+        localStorage.setItem('user_portfolio_cash', nextCash.toString());
+      } catch (e) {}
+      if (onUpdateCash) onUpdateCash(nextCash);
+
       if (existingPos) {
         const remainingShares = existingPos.shares - sharesNum;
         if (remainingShares <= 0.00001) {
@@ -2674,6 +2684,13 @@ export default function PortfolioTracker({
                               <span className="block text-[9px] uppercase font-bold text-ink-faint">Такса</span>
                               <span className="font-mono font-bold text-ink">{currSym}{feeVal.toFixed(2)}</span>
                             </div>
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-border/30 flex items-center justify-between text-[11px]">
+                            <span className="font-extrabold text-ink-muted flex items-center gap-1">
+                              <Coins className="w-3.5 h-3.5 text-amber-400" />
+                              Постъпление в свободен кеш:
+                            </span>
+                            <span className="font-mono font-black text-emerald-400">+{currSym}{previewNetRevenue.toFixed(2)}</span>
                           </div>
                         </div>
                       )}
