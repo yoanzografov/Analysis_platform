@@ -356,7 +356,7 @@ export default function App() {
     } catch (e) {
       console.error('Error loading positions from localStorage', e);
     }
-    return IBKR_POSITIONS;
+    return [];
   });
 
   useEffect(() => {
@@ -378,7 +378,7 @@ export default function App() {
     } catch (e) {
       console.error('Error loading transactions from localStorage', e);
     }
-    return IBKR_TRANSACTIONS;
+    return [];
   });
 
   useEffect(() => {
@@ -399,7 +399,7 @@ export default function App() {
     } catch (e) {
       console.error('Error loading dividends from localStorage', e);
     }
-    return IBKR_DIVIDENDS;
+    return [];
   });
 
   useEffect(() => {
@@ -415,7 +415,7 @@ export default function App() {
       const saved = localStorage.getItem('user_portfolio_cash');
       if (saved !== null) return parseFloat(saved) || 0;
     } catch (e) {}
-    return IBKR_CASH_BALANCE_EUR;
+    return 0;
   });
 
   useEffect(() => {
@@ -429,7 +429,7 @@ export default function App() {
       const saved = localStorage.getItem('user_portfolio_base_currency');
       if (saved === 'EUR' || saved === 'USD') return saved;
     } catch (e) {}
-    return IBKR_BASE_CURRENCY;
+    return 'EUR';
   });
 
   useEffect(() => {
@@ -891,11 +891,11 @@ export default function App() {
         setStocks(guestStocks);
         setIndices(parsedIndices);
 
-        let guestPositions = IBKR_POSITIONS;
-        let guestTransactions = IBKR_TRANSACTIONS;
-        let guestDividends = IBKR_DIVIDENDS;
-        let guestCash = IBKR_CASH_BALANCE_EUR;
-        let guestBaseCurr: 'EUR' | 'USD' = IBKR_BASE_CURRENCY;
+        let guestPositions: PortfolioPosition[] = [];
+        let guestTransactions: PortfolioTransaction[] = [];
+        let guestDividends: PortfolioDividendRecord[] = [];
+        let guestCash = 0;
+        let guestBaseCurr: 'EUR' | 'USD' = 'EUR';
         try {
           const savedPos = localStorage.getItem('user_portfolio_positions');
           if (savedPos) {
@@ -1157,14 +1157,6 @@ export default function App() {
             const localBaseCurrRaw = localStorage.getItem('user_portfolio_base_currency');
             if (localBaseCurrRaw === 'EUR' || localBaseCurrRaw === 'USD') legacyBaseCurr = localBaseCurrRaw;
           } catch (e) {}
-        }
-
-        if (legacyPositions.length === 0) {
-          legacyPositions = IBKR_POSITIONS;
-          legacyTransactions = IBKR_TRANSACTIONS;
-          legacyDividends = IBKR_DIVIDENDS;
-          legacyCash = IBKR_CASH_BALANCE_EUR;
-          legacyBaseCurr = IBKR_BASE_CURRENCY;
         }
 
         const { stocks: parsedStocks, indices: parsedIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
