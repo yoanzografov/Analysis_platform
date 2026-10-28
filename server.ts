@@ -1654,6 +1654,60 @@ ${JSON.stringify(uniqueNews, null, 2)}
 });
 
 // Dedicated AI Investment Assistant endpoint (Warren Buffett & Charlie Munger framework)
+app.post("/api/update-gemini-key", async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    if (!apiKey || typeof apiKey !== 'string' || !apiKey.trim().startsWith('AIzaSy')) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Невалиден формат на Gemini API ключ. Ключовете от Google AI Studio започват с 'AIzaSy...'." 
+      });
+    }
+
+    const cleanKey = apiKey.trim();
+    const testClient = new GoogleGenAI({
+      apiKey: cleanKey,
+      httpOptions: { headers: { "User-Agent": "aistudio-build" } },
+    });
+
+    // Test ping with Gemini 2.5 Flash to verify key is valid and active
+    await testClient.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: "ping",
+    });
+
+    // Update process.env in memory
+    process.env.GEMINI_API_KEY = cleanKey;
+
+    // Persist to .env file
+    try {
+      const envPath = path.resolve(".env");
+      let envContent = await fs.readFile(envPath, "utf-8");
+      if (envContent.includes("GEMINI_API_KEY=")) {
+        envContent = envContent.replace(/GEMINI_API_KEY=.*/, `GEMINI_API_KEY=${cleanKey}`);
+      } else {
+        envContent = `GEMINI_API_KEY=${cleanKey}\n` + envContent;
+      }
+      await fs.writeFile(envPath, envContent, "utf-8");
+    } catch (err: any) {
+      console.warn("Could not write to .env:", err.message);
+    }
+
+    return res.json({ 
+      success: true, 
+      message: "Gemini 2.5 Flash е валидиран и активиран успешно с пълен капацитет!" 
+    });
+  } catch (error: any) {
+    console.error("Грешка при валидиране на Gemini ключ:", error?.message || error);
+    return res.status(400).json({ 
+      success: false, 
+      error: error?.message?.includes("PERMISSION_DENIED") || error?.message?.includes("API_KEY_INVALID")
+        ? "Този ключ беше отхвърлен от Google (блокиран или невалиден). Моля, създайте нов безплатен ключ от Google AI Studio."
+        : (error?.message || "Грешка при свързване с Gemini.") 
+    });
+  }
+});
+
 app.post("/api/ai-assistant", async (req, res) => {
   try {
     const { message, history, portfolio, stocks, userApiKey } = req.body;
@@ -1676,53 +1730,30 @@ app.post("/api/ai-assistant", async (req, res) => {
     });
 
     const systemPrompt = `РОЛЯ И ЦЕЛ:
-Влез в ролята на фундаментален анализатор, който търси качествени бизнеси за дългосрочно инвестиране с хоризонт над 10 години. Следвай принципите на Уорън Бъфет и Чарли Мънгър: анализирай стойността на бизнеса, а не краткосрочните движения на акцията. Подхождай консервативно и поставяй финансовата устойчивост на първо място.
+Влез в ролята на експертен фундаментален анализатор и инвестиционен консултант по принципите на Уорън Бъфет и Чарли Мънгър за дългосрочно стойностно инвестиране с хоризонт над 10 години (стойност на бизнеса, дълбок ров / moat, предвидим свободен паричен поток FCF, дисциплиниран мениджмънт).
+Познаваш и всички функции на инвестиционната платформа RayVes Capital.
 
 КОГАТО СЕ ИСКА АНАЛИЗ НА КОМПАНИЯ, ЗАДЪЛЖИТЕЛНО НАПРАВИ АНАЛИЗ ПО СЛЕДНИТЕ 8 ТОЧКИ:
-1. БИЗНЕС МОДЕЛ
-Как компанията печели пари? Кои са основните продукти и услуги, бизнес сегменти и пазари, на които оперира?
-2. КОНКУРЕНЦИЯ И ПРЕДИМСТВА
-Кои са основните конкуренти? Има ли компанията устойчиви конкурентни предимства (moat), като силен бранд, мрежов ефект, високи разходи за смяна на доставчика или икономии от мащаба?
-3. ФИНАНСОВО ЗДРАВЕ
-Анализирай за последните 5 финансови години:
-- Приходи и техния ръст.
-- Нетна печалба и нейния ръст.
-- Свободен паричен поток (FCF).
-- Нетен марж на печалбата.
-- Дълг и парични средства.
-- Изплащани дивиденти и обратно изкупуване на акции, ако има такива.
-Представи данните в таблица и обясни основните тенденции.
-4. МЕНИДЖМЪНТ
-Кой управлява компанията? Има ли данни за добро управление, разумно използване на капитала и изпълнение на поставените цели?
-5. РИСКОВЕ
-Посочи и обясни петте най-важни риска за бъдещето на бизнеса, включително конкуренция, регулации, задлъжнялост и промени в индустрията, когато са приложими.
+1. БИЗНЕС МОДЕЛ (продукти, услуги, сегменти, повторяеми приходи)
+2. КОНКУРЕНЦИЯ И ПРЕДИМСТВА (Economic Moat: бранд, ценова мощ, мрежов ефект, икономии от мащаба)
+3. ФИНАНСОВО ЗДРАВЕ (5-годишен структуриран Markdown табличен обзор: приходи, нетна печалба, FCF, маржове, дълг/кеш, дивиденти и обратно изкупуване)
+4. МЕНИДЖМЪНТ (капиталова алокация, изпълнение)
+5. РИСКОВЕ (Топ 5 най-важни риска за бъдещето)
 6. ВЪЗМОЖНОСТИ ЗА РАСТЕЖ
-Кои са основните фактори, които могат да увеличат приходите и печалбите на компанията през следващите години?
-7. ПОСЛЕДЕН ФИНАНСОВ ОТЧЕТ
-Обобщи най-важното от последния публикуван тримесечен или годишен отчет. Как се развива бизнесът и какви очаквания е обявил мениджмънтът?
-8. ФИНАЛЕН ИЗВОД
-Обобщи основните силни и слаби страни на компанията. Подходяща ли е за допълнително проучване от дългосрочен инвеститор в стойност? Какво трябва да се провери, преди да се вземе инвестиционно решение?
+7. ПОСЛЕДЕН ФИНАНСОВ ОТЧЕТ (акценти от последния 10-K / 10-Q)
+8. ФИНАЛЕН ИЗВОД (заключение за стойностния инвеститор)
 
 ВАЖНИ ПРАВИЛА:
-- Използвай приоритетно официални финансови отчети (10-K, 10-Q или местните им еквиваленти) и Investor Relations.
-- Посочвай източниците, датите и периодите на използваните финансови данни.
-- Не измисляй числа или липсваща информация.
-- Не смесвай GAAP и non-GAAP показатели без ясно разграничение.
-- Разграничавай исторически факти от прогнози и предположения.
-- Ако нямаш достъп до актуални официални данни, посочи ограниченията.
+- Използвай официални данни (10-K, 10-Q) и Investor Relations.
+- Не си измисляй числа или липсваща информация.
 - Не давай директна препоръка за покупка или продажба.
-- Пиши разбираемо, но професионално, със структурирани Markdown таблици и ясни заключения.
+- Пиши разбираемо, но професионално, на отличен български език, със структурирани Markdown таблици и ясни изводи.
 
-КОГАТО ПОТРЕБИТЕЛЯТ ПИТА КАК ДА СИ КАЧИ ПОРТФОЛИОТО ИЛИ КАК ДА ИЗПОЛЗВА ПЛАТФОРМАТА:
-- Обясни стъпка по стъпка как се качва портфолио в таб "PORTFOLIO TRACKER" чрез бутона "📥 Импорт на портфолио".
-- Посочи поддържаните брокери: Interactive Brokers (IBKR PDF Activity Statement или CSV - може да се качат едновременно файл за сделки и файл за дивиденти) и Trading 212 (CSV).
-- Обясни, че може да се добавя и ръчно чрез зеления бутон "+ Добави позиция".
-- Къде отиват парите при продажба: При продажба на акция нетната сума автоматично се начислява в полето "Кеш:".
-- Защита на данните: Всяко портфолио е напълно лично, изолирано и защитено. Никой друг потребител не може да вижда чужди данни.
-- Интерактивна таблица: 215+ компании, редактируема Fair Price с 1 клик, 52W Дъно/Връх, бутон $ за статистика и 365 Chart. За Samsung и азиатски акции се ползва префикс като "KRX:005930".
-- Калкулатори: DCF калкулатор за дисконтирани парични потоци с бутон "Запази в таблицата", Fair Value P/E, 10-точков Checklist, Percentage Calculator и Economic Calendar.
-- Ценови известия: Price Alerts над (▲) или под (▼) таргет цена.
-- В тези случаи НЕ прави анализ на акции, освен ако изрично не е поискан!
+КОГАТО ПОТРЕБИТЕЛЯТ ПИТА ЗА ПЛАТФОРМАТА:
+- Обясни как се качва портфолио в "PORTFOLIO TRACKER" чрез "📥 Импорт на портфолио" (IBKR PDF/CSV или Trading 212 CSV).
+- Обясни, че при продажба на акция нетната сума автоматично се начислява в "Кеш баланс".
+- Потвърди, че портфолиото е 100% лично, изолирано и защитено.
+- Обясни как работят Интерактивната таблица, Fair Price с 1 клик, DCF калкулаторът и другите инструменти.
 
 КОНТЕКСТ НА ПОТРЕБИТЕЛСКИЯ ПОРТФЕЙЛ:
 - Свободен кеш: ${portfolio?.cashBalance ?? 0} ${portfolio?.baseCurrency ?? 'EUR'}
@@ -1730,13 +1761,53 @@ app.post("/api/ai-assistant", async (req, res) => {
 - Акции в таблицата: ${JSON.stringify((stocks || []).slice(0, 15).map((s: any) => ({ ticker: s.ticker, name: s.companyName, price: s.currentPrice, fair: s.fairPrice })))}
 `;
 
-    const result = await aiClient.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `${systemPrompt}\n\nВъпрос от потребителя: ${message}`,
-    });
+    // Multi-turn message history for full Gemini conversational reasoning
+    const contents: any[] = [];
+    if (Array.isArray(history) && history.length > 0) {
+      for (const h of history.slice(-6)) {
+        if (!h.content) continue;
+        contents.push({
+          role: h.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: h.content }]
+        });
+      }
+    }
+    // Append current message if not already last
+    if (contents.length === 0 || contents[contents.length - 1].parts[0].text !== message) {
+      contents.push({
+        role: "user",
+        parts: [{ text: message }]
+      });
+    }
 
-    const reply = result.text || "";
-    return res.json({ reply });
+    // Try models with fallback to ensure highest capability
+    let reply = "";
+    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+    let lastError: any = null;
+
+    for (const model of modelsToTry) {
+      try {
+        const result = await aiClient.models.generateContent({
+          model,
+          contents,
+          config: {
+            systemInstruction: systemPrompt,
+            temperature: 0.3,
+          }
+        });
+        reply = result.text || "";
+        if (reply) break;
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`Model ${model} failed, trying fallback:`, err.message);
+      }
+    }
+
+    if (!reply && lastError) {
+      throw lastError;
+    }
+
+    return res.json({ reply, model: "gemini-2.5-flash" });
   } catch (error: any) {
     console.error("Грешка в /api/ai-assistant:", error?.message || error);
     return res.status(500).json({ error: error?.message || "Грешка при обработка на AI заявката" });

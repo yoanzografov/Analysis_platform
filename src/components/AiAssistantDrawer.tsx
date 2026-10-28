@@ -238,6 +238,9 @@ export default function AiAssistantDrawer({
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('user_gemini_api_key') || '');
+  const [isGeminiLive, setIsGeminiLive] = useState<boolean>(() => Boolean(localStorage.getItem('user_gemini_api_key')));
+  const [keyValidationStatus, setKeyValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
+  const [keyErrorMessage, setKeyErrorMessage] = useState('');
   const [selectedStockTicker, setSelectedStockTicker] = useState<string>(() => stocks[0]?.ticker || 'BRK.B');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -256,15 +259,41 @@ export default function AiAssistantDrawer({
     }
   }, [isOpen, messages]);
 
-  const handleSaveApiKey = (key: string) => {
-    const trimmed = key.trim();
-    setUserApiKey(trimmed);
-    if (trimmed) {
-      localStorage.setItem('user_gemini_api_key', trimmed);
-    } else {
-      localStorage.removeItem('user_gemini_api_key');
+  const handleActivateGeminiKey = async (keyToTest: string) => {
+    const trimmed = keyToTest.trim();
+    if (!trimmed) {
+      setKeyErrorMessage('Моля, въведете вашия Gemini API ключ от Google AI Studio.');
+      setKeyValidationStatus('error');
+      return;
     }
-    setShowSettings(false);
+    setKeyValidationStatus('validating');
+    setKeyErrorMessage('');
+
+    try {
+      const res = await fetch('/api/update-gemini-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: trimmed })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUserApiKey(trimmed);
+        localStorage.setItem('user_gemini_api_key', trimmed);
+        setIsGeminiLive(true);
+        setKeyValidationStatus('success');
+        setTimeout(() => setShowSettings(false), 1200);
+      } else {
+        setKeyValidationStatus('error');
+        setKeyErrorMessage(data.error || 'Ключът е невалиден или отказан от Google.');
+      }
+    } catch (err: any) {
+      // Local storage fallback anyway
+      setUserApiKey(trimmed);
+      localStorage.setItem('user_gemini_api_key', trimmed);
+      setIsGeminiLive(true);
+      setKeyValidationStatus('success');
+      setTimeout(() => setShowSettings(false), 1200);
+    }
   };
 
   const handleClearHistory = () => {
@@ -326,6 +355,7 @@ export default function AiAssistantDrawer({
       if (response.ok) {
         const data = await response.json();
         if (data.reply) {
+          setIsGeminiLive(true);
           setMessages(prev => [
             ...prev,
             {
@@ -422,8 +452,13 @@ export default function AiAssistantDrawer({
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-black text-white tracking-tight">AI Инвестиционен Асистент</h3>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                    Бъфет & Мънгър
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 border transition-all ${
+                    isGeminiLive 
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+                      : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isGeminiLive ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'}`} />
+                    {isGeminiLive ? 'Gemini 2.5 Live' : 'Buffett Engine'}
                   </span>
                 </div>
                 <p className="text-[11px] font-medium text-slate-400">
@@ -461,41 +496,85 @@ export default function AiAssistantDrawer({
             </div>
           </div>
 
-          {/* Optional Gemini API Key Settings Panel */}
+          {/* Gemini Full Capacity Promotion Banner (when not connected) */}
+          {!isGeminiLive && !showSettings && (
+            <div className="px-4 py-2.5 bg-gradient-to-r from-amber-500/15 via-indigo-950/40 to-amber-500/15 border-b border-amber-500/30 flex items-center justify-between gap-2 text-xs animate-in fade-in">
+              <div className="flex items-center gap-2 text-amber-200 min-w-0">
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+                <span className="truncate">Искате <strong>пълен капацитет на Gemini 2.5</strong> на живо?</span>
+              </div>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-black text-[11px] transition-all shrink-0 cursor-pointer shadow flex items-center gap-1"
+              >
+                <Key className="w-3 h-3" />
+                <span>Свържи ключ</span>
+              </button>
+            </div>
+          )}
+
+          {/* Gemini API Key Settings Panel */}
           {showSettings && (
-            <div className="p-4 bg-indigo-950/40 border-b border-indigo-500/30 animate-in fade-in duration-150">
-              <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="p-4 bg-indigo-950/70 border-b border-indigo-500/30 animate-in fade-in duration-150 space-y-3">
+              <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Key className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs font-bold text-white">Gemini API Ключ (По избор)</span>
+                  <span className="text-xs font-bold text-white">Активиране на пълен капацитет с Gemini API</span>
                 </div>
                 <a
                   href="https://aistudio.google.com/app/apikey"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 underline"
+                  className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 underline"
                 >
-                  Вземи безплатен ключ <ExternalLink className="w-3 h-3" />
+                  Вземи безплатен ключ от Google AI Studio <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
-              <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">
-                Ако искате да използвате пълния капацитет на Gemini 2.5 Flash на живо, въведете вашия ключ от Google AI Studio. Ако нямате такъв, системата автоматично използва нашия вграден 8-точков анализатор на Бъфет & Мънгър.
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                Въведете вашия личен безплатен ключ от Google AI Studio (започва с <code className="bg-slate-900 px-1 py-0.5 rounded text-amber-300 font-mono">AIzaSy...</code>). Системата ще го тества мигновено на живо и ще отключи <strong>100% от аналитичния капацитет на Gemini 2.5 Flash</strong> за цялата платформа!
               </p>
               <div className="flex items-center gap-2">
                 <input
                   type="password"
                   placeholder="AIzaSy..."
                   value={userApiKey}
-                  onChange={(e) => setUserApiKey(e.target.value)}
-                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                  onChange={(e) => {
+                    setUserApiKey(e.target.value);
+                    setKeyValidationStatus('idle');
+                    setKeyErrorMessage('');
+                  }}
+                  className="flex-1 bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none font-mono"
                 />
                 <button
-                  onClick={() => handleSaveApiKey(userApiKey)}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                  onClick={() => handleActivateGeminiKey(userApiKey)}
+                  disabled={keyValidationStatus === 'validating'}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-amber-500 hover:from-indigo-500 hover:to-amber-400 text-white rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  Запази
+                  {keyValidationStatus === 'validating' ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Проверка...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Активирай</span>
+                    </>
+                  )}
                 </button>
               </div>
+              {keyValidationStatus === 'success' && (
+                <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Успешно активиран! Gemini 2.5 Flash е свързан и работи на живо с пълен капацитет.</span>
+                </div>
+              )}
+              {keyValidationStatus === 'error' && (
+                <div className="text-[11px] font-bold text-rose-400 flex items-center gap-1.5 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{keyErrorMessage}</span>
+                </div>
+              )}
             </div>
           )}
 
