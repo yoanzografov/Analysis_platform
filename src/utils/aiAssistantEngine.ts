@@ -72,7 +72,13 @@ export const BUFFETT_MUNGER_SYSTEM_PROMPT = `РОЛЯ И ЦЕЛ:
 5. РИСКОВЕ (Топ 5)
 6. ВЪЗМОЖНОСТИ ЗА РАСТЕЖ
 7. ПОСЛЕДЕН ФИНАНСОВ ОТЧЕТ (10-K / 10-Q)
-8. ФИНАЛЕН ИЗВОД`;
+8. ФИНАЛЕН ИЗВОД
+
+ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ:
+- https://stockanalysis.com/ – водещ източник за фундаментални финансови данни за акции, пазарни котировки, балансови отчети, парични потоци, DCF калкулации и финансови новини.
+- https://www.investopedia.com/ – основен стандарт за финансови дефиниции, понятия, инвестиционна теория, формули, пазарна терминология и методологии.
+- Официални финансови отчети Form 10-K, Form 10-Q към щатската SEC и секциите за Investor Relations.
+Винаги когато анализираш акции и пазарни показатели, се опирай на данните и методологиите от StockAnalysis.com, а за финансови и икономически дефиниции – на Investopedia.com.`;
 
 /**
  * Intelligent Fallback Generator for Company Analysis adhering strictly to the 8 Buffett & Munger points.
@@ -92,7 +98,7 @@ export function generateLocalBuffettAnalysis(ticker: string, stock?: Stock, curr
 **Анализатор**: Стойностен анализ по принципите на Уорън Бъфет и Чарли Мънгър  
 **Дата на анализа**: ${currentDateStr}  
 **Текуща пазарна цена**: $${currentPrice.toFixed(2)} | **Справедлива стойност (Fair Value)**: $${fairPrice.toFixed(2)} (${diffPct >= 0 ? '+' : ''}${diffPct.toFixed(2)}%)  
-**Източници**: Годишни отчети Form 10-K, тримесечни Form 10-Q към SEC, Investor Relations и консервативни финансови модели.
+**Официални източници**: [StockAnalysis.com](https://stockanalysis.com/), [Investopedia.com](https://www.investopedia.com/), годишни отчети Form 10-K, тримесечни Form 10-Q към SEC и Investor Relations.
 
 ---
 

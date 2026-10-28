@@ -98,11 +98,26 @@ function renderMarkdown(content: string) {
   };
 
   const formatInlineText = (text: string) => {
-    // Process **bold**
-    const parts = text.split(/(\*\*.*?\*\*)/g);
+    // Process markdown links [text](url) and **bold**
+    const parts = text.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|\*\*.*?\*\*)/g);
+
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return <strong key={i} className="font-bold text-indigo-300">{part.slice(2, -2)}</strong>;
+      }
+      const match = /^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/.exec(part);
+      if (match) {
+        return (
+          <a
+            key={i}
+            href={match[2]}
+            target="_blank"
+            rel="noreferrer"
+            className="text-amber-400 hover:text-amber-300 underline font-semibold transition-colors"
+          >
+            {match[1]}
+          </a>
+        );
       }
       return part;
     });
@@ -744,9 +759,16 @@ export default function AiAssistantDrawer({
               </button>
             </form>
 
-            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500">
-              <span>Стойностен анализ по Уорън Бъфет & Чарли Мънгър (10+ г. хоризонт)</span>
-              <span>Не е финансова препоръка за покупка/продажба</span>
+            <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[10px] text-slate-500">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-slate-400 font-bold">Източници на данни:</span>
+                <a href="https://stockanalysis.com/" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 underline font-semibold">StockAnalysis.com</a>
+                <span>•</span>
+                <a href="https://www.investopedia.com/" target="_blank" rel="noreferrer" className="text-amber-400 hover:text-amber-300 underline font-semibold">Investopedia.com</a>
+                <span>•</span>
+                <span>SEC 10-K / 10-Q</span>
+              </div>
+              <span className="shrink-0 text-slate-500">Стойностен анализ (10+ г. хоризонт)</span>
             </div>
           </div>
         </div>
