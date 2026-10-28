@@ -1080,6 +1080,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const url = req.url ?? "";
 
+  const isAiAssistant = url.includes("ai-assistant") ||
+    (Array.isArray(req.query.path) && req.query.path.includes("ai-assistant")) ||
+    req.query.path === "ai-assistant";
+
+  if (isAiAssistant) {
+    if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
+    try {
+      const { message, portfolio, stocks, userApiKey } = req.body || {};
+      if (!message) return res.status(400).json({ error: "Missing message" });
+      const apiKey = userApiKey || process.env.GEMINI_API_KEY;
+      if (!apiKey) return res.status(400).json({ error: "No API key available" });
+
+      const { GoogleGenAI } = await import('@google/genai');
+      const aiClient = new GoogleGenAI({ apiKey });
+
+      const systemPrompt = `РОЛЯ И ЦЕЛ:
+Влез в ролята на фундаментален анализатор, който търси качествени бизнеси за дългосрочно инвестиране с хоризонт над 10 години. Следвай принципите на Уорън Бъфет и Чарли Мънгър: анализирай стойността на бизнеса, а не краткосрочните движения на акцията. Подхождай консервативно и поставяй финансовата устойчивост на първо място.
+
+КОГАТО СЕ ИСКА АНАЛИЗ НА КОМПАНИЯ, ЗАДЪЛЖИТЕЛНО НАПРАВИ АНАЛИЗ ПО СЛЕДНИТЕ 8 ТОЧКИ:
+1. БИЗНЕС МОДЕЛ
+2. КОНКУРЕНЦИЯ И ПРЕДИМСТВА (Economic Moat)
+3. ФИНАНСОВО ЗДРАВЕ (5-годишен обзор с Markdown таблица)
+4. МЕНИДЖМЪНТ
+5. РИСКОВЕ (Топ 5)
+6. ВЪЗМОЖНОСТИ ЗА РАСТЕЖ
+7. ПОСЛЕДЕН ФИНАНСОВ ОТЧЕТ
+8. ФИНАЛЕН ИЗВОД`;
+
+      const result = await aiClient.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: `${systemPrompt}\n\nВъпрос от потребителя: ${message}`,
+      });
+
+      return res.json({ reply: result.text || "" });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || "AI error" });
+    }
+  }
+
   const isStockReturns = url.includes("stock-returns") ||
     (Array.isArray(req.query.path) && req.query.path.includes("stock-returns")) ||
     req.query.path === "stock-returns";

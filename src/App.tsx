@@ -33,6 +33,7 @@ import StockChecklistModal, { syncChecklistsWithCloud } from './components/Stock
 import FinancialFlagsModal from './components/FinancialFlagsModal';
 import PercentCalculatorModal from './components/PercentCalculatorModal';
 import WelcomeQuoteModal from './components/WelcomeQuoteModal';
+import AiAssistantDrawer from './components/AiAssistantDrawer';
 import { 
   Table,
   Save,
@@ -153,6 +154,7 @@ export default function App() {
   const [checklistSelectedStock, setChecklistSelectedStock] = useState<Stock | null>(null);
   const [showFinancialFlagsModal, setShowFinancialFlagsModal] = useState(false);
   const [showLogoModal, setShowLogoModal] = useState(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -982,6 +984,7 @@ export default function App() {
           setDeletedStockTickers(activeDeletedList);
         }
         const deletedSet = new Set(activeDeletedList.map(t => t.toUpperCase()));
+        let migratedStocks: Stock[] = stocks;
 
         // Only update state if data is actually different from our last local save
         if (lastSavedRef.current !== incomingDataString) {
@@ -1068,7 +1071,7 @@ export default function App() {
           }
 
           // 4. Exclude tickers explicitly deleted by the user
-          const migratedStocks = Array.from(stocksMap.values()).filter(s => !deletedSet.has(s.ticker.toUpperCase()));
+          migratedStocks = Array.from(stocksMap.values()).filter(s => !deletedSet.has(s.ticker.toUpperCase()));
           setStocks(migratedStocks);
           const { indices: fallbackIndices } = parseCSVData(RAW_SPREADSHEET_CSV);
           if (data.indices && Array.isArray(data.indices) && data.indices.length >= fallbackIndices.length) {
@@ -2086,6 +2089,22 @@ export default function App() {
                 LIVE
               </span>
             </a>
+
+            {/* AI Assistant Nav Item */}
+            <button
+              type="button"
+              onClick={() => setIsAiAssistantOpen(true)}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group bg-gradient-to-r from-indigo-950/80 via-slate-900 to-amber-950/60 hover:from-indigo-600 hover:to-amber-500 text-amber-300 hover:text-white border-amber-500/30 hover:border-amber-400 shadow-sm"
+              title="Отвори AI Асистент по Бъфет & Мънгър"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Sparkles className="w-4 h-4 text-amber-400 group-hover:text-white group-hover:rotate-12 transition-all shrink-0" />
+                <span className="truncate">AI АСИСТЕНТ</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 bg-amber-400/20 text-amber-300 group-hover:bg-white/20 group-hover:text-white border border-amber-400/30">
+                BUFFETT
+              </span>
+            </button>
           </nav>
         </div>
 
@@ -2970,6 +2989,17 @@ export default function App() {
       </div>
     </div>
   )}
+
+  {/* AI Investment Assistant Drawer (Warren Buffett & Charlie Munger framework) */}
+  <AiAssistantDrawer
+    isOpen={isAiAssistantOpen}
+    onClose={() => setIsAiAssistantOpen(false)}
+    onOpen={() => setIsAiAssistantOpen(true)}
+    stocks={stocks}
+    positions={positions}
+    cashBalance={cashBalance}
+    baseCurrency={baseCurrency}
+  />
  </main>
 
 
