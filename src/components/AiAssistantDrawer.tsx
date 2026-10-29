@@ -13,11 +13,18 @@ import {
   Copy, 
   ExternalLink,
   ChevronDown,
+  ChevronUp,
   Info,
   RefreshCw,
   Sliders,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  FlaskConical,
+  Zap,
+  Snowflake,
+  ShieldCheck,
+  LineChart,
+  Globe
 } from 'lucide-react';
 import { Stock, PortfolioPosition } from '../types';
 import { 
@@ -257,6 +264,7 @@ export default function AiAssistantDrawer({
   const [keyValidationStatus, setKeyValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
   const [keyErrorMessage, setKeyErrorMessage] = useState('');
   const [selectedStockTicker, setSelectedStockTicker] = useState<string>(() => stocks[0]?.ticker || 'BRK.B');
+  const [showSkills, setShowSkills] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -651,6 +659,88 @@ export default function AiAssistantDrawer({
                   <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0 group-hover:rotate-12 transition-transform" />
                 </button>
               </div>
+            </div>
+
+            {/* Toggle Specialized Skills Bar */}
+            <div className="pt-1">
+              <button
+                onClick={() => setShowSkills(!showSkills)}
+                className="w-full py-1 px-2.5 rounded-lg bg-indigo-950/40 hover:bg-indigo-900/50 border border-indigo-500/20 text-indigo-300 hover:text-white transition-all text-[11px] font-bold flex items-center justify-between cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Експертни скилове за оценка & анализ (8 нови умения)</span>
+                </div>
+                {showSkills ? <ChevronUp className="w-3.5 h-3.5 text-indigo-400" /> : <ChevronDown className="w-3.5 h-3.5 text-indigo-400" />}
+              </button>
+
+              {showSkills && (
+                <div className="mt-2 grid grid-cols-2 gap-1.5 animate-in fade-in duration-200">
+                  <button
+                    onClick={() => handleSendMessage(`Piotroski F-Score анализ на ${selectedStockTicker}`)}
+                    className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-indigo-950 border border-slate-700/60 hover:border-amber-400/50 text-left text-[11px] text-slate-200 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <FlaskConical className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span className="truncate">🧪 Piotroski F-Score</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage(`Обратен DCF (Reverse DCF) за ${selectedStockTicker}`)}
+                    className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-indigo-950 border border-slate-700/60 hover:border-amber-400/50 text-left text-[11px] text-slate-200 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="truncate">⚡ Обратен DCF</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage(`💥 Симулация на кризи и стрес тест на портфолиото`)}
+                    className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-indigo-950 border border-slate-700/60 hover:border-amber-400/50 text-left text-[11px] text-slate-200 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <span className="truncate">💥 Стрес тест (Криза)</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage(`❄️ Дивидентна снежна топка и 20-годишна прогноза за пасивен доход`)}
+                    className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-indigo-950 border border-slate-700/60 hover:border-amber-400/50 text-left text-[11px] text-slate-200 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Snowflake className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span className="truncate">❄️ Дивидентна топка</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage(`Одит на икономическия ров (Economic Moat) на ${selectedStockTicker}`)}
+                    className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-indigo-950 border border-slate-700/60 hover:border-amber-400/50 text-left text-[11px] text-slate-200 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                    <span className="truncate">🏰 Moat & Ценова мощ</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage(`Оценка по модела на Питър Линч и PEG за ${selectedStockTicker}`)}
+                    className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-indigo-950 border border-slate-700/60 hover:border-amber-400/50 text-left text-[11px] text-slate-200 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <LineChart className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <span className="truncate">📈 Питър Линч & PEG</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage(`Altman Z-Score тест за финансов стрес на ${selectedStockTicker}`)}
+                    className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-indigo-950 border border-slate-700/60 hover:border-amber-400/50 text-left text-[11px] text-slate-200 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="truncate">🛡️ Altman Z-Score</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage(`🌐 Анализ на макроикономическия цикъл и Yield Curve`)}
+                    className="p-1.5 rounded-lg bg-slate-800/90 hover:bg-indigo-950 border border-slate-700/60 hover:border-amber-400/50 text-left text-[11px] text-slate-200 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                    <span className="truncate">🌐 Макро цикъл & Лихви</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

@@ -1,5 +1,26 @@
 import { Stock, PortfolioPosition } from '../types';
 import officialProfiles from '../data/officialCompanyProfiles.json';
+import {
+  calculatePiotroskiFScore,
+  calculateAltmanZScore,
+  calculateReverseDcf,
+  calculatePeterLynchFairValue,
+  simulatePortfolioStressTest,
+  projectDividendSnowball,
+  auditEconomicMoat,
+  analyzeMacroCycle
+} from './aiSkillsEngine';
+
+export {
+  calculatePiotroskiFScore,
+  calculateAltmanZScore,
+  calculateReverseDcf,
+  calculatePeterLynchFairValue,
+  simulatePortfolioStressTest,
+  projectDividendSnowball,
+  auditEconomicMoat,
+  analyzeMacroCycle
+};
 
 export interface AiChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -73,6 +94,16 @@ export const BUFFETT_MUNGER_SYSTEM_PROMPT = `РОЛЯ И ЦЕЛ:
 6. ВЪЗМОЖНОСТИ ЗА РАСТЕЖ
 7. ПОСЛЕДЕН ФИНАНСОВ ОТЧЕТ (10-K / 10-Q)
 8. ФИНАЛЕН ИЗВОД
+
+8. СПЕЦИАЛИЗИРАНИ ЕКСПЕРТНИ СКИЛОВЕ (SKILLS):
+- Piotroski F-Score (9-точков тест за рентабилност, ликвидност и оперативна ефективност)
+- Altman Z-Score (тест за финансов стрес и риск от фалит с класификация Safe/Grey/Distress Zone)
+- Reverse DCF (изчисляване на вградения бъдещ ръст на свободния паричен поток FCF спрямо текущата цена)
+- Peter Lynch Fair Value & PEG Ratio (оценка на съотношението P/E спрямо темпа на растеж)
+- Portfolio Stress Test (симулация на исторически шокове: 2008 GFC, 2020 COVID, 2022 лихвен шок)
+- Dividend Snowball & Compounding (5, 10, 15, 20-годишна проекция на портфолиото и месечния пасивен доход с DRIP)
+- Economic Moat Audit (5-те стълба на Morningstar за устойчиво конкурентно превъзходство и ценова мощ)
+- Macro Cycle & Yield Curve (10Y-2Y спред, фаза на икономическия цикъл и секторно позициониране)
 
 ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ:
 - https://stockanalysis.com/ – водещ източник за фундаментални финансови данни за акции, пазарни котировки, балансови отчети, парични потоци, DCF калкулации и финансови новини.
@@ -636,8 +667,9 @@ export function handleAiQuery(query: string, context: AiPortfolioContext, stocks
   }
 
   // 5. Calculators & Tools (DCF, Fair Value P/E, Checklist, Percent Calculator, Economic Calendar)
+  const isReverseDcf = lower.includes('обратен') || lower.includes('обратно') || lower.includes('reverse');
   if (
-    lower.includes('dcf') ||
+    (!isReverseDcf && lower.includes('dcf')) ||
     lower.includes('дисконтиран') ||
     lower.includes('чек-лист') ||
     lower.includes('checklist') ||
@@ -697,8 +729,7 @@ export function handleAiQuery(query: string, context: AiPortfolioContext, stocks
     return generateLocalCashAllocation(context, stocks);
   }
 
-  // 11. Explicit stock analysis requested:
-  // Match known tickers and company names (with common company suffix removal)
+  // 11. Match known tickers and company names (with common company suffix removal)
   const matchedStock = stocks.find(s => {
     const sym = s.ticker.toLowerCase();
     const cleanName = s.companyName.toLowerCase().replace(/\s+(inc\.?|corp\.?|corporation|co\.?|ltd\.?|llc|plc|group|holdings?|sa|ag|nv)\b/gi, '').trim();
@@ -727,6 +758,56 @@ export function handleAiQuery(query: string, context: AiPortfolioContext, stocks
     if (reg.test(query)) return true;
     return c.names.some(n => lower.includes(n));
   });
+
+  const resolvedStock = matchedStock || (matchedCommon ? stocks.find(st => st.ticker.toUpperCase() === matchedCommon.ticker.toUpperCase()) : undefined);
+  const resolvedTicker = matchedStock?.ticker || matchedCommon?.ticker || (stocks[0]?.ticker || 'AAPL');
+
+  // Skill 1: Piotroski F-Score (9-point financial health test)
+  if (lower.includes('piotroski') || lower.includes('f-score') || lower.includes('пиотроски') || lower.includes('ф-скор')) {
+    return calculatePiotroskiFScore(resolvedTicker, resolvedStock);
+  }
+
+  // Skill 2: Altman Z-Score (Distress & Bankruptcy risk)
+  if (lower.includes('altman') || lower.includes('z-score') || lower.includes('алтман') || lower.includes('з-скор') || (lower.includes('фалит') && (lower.includes('риск') || lower.includes('тест')))) {
+    return calculateAltmanZScore(resolvedTicker, resolvedStock);
+  }
+
+  // Skill 3: Reverse DCF (Implied Growth Rate)
+  if (lower.includes('reverse dcf') || lower.includes('обратен dcf') || lower.includes('обратно dcf') || lower.includes('какъв растеж') || lower.includes('вграден ръст') || lower.includes('implied growth')) {
+    return calculateReverseDcf(resolvedTicker, resolvedStock);
+  }
+
+  // Skill 4: Peter Lynch Fair Value & PEG Ratio
+  if (lower.includes('линч') || lower.includes('lynch') || lower.includes('peg ratio') || lower.includes('коефициент peg') || lower.includes('питър линч')) {
+    return calculatePeterLynchFairValue(resolvedTicker, resolvedStock);
+  }
+
+  // Skill 5: Portfolio Stress Test & Historical Crisis Simulation
+  if (lower.includes('стрес тест') || lower.includes('stress test') || lower.includes('симулация на срив') || lower.includes('симулация на криза') || lower.includes('криза 2008') || lower.includes('ковид срив') || lower.includes('пазарен срив')) {
+    return simulatePortfolioStressTest(context);
+  }
+
+  // Skill 6: Dividend Snowball & 20-Year Compounding Projection
+  if (lower.includes('снежна топка') || lower.includes('snowball') || lower.includes('пасивен доход') || lower.includes('дивидентна прогноза') || lower.includes('20-годишна прогноза') || lower.includes('drip')) {
+    return projectDividendSnowball(context);
+  }
+
+  // Skill 7: Economic Moat & Pricing Power Audit (Morningstar 5 Pillars)
+  if (
+    lower.includes('moat') || 
+    lower.includes('ров') || 
+    lower.includes('pricing power') || 
+    lower.includes('ценова мощ') || 
+    lower.includes('конкурентно предимство') || 
+    lower.includes('конкурентни предимства')
+  ) {
+    return auditEconomicMoat(resolvedTicker, resolvedStock);
+  }
+
+  // Skill 8: Macro Cycle & Yield Curve Analysis
+  if (lower.includes('макро цикъл') || lower.includes('macro cycle') || lower.includes('yield curve') || lower.includes('крива на доходността') || lower.includes('обърната крива') || lower.includes('10y-2y') || lower.includes('лихвен цикъл')) {
+    return analyzeMacroCycle();
+  }
 
   const isAnalysisKeyword = lower.includes('анализ') || lower.includes('анализирай') || lower.includes('компания') || lower.includes('бъфет') || lower.includes('мънгър');
 
