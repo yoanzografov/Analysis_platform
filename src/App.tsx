@@ -1923,56 +1923,50 @@ export default function App() {
           </button>
         </div>
       </div>
-
-      <div className="flex items-center gap-2 flex-wrap justify-start">
-
-        {/* 1. Auto live updates toggler */}
-        <button
-          onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-          className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
-            isAutoLiveRefresh 
-              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' 
-              : 'bg-card text-ink-faint border-border hover:bg-card-hover hover:text-ink'
-          }`}
-          title="Автоматично фоново синхронизиране на живите пазарни котировки"
-        >
-          <span className="relative flex h-2 w-2 shrink-0">
-            {isAutoLiveRefresh && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            )}
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${isAutoLiveRefresh ? 'bg-emerald-400' : 'bg-stone-500'}`}></span>
-          </span>
-          <span>Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}</span>
-        </button>
-
-        {/* 2. Quick real live market quotes sync */}
-        <button
-          onClick={triggerManualRefresh}
-          disabled={isFetchingLivePrices}
-          className={`h-9 px-3.5 rounded-xl border font-sans text-xs font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
-            isFetchingLivePrices
-              ? 'bg-card/50 text-ink-faint border-border/50 cursor-not-allowed'
-              : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
-          }`}
-          title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isFetchingLivePrices ? 'animate-spin text-emerald-400' : 'text-indigo-400'}`} />
-          <span>{isFetchingLivePrices ? 'Синхронизиране...' : 'Опресни пазар'}</span>
-        </button>
-      </div>
   </div>
 
-    {/* Dynamic indices banner strip (Index Markets / US Markets) */}
-    <IndicesStrip 
-     indices={indices} 
-     isSimulating={isSimulating} 
-    />
-
-    {/* Main Dashboard Layout: StockAnalysis-Style Left Sidebar Navigation + Right Main Content Area */}
-    <div className="flex flex-col lg:flex-row gap-5 items-start w-full mt-2" id="stock-table-section">
+    {/* Main Dashboard Layout: Left Sidebar + Modern Vertical Divider + Right Main Content Area */}
+    <div className="flex flex-col lg:flex-row items-stretch w-full gap-0 relative" id="stock-table-section">
 
       {/* LEFT SIDEBAR NAVIGATION (StockAnalysis.com Style) */}
-      <aside className="w-full lg:w-64 xl:w-72 shrink-0 lg:sticky lg:top-4 z-20 flex flex-col gap-3">
+      <aside className="w-full lg:w-64 xl:w-72 shrink-0 z-20 flex flex-col gap-3 lg:pr-5 lg:self-start lg:sticky lg:top-4 mb-5 lg:mb-0">
+        
+        {/* Quick Market Live Controls (Живи данни & Опресни пазар) */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* 1. Auto live updates toggler */}
+          <button
+            onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
+            className={`h-9 px-3 rounded-xl border font-sans text-[11px] font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none flex-1 ${
+              isAutoLiveRefresh 
+                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' 
+                : 'bg-card text-ink-faint border-border hover:bg-card-hover hover:text-ink'
+            }`}
+            title="Автоматично фоново синхронизиране на живите пазарни котировки"
+          >
+            <span className="relative flex h-2 w-2 shrink-0">
+              {isAutoLiveRefresh && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              )}
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${isAutoLiveRefresh ? 'bg-emerald-400' : 'bg-stone-500'}`}></span>
+            </span>
+            <span>Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}</span>
+          </button>
+
+          {/* 2. Quick real live market quotes sync */}
+          <button
+            onClick={triggerManualRefresh}
+            disabled={isFetchingLivePrices}
+            className={`h-9 px-3 rounded-xl border font-sans text-[11px] font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+              isFetchingLivePrices
+                ? 'bg-card/50 text-ink-faint border-border/50 cursor-not-allowed'
+                : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
+            }`}
+            title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isFetchingLivePrices ? 'animate-spin text-emerald-400' : 'text-indigo-400'}`} />
+            <span>{isFetchingLivePrices ? '...' : 'Опресни'}</span>
+          </button>
+        </div>
         {/* Navigation Menu Card */}
         <div className="bg-card border border-border rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col gap-2">
           {/* Header Title / Platform Nav label */}
@@ -2411,10 +2405,24 @@ export default function App() {
         </div>
       </aside>
 
-      {/* RIGHT MAIN CONTENT AREA */}
-      <div className="flex-1 min-w-0 w-full space-y-5">
+      {/* MODERN VERTICAL DIVIDER (StockAnalysis & Bloomberg Style) */}
+      <div className="hidden lg:flex flex-col items-center shrink-0 self-stretch px-1 select-none pointer-events-none" aria-hidden="true">
+        <div className="w-px h-full bg-gradient-to-b from-indigo-500/50 via-border/80 to-border/20 relative">
+          <div className="sticky top-20 w-1 h-36 -left-[2px] bg-indigo-500/20 blur-xs rounded-full pointer-events-none" />
+        </div>
+      </div>
 
-      {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
+      {/* RIGHT MAIN CONTENT AREA */}
+      <div className="flex-1 min-w-0 w-full space-y-4 lg:pl-5">
+
+        {/* Dynamic indices banner strip (Index Markets / US Markets) */}
+        <IndicesStrip 
+          indices={indices} 
+          isSimulating={isSimulating}
+          className="mt-0 mb-2"
+        />
+
+        {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
       {activeMainTab === 'table' && (
         <>
           <MarketSummaryWidgets 

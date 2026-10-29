@@ -6,6 +6,7 @@ import IndexDetailChartModal from './IndexDetailChartModal';
 interface Props {
   indices: MarketIndex[];
   isSimulating?: boolean;
+  className?: string;
 }
 
 function IndexHoverChart({ changePct, name }: { changePct?: number; name: string }) {
@@ -70,7 +71,7 @@ function IndexHoverChart({ changePct, name }: { changePct?: number; name: string
   );
 }
 
-export default function IndicesStrip({ indices }: Props) {
+export default function IndicesStrip({ indices, className }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string>('US Markets');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -183,7 +184,7 @@ export default function IndicesStrip({ indices }: Props) {
   };
 
  return (
-    <div className="w-full relative z-50 mb-2 mt-4">
+    <div className={`w-full relative z-30 ${className || 'mb-2 mt-4'}`}>
       <div className="w-full bg-bg rounded-2xl border border-border shadow-sm flex items-center h-16 divide-x divide-border">
           
         {/* Category selector */}
