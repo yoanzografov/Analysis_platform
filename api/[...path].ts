@@ -1088,13 +1088,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
     try {
       const { apiKey } = req.body || {};
-      if (!apiKey || typeof apiKey !== 'string' || !apiKey.trim().startsWith('AIzaSy')) {
-        return res.status(400).json({ success: false, error: "Невалиден формат на Gemini ключ." });
+      const cleanKey = typeof apiKey === 'string' ? apiKey.trim().replace(/^["']|["']$/g, '') : '';
+      if (!cleanKey || cleanKey.length < 20) {
+        return res.status(400).json({ success: false, error: "Моля, въведете валиден Gemini API ключ." });
       }
       const { GoogleGenAI } = await import('@google/genai');
-      const testClient = new GoogleGenAI({ apiKey: apiKey.trim() });
+      const testClient = new GoogleGenAI({ apiKey: cleanKey });
       await testClient.models.generateContent({ model: "gemini-2.5-flash", contents: "ping" });
-      process.env.GEMINI_API_KEY = apiKey.trim();
+      process.env.GEMINI_API_KEY = cleanKey;
       return res.json({ success: true, message: "Gemini 2.5 Flash е активен!" });
     } catch (e: any) {
       return res.status(400).json({ success: false, error: e?.message || "Грешка при валидиране на Gemini ключ" });

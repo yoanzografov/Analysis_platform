@@ -1657,14 +1657,14 @@ ${JSON.stringify(uniqueNews, null, 2)}
 app.post("/api/update-gemini-key", async (req, res) => {
   try {
     const { apiKey } = req.body;
-    if (!apiKey || typeof apiKey !== 'string' || !apiKey.trim().startsWith('AIzaSy')) {
+    const cleanKey = typeof apiKey === 'string' ? apiKey.trim().replace(/^["']|["']$/g, '') : '';
+    if (!cleanKey || cleanKey.length < 20) {
       return res.status(400).json({ 
         success: false, 
-        error: "Невалиден формат на Gemini API ключ. Ключовете от Google AI Studio започват с 'AIzaSy...'." 
+        error: "Моля, въведете валиден Gemini API ключ от Google AI Studio." 
       });
     }
 
-    const cleanKey = apiKey.trim();
     const testClient = new GoogleGenAI({
       apiKey: cleanKey,
       httpOptions: { headers: { "User-Agent": "aistudio-build" } },
