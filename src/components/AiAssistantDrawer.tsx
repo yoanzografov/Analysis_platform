@@ -422,6 +422,7 @@ export default function AiAssistantDrawer({
 
   const detectActionsFromMessage = (content: string) => {
     const titleMatch = content.match(/Фундаментален анализ на .*?\(([A-Z0-9.]+)\)/i) || 
+                       content.match(/Анализ на спада: .*?\(([A-Z0-9.]+)\)/i) ||
                        content.match(/Piotroski F-Score Анализ: .*?\(([A-Z0-9.]+)\)/i) ||
                        content.match(/Reverse DCF.*?:\s*.*?\(([A-Z0-9.]+)\)/i) ||
                        content.match(/Оценка по модела на Питър Линч:\s*.*?\(([A-Z0-9.]+)\)/i) ||

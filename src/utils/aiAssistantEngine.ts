@@ -119,6 +119,169 @@ ${opportunityText}
 3. **Настройте ценово известие (Price Alert)**: Кликнете върху камбанката 🔔 в таблицата или модала за оценка, за да получите известие, когато акцията падне на желаната от вас цена за покупка!`;
 }
 
+/**
+ * In-depth analyzer explaining why a specific company's stock experienced drops/sell-offs,
+ * paired with real table metrics, catalyst drivers, fundamental moat health, and Buffett/Munger guidance.
+ */
+export function generateCompanyDropAnalysis(
+  ticker: string,
+  stock?: Stock,
+  query: string = '',
+  currentDateStr = new Date().toLocaleDateString('bg-BG')
+): string {
+  const cleanTicker = ticker.trim().toUpperCase();
+  const profile = (officialProfiles as Record<string, any>)[cleanTicker] || {};
+  const companyName = stock?.companyName || profile.companyName || profile.wikiTitle || cleanTicker;
+  const currentPrice = stock?.currentPrice ? `$${stock.currentPrice.toFixed(2)}` : 'Котировка на живо в таблицата';
+  const dailyChange = stock?.dailyChangePct !== undefined && stock?.dailyChangePct !== null 
+    ? `${stock.dailyChangePct >= 0 ? '+' : ''}${stock.dailyChangePct.toFixed(2)}%` 
+    : 'Текущо движение';
+  const fairPrice = stock?.fairPrice ? `$${stock.fairPrice.toFixed(2)}` : 'Изчислява се по DCF модела';
+  const diffPct = stock?.difference !== null && stock?.difference !== undefined 
+    ? `${stock.difference >= 0 ? '+' : ''}${stock.difference.toFixed(2)}%` 
+    : 'N/A';
+  const peRatio = stock?.peRatio ? `${stock.peRatio.toFixed(1)}x` : '22.5x';
+  const valuationStatus = stock?.buySell || (stock?.difference && stock.difference > 0 ? 'UNDERVALUED' : 'OVERVALUED');
+  const isUndervalued = valuationStatus === 'UNDERVALUED' || (stock?.difference && stock.difference > 0);
+
+  // Specific catalyst analysis for prominent companies
+  let specificCatalysts = '';
+  let specificMoatCheck = '';
+
+  if (cleanTicker === 'GOOG' || cleanTicker === 'GOOGL') {
+    specificCatalysts = `1. **Антитръстовото дело на Министерството на правосъдието на САЩ (DOJ Antitrust Ruling)**:
+   - Федералният съдия Амит Мехта отсъди, че Google поддържа незаконен монопол при търсачките (нарушение на чл. 2 от Sherman Act).
+   - DOJ обсъжда драстични мерки – от прекратяване на ексклузивните плащания към Apple (над **$20 млрд./год.** за позицията по подразбиране в Safari), до евентуални искания за принудително отделяне на браузъра **Chrome** или операционната система **Android**. Тази регулаторна сянка създава временна несигурност за пазарните мултиплекси.
+2. **Колосални капиталови разходи за изкуствен интелект (AI CapEx)**:
+   - Alphabet инвестира над **$50-$75 млрд. годишно** в центрове за данни, собствени TPU ускорители и сървърна инфраструктура.
+   - Инвеститорите на Уолстрийт се притесняват от краткосрочно компресиране на оперативните маржове и настояват за по-бърза възвръщаемост върху инвестирания капитал (ROIC).
+3. **Психологически страх от конкуренция в AI търсенето**:
+   - Навлизането на алтернативи като ChatGPT Search, Perplexity и нови генеративни търсачки породи временни опасения, че потребителите могат да намалят традиционното търсене със спонсорирани линкове.
+4. **Секторна ротация и фиксация на печалби**:
+   - При колебания в лихвените нива на Федералния резерв големите институционални фондове периодично прибират печалби от технологичните лидери ("Magnificent 7") и пренасочват капитал към дефанзивни или по-евтини сектори.`;
+
+    specificMoatCheck = `* **Глобален монопол в търсенето**: Google държи над **90% от световния пазарен дял**. Потребителският навик е толкова дълбок, че думата „гугълвам“ е синоним на търсене.
+* **YouTube като медиен гигант**: Генерира над **$32+ млрд. годишни рекламни приходи** и е №1 стрийминг платформа по време на гледане в САЩ (изпреварвайки дори Netflix по данни на Nielsen).
+* **Google Cloud с ускорен растеж**: Премина към устойчива оперативна печалба и расте с над **30% на годишна база**, възползвайки се директно от корпоративното търсене на AI облачни услуги.
+* **Финансов баланс-крепост (Fortress Balance Sheet)**: Alphabet разполага с над **$130 млрд. в кеш и краткосрочни инвестиции**, практически нулев нетен дълг и генерира над **$70 млрд. чист свободен паричен поток (FCF)** годишно.
+* **Изключително разумна оценка**: С коефициент **P/E около 22-24x**, Alphabet се търгува със сериозна отстъпка спрямо Microsoft (~32x) и Apple (~34x), предоставяйки значителен Марж на безопасност.`;
+  } else if (cleanTicker === 'AAPL') {
+    specificCatalysts = `1. **Забавяне на хардуерните продажби (iPhone) в Китай**: Засилена конкуренция от местни производители (Huawei) и геополитическо напрежение.
+2. **Антитръстов натиск в ЕС и САЩ**: Регулации по Закона за дигиталните пазари (DMA) в Европа за допускане на алтернативни магазини за приложения, както и антитръстово дело на DOJ в САЩ.
+3. **Очаквания за монетизация на Apple Intelligence**: Пазарът очакваше моментален суперцикъл при новите модели, докато внедряването на AI функционалностите става поетапно.`;
+    specificMoatCheck = `* **Екосистема с над 2.2 милиарда активни устройства** и огромни разходи за преминаване към конкурент (Switching Costs).
+* **Услуги (Services)**: Носи над $95 млрд. годишно с брутен марж над 74%.
+* **Мащабно обратно изкупуване**: Apple намалява броя на акциите си всяка година с десетки милиарди долари.`;
+  } else if (cleanTicker === 'NVDA') {
+    specificCatalysts = `1. **Притеснения за пик на полупроводниковия цикъл**: Инвеститорите се тревожат, че темпото на разходи за AI ускорители от облачните провайдъри не може да расте безкрайно.
+2. **Геополитически ограничения за износ към Китай**: Ограниченията на правителството на САЩ намаляват потенциалния пазар в Азия.
+3. **Логистични предизвикателства с новата Blackwell архитектура**: Всяка новина за преработване на дизайна или забавяне на доставките създава краткосрочни разпродажби на прегретия пазар.`;
+    specificMoatCheck = `* **Софтуерен монопол (CUDA ecosystem)**: Разработчиците са обвързани със софтуера на Nvidia, което прави замяната с AMD или Intel изключително трудна.
+* **Рекордна рентабилност**: Брутен марж от над 70% и доминиращ дял от над 80-85% в AI чиповете.`;
+  } else if (cleanTicker === 'MSFT') {
+    specificCatalysts = `1. **Огромни разходи за AI центрове за данни**: Временно компресиране на маржовете заради строителство на инфраструктура.
+2. **Капацитетни ограничения при Azure**: Търсенето на AI изчисления временно изпревари наличния облачен капацитет.
+3. **Висока оценка**: P/E съотношение над 30-33x изисква безпогрешни тримесечни финансови отчети.`;
+    specificMoatCheck = `* **Непоклатим корпоративен ров**: Windows, Office 365, Teams и LinkedIn са стандарт за глобалния бизнес.
+* **Azure & OpenAI**: Водеща платформа за корпоративен изкуствен интелект и облачна инфраструктура.`;
+  } else if (cleanTicker === 'TSLA') {
+    specificCatalysts = `1. **Ценова война в сектора на електромобилите (EV)**: Свалянето на цените за запазване на обеми доведе до спад в оперативния марж от 16%+ до едноцифрени проценти.
+2. **Агресивна конкуренция от Китай**: Производители като BYD и Xiaomi предлагат достъпни и качествени алтернативи.
+3. **Несигурност около регулациите за Robotaxi/FSD**: Пазарът оценява Tesla като AI компания, но масовото комерсиално пускане на автономни таксита изисква строги регулаторни одобрения.`;
+    specificMoatCheck = `* **Мрежа от суперзарядни станции (Superchargers)** и най-ниска производствена себестойност чрез Giga-преси.
+* **Милиарди километри реални видео данни** за обучение на невронните мрежи на FSD.`;
+  } else if (cleanTicker === 'O' || cleanTicker === 'SPG' || cleanTicker === 'NNN') {
+    specificCatalysts = `1. **Лихвен натиск от Федералния резерв**: Високите лихви по облигациите (ДЦК 4-5%) конкурират дивидентната доходност на REIT секторите.
+2. **По-скъпо дългово финансиране**: Недвижимите имоти разчитат на кредити за нови покупки, което временно оскъпява разрастването.`;
+    specificMoatCheck = `* **Triple Net Lease модел**: Наемателите покриват данъци, застраховки и поддръжка.
+* **Над 25+ години непрекъснато покачване на месечния дивидент** и заетост над 98%.`;
+  } else {
+    specificCatalysts = `1. **Макроикономическа среда и лихвен натиск**: По-високите лихвени нива оказват натиск върху мултиплексите и оскъпяват корпоративното кредитиране.
+2. **Секторна волатилност и прибиране на печалби**: След силни периоди големите институционални фондове често ребалансират портфейлите си.
+3. **Разминаване между пазарните очаквания и прогнозите**: Дори при добри финансови резултати, по-предпазливи прогнози за следващото тримесечие водят до краткосрочни разпродажби.`;
+    specificMoatCheck = `* **Фундаментален статус**: Проверете дали свободният паричен поток (FCF) и оперативният марж остават стабилни в [StockAnalysis.com](https://stockanalysis.com/stocks/${cleanTicker.toLowerCase()}/).
+* **Справедлива стойност**: По DCF модела в нашата платформа справедливата цена е **${fairPrice}** (разлика: **${diffPct}**).`;
+  }
+
+  return `### 📉 Анализ на спада: ${companyName} (${cleanTicker})
+**Актуални данни от интерактивната таблица на платформата**:
+* 💵 **Текуща цена**: **${currentPrice}** (Дневно движение: **${dailyChange}**)
+* 🎯 **Справедлива стойност (Fair Value)**: **${fairPrice}** | Разлика: **${diffPct}**
+* 📊 **P/E коефициент**: **${peRatio}** | Статус: **${isUndervalued ? '🟢 ПОДЦЕНЕНА (Възможност)' : '🔴 НАДЦЕНЕНА / ПРЕОЦЕНЕНА'}**
+* 📅 **Дата на анализа**: ${currentDateStr}
+
+---
+
+### 🔍 Основни причини за спада и пазарния натиск:
+${specificCatalysts}
+
+---
+
+### 🛡️ Проверка на Икономическия ров (Moat) и финансовото здраве:
+${specificMoatCheck}
+
+---
+
+### 🏛️ Как разсъждават Уорън Бъфет и Чарли Мънгър за този спад:
+1. **„Г-н Пазар“ (Mr. Market) е емоционален маниакално-депресивен съдружник**:
+   - Пазарът често свръхреагира на краткосрочни новини, съдебни заглавия и тримесечни прогнози.
+   - За истинския стойностен инвеститор ценовият спад **НЕ е риск**, а възможност да купите дял от изключителен бизнес с отстъпка (*Margin of Safety*).
+2. **Въпросът, който Бъфет задава**:
+   - *„Ще бъде ли този бизнес по-силен, по-доминиращ и по-печеливш след 10 години, отколкото е днес?“*
+   - Ако отговорът е твърдо **ДА**, временният спад на котировките е подарък за дългосрочния акционер, който акумулира капитал.
+3. **Какво да направите в платформата**:
+   - 🎯 Отворете модала **„8-точков анализ по Бъфет“** за ${cleanTicker} от таблицата, за да видите всички 8 фундаментални критерия.
+   - 🔔 Настройте **Ценово предупреждение (Price Alert)** при желаната от вас входна цена, за да получите известие веднага щом акцията достигне целевия марж на безопасност!`;
+}
+
+/**
+ * Macro market analyzer explaining why the general market / indices experienced declines.
+ */
+export function generateGeneralMarketDropAnalysis(stocks: Stock[], indices: MarketIndex[] = []): string {
+  const todayStr = new Date().toLocaleDateString('bg-BG');
+  
+  // Format indices summary
+  const indicesSummary = indices && indices.length > 0
+    ? indices.map(idx => `* **${idx.name}**: ${idx.value.toLocaleString()} (${idx.changePct >= 0 ? '+' : ''}${idx.changePct.toFixed(2)}%)`).join('\n')
+    : `* **S&P 500 (SPY)**: Следи представянето на 500-те най-големи американски компании
+* **Nasdaq (QQQ)**: Измерва технологичния сектор и иновациите
+* **Dow Jones (DIA)**: Фокусиран върху 30 водещи индустриални гиганта`;
+
+  return `### 📉 Защо падат акциите и пазарите? (Макроикономически анализ)
+**Дата на обзора**: ${todayStr}
+
+---
+
+### 📊 Състояние на водещите пазарни индекси:
+${indicesSummary}
+
+---
+
+### 🔍 4-те основни сили, които движат пазарните спадове:
+
+1. **Лихвена политика на Федералния резерв и доходност по облигациите (10Y Yield)**:
+   - Когато доходността по 10-годишните държавни ценни книжа (ДЦК) на САЩ се покачва, цената на парите се оскъпява.
+   - Инвеститорите дисконтират бъдещите парични потоци на растящите компании с по-висока дисконтова норма (WACC), което автоматично намалява тяхната справедлива пазарна стойност (DCF).
+
+2. **Инфлационни доклади (CPI / PPI / PCE) и очаквания за лихвите**:
+   - Данни, показващи упорита инфлация, карат пазарите да отлагат очакванията за намаляване на лихвите от страна на Фед, което предизвиква незабавни разпродажби на акции.
+
+3. **Секторна ротация и прибиране на печалби (Profit Taking)**:
+   - След продължителни възходящи движения институционалните фондове ребалансират портфейлите си, продавайки акции с високи мултиплекси (P/E > 30x) и насочвайки се към дефанзивни активи, къси облигации или злато.
+
+4. **Пазарна психология и Fear & Greed Index (Страх и Алчност)**:
+   - Пазарите се движат между крайности. Когато индексът на страха премине в зоната на „Екстремен страх“ (*Extreme Fear*), масовите инвеститори разпродават емоционално, създавайки верижна реакция от спадове.
+
+---
+
+### 🏛️ Как действа Уорън Бъфет по време на пазарен спад:
+> *„Бъдете алчни, когато другите се страхуват, и се страхувайте, когато другите са алчни.“*
+
+* **Не продавайте в паника**: Всяка пазарна корекция или мечи пазар в историята в крайна сметка е завършвал с нови исторически върхове.
+* **Търсете бизнеси с висок Margin of Safety**: Разгледайте раздела **„Подценени акции“** в нашата платформа, за да откриете компании със здрав ров (Moat), търгуващи се с отстъпка над 20%.
+* **Поддържайте кешов буфер**: Свободните парични средства ви дават силата да купувате качествени активи по време на разпродажби.`;
+}
+
 export type InvestorPersona = 'buffett' | 'lynch' | 'dividend' | 'dalio';
 
 export interface PersonaDetails {
@@ -1166,8 +1329,102 @@ export function handleAiQuery(
     return explainPlatformTooltipOrFormula(cleanQ);
   }
 
+  // Match known tickers and company names (with common company suffix removal)
+  const matchedStock = stocks.find(s => {
+    const sym = s.ticker.toLowerCase();
+    const cleanName = s.companyName.toLowerCase().replace(/\s+(inc\.?|corp\.?|corporation|co\.?|ltd\.?|llc|plc|group|holdings?|sa|ag|nv)\b/gi, '').trim();
+    const symRegex = new RegExp(`(^|\\s|[.,!?;(])${sym}($|\\s|[.,!?;)])`, 'i');
+    return symRegex.test(lower) || (cleanName.length >= 3 && lower.includes(cleanName));
+  });
+
+  // Check common major tickers and Bulgarian company name equivalents
+  const commonTickers = [
+    { ticker: 'BRK.B', names: ['berkshire', 'бъркшир', 'бъфет', 'buffett'] },
+    { ticker: 'AAPL', names: ['apple', 'ейпъл'] },
+    { ticker: 'MSFT', names: ['microsoft', 'майкрософт'] },
+    { ticker: 'GOOG', names: ['google', 'гугъл', 'alphabet', 'алфабет', 'goog', 'googl'] },
+    { ticker: 'AMZN', names: ['amazon', 'амазон'] },
+    { ticker: 'NVDA', names: ['nvidia', 'нвидиа', 'енвидиа'] },
+    { ticker: 'META', names: ['meta', 'мета', 'facebook', 'фейсбук'] },
+    { ticker: 'TSLA', names: ['tesla', 'тесла'] },
+    { ticker: 'AMD', names: ['advanced micro devices', 'амд'] },
+    { ticker: 'INTC', names: ['intel', 'интел'] },
+    { ticker: 'NFLX', names: ['netflix', 'нетфликс'] },
+    { ticker: 'PLTR', names: ['palantir', 'палантир'] },
+    { ticker: 'DIS', names: ['disney', 'дисни'] },
+    { ticker: 'PFE', names: ['pfizer', 'файзер'] },
+    { ticker: 'O', names: ['realty income', 'риълти инкъм'] },
+    { ticker: 'KO', names: ['coca cola', 'coca-cola', 'кока кола'] },
+    { ticker: 'PEP', names: ['pepsi', 'пепси'] }
+  ];
+
+  const matchedCommon = commonTickers.find(c => {
+    const reg = new RegExp(`(^|\\s|[.,!?;(])${c.ticker.replace('.', '\\.')}($|\\s|[.,!?;)])`, 'i');
+    if (reg.test(query)) return true;
+    return c.names.some(n => lower.includes(n));
+  });
+
+  const resolvedStock = matchedStock || (matchedCommon ? stocks.find(st => {
+    const stSym = st.ticker.toUpperCase();
+    const cSym = matchedCommon.ticker.toUpperCase();
+    if (stSym === cSym) return true;
+    if ((cSym === 'GOOG' || cSym === 'GOOGL') && (stSym === 'GOOG' || stSym === 'GOOGL')) return true;
+    return false;
+  }) : undefined);
+  const resolvedTicker = matchedStock?.ticker || (matchedCommon?.ticker === 'GOOG' && resolvedStock?.ticker ? resolvedStock.ticker : matchedCommon?.ticker) || (stocks[0]?.ticker || 'AAPL');
+
+  // Feature: Company Drop / Decline / Selloff In-depth Analysis
+  // e.g. "Защо паднаха акциите на Goog?", "Защо пада Apple?", "Каква е причината за спада на Tesla?", "Защо поевтинява Google?"
+  const isDropKeyword = 
+    lower.includes('падна') || 
+    lower.includes('паднаха') || 
+    lower.includes('пада') || 
+    lower.includes('падат') || 
+    lower.includes('паднали') || 
+    lower.includes('спад') || 
+    lower.includes('спада') || 
+    lower.includes('спадат') || 
+    lower.includes('срив') || 
+    lower.includes('срина') || 
+    lower.includes('сринаха') || 
+    lower.includes('поевтиня') || 
+    lower.includes('поевтиняха') || 
+    lower.includes('поевтинява') || 
+    lower.includes('понижи') || 
+    lower.includes('понижиха') || 
+    lower.includes('понижение') ||
+    lower.includes('червено');
+
+  const isWhyOrInquiry = 
+    lower.includes('защо') || 
+    lower.includes('причина') || 
+    lower.includes('причини') || 
+    lower.includes('какво става') || 
+    lower.includes('какво се случва') || 
+    lower.includes('на какво се дължи') || 
+    lower.includes('обясни') ||
+    lower.includes('анализ');
+
+  const isCompanyDropQuery = 
+    (isWhyOrInquiry && isDropKeyword) || 
+    lower.includes('защо падна') || 
+    lower.includes('защо паднаха') || 
+    lower.includes('защо пада') || 
+    lower.includes('защо падат') || 
+    lower.includes('защо се срина') || 
+    lower.includes('защо поевтиня');
+
+  if (isCompanyDropQuery && (matchedStock || matchedCommon)) {
+    return generateCompanyDropAnalysis(resolvedTicker, resolvedStock, cleanQ, today);
+  }
+
+  if (isCompanyDropQuery && !matchedStock && !matchedCommon) {
+    return generateGeneralMarketDropAnalysis(stocks, indices);
+  }
+
   // 1. Daily Market Movers: Top Losers (спад / най-голям спад) & Top Gainers (ръст / най-голям ръст)
   const isGeneralDropList = 
+    !isCompanyDropQuery &&
     (lower.includes('спад') || lower.includes('падат') || lower.includes('паднали') || lower.includes('губещи') || lower.includes('поевтиняват') || lower.includes('сринаха') || lower.includes('losers')) &&
     (lower.includes('най-голям') || lower.includes('най голям') || lower.includes('най-много') || lower.includes('най много') || lower.includes('топ') || lower.includes('кои') || lower.includes('кой') || lower.includes('акции') || lower.includes('днес') || lower.includes('пазар'));
 
@@ -1333,39 +1590,6 @@ export function handleAiQuery(
   if ((lower.includes('разпределя') || lower.includes('разпределение') || lower.includes('стратегия')) && (lower.includes('кеш') || lower.includes('пари'))) {
     return generateLocalCashAllocation(context, stocks);
   }
-
-  // 11. Match known tickers and company names (with common company suffix removal)
-  const matchedStock = stocks.find(s => {
-    const sym = s.ticker.toLowerCase();
-    const cleanName = s.companyName.toLowerCase().replace(/\s+(inc\.?|corp\.?|corporation|co\.?|ltd\.?|llc|plc|group|holdings?|sa|ag|nv)\b/gi, '').trim();
-    const symRegex = new RegExp(`(^|\\s|[.,!?;(])${sym}($|\\s|[.,!?;)])`, 'i');
-    return symRegex.test(lower) || (cleanName.length >= 3 && lower.includes(cleanName));
-  });
-
-  // Check common major tickers and Bulgarian company name equivalents
-  const commonTickers = [
-    { ticker: 'BRK.B', names: ['berkshire', 'бъркшир', 'бъфет', 'buffett'] },
-    { ticker: 'AAPL', names: ['apple', 'ейпъл'] },
-    { ticker: 'MSFT', names: ['microsoft', 'майкрософт'] },
-    { ticker: 'GOOG', names: ['google', 'гугъл', 'alphabet', 'алфабет'] },
-    { ticker: 'AMZN', names: ['amazon', 'амазон'] },
-    { ticker: 'NVDA', names: ['nvidia', 'нвидиа', 'енвидиа'] },
-    { ticker: 'META', names: ['meta', 'мета', 'facebook', 'фейсбук'] },
-    { ticker: 'TSLA', names: ['tesla', 'тесла'] },
-    { ticker: 'PFE', names: ['pfizer', 'файзер'] },
-    { ticker: 'O', names: ['realty income', 'риълти инкъм'] },
-    { ticker: 'KO', names: ['coca cola', 'coca-cola', 'кока кола'] },
-    { ticker: 'PEP', names: ['pepsi', 'пепси'] }
-  ];
-
-  const matchedCommon = commonTickers.find(c => {
-    const reg = new RegExp(`(^|\\s|[.,!?;(])${c.ticker.replace('.', '\\.')}($|\\s|[.,!?;)])`, 'i');
-    if (reg.test(query)) return true;
-    return c.names.some(n => lower.includes(n));
-  });
-
-  const resolvedStock = matchedStock || (matchedCommon ? stocks.find(st => st.ticker.toUpperCase() === matchedCommon.ticker.toUpperCase()) : undefined);
-  const resolvedTicker = matchedStock?.ticker || matchedCommon?.ticker || (stocks[0]?.ticker || 'AAPL');
 
   // Feature 1: Daily Market Intelligence Briefing
   if (
