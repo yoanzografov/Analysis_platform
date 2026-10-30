@@ -461,6 +461,62 @@ ${tableRows}
 }
 
 /**
+ * Ranks highest yielding dividend stocks with dividend safety & FCF coverage audit.
+ */
+export function generateTopDividendStocks(stocks: Stock[]): string {
+  const valid = (stocks || [])
+    .filter(s => s && s.currentPrice > 0)
+    .map(s => {
+      const yieldPct = typeof s.dividendYield === 'number' && !isNaN(s.dividendYield) && s.dividendYield > 0
+        ? s.dividendYield
+        : (s.dividend && s.dividend !== '-' ? parseFloat(s.dividend) : 0);
+      return { ...s, yieldPct };
+    })
+    .filter(s => s.yieldPct > 0)
+    .sort((a, b) => b.yieldPct - a.yieldPct);
+
+  const topDividends = valid.slice(0, 7);
+
+  if (topDividends.length === 0) {
+    return `### 💰 Дивидентни акции в платформата
+В момента няма заредени компании с регистриран дивидент над 0%. Разгледайте класическите дивидентни аристократи в таблицата като **Realty Income (O)**, **Coca-Cola (KO)**, **PepsiCo (PEP)** или **Johnson & Johnson (JNJ)**.`;
+  }
+
+  let tableRows = '';
+  topDividends.forEach((s, idx) => {
+    const fairVal = s.fairPrice ? `$${s.fairPrice.toFixed(2)}` : 'N/A';
+    const mosVal = typeof s.difference === 'number' && !isNaN(s.difference)
+      ? `${s.difference >= 0 ? '+' : ''}${s.difference.toFixed(1)}%`
+      : '0.0%';
+    const pE = s.peRatio ? `${s.peRatio.toFixed(1)}x` : 'N/A';
+    const safetyBadge = s.yieldPct > 8.0 
+      ? '⚠️ Висок дивидент (провери FCF)' 
+      : s.yieldPct >= 3.0 
+      ? '🟢 Стабилен аристократ' 
+      : '🟢 Умерен / Растящ';
+
+    tableRows += `| **#${idx + 1} ${s.ticker}** (${s.companyName}) | **${s.yieldPct.toFixed(2)}%** | **$${s.currentPrice.toFixed(2)}** | ${fairVal} | **${mosVal}** | ${pE} | ${safetyBadge} |\n`;
+  });
+
+  return `### 💰 Топ дивидентни акции в платформата
+*Класиране по текуща годишна дивидентна доходност (Dividend Yield) и сигурност:*
+
+---
+
+### 📊 Таблица на лидерите по дивидентен доход:
+
+| Компания & Тикер | Дивидент (%) | Текуща цена | Справедлива стойност | Margin of Safety | P/E Ratio | Одит на сигурността |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+${tableRows}
+---
+
+### 🏛️ 3 Златни правила на Чарли Мънгър за дивидентни инвеститори:
+1. **Не се подлъгвайте по екстремни дивиденти (> 8-10%)**: Това често е *„дивидентен капан“ (Dividend Trap)* — цената на акцията се е сринала поради сериозни проблеми с бизнеса.
+2. **Проверете FCF Payout Ratio**: Дивидентът трябва да се изплаща от **реални свободни парични потоци**, а не от вземане на нови банкови заеми. Здравословният коефициент е **под 60%**.
+3. **Реинвестиране със сложна лихва (DRIP)**: Реинвестирането на дивидентите обратно в нови дялове удвоява стойността на портфолиото ви значително по-бързо през 10-20 годишен период.`;
+}
+
+/**
  * Intelligent Fallback Generator for Cash Allocation Strategy
  */
 export function generateLocalCashAllocation(context: AiPortfolioContext, stocks: Stock[]): string {
@@ -1117,12 +1173,37 @@ export function handleAiQuery(
     return generateLocalPortfolioAudit(context);
   }
 
-  // 9. Undervalued stocks
-  if (lower.includes('подценени') || lower.includes('най-подценени') || lower.includes('подценена') || lower.includes('марж на сигурност')) {
+  // 9. Undervalued stocks & "Какво да купя / Препоръчай ми акция"
+  const isBuyRecommendationQuery = 
+    lower.includes('подценени') || 
+    lower.includes('най-подценени') || 
+    lower.includes('най подценени') || 
+    lower.includes('подценена') || 
+    lower.includes('марж на сигурност') ||
+    lower.includes('какво да купя') ||
+    lower.includes('коя акция да купя') ||
+    lower.includes('кои акции да купя') ||
+    lower.includes('какво препоръчваш') ||
+    lower.includes('препоръчай ми акция') ||
+    lower.includes('препоръчай акция') ||
+    lower.includes('най-добрите акции') ||
+    lower.includes('най добрите акции') ||
+    lower.includes('най-добрите компании');
+
+  if (isBuyRecommendationQuery) {
     return generateLocalUndervaluedStocks(stocks);
   }
 
-  // 10. Cash allocation
+  // 10. Top Dividend Stocks
+  const isDividendRankQuery = 
+    (lower.includes('дивидент') || lower.includes('дивиденти')) &&
+    (lower.includes('най-висок') || lower.includes('най висок') || lower.includes('топ') || lower.includes('кои') || lower.includes('кой') || lower.includes('най-добри') || lower.includes('най добри') || lower.includes('аристократи'));
+
+  if (isDividendRankQuery) {
+    return generateTopDividendStocks(stocks);
+  }
+
+  // 11. Cash allocation
   if ((lower.includes('разпределя') || lower.includes('разпределение') || lower.includes('стратегия')) && (lower.includes('кеш') || lower.includes('пари'))) {
     return generateLocalCashAllocation(context, stocks);
   }
