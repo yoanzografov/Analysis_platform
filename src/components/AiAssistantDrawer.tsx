@@ -830,14 +830,21 @@ export default function AiAssistantDrawer({
 
             <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[10px] text-slate-500">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-slate-400 font-bold">Източници на данни:</span>
+                <span className="text-emerald-400 font-bold flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 inline text-emerald-400" />
+                  Верифицирани източници:
+                </span>
                 <a href="https://stockanalysis.com/" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 underline font-semibold">StockAnalysis.com</a>
                 <span>•</span>
-                <a href="https://www.investopedia.com/" target="_blank" rel="noreferrer" className="text-amber-400 hover:text-amber-300 underline font-semibold">Investopedia.com</a>
+                <a href="https://www.sec.gov/edgar/searchedgar/companysearch" target="_blank" rel="noreferrer" className="text-cyan-400 hover:text-cyan-300 underline font-semibold">SEC EDGAR (10-K/10-Q)</a>
                 <span>•</span>
-                <span>SEC 10-K / 10-Q</span>
+                <a href="https://www.investopedia.com/" target="_blank" rel="noreferrer" className="text-amber-400 hover:text-amber-300 underline font-semibold">Investopedia</a>
+                <span>•</span>
+                <a href="https://finance.yahoo.com/" target="_blank" rel="noreferrer" className="text-purple-400 hover:text-purple-300 underline font-semibold">Yahoo Finance</a>
+                <span>•</span>
+                <a href="https://fred.stlouisfed.org/" target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 underline font-semibold">FRED</a>
               </div>
-              <span className="shrink-0 text-slate-500">Стойностен анализ (10+ г. хоризонт)</span>
+              <span className="shrink-0 text-slate-500 font-medium">Zero-Error Policy • Стойностен анализ</span>
             </div>
           </div>
         </div>

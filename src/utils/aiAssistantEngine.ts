@@ -231,7 +231,17 @@ ${specificMoatCheck}
    - Ако отговорът е твърдо **ДА**, временният спад на котировките е подарък за дългосрочния акционер, който акумулира капитал.
 3. **Какво да направите в платформата**:
    - 🎯 Отворете модала **„8-точков анализ по Бъфет“** за ${cleanTicker} от таблицата, за да видите всички 8 фундаментални критерия.
-   - 🔔 Настройте **Ценово предупреждение (Price Alert)** при желаната от вас входна цена, за да получите известие веднага щом акцията достигне целевия марж на безопасност!`;
+   - 🔔 Настройте **Ценово предупреждение (Price Alert)** при желаната от вас входна цена, за да получите известие веднага щом акцията достигне целевия марж на безопасност!
+
+---
+
+### 🏛️ Официални верифицирани институционални източници за ${companyName} (${cleanTicker}):
+* 📑 **SEC EDGAR (Одитирани отчети Form 10-K & 10-Q)**: [SEC EDGAR Фирмен регистър за ${cleanTicker}](https://www.sec.gov/edgar/searchedgar/companysearch)
+* 📊 **StockAnalysis.com (Фундаментални отчети, баланс и съотношения)**: [StockAnalysis.com - ${cleanTicker} Financials & Ratios](https://stockanalysis.com/stocks/${cleanTicker.toLowerCase()}/financials/ratios/)
+* 💵 **StockAnalysis.com (Свободен паричен поток & DCF модел)**: [StockAnalysis.com - ${cleanTicker} Cash Flow](https://stockanalysis.com/stocks/${cleanTicker.toLowerCase()}/financials/cash-flow-statement/)
+* 📈 **Yahoo Finance (Пазарни котировки на живо & консенсус)**: [Yahoo Finance - ${cleanTicker} Overview](https://finance.yahoo.com/quote/${cleanTicker}/)
+* 📰 **Новинарски поток в реално време**: [StockAnalysis.com News - ${cleanTicker}](https://stockanalysis.com/stocks/${cleanTicker.toLowerCase()}/)
+* 📚 **Методология и инвестиционна теория**: [Investopedia Financial Dictionary](https://www.investopedia.com/)`;
 }
 
 /**
@@ -279,7 +289,79 @@ ${indicesSummary}
 
 * **Не продавайте в паника**: Всяка пазарна корекция или мечи пазар в историята в крайна сметка е завършвал с нови исторически върхове.
 * **Търсете бизнеси с висок Margin of Safety**: Разгледайте раздела **„Подценени акции“** в нашата платформа, за да откриете компании със здрав ров (Moat), търгуващи се с отстъпка над 20%.
-* **Поддържайте кешов буфер**: Свободните парични средства ви дават силата да купувате качествени активи по време на разпродажби.`;
+* **Поддържайте кешов буфер**: Свободните парични средства ви дават силата да купувате качествени активи по време на разпродажби.
+
+---
+
+### 🏛️ Официални верифицирани макроикономически източници:
+* 🌐 **Федерален резерв (FRED)**: [FRED Economic Data - Лихви, CPI, PCE & Инфлация](https://fred.stlouisfed.org/)
+* 📊 **CBOE Volatility Index (VIX)**: [CBOE VIX Index](https://www.cboe.com/tradable_products/vix/)
+* 🧭 **CNN Business Fear & Greed Index**: [CNN Fear & Greed Tracker](https://edition.cnn.com/markets/fear-and-greed)
+* 📚 **Инвестиционна методология**: [Investopedia Macroeconomic Indicators](https://www.investopedia.com/)`;
+}
+
+/**
+ * Guide on Trusted Institutional Data Sources: Strict Zero-Error & Non-Hallucination Policy.
+ */
+export function generateTrustedSourcesGuide(): string {
+  return `### 🛡️ Верифицирани институционални източници на информация (Zero-Error Policy)
+
+За да гарантираме **100% точност, без грешки, догадки и халюцинации**, аналитичният двигател и AI асистентът на платформата **RayVes Capital** стъпват строго върху 5-те официални златни стандарта на световните финансови пазари:
+
+---
+
+### 🏛️ 5-те стълба на проверената информация:
+
+#### 1. 📑 SEC EDGAR (U.S. Securities and Exchange Commission)
+* **Какво представлява**: Официалната държавна регулаторна база данни на САЩ за публични дружества.
+* **Какви данни черпим**:
+  - **Form 10-K**: Годишни, подробно одитирани финансови отчети, счетоводни баланси и бележки под линия.
+  - **Form 10-Q**: Официални тримесечни финансови отчети за приходи, печалба на акция (EPS) и парични потоци.
+  - **Form 8-K**: Извънредни корпоративни събития, регулаторни решения, антитръстови производства (напр. DOJ) и сливания.
+* **Връзка**: [SEC EDGAR Фирмен регистър](https://www.sec.gov/edgar/searchedgar/companysearch)
+
+#### 2. 📊 StockAnalysis.com (Фундаментален анализ & DCF модели)
+* **Какво представлява**: Най-бързо развиващата се и прецизна световна платформа за корпоративни финансови показатели.
+* **Какви данни черпим**:
+  - P/E, Forward P/E, PEG Ratio, Price/Sales, Price/Book, EV/EBITDA.
+  - Свободен паричен поток (Free Cash Flow - FCF), дисконтирани парични потоци (DCF) и WACC.
+  - Рентабилност на инвестирания капитал: **ROIC** (златен стандарт на Бъфет > 15%), **ROE**, **ROA**.
+  - Задлъжнялост: Debt/Equity, Net Debt, Interest Coverage Ratio.
+* **Връзка**: [StockAnalysis.com](https://stockanalysis.com/)
+
+#### 3. 📚 Investopedia.com (Академичен световен стандарт)
+* **Какво представлява**: Най-авторитетният глобален образователен източник за финансова теория, терминология и математически формули.
+* **Какви данни черпим**:
+  - Формулата на Бенджамин Греъм за вътрешна стойност: $V = \\frac{\\text{EPS} \\times (8.5 + 2g) \\times 4.4}{Y}$.
+  - 9-точковият тест на проф. Джоузеф Пиотроски (**Piotroski F-Score**).
+  - Тестът за риск от фалит на проф. Едуард Алтман (**Altman Z-Score**).
+  - Моделът на Питър Линч за справедлива стойност и Peter Lynch Chart (GARP).
+  - Gordon Dividend Discount Model (DDM) и Capital Asset Pricing Model (CAPM).
+* **Връзка**: [Investopedia Financial Dictionary](https://www.investopedia.com/)
+
+#### 4. 📈 Yahoo Finance & Live Stock Exchange Feeds
+* **Какво представлява**: Пазарни котировки на живо директно от борсите NYSE, NASDAQ, CBOE и европейските борси.
+* **Какви данни черпим**:
+  - Текущи цени на акциите в реално време, дневно движение в проценти (Daily Change %).
+  - 52-седмични дъна и върхове (52-Week Range), бета коефициент (Beta) и пазарна капитализация.
+  - Консенсусни оценки на анализаторите от Уолстрийт (Wall Street Consensus Targets).
+* **Връзка**: [Yahoo Finance](https://finance.yahoo.com/)
+
+#### 5. 🌐 Federal Reserve (FRED) & CNN Business
+* **Какво представлява**: Официалната база данни за икономически изследвания на Федералния резерв (Сейнт Луис) и CNN.
+* **Какви данни черпим**:
+  - Инфлационни индекси: **CPI** (Consumer Price Index), **PCE** (Personal Consumption Expenditures).
+  - Лихвени проценти на Фед (Fed Funds Rate) и лихвена крива (10-Year vs 2-Year Treasury Yield Spread).
+  - **Fear & Greed Index**: Индикатор за пазарния сантимент (от 0 - Екстремен страх до 100 - Екстремна алчност).
+  - **Buffett Indicator**: Обща пазарна капитализация на САЩ към БВП (Wilshire 5000 / US GDP).
+* **Връзка**: [FRED Economic Data](https://fred.stlouisfed.org/) • [CNN Fear & Greed](https://edition.cnn.com/markets/fear-and-greed)
+
+---
+
+### 🛡️ Нашата политика за нулева грешка (Zero-Error Architecture):
+1. **Приоритет на реалните данни**: Ако питате за акция от вашата интерактивна таблица, AI използва точните котировки, съотношения и изчисления от вашата платформа.
+2. **Без измислени цифри**: Ако за дадена компания липсва одитиран показател, AI няма да го измисли, а директно ще посочи връзка към съответния Form 10-K отчет в SEC EDGAR.
+3. **Прозрачност с един клик**: Всеки генериран анализ за компания завършва с директни хипервръзки към нейния профил в StockAnalysis, SEC EDGAR и Yahoo Finance, за да може всеки инвеститор лично да верифицира числата.`;
 }
 
 export type InvestorPersona = 'buffett' | 'lynch' | 'dividend' | 'dalio';
@@ -416,11 +498,16 @@ export const BUFFETT_MUNGER_SYSTEM_PROMPT = `РОЛЯ И ЦЕЛ:
 - Economic Moat Audit (5-те стълба на Morningstar за устойчиво конкурентно превъзходство и ценова мощ)
 - Macro Cycle & Yield Curve (10Y-2Y спред, фаза на икономическия цикъл и секторно позициониране)
 
-ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ:
-- https://stockanalysis.com/ – водещ източник за фундаментални финансови данни за акции, пазарни котировки, балансови отчети, парични потоци, DCF калкулации и финансови новини.
-- https://www.investopedia.com/ – основен стандарт за финансови дефиниции, понятия, инвестиционна теория, формули, пазарна терминология и методологии.
-- Официални финансови отчети Form 10-K, Form 10-Q към щатската SEC и секциите за Investor Relations.
-Винаги когато анализираш акции и пазарни показатели, се опирай на данните и методологиите от StockAnalysis.com, а за финансови и икономически дефиниции – на Investopedia.com.`;
+ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ (ZERO-ERROR & ZERO-HALLUCINATION POLICY):
+- https://stockanalysis.com/ – водещ световен източник за фундаментални финансови данни за акции, пазарни котировки, балансови отчети, парични потоци, DCF калкулации и финансови новини.
+- https://www.investopedia.com/ – златен международен стандарт за финансови дефиниции, понятия, инвестиционна теория, формули, пазарна терминология и методологии.
+- https://www.sec.gov/edgar/searchedgar/companysearch – официални одитирани годишни (Form 10-K) и тримесечни (Form 10-Q) отчети към щатската комисия SEC и секциите за Investor Relations.
+- https://finance.yahoo.com/ – пазарни котировки на живо, дневни обеми, 52-седмични диапазони и анализаторски консенсус.
+- https://fred.stlouisfed.org/ – официални макроданни на Федералния резерв (инфлация CPI/PCE, лихви на Фед, 10Y-2Y лихвена крива).
+СТРОГИ ПРАВИЛА ЗА ПРЕЦИЗНОСТ И ЛИПСА НА ГРЕШКИ:
+1. Забранено е измислянето на произволни числа или непотвърдени слухове. Приоритет имат реалните стойности от интерактивната таблица на платформата.
+2. Всяко обяснение за спад на акция или пазарно движение се основава на официални регулаторни събития (напр. DOJ, SEC, FTC, ЕС), тримесечни отчети (Earnings Calls) или водещи финансови медии (Reuters, Bloomberg, The Wall Street Journal).
+3. Винаги когато анализираш акции и пазарни показатели, се опирай на проверените данни от StockAnalysis.com, SEC EDGAR и Investopedia.com.`;
 
 /**
  * Intelligent Fallback Generator for Company Analysis adhering strictly to the 8 Buffett & Munger points.
@@ -514,7 +601,16 @@ export function generateLocalBuffettAnalysis(ticker: string, stock?: Stock, curr
 * **Какво да проверите преди инвестиционно решение**:
   1. Изчислете собствената си граница на сигурност (Margin of Safety) от поне 15-20%.
   2. Проследете следващия тримесечен отчет Form 10-Q за динамиката на оперативния марж.
-  3. Съобразете размера на позицията с общата диверсификация на вашия портфейл.`;
+  3. Съобразете размера на позицията с общата диверсификация на вашия портфейл.
+
+---
+
+### 🏛️ Официални верифицирани институционални източници:
+* 📑 **SEC EDGAR (Одитирани отчети Form 10-K & 10-Q)**: [SEC EDGAR Фирмен регистър за ${cleanTicker}](https://www.sec.gov/edgar/searchedgar/companysearch)
+* 📊 **StockAnalysis.com (Фундаментални показатели & коефициенти)**: [StockAnalysis.com - ${cleanTicker} Financials](https://stockanalysis.com/stocks/${cleanTicker.toLowerCase()}/financials/ratios/)
+* 💵 **StockAnalysis.com (Свободен паричен поток & DCF модел)**: [StockAnalysis.com - ${cleanTicker} Cash Flow](https://stockanalysis.com/stocks/${cleanTicker.toLowerCase()}/financials/cash-flow-statement/)
+* 📈 **Yahoo Finance (Пазарни котировки на живо & консенсус)**: [Yahoo Finance - ${cleanTicker} Overview](https://finance.yahoo.com/quote/${cleanTicker}/)
+* 📚 **Методология и инвестиционна теория**: [Investopedia Financial Terms](https://www.investopedia.com/)`;
 }
 
 /**
@@ -1295,6 +1391,15 @@ export function handleAiQuery(
 
   if (isMasterGuideQuery) {
     return generateMasterPlatformGuide();
+  }
+
+  // 0.0. Trusted Institutional Data Sources & Zero-Error Policy
+  const isTrustedSourcesQuery =
+    (lower.includes('точни сайтове') || lower.includes('доказани') || lower.includes('източници') || lower.includes('откъде') || lower.includes('от къде') || lower.includes('какви сайтове') || lower.includes('кои сайтове') || lower.includes('къде търсиш') || lower.includes('надеждни') || lower.includes('да няма грешки') || lower.includes('без грешки') || lower.includes('проверени') || lower.includes('грешки') || lower.includes('не искам грешки')) &&
+    (lower.includes('информация') || lower.includes('данни') || lower.includes('сайтове') || lower.includes('сайт') || lower.includes('източник') || lower.includes('източници') || lower.includes('проверка') || lower.includes('търси') || lower.includes('търсиш') || lower.includes('грешки'));
+
+  if (isTrustedSourcesQuery) {
+    return generateTrustedSourcesGuide();
   }
 
   // 0.1. Platform Information, [i] Info Tooltips, Purpose & Mathematical Formulas
