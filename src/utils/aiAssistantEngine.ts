@@ -9,7 +9,8 @@ import {
   projectDividendSnowball,
   auditEconomicMoat,
   analyzeMacroCycle,
-  generateStockAnalysisRatios
+  generateStockAnalysisRatios,
+  explainPlatformTooltipOrFormula
 } from './aiSkillsEngine';
 
 export {
@@ -21,7 +22,8 @@ export {
   projectDividendSnowball,
   auditEconomicMoat,
   analyzeMacroCycle,
-  generateStockAnalysisRatios
+  generateStockAnalysisRatios,
+  explainPlatformTooltipOrFormula
 };
 
 export type InvestorPersona = 'buffett' | 'lynch' | 'dividend' | 'dalio';
@@ -857,7 +859,39 @@ export function handleAiQuery(
   const lower = cleanQ.toLowerCase();
   const today = new Date().toLocaleDateString('bg-BG');
 
-  // 0. Connect / Obtain Gemini API Key Guide
+  // 0. Platform Information, [i] Info Tooltips, Purpose & Mathematical Formulas
+  const isPlatformHelpOrFormula = 
+    lower.includes('за какво служи') ||
+    lower.includes('за какво се ползва') ||
+    lower.includes('какво прави') ||
+    lower.includes('как се ползва') ||
+    lower.includes('как се използва') ||
+    lower.includes('използване на платформата') ||
+    lower.includes('къде има i') ||
+    lower.includes('инфо икон') ||
+    lower.includes('инфо бутон') ||
+    (lower.includes('какво') && lower.includes('означава') && (lower.includes(' i') || lower.includes('инфо') || lower.includes('бутон'))) ||
+    lower.includes('формул') ||
+    lower.includes('как се смята') ||
+    lower.includes('как се изчислява') ||
+    lower.includes('как се изчисляват') ||
+    lower.includes('марж на сигурност') ||
+    lower.includes('margin of safety') ||
+    lower.includes('бенджамин греъм') ||
+    lower.includes('graham formula') ||
+    lower.includes('формула на греъм') ||
+    lower.includes('yield on cost') ||
+    lower.includes('yoc') ||
+    lower.includes('cagr') ||
+    (lower.includes('dcf') && (lower.includes('какво') || lower.includes('формула') || lower.includes('как') || lower.includes('за какво'))) ||
+    (lower.includes('roic') && (lower.includes('какво') || lower.includes('формула') || lower.includes('как') || lower.includes('за какво'))) ||
+    (lower.includes('roe') && (lower.includes('какво') || lower.includes('формула') || lower.includes('как') || lower.includes('за какво')));
+
+  if (isPlatformHelpOrFormula) {
+    return explainPlatformTooltipOrFormula(cleanQ);
+  }
+
+  // 1. Connect / Obtain Gemini API Key Guide
   if (
     lower.includes('api') || 
     lower.includes('ключ') || 
