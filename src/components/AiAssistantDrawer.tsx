@@ -255,9 +255,9 @@ export default function AiAssistantDrawer({
   });
 
   const [messages, setMessages] = useState<AiChatMessage[]>(() => {
+    // Purge any legacy stored history so chat always starts clean on re-entry
     try {
-      const saved = localStorage.getItem('ai_assistant_chat_history');
-      if (saved) return JSON.parse(saved);
+      localStorage.removeItem('ai_assistant_chat_history');
     } catch {}
     return [
       {
@@ -286,12 +286,6 @@ export default function AiAssistantDrawer({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('ai_assistant_chat_history', JSON.stringify(messages));
-    } catch {}
-  }, [messages]);
 
   useEffect(() => {
     try {
@@ -476,15 +470,15 @@ export default function AiAssistantDrawer({
   };
 
   const handleClearHistory = () => {
-    if (confirm('Сигурни ли сте, че искате да изчистите историята на чата?')) {
-      const initial: AiChatMessage = {
-        role: 'assistant',
-        content: 'Историята беше изчистена. С какво мога да ви помогна днес?',
-        timestamp: new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages([initial]);
+    const initial: AiChatMessage = {
+      role: 'assistant',
+      content: 'Историята беше изчистена. С какво мога да ви помогна днес?',
+      timestamp: new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages([initial]);
+    try {
       localStorage.removeItem('ai_assistant_chat_history');
-    }
+    } catch {}
   };
 
   const handleCopyMessage = (text: string, index: number) => {
