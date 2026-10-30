@@ -662,6 +662,39 @@ export function generatePlatformHelp(): string {
 }
 
 /**
+ * Step-by-step guide on connecting and obtaining a free Google Gemini API key.
+ */
+export function generateApiKeyGuide(): string {
+  return `### 🔑 Как да свържете вашия безплатен Gemini API ключ?
+
+Свързването на безплатен ключ от Google отнема **по-малко от 1 минута** и отключва **100% от пълния капацитет на Gemini 2.5 Flash** на живо за цялата платформа!
+
+---
+
+### 1. 🌐 Вземете безплатен ключ от Google AI Studio (30 секунди):
+1. Отворете официалния портал на Google: **[https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)**
+2. Влезте с вашия Google / Gmail профил.
+3. Натиснете синия бутон **„Create API key“** (или *„Create key in new project“*).
+4. Google мигновено ще ви генерира ключ, започващ с:
+   \`AIzaSy...\`
+5. Натиснете **Copy** (Копирай).
+
+---
+
+### 2. 📲 Активирайте ключа в платформата:
+1. В горния десен ъгъл на този AI прозорец натиснете иконката с **ключе** (🔑).
+2. Поставете копирания ключ в полето (започващо с \`AIzaSy...\`).
+3. Натиснете бутона **„Активирай“**.
+
+---
+
+### ✅ Резултат:
+* Системата ще валидира ключа с Google в реално време за 1 секунда.
+* Етикетът горе ще светне в зелено: **🟢 Gemini 2.5 Live (ON)**.
+* Вашият AI асистент вече има пълна многостепенна памет за разговора и разсъждава с най-мощния изкуствен интелект на Google!`;
+}
+
+/**
  * Head-to-Head Comparison Duel between two stocks.
  */
 export function generateHeadToHeadComparison(
@@ -835,6 +868,19 @@ export function handleAiQuery(
   const cleanQ = query.trim();
   const lower = cleanQ.toLowerCase();
   const today = new Date().toLocaleDateString('bg-BG');
+
+  // 0. Connect / Obtain Gemini API Key Guide
+  if (
+    lower.includes('api') || 
+    lower.includes('ключ') || 
+    lower.includes('вържа') || 
+    lower.includes('свържа') || 
+    lower.includes('свързване на api') || 
+    lower.includes('как да си вържа') ||
+    lower.includes('gemini ключ')
+  ) {
+    return generateApiKeyGuide();
+  }
 
   // 1. Portfolio Upload / Import questions
   const isUploadKeyword = lower.includes('кача') || lower.includes('качване') || lower.includes('импорт') || lower.includes('добавя') || lower.includes('файл') || lower.includes('файлове') || lower.includes('csv') || lower.includes('pdf');
