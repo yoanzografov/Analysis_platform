@@ -1089,8 +1089,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const { apiKey } = req.body || {};
       const cleanKey = typeof apiKey === 'string' ? apiKey.trim().replace(/^["']|["']$/g, '') : '';
-      if (!cleanKey || cleanKey.length < 20) {
-        return res.status(400).json({ success: false, error: "Моля, въведете валиден Gemini API ключ." });
+      if (!cleanKey || !/^[A-Za-z0-9_-]{20,}$/.test(cleanKey)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Невалиден формат. Ключът от Google AI Studio трябва да съдържа само латински букви и цифри (започва с AIzaSy...)." 
+        });
       }
       const { GoogleGenAI } = await import('@google/genai');
       const testClient = new GoogleGenAI({ apiKey: cleanKey });
@@ -1098,7 +1101,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       process.env.GEMINI_API_KEY = cleanKey;
       return res.json({ success: true, message: "Gemini 2.5 Flash е активен!" });
     } catch (e: any) {
-      return res.status(400).json({ success: false, error: e?.message || "Грешка при валидиране на Gemini ключ" });
+      let errorMsg = "Грешка при валидиране на Gemini ключ";
+      const rawMsg = String(e?.message || '');
+      if (rawMsg.includes("ByteString") || rawMsg.includes("character at index")) {
+        errorMsg = "Ключът съдържа непозволени символи (вероятно кирилица). Моля, копирайте чистия латински ключ от Google AI Studio (AIzaSy...).";
+      } else if (rawMsg.includes("PERMISSION_DENIED") || rawMsg.includes("API_KEY_INVALID")) {
+        errorMsg = "Този ключ беше отхвърлен от Google (невалиден или блокиран). Моля, генерирайте нов ключ от Google AI Studio.";
+      } else if (e?.message) {
+        errorMsg = e.message;
+      }
+      return res.status(400).json({ success: false, error: errorMsg });
     }
   }
 
@@ -1111,8 +1123,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const { message, portfolio, stocks, userApiKey, persona } = req.body || {};
       if (!message) return res.status(400).json({ error: "Missing message" });
-      const apiKey = userApiKey || process.env.GEMINI_API_KEY;
-      if (!apiKey) return res.status(400).json({ error: "No API key available" });
+      const rawKey = userApiKey || process.env.GEMINI_API_KEY;
+      const apiKey = typeof rawKey === 'string' ? rawKey.trim().replace(/^["']|["']$/g, '') : '';
+      if (!apiKey || !/^[A-Za-z0-9_-]{20,}$/.test(apiKey)) {
+        return res.status(400).json({ error: "No valid API key available" });
+      }
 
       const { GoogleGenAI } = await import('@google/genai');
       const aiClient = new GoogleGenAI({ apiKey });

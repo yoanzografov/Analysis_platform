@@ -33,7 +33,9 @@ import {
   Sun,
   Flame,
   Edit3,
-  Bell
+  Bell,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Stock, PortfolioPosition, MarketIndex } from '../types';
 import { 
@@ -286,8 +288,27 @@ export default function AiAssistantDrawer({
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('user_gemini_api_key') || '');
-  const [isGeminiLive, setIsGeminiLive] = useState<boolean>(() => Boolean(localStorage.getItem('user_gemini_api_key')));
+  const [showKeyPassword, setShowKeyPassword] = useState(false);
+  const [userApiKey, setUserApiKey] = useState(() => {
+    try {
+      const saved = (localStorage.getItem('user_gemini_api_key') || '').trim();
+      if (/^[A-Za-z0-9_-]{20,}$/.test(saved)) {
+        return saved;
+      }
+      if (saved) {
+        localStorage.removeItem('user_gemini_api_key');
+      }
+    } catch {}
+    return '';
+  });
+  const [isGeminiLive, setIsGeminiLive] = useState<boolean>(() => {
+    try {
+      const saved = (localStorage.getItem('user_gemini_api_key') || '').trim();
+      return /^[A-Za-z0-9_-]{20,}$/.test(saved);
+    } catch {
+      return false;
+    }
+  });
   const [keyValidationStatus, setKeyValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
   const [keyErrorMessage, setKeyErrorMessage] = useState('');
   const [selectedStockTicker, setSelectedStockTicker] = useState<string>(() => stocks[0]?.ticker || 'BRK.B');
@@ -487,12 +508,26 @@ export default function AiAssistantDrawer({
   };
 
   const handleActivateGeminiKey = async (keyToTest: string) => {
-    const trimmed = keyToTest.trim();
+    const trimmed = (keyToTest || '').trim().replace(/^["']|["']$/g, '');
     if (!trimmed) {
       setKeyErrorMessage('Моля, въведете вашия Gemini API ключ от Google AI Studio.');
       setKeyValidationStatus('error');
       return;
     }
+
+    // Strict ASCII check: prevent Cyrillic characters (e.g. charCode 1053 'Н' or pasted error messages)
+    if (!/^[A-Za-z0-9_-]+$/.test(trimmed)) {
+      setKeyErrorMessage('Внимание: Въведеният текст съдържа кирилица или непозволени символи! Истинският Gemini API ключ се състои единствено от латински букви и цифри (започва с AIzaSy...).');
+      setKeyValidationStatus('error');
+      return;
+    }
+
+    if (trimmed.length < 25) {
+      setKeyErrorMessage('Ключът е твърде кратък. Истинският Gemini ключ е с дължина 39 символа.');
+      setKeyValidationStatus('error');
+      return;
+    }
+
     setKeyValidationStatus('validating');
     setKeyErrorMessage('');
 
@@ -508,18 +543,19 @@ export default function AiAssistantDrawer({
         localStorage.setItem('user_gemini_api_key', trimmed);
         setIsGeminiLive(true);
         setKeyValidationStatus('success');
-        setTimeout(() => setShowSettings(false), 1200);
+        setTimeout(() => setShowSettings(false), 1500);
       } else {
         setKeyValidationStatus('error');
         setKeyErrorMessage(data.error || 'Ключът е невалиден или отказан от Google.');
       }
     } catch (err: any) {
-      // Local storage fallback anyway
-      setUserApiKey(trimmed);
-      localStorage.setItem('user_gemini_api_key', trimmed);
-      setIsGeminiLive(true);
-      setKeyValidationStatus('success');
-      setTimeout(() => setShowSettings(false), 1200);
+      const msg = String(err?.message || '');
+      if (msg.includes('ByteString') || msg.includes('greater than 255')) {
+        setKeyErrorMessage('Грешка: Въведеният текст съдържа невалидни символи на кирилица. Моля, копирайте отново латинския ключ от Google AI Studio.');
+      } else {
+        setKeyErrorMessage(err?.message || 'Грешка при връзка със сървъра.');
+      }
+      setKeyValidationStatus('error');
     }
   };
 
@@ -567,6 +603,10 @@ export default function AiAssistantDrawer({
 
     try {
       // 1. Try calling the backend /api/ai-assistant with fallback
+      const cleanApiKey = typeof userApiKey === 'string' && /^[A-Za-z0-9_-]{20,}$/.test(userApiKey.trim())
+        ? userApiKey.trim()
+        : undefined;
+
       const response = await fetch('/api/ai-assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -575,7 +615,7 @@ export default function AiAssistantDrawer({
           history: newMessages.slice(-6),
           portfolio: portfolioContext,
           stocks: stocks.slice(0, 30),
-          userApiKey: userApiKey || undefined,
+          userApiKey: cleanApiKey,
           persona
         })
       });
@@ -766,21 +806,48 @@ export default function AiAssistantDrawer({
                 Въведете вашия личен безплатен ключ от Google AI Studio (започва с <code className="bg-slate-900 px-1 py-0.5 rounded text-amber-300 font-mono">AIzaSy...</code>). Системата ще го тества мигновено на живо и ще отключи <strong>100% от аналитичния капацитет на Gemini 2.5 Flash</strong> за цялата платформа!
               </p>
               <div className="flex items-center gap-2">
-                <input
-                  type="password"
-                  placeholder="AIzaSy..."
-                  value={userApiKey}
-                  onChange={(e) => {
-                    setUserApiKey(e.target.value);
-                    setKeyValidationStatus('idle');
-                    setKeyErrorMessage('');
-                  }}
-                  className="flex-1 bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none font-mono"
-                />
+                <div className="relative flex-1">
+                  <input
+                    type={showKeyPassword ? "text" : "password"}
+                    placeholder="AIzaSy..."
+                    value={userApiKey}
+                    onChange={(e) => {
+                      setUserApiKey(e.target.value);
+                      setKeyValidationStatus('idle');
+                      setKeyErrorMessage('');
+                    }}
+                    className="w-full bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-lg pl-3 pr-16 py-1.5 text-xs text-white focus:outline-none font-mono"
+                  />
+                  <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    {userApiKey && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserApiKey('');
+                          setKeyValidationStatus('idle');
+                          setKeyErrorMessage('');
+                          localStorage.removeItem('user_gemini_api_key');
+                        }}
+                        className="text-slate-400 hover:text-white p-1 rounded transition-colors"
+                        title="Изчисти полето"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowKeyPassword(prev => !prev)}
+                      className="text-slate-400 hover:text-amber-400 p-1 rounded transition-colors"
+                      title={showKeyPassword ? "Скрий ключа" : "Покажи ключа"}
+                    >
+                      {showKeyPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
                 <button
                   onClick={() => handleActivateGeminiKey(userApiKey)}
                   disabled={keyValidationStatus === 'validating'}
-                  className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-amber-500 hover:from-indigo-500 hover:to-amber-400 text-white rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-amber-500 hover:from-indigo-500 hover:to-amber-400 text-white rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 shrink-0"
                 >
                   {keyValidationStatus === 'validating' ? (
                     <>

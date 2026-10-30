@@ -1658,10 +1658,12 @@ app.post("/api/update-gemini-key", async (req, res) => {
   try {
     const { apiKey } = req.body;
     const cleanKey = typeof apiKey === 'string' ? apiKey.trim().replace(/^["']|["']$/g, '') : '';
-    if (!cleanKey || cleanKey.length < 20) {
+    
+    // Strict ASCII check to reject Cyrillic characters or error texts (e.g. ByteString error with char 1053 'Н')
+    if (!cleanKey || !/^[A-Za-z0-9_-]{20,}$/.test(cleanKey)) {
       return res.status(400).json({ 
         success: false, 
-        error: "Моля, въведете валиден Gemini API ключ от Google AI Studio." 
+        error: "Невалиден формат. Ключът от Google AI Studio трябва да съдържа само латински букви и цифри (започва с AIzaSy...)." 
       });
     }
 
@@ -1699,11 +1701,18 @@ app.post("/api/update-gemini-key", async (req, res) => {
     });
   } catch (error: any) {
     console.error("Грешка при валидиране на Gemini ключ:", error?.message || error);
+    let errorMsg = "Грешка при свързване с Gemini.";
+    const rawMsg = String(error?.message || '');
+    if (rawMsg.includes("ByteString") || rawMsg.includes("character at index")) {
+      errorMsg = "Ключът съдържа непозволени символи (вероятно кирилица). Моля, копирайте чистия латински ключ от Google AI Studio (AIzaSy...).";
+    } else if (rawMsg.includes("PERMISSION_DENIED") || rawMsg.includes("API_KEY_INVALID")) {
+      errorMsg = "Този ключ беше отхвърлен от Google (блокиран или невалиден). Моля, създайте нов безплатен ключ от Google AI Studio.";
+    } else if (error?.message) {
+      errorMsg = error.message;
+    }
     return res.status(400).json({ 
       success: false, 
-      error: error?.message?.includes("PERMISSION_DENIED") || error?.message?.includes("API_KEY_INVALID")
-        ? "Този ключ беше отхвърлен от Google (блокиран или невалиден). Моля, създайте нов безплатен ключ от Google AI Studio."
-        : (error?.message || "Грешка при свързване с Gemini.") 
+      error: errorMsg
     });
   }
 });
@@ -1715,9 +1724,10 @@ app.post("/api/ai-assistant", async (req, res) => {
       return res.status(400).json({ error: "Missing message" });
     }
 
-    const apiKey = userApiKey || process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(400).json({ error: "No API key available" });
+    const rawKey = userApiKey || process.env.GEMINI_API_KEY;
+    const apiKey = typeof rawKey === 'string' ? rawKey.trim().replace(/^["']|["']$/g, '') : '';
+    if (!apiKey || !/^[A-Za-z0-9_-]{20,}$/.test(apiKey)) {
+      return res.status(400).json({ error: "No valid API key available" });
     }
 
     const aiClient = new GoogleGenAI({
