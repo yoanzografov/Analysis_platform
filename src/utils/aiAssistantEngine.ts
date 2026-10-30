@@ -26,6 +26,99 @@ export {
   explainPlatformTooltipOrFormula
 };
 
+/**
+ * Daily Market Movers Analyzer: Top Losers & Top Gainers with Buffett & Munger value commentary.
+ */
+export function generateDailyMarketMovers(stocks: Stock[], direction: 'losers' | 'gainers' = 'losers'): string {
+  const isLoser = direction === 'losers';
+  const todayStr = new Date().toLocaleDateString('bg-BG');
+
+  // Filter stocks with valid numbers
+  const validStocks = (stocks || []).filter(s => 
+    s && 
+    typeof s.currentPrice === 'number' && 
+    s.currentPrice > 0 &&
+    typeof s.dailyChangePct === 'number' && 
+    !isNaN(s.dailyChangePct)
+  );
+
+  // Fallback if empty or mock
+  const listToUse = validStocks.length >= 3 ? validStocks : (stocks || []);
+
+  const sorted = [...listToUse].sort((a, b) => {
+    const valA = a.dailyChangePct ?? 0;
+    const valB = b.dailyChangePct ?? 0;
+    return isLoser ? valA - valB : valB - valA;
+  });
+
+  const movers = sorted.slice(0, 8);
+
+  const titleEmoji = isLoser ? '📉' : '📈';
+  const titleText = isLoser ? 'Акции с най-голям дневен спад' : 'Акции с най-голям дневен ръст';
+  const columnChangeHeader = isLoser ? 'Дневен спад (%)' : 'Дневен ръст (%)';
+
+  let tableRows = '';
+  movers.forEach(s => {
+    const changeVal = s.dailyChangePct ?? 0;
+    const changeBadge = changeVal < 0 
+      ? `🔴 ${changeVal.toFixed(2)}%` 
+      : `🟢 +${changeVal.toFixed(2)}%`;
+
+    const fairVal = s.fairPrice ? `$${s.fairPrice.toFixed(2)}` : 'N/A';
+    const mosVal = typeof s.difference === 'number' && !isNaN(s.difference) 
+      ? `${s.difference >= 0 ? '+' : ''}${s.difference.toFixed(1)}%` 
+      : (s.fairPrice && s.fairPrice > s.currentPrice ? `+${(((s.fairPrice - s.currentPrice) / s.fairPrice) * 100).toFixed(1)}%` : '0.0%');
+
+    const isUndervalued = s.buySell === 'UNDERVALUED' || (s.fairPrice && s.fairPrice > s.currentPrice);
+    const statusBadge = isUndervalued ? '🟢 Подценена' : '🟡 Честна / Надценена';
+
+    tableRows += `| **${s.ticker}** (${s.companyName}) | **${changeBadge}** | **$${s.currentPrice.toFixed(2)}** | ${fairVal} | **${mosVal}** | ${statusBadge} |\n`;
+  });
+
+  // Identify standout value opportunities among the movers
+  const attractiveOpportunities = movers.filter(s => 
+    (s.fairPrice && s.fairPrice > s.currentPrice) || s.buySell === 'UNDERVALUED'
+  );
+
+  let opportunityText = '';
+  if (isLoser && attractiveOpportunities.length > 0) {
+    const topOpportunity = attractiveOpportunities[0];
+    opportunityText = `
+### 🎯 Най-добра възможност за покупка сред падащите акции:
+* **${topOpportunity.ticker} (${topOpportunity.companyName})**:
+  - Днешен спад: **${topOpportunity.dailyChangePct.toFixed(2)}%** | Текуща цена: **$${topOpportunity.currentPrice.toFixed(2)}**
+  - Справедлива вътрешна стойност (Fair Value): **$${(topOpportunity.fairPrice || topOpportunity.currentPrice * 1.2).toFixed(2)}**
+  - **Марж на сигурност (Margin of Safety)**: **${typeof topOpportunity.difference === 'number' ? `${topOpportunity.difference.toFixed(1)}%` : '+20.0%'}**
+  - *Коментар на Бъфет*: Когато първокласен бизнес се разпродава заради краткосрочен пазарен шум или общо разпродаване на сектора, за дългосрочния инвеститор това е като намаление в любимия магазин!
+`;
+  } else if (!isLoser && movers.length > 0) {
+    const topGainer = movers[0];
+    opportunityText = `
+### 💡 Анализ на лидера по растеж:
+* **${topGainer.ticker} (${topGainer.companyName})**:
+  - Днешен ръст: **+${topGainer.dailyChangePct.toFixed(2)}%** | Текуща цена: **$${topGainer.currentPrice.toFixed(2)}**
+  - Внимание: Не преследвайте акции само заради силен еднодневен ръст (*FOMO*). Проверете дали цената не е изпреварила справедливата стойност (P/E коефициент и DCF парични потоци).
+`;
+  }
+
+  return `### ${titleEmoji} ${titleText} към днешна дата (${todayStr})
+**Източник на данните**: Интерактивна пазарна таблица на платформата (на живо с данни от Yahoo Finance & StockAnalysis)
+
+---
+
+### 📊 Таблица на топ ${movers.length} движения:
+
+| Компания & Тикер | ${columnChangeHeader} | Текуща цена | Справедлива стойност (Fair) | Margin of Safety | Оценка на стойността |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+${tableRows}
+---
+${opportunityText}
+### 🏛️ Как разсъждават Уорън Бъфет и Чарли Мънгър за дневните спадове:
+1. **Волатилността не е риск**: Ценовите колебания за 1 ден отразяват емоциите на *„Г-н Пазар“ (Mr. Market)*, а не реалната дългосрочна същност на бизнеса.
+2. **Проверка на рова (Moat)**: Преди да купите акция на спад, се уверете, че конкурентното предимство, свободният паричен поток (FCF) и мениджмънтът са непокътнати.
+3. **Настройте ценово известие (Price Alert)**: Кликнете върху камбанката 🔔 в таблицата или модала за оценка, за да получите известие, когато акцията падне на желаната от вас цена за покупка!`;
+}
+
 export type InvestorPersona = 'buffett' | 'lynch' | 'dividend' | 'dalio';
 
 export interface PersonaDetails {
@@ -889,6 +982,23 @@ export function handleAiQuery(
 
   if (isPlatformHelpOrFormula) {
     return explainPlatformTooltipOrFormula(cleanQ);
+  }
+
+  // 1. Daily Market Movers: Top Losers (спад / най-голям спад) & Top Gainers (ръст / най-голям ръст)
+  const isGeneralDropList = 
+    (lower.includes('спад') || lower.includes('падат') || lower.includes('паднали') || lower.includes('губещи') || lower.includes('поевтиняват') || lower.includes('сринаха') || lower.includes('losers')) &&
+    (lower.includes('най-голям') || lower.includes('най голям') || lower.includes('най-много') || lower.includes('най много') || lower.includes('топ') || lower.includes('кои') || lower.includes('кой') || lower.includes('акции') || lower.includes('днес') || lower.includes('пазар'));
+
+  const isGeneralRiseList = 
+    (lower.includes('ръст') || lower.includes('растат') || lower.includes('печеливши') || lower.includes('поскъпват') || lower.includes('gainers')) &&
+    (lower.includes('най-голям') || lower.includes('най голям') || lower.includes('най-много') || lower.includes('най много') || lower.includes('топ') || lower.includes('кои') || lower.includes('кой') || lower.includes('акции') || lower.includes('днес') || lower.includes('пазар'));
+
+  if (isGeneralDropList) {
+    return generateDailyMarketMovers(stocks, 'losers');
+  }
+
+  if (isGeneralRiseList) {
+    return generateDailyMarketMovers(stocks, 'gainers');
   }
 
   // 1. Connect / Obtain Gemini API Key Guide

@@ -1165,11 +1165,16 @@ ${personaInstructions}
   * Fear & Greed Index (0-100): < 25 Extreme Fear (купувай при паника), > 75 Extreme Greed (пазарна еуфория).
   * Buffett Indicator: (Пазарна капитализация на САЩ / БВП на САЩ) * 100%.
   * Интерактивна таблица (редактируема Fair Price с 1 клик), Portfolio Tracker (импорт на IBKR PDF/CSV или Trading 212 CSV, автоматичен кеш баланс при продажба), Price Alerts (ценови известия под Fair Value), ROI Calculator.
+- При въпроси за пазарни движения (напр. "Кои са акциите с най-голям спад днес?", "Топ губещи", "Топ печеливши"): класирай ги директно по дневната промяна (changePct), изведи ги в структурирана Markdown таблица (Тикер, Компания, Спад %, Цена, Fair Value, Margin of Safety) и добави коментар по Уорън Бъфет дали спадът е добра възможност за покупка с отстъпка.
 
 ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ:
 - Дефиниции, понятия и формули: https://www.investopedia.com/
 - Финансови отчети за акции, котировки и метрики: https://stockanalysis.com/
-- Официални отчети: SEC 10-K и 10-Q.`;
+- Официални отчети: SEC 10-K и 10-Q.
+
+КОНТЕКСТ НА ПОТРЕБИТЕЛЯ:
+- Акции в таблицата (с котировки, дневни изменения % и справедлива стойност): ${JSON.stringify((stocks || []).slice(0, 30).map((s: any) => ({ ticker: s.ticker, name: s.companyName, price: s.currentPrice, changePct: s.dailyChangePct, fair: s.fairPrice, mos: s.difference })))}
+`;
 
       const result = await aiClient.models.generateContent({
         model: "gemini-2.5-flash",

@@ -1780,6 +1780,7 @@ ${personaInstructions}
   * Fear & Greed Index (0-100): < 25 Extreme Fear (купувай при паника), > 75 Extreme Greed (пазарна еуфория).
   * Buffett Indicator: (Пазарна капитализация на САЩ / БВП на САЩ) * 100%.
   * Интерактивна таблица (редактируема Fair Price с 1 клик), Portfolio Tracker (импорт на IBKR PDF/CSV или Trading 212 CSV, автоматичен кеш баланс при продажба), Price Alerts (ценови известия под Fair Value), ROI Calculator.
+- При въпроси за пазарни движения (напр. "Кои са акциите с най-голям спад днес?", "Топ губещи", "Топ печеливши"): класирай ги директно по дневната промяна (changePct), изведи ги в структурирана Markdown таблица (Тикер, Компания, Спад %, Цена, Fair Value, Margin of Safety) и добави коментар по Уорън Бъфет дали спадът е добра възможност за покупка с отстъпка.
 
 ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ:
 - За дефиниции, понятия, формули и образователни финансови знания: https://www.investopedia.com/
@@ -1790,7 +1791,7 @@ ${personaInstructions}
 КОНТЕКСТ НА ПОТРЕБИТЕЛЯ:
 - Свободен кеш: ${portfolio?.cashBalance ?? 0} ${portfolio?.baseCurrency ?? 'EUR'}
 - Отворени позиции: ${JSON.stringify(portfolio?.positions ?? [])}
-- Акции в таблицата: ${JSON.stringify((stocks || []).slice(0, 15).map((s: any) => ({ ticker: s.ticker, name: s.companyName, price: s.currentPrice, fair: s.fairPrice })))}
+- Акции в таблицата (пазарни цени, промяна за деня % и вътрешна стойност): ${JSON.stringify((stocks || []).slice(0, 30).map((s: any) => ({ ticker: s.ticker, name: s.companyName, price: s.currentPrice, changePct: s.dailyChangePct, fair: s.fairPrice, mos: s.difference })))}
 `;
 
     // Multi-turn message history for full Gemini conversational reasoning
