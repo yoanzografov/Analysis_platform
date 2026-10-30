@@ -24,12 +24,23 @@ import {
   Snowflake,
   ShieldCheck,
   LineChart,
-  Globe
+  Globe,
+  Mic,
+  MicOff,
+  Printer,
+  Download,
+  Swords,
+  Sun,
+  Flame,
+  Edit3,
+  Bell
 } from 'lucide-react';
-import { Stock, PortfolioPosition } from '../types';
+import { Stock, PortfolioPosition, MarketIndex } from '../types';
 import { 
   AiChatMessage, 
   AiPortfolioContext,
+  InvestorPersona,
+  INVESTOR_PERSONAS,
   BUFFETT_MUNGER_SYSTEM_PROMPT,
   generateLocalBuffettAnalysis,
   generateLocalPortfolioAudit,
@@ -37,6 +48,8 @@ import {
   generateLocalCashAllocation,
   generatePortfolioUploadGuide,
   generatePlatformHelp,
+  generateHeadToHeadComparison,
+  generateDailyMarketBriefing,
   handleAiQuery
 } from '../utils/aiAssistantEngine';
 
@@ -48,6 +61,9 @@ interface AiAssistantDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onOpen?: () => void;
+  indices?: MarketIndex[];
+  onUpdateStock?: (oldTicker: string, updatedStock: Stock) => void;
+  onAddAlert?: (ticker: string, criteria: 'ABOVE' | 'BELOW', targetPrice: number) => void;
 }
 
 // Simple and robust Markdown to HTML renderer for headers, tables, bold, and lists
@@ -231,8 +247,19 @@ export default function AiAssistantDrawer({
   baseCurrency,
   isOpen,
   onClose,
-  onOpen
+  onOpen,
+  indices = [],
+  onUpdateStock,
+  onAddAlert
 }: AiAssistantDrawerProps) {
+  const [persona, setPersona] = useState<InvestorPersona>(() => {
+    try {
+      const saved = localStorage.getItem('ai_assistant_persona') as InvestorPersona;
+      if (saved && INVESTOR_PERSONAS[saved]) return saved;
+    } catch {}
+    return 'buffett';
+  });
+
   const [messages, setMessages] = useState<AiChatMessage[]>(() => {
     try {
       const saved = localStorage.getItem('ai_assistant_chat_history');
@@ -241,15 +268,15 @@ export default function AiAssistantDrawer({
     return [
       {
         role: 'assistant',
-        content: `👋 **Здравейте! Аз съм вашият AI Анализатор на инвестиционна стойност.**
+        content: `👋 **Здравейте! Аз съм вашият елитен AI Инвестиционен Анализатор.**
 
-Анализирам бизнесите по строгите принципи на **Уорън Бъфет** и **Чарли Мънгър**:
-* 🎯 Дългосрочен хоризонт (10+ години)
-* 🏰 Устойчиви конкурентни предимства (**Economic Moat**)
-* 📊 Финансово здраве, свободен паричен поток (FCF) и консервативен баланс
-* 🛡️ Марж на сигурност (**Margin of Safety**)
+Изберете вашия предпочитан **инвеститорски мозък** от лентата горе:
+* 🏛️ **Уорън Бъфет & Чарли Мънгър** – Стойност, дълбок ров (**Moat**) и консервативен баланс
+* 🚀 **Питър Линч** – Растеж на разумна цена (**PEG < 1.0**) и реални пазарни наблюдения
+* 💰 **Дивидентен Аристократ** – Пасивен паричен поток, FCF покритие и 20-годишна снежна топка
+* 🌍 **Рей Далио (All-Weather)** – Макро цикли, лихвени криви и устойчивост при кризи
 
-Можете да изберете един от бързите въпроси по-долу или да зададете свой въпрос!`,
+Задайте свободен въпрос, натиснете микрофона за **гласово въвеждане** или изберете от експертните бутони!`,
         timestamp: new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })
       }
     ];
@@ -265,8 +292,11 @@ export default function AiAssistantDrawer({
   const [keyErrorMessage, setKeyErrorMessage] = useState('');
   const [selectedStockTicker, setSelectedStockTicker] = useState<string>(() => stocks[0]?.ticker || 'BRK.B');
   const [showSkills, setShowSkills] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [actionSuccessToast, setActionSuccessToast] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     try {
@@ -275,12 +305,186 @@ export default function AiAssistantDrawer({
   }, [messages]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem('ai_assistant_persona', persona);
+    } catch {}
+  }, [persona]);
+
+  useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     }
   }, [isOpen, messages]);
+
+  const toggleVoiceRecording = () => {
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRec) {
+      alert('Гласовото разпознаване не се поддържа от този браузър. Моля, използвайте Google Chrome или Microsoft Edge.');
+      return;
+    }
+
+    if (isRecording) {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRec();
+      recognition.lang = 'bg-BG';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsRecording(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInputMessage(prev => prev ? `${prev} ${transcript}` : transcript);
+        setIsRecording(false);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition warning:', event.error);
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.error('Speech recognition failed to start:', err);
+      setIsRecording(false);
+    }
+  };
+
+  const handleExportReport = (content: string) => {
+    const pMeta = INVESTOR_PERSONAS[persona];
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Моля, разрешете изскачащите прозорци (popups) в браузъра за генериране на официалния PDF доклад.');
+      return;
+    }
+
+    const htmlBody = content
+      .replace(/^### (.*$)/gim, '<h3 style="color:#0f172a; margin-top:20px; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 style="color:#4f46e5; margin-top:24px;">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 style="color:#0f172a; margin-top:28px;">$1</h1>')
+      .replace(/\*\*(.*?)\*\*/gim, '<strong style="color:#0f172a;">$1</strong>')
+      .replace(/^\* (.*$)/gim, '<li style="margin:4px 0;">$1</li>')
+      .replace(/\|(.+)\|/gim, (match) => {
+        const cells = match.split('|').map(c => c.trim()).filter((_, i, a) => i > 0 && i < a.length - 1);
+        if (cells.some(c => c.includes('---'))) return '';
+        return `<tr>${cells.map(c => `<td style="border:1px solid #cbd5e1; padding:8px 12px;">${c}</td>`).join('')}</tr>`;
+      })
+      .replace(/\n\n/g, '<br/><br/>');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="bg">
+      <head>
+        <meta charset="UTF-8">
+        <title>RayVes Capital - Инвестиционен Доклад</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 900px; margin: 0 auto; line-height: 1.6; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4f46e5; padding-bottom: 15px; margin-bottom: 25px; }
+          .brand { font-size: 24px; font-weight: 900; color: #4f46e5; letter-spacing: -0.5px; }
+          .tagline { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+          .pill { background: #e0e7ff; color: #3730a3; padding: 6px 14px; border-radius: 9999px; font-size: 12px; font-weight: 800; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+          th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+          th { background: #f8fafc; font-weight: 800; color: #1e293b; }
+          tr:nth-child(even) { background: #f8fafc; }
+          .footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #cbd5e1; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; }
+          @media print {
+            body { padding: 10px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="brand">RAYVES CAPITAL</div>
+            <div class="tagline">Investing Today. Building Tomorrow. For Our Children. For Their Future.</div>
+          </div>
+          <div class="pill">
+            ${pMeta.icon} ${pMeta.name} • ${new Date().toLocaleDateString('bg-BG')}
+          </div>
+        </div>
+        <div>${htmlBody}</div>
+        <div class="footer">
+          <span>Източник: RayVes Capital Investment Platform • Анализатор: ${pMeta.name}</span>
+          <span>Официални данни: StockAnalysis.com • Investopedia.com • SEC 10-K / 10-Q</span>
+        </div>
+        <script>
+          window.onload = function() { window.print(); }
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
+  const detectActionsFromMessage = (content: string) => {
+    const titleMatch = content.match(/Фундаментален анализ на .*?\(([A-Z0-9.]+)\)/i) || 
+                       content.match(/Piotroski F-Score Анализ: .*?\(([A-Z0-9.]+)\)/i) ||
+                       content.match(/Reverse DCF.*?:\s*.*?\(([A-Z0-9.]+)\)/i) ||
+                       content.match(/Оценка по модела на Питър Линч:\s*.*?\(([A-Z0-9.]+)\)/i) ||
+                       content.match(/Altman Z-Score.*?:\s*.*?\(([A-Z0-9.]+)\)/i) ||
+                       content.match(/Economic Moat.*?:\s*.*?\(([A-Z0-9.]+)\)/i);
+
+    if (titleMatch) {
+      const sym = titleMatch[1].trim().toUpperCase();
+      const s = stocks.find(st => st.ticker.toUpperCase() === sym);
+      if (s) {
+        const fairMatch = content.match(/Справедлива стойност.*?\$([0-9,.]+)/i) || 
+                          content.match(/Fair Value.*?\$([0-9,.]+)/i) || 
+                          content.match(/Справедлива цена по Питър Линч.*?\$([0-9,.]+)/i);
+        const fairVal = fairMatch ? parseFloat(fairMatch[1].replace(/,/g, '')) : (s.fairPrice || s.currentPrice);
+        return { ticker: sym, stock: s, fairPrice: fairVal };
+      }
+    }
+    return null;
+  };
+
+  const handleApplyFairPrice = (targetTicker: string, newFairVal: number) => {
+    if (!onUpdateStock) return;
+    const target = stocks.find(s => s.ticker.toUpperCase() === targetTicker.toUpperCase());
+    if (!target) return;
+
+    const diff = target.currentPrice > 0 ? ((newFairVal - target.currentPrice) / target.currentPrice) * 100 : 0;
+    const buySell = newFairVal > target.currentPrice ? 'UNDERVALUED' : 'OVERVALUED';
+
+    const updated: Stock = {
+      ...target,
+      fairPrice: newFairVal,
+      difference: diff,
+      buySell
+    };
+
+    onUpdateStock(target.ticker, updated);
+    setActionSuccessToast(`✅ Записахте Fair Price $${newFairVal.toFixed(2)} за ${targetTicker} в интерактивната таблица!`);
+    setTimeout(() => setActionSuccessToast(null), 4000);
+  };
+
+  const handleApplyPriceAlert = (targetTicker: string, targetPrice: number) => {
+    if (!onAddAlert) return;
+    onAddAlert(targetTicker, 'BELOW', targetPrice);
+    setActionSuccessToast(`🔔 Настроихте Price Alert за ${targetTicker} под $${targetPrice.toFixed(2)}!`);
+    setTimeout(() => setActionSuccessToast(null), 4000);
+  };
 
   const handleActivateGeminiKey = async (keyToTest: string) => {
     const trimmed = keyToTest.trim();
@@ -371,7 +575,8 @@ export default function AiAssistantDrawer({
           history: newMessages.slice(-6),
           portfolio: portfolioContext,
           stocks: stocks.slice(0, 30),
-          userApiKey: userApiKey || undefined
+          userApiKey: userApiKey || undefined,
+          persona
         })
       });
 
@@ -397,7 +602,7 @@ export default function AiAssistantDrawer({
 
     // 2. Resilient Local Engine Fallback (guaranteed 100% uptime with exact 8-point analysis)
     setTimeout(() => {
-      const reply = handleAiQuery(query, portfolioContext, stocks);
+      const reply = handleAiQuery(query, portfolioContext, stocks, persona, indices);
 
       setMessages(prev => [
         ...prev,
@@ -411,9 +616,13 @@ export default function AiAssistantDrawer({
     }, 400);
   };
 
-  const handleQuickPrompt = (promptType: 'portfolio' | 'undervalued' | 'cash' | 'company') => {
+  const handleQuickPrompt = (promptType: 'portfolio' | 'undervalued' | 'cash' | 'company' | 'briefing' | 'duel') => {
     const today = new Date().toLocaleDateString('bg-BG');
-    if (promptType === 'portfolio') {
+    if (promptType === 'briefing') {
+      handleSendMessage('🌅 Направи ми цялостен институционален дневен пазарен брифинг');
+    } else if (promptType === 'duel') {
+      handleSendMessage('🥊 Сравни компанията Apple Inc. (AAPL) срещу Microsoft Corporation (MSFT)');
+    } else if (promptType === 'portfolio') {
       handleSendMessage('🚀 Анализирай моето портфолио за рискове');
     } else if (promptType === 'undervalued') {
       handleSendMessage('🎯 Кои акции в таблицата са най-подценени в момента?');
@@ -422,7 +631,7 @@ export default function AiAssistantDrawer({
     } else if (promptType === 'company') {
       const target = stocks.find(s => s.ticker === selectedStockTicker) || stocks[0];
       const name = target ? `${target.companyName} (${target.ticker})` : selectedStockTicker;
-      handleSendMessage(`Анализирай компанията ${name} на български език към дата ${today}.`);
+      handleSendMessage(`Анализирай компанията ${name} на български език по принципите на ${INVESTOR_PERSONAS[persona].name} към дата ${today}.`);
     }
   };
 
@@ -601,20 +810,82 @@ export default function AiAssistantDrawer({
             </div>
           )}
 
+          {/* Persona Switcher Bar */}
+          <div className="px-4 py-2.5 bg-slate-950/80 border-b border-indigo-500/20 flex flex-col gap-1.5 shrink-0">
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <span className="text-slate-500">Инвеститорски мозък:</span>
+                <span className="text-amber-300 font-bold">{INVESTOR_PERSONAS[persona].badge}</span>
+              </span>
+              <span className="text-[10px] text-slate-500">Смени режима</span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {(Object.keys(INVESTOR_PERSONAS) as InvestorPersona[]).map((pKey) => {
+                const p = INVESTOR_PERSONAS[pKey];
+                const isActive = persona === pKey;
+                return (
+                  <button
+                    key={pKey}
+                    onClick={() => {
+                      setPersona(pKey);
+                      localStorage.setItem('ai_assistant_persona', pKey);
+                    }}
+                    className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
+                      isActive
+                        ? 'bg-gradient-to-r from-indigo-600 to-amber-500 text-white border-white/20 shadow-md scale-[1.02]'
+                        : 'bg-slate-900/80 text-slate-300 hover:text-white border-slate-800 hover:border-slate-700 hover:bg-slate-800'
+                    }`}
+                    title={p.philosophy}
+                  >
+                    <span>{p.icon}</span>
+                    <span className="truncate">{p.name.split(' ')[0]}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Action Success Toast */}
+          {actionSuccessToast && (
+            <div className="px-4 py-2 bg-emerald-500/20 border-b border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center justify-between gap-2 animate-in fade-in">
+              <span>{actionSuccessToast}</span>
+              <button onClick={() => setActionSuccessToast(null)} className="text-emerald-400 hover:text-white cursor-pointer">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Quick 1-Click Action Prompt Chips */}
           <div className="p-3 bg-slate-900/60 border-b border-indigo-500/10 space-y-2 shrink-0">
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
               <span>Бързи въпроси с 1 клик:</span>
-              <span className="text-amber-400 font-normal">Принципи на Бъфет & Мънгър</span>
+              <span className="text-amber-400 font-normal">{INVESTOR_PERSONAS[persona].badge}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                onClick={() => handleQuickPrompt('briefing')}
+                className="text-left px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 via-indigo-950/70 to-indigo-900/40 hover:from-amber-500/25 border border-amber-500/30 hover:border-amber-400/50 text-amber-200 hover:text-white transition-all text-xs font-bold flex items-center gap-2 group cursor-pointer shadow-sm"
+              >
+                <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform shrink-0" />
+                <span className="truncate">🌅 Дневен пазарен брифинг</span>
+              </button>
+
+              <button
+                onClick={() => handleQuickPrompt('duel')}
+                className="text-left px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-indigo-950/70 border border-indigo-500/20 hover:border-indigo-500/50 text-slate-200 hover:text-white transition-all text-xs font-medium flex items-center gap-2 group cursor-pointer shadow-sm"
+              >
+                <Swords className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform shrink-0" />
+                <span className="truncate">🥊 Инвестиционен дуел (AAPL vs MSFT)</span>
+              </button>
+
               <button
                 onClick={() => handleQuickPrompt('portfolio')}
                 className="text-left px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-indigo-950/70 border border-indigo-500/20 hover:border-indigo-500/50 text-slate-200 hover:text-white transition-all text-xs font-medium flex items-center gap-2 group cursor-pointer shadow-sm"
               >
                 <ShieldAlert className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform shrink-0" />
-                <span className="truncate">🚀 Анализирай моето портфолио за рискове</span>
+                <span className="truncate">🚀 Одит на портфолиото ми за рискове</span>
               </button>
 
               <button
@@ -633,7 +904,7 @@ export default function AiAssistantDrawer({
                 <span className="truncate">💵 Как да разпределя свободния си кеш?</span>
               </button>
 
-              {/* 4th Prompt: Buffett & Munger 8-Point Company Analysis with Selector */}
+              {/* 4th Prompt: Company Analysis with Selector */}
               <div className="flex items-center gap-1.5 bg-slate-800/80 rounded-xl p-1 border border-indigo-500/20">
                 <select
                   value={selectedStockTicker}
@@ -655,7 +926,7 @@ export default function AiAssistantDrawer({
                   onClick={() => handleQuickPrompt('company')}
                   className="flex-1 text-left px-2 py-1.5 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white transition-all text-xs font-bold flex items-center justify-between gap-1 group cursor-pointer"
                 >
-                  <span className="truncate">🏢 8-точков анализ по Бъфет</span>
+                  <span className="truncate">🏢 Анализ по {INVESTOR_PERSONAS[persona].name.split(' ')[0]}</span>
                   <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0 group-hover:rotate-12 transition-transform" />
                 </button>
               </div>
@@ -755,7 +1026,7 @@ export default function AiAssistantDrawer({
                 >
                   <div className="flex items-center gap-2 mb-1 px-1">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                      {isAssistant ? 'AI Анализатор (Buffett & Munger)' : 'Вие'}
+                      {isAssistant ? `AI Анализатор (${INVESTOR_PERSONAS[persona].badge})` : 'Вие'}
                     </span>
                     {msg.timestamp && (
                       <span className="text-[10px] text-slate-600 font-mono">
@@ -772,22 +1043,64 @@ export default function AiAssistantDrawer({
                     }`}
                   >
                     {isAssistant && (
-                      <button
-                        onClick={() => handleCopyMessage(msg.content, idx)}
-                        className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-800/80 text-slate-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow"
-                        title="Копирай анализа"
-                      >
-                        {copiedIndex === idx ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
+                      <div className="flex items-center gap-1.5 absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleExportReport(msg.content)}
+                          className="p-1.5 rounded-lg bg-slate-800/80 text-slate-400 hover:text-white transition-colors cursor-pointer shadow"
+                          title="Свали / Разпечатай официален PDF инвестиционен доклад"
+                        >
+                          <Printer className="w-3.5 h-3.5 text-indigo-400" />
+                        </button>
+                        <button
+                          onClick={() => handleCopyMessage(msg.content, idx)}
+                          className="p-1.5 rounded-lg bg-slate-800/80 text-slate-400 hover:text-white transition-colors cursor-pointer shadow"
+                          title="Копирай анализа"
+                        >
+                          {copiedIndex === idx ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
                     )}
 
                     <div className="prose prose-invert max-w-none text-xs">
                       {renderMarkdown(msg.content)}
                     </div>
+
+                    {/* Actionable AI Buttons when stock/fair price detected */}
+                    {isAssistant && (() => {
+                      const actionData = detectActionsFromMessage(msg.content);
+                      if (!actionData) return null;
+                      return (
+                        <div className="mt-3 pt-2.5 border-t border-indigo-500/20 flex items-center gap-2 flex-wrap text-[11px]">
+                          <span className="text-slate-400 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-amber-400" /> Екшън:
+                          </span>
+                          {onUpdateStock && actionData.fairPrice > 0 && (
+                            <button
+                              onClick={() => handleApplyFairPrice(actionData.ticker, actionData.fairPrice)}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold flex items-center gap-1 transition-all cursor-pointer"
+                              title={`Запиши $${actionData.fairPrice.toFixed(2)} като Fair Price за ${actionData.ticker}`}
+                            >
+                              <Edit3 className="w-3 h-3 text-emerald-400" />
+                              <span>Запази Fair Price (${actionData.fairPrice.toFixed(2)})</span>
+                            </button>
+                          )}
+                          {onAddAlert && (
+                            <button
+                              onClick={() => handleApplyPriceAlert(actionData.ticker, actionData.fairPrice)}
+                              className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1 transition-all cursor-pointer"
+                              title={`Добави Price Alert за ${actionData.ticker}`}
+                            >
+                              <Bell className="w-3 h-3 text-amber-400" />
+                              <span>Задай Price Alert</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -833,11 +1146,27 @@ export default function AiAssistantDrawer({
                       handleSendMessage();
                     }
                   }}
-                  placeholder="Задайте въпрос (напр. 'Анализирай компанията Apple на български език към дата днес')..."
-                  className="w-full bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none resize-none max-h-32 min-h-[46px] leading-relaxed"
+                  placeholder={isRecording ? "Слушам ви на български... Говорете свободно!" : `Задайте въпрос към ${INVESTOR_PERSONAS[persona].badge} или натиснете микрофона...`}
+                  className={`w-full bg-slate-950 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none resize-none max-h-32 min-h-[46px] leading-relaxed transition-colors ${
+                    isRecording ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-700 focus:border-indigo-500'
+                  }`}
                   rows={2}
                 />
               </div>
+
+              {/* Voice Input Microphone Button */}
+              <button
+                type="button"
+                onClick={toggleVoiceRecording}
+                className={`h-[46px] w-[46px] rounded-xl flex items-center justify-center transition-all cursor-pointer shrink-0 border ${
+                  isRecording
+                    ? 'bg-rose-600 text-white border-rose-400 animate-pulse shadow-lg shadow-rose-600/40'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
+                }`}
+                title={isRecording ? 'Слушам... Натиснете за спиране' : 'Гласово въвеждане на български (Speak)'}
+              >
+                {isRecording ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4" />}
+              </button>
 
               <button
                 type="submit"

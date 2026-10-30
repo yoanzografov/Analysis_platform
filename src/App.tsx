@@ -3007,6 +3007,9 @@ export default function App() {
     positions={positions}
     cashBalance={cashBalance}
     baseCurrency={baseCurrency}
+    indices={indices}
+    onUpdateStock={handleUpdateStock}
+    onAddAlert={handleAddAlert}
   />
  </main>
 

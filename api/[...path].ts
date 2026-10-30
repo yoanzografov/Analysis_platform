@@ -1108,7 +1108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (isAiAssistant) {
     if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
     try {
-      const { message, portfolio, stocks, userApiKey } = req.body || {};
+      const { message, portfolio, stocks, userApiKey, persona } = req.body || {};
       if (!message) return res.status(400).json({ error: "Missing message" });
       const apiKey = userApiKey || process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(400).json({ error: "No API key available" });
@@ -1116,8 +1116,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { GoogleGenAI } = await import('@google/genai');
       const aiClient = new GoogleGenAI({ apiKey });
 
+      const personaInstructions = persona === 'lynch' 
+        ? 'АКТИВЕН ИНВЕСТИТОРСКИ СТИЛ: Питър Линч (Растеж на разумна цена / GARP). Анализирай през призмата на PEG коефициент < 1.0, ускоряващ се EPS растеж, нисък дълг и наблюдение на реални потребителски навици.'
+        : persona === 'dividend'
+        ? 'АКТИВЕН ИНВЕСТИТОРСКИ СТИЛ: Дивидентен Аристократ. Фокусирай се върху сигурност на свободния паричен поток (FCF Payout Ratio < 60%), устойчивост на дивидента и 20-годишна снежна топка с DRIP.'
+        : persona === 'dalio'
+        ? 'АКТИВЕН ИНВЕСТИТОРСКИ СТИЛ: Рей Далио (All-Weather & Macro). Анализирай макро цикъла, инфлацията, лихвената крива, дълговия цикъл и защитата срещу системни пазарни кризи.'
+        : 'АКТИВЕН ИНВЕСТИТОРСКИ СТИЛ: Уорън Бъфет и Чарли Мънгър. Фокусирай се върху дългосрочна стойност (10+ г.), икономически ров (Moat), консервативен баланс и Margin of Safety.';
+
       const systemPrompt = `РОЛЯ И ЦЕЛ:
-Ти си универсален, интелигентен и всеобхватен AI асистент, задвижван от Google Gemini.
+Ти си универсален, интелигентен и всеобхватен AI асистент, задвижван от Google Gemini за RayVes Capital.
+${personaInstructions}
 Отговаряй свободно, изчерпателно и задълбочено на ВСЯКАКВИ въпроси, зададени от потребителя — от финанси, инвестиране и акции, до наука, технологии, история, общи житейски казуси и работа с инвестиционната платформа RayVes Capital. Не се ограничавай в отговорите!
 
 ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ:
