@@ -8,7 +8,8 @@ import {
   simulatePortfolioStressTest,
   projectDividendSnowball,
   auditEconomicMoat,
-  analyzeMacroCycle
+  analyzeMacroCycle,
+  generateStockAnalysisRatios
 } from './aiSkillsEngine';
 
 export {
@@ -19,7 +20,8 @@ export {
   simulatePortfolioStressTest,
   projectDividendSnowball,
   auditEconomicMoat,
-  analyzeMacroCycle
+  analyzeMacroCycle,
+  generateStockAnalysisRatios
 };
 
 export type InvestorPersona = 'buffett' | 'lynch' | 'dividend' | 'dalio';
@@ -1062,6 +1064,31 @@ export function handleAiQuery(
   // Skill 8: Macro Cycle & Yield Curve Analysis
   if (lower.includes('макро цикъл') || lower.includes('macro cycle') || lower.includes('yield curve') || lower.includes('крива на доходността') || lower.includes('обърната крива') || lower.includes('10y-2y') || lower.includes('лихвен цикъл')) {
     return analyzeMacroCycle();
+  }
+
+  // Skill 9: Full StockAnalysis.com Financial Ratios Matrix (Multiples, Margins, Debt, ROIC, Returns)
+  if (
+    lower.includes('ratios') || 
+    lower.includes('коефициент') || 
+    lower.includes('коефициенти') || 
+    lower.includes('финансови показатели') || 
+    lower.includes('множители') ||
+    lower.includes('multiples') ||
+    lower.includes('ev/ebitda') ||
+    lower.includes('ev/ebit') ||
+    lower.includes('price to book') ||
+    lower.includes('price/book') ||
+    lower.includes('current ratio') ||
+    lower.includes('quick ratio') ||
+    lower.includes('debt to equity') ||
+    lower.includes('debt/equity') ||
+    lower.includes('interest coverage') ||
+    lower.includes('shareholder yield') ||
+    lower.includes('payout ratio') ||
+    lower.includes('маржове') ||
+    lower.includes('марж')
+  ) {
+    return generateStockAnalysisRatios(resolvedTicker, resolvedStock);
   }
 
   const isAnalysisKeyword = lower.includes('анализ') || lower.includes('анализирай') || lower.includes('компания') || lower.includes('бъфет') || lower.includes('мънгър');
