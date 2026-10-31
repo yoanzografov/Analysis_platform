@@ -265,7 +265,7 @@ export default function AiAssistantDrawer({
         content: `👋 **Здравейте! Аз съм вашият елитен AI Инвестиционен Анализатор.**
 
 Изберете вашия предпочитан **инвеститорски мозък** от бутоните горе:
-* 🏛️ **Уорън Бъфет & Чарли Мънгър** – Дългосрочна стойност, икономически ров (**Moat**) и консервативен баланс
+* 🏛️ **Уорън Бъфет & Чарли Мънгър** – Дългосрочна стойност, икономически ров (**Moat**) и одит на финансовите отчети от книгата на Бъфет
 * 📖 **Бенджамин Греъм (Интелигентният инвеститор)** – 7-те количествени критерия (Гл. 14), **Число на Греъм**, алегорията за **Г-н Пазар** (Гл. 8), **Net-Net / NCAV** (Гл. 15) и **Марж на безопасност** (Гл. 20)
 * 🚀 **Питър Линч** – Растеж на разумна цена (**PEG < 1.0**) и реални пазарни наблюдения
 * 💰 **Дивидентен Аристократ** – Пасивен паричен поток, FCF покритие и 20-годишна снежна топка
@@ -558,12 +558,14 @@ export default function AiAssistantDrawer({
     }, 450);
   };
 
-  const handleQuickPrompt = (promptType: 'portfolio' | 'undervalued' | 'cash' | 'company' | 'briefing' | 'duel' | 'graham-audit' | 'graham-number' | 'graham-market') => {
+  const handleQuickPrompt = (promptType: 'portfolio' | 'undervalued' | 'cash' | 'company' | 'briefing' | 'duel' | 'graham-audit' | 'graham-number' | 'graham-market' | 'buffett-statements') => {
     const today = new Date().toLocaleDateString('bg-BG');
     const target = stocks.find(s => s.ticker === selectedStockTicker) || stocks[0];
     const name = target ? `${target.companyName} (${target.ticker})` : selectedStockTicker;
 
-    if (promptType === 'graham-audit') {
+    if (promptType === 'buffett-statements') {
+      handleSendMessage(`Направи пълен одит на финансовите отчети на ${name} по книгата на Уорън Бъфет (Income Statement, Balance Sheet, Cash Flow).`);
+    } else if (promptType === 'graham-audit') {
       handleSendMessage(`Провери компанията ${name} по 7-те количествени критерия на Бенджамин Греъм от Глава 14 на Интелигентният инвеститор.`);
     } else if (promptType === 'graham-number') {
       handleSendMessage(`Изчисли Числото на Греъм и стойностния модел за ${name}.`);
@@ -736,6 +738,13 @@ export default function AiAssistantDrawer({
                   className="px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
                 >
                   <span>🏢 Анализ на {selectedStockTicker}</span>
+                </button>
+                <button
+                  onClick={() => handleQuickPrompt('buffett-statements')}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                  title="Одит на 10-те златни правила за финансовите отчети от книгата на Бъфет"
+                >
+                  <span>📑 Отчети по Бъфет</span>
                 </button>
                 <button
                   onClick={() => handleQuickPrompt('undervalued')}

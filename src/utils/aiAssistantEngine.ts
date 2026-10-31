@@ -13,7 +13,9 @@ import {
   explainPlatformTooltipOrFormula,
   auditGrahamDefensiveInvestor,
   calculateGrahamNumber,
-  explainGrahamIntelligentInvestorConcepts
+  explainGrahamIntelligentInvestorConcepts,
+  auditBuffettFinancialStatements,
+  explainBuffettFinancialStatementsBook
 } from './aiSkillsEngine';
 
 export {
@@ -29,7 +31,9 @@ export {
   explainPlatformTooltipOrFormula,
   auditGrahamDefensiveInvestor,
   calculateGrahamNumber,
-  explainGrahamIntelligentInvestorConcepts
+  explainGrahamIntelligentInvestorConcepts,
+  auditBuffettFinancialStatements,
+  explainBuffettFinancialStatementsBook
 };
 
 /**
@@ -1812,6 +1816,33 @@ export function handleAiQuery(
 
   if (persona === 'graham' && (matchedStock || matchedCommon)) {
     return auditGrahamDefensiveInvestor(resolvedTicker, resolvedStock);
+  }
+
+  // Warren Buffett Financial Statements Suite: "Warren Buffett and the Interpretation of Financial Statements"
+  const isBuffettStatementsQuery = 
+    lower.includes('анализ на финансовите отчети') ||
+    lower.includes('анализ на финасовите отчети') ||
+    lower.includes('анализ на финансовия отчет') ||
+    lower.includes('финансови отчети на бъфет') ||
+    lower.includes('финансовите отчети по бъфет') ||
+    lower.includes('отчетите по бъфет') ||
+    lower.includes('книгата на бъфет') ||
+    lower.includes('мери бъфет') ||
+    lower.includes('дейвид кларк') ||
+    lower.includes('трайно конкурентно предимство') ||
+    lower.includes('durable competitive advantage') ||
+    lower.includes('capex към нетна печалба') ||
+    lower.includes('capex към печалба') ||
+    lower.includes('дълг към нетна печалба') ||
+    lower.includes('sga към брутна') ||
+    (lower.includes('отчет за доходите') && lower.includes('бъфет')) ||
+    (lower.includes('баланс') && lower.includes('бъфет') && !lower.includes('кеш'));
+
+  if (isBuffettStatementsQuery) {
+    if (matchedStock || matchedCommon) {
+      return auditBuffettFinancialStatements(resolvedTicker, resolvedStock);
+    }
+    return explainBuffettFinancialStatementsBook(cleanQ);
   }
 
   // Skill 1: Piotroski F-Score (9-point financial health test)
