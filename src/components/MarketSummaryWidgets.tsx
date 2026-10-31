@@ -402,7 +402,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
       2:  { releaseDate: 'Oct 14, 2026', actual: '2.6%',   forecast: '2.6%',   previous: '2.4%',   lowerIsBetter: false },
       3:  { releaseDate: 'Sep 30, 2026', actual: '3.4%',   forecast: '3.4%',   previous: '3.4%',   lowerIsBetter: true  },
       4:  { releaseDate: 'Sep 30, 2026', actual: '3.0%',   forecast: '3.0%',   previous: '3.0%',   lowerIsBetter: true  },
-      5:  { releaseDate: 'Sep 16, 2026', actual: '3.75%',  forecast: '3.75%',  previous: '3.63%',  lowerIsBetter: true  },
+      5:  { releaseDate: 'Oct 28, 2026', actual: '3.75%',  forecast: '3.75%',  previous: '3.75%',  lowerIsBetter: true  },
       6:  { releaseDate: 'Oct 2, 2026',  actual: '+29K',   forecast: '+140K',  previous: '+133K',  lowerIsBetter: false },
       7:  { releaseDate: 'Oct 2, 2026',  actual: '+29K',   forecast: '+140K',  previous: '+133K',  lowerIsBetter: false },
       8:  { releaseDate: 'Oct 2, 2026',  actual: '4.2%',   forecast: '4.2%',   previous: '4.1%',   lowerIsBetter: true  },

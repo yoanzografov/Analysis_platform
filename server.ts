@@ -1462,14 +1462,14 @@ app.get("/api/inflation-data", async (req, res) => {
       return fallback;
     };
 
-    const fedRes = get(fedFunds, { actual: "3.75%", previous: "3.63%", releaseDate: "Sep 16, 2026" });
+    const fedRes = get(fedFunds, { actual: "3.75%", previous: "3.75%", releaseDate: "Oct 28, 2026" });
 
     const data = [
       { name: "CPI (Inflation) YoY",      forecast: "3.6%",   url: "https://www.bls.gov/cpi/",                                                                              ...get(cpi,          { actual: "3.7%",   previous: "3.4%",   releaseDate: "Oct 14, 2026" }) },
       { name: "Core CPI YoY",             forecast: "2.6%",   url: "https://www.bls.gov/cpi/",                                                                              ...get(coreCpi,      { actual: "2.6%",   previous: "2.4%",   releaseDate: "Oct 14, 2026" }) },
       { name: "PCE Price Index YoY",      forecast: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures",                                            ...get(pce,          { actual: "3.4%",   previous: "3.4%",   releaseDate: "Sep 30, 2026" }) },
       { name: "Core PCE Price Index YoY", forecast: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy",      ...get(corePce,      { actual: "3.0%",   previous: "3.0%",   releaseDate: "Sep 30, 2026" }) },
-      { name: "Fed Funds Rate",           forecast: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",                                          actual: fedRes.actual, previous: fedRes.previous, releaseDate: "Sep 16, 2026" },
+      { name: "Fed Funds Rate",           forecast: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",                                          actual: fedRes.actual, previous: fedRes.previous, releaseDate: "Oct 28, 2026" },
       { name: "Employment Situation",     forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
       { name: "Non-Farm Payrolls",        forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
       { name: "Unemployment Rate",        forecast: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment, { actual: "4.2%",   previous: "4.1%",   releaseDate: "Oct 2, 2026"  }) },

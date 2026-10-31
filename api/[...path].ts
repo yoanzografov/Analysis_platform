@@ -1526,7 +1526,7 @@ ${personaInstructions}
       { name: "Core CPI YoY",             releaseDate: "Oct 14, 2026", actual: "2.6%",   forecast: "2.6%",   previous: "2.4%",   url: "https://www.bls.gov/cpi/" },
       { name: "PCE Price Index YoY",      releaseDate: "Sep 30, 2026", actual: "3.4%",   forecast: "3.4%",   previous: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures" },
       { name: "Core PCE Price Index YoY", releaseDate: "Sep 30, 2026", actual: "3.0%",   forecast: "3.0%",   previous: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy" },
-      { name: "Fed Funds Rate",           releaseDate: "Sep 16, 2026", actual: "3.75%",  forecast: "3.75%",  previous: "3.63%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
+      { name: "Fed Funds Rate",           releaseDate: "Oct 28, 2026", actual: "3.75%",  forecast: "3.75%",  previous: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
       { name: "Employment Situation",     releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
       { name: "Non-Farm Payrolls",        releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
       { name: "Unemployment Rate",        releaseDate: "Oct 2, 2026",  actual: "4.2%",   forecast: "4.2%",   previous: "4.1%",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
