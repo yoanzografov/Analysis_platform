@@ -352,6 +352,19 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
   const [timersMap, setTimersMap] = useState<Record<number, TimeLeft>>({});
   const [selectedIndicator, setSelectedIndicator] = useState<MarketIndicator | null>(null);
   const [indicatorStats, setIndicatorStats] = useState<Record<number, IndicatorStats>>({});
+  const [fngData, setFngData] = useState<{ score: number; rating: string } | null>(null);
+
+  // Fear & Greed Live Fetch from CNN DataViz API
+  useEffect(() => {
+    fetch('/api/fear-greed')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && typeof data.score === 'number') {
+          setFngData({ score: data.score, rating: data.rating });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // FOMC Timer & All Indicators Timers Engine
   useEffect(() => {
@@ -650,7 +663,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
             </h3>
           </div>
 
-          {/* Useful Link 1: Fear & Greed Index */}
+          {/* Useful Link 1: Fear & Greed Index with Live CNN Score */}
           <a 
             href="https://edition.cnn.com/markets/fear-and-greed" 
             target="_blank" 
@@ -667,10 +680,30 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                 <span className="text-xs font-extrabold text-ink group-hover:text-indigo-400 transition-colors truncate">
                   Fear & Greed Index (Страх & Алчност)
                 </span>
-                <span className="text-[10px] text-ink-faint font-mono">cnn.com</span>
+                <span className="text-[10px] text-ink-faint font-mono">cnn.com • на живо</span>
               </div>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0" />
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              {fngData && (
+                <div className="flex items-center gap-1.5 bg-bg/80 px-2 py-1 rounded-lg border border-border/40 font-mono">
+                  <span className="text-xs font-black text-ink">{fngData.score}</span>
+                  <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full ${
+                    fngData.score <= 25 ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                    fngData.score <= 45 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                    fngData.score <= 55 ? 'bg-slate-500/20 text-slate-300 border border-slate-500/30' :
+                    fngData.score <= 75 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                    'bg-green-500/20 text-green-300 border border-green-500/30'
+                  }`}>
+                    {fngData.rating === 'extreme fear' ? 'Краен страх' :
+                     fngData.rating === 'fear' ? 'Страх' :
+                     fngData.rating === 'neutral' ? 'Неутрално' :
+                     fngData.rating === 'greed' ? 'Алчност' : 'Крайна алчност'}
+                  </span>
+                </div>
+              )}
+              <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0" />
+            </div>
           </a>
 
           {/* Useful Link 2: CME FedWatch Tool with Dynamic FOMC Countdown */}
