@@ -1814,6 +1814,20 @@ app.post("/api/ai-assistant", async (req, res) => {
 - ЖЪЛТИ ФЛАГОВЕ (🟡 Yellow Flags): Брутен марж < 30%, Ръст на приходите < 10%, EBITDA марж < 10%, Нетен марж < 5%, Лихвено покритие < 2x, Goodwill > 20%, Debt/Equity > 2.0, Вземания/Складови наличности растящи по-бързо от продажбите, Current Ratio < 1.0, Quick Ratio < 0.8, SBC > 10%, CapEx > 25%, Спадащ FCF, FCF < Net Income, Cash Flow to Debt < 0.3.
 - ЧЕРВЕНИ ФЛАГОВЕ (🔴 Red Flags): Брутен марж < 10%, Ръст приходи < 2%, EBITDA марж < 3%, Нетен марж < 1%, Лихвено покритие < 1.5x (риск от фалит), Goodwill > 30% (риск от отписване), Debt/Equity > 4.0, Quick Ratio < 0.3, SBC > 20% (разводняване), CapEx > 40%, Отрицателен оперативен паричен поток, Cash Flow to Debt < 0.1, Одиторско становище с Going Concern / Qualified / Disclaimer Opinion.
 - ПРАВИЛАТА НА БЪФЕТ ЗА INCOME STATEMENT (BRIAN FEROLDI): Gross Margin > 40%, SG&A / Gross Profit < 30%, R&D / Gross Profit < 30%, Depreciation / Gross Profit < 10%, Interest / Operating Income < 15%, Tax Rate = Corporate Tax Rate, Net Income Margin > 20%, EPS Growth = положителен и растящ.
+6. УЪРКШОП РАМКА ЗА ПЪЛЕН АНАЛИЗ НА КОМПАНИЯ (DIMITAR ANGELOV COMMUNITY - 13 СТЪЛБА):
+Когато се прави задълбочен одит или се поиска пълен уъркшоп анализ на компания, следвай задължително 13-те стълба на Димитър Ангелов (Angelov Dimitar Community - Действаме Заедно!):
+1. Бизнес модел - Form 10-K: как компанията прави пари, основни продукти/услуги, клиенти и пазари, конкуренти и диференциация.
+2. История и развитие: основаване, IPO, придобивания, преодолени кризи, Ownership (инсайдъри/институции), еволюция на модела.
+3. Пазар и индустрия: TAM размер на адресируемия пазар, потенциал за растеж, цикличен ли е бизнесът и пазарът, регулации.
+4. Конкурентни предимства (Economic Moat): Brand (ценова сила), Network effect, Switching cost, Scale advantage, Технологично предимство.
+5. Финанси - Growth (5-10 години): Revenue growth, EBITDA growth, Net Income growth, EPS growth, Free Cash Flow growth.
+6. Финанси - тренд на маржовете: Gross margin, Net profit margin, Cash ratio, LTD to FCF (изплащане на дълга за < 3 г.), LTD to Net Income.
+7. Финанси - парични потоци & акционерна доходност: CFO margin, Free Cash Flow margin, FCF yield, CapEx trend, Reinvestment rate (CapEx / CFO < 25%), Shareholder yield (buybacks + дивиденти), Dividends / FCF.
+8. Management: Skin in the game (собствени акции), липса на прекомерна алчност/SBC разводняване, реалистичен guidance, открита комуникация.
+9. Рискове: Макро риск, конкурентен риск, пренасищане на пазара, смяна в потребителското поведение, регулаторен риск.
+10. Катализатори на растеж: Нов продукт/услуга, нови пазари, Margin expansion, Buybacks, AI/Automation.
+11. S.W.O.T. анализ: Силни страни (Strengths), Слаби страни (Weaknesses), Възможности (Opportunities), Заплахи (Threats).
+12. Справедлива цена (Valuation): DCF with perpetual growth rate, DCF with exit multiple, EV/EBITDA, P/E multiple, Dividend multiple.
 - При въпроси за пазарни движения (напр. "Кои са акциите с най-голям спад днес?", "Топ губещи", "Топ печеливши"): класирай ги директно по дневната промяна (changePct), изведи ги в структурирана Markdown таблица (Тикер, Компания, Спад %, Цена, Fair Value, Margin of Safety) и добави коментар по Уорън Бъфет дали спадът е добра възможност за покупка с отстъпка.
 
 ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ (СТРОГА ПОЛИТИКА ЗА НУЛЕВА ГРЕШКА):
