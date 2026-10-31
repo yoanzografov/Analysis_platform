@@ -27,7 +27,8 @@ import {
   Sun, 
   Flame, 
   Edit3, 
-  Bell 
+  Bell,
+  Key 
 } from 'lucide-react';
 import { Stock, PortfolioPosition, MarketIndex } from '../types';
 import { 
@@ -286,6 +287,31 @@ export default function AiAssistantDrawer({
   const [isRecording, setIsRecording] = useState(false);
   const [actionSuccessToast, setActionSuccessToast] = useState<string | null>(null);
 
+  const [userApiKey, setUserApiKey] = useState<string>(() => {
+    try {
+      return localStorage.getItem('gemini_user_api_key') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [tempApiKeyInput, setTempApiKeyInput] = useState('');
+
+  const handleSaveApiKey = (key: string) => {
+    const cleanKey = key.trim();
+    try {
+      if (cleanKey) {
+        localStorage.setItem('gemini_user_api_key', cleanKey);
+      } else {
+        localStorage.removeItem('gemini_user_api_key');
+      }
+    } catch {}
+    setUserApiKey(cleanKey);
+    setShowApiKeyModal(false);
+    setActionSuccessToast(cleanKey ? '🔑 Вашият Gemini API ключ беше запазен успешно!' : '🔑 Ключът беше премахнат.');
+    setTimeout(() => setActionSuccessToast(null), 3500);
+  };
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -512,7 +538,8 @@ export default function AiAssistantDrawer({
     };
 
     try {
-      // 1. Try calling the backend /api/ai-assistant (if server key is active)
+      // 1. Try calling the backend /api/ai-assistant (with userApiKey or server key)
+      const activeKey = userApiKey.trim() || undefined;
       const response = await fetch('/api/ai-assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -521,7 +548,8 @@ export default function AiAssistantDrawer({
           history: newMessages.slice(-6),
           portfolio: portfolioContext,
           stocks: stocks.slice(0, 30),
-          persona
+          persona,
+          userApiKey: activeKey
         })
       });
 
@@ -648,6 +676,24 @@ export default function AiAssistantDrawer({
 
             <div className="flex items-center gap-1.5">
               <button
+                onClick={() => {
+                  setTempApiKeyInput(userApiKey);
+                  setShowApiKeyModal(!showApiKeyModal);
+                }}
+                className={`p-2 rounded-lg transition-colors cursor-pointer relative ${
+                  userApiKey 
+                    ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-500/40 hover:bg-emerald-900/50' 
+                    : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'
+                }`}
+                title={userApiKey ? "Личен Gemini API ключ: Свързан" : "Добави личен Gemini API ключ (за неограничен жив AI)"}
+              >
+                <Key className="w-4 h-4" />
+                {userApiKey && (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                )}
+              </button>
+
+              <button
                 onClick={handleClearHistory}
                 className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors cursor-pointer"
                 title="Изчисти чата"
@@ -664,6 +710,56 @@ export default function AiAssistantDrawer({
               </button>
             </div>
           </div>
+
+          {/* Inline Gemini API Key Setup Panel */}
+          {showApiKeyModal && (
+            <div className="px-5 py-3.5 bg-slate-900 border-b border-indigo-500/20 text-xs animate-in slide-in-from-top-2 shrink-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-amber-400" />
+                  Личен Google Gemini API ключ (Незадължително)
+                </span>
+                <a 
+                  href="https://aistudio.google.com/app/apikey" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-[11px] text-indigo-400 hover:text-indigo-300 underline font-semibold"
+                >
+                  Вземете безплатен ключ от Google ↗
+                </a>
+              </div>
+              <p className="text-[11px] text-slate-400 mb-2 leading-relaxed">
+                Свързването на ваш собствен ключ осигурява пълен, свободен и неограничен диалог с модела Gemini 2.5 Flash за всякакви свободни въпроси.
+              </p>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="password"
+                  value={tempApiKeyInput}
+                  onChange={(e) => setTempApiKeyInput(e.target.value)}
+                  placeholder="Поставете вашия ключ (AIzaSy...)"
+                  className="flex-1 bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded-lg px-3 py-1.5 text-white placeholder-slate-500 text-xs outline-none"
+                />
+                <button
+                  onClick={() => handleSaveApiKey(tempApiKeyInput)}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs cursor-pointer transition-colors"
+                >
+                  Запази
+                </button>
+                {userApiKey && (
+                  <button
+                    onClick={() => {
+                      setTempApiKeyInput('');
+                      handleSaveApiKey('');
+                    }}
+                    className="px-2.5 py-1.5 bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 rounded-lg font-bold text-xs cursor-pointer transition-colors"
+                    title="Премахни ключа"
+                  >
+                    Изчисти
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Action Success Toast */}
           {actionSuccessToast && (
