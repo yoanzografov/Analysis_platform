@@ -850,6 +850,55 @@ export function generateLocalCashAllocation(context: AiPortfolioContext, stocks:
 }
 
 /**
+ * Step-by-step user guide for spouse, family members, or second user accounts to add their own portfolio.
+ */
+export function generateFamilyOrSpousePortfolioGuide(): string {
+  return `### 👩‍💼 Как съпругата ви (или друг член на семейството) да вкара своето портфолио в платформата?
+
+В платформата **RayVes Capital** всяко инвестиционно портфолио е напълно независимо, криптирано и изолирано към конкретния потребителски акаунт. За да може и съпругата ви да следи своето портфолио, имате **2 удобни и сигурни начина**:
+
+---
+
+### 🌟 Вариант 1: Със собствен отделен акаунт (Препоръчителен метод)
+1. **Регистрация / Вход**:
+   - В горния десен ъгъл натиснете бутона за **Профил** (или иконката за изход, ако в момента сте вписан с вашия акаунт).
+   - Съпругата ви може да се регистрира със своя личен имейл и парола или да влезе с 1 клик чрез **Google вход**.
+2. **Пълна изолация на активите**:
+   - Тя получава свое собствено чисто пространство в таб **„PORTFOLIO TRACKER“**, където нейните акции, кеш, графики и дивиденти няма да се смесват с вашите.
+3. **Едновременна употреба на един и същ компютър**:
+   - За да не се отписвате и вписвате непрекъснато, тя може да отвори платформата в **друг браузър** (например вие сте в Chrome, тя в Safari, Firefox или Edge) или в **Incognito / Поверителен прозорец**. Така и двамата можете да следите портфолиата си едновременно!
+
+---
+
+### 📁 Вариант 2: Превключване чрез функцията „Архив / Резервно копие (JSON)“
+Ако предпочитате да ползвате един общ браузър или акаунт:
+1. В таб **„PORTFOLIO TRACKER“** натиснете бутона **„📥 Резервно копие / Архив“** – това ще свали файл с вашето портфолио (\`portfolio-backup.json\`).
+2. След това изчистете позициите и въведете нейните акции. Свалете нейния архив с име (напр. \`portfolio-wife.json\`).
+3. Когато пожелаете, можете да сменяте кое портфолио да се визуализира само с 1 клик чрез бутона **„Качи архив“**.
+
+---
+
+### 📥 Как точно се вкарват акциите в таб „PORTFOLIO TRACKER“:
+
+След като се отвори таб **„PORTFOLIO TRACKER“** от лявото главно меню:
+
+1. **🚀 Автоматичен импорт от брокер (най-бързо, за 10 секунди)**:
+   - В горния десен ъгъл (до избора на базова валута **EUR / USD**) натиснете бутона **„📥 Импорт на портфолио“**.
+   - **Interactive Brokers (IBKR)**: Прикачете официалния Activity Statement отчет (поддържат се **PDF** и **CSV**). Може да се качат два файла едновременно: за покупки (**Trades**) и за дивиденти (**Dividends**).
+   - **Trading 212**: Прикачете експортния **CSV** файл от историята на поръчките.
+   - Платформата автоматично ще извлече тикерите, броя акции, покупните цени, таксите, дивидентите и свободния кеш!
+
+2. **➕ Ръчно добавяне на позиции**:
+   - Натиснете зеления бутон **„+ Добави позиция“**.
+   - Въведете символа на акцията (напр. \`AAPL\`, \`MSFT\`, \`NVDA\`, \`BRK.B\`), броя притежавани акции и средната цена на придобиване.
+
+3. **💵 Наличен свободен кеш**:
+   - В полето **„Кеш:“** горе вдясно въведете свободните парични средства в EUR или USD, които чакат да бъдат инвестирани.
+
+*Всички данни се съхраняват автоматично в реално време, като веднага се изчисляват дневната доходност, дивидентният календар и разпределението по сектори!*`;
+}
+
+/**
  * Step-by-step user guide for uploading and importing portfolios from brokers.
  */
 export function generatePortfolioUploadGuide(): string {
@@ -1610,11 +1659,73 @@ export function handleAiQuery(
     return generateApiKeyGuide();
   }
 
-  // 1. Portfolio Upload / Import questions
-  const isUploadKeyword = lower.includes('кача') || lower.includes('качване') || lower.includes('импорт') || lower.includes('добавя') || lower.includes('файл') || lower.includes('файлове') || lower.includes('csv') || lower.includes('pdf');
-  const isPortfolioContext = lower.includes('портфолио') || lower.includes('портфейл') || lower.includes('брокер') || lower.includes('ibkr') || lower.includes('interactive') || lower.includes('t212') || lower.includes('trading') || lower.includes('платформа');
+  // 1. Spouse, Family or Multi-User Portfolio Questions
+  const isFamilyOrSpouseQuery = 
+    lower.includes('женами') || 
+    lower.includes('жена ми') || 
+    lower.includes('съпруга') || 
+    lower.includes('съпруг') || 
+    lower.includes('семейство') || 
+    lower.includes('семейно') || 
+    lower.includes('приятел') || 
+    lower.includes('втори акаунт') || 
+    lower.includes('втори потребител') || 
+    lower.includes('втори профил') || 
+    lower.includes('второ портфолио') || 
+    lower.includes('отделно портфолио') || 
+    lower.includes('две портфолиа') || 
+    lower.includes('два акаунта') || 
+    lower.includes('двама души');
 
-  if ((isUploadKeyword && isPortfolioContext) || lower.includes('как мога да си кача') || lower.includes('как да си кача')) {
+  const isUploadOrEntryKeyword = 
+    lower.includes('вкара') || 
+    lower.includes('вкарва') || 
+    lower.includes('вкарване') || 
+    lower.includes('вкарам') || 
+    lower.includes('кача') || 
+    lower.includes('качване') || 
+    lower.includes('импорт') || 
+    lower.includes('импортира') || 
+    lower.includes('добавя') || 
+    lower.includes('добавяне') || 
+    lower.includes('въведе') || 
+    lower.includes('въвеждане') || 
+    lower.includes('въведа') || 
+    lower.includes('сложи') || 
+    lower.includes('прехвърли') || 
+    lower.includes('файл') || 
+    lower.includes('файлове') || 
+    lower.includes('csv') || 
+    lower.includes('pdf');
+
+  const isPortfolioContext = 
+    lower.includes('портфолио') || 
+    lower.includes('портфейл') || 
+    lower.includes('акции') || 
+    lower.includes('позици') || 
+    lower.includes('брокер') || 
+    lower.includes('ibkr') || 
+    lower.includes('interactive') || 
+    lower.includes('t212') || 
+    lower.includes('trading') || 
+    lower.includes('платформа');
+
+  if (isFamilyOrSpouseQuery && (isUploadOrEntryKeyword || isPortfolioContext || lower.includes('как'))) {
+    return generateFamilyOrSpousePortfolioGuide();
+  }
+
+  // 1.1. Portfolio Upload / Entry / Import questions
+  if (
+    (isUploadOrEntryKeyword && isPortfolioContext) || 
+    lower.includes('как мога да си кача') || 
+    lower.includes('как да си кача') || 
+    lower.includes('как да вкарам') || 
+    lower.includes('как се вкарва') || 
+    lower.includes('как да си вкарам') ||
+    lower.includes('как да въведа') ||
+    lower.includes('как се въвежда') ||
+    lower.includes('как да добавя портфолио')
+  ) {
     return generatePortfolioUploadGuide();
   }
 
