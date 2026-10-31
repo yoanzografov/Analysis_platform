@@ -689,16 +689,22 @@ async function translateArticlesBatchToBg(articles: any[]): Promise<any[]> {
 async function fetchTopGlobalFinancialFeeds(tab: string = 'all'): Promise<any[]> {
   const normalizedTab = (tab || 'all').toLowerCase();
 
-  // Official publisher RSS feeds matching StockAnalysis's sources (WSJ, CNBC, MarketWatch, Reuters, Seeking Alpha, GlobeNewsWire, PRNewsWire, Business Wire, Investor.bg)
+  // Official publisher RSS feeds (WSJ, CNBC, MarketWatch, Reuters, Investing.com, Yahoo Finance, The Guardian, Seeking Alpha, GlobeNewsWire, PRNewsWire, Business Wire, Investor.bg)
   const allFeedConfigs = [
-    // Markets & Newsroom feeds
+    // Verified Institutional Outlets (Investing.com, Yahoo Finance, Reuters, The Guardian Europe)
+    { url: "https://www.investing.com/rss/news_25.rss", sourceName: "Investing.com", category: "markets", tabs: ["all", "newsroom", "markets"], lang: "en" },
+    { url: "https://news.google.com/rss/search?q=site:finance.yahoo.com+markets&hl=en-US&gl=US&ceid=US:en", sourceName: "Yahoo Finance", category: "markets", tabs: ["all", "newsroom", "markets", "all-stocks"], lang: "en" },
+    { url: "https://news.google.com/rss/search?q=site:reuters.com+business+markets&hl=en-US&gl=US&ceid=US:en", sourceName: "Reuters", category: "markets", tabs: ["all", "newsroom", "markets"], lang: "en" },
+    { url: "https://www.theguardian.com/europe/rss", sourceName: "The Guardian Europe", category: "bg", tabs: ["all", "newsroom", "bg"], lang: "en" },
+    { url: "https://www.theguardian.com/business/economics/rss", sourceName: "The Guardian Economics", category: "markets", tabs: ["all", "newsroom", "markets"], lang: "en" },
+
+    // Additional Major Financial Outlets (WSJ, CNBC, MarketWatch)
     { url: "https://feeds.content.dowjones.io/public/rss/RSSMarketsMain", sourceName: "The Wall Street Journal", category: "markets", tabs: ["all", "newsroom", "markets"], lang: "en" },
     { url: "https://feeds.content.dowjones.io/public/rss/WSJcomUSBusiness", sourceName: "The Wall Street Journal", category: "markets", tabs: ["all", "newsroom", "markets", "all-stocks"], lang: "en" },
     { url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664", sourceName: "CNBC", category: "markets", tabs: ["all", "newsroom", "markets"], lang: "en" },
     { url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258", sourceName: "CNBC", category: "markets", tabs: ["all", "markets"], lang: "en" },
     { url: "https://feeds.content.dowjones.io/public/rss/mw_topstories", sourceName: "MarketWatch", category: "markets", tabs: ["all", "newsroom", "markets"], lang: "en" },
     { url: "https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines", sourceName: "MarketWatch", category: "markets", tabs: ["all", "markets"], lang: "en" },
-    { url: "https://www.investing.com/rss/news_25.rss", sourceName: "Reuters", category: "markets", tabs: ["all", "markets"], lang: "en" },
 
     // All Stocks feeds (company-specific breaking stories with tickers)
     { url: "https://seekingalpha.com/market_currents.xml", sourceName: "Seeking Alpha", category: "all-stocks", tabs: ["all", "all-stocks"], lang: "en" },
@@ -711,7 +717,7 @@ async function fetchTopGlobalFinancialFeeds(tab: string = 'all'): Promise<any[]>
     { url: "https://www.prnewswire.com/rss/financial-services-latest-news/financial-services-latest-news-list.rss", sourceName: "PRNewsWire", category: "press-releases", tabs: ["all", "press-releases"], lang: "en" },
     { url: "https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFpRWA==", sourceName: "Business Wire", category: "press-releases", tabs: ["all", "press-releases"], lang: "en" },
 
-    // Bulgarian feeds (Investor.bg)
+    // Bulgarian & Regional feeds (Investor.bg)
     { url: "https://www.investor.bg/rss/c/578-top-novini", sourceName: "Investor.bg", category: "bg", tabs: ["all", "newsroom", "bg"], lang: "bg" },
     { url: "https://www.investor.bg/rss/latest", sourceName: "Investor.bg", category: "bg", tabs: ["all", "bg"], lang: "bg" }
   ];
@@ -828,9 +834,11 @@ async function fetchTopGlobalFinancialFeeds(tab: string = 'all'): Promise<any[]>
 async function fetchTickerRssNews(ticker: string, companyName?: string): Promise<any[]> {
   const cleanTicker = (ticker.includes(':') ? ticker.split(':')[1] : ticker.split('.')[0]).trim().toUpperCase();
   const urls = [
-    { url: `https://seekingalpha.com/api/sa/combined/${encodeURIComponent(cleanTicker)}.xml`, src: "Seeking Alpha" },
-    { url: `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(cleanTicker)}&region=US&lang=en-US`, src: "Yahoo Finance" },
-    { url: `https://news.google.com/rss/search?q=${encodeURIComponent((companyName || cleanTicker) + ' stock news')}&hl=en-US&gl=US&ceid=US:en`, src: "Google News" }
+    { url: `https://news.google.com/rss/search?q=site:investing.com+${encodeURIComponent(cleanTicker)}&hl=en-US&gl=US&ceid=US:en`, src: "Investing.com" },
+    { url: `https://news.google.com/rss/search?q=site:finance.yahoo.com+${encodeURIComponent(cleanTicker)}&hl=en-US&gl=US&ceid=US:en`, src: "Yahoo Finance" },
+    { url: `https://news.google.com/rss/search?q=site:reuters.com+${encodeURIComponent(cleanTicker)}&hl=en-US&gl=US&ceid=US:en`, src: "Reuters" },
+    { url: `https://news.google.com/rss/search?q=site:theguardian.com+${encodeURIComponent(companyName || cleanTicker)}&hl=en-US&gl=US&ceid=US:en`, src: "The Guardian" },
+    { url: `https://seekingalpha.com/api/sa/combined/${encodeURIComponent(cleanTicker)}.xml`, src: "Seeking Alpha" }
   ];
 
   const finnhubKey = process.env.FINNHUB_API_KEY;
@@ -1312,12 +1320,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 - При въпроси за пазарни движения (напр. "Кои са акциите с най-голям спад днес?", "Топ губещи", "Топ печеливши"): класирай ги директно по дневната промяна (changePct), изведи ги в структурирана Markdown таблица (Тикер, Компания, Спад %, Цена, Fair Value, Margin of Safety) и добави коментар по Уорън Бъфет дали спадът е добра възможност за покупка с отстъпка.
 
 ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ (СТРОГА ПОЛИТИКА ЗА НУЛЕВА ГРЕШКА):
+- За актуални финансови новини и пазарен пулс: Investing.com (https://www.investing.com/), Yahoo Finance (https://finance.yahoo.com/), Reuters (https://www.reuters.com/), The Guardian Europe (https://www.theguardian.com/europe).
 - Дефиниции, понятия и формули: https://www.investopedia.com/
 - Финансови отчети за акции, котировки, баланси, FCF и DCF метрики: https://stockanalysis.com/
 - Официални одитирани регулаторни отчети: SEC EDGAR Form 10-K и 10-Q (https://www.sec.gov/edgar/searchedgar/companysearch).
 - Пазарни данни и котировки на живо: Yahoo Finance (https://finance.yahoo.com/).
 - Макроикономически показатели (лихви, инфлация CPI/PCE): Federal Reserve FRED (https://fred.stlouisfed.org/).
-СТРОГА ЗАБРАНА ЗА ХАЛЮЦИНИРАНЕ: Никога не измисляй произволни числа. Използвай подадените реални данни от таблицата на потребителя. Всяко обяснение за спад или новини се основава на официални регулаторни събития или тримесечни финансови отчети. Винаги цитирай и предоставяй линкове към проверените източници.
+СТРОГА ЗАБРАНА ЗА ХАЛЮЦИНИРАНЕ: Никога не измисляй произволни числа. Използвай подадените реални данни от таблицата на потребителя. Всяко обяснение за спад или пазарно движение се основава строго на проверени новини от четирите официални новинарски източника (Investing.com, Yahoo Finance, Reuters, The Guardian Europe) или официални регулаторни събития и тримесечни финансови отчети. Винаги цитирай и предоставяй линкове към проверените източници.
 
 КОНТЕКСТ НА ПОТРЕБИТЕЛЯ:
 - Акции в таблицата (с котировки, дневни изменения % и справедлива стойност): ${JSON.stringify((stocks || []).slice(0, 30).map((s: any) => ({ ticker: s.ticker, name: s.companyName, price: s.currentPrice, changePct: s.dailyChangePct, fair: s.fairPrice, mos: s.difference })))}

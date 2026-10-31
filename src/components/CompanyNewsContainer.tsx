@@ -60,37 +60,37 @@ const GENERAL_FALLBACK_NEWS: NewsArticle[] = [
   {
     title: "Wall Street indices react to latest Federal Reserve monetary policy signals and corporate earnings",
     titleBg: "Пазарите на Уолстрийт реагират на новите монетарни сигнали от Федералния резерв и корпоративните отчети",
-    source: "The Wall Street Journal",
-    time: "Преди 24 мин",
-    timeEn: "24 minutes ago",
+    source: "Yahoo Finance",
+    time: "Преди 18 мин",
+    timeEn: "18 minutes ago",
     summary: "Major equity benchmarks S&P 500 and Nasdaq Composite show heightened activity as institutional investors weigh interest rate expectations and quarterly results.",
     summaryBg: "Основните борсови индекси S&P 500 и Nasdaq отчитат повишена активност, докато институционалните инвеститори оценяват перспективите за лихвените нива и тримесечните отчети.",
     impact: "Positive",
-    url: "https://www.wsj.com/finance",
+    url: "https://finance.yahoo.com/",
     image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=640&auto=format&fit=crop&q=80",
     category: "markets",
     tickers: ["NVDA", "AAPL", "MSFT"]
   },
   {
-    title: "Semiconductor and AI infrastructure stocks rally on surging hyperscaler data center capex",
-    titleBg: "Акциите за полупроводници и AI инфраструктура поскъпват след рекорден ръст на инвестициите в дейта центрове",
-    source: "CNBC",
-    time: "Преди 42 мин",
-    timeEn: "42 minutes ago",
-    summary: "Leading chipmakers and cloud providers report accelerating demand for next-generation AI accelerators and enterprise cloud workloads.",
-    summaryBg: "Водещите производители на чипове и облачни доставчици отчитат ускорено търсене на ново поколение AI ускорители и корпоративни облачни системи.",
-    impact: "Positive",
-    url: "https://www.cnbc.com/technology/",
-    image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=640&auto=format&fit=crop&q=80",
-    category: "all-stocks",
-    tickers: ["NVDA", "AMD", "AVGO", "TSM"]
+    title: "European economy and markets navigate central bank rates and geopolitical developments",
+    titleBg: "Европейската икономика и пазари балансират между лихвите на ЕЦБ и геополитическите фактори",
+    source: "The Guardian Europe",
+    time: "Преди 35 мин",
+    timeEn: "35 minutes ago",
+    summary: "Eurozone economic indicators and corporate resilience shape trading sessions across London, Frankfurt, and regional European exchanges.",
+    summaryBg: "Икономическите показатели в еврозоната и устойчивостта на бизнеса определят търговията в Лондон, Франкфурт и регионалните европейски борси.",
+    impact: "Neutral",
+    url: "https://www.theguardian.com/europe",
+    image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=640&auto=format&fit=crop&q=80",
+    category: "bg",
+    tickers: []
   },
   {
     title: "Global crude oil and gold stabilize as markets assess OPEC+ supply outlook and Treasury yields",
     titleBg: "Петролът и златото се стабилизират, докато пазарите оценяват доставките от ОПЕК+ и доходността по облигациите",
-    source: "Reuters",
-    time: "Преди 1 час",
-    timeEn: "1 hour ago",
+    source: "Investing.com",
+    time: "Преди 50 мин",
+    timeEn: "50 minutes ago",
     summary: "Brent crude trades near key technical support while precious metals remain resilient amid ongoing central bank accumulation.",
     summaryBg: "Суровият петрол сорт Брент се търгува около ключови нива на подкрепа, докато благородните метали остават стабилни на фона на покупките от централни банки.",
     impact: "Neutral",
@@ -98,6 +98,20 @@ const GENERAL_FALLBACK_NEWS: NewsArticle[] = [
     image: "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=640&auto=format&fit=crop&q=80",
     category: "markets",
     tickers: ["XOM", "CVX"]
+  },
+  {
+    title: "Global corporate earnings and technology investments face critical macroeconomic test",
+    titleBg: "Глобалните корпоративни отчети и технологични инвестиции са изправени пред ключов макроикономически тест",
+    source: "Reuters",
+    time: "Преди 1 час",
+    timeEn: "1 hour ago",
+    summary: "Institutional fund managers closely monitor margin preservation, capital expenditures, and free cash flows across multi-national corporations.",
+    summaryBg: "Институционалните мениджъри на фондове следят отблизо запазването на маржовете, капиталовите разходи и свободния паричен поток на мултинационалните компании.",
+    impact: "Neutral",
+    url: "https://www.reuters.com/",
+    image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=640&auto=format&fit=crop&q=80",
+    category: "markets",
+    tickers: ["GOOGL", "AMZN", "NVDA"]
   },
   {
     title: "Европейските борси и БФБ отчитат засилен интерес към финансовия и енергийния сектор",
@@ -109,7 +123,7 @@ const GENERAL_FALLBACK_NEWS: NewsArticle[] = [
     summaryBg: "Българският индекс SOFIX и водещите европейски пазари се движат с положителен тренд на фона на нови дивиденти и стабилни тримесечни финансови отчети.",
     impact: "Positive",
     url: "https://www.investor.bg/rss/latest",
-    image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=640&auto=format&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=640&auto=format&fit=crop&q=80",
     category: "bg",
     tickers: []
   }
@@ -120,22 +134,22 @@ const TABS: { id: NewsTabType; labelEn: string; labelBg: string; subtitleEn: str
     id: 'newsroom',
     labelEn: 'Newsroom',
     labelBg: 'Newsroom (Водещи)',
-    subtitleEn: 'Top breaking market stories & editorial coverage from WSJ, CNBC, MarketWatch & StockAnalysis',
-    subtitleBg: 'Водещи пазарни обзори и топ новини от WSJ, CNBC, MarketWatch, StockAnalysis и Investor.bg'
+    subtitleEn: 'Top breaking market stories from Investing.com, Yahoo Finance, Reuters, The Guardian & WSJ',
+    subtitleBg: 'Водещи пазарни обзори и топ новини от Investing.com, Yahoo Finance, Reuters, The Guardian Europe и WSJ'
   },
   {
     id: 'markets',
     labelEn: 'Markets',
     labelBg: 'Markets (Пазари)',
-    subtitleEn: 'Real-time global market headlines from The Wall Street Journal, CNBC, MarketWatch & Reuters',
-    subtitleBg: 'Глобални пазарни новини в реално време от The Wall Street Journal, CNBC, MarketWatch и Reuters'
+    subtitleEn: 'Real-time global market headlines from Investing.com, Reuters, Yahoo Finance & CNBC',
+    subtitleBg: 'Глобални пазарни новини в реално време от Investing.com, Reuters, Yahoo Finance, CNBC и MarketWatch'
   },
   {
     id: 'all-stocks',
     labelEn: 'All Stocks',
     labelBg: 'All Stocks (Акции)',
-    subtitleEn: 'Company-specific stock news with ticker tags from Seeking Alpha, CNBC, WSJ & TechCrunch',
-    subtitleBg: 'Новини по компании и борсови тикери от Seeking Alpha, CNBC, WSJ и TechCrunch'
+    subtitleEn: 'Company-specific stock news with ticker tags from Yahoo Finance, Seeking Alpha & Investing.com',
+    subtitleBg: 'Новини по компании и борсови тикери от Yahoo Finance, Seeking Alpha, Investing.com и WSJ'
   },
   {
     id: 'press-releases',
@@ -148,8 +162,8 @@ const TABS: { id: NewsTabType; labelEn: string; labelBg: string; subtitleEn: str
     id: 'bg',
     labelEn: 'Bulgaria & EU',
     labelBg: 'България & Европа',
-    subtitleEn: 'Bulgarian Stock Exchange (BSE) and European financial news from Investor.bg',
-    subtitleBg: 'Финансови и борсови новини за България (БФБ) и Европа директно от Investor.bg'
+    subtitleEn: 'European & Bulgarian economic coverage from The Guardian Europe and Investor.bg',
+    subtitleBg: 'Финансови и икономически новини за Европа и България директно от The Guardian Europe и Investor.bg'
   }
 ];
 
