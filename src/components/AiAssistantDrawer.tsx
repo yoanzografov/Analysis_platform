@@ -558,12 +558,14 @@ export default function AiAssistantDrawer({
     }, 450);
   };
 
-  const handleQuickPrompt = (promptType: 'portfolio' | 'undervalued' | 'cash' | 'company' | 'briefing' | 'duel' | 'graham-audit' | 'graham-number' | 'graham-market' | 'buffett-statements') => {
+  const handleQuickPrompt = (promptType: 'portfolio' | 'undervalued' | 'cash' | 'company' | 'briefing' | 'duel' | 'graham-audit' | 'graham-number' | 'graham-market' | 'buffett-statements' | 'traffic-light-flags') => {
     const today = new Date().toLocaleDateString('bg-BG');
     const target = stocks.find(s => s.ticker === selectedStockTicker) || stocks[0];
     const name = target ? `${target.companyName} (${target.ticker})` : selectedStockTicker;
 
-    if (promptType === 'buffett-statements') {
+    if (promptType === 'traffic-light-flags') {
+      handleSendMessage(`Направи анализ на зелени, жълти и червени флагове на финансовите отчети на ${name} (Income Statement, Balance Sheet, Cash Flow).`);
+    } else if (promptType === 'buffett-statements') {
       handleSendMessage(`Направи пълен одит на финансовите отчети на ${name} по книгата на Уорън Бъфет (Income Statement, Balance Sheet, Cash Flow).`);
     } else if (promptType === 'graham-audit') {
       handleSendMessage(`Провери компанията ${name} по 7-те количествени критерия на Бенджамин Греъм от Глава 14 на Интелигентният инвеститор.`);
@@ -745,6 +747,13 @@ export default function AiAssistantDrawer({
                   title="Одит на 10-те златни правила за финансовите отчети от книгата на Бъфет"
                 >
                   <span>📑 Отчети по Бъфет</span>
+                </button>
+                <button
+                  onClick={() => handleQuickPrompt('traffic-light-flags')}
+                  className="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                  title="Одит на зелени, жълти и червени флагове (BojanFin & Brian Feroldi)"
+                >
+                  <span>🚦 Зелени/Червени флагове</span>
                 </button>
                 <button
                   onClick={() => handleQuickPrompt('undervalued')}

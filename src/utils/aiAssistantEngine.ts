@@ -15,7 +15,9 @@ import {
   calculateGrahamNumber,
   explainGrahamIntelligentInvestorConcepts,
   auditBuffettFinancialStatements,
-  explainBuffettFinancialStatementsBook
+  explainBuffettFinancialStatementsBook,
+  auditFinancialStatementsTrafficLight,
+  explainFinancialStatementsFlags
 } from './aiSkillsEngine';
 
 export {
@@ -33,7 +35,9 @@ export {
   calculateGrahamNumber,
   explainGrahamIntelligentInvestorConcepts,
   auditBuffettFinancialStatements,
-  explainBuffettFinancialStatementsBook
+  explainBuffettFinancialStatementsBook,
+  auditFinancialStatementsTrafficLight,
+  explainFinancialStatementsFlags
 };
 
 /**
@@ -1843,6 +1847,45 @@ export function handleAiQuery(
       return auditBuffettFinancialStatements(resolvedTicker, resolvedStock);
     }
     return explainBuffettFinancialStatementsBook(cleanQ);
+  }
+
+  // Traffic-Light Flags Suite: Green, Yellow & Red Flags (BojanFin & Brian Feroldi)
+  const isTrafficLightFlagsQuery = 
+    lower.includes('зелен флаг') ||
+    lower.includes('зелени флагове') ||
+    lower.includes('жълт флаг') ||
+    lower.includes('жълти флагове') ||
+    lower.includes('червен флаг') ||
+    lower.includes('червени флагове') ||
+    lower.includes('green flag') ||
+    lower.includes('green flags') ||
+    lower.includes('yellow flag') ||
+    lower.includes('yellow flags') ||
+    lower.includes('red flag') ||
+    lower.includes('red flags') ||
+    lower.includes('светофар') ||
+    lower.includes('traffic light') ||
+    lower.includes('flags') ||
+    lower.includes('флагове') ||
+    lower.includes('флаг') ||
+    lower.includes('brian feroldi') ||
+    lower.includes('феролди') ||
+    lower.includes('bojanfin') ||
+    lower.includes('rules of thumb') ||
+    lower.includes('правила на палеца') ||
+    lower.includes('stock-based compensation') ||
+    lower.includes('sbc') ||
+    lower.includes('goodwill в активите') ||
+    lower.includes('гудуил') ||
+    lower.includes('одиторско мнение') ||
+    lower.includes('audit opinion') ||
+    lower.includes('going concern');
+
+  if (isTrafficLightFlagsQuery) {
+    if (matchedStock || matchedCommon) {
+      return auditFinancialStatementsTrafficLight(resolvedTicker, resolvedStock);
+    }
+    return explainFinancialStatementsFlags(cleanQ);
   }
 
   // Skill 1: Piotroski F-Score (9-point financial health test)
