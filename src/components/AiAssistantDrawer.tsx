@@ -262,16 +262,17 @@ export default function AiAssistantDrawer({
     return [
       {
         role: 'assistant',
-        content: `👋 **Здравейте! Аз съм вашият елитен AI Инвестиционен Анализатор.**
+        content: `👋 **Здравейте! Аз съм вашият цялостен AI Инвестиционен Анализатор.**
 
-Изберете вашия предпочитан **инвеститорски мозък** от бутоните горе:
-* 🏛️ **Уорън Бъфет & Чарли Мънгър** – Дългосрочна стойност, икономически ров (**Moat**) и одит на финансовите отчети от книгата на Бъфет
-* 📖 **Бенджамин Греъм (Интелигентният инвеститор)** – 7-те количествени критерия (Гл. 14), **Число на Греъм**, алегорията за **Г-н Пазар** (Гл. 8), **Net-Net / NCAV** (Гл. 15) и **Марж на безопасност** (Гл. 20)
-* 🚀 **Питър Линч** – Растеж на разумна цена (**PEG < 1.0**) и реални пазарни наблюдения
-* 💰 **Дивидентен Аристократ** – Пасивен паричен поток, FCF покритие и 20-годишна снежна топка
-* 🌍 **Рей Далио (All-Weather)** – Макро цикли, лихвени криви и устойчивост при кризи
+В моя аналитичен модел са обединени в едно цяло знанията, формулите и философията на най-великите инвеститори:
+* 🏛️ **Уорън Бъфет & Чарли Мънгър** – Дългосрочна стойност, икономически ров (**Moat**) и 10-те правила за анализ на финансовите отчети
+* 📖 **Бенджамин Греъм** – **Марж на безопасност (Margin of Safety)**, 7-те критерия на Защитния инвеститор, **Число на Греъм** и **Г-н Пазар**
+* 🚀 **Питър Линч** – Растеж на разумна цена (**PEG < 1.0**) и наблюдение на реалния бизнес
+* 💰 **Дивидентна снежна топка** – Пасивен паричен поток, FCF покритие и устойчивост
+* 🌍 **Рей Далио (All-Weather)** – Макро цикли, лихвени криви и диверсификация при кризи
+* 🚦 **Финансов светофар (BojanFin & Brian Feroldi)** – Зелени, жълти и червени флагове за баланса и отчетите 10-K
 
-Задайте свободен въпрос, натиснете микрофона за **гласово въвеждане** или изберете от бързите бутони долу!`,
+Задайте ми свободен въпрос за всяка акция от таблицата, пазарен спад, финансови отчети или инвестиционна формула!`,
         timestamp: new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })
       }
     ];
@@ -601,10 +602,7 @@ export default function AiAssistantDrawer({
             <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-indigo-900 animate-ping" />
           </div>
-          <span className="tracking-wide">AI Асистент</span>
-          <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-black uppercase tracking-wider text-amber-200">
-            {INVESTOR_PERSONAS[persona]?.badge || 'AI'}
-          </span>
+          <span className="tracking-wide">AI Анализатор</span>
         </button>
       )}
 
@@ -643,7 +641,7 @@ export default function AiAssistantDrawer({
                   </span>
                 </div>
                 <p className="text-[11px] font-medium text-slate-400">
-                  Фундаментален анализ на стойността с хоризонт 10+ години
+                  Обединен аналитичен модел: Бъфет, Греъм, Линч, Далио и Финансови отчети
                 </p>
               </div>
             </div>
@@ -667,116 +665,6 @@ export default function AiAssistantDrawer({
             </div>
           </div>
 
-          {/* Investor Persona Selector Strip */}
-          <div className="px-4 py-2.5 bg-slate-950 border-b border-indigo-500/20 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 shrink-0 mr-1">
-              Мозък:
-            </span>
-            {(Object.keys(INVESTOR_PERSONAS) as InvestorPersona[]).map((pKey) => {
-              const p = INVESTOR_PERSONAS[pKey];
-              const isActive = persona === pKey;
-              return (
-                <button
-                  key={pKey}
-                  onClick={() => setPersona(pKey)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                    isActive
-                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30 border border-indigo-400'
-                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
-                  }`}
-                  title={`${p.name} — ${p.philosophy}`}
-                >
-                  <span>{p.icon}</span>
-                  <span className="truncate">{p.badge}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Quick Context & Prompts Strip */}
-          <div className="px-4 py-2 bg-slate-900/60 border-b border-indigo-500/10 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0 text-xs">
-            {/* Stock selector dropdown */}
-            <select
-              value={selectedStockTicker}
-              onChange={(e) => setSelectedStockTicker(e.target.value)}
-              className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-300 focus:outline-none focus:border-indigo-500 shrink-0 cursor-pointer"
-            >
-              {stocks.map(s => (
-                <option key={s.ticker} value={s.ticker}>
-                  {s.ticker} - {s.companyName.slice(0, 18)}
-                </option>
-              ))}
-            </select>
-
-            {/* Persona-specific & global quick action chips */}
-            {persona === 'graham' ? (
-              <>
-                <button
-                  onClick={() => handleQuickPrompt('graham-audit')}
-                  className="px-2.5 py-1 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 border border-blue-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
-                  title="7 количествени критерия от Глава 14 на Интелигентният инвеститор"
-                >
-                  <span>📖 7 критерия за {selectedStockTicker}</span>
-                </button>
-                <button
-                  onClick={() => handleQuickPrompt('graham-number')}
-                  className="px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
-                  title="Изчисли Числото на Греъм и формула 1974 г."
-                >
-                  <span>⚖️ Число на Греъм</span>
-                </button>
-                <button
-                  onClick={() => handleQuickPrompt('graham-market')}
-                  className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
-                  title="Урокът за Г-н Пазар от Глава 8"
-                >
-                  <span>🎭 Г-н Пазар (Гл. 8)</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => handleQuickPrompt('company')}
-                  className="px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
-                >
-                  <span>🏢 Анализ на {selectedStockTicker}</span>
-                </button>
-                <button
-                  onClick={() => handleQuickPrompt('buffett-statements')}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
-                  title="Одит на 10-те златни правила за финансовите отчети от книгата на Бъфет"
-                >
-                  <span>📑 Отчети по Бъфет</span>
-                </button>
-                <button
-                  onClick={() => handleQuickPrompt('traffic-light-flags')}
-                  className="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
-                  title="Одит на зелени, жълти и червени флагове (BojanFin & Brian Feroldi)"
-                >
-                  <span>🚦 Зелени/Червени флагове</span>
-                </button>
-                <button
-                  onClick={() => handleQuickPrompt('undervalued')}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
-                >
-                  <span>🎯 Подценени акции</span>
-                </button>
-                <button
-                  onClick={() => handleQuickPrompt('briefing')}
-                  className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
-                >
-                  <span>🌅 Брифинг</span>
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => handleQuickPrompt('duel')}
-              className="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
-            >
-              <span>🥊 Дуел AAPL vs MSFT</span>
-            </button>
-          </div>
-
           {/* Action Success Toast */}
           {actionSuccessToast && (
             <div className="px-4 py-2 bg-emerald-500/20 border-b border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center justify-between gap-2 animate-in fade-in">
@@ -798,7 +686,7 @@ export default function AiAssistantDrawer({
                 >
                   <div className="flex items-center gap-2 mb-1 px-1">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                      {isAssistant ? `AI Анализатор (${INVESTOR_PERSONAS[persona].badge})` : 'Вие'}
+                      {isAssistant ? 'AI Инвестиционен Анализатор' : 'Вие'}
                     </span>
                     {msg.timestamp && (
                       <span className="text-[10px] text-slate-600 font-mono">
@@ -918,7 +806,7 @@ export default function AiAssistantDrawer({
                       handleSendMessage();
                     }
                   }}
-                  placeholder={isRecording ? "Слушам ви на български... Говорете свободно!" : `Задайте въпрос към ${INVESTOR_PERSONAS[persona].badge} или натиснете микрофона...`}
+                  placeholder={isRecording ? "Слушам ви на български... Говорете свободно!" : "Задайте свободен въпрос за акция, финансови отчети, пазара или натиснете микрофона..."}
                   className={`w-full bg-slate-950 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none resize-none max-h-32 min-h-[46px] leading-relaxed transition-colors ${
                     isRecording ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-700 focus:border-indigo-500'
                   }`}
