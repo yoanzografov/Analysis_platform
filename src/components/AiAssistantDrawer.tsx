@@ -264,13 +264,14 @@ export default function AiAssistantDrawer({
         role: 'assistant',
         content: `👋 **Здравейте! Аз съм вашият елитен AI Инвестиционен Анализатор.**
 
-Изберете вашия предпочитан **инвеститорски мозък** от лентата горе:
-* 🏛️ **Уорън Бъфет & Чарли Мънгър** – Стойност, дълбок ров (**Moat**) и консервативен баланс
+Изберете вашия предпочитан **инвеститорски мозък** от бутоните горе:
+* 🏛️ **Уорън Бъфет & Чарли Мънгър** – Дългосрочна стойност, икономически ров (**Moat**) и консервативен баланс
+* 📖 **Бенджамин Греъм (Интелигентният инвеститор)** – 7-те количествени критерия (Гл. 14), **Число на Греъм**, алегорията за **Г-н Пазар** (Гл. 8), **Net-Net / NCAV** (Гл. 15) и **Марж на безопасност** (Гл. 20)
 * 🚀 **Питър Линч** – Растеж на разумна цена (**PEG < 1.0**) и реални пазарни наблюдения
 * 💰 **Дивидентен Аристократ** – Пасивен паричен поток, FCF покритие и 20-годишна снежна топка
 * 🌍 **Рей Далио (All-Weather)** – Макро цикли, лихвени криви и устойчивост при кризи
 
-Задайте свободен въпрос, натиснете микрофона за **гласово въвеждане** или изберете от експертните бутони!`,
+Задайте свободен въпрос, натиснете микрофона за **гласово въвеждане** или изберете от бързите бутони долу!`,
         timestamp: new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })
       }
     ];
@@ -557,9 +558,18 @@ export default function AiAssistantDrawer({
     }, 450);
   };
 
-  const handleQuickPrompt = (promptType: 'portfolio' | 'undervalued' | 'cash' | 'company' | 'briefing' | 'duel') => {
+  const handleQuickPrompt = (promptType: 'portfolio' | 'undervalued' | 'cash' | 'company' | 'briefing' | 'duel' | 'graham-audit' | 'graham-number' | 'graham-market') => {
     const today = new Date().toLocaleDateString('bg-BG');
-    if (promptType === 'briefing') {
+    const target = stocks.find(s => s.ticker === selectedStockTicker) || stocks[0];
+    const name = target ? `${target.companyName} (${target.ticker})` : selectedStockTicker;
+
+    if (promptType === 'graham-audit') {
+      handleSendMessage(`Провери компанията ${name} по 7-те количествени критерия на Бенджамин Греъм от Глава 14 на Интелигентният инвеститор.`);
+    } else if (promptType === 'graham-number') {
+      handleSendMessage(`Изчисли Числото на Греъм и стойностния модел за ${name}.`);
+    } else if (promptType === 'graham-market') {
+      handleSendMessage(`Обясни алегорията за Г-н Пазар (Mr. Market) от Глава 8 на Интелигентният инвеститор.`);
+    } else if (promptType === 'briefing') {
       handleSendMessage('🌅 Направи ми цялостен институционален дневен пазарен брифинг');
     } else if (promptType === 'duel') {
       handleSendMessage('🥊 Сравни компанията Apple Inc. (AAPL) срещу Microsoft Corporation (MSFT)');
@@ -570,8 +580,6 @@ export default function AiAssistantDrawer({
     } else if (promptType === 'cash') {
       handleSendMessage('💵 Как да разпределя свободния си кеш?');
     } else if (promptType === 'company') {
-      const target = stocks.find(s => s.ticker === selectedStockTicker) || stocks[0];
-      const name = target ? `${target.companyName} (${target.ticker})` : selectedStockTicker;
       handleSendMessage(`Анализирай компанията ${name} на български език по принципите на ${INVESTOR_PERSONAS[persona].name} към дата ${today}.`);
     }
   };
@@ -591,7 +599,7 @@ export default function AiAssistantDrawer({
           </div>
           <span className="tracking-wide">AI Асистент</span>
           <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-black uppercase tracking-wider text-amber-200">
-            Buffett
+            {INVESTOR_PERSONAS[persona]?.badge || 'AI'}
           </span>
         </button>
       )}
@@ -653,6 +661,102 @@ export default function AiAssistantDrawer({
                 <X className="w-5 h-5" />
               </button>
             </div>
+          </div>
+
+          {/* Investor Persona Selector Strip */}
+          <div className="px-4 py-2.5 bg-slate-950 border-b border-indigo-500/20 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 shrink-0 mr-1">
+              Мозък:
+            </span>
+            {(Object.keys(INVESTOR_PERSONAS) as InvestorPersona[]).map((pKey) => {
+              const p = INVESTOR_PERSONAS[pKey];
+              const isActive = persona === pKey;
+              return (
+                <button
+                  key={pKey}
+                  onClick={() => setPersona(pKey)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30 border border-indigo-400'
+                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+                  }`}
+                  title={`${p.name} — ${p.philosophy}`}
+                >
+                  <span>{p.icon}</span>
+                  <span className="truncate">{p.badge}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick Context & Prompts Strip */}
+          <div className="px-4 py-2 bg-slate-900/60 border-b border-indigo-500/10 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0 text-xs">
+            {/* Stock selector dropdown */}
+            <select
+              value={selectedStockTicker}
+              onChange={(e) => setSelectedStockTicker(e.target.value)}
+              className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-300 focus:outline-none focus:border-indigo-500 shrink-0 cursor-pointer"
+            >
+              {stocks.map(s => (
+                <option key={s.ticker} value={s.ticker}>
+                  {s.ticker} - {s.companyName.slice(0, 18)}
+                </option>
+              ))}
+            </select>
+
+            {/* Persona-specific & global quick action chips */}
+            {persona === 'graham' ? (
+              <>
+                <button
+                  onClick={() => handleQuickPrompt('graham-audit')}
+                  className="px-2.5 py-1 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 border border-blue-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                  title="7 количествени критерия от Глава 14 на Интелигентният инвеститор"
+                >
+                  <span>📖 7 критерия за {selectedStockTicker}</span>
+                </button>
+                <button
+                  onClick={() => handleQuickPrompt('graham-number')}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                  title="Изчисли Числото на Греъм и формула 1974 г."
+                >
+                  <span>⚖️ Число на Греъм</span>
+                </button>
+                <button
+                  onClick={() => handleQuickPrompt('graham-market')}
+                  className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                  title="Урокът за Г-н Пазар от Глава 8"
+                >
+                  <span>🎭 Г-н Пазар (Гл. 8)</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleQuickPrompt('company')}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                >
+                  <span>🏢 Анализ на {selectedStockTicker}</span>
+                </button>
+                <button
+                  onClick={() => handleQuickPrompt('undervalued')}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                >
+                  <span>🎯 Подценени акции</span>
+                </button>
+                <button
+                  onClick={() => handleQuickPrompt('briefing')}
+                  className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                >
+                  <span>🌅 Брифинг</span>
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => handleQuickPrompt('duel')}
+              className="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+            >
+              <span>🥊 Дуел AAPL vs MSFT</span>
+            </button>
           </div>
 
           {/* Action Success Toast */}

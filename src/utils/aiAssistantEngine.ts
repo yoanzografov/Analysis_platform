@@ -10,7 +10,10 @@ import {
   auditEconomicMoat,
   analyzeMacroCycle,
   generateStockAnalysisRatios,
-  explainPlatformTooltipOrFormula
+  explainPlatformTooltipOrFormula,
+  auditGrahamDefensiveInvestor,
+  calculateGrahamNumber,
+  explainGrahamIntelligentInvestorConcepts
 } from './aiSkillsEngine';
 
 export {
@@ -23,7 +26,10 @@ export {
   auditEconomicMoat,
   analyzeMacroCycle,
   generateStockAnalysisRatios,
-  explainPlatformTooltipOrFormula
+  explainPlatformTooltipOrFormula,
+  auditGrahamDefensiveInvestor,
+  calculateGrahamNumber,
+  explainGrahamIntelligentInvestorConcepts
 };
 
 /**
@@ -364,7 +370,7 @@ export function generateTrustedSourcesGuide(): string {
 3. **Прозрачност с един клик**: Всеки генериран анализ за компания завършва с директни хипервръзки към нейния профил в StockAnalysis, SEC EDGAR и Yahoo Finance, за да може всеки инвеститор лично да верифицира числата.`;
 }
 
-export type InvestorPersona = 'buffett' | 'lynch' | 'dividend' | 'dalio';
+export type InvestorPersona = 'buffett' | 'graham' | 'lynch' | 'dividend' | 'dalio';
 
 export interface PersonaDetails {
   id: InvestorPersona;
@@ -385,6 +391,15 @@ export const INVESTOR_PERSONAS: Record<InvestorPersona, PersonaDetails> = {
     philosophy: 'Дългосрочна стойност, икономически ров (Moat), консервативен баланс и Margin of Safety.',
     quote: '„Много по-добре е да купиш прекрасен бизнес на справедлива цена, отколкото справедлив бизнес на прекрасна цена.“',
     accentColor: 'amber'
+  },
+  graham: {
+    id: 'graham',
+    name: 'Бенджамин Греъм (Интелигентният инвеститор)',
+    badge: 'Benjamin Graham (Deep Value)',
+    icon: '📖',
+    philosophy: 'Марж на безопасност (Margin of Safety), 7 количествени критерия на Защитния инвеститор, Г-н Пазар (Mr. Market) и Net-Net (NCAV).',
+    quote: '„Инвестиционна операция е тази, която след задълбочен анализ обещава сигурност на главницата и адекватна доходност. Всичко останало е спекулация.“',
+    accentColor: 'blue'
   },
   lynch: {
     id: 'lynch',
@@ -1438,11 +1453,6 @@ export function handleAiQuery(
     lower.includes('как се смята') ||
     lower.includes('как се изчислява') ||
     lower.includes('как се изчисляват') ||
-    lower.includes('марж на сигурност') ||
-    lower.includes('margin of safety') ||
-    lower.includes('бенджамин греъм') ||
-    lower.includes('graham formula') ||
-    lower.includes('формула на греъм') ||
     lower.includes('yield on cost') ||
     lower.includes('yoc') ||
     lower.includes('cagr') ||
@@ -1753,6 +1763,57 @@ export function handleAiQuery(
     }
   }
 
+  // Benjamin Graham Suite: 7 Quantitative Criteria, Graham Number, Net-Net, Mr. Market & The Intelligent Investor
+  const isGrahamCriteria = 
+    lower.includes('7 критерия') || 
+    lower.includes('7-те критерия') || 
+    lower.includes('седемте критерия') || 
+    lower.includes('критерии на греъм') || 
+    lower.includes('критерий на греъм') || 
+    lower.includes('защитен инвеститор') || 
+    lower.includes('defensive investor') ||
+    lower.includes('одит по греъм') ||
+    (lower.includes('греъм') && (lower.includes('критери') || lower.includes('одит') || lower.includes('тест') || lower.includes('провери')));
+
+  const isGrahamNumber = 
+    lower.includes('число на греъм') || 
+    lower.includes('числото на греъм') || 
+    lower.includes('graham number') || 
+    (lower.includes('формула') && lower.includes('греъм')) ||
+    lower.includes('net-net') || 
+    lower.includes('ncav') || 
+    lower.includes('предприемчив инвеститор') ||
+    lower.includes('enterprising investor');
+
+  const isGrahamPhilosophy = 
+    lower.includes('интелигентния инвеститор') || 
+    lower.includes('интелигентният инвеститор') || 
+    lower.includes('интелигентния ивнеститор') || 
+    lower.includes('интелигентният ивнеститор') || 
+    lower.includes('intelligent investor') || 
+    lower.includes('г-н пазар') || 
+    lower.includes('господин пазар') || 
+    lower.includes('мистър маркет') || 
+    lower.includes('mr. market') || 
+    lower.includes('mr market') ||
+    ((lower.includes('бен греъм') || lower.includes('бенджамин греъм')) && !matchedStock && !matchedCommon);
+
+  if (isGrahamCriteria) {
+    return auditGrahamDefensiveInvestor(resolvedTicker, resolvedStock);
+  }
+
+  if (isGrahamNumber) {
+    return calculateGrahamNumber(resolvedTicker, resolvedStock);
+  }
+
+  if (isGrahamPhilosophy) {
+    return explainGrahamIntelligentInvestorConcepts(cleanQ);
+  }
+
+  if (persona === 'graham' && (matchedStock || matchedCommon)) {
+    return auditGrahamDefensiveInvestor(resolvedTicker, resolvedStock);
+  }
+
   // Skill 1: Piotroski F-Score (9-point financial health test)
   if (lower.includes('piotroski') || lower.includes('f-score') || lower.includes('пиотроски') || lower.includes('ф-скор')) {
     return calculatePiotroskiFScore(resolvedTicker, resolvedStock);
@@ -1833,6 +1894,12 @@ export function handleAiQuery(
     const s = stocks.find(st => st.ticker.toUpperCase() === matchedCommon.ticker.toUpperCase());
     return generateLocalBuffettAnalysis(matchedCommon.ticker, s, today);
   } else if (isAnalysisKeyword) {
+    if (persona === 'graham') {
+      return `### 📖 7 Количествени критерия на Бенджамин Греъм (Защитен инвеститор)
+Моля, посочете конкретната компания или тикер, за който желаете одит по 7-те критерия на Греъм от *„Интелигентният инвеститор“* (например: **AAPL**, **MSFT**, **GOOG**, **KO**, **JNJ**, **PG** или друга от вашата таблица).
+
+Можете също да попитате за **„Число на Греъм за [тикер]“** или за концепцията за **„Г-н Пазар (Mr. Market)“**!`;
+    }
     return `### 🏛️ Фундаментален анализ по принципите на Уорън Бъфет и Чарли Мънгър
 Моля, посочете конкретната компания или тикер, за който желаете 8-точков фундаментален анализ (например: **AAPL**, **MSFT**, **GOOG**, **BRK.B**, **NVDA**, **O** или друга от вашата таблица).
 

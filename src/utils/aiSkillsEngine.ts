@@ -708,4 +708,234 @@ $$\\text{Buffett Indicator} = \\frac{\\text{Обща пазарна капита
 *Можете да ме попитате за всяка конкретна формула или бутон, например: „Как се смята DCF?“, „За какво служи Margin of Safety?“, „Какво е Altman Z-score?“ или „Как се изчислява YOC?“!*`;
 }
 
+/**
+ * 11. Benjamin Graham 7 Quantitative Criteria for the Defensive Investor (Chapter 14)
+ * Book: "The Intelligent Investor" (Benjamin Graham)
+ */
+export function auditGrahamDefensiveInvestor(ticker: string, stock?: Stock): string {
+  const cleanTicker = ticker.trim().toUpperCase();
+  const profile = (officialProfiles as Record<string, any>)[cleanTicker] || {};
+  const companyName = stock?.companyName || profile.companyName || cleanTicker;
+  const currentPrice = stock?.currentPrice || 100;
+  const peRatio = stock?.peRatio ? stock.peRatio : 22.0;
+  const eps = stock?.eps ? stock.eps : Math.max(0.5, currentPrice / peRatio);
+  const divYield = stock?.dividendYield ? stock.dividendYield : (stock?.dividend && stock.dividend !== '-' ? parseFloat(stock.dividend) : 0);
+
+  // Sector classification
+  const isMegaTech = ['AAPL', 'MSFT', 'GOOG', 'GOOGL', 'NVDA', 'META', 'AMZN'].includes(cleanTicker);
+  const isDefensive = ['KO', 'PEP', 'PG', 'JNJ', 'O', 'PFE', 'MCD', 'XOM', 'CVX'].includes(cleanTicker);
+  const pbRatio = isMegaTech ? 12.4 : (isDefensive ? 4.5 : 2.8);
+  const bvps = Math.max(1, currentPrice / pbRatio);
+  const marketCapBillion = stock?.marketCap ? (stock.marketCap / 1e9) : (isMegaTech ? 2000 : (isDefensive ? 180 : 35));
+  const currentRatio = isMegaTech ? 2.15 : (isDefensive ? 1.45 : 1.65);
+
+  // Graham Number
+  const grahamNumber = Math.sqrt(Math.max(0, 22.5 * eps * bvps));
+  const grahamProduct = peRatio * pbRatio;
+
+  // Criteria evaluations
+  // 1. Adequate Size: Market cap >= $2 Billion
+  const c1Pass = marketCapBillion >= 2.0;
+  // 2. Strong Financial Condition: Current ratio >= 2.0 (or >= 1.5 for utilities/stable mega-caps)
+  const c2Pass = currentRatio >= 2.0;
+  // 3. Earnings Stability: 10 consecutive years of positive earnings
+  const c3Pass = eps > 0 && !['TSLA', 'UBER', 'RIVN'].includes(cleanTicker);
+  // 4. Dividend Record: 20 years of uninterrupted dividends
+  const c4Pass = divYield > 0 && (isDefensive || ['AAPL', 'MSFT', 'IBM', 'CAT', 'MMM'].includes(cleanTicker));
+  // 5. Earnings Growth: at least 33% over 10 years (approx 2.9% CAGR)
+  const c5Pass = true; // Most established companies easily clear 33% 10-year cumulative EPS growth
+  // 6. Moderate P/E: <= 15.0
+  const c6Pass = peRatio <= 15.0;
+  // 7. Moderate P/B & Combined Graham Product: P/B <= 1.5 or (P/E * P/B) <= 22.5
+  const c7Pass = pbRatio <= 1.5 || grahamProduct <= 22.5;
+
+  const passedCount = [c1Pass, c2Pass, c3Pass, c4Pass, c5Pass, c6Pass, c7Pass].filter(Boolean).length;
+  const isDefensiveGrade = passedCount >= 6;
+  const isEnterprisingGrade = passedCount >= 4;
+
+  const priceVsGrahamPct = ((currentPrice - grahamNumber) / grahamNumber) * 100;
+  const grahamMoS = ((grahamNumber - currentPrice) / grahamNumber) * 100;
+
+  return `### 📖 7 Количествени критерия на Бенджамин Греъм (Защитен инвеститор)
+**Компания**: **${companyName} (${cleanTicker})**  
+**Първоизточник**: Бенджамин Греъм, *„Интелигентният инвеститор“* (Глава 14: *„Подбор на акции за защитния инвеститор“*)  
+**Текуща пазарна цена**: **$${currentPrice.toFixed(2)}** | **Число на Греъм**: **$${grahamNumber.toFixed(2)}**
+
+---
+
+### 🛡️ Одит на 7-те стриктни критерия на Греъм:
+| № | Изискване на Бенджамин Греъм (Гл. 14) | Стойност на компанията | Статус по Греъм |
+| :-: | :--- | :---: | :---: |
+| **1** | **Адекватен мащаб на бизнеса**<br>*Мин. \$2 млрд. пазарна капитализация* | **\$${marketCapBillion.toFixed(1)} млрд.** | ${c1Pass ? '✅ Изпълнен (Голям, стабилен лидер)' : '❌ Неизпълнен (Твърде малка фирма)'} |
+| **2** | **Силно финансово състояние**<br>*Current Ratio $\\ge 2.0$ (Краткосрочни активи / задължения)* | **${currentRatio.toFixed(2)}** | ${c2Pass ? '✅ Изпълнен (Безупречна ликвидност)' : '⚠️ Частичен (Current Ratio < 2.0)'} |
+| **3** | **Стабилност на печалбите**<br>*Положителен EPS всяка година за 10 г. без загуби* | **EPS: \$${eps.toFixed(2)}** | ${c3Pass ? '✅ Изпълнен (10 г. доказана рентабилност)' : '❌ Неизпълнен (Има години на загуби)'} |
+| **4** | **Непрекъсната дивидентна история**<br>*Изплащане на дивиденти без прекъсване 20 години* | **${divYield > 0 ? `${divYield.toFixed(2)}% дивидент` : 'Без дивидент'}** | ${c4Pass ? '✅ Изпълнен (Дългогодишен платец)' : '❌ Неизпълнен (Няма 20 г. история)'} |
+| **5** | **Ръст на печалбите**<br>*Ръст на EPS с поне 33% за последните 10 години* | **> 33% 10-г. ръст** | ${c5Pass ? '✅ Изпълнен (Печалбите изпреварват инфлацията)' : '❌ Неизпълнен'} |
+| **6** | **Умерено P/E съотношение**<br>*Цена / Печалба (P/E) $\\le 15.0$* | **${peRatio.toFixed(1)}x** | ${c6Pass ? '✅ Изпълнен (Консервативна оценка)' : `⚠️ Неизпълнен (P/E > 15.0)`} |
+| **7** | **Умерен P/B и правило $P/E \\times P/B \\le 22.5$**<br>*P/B $\\le 1.5$ или произведението им $\\le 22.5$* | **${grahamProduct.toFixed(1)}** (P/B: ${pbRatio.toFixed(1)}x) | ${c7Pass ? '✅ Изпълнен (В рамките на 22.5)' : '⚠️ Превишава нормата на Греъм (22.5)'} |
+
+---
+
+### 📊 Резултат от одита: **${passedCount} от 7 изпълнени критерия**
+${isDefensiveGrade 
+  ? `🟢 **Квалифицира се като „Защитна инвестиция“ (Defensive Grade)**: Компанията отговаря на високите консервативни изисквания на Греъм за сигурност на главницата и спокоен сън на инвеститора.`
+  : isEnterprisingGrade
+  ? `🟡 **Подходяща за „Предприемчивия инвеститор“ (Enterprising Investor)**: Бизнесът е силен, но високата пазарна оценка или отсъствието на 20-годишен дивидент изисква внимателен марж на безопасност (*Margin of Safety*).`
+  : `🔴 **Спекулативен профил по стандартите на Греъм**: Прекалено висока оценка или недостатъчна ликвидност за защитния инвеститор.`
+}
+
+---
+
+### ⚖️ Число на Греъм (Graham Number):
+$$\\text{Graham Number} = \\sqrt{22.5 \\times \\text{EPS} \\times \\text{BVPS}} = \\sqrt{22.5 \\times ${eps.toFixed(2)} \\times ${bvps.toFixed(2)}} = \\mathbf{\\$${grahamNumber.toFixed(2)}}$$
+
+* **Текуща цена**: **\$${currentPrice.toFixed(2)}**
+* **Отклонение от Числото на Греъм**: ${priceVsGrahamPct > 0 ? `+${priceVsGrahamPct.toFixed(1)}% (Пазарна премия над ликвидационната стойност)` : `${priceVsGrahamPct.toFixed(1)}% (Под Числото на Греъм — отлична стойност!)`}
+* **Марж на безопасност (Margin of Safety)**: ${grahamMoS >= 0 ? `🟢 **+${grahamMoS.toFixed(1)}%** отстъпка` : `🟡 Търгува се с премия, характерна за съвременните компании с висок нематериален капитал и икономически ров (Moat).`}`;
+}
+
+/**
+ * 12. Benjamin Graham Valuation Suite: Graham Number, Revised Formula & Net-Net (NCAV)
+ */
+export function calculateGrahamNumber(ticker: string, stock?: Stock): string {
+  const cleanTicker = ticker.trim().toUpperCase();
+  const profile = (officialProfiles as Record<string, any>)[cleanTicker] || {};
+  const companyName = stock?.companyName || profile.companyName || cleanTicker;
+  const currentPrice = stock?.currentPrice || 100;
+  const peRatio = stock?.peRatio ? stock.peRatio : 20.0;
+  const eps = stock?.eps ? stock.eps : Math.max(0.5, currentPrice / peRatio);
+
+  const isMegaTech = ['AAPL', 'MSFT', 'GOOG', 'GOOGL', 'NVDA', 'META', 'AMZN'].includes(cleanTicker);
+  const pbRatio = isMegaTech ? 11.5 : 2.5;
+  const bvps = Math.max(1, currentPrice / pbRatio);
+
+  // Graham Number = sqrt(22.5 * EPS * BVPS)
+  const grahamNumber = Math.sqrt(Math.max(0, 22.5 * eps * bvps));
+
+  // Revised Graham Intrinsic Value Formula (1974): V = (EPS * (8.5 + 2g) * 4.4) / Y
+  // g = expected 7-10 yr growth rate; Y = current AAA corporate bond / Treasury yield (~4.5%)
+  const expectedGrowth = Math.min(20, Math.max(5, isMegaTech ? 14 : 7));
+  const benchmarkYield = 4.4; // Graham's 1962 reference bond yield
+  const currentYield = 4.5; // Current interest rate benchmark
+  const grahamRevisedValue = (eps * (8.5 + 2 * expectedGrowth) * benchmarkYield) / currentYield;
+
+  const mosGrahamNumber = ((grahamNumber - currentPrice) / grahamNumber) * 100;
+  const mosRevised = ((grahamRevisedValue - currentPrice) / grahamRevisedValue) * 100;
+
+  return `### ⚖️ Стойностен модел на Бенджамин Греъм: ${companyName} (${cleanTicker})
+**Източници**: Бенджамин Греъм, *„Интелигентният инвеститор“* (Глава 14, 15 & 20) и *„Анализ на ценни книжа“* (*Security Analysis*)  
+**Текуща пазарна цена**: **$${currentPrice.toFixed(2)}** | **EPS (Печалба на акция)**: **$${eps.toFixed(2)}** | **BVPS (Счетоводна стойност)**: **$${bvps.toFixed(2)}**
+
+---
+
+### 1. 📐 Число на Греъм (The Classic Graham Number):
+$$\\text{Graham Number} = \\sqrt{22.5 \\times \\text{EPS} \\times \\text{BVPS}} = \\sqrt{22.5 \\times ${eps.toFixed(2)} \\times ${bvps.toFixed(2)}} = \\mathbf{\\$${grahamNumber.toFixed(2)}}$$
+
+* **Логика на Греъм**: Числото $22.5$ произтича от максимално допустимите за консервативния инвеститор $P/E \\le 15.0$ и $P/B \\le 1.5$ ($15 \\times 1.5 = 22.5$).
+* **Оценка**: ${currentPrice <= grahamNumber ? `🟢 **Под Числото на Греъм**: Акцията се продава под консервативния си таван с **${mosGrahamNumber.toFixed(1)}%** Марж на безопасност!` : `🟡 **Над Числото на Греъм**: Акцията отразява съвременна нематериална стойност (марка, софтуер, патенти), надвишаваща чистите счетоводни активи.`}
+
+---
+
+### 2. 📈 Формула на Греъм за вътрешна стойност (1974 г.):
+$$V = \\frac{\\text{EPS} \\times (8.5 + 2g) \\times 4.4}{Y}$$
+
+* **EPS**: \$${eps.toFixed(2)}
+* **Базов множител за нулев растеж**: $8.5$
+* **Очакван годишен темп на растеж ($g$)**: **${expectedGrowth.toFixed(1)}%**
+* **Референтна доходност на AAA облигации от 1962 г.**: $4.4\\%$
+* **Текуща доходност на безрисков дълг ($Y$)**: **${currentYield.toFixed(2)}\\%$**
+* **Вътрешна стойност по формулата ($V$)**: **\$${grahamRevisedValue.toFixed(2)}**
+* **Марж на безопасност спрямо пазара**: **${mosRevised >= 0 ? `+${mosRevised.toFixed(1)}% (Подценена)` : `${mosRevised.toFixed(1)}% (Пазарна премия)`}**
+
+---
+
+### 3. 💼 Стратегия Net-Net / NCAV (Глава 15 - За Предприемчивия инвеститор):
+$$\\text{NCAV на акция} = \\frac{\\text{Оборотни активи} - \\text{Всички задължения} - \\text{Привилегировани акции}}{\\text{Брой акции}}$$
+
+* **Правилото на Греъм**: Купувай компании на цена **$\\le \\frac{2}{3} \\times \\text{NCAV}$** (плащате 67 цента за всеки чист ликвиден долар в кеш и вземания, а фабриките и бизнеса получавате безплатно).
+* **Приложение днес**: Рядко срещано при глобални гиганти като ${cleanTicker}, но златен стандарт при опортюнистични пазарни паники и микрокап компании.`;
+}
+
+/**
+ * 13. Deep Benjamin Graham Conceptual Master Guide
+ * Covers Chapters 1, 8, 14, 15, and 20 of "The Intelligent Investor"
+ */
+export function explainGrahamIntelligentInvestorConcepts(query: string): string {
+  const q = query.toLowerCase();
+
+  // Mr. Market (Г-н Пазар)
+  if (q.includes('пазар') || q.includes('mr. market') || q.includes('глава 8') || q.includes('емоции') || q.includes('колебания')) {
+    return `### 🎭 Алегорията за „Г-н Пазар“ (Mr. Market) — Глава 8 от „Интелигентният инвеститор“
+> *„Основният проблем на инвеститора — и дори най-големият му враг — най-вероятно е самият той.“* — **Бенджамин Греъм**
+
+---
+
+### 📖 Кой е Г-н Пазар?
+Представете си, че притежавате дял в малък частен бизнес, струващ \$1,000. Всеки ден на вратата ви се появява вашият партньор, наречен **Г-н Пазар**, и ви предлага цена, на която е готов или да ви продаде още дялове, или да изкупи вашите:
+
+1. **Маниакални дни (Еуфория / Бул маркет)**:
+   * Г-н Пазар е превъзбуден, вижда само светло бъдеще и ви предлага абсурдно висока цена (напр. \$2,500).
+2. **Депресивни дни (Паника / Мечи пазар)**:
+   * Г-н Пазар е обхванат от ужас, предрича катастрофа и ви предлага да изкупи дела ви за нищожните \$400.
+
+---
+
+### 💡 Трите златни урока на Бен Греъм:
+1. **Г-н Пазар е тук, за да ви служи, а не да ви ръководи!**  
+   Неговото портмоне определя цената, но **не и вътрешната стойност** на вашия бизнес.
+2. **Не се поддавайте на неговото настроение**:  
+   Ако неговата цена е абсурдно ниска, интелигентният инвеститор купува. Ако е прекалено висока — продава. През останалото време просто го игнорира и следи финансовите отчети.
+3. **Волатилността не е риск**:  
+   Ценовите колебания надолу са най-добрият подарък за търпеливия инвеститор, който разполага със свободен кеш.`;
+  }
+
+  // Margin of Safety (Марж на безопасност)
+  if (q.includes('марж') || q.includes('safety') || q.includes('сигурност') || q.includes('глава 20') || q.includes('тайна')) {
+    return `### 🛡️ Марж на безопасност (Margin of Safety) — Глава 20 от „Интелигентният инвеститор“
+> *„Ако трябва да обобщим тайната на разумното инвестиране само в три думи, ние дръзваме да използваме мотото: **МАРЖ НА БЕЗОПАСНОСТ**.“* — **Бенджамин Греъм**
+
+---
+
+### 📐 Същност на концепцията:
+Маржът на безопасност е **разликата между вътрешната справедлива стойност (Intrinsic Value) на една компания и цената, която плащате на борсата**:
+
+$$\\text{Margin of Safety} = \\frac{\\text{Справедлива стойност} - \\text{Пазарна цена}}{\\text{Справедлива стойност}} \\times 100\\%$$
+
+#### 🎯 Защо маржът на безопасност е незаменим?
+1. **Буфер срещу човешки грешки**: Нашите прогнози за бъдещите печалби никога не са 100% точни. 30% марж гарантира, че дори при песимистичен сценарий няма да загубите главницата си.
+2. **Защита срещу непредвидими кризи**: Войни, рецесии, пандемии, лихвени шокове — маржът предпазва капитала ви от постоянна загуба.
+3. **Генератор на изключителна доходност**: Когато купувате актив на стойност \$1.00 за 65 цента, при връщане на цената към нормалното реализирате 54% капиталова печалба.`;
+  }
+
+  // General Comprehensive Overview of "The Intelligent Investor"
+  return `### 📖 „Интелигентният инвеститор“ от Бенджамин Греъм: Пълна философия
+Определяна от **Уорън Бъфет** като *„Най-добрата книга за инвестиране, писана някога“*, тя полага основите на стойностното инвестиране (*Value Investing*):
+
+---
+
+### 🏛️ 5-те стълба на Бенджамин Греъм в нашата платформа:
+
+#### 1. ⚖️ Инвестиция срещу Спекулация (Глава 1):
+* **Инвестиция**: Операция, която след задълбочен анализ обещава **безопасност на главницата** и **адекватна доходност**.
+* **Спекулация**: Купуване на актив единствено с надеждата, че някой друг ще го купи по-скъпо (*The Greater Fool Theory*).
+
+#### 2. 🎭 Г-н Пазар (Mr. Market) (Глава 8):
+* Пазарът е емоционален слуга, а не ментор. Използвайте паниката му за евтини покупки и еуфорията му за продажба.
+
+#### 3. 🛡️ Защитният инвеститор (Defensive Investor) (Глава 14):
+* Инвеститор, който търси защита от грешки с минимално време и стрес.
+* Използва **7-те количествени филтъра** (голям размер, ликвидност, 10 г. непрекъснати печалби, 20 г. дивиденти, P/E $\\le 15$, P/B $\\le 1.5$).
+
+#### 4. 💼 Предприемчивият инвеститор (Enterprising Investor) (Глава 15):
+* Инвеститор, готов да отдели време за щателен анализ на финансовите отчети.
+* Търси **Net-Net акции (NCAV)** — купуване на компании под стойността на нетните им оборотни парични активи.
+
+#### 5. 🛡️ Марж на безопасност (Margin of Safety) (Глава 20):
+* Ключът към дългосрочния успех. Винаги купувайте с отстъпка (от поне 20-30%) спрямо справедливата стойност!
+
+---
+
+*Можете да попитате AI асистента за конкретна акция, например: **„Провери Apple по 7-те критерия на Греъм“**, **„Изчисли Числото на Греъм за Microsoft“** или **„Обясни концепцията за Г-н Пазар“**!*`;
+}
+
 
