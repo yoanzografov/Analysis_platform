@@ -1810,10 +1810,28 @@ app.post("/api/ai-assistant", async (req, res) => {
 - Отчет за паричните потоци (Cash Flow Statement): CapEx / Нетна печалба < 25% (златен стандарт за машина за пари) или < 50%.
 5. ФИНАНСОВ СВЕТОФАР: ЗЕЛЕНИ, ЖЪЛТИ И ЧЕРВЕНИ ФЛАГОВЕ (BOJANFIN & BRIAN FEROLDI):
 Когато се анализират финансови отчети или се пита за флагове:
-- ЗЕЛЕНИ ФЛАГОВЕ (🟢 Green Flags): Брутен марж >= 40%, Ръст на приходите >= 15%, Оперативен кеш > Оперативна печалба, EBITDA марж >= 20%, Нетен марж >= 17%, Покритие на лихвите > 5x, Goodwill < 10% от активите, Debt/Equity < 1.0, Current Ratio >= 2.0, Quick Ratio >= 1.0, SBC < 5% от нетната печалба, CapEx < 15% от печалбата, FCF > Нетен доход и растящ с 10%+, Cash Flow to Debt > 1.0, Одиторско становище: Clean Unqualified Opinion.
-- ЖЪЛТИ ФЛАГОВЕ (🟡 Yellow Flags): Брутен марж < 30%, Ръст на приходите < 10%, EBITDA марж < 10%, Нетен марж < 5%, Лихвено покритие < 2x, Goodwill > 20%, Debt/Equity > 2.0, Вземания/Складови наличности растящи по-бързо от продажбите, Current Ratio < 1.0, Quick Ratio < 0.8, SBC > 10%, CapEx > 25%, Спадащ FCF, FCF < Net Income, Cash Flow to Debt < 0.3.
-- ЧЕРВЕНИ ФЛАГОВЕ (🔴 Red Flags): Брутен марж < 10%, Ръст приходи < 2%, EBITDA марж < 3%, Нетен марж < 1%, Лихвено покритие < 1.5x (риск от фалит), Goodwill > 30% (риск от отписване), Debt/Equity > 4.0, Quick Ratio < 0.3, SBC > 20% (разводняване), CapEx > 40%, Отрицателен оперативен паричен поток, Cash Flow to Debt < 0.1, Одиторско становище с Going Concern / Qualified / Disclaimer Opinion.
-- ПРАВИЛАТА НА БЪФЕТ ЗА INCOME STATEMENT (BRIAN FEROLDI): Gross Margin > 40%, SG&A / Gross Profit < 30%, R&D / Gross Profit < 30%, Depreciation / Gross Profit < 10%, Interest / Operating Income < 15%, Tax Rate = Corporate Tax Rate, Net Income Margin > 20%, EPS Growth = положителен и растящ.
+- ЗЕЛЕНИ ФЛАГОВЕ (🟢 Green Flags - BojanFin): 
+  * Income Statement: Брутен марж >= 40%, Ръст на приходите >= 15%, Оперативен кеш > Оперативна печалба, EBITDA марж >= 20%, Нетен марж >= 17%, Директните разходи растат по-бавно от продажбите, Покритие на лихвите > 5x.
+  * Balance Sheet: Goodwill < 10% от активите, Debt to Equity < 1.0, Вземанията растат по-бавно от продажбите, Складовите наличности растат по-бавно от печалбата, Asset Turnover Ratio > 3.0, Current Assets 2x по-високи от Current Liabilities (Current Ratio >= 2.0), Quick Ratio >= 1.0.
+  * Cash Flow Statement: SBC < 5% от нетната печалба, CapEx < 15% от нетната печалба, Оперативният паричен поток расте по-бързо от оперативната печалба, Свободният паричен поток расте с 10%+ годишно, FCF > Net Income, Cash Flow to Debt > 1.0, Operating Cash Flow to Sales >= 15%.
+- ЖЪЛТИ ФЛАГОВЕ (🟡 Yellow Flags - BojanFin): 
+  * Income Statement: Брутен марж < 30%, Ръст на приходите < 10%, Нетна печалба по-ниска от оперативния кеш, EBITDA марж < 10%, Нетен марж < 5%, Директните разходи растат по-бързо от продажбите, Лихвено покритие < 2.0x.
+  * Balance Sheet: Goodwill > 20% от активите, Debt to Equity > 2.0, Вземанията растат по-бързо от продажбите, Складовите наличности растат по-бързо от печалбата, Asset Turnover Ratio < 1.0, Текущите активи са по-малко от текущите пасиви (Current Ratio < 1.0), Quick Ratio < 0.8.
+  * Cash Flow Statement: SBC > 10% от нетния доход, CapEx > 25% от нетния доход, Нисък или отрицателен оперативен паричен поток, Спадащ FCF, FCF < Net Income, Cash Flow to Debt < 0.3, Operating Cash Flow to Sales < 10%.
+- ЧЕРВЕНИ ФЛАГОВЕ (🔴 Red Flags - BojanFin): 
+  * Income Statement: Брутен марж < 10%, Ръст приходи < 2%, EBITDA марж < 3%, Нетен марж < 1%, Директните разходи ескалират спрямо продажбите, Лихвено покритие < 1.5x (остър дългов риск).
+  * Balance Sheet: Goodwill > 30% от активите (риск от гигантски отписвания), Debt to Equity > 4.0, Вземанията и наличностите растат рязко по-бързо от оборота/печалбата, Asset Turnover Ratio < 0.5, Текущи активи < Текущи пасиви, Quick Ratio < 0.3.
+  * Cash Flow Statement: SBC > 20% от нетния доход (агресивно разводняване), CapEx > 40% от нетния доход (капиталов капан), Отрицателен оперативен кеш поток, Спадащ/дефицитен FCF, Cash Flow to Debt < 0.1, Operating Cash Flow to Sales < 5%.
+  * Одиторско мнение (Audit Opinion): Всяко Adverse opinion, Disclaimer opinion, Qualified opinion with significant issues или становище с клауза за Going Concern (съмнение в непрекъснатостта на дейността).
+- ПРАВИЛАТА НА БЪФЕТ ЗА INCOME STATEMENT (BRIAN FEROLDI RULES OF THUMB):
+  * Gross Margin (Gross Profit / Revenue) > 40%
+  * SG&A Margin (SG&A / Gross Profit) < 30%
+  * R&D Margin (R&D / Gross Profit) < 30%
+  * Depreciation Margin (Depreciation / Gross Profit) < 10%
+  * Interest Margin (Interest / Operating Income) < 15%
+  * Tax Margin (Taxes / Pre-Tax Income) = Corporate Tax Rate (~21%)
+  * Net Income Margin (Net Income / Revenue) > 20%
+  * EPS Growth (Year 2 EPS / Year 1 EPS) = положителен и растящ (Positive & Growing).
 6. УЪРКШОП РАМКА ЗА ПЪЛЕН АНАЛИЗ НА КОМПАНИЯ (DIMITAR ANGELOV COMMUNITY - 13 СТЪЛБА):
 Когато се прави задълбочен одит или се поиска пълен уъркшоп анализ на компания, следвай задължително 13-те стълба на Димитър Ангелов (Angelov Dimitar Community - Действаме Заедно!):
 1. Бизнес модел - Form 10-K: как компанията прави пари, основни продукти/услуги, клиенти и пазари, конкуренти и диференциация.

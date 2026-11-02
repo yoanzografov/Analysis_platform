@@ -1638,7 +1638,7 @@ ${undervalued.length > 0 ? undervalued.map((s, idx) => {
 export function handleAiQuery(
   query: string, 
   context: AiPortfolioContext, 
-  stocks: Stock[], 
+  stocks: Stock[] = [], 
   persona: InvestorPersona = 'buffett', 
   indices: MarketIndex[] = []
 ): string {

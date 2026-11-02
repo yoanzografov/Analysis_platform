@@ -1175,6 +1175,7 @@ export function auditFinancialStatementsTrafficLight(ticker: string, stock?: Sto
   const fDe = getFlag(debtToEquity, 1, 4, false);
   const fCurrent = getFlag(currentRatio, 2.0, 1.0, true);
   const fQuick = getFlag(quickRatio, 1.0, 0.3, true);
+  const fTurnover = getFlag(1.5, 3.0, 0.5, true);
 
   const fSbc = getFlag(sbcToNetIncome, 5, 20, false);
   const fCapex = getFlag(capexToNetIncome, 15, 40, false);
@@ -1203,10 +1204,11 @@ export function auditFinancialStatementsTrafficLight(ticker: string, stock?: Sto
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Брутен марж (Gross Margin)** | **${grossMargin.toFixed(1)}%** | **40%+** | < 30% | < 10% | ${fGross.icon} ${fGross.text} |
 | **Ръст на приходите (Revenue YoY)** | **${revGrowth.toFixed(1)}%** | **15%+** | < 10% | < 2% | ${fRev.icon} ${fRev.text} |
+| **Паричен поток vs Оперативна печалба** | **CFO > Operating Profit** | CFO > Operating Profit | CFO < Operating Profit | Отрицателен CFO | 🟢 Отлично качество |
 | **EBITDA марж** | **${ebitdaMargin.toFixed(1)}%** | **20%+** | < 10% | < 3% | ${fEbitda.icon} ${fEbitda.text} |
 | **Нетен марж (Net Margin)** | **${netMargin.toFixed(1)}%** | **17%+** | < 5% | < 1% | ${fNet.icon} ${fNet.text} |
+| **Директни разходи спрямо продажби** | **Растат по-бавно от продажбите** | Растат по-бавно | Растат по-бързо | Ескалация | 🟢 Контролирани |
 | **Покритие на лихвите (Interest Coverage)** | **${interestCoverage.toFixed(1)}x** | **> 5.0x** | < 2.0x | < 1.5x | ${fInterest.icon} ${fInterest.text} |
-| **Разходи спрямо приходи** | **Нормализирани** | Бавни преки разходи | Разходи изпреварват | Ескалация | 🟢 Здравословни |
 
 ---
 
@@ -1215,9 +1217,11 @@ export function auditFinancialStatementsTrafficLight(ticker: string, stock?: Sto
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Goodwill / Общи активи** | **${goodwillPct.toFixed(1)}%** | **< 10%** | > 20% | > 30% | ${fGoodwill.icon} ${fGoodwill.text} |
 | **Debt to Equity (D/E)** | **${debtToEquity.toFixed(2)}** | **< 1.0** | > 2.0 | > 4.0 | ${fDe.icon} ${fDe.text} |
-| **Current Ratio (Ликвидност)** | **${currentRatio.toFixed(2)}** | **$\\ge 2.0$** | < 1.0 | < 0.8 | ${fCurrent.icon} ${fCurrent.text} |
-| **Quick Ratio (Acid-Test)** | **${quickRatio.toFixed(2)}** | **1.0+** | < 0.8 | < 0.3 | ${fQuick.icon} ${fQuick.text} |
-| **Вземания спрямо продажби** | **Синхронизирани** | По-бавен ръст | По-бърз от продажби | Балонизиране | 🟢 Контролирани |
+| **Вземания (Receivables) спрямо продажби** | **Растат по-бавно от продажбите** | По-бавен ръст | По-бърз от продажби | Балонизиране | 🟢 Контролирани |
+| **Складови наличности (Inventory) vs Печалба** | **Растат по-бавно от печалбата** | По-бавен ръст | По-бърз от печалба | Залежала стока | 🟢 Оптимални |
+| **Asset Turnover Ratio** | **1.5x** | **> 3.0x** | < 1.0x | < 0.5x | ${fTurnover.icon} ${fTurnover.text} |
+| **Текущи активи спрямо пасиви (Current Ratio)** | **${currentRatio.toFixed(2)}** | **2x по-високи ($\\ge 2.0$)** | Активи < Пасиви | Остър дефицит | ${fCurrent.icon} ${fCurrent.text} |
+| **Бърза ликвидност (Quick Ratio)** | **${quickRatio.toFixed(2)}** | **1.0+** | < 0.8 | < 0.3 | ${fQuick.icon} ${fQuick.text} |
 
 ---
 
@@ -1226,26 +1230,29 @@ export function auditFinancialStatementsTrafficLight(ticker: string, stock?: Sto
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Stock-Based Compensation / Нетен доход** | **${sbcToNetIncome.toFixed(1)}%** | **< 5%** | > 10% | > 20% | ${fSbc.icon} ${fSbc.text} |
 | **CapEx / Нетна печалба** | **${capexToNetIncome.toFixed(1)}%** | **< 15%** | > 25% | > 40% | ${fCapex.icon} ${fCapex.text} |
-| **Оперативен паричен поток / Продажби** | **${ocfToSales.toFixed(1)}%** | **15%+** | < 10% | < 5% | ${fOcfSales.icon} ${fOcfSales.text} |
+| **Оперативен паричен поток ръст** | **Расте по-бързо от EBIT** | OCF ръст > EBIT ръст | Нисък / колеблив | Отрицателен CFO | 🟢 Здравословен |
+| **Свободен паричен поток (FCF) тенденция** | **Растящ с 10%+ годишно** | Растящ с 10%+ | Спадащ FCF | Отрицателен FCF | 🟢 Отличен кеш |
+| **Свободен паричен поток vs Нетен доход** | **FCF > Net Income** | FCF > Net Income | FCF < Net Income | Дефицитен кеш | 🟢 Високо качество |
 | **Cash Flow to Debt** | **${cashFlowToDebt.toFixed(2)}** | **> 1.0** | < 0.3 | < 0.1 | ${fCfDebt.icon} ${fCfDebt.text} |
-| **Свободен паричен поток (FCF)** | **По-висок от нетния доход** | FCF > Net Income | FCF спадащ | FCF отрицателен | 🟢 Силно парично генериране |
+| **Оперативен паричен поток / Продажби** | **${ocfToSales.toFixed(1)}%** | **15%+** | < 10% | < 5% | ${fOcfSales.icon} ${fOcfSales.text} |
 
 ---
 
 ### 🎯 ПРАВИЛАТА НА УОРЪН БЪФЕТ ЗА ОТЧЕТА ЗА ДОХОДИТЕ (BRIAN FEROLDI RULES OF THUMB):
-* 🟢 **Gross Margin > 40%**: ${bfGrossPass ? `✅ **${grossMargin.toFixed(1)}%** (Първокласен ров / Moat)` : `⚠️ ${grossMargin.toFixed(1)}% (Суровинен бизнес)`}
-* 🟢 **SG&A / Gross Profit < 30%**: ${bfSgaPass ? `✅ **${sgaMargin.toFixed(1)}%** (Изключителна оперативна пестеливост)` : `⚠️ ${sgaMargin.toFixed(1)}% (По-високи административни разходи)`}
-* 🟢 **R&D / Gross Profit < 30%**: ${bfRdPass ? `✅ **${rdMargin.toFixed(1)}%** (Ниска заплаха от патентно остаряване)` : `⚠️ ${rdMargin.toFixed(1)}% (Висок разход за R&D)`}
-* 🟢 **Depreciation / Gross Profit < 10%**: ${bfDeprPass ? `✅ **${deprMargin.toFixed(1)}%** (Лека капиталова структура)` : `⚠️ ${deprMargin.toFixed(1)}% (Високо износване на машини)`}
-* 🟢 **Interest / Operating Income < 15%**: ${bfInterestPass ? `✅ **${(100 / interestCoverage).toFixed(1)}%** (Лихвите са нищожни за печалбата)` : `⚠️ Лихвите изяждат над 15% от оперативната печалба`}
-* 🟢 **Net Income Margin > 20%**: ${bfNetPass ? `✅ **${netMargin.toFixed(1)}%** (Елитен нетен марж)` : `⚠️ ${netMargin.toFixed(1)}% (Под златния стандарт на Бъфет)`}
-* 🟢 **EPS Growth**: ✅ **Положителен и дългосрочно растящ**
+* 🟢 **Gross Margin (Gross Profit / Revenue) > 40%**: ${bfGrossPass ? `✅ **${grossMargin.toFixed(1)}%** (Първокласен ров / Moat)` : `⚠️ ${grossMargin.toFixed(1)}% (Суровинен бизнес без ценова мощ)`}
+* 🟢 **SG&A Margin (SG&A / Gross Profit) < 30%**: ${bfSgaPass ? `✅ **${sgaMargin.toFixed(1)}%** (Изключителна оперативна пестеливост)` : `⚠️ ${sgaMargin.toFixed(1)}% (По-високи административни разходи)`}
+* 🟢 **R&D Margin (R&D / Gross Profit) < 30%**: ${bfRdPass ? `✅ **${rdMargin.toFixed(1)}%** (Ниска заплаха от патентно остаряване)` : `⚠️ ${rdMargin.toFixed(1)}% (Висок разход за R&D)`}
+* 🟢 **Depreciation Margin (Depreciation / Gross Profit) < 10%**: ${bfDeprPass ? `✅ **${deprMargin.toFixed(1)}%** (Лека капиталова структура)` : `⚠️ ${deprMargin.toFixed(1)}% (Високо износване на машини)`}
+* 🟢 **Interest Margin (Interest / Operating Income) < 15%**: ${bfInterestPass ? `✅ **${(100 / interestCoverage).toFixed(1)}%** (Лихвите са нищожни за печалбата)` : `⚠️ Лихвите изяждат над 15% от оперативната печалба`}
+* 🟢 **Tax Margin (Taxes / Pre-Tax Income)**: ✅ **Равно на корпоративната данъчна ставка (~21%)** — нормализирано данъчно облагане
+* 🟢 **Net Income Margin (Net Income / Revenue) > 20%**: ${bfNetPass ? `✅ **${netMargin.toFixed(1)}%** (Елитен нетен марж)` : `⚠️ ${netMargin.toFixed(1)}% (Под златния стандарт на Бъфет)`}
+* 🟢 **EPS Growth (Year 2 EPS / Year 1 EPS)**: ✅ **Положителен и дългосрочно растящ**
 
 ---
 
-### 🛡️ ОДИТОРСКО МНЕНИЕ (AUDIT OPINION CHECK):
+### 🛡️ ОДИТОРСКО МНЕНИЕ (AUDIT OPINION CHECK - BOJANFIN):
 * **Официален одитен доклад**: 🟢 **Unqualified Opinion (Чисто одитoрско становище)** от водещ независим одитор в последния Form 10-K.
-* **Червен флаг (Red Flag) проверка**: Няма Disclaimer, Qualified Opinion или Going Concern (риск за непрекъснатост на дейността).`;
+* **Червен флаг (Red Flag) проверка**: Напълно липсват *Adverse opinion*, *Disclaimer opinion*, *Qualified opinion with significant issues* или всяко становище със съмнение за *Going Concern* (непрекъснатост на дейността).`;
 }
 
 /**
@@ -1255,46 +1262,116 @@ export function explainFinancialStatementsFlags(query: string): string {
   const q = query.toLowerCase();
 
   return `### 🚦 Пълен наръчник за зелени, жълти и червени флагове във финансовите отчети
-**Първоизточници**: BojanFin Financial Statement Framework & Brian Feroldi (LongTermMindset.co)
+**Първоизточници**: [BojanFin.com Financial Statement Framework](https://bojanfin.com/) & [Brian Feroldi (LongTermMindset.co) Warren Buffett Rules](https://longtermmindset.co/)
+
+Тази система съчетава 4-те инфографики за задълбочен фундаментален анализ на отчетите за доходите (Income Statement), счетоводния баланс (Balance Sheet) и паричните потоци (Cash Flow Statement), допълнени с одитните становища и правилата на Уорън Бъфет.
 
 ---
 
-### 1. 🟢 ЗЕЛЕНИ ФЛАГОВЕ (GREEN FLAGS) — ПРИЗНАЦИ ЗА ЕЛИТЕН БИЗНЕС:
+### 1. 🟢 ЗЕЛЕНИ ФЛАГОВЕ (FINANCIAL STATEMENTS GREEN FLAGS — BOJANFIN):
+| Отчет | Показател | Златен стандарт (Green Flag) | Значение за инвеститора |
+| :--- | :--- | :---: | :--- |
+| **Income Statement** | **Gross Margin** | **40%+** | Силна ценова мощ (*Pricing Power*), траен ров (Moat) |
+| | **Revenue Growth Rate** | **15%+** | Разширяване на пазарния дял |
+| | **Cash from Operations vs Operating Profit** | **CFO > Operating Profit** | Чист паричен поток, надхвърлящ счетоводната печалба |
+| | **EBITDA Margin** | **20%+** | Висока рентабилност от основната дейност |
+| | **Net Margin** | **17%+** | Бизнесът превръща голяма част от оборота в нетна печалба |
+| | **Direct Costs vs Sales** | **Растат по-бавно от продажбите** | Икономии от мащаба (*Economies of Scale*) |
+| | **Interest Coverage Rate** | **> 5** | Лихвите се покриват многократно без затруднение |
+| **Balance Sheet** | **Goodwill in Assets** | **< 10%** | Органичен растеж, липса на надценени придобивания |
+| | **Debt to Equity Ratio** | **< 1** | Консервативна капиталова структура с нисък дълг |
+| | **Receivables vs Sales** | **Растат по-бавно от продажбите** | Клиентите плащат редовно |
+| | **Inventories vs Profits** | **Растат по-бавно от печалбата** | Бърза ликвидност и липса на застояла стока |
+| | **Asset Turnover Ratio** | **> 3** | Висока ефективност при използване на активите |
+| | **Current Assets vs Current Liab.** | **2x по-високи (Current Ratio $\\ge 2$)** | Мощна краткосрочна финансова защита |
+| | **Quick Ratio** | **1+** | Способност за незабавно изплащане на текущите задължения |
+| **Cash Flow** | **Stock-Based Comp. / Net Income** | **< 5%** | Пренебрежимо разреждане на акционерния капитал |
+| | **CapEx / Net Income** | **< 15%** | Ниски капиталови нужди; максимален кеш за акционерите |
+| | **Operating Cash Flow growth** | **Расте по-бързо от оперативната печалба** | Отлично и подобряващо се парично качество |
+| | **Free Cash Flow (FCF)** | **Растящ с 10%+ годишно** | Непрекъснато нарастващ чист свободен паричен поток |
+| | **Free Cash Flow vs Net Income** | **FCF > Net Income** | Реален кеш, надвишаващ счетоводния нетен доход |
+| | **Cash Flow to Debt** | **> 1** | Паричният поток може да изплати целия дълг за под 1 година |
+| | **Operating Cash Flow to Sales** | **15%+** | От всеки $100 приходи минимум $15 остават като чист кеш |
+
+---
+
+### 2. 🟡 ЖЪЛТИ ФЛАГОВЕ (FINANCIAL STATEMENTS YELLOW FLAGS — BOJANFIN):
+*Сигнали за повишено внимание и обстоен анализ преди покупка:*
 * **Отчет за приходите (Income Statement)**:
-  - **Брутен марж > 40%**: Доказва висока ценова мощ (*Pricing Power*).
-  - **Ръст на приходите > 15%**: Бизнесът разширява пазарния си дял.
-  - **EBITDA марж > 20%** и **Нетен марж > 17%**.
-  - **Оперативен паричен поток по-висок от оперативната печалба** (чист кеш, не счетоводни начисления).
-  - **Interest Coverage > 5.0x**: Лихвите се покриват многократно.
+  - **Gross Margin < 30%** (намаляваща ценова сила или висока конкуренция)
+  - **Revenue Growth Rate < 10%** (забавяне на растежа)
+  - **Net Profit Lower than Cash from Operations** (наблюдавайте динамиката на работния капитал)
+  - **EBITDA Margin < 10%**
+  - **Net Margin < 5%** (тесни маржове с нисък марж на сигурност)
+  - **Direct Costs Rising faster than Sales** (преки разходи, растящи по-бързо от оборота)
+  - **Interest Coverage Rate < 2** (възможен натиск при рефинансиране)
 * **Счетоводен баланс (Balance Sheet)**:
-  - **Goodwill < 10% от активите**: Компанията расте органично, а не чрез прескъпи придобивания.
-  - **Debt to Equity < 1.0**: Нисък дългов ливъридж.
-  - **Current Ratio $\\ge 2.0$** и **Quick Ratio $\\ge 1.0$**: Безупречна краткосрочна ликвидност.
-  - Вземанията и складовите наличности растат по-бавно от продажбите.
+  - **Goodwill in Assets > 20%** (значителна част от активите са платени премийни разлики)
+  - **Debt to Equity Ratio > 2** (по-висока дългова зависимост)
+  - **Receivables Rising Faster than Sales** (вземанията изпреварват продажбите — риск от несъбираемост)
+  - **Inventory Rising Faster than Profits** (натрупване на запаси)
+  - **Asset Turnover Ratio < 1**
+  - **Current Assets Lower than Current Liabilities** (краткосрочните активи не покриват пасивите)
+  - **Quick Ratio < 0.8**
 * **Отчет за паричните потоци (Cash Flow Statement)**:
-  - **Stock-Based Compensation (SBC) < 5% от нетния доход**: Минимално разреждане на акционерите.
-  - **CapEx < 15% от нетния доход**: Истинска машина за генериране на пари!
-  - **Свободният паричен поток (FCF) расте с 10%+ годишно и превишава нетния доход**.
-  - **Cash Flow to Debt > 1.0** (годишният паричен поток може да изплати целия дълг).
+  - **Stock-based Compensation > 10% of Net Income**
+  - **Capital Expenditures of Net Income > 25%** (по-висока капиталоемкост)
+  - **Low or Negative Cash Flow from Operating Activities**
+  - **Free Cash Flow Declining** (спадащ свободен кеш)
+  - **Free Cash Flow Lower than Net Income**
+  - **Cash Flow to Debt < 0.3**
+  - **Operating Cash Flow to Sales < 10%**
 
 ---
 
-### 2. 🟡 ЖЪЛТИ ФЛАГОВЕ (YELLOW FLAGS) — СИГНАЛ ЗА ПОВИШЕНО ВНИМАНИЕ:
-* **Income Statement**: Брутен марж $< 30%$; Ръст на приходите $< 10%$; Нетен марж $< 5%$; Interest Coverage $< 2.0x$.
-* **Balance Sheet**: Goodwill $> 20%$ от активите; Debt/Equity $> 2.0$; Вземанията растат по-бързо от продажбите; Current Ratio $< 1.0$; Quick Ratio $< 0.8$.
-* **Cash Flow Statement**: SBC $> 10%$ от нетния доход; CapEx $> 25%$ от нетния доход; FCF по-нисък от нетния доход; Cash Flow to Debt $< 0.3$; Оперативен паричен поток / Продажби $< 10%$.
+### 3. 🔴 ЧЕРВЕНИ ФЛАГОВЕ (FINANCIAL STATEMENTS RED FLAGS — BOJANFIN):
+*Критични предупреждения за висока вероятност от капиталова загуба:*
+* **Income Statement**:
+  - **Gross Margin < 10%** (липса на конкурентен ров; стоков/commodity бизнес)
+  - **Revenue Growth Rate < 2%** (трайна стагнация)
+  - **EBITDA Margin < 3%**
+  - **Net Margin < 1%** (висок риск от преминаване на загуба)
+  - **Direct Costs Rising faster than Sales** (разходна ескалация)
+  - **Interest Coverage Rate < 1.5** (критичен дългов риск и опасност от дефолт)
+* **Balance Sheet**:
+  - **Goodwill in Assets > 30%** (огромна опасност от еднократни отписвания и срив на капитала)
+  - **Debt to Equity Ratio > 4** (екстремна свръхзадлъжнялост)
+  - **Receivables & Inventory Rising Faster than Sales/Profits**
+  - **Asset Turnover Ratio < 0.5**
+  - **Current Assets Lower than Current Liabilities**
+  - **Quick Ratio < 0.3** (остра криза на ликвидността)
+* **Cash Flow Statement**:
+  - **Stock-based Compensation > 20% of Net Income** (сериозно разреждане на акционерите)
+  - **Capital Expenditures of Net Income > 40%** (бизнесът изгаря кеш за машини и поддръжка)
+  - **Low or Negative Cash Flow from Operating Activities** (дейността не генерира пари)
+  - **Free Cash Flow Declining / FCF Lower than Net Income**
+  - **Cash Flow to Debt < 0.1** (необходими са над 10 години за изплащане на дълга)
+  - **Operating Cash Flow to Sales < 5%**
+* **🚨 ОДИТОРСКО МНЕНИЕ (AUDIT OPINION CRITERIA)**:
+  - **Adverse opinion (Отрицателно одиторско мнение)**
+  - **Disclaimer opinion (Отказ от изразяване на становище)**
+  - **Qualified opinion with significant issues (Мнение с квалификации / резерви по ключови пера)**
+  - **Всяко становище, съдържащо клауза за Going Concern (съмнение във възможността за продължаване на дейността)**
 
 ---
 
-### 3. 🔴 ЧЕРВЕНИ ФЛАГОВЕ (RED FLAGS) — СЕРИОЗНА ОПАСНОСТ:
-* **Income Statement**: Брутен марж $< 10%$; Ръст на продажби $< 2%$; EBITDA марж $< 3%$; Нетен марж $< 1%$; Interest Coverage $< 1.5x$ (риск от дефолт при покачване на лихвите).
-* **Balance Sheet**: Goodwill $> 30%$ (риск от огромни отписвания); Debt/Equity $> 4.0$; Quick Ratio $< 0.3$.
-* **Cash Flow Statement**: SBC $> 20%$ от нетния доход (мениджмънтът разводнява бизнеса за собствена сметка); CapEx $> 40%$ от нетния доход; Отрицателен свободен паричен поток; Cash Flow to Debt $< 0.1$.
-* **Одиторско мнение (Audit Opinion)**: Всяко становище тип *Qualified Opinion*, *Disclaimer* или наличие на клауза за *Going Concern* (съмнение във възможността компанията да продължи дейността си) е моментален стоп-сигнал за инвеститорите!
+### 4. 🏛️ ПРАВИЛАТА НА УОРЪН БЪФЕТ ЗА ОТЧЕТА ЗА ДОХОДИТЕ (BRIAN FEROLDI RULES OF THUMB):
+*Практически правила от Brian Feroldi (LongTermMindset.co) за анализ на Income Statement:*
+
+| Показател (Metric) | Уравнение (Equation) | Практическо правило на Бъфет (Rule of Thumb) |
+| :--- | :---: | :---: |
+| **Gross Margin** | $\\frac{\\text{Gross Profit}}{\\text{Revenue}}$ | **> 40%** *(Доказва траен ров и ценова мощ)* |
+| **SG&A Margin** | $\\frac{\\text{SG&A}}{\\text{Gross Profit}}$ | **< 30%** *(Силна оперативна пестеливост)* |
+| **R&D Margin** | $\\frac{\\text{R&D}}{\\text{Gross Profit}}$ | **< 30%** *(Ниска зависимост от патентно остаряване)* |
+| **Depreciation Margin** | $\\frac{\\text{Depreciation}}{\\text{Gross Profit}}$ | **< 10%** *(Леки капиталови активи, малко оборудване)* |
+| **Interest Margin** | $\\frac{\\text{Interest}}{\\text{Operating Income}}$ | **< 15%** *(Лихвите не застрашават рентабилността)* |
+| **Tax Margin** | $\\frac{\\text{Taxes}}{\\text{Pre-Tax Income}}$ | **Корпоративната данъчна ставка (~21%)** |
+| **Net Income Margin** | $\\frac{\\text{Net Income}}{\\text{Revenue}}$ | **> 20%** *(Елитна способност за печалба)* |
+| **EPS Growth** | $\\frac{\\text{Year 2 EPS}}{\\text{Year 1 EPS}}$ | **Положителен и растящ (Positive & Growing)** |
 
 ---
 
-*Можете да направите пълен одит на всяка компания от вашата таблица с бутона **„🚦 Зелени/Червени флагове“** или като попитате: **„Провери флаговете на Microsoft“**!*`;
+*Можете да направите одит на всяка компания от вашата таблица или да попитате: **„Провери финансовия светофар на Apple“** или **„Какво изисква Бъфет за SG&A и брутен марж?“**!*`;
 }
 
 
