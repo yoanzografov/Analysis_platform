@@ -1111,6 +1111,48 @@ export function generatePortfolioUploadGuide(): string {
 }
 
 /**
+ * Guide for handling duplicate stock rows (e.g., when buying additional shares of META or other existing positions)
+ */
+export function generateDuplicatePositionGuide(query?: string): string {
+  return `### 💡 Как да процедирате, ако имате дублиран ред за акция в PORTFOLIO TRACKER:
+
+Не е необходимо да триете цялото си портфолио и да започвате отначало! Ето точните и бързи начини за действие:
+
+---
+
+#### ⚡ Вариант 1: Най-бързият начин (директно от таблицата за 10 секунди)
+Всяка позиция в таблицата има свои собствени бутони за управление в дясната колона **ДЕЙСТВИЯ**:
+
+1. **Редактирайте първия ред на компанията**:
+   * Натиснете синьото моливче **✏️ (Редактирай)** на първия ред на компанията (напр. **META**).
+   * Въведете **общия сумарен брой акции** (например: ако сте имали 10 бр. и сте докупили още 5 бр. $\\rightarrow$ запишете **15**).
+   * Запишете новата си средно-претеглена покупна цена.
+   * Натиснете **„Запази“**.
+2. **Изтрийте излишния втори ред**:
+   * Натиснете червеното кошче **🗑️ (Изтрий)** само върху **втория (дублиран) ред**.
+   * Така изтривате единствено излишния запис, а всички останали акции в портфолиото ви остават непокътнати и защитени!
+
+---
+
+#### 📥 Вариант 2: Чрез нов отчет от брокера (IBKR, Trading 212, Revolut)
+Ако сваляте Activity Statement от вашия брокер:
+1. Отворете таб **„PORTFOLIO TRACKER“** и натиснете бутона **„📥 Импорт на портфолио“** горе вдясно.
+2. Изберете опцията **„Замени портфолиото (Replace)“**.
+3. Прикачете новия файл от брокера (в който последната покупка вече фигурира). Системата ще презареди позициите на чисто, обединени точно на 1 ред с официалната цена от брокера.
+
+---
+
+#### 📐 Формула за средно-претеглена покупна цена (Weighted Average Price):
+$$\\text{Нова средна цена} = \\frac{(\\text{Предишни акции} \\times \\text{Предишна цена}) + (\\text{Нови акции} \\times \\text{Нова цена})}{\\text{Общ брой акции}}$$
+*Пример: 10 акции @ \\$500 + 5 акции @ \\$620 = (5000 + 3100) / 15 = \\$540 средна цена.*
+
+---
+
+#### 📜 Къде остава историята на всяка отделна покупка:
+Всяка ваша отделна покупка или продажба с нейната дата и цена винаги се пази в бутона **„История на транзакциите“** (разположен до бутона за добавяне на нов актив). Така основната таблица остава чиста (1 ред на компания), а инвестиционната ви история е пълна и детайлна!`;
+}
+
+/**
  * Guide on Cash Flow from stock sales and Cash Balance management.
  */
 export function generateCashProceedsGuide(): string {
@@ -1871,6 +1913,36 @@ export function handleAiQuery(
     lower.includes('gemini ключ')
   ) {
     return generateApiKeyGuide();
+  }
+
+  // 0. Duplicate Portfolio Row / Merging / Position cleanup instructions
+  const isDuplicatePositionQuery = 
+    lower.includes('дублиран ред') ||
+    lower.includes('дублирани редове') ||
+    lower.includes('дублираха се') ||
+    lower.includes('дублира се') ||
+    lower.includes('дублиран') ||
+    lower.includes('дублирани') ||
+    lower.includes('втори ред') ||
+    lower.includes('два реда') ||
+    lower.includes('още един ред') ||
+    lower.includes('появи се още един') ||
+    lower.includes('появиха се две') ||
+    lower.includes('все още са две') ||
+    lower.includes('все още са 2') ||
+    lower.includes('все още има два') ||
+    lower.includes('две мети') ||
+    lower.includes('две meta') ||
+    lower.includes('два пъти meta') ||
+    (lower.includes('как да процедирам') && (lower.includes('трия') || lower.includes('изтрия') || lower.includes('ред') || lower.includes('две') || lower.includes('кача') || lower.includes('актив') || lower.includes('мета') || lower.includes('meta'))) ||
+    (lower.includes('да изтрия') && (lower.includes('кача') || lower.includes('ред') || lower.includes('портфолио') || lower.includes('акции'))) ||
+    (lower.includes('да кача наново') || lower.includes('кача на нова')) ||
+    lower.includes('обединяване на позиции') ||
+    lower.includes('обединяване на акции') ||
+    lower.includes('средно претеглена покупна цена');
+
+  if (isDuplicatePositionQuery) {
+    return generateDuplicatePositionGuide(cleanQ);
   }
 
   // 1. Spouse, Family or Multi-User Portfolio Questions
