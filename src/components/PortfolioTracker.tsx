@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Stock, PortfolioPosition, PortfolioTransaction, PortfolioDividendRecord } from '../types';
+import { consolidatePositions } from '../utils/portfolioCalculations';
 import { useRef } from 'react';
 import { db, auth } from '../lib/firebase';
 import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
@@ -183,6 +184,23 @@ export default function PortfolioTracker({
       return () => unsub();
     }
   }, [propCurrentUser]);
+
+  // Automatic consolidation: merges duplicate rows of the same ticker into a single position
+  useEffect(() => {
+    if (Array.isArray(positions) && positions.length > 1) {
+      const counts = new Map<string, number>();
+      for (const p of positions) {
+        if (!p?.ticker) continue;
+        const sym = p.ticker.trim().toUpperCase();
+        counts.set(sym, (counts.get(sym) || 0) + 1);
+      }
+      const hasDups = Array.from(counts.values()).some(c => c > 1);
+      if (hasDups && onSetAllPositions) {
+        const consolidated = consolidatePositions(positions);
+        onSetAllPositions(consolidated);
+      }
+    }
+  }, [positions, onSetAllPositions]);
 
   const isInitialCloudSyncedRef = useRef(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
@@ -737,7 +755,30 @@ export default function PortfolioTracker({
         setFormError('Въведете валидна цена на покупка');
         return;
       }
-      onAddPosition({ ...payload, buyPrice: priceNum });
+
+      const existingPos = positions.find(p => p.ticker.toUpperCase() === payload.ticker);
+      if (existingPos) {
+        // Automatically merge additional shares into existing position
+        const totalShares = (existingPos.shares || 0) + sharesNum;
+        const totalCost = ((existingPos.shares || 0) * (existingPos.buyPrice || 0)) + (sharesNum * priceNum);
+        const weightedAvgBuyPrice = totalShares > 0 ? totalCost / totalShares : priceNum;
+        const totalFee = (existingPos.fee || 0) + (parseFloat(fee) || 0);
+
+        onUpdatePosition(existingPos.id, {
+          ...existingPos,
+          shares: parseFloat(totalShares.toFixed(4)),
+          buyPrice: parseFloat(weightedAvgBuyPrice.toFixed(4)),
+          fee: parseFloat(totalFee.toFixed(2)),
+          companyName: payload.companyName || existingPos.companyName,
+          buyDate: buyDate || existingPos.buyDate,
+          fairPrice: payload.fairPrice !== undefined ? payload.fairPrice : existingPos.fairPrice,
+          annualDivPerShare: payload.annualDivPerShare !== undefined ? payload.annualDivPerShare : existingPos.annualDivPerShare,
+          buyTarget: payload.buyTarget !== undefined ? payload.buyTarget : existingPos.buyTarget,
+          sellTarget: payload.sellTarget !== undefined ? payload.sellTarget : existingPos.sellTarget,
+        });
+      } else {
+        onAddPosition({ ...payload, buyPrice: priceNum });
+      }
 
       // Add to transaction history
       const newTx: PortfolioTransaction = {
@@ -2419,6 +2460,30 @@ export default function PortfolioTracker({
                         🔴 SELL (Продажба)
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* Existing Position Helper for BUY (Merge Notification) */}
+                {txType === 'Покупка' && !editingId && modalExistingPos && (
+                  <div className="p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-300 flex flex-col gap-1.5 text-xs animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2 font-bold">
+                      <Briefcase className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>
+                        Вече притежавате: <strong className="text-ink font-mono">{modalExistingPos.shares}</strong> бр. {modalExistingPos.ticker} 
+                        (Текуща ср. цена: <strong className="text-ink font-mono">{currSym}{modalExistingPos.buyPrice.toFixed(2)}</strong>)
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-ink-muted leading-tight">
+                      ℹ️ Новите акции ще бъдат обединени в съществуващия ред и автоматично ще преизчислят средно-претеглената цена (без дублиращи се редове).
+                    </p>
+                    {sharesVal > 0 && parseFloat(buyPrice) > 0 && (
+                      <div className="text-[11px] font-black text-emerald-400 font-mono mt-0.5 bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-500/20 flex items-center justify-between">
+                        <span>➔ Нова ср. цена след покупката:</span>
+                        <strong className="text-emerald-300 text-xs font-mono">
+                          {(modalExistingPos.shares + sharesVal).toFixed(4)} бр. @ {currSym}{(((modalExistingPos.shares * modalExistingPos.buyPrice) + (sharesVal * parseFloat(buyPrice))) / (modalExistingPos.shares + sharesVal)).toFixed(2)}
+                        </strong>
+                      </div>
+                    )}
                   </div>
                 )}
 

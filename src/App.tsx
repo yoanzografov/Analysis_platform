@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Stock, MarketIndex, PriceAlert, NotificationLog, TableFilter, PortfolioPosition, PortfolioTransaction, PortfolioDividendRecord } from './types';
+import { consolidatePositions } from './utils/portfolioCalculations';
 import { RAW_SPREADSHEET_CSV, parseCSVData } from './data/initialStocks';
 import { 
   IBKR_POSITIONS, 
@@ -353,7 +354,7 @@ export default function App() {
       const saved = localStorage.getItem('user_portfolio_positions');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return consolidatePositions(parsed);
       }
     } catch (e) {
       console.error('Error loading positions from localStorage', e);
@@ -362,6 +363,14 @@ export default function App() {
   });
 
   useEffect(() => {
+    // Deduplicate any positions if identical tickers were previously added
+    if (positions.length > 1) {
+      const consolidated = consolidatePositions(positions);
+      if (consolidated.length !== positions.length) {
+        setPositions(consolidated);
+        return;
+      }
+    }
     try {
       localStorage.setItem('user_portfolio_positions', JSON.stringify(positions));
     } catch (e) {
@@ -1692,12 +1701,46 @@ export default function App() {
 
   // Position management controllers for Portfolio Tracker
   const handleAddPosition = (pos: Omit<PortfolioPosition, 'id'>) => {
-    const newPos: PortfolioPosition = {
-      ...pos,
-      id: `${Date.now()}-${Math.random()}`
-    };
+    let isMerge = false;
+    let finalShares = pos.shares;
+    let finalAvgPrice = pos.buyPrice;
+
     setPositions(prev => {
-      const next = [newPos, ...prev];
+      const existingIdx = prev.findIndex(p => p.ticker.toUpperCase() === pos.ticker.toUpperCase());
+      let next: PortfolioPosition[];
+
+      if (existingIdx >= 0) {
+        isMerge = true;
+        const cur = prev[existingIdx];
+        const totalShares = (cur.shares || 0) + pos.shares;
+        const totalCost = ((cur.shares || 0) * (cur.buyPrice || 0)) + (pos.shares * pos.buyPrice);
+        const weightedAvgPrice = totalShares > 0 ? totalCost / totalShares : pos.buyPrice;
+        finalShares = parseFloat(totalShares.toFixed(4));
+        finalAvgPrice = parseFloat(weightedAvgPrice.toFixed(4));
+
+        const updated: PortfolioPosition = {
+          ...cur,
+          shares: finalShares,
+          buyPrice: finalAvgPrice,
+          fee: parseFloat(((cur.fee || 0) + (pos.fee || 0)).toFixed(2)),
+          companyName: pos.companyName || cur.companyName,
+          buyDate: pos.buyDate || cur.buyDate,
+          fairPrice: pos.fairPrice !== undefined ? pos.fairPrice : cur.fairPrice,
+          annualDivPerShare: pos.annualDivPerShare !== undefined ? pos.annualDivPerShare : cur.annualDivPerShare,
+          buyTarget: pos.buyTarget !== undefined ? pos.buyTarget : cur.buyTarget,
+          sellTarget: pos.sellTarget !== undefined ? pos.sellTarget : cur.sellTarget,
+          currency: pos.currency || cur.currency
+        };
+        next = [...prev];
+        next[existingIdx] = updated;
+      } else {
+        const newPos: PortfolioPosition = {
+          ...pos,
+          id: `${Date.now()}-${Math.random()}`
+        };
+        next = [newPos, ...prev];
+      }
+
       setTimeout(() => {
         fetchRealStockPricesDirect(stocks, next);
       }, 150);
@@ -1708,11 +1751,16 @@ export default function App() {
       id: `${Date.now()}-${Math.random()}`,
       timestamp: new Date().toLocaleTimeString(),
       ticker: pos.ticker,
-      message: `Добавена нова позиция в портфолиото: ${pos.shares} бр. @ $${pos.buyPrice}.`,
+      message: isMerge 
+        ? `Обединена позиция за ${pos.ticker}: общо ${finalShares} бр. със средна цена $${finalAvgPrice}.`
+        : `Добавена нова позиция в портфолиото: ${pos.shares} бр. @ $${pos.buyPrice}.`,
       type: 'success'
     };
     setLogs(prev => [newLog, ...prev]);
-    setActiveAlertToast(`💼 Успешно добавена позиция за ${pos.ticker}!`);
+    setActiveAlertToast(isMerge 
+      ? `💼 Обединена позиция за ${pos.ticker} (${finalShares} бр. @ $${finalAvgPrice})!`
+      : `💼 Успешно добавена позиция за ${pos.ticker}!`
+    );
   };
 
   const handleUpdatePosition = (id: string, updatedPos: Omit<PortfolioPosition, 'id'>) => {
