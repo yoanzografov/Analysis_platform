@@ -1,0 +1,346 @@
+diff --git a/api/[...path].ts b/api/[...path].ts
+index 4956eed..d382523 100644
+--- a/api/[...path].ts
++++ b/api/[...path].ts
+@@ -1083,7 +1083,7 @@ const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
+ 
+ let cachedServerlessInflationData: any = null;
+ let lastServerlessInflationFetch: number = 0;
+-const SERVERLESS_CACHE_MS = 1000 * 60 * 60 * 12; // 12 hours cache
++const SERVERLESS_CACHE_MS = 1000 * 60 * 60 * 1; // 1 hour cache
+ 
+ function formatServerlessFredDate(isoDate?: string): string | undefined {
+   if (!isoDate) return undefined;
+@@ -1798,9 +1798,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
+         { name: "PCE Price Index YoY",      forecast: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures",                                            ...get(pce,          { actual: "3.4%",   previous: "3.4%",   releaseDate: "Sep 30, 2026" }) },
+         { name: "Core PCE Price Index YoY", forecast: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy",      ...get(corePce,      { actual: "3.0%",   previous: "3.0%",   releaseDate: "Sep 30, 2026" }) },
+         { name: "Fed Funds Rate",           forecast: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",                                          actual: fedRes.actual, previous: fedRes.previous, releaseDate: "Oct 28, 2026" },
+-        { name: "Employment Situation",     forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
+-        { name: "Non-Farm Payrolls",        forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
+-        { name: "Unemployment Rate",        forecast: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment, { actual: "4.2%",   previous: "4.1%",   releaseDate: "Oct 2, 2026"  }) },
++        { name: "Employment Situation",     forecast: "+65K",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+165K",  previous: "+60K",   releaseDate: "Nov 6, 2026"  }) },
++        { name: "Non-Farm Payrolls",        forecast: "+65K",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+165K",  previous: "+60K",   releaseDate: "Nov 6, 2026"  }) },
++        { name: "Unemployment Rate",        forecast: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment, { actual: "4.1%",   previous: "4.2%",   releaseDate: "Nov 6, 2026"  }) },
+         { name: "GDP Growth Rate",          forecast: "+2.2%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product",                                                   ...get(gdp,          { actual: "+2.2%",  previous: "+2.5%",  releaseDate: "Sep 30, 2026" }) },
+         { name: "Retail Sales MoM",         forecast: "+0.4%",  url: "https://www.census.gov/retail/index.html",                                                              ...get(retail,       { actual: "+0.8%",  previous: "+1.3%",  releaseDate: "Oct 15, 2026" }) },
+         { name: "Consumer Sentiment",       forecast: "53.0",   url: "https://data.sca.isr.umich.edu/",                                                                       ...get(confidence,   { actual: "51.7",   previous: "55.2",   releaseDate: "Oct 6, 2026"  }) },
+@@ -1817,9 +1817,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
+         { name: "PCE Price Index YoY",      releaseDate: "Sep 30, 2026", actual: "3.4%",   forecast: "3.4%",   previous: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures" },
+         { name: "Core PCE Price Index YoY", releaseDate: "Sep 30, 2026", actual: "3.0%",   forecast: "3.0%",   previous: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy" },
+         { name: "Fed Funds Rate",           releaseDate: "Oct 28, 2026", actual: "3.75%",  forecast: "3.75%",  previous: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
+-        { name: "Employment Situation",     releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+-        { name: "Non-Farm Payrolls",        releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+-        { name: "Unemployment Rate",        releaseDate: "Oct 2, 2026",  actual: "4.2%",   forecast: "4.2%",   previous: "4.1%",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
++        { name: "Employment Situation",     releaseDate: "Nov 6, 2026",  actual: "+165K",  forecast: "+65K",   previous: "+60K",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
++        { name: "Non-Farm Payrolls",        releaseDate: "Nov 6, 2026",  actual: "+165K",  forecast: "+65K",   previous: "+60K",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
++        { name: "Unemployment Rate",        releaseDate: "Nov 6, 2026",  actual: "4.1%",   forecast: "4.2%",   previous: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+         { name: "GDP Growth Rate",          releaseDate: "Sep 30, 2026", actual: "+2.2%",  forecast: "+2.2%",  previous: "+2.5%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product" },
+         { name: "Retail Sales MoM",         releaseDate: "Oct 15, 2026", actual: "+0.8%",  forecast: "+0.4%",  previous: "+1.3%",  url: "https://www.census.gov/retail/index.html" },
+         { name: "Consumer Sentiment",       releaseDate: "Oct 6, 2026",  actual: "51.7",   forecast: "53.0",   previous: "55.2",   url: "https://data.sca.isr.umich.edu/" },
+diff --git a/server.ts b/server.ts
+index ad15967..884a5a0 100644
+--- a/server.ts
++++ b/server.ts
+@@ -1305,7 +1305,7 @@ const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
+ 
+ let cachedInflationData: any = null;
+ let lastInflationFetch: number = 0;
+-const CACHE_MS = 1000 * 60 * 60 * 24; // 24 hours cache (FRED data updates daily)
++const CACHE_MS = 1000 * 60 * 60 * 1; // 1 hour cache (ensures new releases reflect promptly)
+ 
+ function formatFredDate(isoDate?: string): string | undefined {
+   if (!isoDate) return undefined;
+@@ -1478,9 +1478,9 @@ app.get("/api/inflation-data", async (req, res) => {
+       { name: "PCE Price Index YoY",      forecast: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures",                                            ...get(pce,          { actual: "3.4%",   previous: "3.4%",   releaseDate: "Sep 30, 2026" }) },
+       { name: "Core PCE Price Index YoY", forecast: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy",      ...get(corePce,      { actual: "3.0%",   previous: "3.0%",   releaseDate: "Sep 30, 2026" }) },
+       { name: "Fed Funds Rate",           forecast: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",                                          actual: fedRes.actual, previous: fedRes.previous, releaseDate: "Oct 28, 2026" },
+-      { name: "Employment Situation",     forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
+-      { name: "Non-Farm Payrolls",        forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
+-      { name: "Unemployment Rate",        forecast: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment, { actual: "4.2%",   previous: "4.1%",   releaseDate: "Oct 2, 2026"  }) },
++      { name: "Employment Situation",     forecast: "+65K",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+165K",  previous: "+60K",   releaseDate: "Nov 6, 2026"  }) },
++      { name: "Non-Farm Payrolls",        forecast: "+65K",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+165K",  previous: "+60K",   releaseDate: "Nov 6, 2026"  }) },
++      { name: "Unemployment Rate",        forecast: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment, { actual: "4.1%",   previous: "4.2%",   releaseDate: "Nov 6, 2026"  }) },
+       { name: "GDP Growth Rate",          forecast: "+2.2%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product",                                                   ...get(gdp,          { actual: "+2.2%",  previous: "+2.5%",  releaseDate: "Sep 30, 2026" }) },
+       { name: "Retail Sales MoM",         forecast: "+0.4%",  url: "https://www.census.gov/retail/index.html",                                                              ...get(retail,       { actual: "+0.8%",  previous: "+1.3%",  releaseDate: "Oct 15, 2026" }) },
+       { name: "Consumer Sentiment",       forecast: "53.0",   url: "https://data.sca.isr.umich.edu/",                                                                       ...get(confidence,   { actual: "51.7",   previous: "55.2",   releaseDate: "Oct 6, 2026"  }) },
+@@ -1499,9 +1499,9 @@ app.get("/api/inflation-data", async (req, res) => {
+       { name: "PCE Price Index YoY",      releaseDate: "Sep 30, 2026", actual: "3.4%",   forecast: "3.4%",   previous: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures" },
+       { name: "Core PCE Price Index YoY", releaseDate: "Sep 30, 2026", actual: "3.0%",   forecast: "3.0%",   previous: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy" },
+       { name: "Fed Funds Rate",           releaseDate: "Sep 16, 2026", actual: "3.75%",  forecast: "3.75%",  previous: "3.63%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
+-      { name: "Employment Situation",     releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+-      { name: "Non-Farm Payrolls",        releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+-      { name: "Unemployment Rate",        releaseDate: "Oct 2, 2026",  actual: "4.2%",   forecast: "4.2%",   previous: "4.1%",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
++      { name: "Employment Situation",     releaseDate: "Nov 6, 2026",  actual: "+165K",  forecast: "+65K",   previous: "+60K",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
++      { name: "Non-Farm Payrolls",        releaseDate: "Nov 6, 2026",  actual: "+165K",  forecast: "+65K",   previous: "+60K",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
++      { name: "Unemployment Rate",        releaseDate: "Nov 6, 2026",  actual: "4.1%",   forecast: "4.2%",   previous: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+       { name: "GDP Growth Rate",          releaseDate: "Sep 30, 2026", actual: "+2.2%",  forecast: "+2.2%",  previous: "+2.5%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product" },
+       { name: "Retail Sales MoM",         releaseDate: "Oct 15, 2026", actual: "+0.8%",  forecast: "+0.4%",  previous: "+1.3%",  url: "https://www.census.gov/retail/index.html" },
+       { name: "Consumer Sentiment",       releaseDate: "Oct 6, 2026",  actual: "51.7",   forecast: "53.0",   previous: "55.2",   url: "https://data.sca.isr.umich.edu/" },
+diff --git a/src/App.tsx b/src/App.tsx
+index 1a41b43..798c919 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1987,7 +1987,7 @@ export default function App() {
+             className={`h-9 px-3 rounded-xl border font-sans text-[11px] font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none flex-1 ${
+               isAutoLiveRefresh 
+                 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' 
+-                : 'bg-card text-ink-faint border-border hover:bg-card-hover hover:text-ink'
++                : 'bg-transparent text-ink-faint border-border hover:bg-card-hover hover:text-ink'
+             }`}
+             title="Автоматично фоново синхронизиране на живите пазарни котировки"
+           >
+@@ -2006,8 +2006,8 @@ export default function App() {
+             disabled={isFetchingLivePrices}
+             className={`h-9 px-3 rounded-xl border font-sans text-[11px] font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
+               isFetchingLivePrices
+-                ? 'bg-card/50 text-ink-faint border-border/50 cursor-not-allowed'
+-                : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
++                ? 'bg-transparent text-ink-faint border-border/50 cursor-not-allowed opacity-50'
++                : 'bg-transparent text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
+             }`}
+             title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
+           >
+@@ -2016,7 +2016,7 @@ export default function App() {
+           </button>
+         </div>
+         {/* Navigation Menu Card */}
+-        <div className="bg-card border border-border rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col gap-2">
++        <div className="bg-transparent border border-border rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col gap-2">
+           {/* Header Title / Platform Nav label */}
+           <div className="px-2 py-1.5 flex items-center justify-between border-b border-border/50 text-[11px] font-black uppercase tracking-wider text-ink-muted">
+             <span className="flex items-center gap-1.5">
+@@ -2040,7 +2040,7 @@ export default function App() {
+               className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                 activeMainTab === 'table'
+                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+-                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
++                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
+               }`}
+             >
+               <div className="flex items-center gap-2.5 min-w-0">
+@@ -2068,7 +2068,7 @@ export default function App() {
+               className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                 activeMainTab === 'alerts'
+                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+-                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
++                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
+               }`}
+             >
+               <div className="flex items-center gap-2.5 min-w-0">
+@@ -2093,7 +2093,7 @@ export default function App() {
+               className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                 activeMainTab === 'portfolio'
+                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+-                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
++                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
+               }`}
+             >
+               <div className="flex items-center gap-2.5 min-w-0">
+@@ -2117,7 +2117,7 @@ export default function App() {
+               className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                 activeMainTab === 'news'
+                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+-                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
++                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
+               }`}
+             >
+               <div className="flex items-center gap-2.5 min-w-0">
+@@ -2151,7 +2151,7 @@ export default function App() {
+         </div>
+ 
+         {/* Fair Value Calculators Dropdown Menu (StockAnalysis Style) */}
+-        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
++        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
+           <button
+             type="button"
+             onClick={() => setIsSidebarFairValueOpen(!isSidebarFairValueOpen)}
+@@ -2213,7 +2213,7 @@ export default function App() {
+         </div>
+ 
+         {/* Tools Dropdown Menu (StockAnalysis Style) */}
+-        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
++        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
+           <button
+             type="button"
+             onClick={() => setIsSidebarToolsOpen(!isSidebarToolsOpen)}
+@@ -2287,7 +2287,7 @@ export default function App() {
+         </div>
+ 
+         {/* Economic Calendar Card (StockAnalysis Style - under Tools) */}
+-        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
++        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
+           <button
+             type="button"
+             onClick={() => setShowEconomicCalendarModal(true)}
+@@ -2305,7 +2305,7 @@ export default function App() {
+         </div>
+ 
+         {/* System Settings Dropdown Card (StockAnalysis Style - under Calendar) */}
+-        <div ref={settingsMenuRef} className="relative flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
++        <div ref={settingsMenuRef} className="relative flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
+           <button
+             type="button"
+             onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
+@@ -2353,7 +2353,7 @@ export default function App() {
+         </div>
+ 
+         {/* Other Category Dropdown Card (StockAnalysis Style) */}
+-        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
++        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
+           <button
+             type="button"
+             onClick={() => {
+@@ -2425,7 +2425,7 @@ export default function App() {
+         </div>
+ 
+         {/* Market Status Quick Glance Card (StockAnalysis Style - desktop only) */}
+-        <div className="hidden lg:flex flex-col bg-card/60 border border-border/70 rounded-2xl p-3 shadow-xs space-y-2 text-xs">
++        <div className="hidden lg:flex flex-col bg-transparent border border-border/70 rounded-2xl p-3 shadow-xs space-y-2 text-xs">
+           <div className="flex items-center justify-between text-[11px] font-bold text-ink-muted">
+             <span className="flex items-center gap-1.5">
+               <span className="relative flex h-2 w-2">
+diff --git a/src/components/MarketSummaryWidgets.tsx b/src/components/MarketSummaryWidgets.tsx
+index 8d2b031..1056244 100644
+--- a/src/components/MarketSummaryWidgets.tsx
++++ b/src/components/MarketSummaryWidgets.tsx
+@@ -416,9 +416,9 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
+       3:  { releaseDate: 'Sep 30, 2026', actual: '3.4%',   forecast: '3.4%',   previous: '3.4%',   lowerIsBetter: true  },
+       4:  { releaseDate: 'Sep 30, 2026', actual: '3.0%',   forecast: '3.0%',   previous: '3.0%',   lowerIsBetter: true  },
+       5:  { releaseDate: 'Oct 28, 2026', actual: '3.75%',  forecast: '3.75%',  previous: '3.75%',  lowerIsBetter: true  },
+-      6:  { releaseDate: 'Oct 2, 2026',  actual: '+29K',   forecast: '+140K',  previous: '+133K',  lowerIsBetter: false },
+-      7:  { releaseDate: 'Oct 2, 2026',  actual: '+29K',   forecast: '+140K',  previous: '+133K',  lowerIsBetter: false },
+-      8:  { releaseDate: 'Oct 2, 2026',  actual: '4.2%',   forecast: '4.2%',   previous: '4.1%',   lowerIsBetter: true  },
++      6:  { releaseDate: 'Nov 6, 2026',  actual: '+165K',  forecast: '+65K',   previous: '+60K',   lowerIsBetter: false },
++      7:  { releaseDate: 'Nov 6, 2026',  actual: '+165K',  forecast: '+65K',   previous: '+60K',   lowerIsBetter: false },
++      8:  { releaseDate: 'Nov 6, 2026',  actual: '4.1%',   forecast: '4.2%',   previous: '4.2%',   lowerIsBetter: true  },
+       9:  { releaseDate: 'Sep 30, 2026', actual: '+2.2%',  forecast: '+2.2%',  previous: '+2.5%',  lowerIsBetter: false },
+       10: { releaseDate: 'Oct 15, 2026', actual: '+0.8%',  forecast: '+0.4%',  previous: '+1.3%',  lowerIsBetter: false },
+       11: { releaseDate: 'Oct 6, 2026',  actual: '51.7',   forecast: '53.0',   previous: '55.2',   lowerIsBetter: false },
+diff --git a/src/components/PortfolioTracker.tsx b/src/components/PortfolioTracker.tsx
+index 269cf25..1759d65 100644
+--- a/src/components/PortfolioTracker.tsx
++++ b/src/components/PortfolioTracker.tsx
+@@ -1125,14 +1125,14 @@ export default function PortfolioTracker({
+       {/* ======================================================================== */}
+       {/* SNOWBALL ANALYTICS SUB-TAB NAVIGATION BAR                                */}
+       {/* ======================================================================== */}
+-      <div className="bg-card/80 border border-border/80 rounded-2xl p-2 shadow-md backdrop-blur-md flex items-center justify-between gap-2 overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
++      <div className="bg-transparent border border-border rounded-2xl p-2 shadow-xs flex items-center justify-between gap-2 overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
+         <div className="flex items-center gap-1.5 overflow-x-auto pb-0 text-xs font-black shrink-0">
+           <button
+             onClick={() => setActiveSubTab('overview')}
+             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+               activeSubTab === 'overview'
+                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
++                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
+             }`}
+           >
+             <PieChart className="w-4 h-4 text-indigo-300" />
+@@ -1144,7 +1144,7 @@ export default function PortfolioTracker({
+             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+               activeSubTab === 'holdings'
+                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
++                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
+             }`}
+           >
+             <Briefcase className="w-4 h-4 text-amber-300" />
+@@ -1156,7 +1156,7 @@ export default function PortfolioTracker({
+             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+               activeSubTab === 'diversification'
+                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
++                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
+             }`}
+           >
+             <Layers className="w-4 h-4 text-cyan-300" />
+@@ -1168,7 +1168,7 @@ export default function PortfolioTracker({
+             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+               activeSubTab === 'dividends'
+                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
++                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
+             }`}
+           >
+             <Flame className="w-4 h-4 text-emerald-400" />
+@@ -1180,7 +1180,7 @@ export default function PortfolioTracker({
+             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+               activeSubTab === 'transactions'
+                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
+-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
++                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
+             }`}
+           >
+             <History className="w-4 h-4 text-purple-300" />
+@@ -1227,7 +1227,7 @@ export default function PortfolioTracker({
+ 
+           <button
+             onClick={togglePrivacyMode}
+-            className="p-2 bg-card border border-border/80 text-ink-muted hover:text-ink rounded-xl text-xs font-bold transition-all"
++            className="p-2 bg-transparent hover:bg-card-hover border border-border/80 text-ink-muted hover:text-ink rounded-xl text-xs font-bold transition-all"
+             title={isPrivacyMode ? "Покажи сумите" : "Скрий сумите"}
+           >
+             {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4" />}
+@@ -1873,7 +1873,7 @@ export default function PortfolioTracker({
+       {(activeSubTab === 'overview' || activeSubTab === 'holdings') && (
+         <div className="bg-bg border border-border rounded-2xl overflow-hidden shadow-xs">
+         {/* Table Header Controls */}
+-        <div className="p-2.5 border-b border-border/40 flex items-center justify-between gap-2 bg-card/40 overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
++        <div className="p-2.5 border-b border-border/40 flex items-center justify-between gap-2 bg-transparent overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
+           <div className="flex items-center gap-2 shrink-0">
+             
+             {/* 1. Header Badge: АКТИВИ */}
+@@ -1906,7 +1906,7 @@ export default function PortfolioTracker({
+             {/* 3. История на транзакциите */}
+             <button 
+               onClick={() => setIsHistoryModalOpen(true)}
+-              className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-indigo-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
++              className="px-3.5 py-2 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-indigo-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
+             >
+               <History className="w-4 h-4 text-indigo-400" />
+               <span>История на транзакциите ({filteredHistory.length})</span>
+@@ -1915,7 +1915,7 @@ export default function PortfolioTracker({
+             {/* 4. Получени дивиденти */}
+             <button 
+               onClick={() => setIsDividendsModalOpen(true)}
+-              className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-emerald-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
++              className="px-3.5 py-2 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-emerald-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
+             >
+               <Coins className="w-4 h-4 text-emerald-400" />
+               <span>Получени дивиденти ({baseSymbol}{totalDivEarned.toFixed(2)})</span>
+@@ -1924,7 +1924,7 @@ export default function PortfolioTracker({
+             {/* 5. Кеш */}
+             <button 
+               onClick={() => setIsCashModalOpen(true)}
+-              className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-amber-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
++              className="px-3.5 py-2 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-amber-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
+             >
+               <Coins className="w-4 h-4 text-amber-400" />
+               <span>Кеш: {baseSymbol}{(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+@@ -2241,7 +2241,7 @@ export default function PortfolioTracker({
+         </div>
+ 
+         {/* Table Status Footer with Export & Import Controls */}
+-        <div className="p-3 bg-card/40 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans tabular-nums text-xs text-ink/90 gap-3">
++        <div className="p-3 bg-transparent border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans tabular-nums text-xs text-ink/90 gap-3">
+           <div className="flex items-center gap-2">
+             <span>
+               Показване на всички <span className="font-extrabold text-indigo-400">{enrichedHoldings.length}</span> позиции в портфейла
+@@ -2256,14 +2256,14 @@ export default function PortfolioTracker({
+             <button 
+               onClick={handleExportBackup}
+               title="Свали резервно копие на вашето портфолио"
+-              className="px-3 py-1.5 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
++              className="px-3 py-1.5 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
+             >
+               <Download className="w-4 h-4 text-emerald-400" />
+               <span>Експорт</span>
+             </button>
+ 
+             {/* Импорт */}
+-            <label title="Възстанови резервно копие на портфолиото" className="px-3 py-1.5 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0">
++            <label title="Възстанови резервно копие на портфолиото" className="px-3 py-1.5 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0">
+               <Upload className="w-4 h-4 text-indigo-400" />
+               <span>Импорт</span>
+               <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
