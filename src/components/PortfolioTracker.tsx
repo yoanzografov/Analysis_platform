@@ -1125,14 +1125,14 @@ export default function PortfolioTracker({
       {/* ======================================================================== */}
       {/* SNOWBALL ANALYTICS SUB-TAB NAVIGATION BAR                                */}
       {/* ======================================================================== */}
-      <div className="bg-card/80 border border-border/80 rounded-2xl p-2 shadow-md backdrop-blur-md flex items-center justify-between gap-2 overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
+      <div className="bg-transparent border border-border rounded-2xl p-2 shadow-xs flex items-center justify-between gap-2 overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-0 text-xs font-black shrink-0">
           <button
             onClick={() => setActiveSubTab('overview')}
             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeSubTab === 'overview'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
             }`}
           >
             <PieChart className="w-4 h-4 text-indigo-300" />
@@ -1144,7 +1144,7 @@ export default function PortfolioTracker({
             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeSubTab === 'holdings'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
             }`}
           >
             <Briefcase className="w-4 h-4 text-amber-300" />
@@ -1156,7 +1156,7 @@ export default function PortfolioTracker({
             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeSubTab === 'diversification'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
             }`}
           >
             <Layers className="w-4 h-4 text-cyan-300" />
@@ -1168,7 +1168,7 @@ export default function PortfolioTracker({
             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeSubTab === 'dividends'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
             }`}
           >
             <Flame className="w-4 h-4 text-emerald-400" />
@@ -1180,7 +1180,7 @@ export default function PortfolioTracker({
             className={`px-3.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               activeSubTab === 'transactions'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md font-black'
-                : 'bg-card text-ink-muted border-border hover:bg-white/5 hover:text-ink font-bold'
+                : 'bg-transparent text-ink-muted border-transparent hover:border-border hover:bg-card-hover hover:text-ink font-bold'
             }`}
           >
             <History className="w-4 h-4 text-purple-300" />
@@ -1227,7 +1227,7 @@ export default function PortfolioTracker({
 
           <button
             onClick={togglePrivacyMode}
-            className="p-2 bg-card border border-border/80 text-ink-muted hover:text-ink rounded-xl text-xs font-bold transition-all"
+            className="p-2 bg-transparent hover:bg-card-hover border border-border/80 text-ink-muted hover:text-ink rounded-xl text-xs font-bold transition-all"
             title={isPrivacyMode ? "Покажи сумите" : "Скрий сумите"}
           >
             {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4" />}
@@ -1873,7 +1873,7 @@ export default function PortfolioTracker({
       {(activeSubTab === 'overview' || activeSubTab === 'holdings') && (
         <div className="bg-bg border border-border rounded-2xl overflow-hidden shadow-xs">
         {/* Table Header Controls */}
-        <div className="p-2.5 border-b border-border/40 flex items-center justify-between gap-2 bg-card/40 overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
+        <div className="p-2.5 border-b border-border/40 flex items-center justify-between gap-2 bg-transparent overflow-x-auto max-w-full touch-pan-x scroll-smooth no-scrollbar">
           <div className="flex items-center gap-2 shrink-0">
             
             {/* 1. Header Badge: АКТИВИ */}
@@ -1906,7 +1906,7 @@ export default function PortfolioTracker({
             {/* 3. История на транзакциите */}
             <button 
               onClick={() => setIsHistoryModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-indigo-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-indigo-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <History className="w-4 h-4 text-indigo-400" />
               <span>История на транзакциите ({filteredHistory.length})</span>
@@ -1915,7 +1915,7 @@ export default function PortfolioTracker({
             {/* 4. Получени дивиденти */}
             <button 
               onClick={() => setIsDividendsModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-emerald-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-emerald-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <Coins className="w-4 h-4 text-emerald-400" />
               <span>Получени дивиденти ({baseSymbol}{totalDivEarned.toFixed(2)})</span>
@@ -1924,7 +1924,7 @@ export default function PortfolioTracker({
             {/* 5. Кеш */}
             <button 
               onClick={() => setIsCashModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-amber-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-amber-400 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs h-9 shrink-0"
             >
               <Coins className="w-4 h-4 text-amber-400" />
               <span>Кеш: {baseSymbol}{(parseFloat(cashInput) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -2241,7 +2241,7 @@ export default function PortfolioTracker({
         </div>
 
         {/* Table Status Footer with Export & Import Controls */}
-        <div className="p-3 bg-card/40 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans tabular-nums text-xs text-ink/90 gap-3">
+        <div className="p-3 bg-transparent border-t border-border flex flex-col sm:flex-row sm:items-center justify-between font-sans tabular-nums text-xs text-ink/90 gap-3">
           <div className="flex items-center gap-2">
             <span>
               Показване на всички <span className="font-extrabold text-indigo-400">{enrichedHoldings.length}</span> позиции в портфейла
@@ -2256,14 +2256,14 @@ export default function PortfolioTracker({
             <button 
               onClick={handleExportBackup}
               title="Свали резервно копие на вашето портфолио"
-              className="px-3 py-1.5 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
+              className="px-3 py-1.5 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
             >
               <Download className="w-4 h-4 text-emerald-400" />
               <span>Експорт</span>
             </button>
 
             {/* Импорт */}
-            <label title="Възстанови резервно копие на портфолиото" className="px-3 py-1.5 rounded-xl text-xs font-black bg-card/70 hover:bg-card border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0">
+            <label title="Възстанови резервно копие на портфолиото" className="px-3 py-1.5 rounded-xl text-xs font-black bg-transparent hover:bg-card-hover border border-border text-ink-muted hover:text-ink flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0">
               <Upload className="w-4 h-4 text-indigo-400" />
               <span>Импорт</span>
               <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />

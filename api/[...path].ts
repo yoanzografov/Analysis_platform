@@ -1083,7 +1083,7 @@ const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
 
 let cachedServerlessInflationData: any = null;
 let lastServerlessInflationFetch: number = 0;
-const SERVERLESS_CACHE_MS = 1000 * 60 * 60 * 12; // 12 hours cache
+const SERVERLESS_CACHE_MS = 1000 * 60 * 60 * 1; // 1 hour cache
 
 function formatServerlessFredDate(isoDate?: string): string | undefined {
   if (!isoDate) return undefined;
@@ -1798,9 +1798,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         { name: "PCE Price Index YoY",      forecast: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures",                                            ...get(pce,          { actual: "3.4%",   previous: "3.4%",   releaseDate: "Sep 30, 2026" }) },
         { name: "Core PCE Price Index YoY", forecast: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy",      ...get(corePce,      { actual: "3.0%",   previous: "3.0%",   releaseDate: "Sep 30, 2026" }) },
         { name: "Fed Funds Rate",           forecast: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",                                          actual: fedRes.actual, previous: fedRes.previous, releaseDate: "Oct 28, 2026" },
-        { name: "Employment Situation",     forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
-        { name: "Non-Farm Payrolls",        forecast: "+140K",  url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+29K",   previous: "+133K",  releaseDate: "Oct 2, 2026"  }) },
-        { name: "Unemployment Rate",        forecast: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment, { actual: "4.2%",   previous: "4.1%",   releaseDate: "Oct 2, 2026"  }) },
+        { name: "Employment Situation",     forecast: "+65K",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+165K",  previous: "+60K",   releaseDate: "Nov 6, 2026"  }) },
+        { name: "Non-Farm Payrolls",        forecast: "+65K",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(nfp,          { actual: "+165K",  previous: "+60K",   releaseDate: "Nov 6, 2026"  }) },
+        { name: "Unemployment Rate",        forecast: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm",                                                       ...get(unemployment, { actual: "4.1%",   previous: "4.2%",   releaseDate: "Nov 6, 2026"  }) },
         { name: "GDP Growth Rate",          forecast: "+2.2%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product",                                                   ...get(gdp,          { actual: "+2.2%",  previous: "+2.5%",  releaseDate: "Sep 30, 2026" }) },
         { name: "Retail Sales MoM",         forecast: "+0.4%",  url: "https://www.census.gov/retail/index.html",                                                              ...get(retail,       { actual: "+0.8%",  previous: "+1.3%",  releaseDate: "Oct 15, 2026" }) },
         { name: "Consumer Sentiment",       forecast: "53.0",   url: "https://data.sca.isr.umich.edu/",                                                                       ...get(confidence,   { actual: "51.7",   previous: "55.2",   releaseDate: "Oct 6, 2026"  }) },
@@ -1817,9 +1817,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         { name: "PCE Price Index YoY",      releaseDate: "Sep 30, 2026", actual: "3.4%",   forecast: "3.4%",   previous: "3.4%",   url: "https://www.bea.gov/data/personal-consumption-expenditures" },
         { name: "Core PCE Price Index YoY", releaseDate: "Sep 30, 2026", actual: "3.0%",   forecast: "3.0%",   previous: "3.0%",   url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy" },
         { name: "Fed Funds Rate",           releaseDate: "Oct 28, 2026", actual: "3.75%",  forecast: "3.75%",  previous: "3.75%",  url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
-        { name: "Employment Situation",     releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
-        { name: "Non-Farm Payrolls",        releaseDate: "Oct 2, 2026",  actual: "+29K",   forecast: "+140K",  previous: "+133K",  url: "https://www.bls.gov/news.release/empsit.toc.htm" },
-        { name: "Unemployment Rate",        releaseDate: "Oct 2, 2026",  actual: "4.2%",   forecast: "4.2%",   previous: "4.1%",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+        { name: "Employment Situation",     releaseDate: "Nov 6, 2026",  actual: "+165K",  forecast: "+65K",   previous: "+60K",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+        { name: "Non-Farm Payrolls",        releaseDate: "Nov 6, 2026",  actual: "+165K",  forecast: "+65K",   previous: "+60K",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
+        { name: "Unemployment Rate",        releaseDate: "Nov 6, 2026",  actual: "4.1%",   forecast: "4.2%",   previous: "4.2%",   url: "https://www.bls.gov/news.release/empsit.toc.htm" },
         { name: "GDP Growth Rate",          releaseDate: "Sep 30, 2026", actual: "+2.2%",  forecast: "+2.2%",  previous: "+2.5%",  url: "https://www.bea.gov/data/gdp/gross-domestic-product" },
         { name: "Retail Sales MoM",         releaseDate: "Oct 15, 2026", actual: "+0.8%",  forecast: "+0.4%",  previous: "+1.3%",  url: "https://www.census.gov/retail/index.html" },
         { name: "Consumer Sentiment",       releaseDate: "Oct 6, 2026",  actual: "51.7",   forecast: "53.0",   previous: "55.2",   url: "https://data.sca.isr.umich.edu/" },

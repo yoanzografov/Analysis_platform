@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stock, TableFilter, PriceAlert } from '../types';
-import { Search, Sparkles, TrendingUp, TrendingDown, Edit3, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell, CheckSquare, Lock } from 'lucide-react';
+import { Search, Sparkles, TrendingUp, TrendingDown, Edit3, Check, X, ExternalLink, Plus, Newspaper, Trash2, Calculator, Save, Bell, CheckSquare, Lock, Activity, BarChart2, Building2, Coins, DollarSign, History, LayoutDashboard, LineChart, Target } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
 import StockDetailChartModal from './StockDetailChartModal';
 import DividendModal from './DividendModal';
@@ -715,6 +715,38 @@ export default function StockTable({
  // Direct non-paginated output to support continuous scrolling
  const pageStocks = sortedStocks;
 
+ const getCleanTicker = (rawTicker: string) => {
+   if (!rawTicker) return '';
+   const clean = rawTicker.includes(':') ? rawTicker.split(':')[1] : rawTicker;
+   return clean.trim().replace(/\./g, '-');
+ };
+
+ const activeSelectedStock = useMemo(() => {
+   if (selectedRow) {
+     const found = stocks.find(s => s.ticker === selectedRow);
+     if (found) return found;
+   }
+   return pageStocks.length > 0 ? pageStocks[0] : (stocks.length > 0 ? stocks[0] : null);
+ }, [selectedRow, stocks, pageStocks]);
+
+ const stockAnalysisTabs = useMemo(() => {
+   if (!activeSelectedStock) return [];
+   const clean = getCleanTicker(activeSelectedStock.ticker);
+   const sym = clean.toLowerCase();
+   const chartSym = clean.toUpperCase();
+   return [
+     { id: 'overview',   label: 'Overview',   url: `https://stockanalysis.com/stocks/${sym}/`,            icon: LayoutDashboard, desc: 'Общ преглед, коефициенти и ключова статистика' },
+     { id: 'financials', label: 'Financials', url: `https://stockanalysis.com/stocks/${sym}/financials/`,  icon: DollarSign,     desc: 'Финансови отчети, баланс и парични потоци' },
+     { id: 'forecast',   label: 'Forecast',   url: `https://stockanalysis.com/stocks/${sym}/forecast/`,    icon: Target,         desc: 'Прогнози и ценови таргети от Уолстрийт' },
+     { id: 'statistics', label: 'Statistics', url: `https://stockanalysis.com/stocks/${sym}/statistics/`,  icon: BarChart2,      desc: 'Подробни пазарни мултипликатори и маржове' },
+     { id: 'metrics',    label: 'Metrics',    url: `https://stockanalysis.com/stocks/${sym}/metrics/`,     icon: Activity,       desc: 'Ключови финансови показатели за ефективност' },
+     { id: 'dividends',  label: 'Dividends',  url: `https://stockanalysis.com/stocks/${sym}/dividend/`,    icon: Coins,          desc: 'Дивидентна история, доходност и дати' },
+     { id: 'history',    label: 'History',    url: `https://stockanalysis.com/stocks/${sym}/history/`,     icon: History,        desc: 'Исторически цени, обеми и корекции' },
+     { id: 'profile',    label: 'Profile',    url: `https://stockanalysis.com/stocks/${sym}/company/`,     icon: Building2,      desc: 'Бизнес модел, сектор, служители и борд' },
+     { id: 'chart',      label: 'Chart',      url: `https://stockanalysis.com/chart/${chartSym}/`,         icon: LineChart,      desc: 'Пълна интерактивна техническа графика' },
+   ];
+ }, [activeSelectedStock]);
+
  const formatLargeNum = (num: number | null | undefined) => {
  if (num == null || isNaN(Number(num))) return '-';
  if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
@@ -958,6 +990,7 @@ export default function StockTable({
    // Avoid selecting row when clicking on buttons, links or selects inside the row
    if ((e.target as HTMLElement).tagName !== 'BUTTON' && (e.target as HTMLElement).tagName !== 'A' && (e.target as HTMLElement).tagName !== 'SELECT') {
      setSelectedRow(stock.ticker);
+     onSelectStockForAi?.(stock);
    }
  }}
  className={`transition-all duration-150 group cursor-pointer ${
@@ -1511,6 +1544,170 @@ export default function StockTable({
  Използвайте скрол лентата за нагоре и надолу, за да прегледате пълната таблица
  </span>
  </div>
+
+ {/* StockAnalysis.com Company Navigation Bar & Deep Explorer */}
+ {activeSelectedStock && (
+   <div className="border-t-2 border-border/80 bg-bg p-4 sm:p-5 transition-all duration-200">
+     {/* Top Bar: Company Identity, Metrics & In-App Quick Tools */}
+     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border/60">
+       <div className="flex items-center gap-3.5 min-w-0">
+         <StockLogo
+           ticker={activeSelectedStock.ticker}
+           companyName={activeSelectedStock.companyName}
+           size="lg"
+           className="w-12 h-12 text-sm shadow-xs border border-border/60 shrink-0"
+         />
+         <div className="min-w-0">
+           <div className="flex flex-wrap items-center gap-2">
+             <span className="font-extrabold text-base sm:text-lg text-ink tracking-tight truncate">
+               {activeSelectedStock.companyName || activeSelectedStock.ticker}
+             </span>
+             <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 border border-blue-500/20 text-xs font-mono font-bold uppercase">
+               {activeSelectedStock.ticker}
+             </span>
+             {activeSelectedStock.profileLink && (
+               <span className="px-2 py-0.5 rounded-md bg-slate-500/10 text-ink-faint border border-border text-[11px] font-medium hidden sm:inline-block">
+                 {getSectorForStock(activeSelectedStock.ticker, activeSelectedStock.profileLink, activeSelectedStock.companyName)}
+               </span>
+             )}
+           </div>
+           
+           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs tabular-nums text-ink-faint">
+             <div className="flex items-center gap-1.5">
+               <span className="text-ink-faint text-[11px]">Цена:</span>
+               <span className="font-extrabold text-ink text-sm">
+                 ${activeSelectedStock.currentPrice > 0 ? activeSelectedStock.currentPrice.toFixed(2) : '-'}
+               </span>
+               <span className={`inline-flex items-center text-[11px] font-bold px-1.5 py-0.5 rounded ${
+                 activeSelectedStock.dailyChangePct >= 0 
+                   ? 'bg-emerald-500/15 text-emerald-500' 
+                   : 'bg-rose-500/15 text-rose-500'
+               }`}>
+                 {activeSelectedStock.dailyChangePct >= 0 ? '+' : ''}{activeSelectedStock.dailyChangePct.toFixed(2)}%
+               </span>
+             </div>
+
+             {activeSelectedStock.fairPrice !== null && (
+               <div className="flex items-center gap-1">
+                 <span className="text-ink-faint text-[11px]">Справедлива:</span>
+                 <span className="font-bold text-ink">${activeSelectedStock.fairPrice.toFixed(2)}</span>
+                 {activeSelectedStock.difference !== null && (
+                   <span className={`text-[11px] font-semibold ${
+                     activeSelectedStock.difference > 0 ? 'text-emerald-500' : 'text-rose-500'
+                   }`}>
+                     ({activeSelectedStock.difference > 0 ? '+' : ''}{activeSelectedStock.difference.toFixed(1)}%)
+                   </span>
+                 )}
+               </div>
+             )}
+
+             {activeSelectedStock.peRatio && activeSelectedStock.peRatio > 0 && (
+               <div className="hidden md:flex items-center gap-1">
+                 <span className="text-ink-faint text-[11px]">P/E:</span>
+                 <span className="font-semibold text-ink">{activeSelectedStock.peRatio.toFixed(1)}</span>
+               </div>
+             )}
+
+             {activeSelectedStock.marketCap && activeSelectedStock.marketCap > 0 && (
+               <div className="hidden md:flex items-center gap-1">
+                 <span className="text-ink-faint text-[11px]">Market Cap:</span>
+                 <span className="font-semibold text-ink">{formatLargeNum(activeSelectedStock.marketCap)}</span>
+               </div>
+             )}
+           </div>
+         </div>
+       </div>
+
+       {/* In-App Quick Action Shortcuts */}
+       <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+         <button
+           type="button"
+           onClick={() => setActiveChartStock(activeSelectedStock)}
+           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-bg hover:bg-indigo-500/10 text-xs font-semibold text-ink transition-colors cursor-pointer"
+           title="Интерактивна TradingView Графика"
+         >
+           <LineChart className="w-3.5 h-3.5 text-indigo-500" />
+           <span>Графика</span>
+         </button>
+
+         <button
+           type="button"
+           onClick={() => setFinancialsModalStock(activeSelectedStock)}
+           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-bg hover:bg-emerald-500/10 text-xs font-semibold text-ink transition-colors cursor-pointer"
+           title="Финансови отчети и показатели"
+         >
+           <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+           <span>Финанси</span>
+         </button>
+
+         <button
+           type="button"
+           onClick={() => setDividendModalStock(activeSelectedStock)}
+           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-bg hover:bg-amber-500/10 text-xs font-semibold text-ink transition-colors cursor-pointer"
+           title="Дивидентна история и календар"
+         >
+           <Coins className="w-3.5 h-3.5 text-amber-500" />
+           <span>Дивиденти</span>
+         </button>
+
+         <button
+           type="button"
+           onClick={() => onSelectStockForAi(activeSelectedStock)}
+           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-bg hover:bg-purple-500/10 text-xs font-semibold text-ink transition-colors cursor-pointer"
+           title="Зареди в Rayves AI асистента"
+         >
+           <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+           <span>AI Анализ</span>
+         </button>
+
+         <a
+           href={`https://stockanalysis.com/stocks/${getCleanTicker(activeSelectedStock.ticker).toLowerCase()}/`}
+           target="_blank"
+           rel="noopener noreferrer"
+           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-xs font-bold text-blue-500 transition-colors"
+           title="Отвори началната страница в StockAnalysis.com"
+         >
+           <span>StockAnalysis</span>
+           <ExternalLink className="w-3 h-3" />
+         </a>
+       </div>
+     </div>
+
+     {/* StockAnalysis Tabs Navigation Bar */}
+     <div className="pt-3">
+       <div className="flex items-center justify-between mb-2">
+         <span className="text-[11px] font-bold uppercase tracking-wider text-ink-faint flex items-center gap-1.5">
+           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+           StockAnalysis.com Навигация за <span className="text-ink font-mono font-bold uppercase">{activeSelectedStock.ticker}</span>:
+         </span>
+         <span className="text-[11px] text-ink-faint italic hidden sm:inline">
+           Изберете раздел за директен достъп в stockanalysis.com
+         </span>
+       </div>
+
+       {/* Scrollable Horizontal Tabs Container */}
+       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+         {stockAnalysisTabs.map(tab => {
+           const Icon = tab.icon;
+           return (
+             <a
+               key={tab.id}
+               href={tab.url}
+               target="_blank"
+               rel="noopener noreferrer"
+               title={`${tab.label} — ${tab.desc}`}
+               className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border/80 bg-bg hover:bg-blue-500/10 hover:border-blue-500/40 text-xs font-bold text-ink hover:text-blue-500 transition-all duration-150 shrink-0 shadow-xs active:scale-95"
+             >
+               <Icon className="w-3.5 h-3.5 text-ink-faint group-hover:text-blue-500 transition-colors" />
+               <span>{tab.label}</span>
+               <ExternalLink className="w-2.5 h-2.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 -translate-y-0.5 transition-all text-blue-500" />
+             </a>
+           );
+         })}
+       </div>
+     </div>
+   </div>
+ )}
 
  {/* Modern Retro Modal for adding a new Stock */}
  {isAddModalOpen && (

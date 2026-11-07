@@ -1987,7 +1987,7 @@ export default function App() {
             className={`h-9 px-3 rounded-xl border font-sans text-[11px] font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none flex-1 ${
               isAutoLiveRefresh 
                 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' 
-                : 'bg-card text-ink-faint border-border hover:bg-card-hover hover:text-ink'
+                : 'bg-transparent text-ink-faint border-border hover:bg-card-hover hover:text-ink'
             }`}
             title="Автоматично фоново синхронизиране на живите пазарни котировки"
           >
@@ -2006,8 +2006,8 @@ export default function App() {
             disabled={isFetchingLivePrices}
             className={`h-9 px-3 rounded-xl border font-sans text-[11px] font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
               isFetchingLivePrices
-                ? 'bg-card/50 text-ink-faint border-border/50 cursor-not-allowed'
-                : 'bg-card text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
+                ? 'bg-transparent text-ink-faint border-border/50 cursor-not-allowed opacity-50'
+                : 'bg-transparent text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
             }`}
             title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
           >
@@ -2016,7 +2016,7 @@ export default function App() {
           </button>
         </div>
         {/* Navigation Menu Card */}
-        <div className="bg-card border border-border rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col gap-2">
+        <div className="bg-transparent border border-border rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col gap-2">
           {/* Header Title / Platform Nav label */}
           <div className="px-2 py-1.5 flex items-center justify-between border-b border-border/50 text-[11px] font-black uppercase tracking-wider text-ink-muted">
             <span className="flex items-center gap-1.5">
@@ -2040,7 +2040,7 @@ export default function App() {
               className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
                 activeMainTab === 'table'
                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
+                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -2068,7 +2068,7 @@ export default function App() {
               className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
                 activeMainTab === 'alerts'
                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
+                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -2093,7 +2093,7 @@ export default function App() {
               className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
                 activeMainTab === 'portfolio'
                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
+                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -2117,7 +2117,7 @@ export default function App() {
               className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
                 activeMainTab === 'news'
                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-                  : 'bg-card/70 hover:bg-card-hover text-ink-muted hover:text-ink border-border/80 hover:border-indigo-500/40 font-bold'
+                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -2151,7 +2151,7 @@ export default function App() {
         </div>
 
         {/* Fair Value Calculators Dropdown Menu (StockAnalysis Style) */}
-        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
           <button
             type="button"
             onClick={() => setIsSidebarFairValueOpen(!isSidebarFairValueOpen)}
@@ -2213,7 +2213,7 @@ export default function App() {
         </div>
 
         {/* Tools Dropdown Menu (StockAnalysis Style) */}
-        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
           <button
             type="button"
             onClick={() => setIsSidebarToolsOpen(!isSidebarToolsOpen)}
@@ -2287,7 +2287,7 @@ export default function App() {
         </div>
 
         {/* Economic Calendar Card (StockAnalysis Style - under Tools) */}
-        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
           <button
             type="button"
             onClick={() => setShowEconomicCalendarModal(true)}
@@ -2305,7 +2305,7 @@ export default function App() {
         </div>
 
         {/* System Settings Dropdown Card (StockAnalysis Style - under Calendar) */}
-        <div ref={settingsMenuRef} className="relative flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+        <div ref={settingsMenuRef} className="relative flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
           <button
             type="button"
             onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
@@ -2353,7 +2353,7 @@ export default function App() {
         </div>
 
         {/* Other Category Dropdown Card (StockAnalysis Style) */}
-        <div className="flex flex-col bg-card border border-border rounded-2xl p-2.5 shadow-xs">
+        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
           <button
             type="button"
             onClick={() => {
@@ -2425,7 +2425,7 @@ export default function App() {
         </div>
 
         {/* Market Status Quick Glance Card (StockAnalysis Style - desktop only) */}
-        <div className="hidden lg:flex flex-col bg-card/60 border border-border/70 rounded-2xl p-3 shadow-xs space-y-2 text-xs">
+        <div className="hidden lg:flex flex-col bg-transparent border border-border/70 rounded-2xl p-3 shadow-xs space-y-2 text-xs">
           <div className="flex items-center justify-between text-[11px] font-bold text-ink-muted">
             <span className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
