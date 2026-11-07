@@ -1547,7 +1547,7 @@ export default function StockTable({
 
  {/* StockAnalysis.com Company Navigation Bar & Deep Explorer */}
  {activeSelectedStock && (
-   <div className="border-t-2 border-border/80 bg-bg p-4 sm:p-5 transition-all duration-200">
+   <div className="sticky bottom-0 z-40 border-t-2 border-indigo-500/40 bg-bg/95 backdrop-blur-md p-3.5 sm:p-4 transition-all duration-200 shadow-2xl">
      {/* Top Bar: Company Identity, Metrics & In-App Quick Tools */}
      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border/60">
        <div className="flex items-center gap-3.5 min-w-0">
