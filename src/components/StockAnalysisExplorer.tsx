@@ -40,6 +40,7 @@ import {
   BarChart,
   Bar,
   Cell,
+  LabelList,
   XAxis, 
   YAxis, 
   Tooltip as RechartsTooltip,
@@ -69,6 +70,8 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   const [financialSubTab, setFinancialSubTab] = useState<'income' | 'balance' | 'cashflow'>('income');
   const [financialFreq, setFinancialFreq] = useState<'annual' | 'quarterly'>('annual');
   const [hoveredMetricRow, setHoveredMetricRow] = useState<FinancialStatementRow | null>(null);
+  const [pinnedMetricRow, setPinnedMetricRow] = useState<FinancialStatementRow | null>(null);
+  const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
   const [data, setData] = useState<StockAnalysisData | null>(() => {
     const clean = getCleanTicker(stock.ticker);
@@ -424,6 +427,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   };
 
   const handleIconMouseEnter = (e: React.MouseEvent, row: FinancialStatementRow) => {
+    if (pinnedMetricRow) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredMetricRow(row);
     setHoverPos({
@@ -433,21 +437,73 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   };
 
   const handleIconMouseLeave = () => {
+    if (pinnedMetricRow) return;
     setHoveredMetricRow(null);
     setHoverPos(null);
   };
 
-  const hoveredChartData = useMemo(() => {
-    if (!hoveredMetricRow) return [];
-    return [...currentStatementTable.periods].reverse().map(period => {
-      const val = hoveredMetricRow.values[period] ?? 0;
+  const handleIconClick = (e: React.MouseEvent, row: FinancialStatementRow) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (pinnedMetricRow?.key === row.key) {
+      setPinnedMetricRow(null);
+      setHoveredMetricRow(null);
+      setSelectedBarIndex(null);
+    } else {
+      setPinnedMetricRow(row);
+      setHoveredMetricRow(null);
+      setSelectedBarIndex(null);
+      setHoverPos({
+        x: rect.left + rect.width / 2,
+        y: rect.top
+      });
+    }
+  };
+
+  const activeMetricRow = pinnedMetricRow || hoveredMetricRow;
+
+  const activeChartData = useMemo(() => {
+    if (!activeMetricRow) return [];
+    const reversedPeriods = [...currentStatementTable.periods].reverse();
+    return reversedPeriods.map((period, idx) => {
+      const val = activeMetricRow.values[period] ?? 0;
+      const prevVal = idx > 0 ? activeMetricRow.values[reversedPeriods[idx - 1]] : null;
+      let yoyGrowth: number | null = null;
+      if (prevVal != null && prevVal !== 0 && val != null) {
+        yoyGrowth = parseFloat((((val - prevVal) / Math.abs(prevVal)) * 100).toFixed(1));
+      }
+
+      // Compact format for on-top-of-bar labels
+      let compact = '';
+      if (val === null || val === undefined) compact = '—';
+      else if (activeMetricRow.format === 'percent') compact = `${val.toFixed(1)}%`;
+      else {
+        const abs = Math.abs(val);
+        const sign = val < 0 ? '-' : '';
+        if (abs >= 1e12) compact = `${sign}$${(abs / 1e12).toFixed(1)}T`;
+        else if (abs >= 1e9) compact = `${sign}$${(abs / 1e9).toFixed(1)}B`;
+        else if (abs >= 1e6) compact = `${sign}$${(abs / 1e6).toFixed(0)}M`;
+        else if (abs >= 1e3) compact = `${sign}$${(abs / 1e3).toFixed(0)}K`;
+        else compact = `${sign}$${abs.toFixed(1)}`;
+      }
+
       return {
         period,
         value: val,
-        formatted: formatFinancialValue(val, hoveredMetricRow.format)
+        formatted: formatFinancialValue(val, activeMetricRow.format),
+        formattedCompact: compact,
+        yoyGrowth
       };
     });
-  }, [hoveredMetricRow, currentStatementTable.periods]);
+  }, [activeMetricRow, currentStatementTable.periods]);
+
+  const currentInspectBar = useMemo(() => {
+    if (!activeChartData.length) return null;
+    if (selectedBarIndex != null && activeChartData[selectedBarIndex]) {
+      return activeChartData[selectedBarIndex];
+    }
+    return activeChartData[activeChartData.length - 1];
+  }, [activeChartData, selectedBarIndex]);
 
   const tabs: Array<{ id: StockAnalysisTabId; label: string; icon: any; desc: string; hasDropdown?: boolean; arrow?: boolean }> = [
     { id: 'overview',   label: 'Overview',   icon: LayoutDashboard, desc: 'Общ преглед, оценка и фундаментални данни' },
@@ -1054,52 +1110,169 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </div>
                         </div>
 
-                        {/* ─── Floating Chart Popover on Icon Hover (StockAnalysis Style) ─── */}
-                        {hoveredMetricRow && hoverPos && (
+                        {/* ─── Large Interactive Metric Chart Popover / Modal (StockAnalysis Style) ─── */}
+                        {activeMetricRow && hoverPos && (
                           <div
-                            className="fixed z-50 pointer-events-none p-3.5 rounded-xl bg-card/95 backdrop-blur-md border border-border/90 shadow-2xl animate-in fade-in zoom-in-95 duration-150 w-72"
+                            className={`fixed z-50 p-4 sm:p-5 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/90 shadow-2xl animate-in fade-in zoom-in-95 duration-150 w-[480px] sm:w-[520px] max-w-[95vw] ${
+                              pinnedMetricRow ? 'pointer-events-auto ring-2 ring-indigo-500/50 shadow-indigo-500/10' : 'pointer-events-auto'
+                            }`}
                             style={{
-                              top: hoverPos.y < 210 ? `${hoverPos.y + 24}px` : `${hoverPos.y - 10}px`,
+                              top: hoverPos.y < 320 ? `${hoverPos.y + 24}px` : `${hoverPos.y - 12}px`,
                               left: `${hoverPos.x}px`,
-                              transform: hoverPos.y < 210 ? 'translate(-50%, 0)' : 'translate(-50%, -100%)'
+                              transform: hoverPos.y < 320 ? 'translate(-50%, 0)' : 'translate(-50%, -100%)'
                             }}
                           >
-                            <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/60">
-                              <div className="min-w-0 pr-2">
-                                <div className="text-xs font-black text-ink truncate">{hoveredMetricRow.name}</div>
-                                <div className="text-[10px] text-ink-faint">{cleanTicker} · {financialFreq === 'annual' ? 'Годишни' : 'Тримесечни'}</div>
+                            {/* Card Header */}
+                            <div className="flex items-start justify-between gap-3 pb-3 mb-2.5 border-b border-border/70">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                                    <BarChart3 className="w-4 h-4" />
+                                  </span>
+                                  <h4 className="text-sm font-black text-ink truncate">
+                                    {activeMetricRow.name}
+                                  </h4>
+                                </div>
+                                <div className="text-[11px] text-ink-faint mt-0.5 font-medium">
+                                  {cleanTicker} · {data?.currency || 'USD'} · {financialFreq === 'annual' ? 'Годишни финансови данни' : 'Тримесечни финансови данни'}
+                                </div>
                               </div>
-                              <div className="text-xs font-black font-mono text-emerald-500 shrink-0">
-                                {formatFinancialValue(hoveredMetricRow.values[currentStatementTable.periods[0]], hoveredMetricRow.format)}
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                {pinnedMetricRow && (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                                    Заключена
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPinnedMetricRow(null);
+                                    setHoveredMetricRow(null);
+                                    setSelectedBarIndex(null);
+                                  }}
+                                  className="p-1 rounded-lg border border-border text-ink-faint hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
+                                  title="Затвори графиката"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
                               </div>
                             </div>
 
-                            <div className="w-full h-28">
+                            {/* Inspected Bar Detail Banner */}
+                            {currentInspectBar && (
+                              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 mb-2 rounded-xl bg-card-hover/70 border border-border/60 text-xs tabular-nums">
+                                <div className="flex items-center gap-1.5 font-semibold text-ink">
+                                  <span className="text-ink-faint text-[11px]">Период:</span>
+                                  <span className="font-bold font-mono text-indigo-400">{currentInspectBar.period}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-ink-faint text-[11px]">Стойност:</span>
+                                  <span className="font-mono font-black text-ink text-sm sm:text-base">
+                                    {currentInspectBar.formatted}
+                                  </span>
+                                  {currentInspectBar.yoyGrowth != null && (
+                                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${
+                                      currentInspectBar.yoyGrowth >= 0 
+                                        ? 'bg-emerald-500/15 text-emerald-500' 
+                                        : 'bg-rose-500/15 text-rose-500'
+                                    }`}>
+                                      {currentInspectBar.yoyGrowth >= 0 ? '+' : ''}{currentInspectBar.yoyGrowth}%
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Large Bar Chart */}
+                            <div className="w-full h-48 sm:h-52">
                               <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={hoveredChartData} margin={{ top: 5, right: 8, left: -24, bottom: 0 }}>
-                                  <XAxis dataKey="period" stroke="var(--color-ink-faint)" fontSize={9} tickLine={false} />
+                                <BarChart 
+                                  data={activeChartData} 
+                                  margin={{ top: 22, right: 12, left: -15, bottom: 0 }}
+                                >
+                                  <XAxis 
+                                    dataKey="period" 
+                                    stroke="var(--color-ink-faint)" 
+                                    fontSize={11} 
+                                    tickLine={false} 
+                                  />
                                   <YAxis 
                                     stroke="var(--color-ink-faint)" 
-                                    fontSize={8} 
+                                    fontSize={9} 
                                     tickLine={false}
                                     tickFormatter={(v) => {
-                                      if (hoveredMetricRow.format === 'percent') return `${v}%`;
-                                      if (Math.abs(v) >= 1e12) return `$${(v / 1e12).toFixed(0)}T`;
-                                      if (Math.abs(v) >= 1e9) return `$${(v / 1e9).toFixed(0)}B`;
+                                      if (activeMetricRow.format === 'percent') return `${v}%`;
+                                      if (Math.abs(v) >= 1e12) return `$${(v / 1e12).toFixed(1)}T`;
+                                      if (Math.abs(v) >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
                                       if (Math.abs(v) >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
                                       return String(v);
                                     }} 
                                   />
-                                  <Bar dataKey="value" radius={[3, 3, 0, 0]}>
-                                    {hoveredChartData.map((e, idx) => (
-                                      <Cell 
-                                        key={idx} 
-                                        fill={e.value >= 0 ? (idx === hoveredChartData.length - 1 ? '#4f46e5' : '#6366f1') : '#ef4444'} 
-                                      />
-                                    ))}
+                                  <RechartsTooltip 
+                                    cursor={{ fill: 'rgba(99, 102, 241, 0.08)' }}
+                                    content={({ active, payload }) => {
+                                      if (!active || !payload || !payload.length) return null;
+                                      const pt = payload[0].payload;
+                                      return (
+                                        <div className="bg-stone-950/95 border border-indigo-500/40 rounded-xl px-3 py-2 shadow-xl text-xs">
+                                          <div className="text-stone-400 font-medium mb-0.5">{pt.period}</div>
+                                          <div className="font-mono font-black text-sm text-indigo-400">
+                                            {pt.formatted}
+                                          </div>
+                                          {pt.yoyGrowth != null && (
+                                            <div className="text-[11px] font-bold mt-0.5" style={{ color: pt.yoyGrowth >= 0 ? '#10b981' : '#ef4444' }}>
+                                              {pt.yoyGrowth >= 0 ? '+' : ''}{pt.yoyGrowth}% спрямо предходен
+                                            </div>
+                                          )}
+                                          <div className="text-[10px] text-stone-500 mt-1">
+                                            💡 Кликнете за заключване
+                                          </div>
+                                        </div>
+                                      );
+                                    }}
+                                  />
+                                  <Bar 
+                                    dataKey="value" 
+                                    radius={[5, 5, 0, 0]}
+                                    onClick={(_data, index) => setSelectedBarIndex(index)}
+                                    className="cursor-pointer"
+                                  >
+                                    <LabelList 
+                                      dataKey="formattedCompact" 
+                                      position="top" 
+                                      fill="var(--color-ink-muted)" 
+                                      fontSize={10} 
+                                      fontWeight="bold"
+                                      offset={6}
+                                    />
+                                    {activeChartData.map((e, idx) => {
+                                      const isSelected = selectedBarIndex === idx;
+                                      const isLatest = idx === activeChartData.length - 1;
+                                      const isPositive = e.value >= 0;
+                                      return (
+                                        <Cell 
+                                          key={`cell-${idx}`} 
+                                          fill={
+                                            isSelected 
+                                              ? '#10b981' 
+                                              : isPositive 
+                                                ? (isLatest ? '#4f46e5' : '#6366f1') 
+                                                : '#ef4444'
+                                          }
+                                          fillOpacity={isSelected ? 1 : (isLatest ? 1 : 0.85)}
+                                          stroke={isSelected ? '#10b981' : 'transparent'}
+                                          strokeWidth={isSelected ? 2 : 0}
+                                        />
+                                      );
+                                    })}
                                   </Bar>
                                 </BarChart>
                               </ResponsiveContainer>
+                            </div>
+
+                            <div className="text-center text-[10px] text-ink-faint mt-1">
+                              💡 Кликнете върху стълб за избор на период или кликнете върху иконката за заключване
                             </div>
                           </div>
                         )}
@@ -1135,17 +1308,26 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 }
 
                                 const isBold = row.isBold;
+                                const isPinned = pinnedMetricRow?.key === row.key;
                                 const indentClass = row.indent === 1 ? 'pl-8' : row.indent === 2 ? 'pl-12' : 'pl-4';
 
                                 return (
                                   <tr 
                                     key={idx} 
-                                    className={`group transition-colors hover:bg-card-hover/60 ${isBold ? 'font-black text-ink border-t border-border/60 bg-card/60' : 'text-ink-muted'}`}
+                                    className={`group transition-colors hover:bg-card-hover/60 ${
+                                      isPinned 
+                                        ? 'bg-indigo-500/10 border-l-4 border-indigo-500 font-bold' 
+                                        : isBold 
+                                          ? 'font-black text-ink border-t border-border/60 bg-card/60' 
+                                          : 'text-ink-muted'
+                                    }`}
                                   >
                                     <td className={`py-2 px-4 sticky left-0 bg-card z-10 border-r border-border/40 font-sans ${indentClass} ${
-                                      isBold 
-                                        ? 'font-black text-ink' 
-                                        : 'font-medium text-ink-faint group-hover:text-ink'
+                                      isPinned
+                                        ? 'bg-indigo-950/20 text-indigo-300 font-black'
+                                        : isBold 
+                                          ? 'font-black text-ink' 
+                                          : 'font-medium text-ink-faint group-hover:text-ink'
                                     }`}>
                                       <div className="flex items-center justify-between gap-2">
                                         <span className="truncate">{row.name}</span>
@@ -1153,8 +1335,13 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                           type="button"
                                           onMouseEnter={(e) => handleIconMouseEnter(e, row)}
                                           onMouseLeave={handleIconMouseLeave}
-                                          className="p-1 rounded text-ink-faint hover:text-indigo-400 hover:bg-card-hover/80 transition-colors cursor-help opacity-40 group-hover:opacity-100 shrink-0"
-                                          title="Посочете за графика"
+                                          onClick={(e) => handleIconClick(e, row)}
+                                          className={`p-1 rounded transition-colors cursor-pointer shrink-0 ${
+                                            isPinned
+                                              ? 'text-indigo-400 bg-indigo-500/20 ring-1 ring-indigo-500/40 opacity-100'
+                                              : 'text-ink-faint hover:text-indigo-400 hover:bg-card-hover/80 opacity-40 group-hover:opacity-100'
+                                          }`}
+                                          title={isPinned ? 'Кликнете за затваряне на графиката' : 'Кликнете за заключване на графиката'}
                                         >
                                           <BarChart3 className="w-3.5 h-3.5" />
                                         </button>
