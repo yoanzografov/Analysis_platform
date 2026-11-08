@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Parser from 'rss-parser';
 import handleDividends from './dividends.js';
 import handleEarnings from './earnings.js';
+import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement } from '../src/utils/financialStatementsBuilder.js';
 
 // Google Finance exchange prefix → Yahoo Finance suffix
 const EXCHANGE_MAP: Record<string, string> = {
@@ -2131,6 +2132,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         { metric: 'Свободен паричен поток (FCF)', ttm: fmtLarge(fcf), prevYear: fmtLarge(fcf * 0.82), prev2Year: fmtLarge(fcf * 0.68), prev3Year: fmtLarge(fcf * 0.54) }
       ];
 
+      const buildParams = {
+        ticker: cleanTicker,
+        companyName: tv?.description || fhProfile?.name || cleanTicker,
+        currentPrice: parseFloat(Number(currentPrice).toFixed(2)),
+        marketCap: Math.round(mCap),
+        totalRevenue: totalRev,
+        grossProfit: grossProf,
+        operatingIncome: operInc,
+        netIncome: netInc,
+        freeCashFlow: fcf,
+        sharesOut: Math.round(sharesOut),
+        debtEquity: debtEqVal,
+        peRatio: peVal,
+        dividendYield: divYield
+      };
+
+      const incomeStatement = buildIncomeStatement(buildParams, false);
+      const balanceSheet = buildBalanceSheet(buildParams, false);
+      const cashFlow = buildCashFlowStatement(buildParams, false);
+      const quarterlyIncomeStatement = buildIncomeStatement(buildParams, true);
+      const quarterlyBalanceSheet = buildBalanceSheet(buildParams, true);
+      const quarterlyCashFlow = buildCashFlowStatement(buildParams, true);
+
       const data = {
         ticker: cleanTicker,
         companyName: tv?.description || fhProfile?.name || cleanTicker,
@@ -2189,7 +2213,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           grossMargin: parseFloat(((grossProf / (totalRev || 1)) * 100).toFixed(1)),
           operatingMargin: parseFloat(operMarginVal.toFixed(1)),
           profitMargin: parseFloat(netMarginVal.toFixed(1)),
-          statementRows
+          statementRows,
+          incomeStatement,
+          balanceSheet,
+          cashFlow,
+          quarterlyIncomeStatement,
+          quarterlyBalanceSheet,
+          quarterlyCashFlow
         },
         forecast: {
           targetLow: parseFloat(Number(targetLow).toFixed(2)),

@@ -1,3 +1,18 @@
+export interface FinancialStatementRow {
+  name: string;
+  key: string;
+  isHeader?: boolean;
+  isBold?: boolean;
+  indent?: number; // 0 = main, 1 = sub, 2 = sub-sub
+  format?: 'currency' | 'percent' | 'number';
+  values: { [period: string]: number | null };
+}
+
+export interface FinancialStatementTable {
+  periods: string[];
+  rows: FinancialStatementRow[];
+}
+
 export interface StockAnalysisData {
   ticker: string;
   companyName: string;
@@ -63,6 +78,12 @@ export interface StockAnalysisData {
       prev2Year: string;
       prev3Year: string;
     }>;
+    incomeStatement?: FinancialStatementTable;
+    balanceSheet?: FinancialStatementTable;
+    cashFlow?: FinancialStatementTable;
+    quarterlyIncomeStatement?: FinancialStatementTable;
+    quarterlyBalanceSheet?: FinancialStatementTable;
+    quarterlyCashFlow?: FinancialStatementTable;
   };
   forecast: {
     targetLow: number | null;

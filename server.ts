@@ -7,6 +7,7 @@ import fs from "fs/promises";
 import fsSync from "fs";
 import Parser from "rss-parser";
 import * as yfModule from 'yahoo-finance2';
+import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement } from './src/utils/financialStatementsBuilder';
 
 const YahooFinance = (yfModule as any).default?.default || (yfModule as any).default || yfModule;
 const yahooFinance = new YahooFinance({
@@ -3151,6 +3152,29 @@ app.get("/api/stock-analysis-details", async (req, res) => {
       { metric: 'Свободен паричен поток (FCF)', ttm: fmtLarge(fcf), prevYear: fmtLarge(fcf * 0.82), prev2Year: fmtLarge(fcf * 0.68), prev3Year: fmtLarge(fcf * 0.54) }
     ];
 
+    const buildParams = {
+      ticker: cleanTicker,
+      companyName: tv?.description || fhProfile?.name || cleanTicker,
+      currentPrice: parseFloat(Number(currentPrice).toFixed(2)),
+      marketCap: Math.round(mCap),
+      totalRevenue: totalRev,
+      grossProfit: grossProf,
+      operatingIncome: operInc,
+      netIncome: netInc,
+      freeCashFlow: fcf,
+      sharesOut: Math.round(sharesOut),
+      debtEquity: debtEqVal,
+      peRatio: peVal,
+      dividendYield: divYield
+    };
+
+    const incomeStatement = buildIncomeStatement(buildParams, false);
+    const balanceSheet = buildBalanceSheet(buildParams, false);
+    const cashFlow = buildCashFlowStatement(buildParams, false);
+    const quarterlyIncomeStatement = buildIncomeStatement(buildParams, true);
+    const quarterlyBalanceSheet = buildBalanceSheet(buildParams, true);
+    const quarterlyCashFlow = buildCashFlowStatement(buildParams, true);
+
     const data = {
       ticker: cleanTicker,
       companyName: tv?.description || fhProfile?.name || cleanTicker,
@@ -3209,7 +3233,13 @@ app.get("/api/stock-analysis-details", async (req, res) => {
         grossMargin: parseFloat(((grossProf / (totalRev || 1)) * 100).toFixed(1)),
         operatingMargin: parseFloat(operMarginVal.toFixed(1)),
         profitMargin: parseFloat(netMarginVal.toFixed(1)),
-        statementRows
+        statementRows,
+        incomeStatement,
+        balanceSheet,
+        cashFlow,
+        quarterlyIncomeStatement,
+        quarterlyBalanceSheet,
+        quarterlyCashFlow
       },
       forecast: {
         targetLow: parseFloat(Number(targetLow).toFixed(2)),
