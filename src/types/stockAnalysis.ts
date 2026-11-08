@@ -5,7 +5,22 @@ export interface StockAnalysisData {
   overview: {
     currentPrice: number;
     dailyChangePct: number;
+    dailyChangeAmount?: number | null;
+    afterHoursPrice?: number | null;
+    afterHoursChange?: number | null;
+    afterHoursChangePct?: number | null;
+    exchange?: string;
+    open?: number | null;
+    previousClose?: number | null;
+    volume?: number | null;
+    dayLow?: number | null;
+    dayHigh?: number | null;
+    sharesOut?: number | null;
     marketCap: number;
+    marketCapGrowth?: number | null;
+    revenueGrowth?: number | null;
+    netIncomeGrowth?: number | null;
+    epsGrowth?: number | null;
     peRatio: number | null;
     forwardPE: number | null;
     pegRatio: number | null;
@@ -16,7 +31,12 @@ export interface StockAnalysisData {
     week52Low: number | null;
     week52High: number | null;
     dividendYield: number | null;
+    dividendAmount?: number | null;
+    exDividendDate?: string;
     nextEarningsDate: string;
+    analystsRecommendation?: string;
+    priceTarget?: number | null;
+    priceTargetUpside?: number | null;
     sector: string;
     industry: string;
     description: string;
