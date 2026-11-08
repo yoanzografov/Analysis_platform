@@ -25,6 +25,7 @@ interface Props {
   onUpdateStock: (oldTicker: string, updatedStock: Stock) => void;
   onDeleteStock: (ticker: string) => void;
   onSelectStockForAi: (stock: Stock) => void;
+  onNavigateToStocksTab?: (stock: Stock) => void;
   onAddStock: (stock: Stock) => void;
   activeFilter: TableFilter;
   onSetActiveFilter: (filter: TableFilter) => void;
@@ -250,6 +251,7 @@ export default function StockTable({
   onUpdateStock, 
   onDeleteStock, 
   onSelectStockForAi, 
+  onNavigateToStocksTab,
   onAddStock, 
   activeFilter, 
   onSetActiveFilter, 
@@ -1546,12 +1548,36 @@ export default function StockTable({
  </span>
  </div>
 
- {/* StockAnalysis In-Platform Company Deep Explorer (9 Tabs) */}
+ {/* Selected Stock Quick Bar & Switch to STOCKS Tab */}
  {activeSelectedStock && (
-   <StockAnalysisExplorer
-     stock={activeSelectedStock}
-     onClose={() => setSelectedRow(null)}
-   />
+   <div className="p-3 bg-card/70 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 font-sans">
+     <div className="flex flex-wrap items-center gap-2 min-w-0">
+       <span className="text-xs font-bold text-ink-faint">Избран актив:</span>
+       <span className="font-extrabold text-xs text-ink">{activeSelectedStock.companyName || activeSelectedStock.ticker}</span>
+       <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[11px] font-bold">
+         {activeSelectedStock.ticker}
+       </span>
+       <span className="text-xs font-bold text-ink">
+         ${activeSelectedStock.currentPrice > 0 ? activeSelectedStock.currentPrice.toFixed(2) : '-'}
+       </span>
+       <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${
+         activeSelectedStock.dailyChangePct >= 0 ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'
+       }`}>
+         {activeSelectedStock.dailyChangePct >= 0 ? '+' : ''}{activeSelectedStock.dailyChangePct.toFixed(2)}%
+       </span>
+     </div>
+
+     <button
+       type="button"
+       onClick={() => {
+         onNavigateToStocksTab?.(activeSelectedStock);
+       }}
+       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black transition-all cursor-pointer shadow-md shadow-indigo-600/20 active:scale-95 shrink-0"
+     >
+       <BarChart2 className="w-3.5 h-3.5" />
+       <span>Отвори в STOCKS (9 Раздела) ➔</span>
+     </button>
+   </div>
  )}
 
  {/* Modern Retro Modal for adding a new Stock */}

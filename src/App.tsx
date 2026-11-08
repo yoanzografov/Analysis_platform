@@ -35,6 +35,7 @@ import FinancialFlagsModal from './components/FinancialFlagsModal';
 import PercentCalculatorModal from './components/PercentCalculatorModal';
 import WelcomeQuoteModal from './components/WelcomeQuoteModal';
 import AiAssistantDrawer from './components/AiAssistantDrawer';
+import StockAnalysisExplorer from './components/StockAnalysisExplorer';
 import { 
   Table,
   Save,
@@ -70,7 +71,8 @@ import {
   Database,
   Compass,
   Percent,
-  Scale
+  Scale,
+  BarChart2
 } from 'lucide-react';
 
 export default function App() {
@@ -189,20 +191,22 @@ export default function App() {
     }
   };
 
-  const getInitialTab = (): 'table' | 'alerts' | 'portfolio' | 'news' | 'other' => {
+  const getInitialTab = (): 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other' => {
     const hash = window.location.hash.toLowerCase().replace('#', '');
-    if (hash === 'alerts' || hash === 'portfolio' || hash === 'news' || hash === 'other') return hash;
+    if (hash === 'stocks' || hash === 'alerts' || hash === 'portfolio' || hash === 'news' || hash === 'other') return hash;
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab')?.toLowerCase();
-    if (tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news' || tabParam === 'other') return tabParam;
+    if (tabParam === 'stocks' || tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news' || tabParam === 'other') return tabParam;
     return 'table';
   };
 
-  const [activeMainTab, setActiveMainTab] = useState<'table' | 'alerts' | 'portfolio' | 'news' | 'other'>(getInitialTab);
-  const activeMainTabRef = useRef<'table' | 'alerts' | 'portfolio' | 'news' | 'other'>(activeMainTab);
+  const [activeMainTab, setActiveMainTab] = useState<'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other'>(getInitialTab);
+  const activeMainTabRef = useRef<'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other'>(activeMainTab);
   activeMainTabRef.current = activeMainTab;
 
-  const switchTab = (tab: 'table' | 'alerts' | 'portfolio' | 'news' | 'other') => {
+  const [selectedStockForStocksTab, setSelectedStockForStocksTab] = useState<Stock | null>(null);
+
+  const switchTab = (tab: 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other') => {
     setActiveMainTab(tab);
     activeMainTabRef.current = tab;
     const targetHash = tab === 'table' ? '' : `#${tab}`;
@@ -283,6 +287,9 @@ export default function App() {
           }
           setActiveMainTab('alerts');
           activeMainTabRef.current = 'alerts';
+        } else if (hash === 'stocks') {
+          setActiveMainTab('stocks');
+          activeMainTabRef.current = 'stocks';
         } else if (hash === 'portfolio') {
           setActiveMainTab('portfolio');
           activeMainTabRef.current = 'portfolio';
@@ -2054,6 +2061,30 @@ export default function App() {
               </span>
             </a>
 
+            {/* Tab: STOCKS */}
+            <a
+              href="#stocks"
+              onClick={(e) => {
+                e.preventDefault();
+                switchTab('stocks');
+              }}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                activeMainTab === 'stocks'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <BarChart2 className={`w-4 h-4 shrink-0 ${activeMainTab === 'stocks' ? 'text-white' : 'text-blue-400 group-hover:scale-110 transition-transform'}`} />
+                <span className="truncate">STOCKS</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                activeMainTab === 'stocks' ? 'bg-white/20 text-white' : 'bg-blue-500/20 text-blue-400'
+              }`}>
+                {selectedStockForStocksTab ? selectedStockForStocksTab.ticker : '9 TABS'}
+              </span>
+            </a>
+
             {/* Tab 2: PRICE ALERTS SCHEDULE */}
             <a
               href="#alerts"
@@ -2506,6 +2537,10 @@ export default function App() {
           onUpdateStock={handleUpdateStock} 
           onDeleteStock={handleDeleteStock}
           onSelectStockForAi={setSelectedStockForAi} 
+          onNavigateToStocksTab={(stk) => {
+            setSelectedStockForStocksTab(stk);
+            switchTab('stocks');
+          }}
           activeFilter={activeFilter}
           onSetActiveFilter={setActiveFilter}
           buyThreshold={buyThreshold}
@@ -2591,6 +2626,66 @@ export default function App() {
         />
         
       </>
+    ) : activeMainTab === 'stocks' ? (
+      <div className="space-y-4 font-sans">
+        {/* Quick stock selector & search header */}
+        <div className="p-4 rounded-2xl bg-card border border-border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold shrink-0">
+              <BarChart2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-black uppercase text-ink tracking-tight flex items-center gap-2">
+                <span>STOCKS DEEP ANALYSIS</span>
+                <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-xs font-bold font-mono">
+                  9 РАЗДЕЛА
+                </span>
+              </h2>
+              <p className="text-xs text-ink-muted">
+                Пълен институционален фундаментален и технически анализ на всяка компания
+              </p>
+            </div>
+          </div>
+
+          {/* Stock Quick Selector / Switcher */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-ink-faint">Изберете актив:</span>
+            <select
+              value={selectedStockForStocksTab?.ticker || stocks[0]?.ticker || ''}
+              onChange={(e) => {
+                const found = stocks.find(s => s.ticker === e.target.value);
+                if (found) setSelectedStockForStocksTab(found);
+              }}
+              className="bg-bg border border-border rounded-xl px-3 py-1.5 text-xs font-bold text-ink focus:outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              {stocks.map(s => (
+                <option key={s.ticker} value={s.ticker}>
+                  {s.ticker} — {s.companyName}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* The 9-Tab Stock Analysis Explorer Component */}
+        {(() => {
+          const currentTargetStock = selectedStockForStocksTab || stocks[0];
+          if (!currentTargetStock) {
+            return (
+              <div className="p-8 text-center text-xs text-ink-faint rounded-2xl border border-border bg-card">
+                Няма налични акции за анализ.
+              </div>
+            );
+          }
+          return (
+            <StockAnalysisExplorer
+              key={currentTargetStock.ticker}
+              stock={currentTargetStock}
+              className="rounded-2xl border border-border shadow-md"
+            />
+          );
+        })()}
+      </div>
     ) : activeMainTab === 'alerts' ? (
       currentUser ? (
         <PriceAlertPlanner
