@@ -29,12 +29,17 @@ import {
   Scale,
   Download,
   Moon,
-  Sparkles
+  Sparkles,
+  BarChart3,
+  X
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
   AreaChart, 
   Area, 
+  BarChart,
+  Bar,
+  Cell,
   XAxis, 
   YAxis, 
   Tooltip as RechartsTooltip,
@@ -59,10 +64,44 @@ interface Props {
   className?: string;
 }
 
+function FinancialRowSparkline({ values, periods }: { values: { [period: string]: number | null }; periods: string[] }) {
+  const nums = [...periods].reverse().map(p => values[p]).filter((v): v is number => v != null && !isNaN(v));
+  if (nums.length < 2) return <span className="w-10 inline-block text-center text-ink-faint text-[10px]">—</span>;
+
+  const min = Math.min(...nums);
+  const max = Math.max(...nums);
+  const range = max - min || 1;
+  const width = 44;
+  const height = 14;
+
+  const points = nums.map((val, idx) => {
+    const x = (idx / (nums.length - 1)) * width;
+    const y = height - ((val - min) / range) * (height - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+
+  const isUp = nums[nums.length - 1] >= nums[0];
+  const strokeColor = isUp ? '#10b981' : '#ef4444';
+
+  return (
+    <svg width={width} height={height} className="overflow-visible shrink-0 inline-block opacity-80 hover:opacity-100 transition-opacity">
+      <polyline
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  );
+}
+
 export default function StockAnalysisExplorer({ stock, onClose, className = '' }: Props) {
   const [activeTab, setActiveTab] = useState<StockAnalysisTabId>('overview');
   const [financialSubTab, setFinancialSubTab] = useState<'income' | 'balance' | 'cashflow'>('income');
   const [financialFreq, setFinancialFreq] = useState<'annual' | 'quarterly'>('annual');
+  const [selectedMetricKey, setSelectedMetricKey] = useState<string | null>('revenue');
   const [data, setData] = useState<StockAnalysisData | null>(() => {
     const clean = getCleanTicker(stock.ticker);
     return clientAnalysisCache.get(clean) || null;
@@ -415,6 +454,23 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     link.click();
     document.body.removeChild(link);
   };
+
+  const selectedMetricRow = useMemo(() => {
+    if (!selectedMetricKey) return null;
+    return currentStatementTable.rows.find(r => r.key === selectedMetricKey) || null;
+  }, [currentStatementTable, selectedMetricKey]);
+
+  const selectedMetricChartData = useMemo(() => {
+    if (!selectedMetricRow) return [];
+    return [...currentStatementTable.periods].reverse().map(period => {
+      const val = selectedMetricRow.values[period] ?? 0;
+      return {
+        period,
+        value: val,
+        formatted: formatFinancialValue(val, selectedMetricRow.format)
+      };
+    });
+  }, [selectedMetricRow, currentStatementTable.periods]);
 
   const tabs: Array<{ id: StockAnalysisTabId; label: string; icon: any; desc: string; hasDropdown?: boolean; arrow?: boolean }> = [
     { id: 'overview',   label: 'Overview',   icon: LayoutDashboard, desc: 'Общ преглед, оценка и фундаментални данни' },
@@ -1021,13 +1077,115 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </div>
                         </div>
 
-                        {/* Exact StockAnalysis Financial Statement Table */}
+                        {/* ─── Interactive Metric Bar Chart (StockAnalysis Style) ─── */}
+                        {selectedMetricRow && (
+                          <div className="p-4 rounded-xl bg-card border border-indigo-500/30 shadow-md space-y-3 animate-in fade-in duration-200">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="p-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 shrink-0">
+                                  <BarChart3 className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="text-xs sm:text-sm font-black text-ink flex items-center gap-1.5 truncate">
+                                    <span>{selectedMetricRow.name}</span>
+                                    <span className="text-[11px] font-bold text-ink-muted">
+                                      ({financialFreq === 'annual' ? 'Годишни' : 'Тримесечни'})
+                                    </span>
+                                  </h4>
+                                  <span className="text-[11px] text-ink-faint font-mono">
+                                    {cleanTicker} · {data?.currency || 'USD'} · Кликнете на друг ред за нова графика
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 shrink-0">
+                                <div className="text-right">
+                                  <div className="text-sm sm:text-base font-black font-mono text-ink">
+                                    {formatFinancialValue(selectedMetricRow.values[currentStatementTable.periods[0]], selectedMetricRow.format)}
+                                  </div>
+                                  <div className="text-[10px] text-ink-faint">
+                                    {currentStatementTable.periods[0]}
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedMetricKey(null)}
+                                  className="p-1.5 rounded-lg border border-border text-ink-faint hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
+                                  title="Затвори графиката"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Responsive BarChart Container */}
+                            <div className="w-full h-[180px] sm:h-[210px]">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={selectedMetricChartData} margin={{ top: 15, right: 15, left: 0, bottom: 5 }}>
+                                  <XAxis 
+                                    dataKey="period" 
+                                    stroke="var(--color-ink-faint)" 
+                                    fontSize={11} 
+                                    tickLine={false} 
+                                  />
+                                  <YAxis 
+                                    stroke="var(--color-ink-faint)" 
+                                    fontSize={10} 
+                                    tickLine={false}
+                                    tickFormatter={(v) => {
+                                      if (selectedMetricRow.format === 'percent') return `${v}%`;
+                                      if (Math.abs(v) >= 1e12) return `$${(v / 1e12).toFixed(1)}T`;
+                                      if (Math.abs(v) >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
+                                      if (Math.abs(v) >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
+                                      return String(v);
+                                    }}
+                                    width={55}
+                                  />
+                                  <RechartsTooltip 
+                                    cursor={{ fill: 'rgba(99, 102, 241, 0.08)' }}
+                                    content={({ active, payload }) => {
+                                      if (!active || !payload || !payload.length) return null;
+                                      const pt = payload[0].payload;
+                                      return (
+                                        <div className="bg-stone-950/95 border border-indigo-500/40 rounded-xl px-3 py-2 shadow-xl text-xs">
+                                          <div className="text-stone-400 font-medium mb-0.5">{pt.period}</div>
+                                          <div className="font-mono font-black text-sm text-indigo-400">
+                                            {pt.formatted}
+                                          </div>
+                                        </div>
+                                      );
+                                    }}
+                                  />
+                                  <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+                                    {selectedMetricChartData.map((entry, index) => {
+                                      const isPositive = entry.value >= 0;
+                                      const isLatest = index === selectedMetricChartData.length - 1;
+                                      return (
+                                        <Cell 
+                                          key={`cell-${index}`} 
+                                          fill={isPositive ? (isLatest ? '#4f46e5' : '#6366f1') : '#ef4444'} 
+                                          fillOpacity={isLatest ? 1 : 0.8}
+                                        />
+                                      );
+                                    })}
+                                  </Bar>
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Exact StockAnalysis Financial Statement Table with Sparklines */}
                         <div className="overflow-x-auto rounded-xl border border-border/80 bg-card shadow-xs">
                           <table className="w-full text-xs text-left tabular-nums border-collapse">
                             <thead>
                               <tr className="bg-card-hover/90 border-b border-border text-[11px] font-bold text-ink-muted">
-                                <th className="py-3 px-4 font-extrabold text-ink min-w-[250px] sticky left-0 bg-card z-10 border-r border-border/50">
-                                  {financialSubTab === 'income' ? 'Income Statement' : financialSubTab === 'balance' ? 'Balance Sheet' : 'Cash Flow Statement'} ({data?.currency || 'USD'})
+                                <th className="py-3 px-4 font-extrabold text-ink min-w-[280px] sticky left-0 bg-card z-10 border-r border-border/50">
+                                  <span>{financialSubTab === 'income' ? 'Income Statement' : financialSubTab === 'balance' ? 'Balance Sheet' : 'Cash Flow Statement'} ({data?.currency || 'USD'})</span>
+                                  <span className="text-[10px] text-ink-faint font-normal ml-2">· Кликнете за графика</span>
+                                </th>
+                                <th className="py-3 px-2 text-center font-bold text-ink-muted w-14">
+                                  Тренд
                                 </th>
                                 {currentStatementTable.periods.map(period => (
                                   <th key={period} className="py-3 px-4 text-right font-black text-ink min-w-[110px]">
@@ -1042,7 +1200,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                   return (
                                     <tr key={idx} className="bg-card-hover/50 font-sans">
                                       <td
-                                        colSpan={currentStatementTable.periods.length + 1}
+                                        colSpan={currentStatementTable.periods.length + 2}
                                         className="py-2.5 px-4 font-black uppercase text-[11px] text-indigo-400 tracking-wider"
                                       >
                                         {row.name}
@@ -1052,20 +1210,37 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 }
 
                                 const isBold = row.isBold;
+                                const isSelected = row.key === selectedMetricKey;
                                 const indentClass = row.indent === 1 ? 'pl-8' : row.indent === 2 ? 'pl-12' : 'pl-4';
 
                                 return (
                                   <tr 
                                     key={idx} 
-                                    className={`transition-colors hover:bg-card-hover/60 ${
-                                      isBold ? 'bg-card font-black text-ink border-t border-border/60' : 'text-ink-muted'
-                                    }`}
+                                    onClick={() => setSelectedMetricKey(isSelected ? null : row.key)}
+                                    className={`group transition-colors cursor-pointer ${
+                                      isSelected
+                                        ? 'bg-indigo-500/10 text-ink border-l-4 border-indigo-500 font-bold'
+                                        : 'hover:bg-card-hover/60 text-ink-muted'
+                                    } ${isBold ? 'font-black text-ink border-t border-border/60' : ''}`}
                                   >
                                     <td className={`py-2 px-4 sticky left-0 bg-card z-10 border-r border-border/40 font-sans ${indentClass} ${
-                                      isBold ? 'font-black text-ink' : 'font-medium text-ink-faint hover:text-ink'
+                                      isSelected 
+                                        ? 'bg-indigo-950/20 text-indigo-300 font-black' 
+                                        : isBold 
+                                          ? 'font-black text-ink' 
+                                          : 'font-medium text-ink-faint group-hover:text-ink'
                                     }`}>
-                                      {row.name}
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="truncate">{row.name}</span>
+                                        <BarChart3 className={`w-3.5 h-3.5 transition-opacity ${isSelected ? 'text-indigo-400 opacity-100' : 'opacity-0 group-hover:opacity-60 text-ink-faint'}`} />
+                                      </div>
                                     </td>
+                                    
+                                    {/* Inline Mini-Sparkline */}
+                                    <td className="py-2 px-2 text-center align-middle">
+                                      <FinancialRowSparkline values={row.values} periods={currentStatementTable.periods} />
+                                    </td>
+
                                     {currentStatementTable.periods.map(period => {
                                       const rawVal = row.values[period];
                                       const formatted = formatFinancialValue(rawVal, row.format);
