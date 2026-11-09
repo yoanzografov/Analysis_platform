@@ -81,9 +81,17 @@ export interface StockAnalysisData {
     incomeStatement?: FinancialStatementTable;
     balanceSheet?: FinancialStatementTable;
     cashFlow?: FinancialStatementTable;
+    ratios?: FinancialStatementTable;
     quarterlyIncomeStatement?: FinancialStatementTable;
     quarterlyBalanceSheet?: FinancialStatementTable;
     quarterlyCashFlow?: FinancialStatementTable;
+    quarterlyRatios?: FinancialStatementTable;
+    segments?: Array<{
+      name: string;
+      revenue: number;
+      pct: number;
+      growthPct?: number;
+    }>;
   };
   forecast: {
     targetLow: number | null;

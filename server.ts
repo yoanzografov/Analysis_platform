@@ -7,7 +7,7 @@ import fs from "fs/promises";
 import fsSync from "fs";
 import Parser from "rss-parser";
 import * as yfModule from 'yahoo-finance2';
-import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement } from './src/utils/financialStatementsBuilder';
+import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement, buildFinancialRatios, getCompanySegments } from './src/utils/financialStatementsBuilder';
 
 const YahooFinance = (yfModule as any).default?.default || (yfModule as any).default || yfModule;
 const yahooFinance = new YahooFinance({
@@ -3190,9 +3190,12 @@ app.get("/api/stock-analysis-details", async (req, res) => {
     const incomeStatement = buildIncomeStatement(buildParams, false);
     const balanceSheet = buildBalanceSheet(buildParams, false);
     const cashFlow = buildCashFlowStatement(buildParams, false);
+    const ratios = buildFinancialRatios(buildParams, false);
     const quarterlyIncomeStatement = buildIncomeStatement(buildParams, true);
     const quarterlyBalanceSheet = buildBalanceSheet(buildParams, true);
     const quarterlyCashFlow = buildCashFlowStatement(buildParams, true);
+    const quarterlyRatios = buildFinancialRatios(buildParams, true);
+    const companySegments = getCompanySegments(cleanTicker, totalRev);
 
     const data = {
       ticker: cleanTicker,
@@ -3256,9 +3259,13 @@ app.get("/api/stock-analysis-details", async (req, res) => {
         incomeStatement,
         balanceSheet,
         cashFlow,
+        ratios,
         quarterlyIncomeStatement,
         quarterlyBalanceSheet,
-        quarterlyCashFlow
+        quarterlyCashFlow,
+        quarterlyRatios,
+        segments: companySegments.primarySegments,
+        platformMarkets: companySegments.platformMarkets
       },
       forecast: {
         targetLow: parseFloat(Number(targetLow).toFixed(2)),

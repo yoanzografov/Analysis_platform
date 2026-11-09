@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Parser from 'rss-parser';
 import handleDividends from './dividends.js';
 import handleEarnings from './earnings.js';
-import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement } from '../src/utils/financialStatementsBuilder.js';
+import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement, buildFinancialRatios, getCompanySegments } from '../src/utils/financialStatementsBuilder.js';
 
 // Google Finance exchange prefix → Yahoo Finance suffix
 const EXCHANGE_MAP: Record<string, string> = {
@@ -2170,9 +2170,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const incomeStatement = buildIncomeStatement(buildParams, false);
       const balanceSheet = buildBalanceSheet(buildParams, false);
       const cashFlow = buildCashFlowStatement(buildParams, false);
+      const ratios = buildFinancialRatios(buildParams, false);
       const quarterlyIncomeStatement = buildIncomeStatement(buildParams, true);
       const quarterlyBalanceSheet = buildBalanceSheet(buildParams, true);
       const quarterlyCashFlow = buildCashFlowStatement(buildParams, true);
+      const quarterlyRatios = buildFinancialRatios(buildParams, true);
+      const companySegments = getCompanySegments(cleanTicker, totalRev);
 
       const data = {
         ticker: cleanTicker,
@@ -2236,9 +2239,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           incomeStatement,
           balanceSheet,
           cashFlow,
+          ratios,
           quarterlyIncomeStatement,
           quarterlyBalanceSheet,
-          quarterlyCashFlow
+          quarterlyCashFlow,
+          quarterlyRatios,
+          segments: companySegments.primarySegments,
+          platformMarkets: companySegments.platformMarkets
         },
         forecast: {
           targetLow: parseFloat(Number(targetLow).toFixed(2)),
