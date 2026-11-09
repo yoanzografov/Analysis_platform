@@ -545,8 +545,18 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   }, [activeChartData, selectedBarIndex]);
 
   const companySegments = useMemo(() => {
+    if (data?.financials?.segments && data?.financials?.platformMarkets) {
+      return {
+        primarySegments: data.financials.segments,
+        platformMarkets: data.financials.platformMarkets
+      };
+    }
     const totalRev = cleanTicker === 'NVDA' ? 302970000000 : (data?.financials?.revenue || (activeStockPrice * 500000000 * 0.32));
-    return getCompanySegments(cleanTicker, totalRev);
+    const segs = getCompanySegments(cleanTicker, totalRev);
+    return {
+      primarySegments: segs?.primarySegments || [],
+      platformMarkets: segs?.platformMarkets || []
+    };
   }, [cleanTicker, data, activeStockPrice]);
 
   const revenueProfitChartData = useMemo(() => {
@@ -1322,7 +1332,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                               <span className="text-[11px] text-ink-faint font-mono">FY 2026 / TTM</span>
                             </div>
                             <div className="space-y-3">
-                              {companySegments.segments.map((s, idx) => (
+                              {(companySegments?.primarySegments || []).map((s, idx) => (
                                 <div key={idx} className="space-y-1">
                                   <div className="flex items-center justify-between text-xs">
                                     <span className="font-bold text-ink">{s.name}</span>
@@ -1354,7 +1364,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                               <span className="text-[11px] text-ink-faint font-mono">Дял от приходите</span>
                             </div>
                             <div className="space-y-3">
-                              {companySegments.platformMarkets.map((pm, idx) => (
+                              {(companySegments?.platformMarkets || []).map((pm, idx) => (
                                 <div key={idx} className="space-y-1">
                                   <div className="flex items-center justify-between text-xs">
                                     <span className="font-bold text-ink">{pm.name}</span>
@@ -1686,7 +1696,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 <th className="py-3 px-4 font-extrabold text-ink min-w-[280px] sticky left-0 bg-card z-10 border-r border-border/50">
                                   <span>{financialSubTab === 'income' ? 'Income Statement' : financialSubTab === 'balance' ? 'Balance Sheet' : financialSubTab === 'cashflow' ? 'Cash Flow Statement' : 'Financial Ratios'} ({data?.currency || 'USD'})</span>
                                 </th>
-                                {currentStatementTable.periods.map(period => (
+                                {(currentStatementTable?.periods || []).map(period => (
                                   <th key={period} className="py-3 px-4 text-right font-black text-ink min-w-[110px]">
                                     {period}
                                   </th>
@@ -1694,12 +1704,12 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border/40 font-mono">
-                              {currentStatementTable.rows.map((row, idx) => {
+                              {(currentStatementTable?.rows || []).map((row, idx) => {
                                 if (row.isHeader) {
                                   return (
                                     <tr key={idx} className="bg-card-hover/50 font-sans">
                                       <td
-                                        colSpan={currentStatementTable.periods.length + 1}
+                                        colSpan={(currentStatementTable?.periods?.length || 0) + 1}
                                         className="py-2.5 px-4 font-black uppercase text-[11px] text-indigo-400 tracking-wider"
                                       >
                                         {row.name}
@@ -1749,7 +1759,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                       </div>
                                     </td>
 
-                                    {currentStatementTable.periods.map(period => {
+                                    {(currentStatementTable?.periods || []).map(period => {
                                       const rawVal = row.values[period];
                                       const formatted = formatFinancialValue(rawVal, row.format);
                                       const isGrowthOrMargin = row.format === 'percent';
@@ -2029,7 +2039,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border/50">
-                            {data.dividends.payouts.map((p, idx) => (
+                            {(data?.dividends?.payouts || []).map((p, idx) => (
                               <tr key={idx} className="hover:bg-bg/50">
                                 <td className="p-2 font-semibold text-ink">{p.date}</td>
                                 <td className="p-2 font-bold text-emerald-500">{p.amount}</td>
@@ -2090,7 +2100,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/50">
-                          {data.history.recentPrices.map((row, idx) => (
+                          {(data?.history?.recentPrices || []).map((row, idx) => (
                             <tr key={idx} className="hover:bg-bg/50">
                               <td className="p-2.5 pl-3 font-semibold text-ink">{row.date}</td>
                               <td className="p-2.5 text-ink-muted">${row.open.toFixed(2)}</td>
@@ -2145,7 +2155,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                       <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2">
                         <h4 className="text-xs font-bold text-ink uppercase">Ключов мениджмънт</h4>
                         <div className="space-y-1.5 text-xs">
-                          {data.profile.officers.map((officer, idx) => (
+                          {(data?.profile?.officers || []).map((officer, idx) => (
                             <div key={idx} className="flex justify-between items-center py-1 border-b border-border/40 last:border-0">
                               <div>
                                 <span className="font-bold text-ink block">{officer.name}</span>
