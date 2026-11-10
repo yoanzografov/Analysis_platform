@@ -498,6 +498,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
       setPinnedMetricRow(null);
       setHoveredMetricRow(null);
       setSelectedBarIndex(null);
+      setHoverPos(null);
     } else {
       setPinnedMetricRow(row);
       setHoveredMetricRow(null);
@@ -529,7 +530,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     return currentStatementTable.rows.find(r => !r.isHeader) || null;
   }, [currentStatementTable, financialSubTab]);
 
-  const activeMetricRow = pinnedMetricRow || hoveredMetricRow || defaultMetricRow;
+  const activeMetricRow = pinnedMetricRow || hoveredMetricRow;
 
   const activeChartData = useMemo(() => {
     if (!activeMetricRow) return [];
@@ -1257,21 +1258,6 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </button>
                         </div>
 
-                        {/* Chart Toggle */}
-                        <button
-                          type="button"
-                          onClick={() => setShowChart(!showChart)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer shadow-xs ${
-                            showChart
-                              ? 'border-indigo-500/40 bg-indigo-500/15 text-indigo-400'
-                              : 'border-border bg-card text-ink-muted hover:text-ink'
-                          }`}
-                          title={showChart ? 'Скрий горната графика' : 'Покажи горната графика'}
-                        >
-                          <BarChart3 className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Chart</span>
-                        </button>
-
                         {/* Export CSV */}
                         <button
                           type="button"
@@ -1307,61 +1293,88 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {/* ─── Inline Top Interactive Metric Chart (StockAnalysis Style) ─── */}
-                        {showChart && activeMetricRow && (
-                          <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border/60">
-                              <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
-                                  <BarChart3 className="w-4 h-4" />
+                        {/* ─── Floating Interactive Metric Chart Popover / Modal (StockAnalysis Style) ─── */}
+                        {activeMetricRow && hoverPos && (
+                          <div
+                            className={`fixed z-50 p-4 sm:p-5 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/90 shadow-2xl animate-in fade-in zoom-in-95 duration-150 w-[480px] sm:w-[520px] max-w-[95vw] ${
+                              pinnedMetricRow ? 'pointer-events-auto ring-2 ring-indigo-500/50 shadow-indigo-500/10' : 'pointer-events-auto'
+                            }`}
+                            style={{
+                              top: hoverPos.y < 320 ? `${hoverPos.y + 24}px` : `${hoverPos.y - 12}px`,
+                              left: `${hoverPos.x}px`,
+                              transform: hoverPos.y < 320 ? 'translate(-50%, 0)' : 'translate(-50%, -100%)'
+                            }}
+                          >
+                            {/* Card Header */}
+                            <div className="flex items-start justify-between gap-3 pb-3 mb-2.5 border-b border-border/70">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                                    <BarChart3 className="w-4 h-4" />
+                                  </span>
+                                  <h4 className="text-sm font-black text-ink truncate">
+                                    {activeMetricRow.name}
+                                  </h4>
                                 </div>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="text-sm font-black text-ink">
-                                      {cleanTicker} {activeMetricRow.name}
-                                    </h4>
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-border/60 text-ink-muted">
-                                      {financialFreq === 'annual' ? 'Годишно' : 'Тримесечно'}
-                                    </span>
-                                  </div>
-                                  <p className="text-[11px] text-ink-faint">
-                                    {activeMetricRow.format === 'currency' 
-                                      ? `Стойности в ${financialScale === 'billions' ? 'милиарди' : financialScale === 'millions' ? 'милиони' : 'пълни'} (${data?.currency || 'USD'})` 
-                                      : activeMetricRow.format === 'percent'
-                                        ? 'Стойности в проценти (%)'
-                                        : 'Числена стойност'}
-                                  </p>
+                                <div className="text-[11px] text-ink-faint mt-0.5 font-medium">
+                                  {cleanTicker} · {data?.currency || 'USD'} · {financialFreq === 'annual' ? 'Годишни финансови данни' : 'Тримесечни финансови данни'}
                                 </div>
                               </div>
 
-                              {currentInspectBar && (
-                                <div className="flex items-center gap-3 bg-card-hover/80 px-3 py-1.5 rounded-xl border border-border/70 text-xs">
-                                  <div className="text-ink-faint text-[11px]">
-                                    Период: <span className="font-bold text-ink">{currentInspectBar.period}</span>
-                                  </div>
-                                  <div className="font-mono font-black text-sm text-indigo-400">
+                              <div className="flex items-center gap-2 shrink-0">
+                                {pinnedMetricRow && (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                                    Заключена
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPinnedMetricRow(null);
+                                    setHoveredMetricRow(null);
+                                    setSelectedBarIndex(null);
+                                    setHoverPos(null);
+                                  }}
+                                  className="p-1 rounded-lg border border-border text-ink-faint hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
+                                  title="Затвори графиката"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Inspected Bar Detail Banner */}
+                            {currentInspectBar && (
+                              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 mb-2 rounded-xl bg-card-hover/70 border border-border/60 text-xs tabular-nums">
+                                <div className="flex items-center gap-1.5 font-semibold text-ink">
+                                  <span className="text-ink-faint text-[11px]">Период:</span>
+                                  <span className="font-bold font-mono text-indigo-400">{currentInspectBar.period}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-ink-faint text-[11px]">Стойност:</span>
+                                  <span className="font-mono font-black text-ink text-sm sm:text-base">
                                     {currentInspectBar.formatted}
-                                  </div>
+                                  </span>
                                   {currentInspectBar.yoyGrowth != null && (
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${
                                       currentInspectBar.yoyGrowth >= 0 
                                         ? 'bg-emerald-500/15 text-emerald-500' 
                                         : 'bg-rose-500/15 text-rose-500'
                                     }`}>
-                                      {currentInspectBar.yoyGrowth >= 0 ? '+' : ''}{currentInspectBar.yoyGrowth}% YoY
+                                      {currentInspectBar.yoyGrowth >= 0 ? '+' : ''}{currentInspectBar.yoyGrowth}%
                                     </span>
                                   )}
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
 
-                            <div className="w-full h-56 sm:h-64">
+                            {/* Large Bar Chart */}
+                            <div className="w-full h-48 sm:h-52">
                               <ResponsiveContainer width="100%" height="100%">
                                 <BarChart 
                                   data={activeChartData} 
-                                  margin={{ top: 22, right: 12, left: -10, bottom: 0 }}
+                                  margin={{ top: 22, right: 12, left: -15, bottom: 0 }}
                                 >
-                                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.35} vertical={false} />
                                   <XAxis 
                                     dataKey="period" 
                                     stroke="var(--color-ink-faint)" 
@@ -1370,7 +1383,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                   />
                                   <YAxis 
                                     stroke="var(--color-ink-faint)" 
-                                    fontSize={10} 
+                                    fontSize={9} 
                                     tickLine={false}
                                     tickFormatter={(v) => {
                                       if (activeMetricRow.format === 'percent') return `${v}%`;
@@ -1443,6 +1456,10 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 </BarChart>
                               </ResponsiveContainer>
                             </div>
+
+                            <div className="text-center text-[10px] text-ink-faint mt-1">
+                              💡 Кликнете върху иконката за заключване или затваряне
+                            </div>
                           </div>
                         )}
 
@@ -1504,10 +1521,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 return (
                                   <tr 
                                     key={idx} 
-                                    onClick={() => {
-                                      setPinnedMetricRow(row);
-                                      setSelectedBarIndex(null);
-                                    }}
+                                    onClick={(e) => handleIconClick(e, row)}
                                     className={`group transition-colors cursor-pointer hover:bg-card-hover/60 ${
                                       isActive
                                         ? 'bg-indigo-500/10 border-l-4 border-indigo-500 font-bold' 
@@ -1527,17 +1541,15 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                         <span className="truncate">{row.name}</span>
                                         <button
                                           type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setPinnedMetricRow(row);
-                                            setSelectedBarIndex(null);
-                                          }}
+                                          onMouseEnter={(e) => handleIconMouseEnter(e, row)}
+                                          onMouseLeave={handleIconMouseLeave}
+                                          onClick={(e) => handleIconClick(e, row)}
                                           className={`p-1 rounded transition-colors cursor-pointer shrink-0 ${
                                             isActive
                                               ? 'text-indigo-400 bg-indigo-500/20 ring-1 ring-indigo-500/40 opacity-100'
                                               : 'text-ink-faint hover:text-indigo-400 hover:bg-card-hover/80 opacity-40 group-hover:opacity-100'
                                           }`}
-                                          title="Покажи в горната графика"
+                                          title={isActive ? 'Затвори графиката' : 'Отвори графиката'}
                                         >
                                           <BarChart3 className="w-3.5 h-3.5" />
                                         </button>
