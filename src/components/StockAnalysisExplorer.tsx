@@ -60,8 +60,11 @@ import {
   buildBalanceSheet, 
   buildCashFlowStatement,
   buildFinancialRatios,
+  buildKpisMetrics,
   getCompanySegments,
-  formatFinancialValue 
+  formatFinancialValue,
+  getPeriodEndDate,
+  FinancialScale
 } from '../utils/financialStatementsBuilder';
 
 // Module-level cache for instant tab switching across stocks
@@ -75,7 +78,9 @@ interface Props {
 
 export default function StockAnalysisExplorer({ stock, onClose, className = '' }: Props) {
   const [activeTab, setActiveTab] = useState<StockAnalysisTabId>('overview');
-  const [financialSubTab, setFinancialSubTab] = useState<'overview' | 'income' | 'balance' | 'cashflow' | 'ratios'>('overview');
+  const [financialSubTab, setFinancialSubTab] = useState<'income' | 'balance' | 'cashflow' | 'ratios' | 'kpis'>('income');
+  const [financialScale, setFinancialScale] = useState<FinancialScale>('millions');
+  const [showChart, setShowChart] = useState<boolean>(true);
   const [financialFreq, setFinancialFreq] = useState<'annual' | 'quarterly'>('annual');
   const [hoveredMetricRow, setHoveredMetricRow] = useState<FinancialStatementRow | null>(null);
   const [pinnedMetricRow, setPinnedMetricRow] = useState<FinancialStatementRow | null>(null);
@@ -437,6 +442,11 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
       if (!isQ && data?.financials?.ratios) return data.financials.ratios;
       return buildFinancialRatios(buildParams, isQ);
     }
+    if (financialSubTab === 'kpis') {
+      if (isQ && data?.financials?.quarterlyKpis) return data.financials.quarterlyKpis;
+      if (!isQ && data?.financials?.kpis) return data.financials.kpis;
+      return buildKpisMetrics(buildParams, isQ);
+    }
     return buildIncomeStatement(buildParams, isQ);
   }, [financialSubTab, financialFreq, data, cleanTicker, stock, activeStockPrice]);
 
@@ -499,7 +509,27 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     }
   };
 
-  const activeMetricRow = pinnedMetricRow || hoveredMetricRow;
+  const defaultMetricRow = useMemo(() => {
+    if (!currentStatementTable?.rows?.length) return null;
+    if (financialSubTab === 'income') {
+      return currentStatementTable.rows.find(r => r.key === 'revenue') || currentStatementTable.rows.find(r => !r.isHeader);
+    }
+    if (financialSubTab === 'balance') {
+      return currentStatementTable.rows.find(r => r.key === 'total_assets') || currentStatementTable.rows.find(r => r.key === 'total_cash') || currentStatementTable.rows.find(r => !r.isHeader);
+    }
+    if (financialSubTab === 'cashflow') {
+      return currentStatementTable.rows.find(r => r.key === 'fcf') || currentStatementTable.rows.find(r => r.key === 'ocf') || currentStatementTable.rows.find(r => !r.isHeader);
+    }
+    if (financialSubTab === 'ratios') {
+      return currentStatementTable.rows.find(r => r.key === 'pe') || currentStatementTable.rows.find(r => r.key === 'gross_margin') || currentStatementTable.rows.find(r => !r.isHeader);
+    }
+    if (financialSubTab === 'kpis') {
+      return currentStatementTable.rows.find(r => r.key === 'plat_datacenter') || currentStatementTable.rows.find(r => r.key === 'seg_compute') || currentStatementTable.rows.find(r => !r.isHeader);
+    }
+    return currentStatementTable.rows.find(r => !r.isHeader) || null;
+  }, [currentStatementTable, financialSubTab]);
+
+  const activeMetricRow = pinnedMetricRow || hoveredMetricRow || defaultMetricRow;
 
   const activeChartData = useMemo(() => {
     if (!activeMetricRow) return [];
@@ -516,7 +546,13 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
       let compact = '';
       if (val === null || val === undefined) compact = '—';
       else if (activeMetricRow.format === 'percent') compact = `${val.toFixed(1)}%`;
-      else {
+      else if (activeMetricRow.format === 'number') {
+        if (Math.abs(val) < 2000 && !activeMetricRow.key.includes('shares') && !activeMetricRow.key.includes('headcount')) {
+          compact = val.toFixed(2);
+        } else {
+          compact = Math.abs(val) >= 1e9 ? `${(val / 1e9).toFixed(1)}B` : Math.abs(val) >= 1e6 ? `${(val / 1e6).toFixed(0)}M` : Math.round(val).toLocaleString();
+        }
+      } else {
         const abs = Math.abs(val);
         const sign = val < 0 ? '-' : '';
         if (abs >= 1e12) compact = `${sign}$${(abs / 1e12).toFixed(1)}T`;
@@ -529,12 +565,12 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
       return {
         period,
         value: val,
-        formatted: formatFinancialValue(val, activeMetricRow.format),
+        formatted: formatFinancialValue(val, activeMetricRow.format, financialScale, activeMetricRow.key),
         formattedCompact: compact,
         yoyGrowth
       };
     });
-  }, [activeMetricRow, currentStatementTable.periods]);
+  }, [activeMetricRow, currentStatementTable.periods, financialScale]);
 
   const currentInspectBar = useMemo(() => {
     if (!activeChartData.length) return null;
@@ -1123,20 +1159,25 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                 {activeTab === 'financials' && (
                   <div className="space-y-4">
                     {/* Sub-navigation & Period Controls */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/70">
-                      {/* Statement Sub-tabs */}
+                    {/* Sub-navigation & Period Controls (StockAnalysis Toolbar) */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-border/70">
+                      {/* 5 Statement Sub-tabs */}
                       <div className="flex items-center gap-1 p-1 rounded-xl bg-card border border-border/80 overflow-x-auto scrollbar-none">
                         {[
-                          { id: 'overview', label: 'Overview' },
                           { id: 'income', label: 'Income Statement' },
                           { id: 'balance', label: 'Balance Sheet' },
                           { id: 'cashflow', label: 'Cash Flow' },
-                          { id: 'ratios', label: 'Ratios' }
+                          { id: 'ratios', label: 'Ratios' },
+                          { id: 'kpis', label: 'KPIs & Metrics' }
                         ].map(st => (
                           <button
                             key={st.id}
                             type="button"
-                            onClick={() => setFinancialSubTab(st.id as any)}
+                            onClick={() => {
+                              setFinancialSubTab(st.id as any);
+                              setPinnedMetricRow(null);
+                              setSelectedBarIndex(null);
+                            }}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                               financialSubTab === st.id
                                 ? 'bg-ink text-bg shadow-sm font-black'
@@ -1148,8 +1189,9 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                         ))}
                       </div>
 
-                      {/* Period Switcher & Action Controls */}
-                      <div className="flex items-center gap-2 self-end sm:self-center">
+                      {/* Period Switcher, Scale & Action Controls */}
+                      <div className="flex items-center gap-2 flex-wrap self-end lg:self-center">
+                        {/* Annual / Quarterly */}
                         <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold">
                           <button
                             type="button"
@@ -1175,21 +1217,78 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </button>
                         </div>
 
+                        {/* Scale: $M / $B / Full */}
+                        <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold">
+                          <button
+                            type="button"
+                            onClick={() => setFinancialScale('millions')}
+                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
+                              financialScale === 'millions'
+                                ? 'bg-ink text-bg shadow-xs font-black'
+                                : 'text-ink-muted hover:text-ink'
+                            }`}
+                            title="Стойности в милиони (USD in Millions)"
+                          >
+                            $M
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFinancialScale('billions')}
+                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
+                              financialScale === 'billions'
+                                ? 'bg-ink text-bg shadow-xs font-black'
+                                : 'text-ink-muted hover:text-ink'
+                            }`}
+                            title="Стойности в милиарди (USD in Billions)"
+                          >
+                            $B
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFinancialScale('full')}
+                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
+                              financialScale === 'full'
+                                ? 'bg-ink text-bg shadow-xs font-black'
+                                : 'text-ink-muted hover:text-ink'
+                            }`}
+                            title="Пълни стойности (Exact)"
+                          >
+                            Full
+                          </button>
+                        </div>
+
+                        {/* Chart Toggle */}
+                        <button
+                          type="button"
+                          onClick={() => setShowChart(!showChart)}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer shadow-xs ${
+                            showChart
+                              ? 'border-indigo-500/40 bg-indigo-500/15 text-indigo-400'
+                              : 'border-border bg-card text-ink-muted hover:text-ink'
+                          }`}
+                          title={showChart ? 'Скрий горната графика' : 'Покажи горната графика'}
+                        >
+                          <BarChart3 className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Chart</span>
+                        </button>
+
+                        {/* Export CSV */}
                         <button
                           type="button"
                           onClick={handleExportFinancialsCsv}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink transition-colors cursor-pointer shadow-xs"
-                          title="Свали текущия финансов отчет в CSV формат"
+                          title="Свали текущия отчет в CSV"
                         >
                           <Download className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">Export</span>
                         </button>
 
+                        {/* TradingView Widget Toggle */}
                         <button
                           type="button"
                           onClick={() => setTvEmbedMode(!tvEmbedMode)}
                           className="text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold transition-colors cursor-pointer"
-                          title="Превключи към графичен фундаментален уиджет"
+                          title="Превключи към TradingView уиджет"
                         >
                           {tvEmbedMode ? 'Таблица' : 'TradingView'}
                         </button>
@@ -1206,402 +1305,63 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           displayMode="regular"
                         />
                       </div>
-                    ) : financialSubTab === 'overview' ? (
-                      <div className="space-y-6">
-                        {/* 4 Quick Stat Hero Cards */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                          <div className="p-4 rounded-xl bg-card border border-border/80 shadow-xs">
-                            <span className="text-[11px] font-bold text-ink-faint block uppercase tracking-wider">Приходи (Revenue TTM)</span>
-                            <div className="text-xl sm:text-2xl font-black text-ink font-mono mt-1">
-                              {cleanTicker === 'NVDA' ? '$302.97B' : formatLargeNum(data.financials.revenue)}
-                            </div>
-                            <span className="text-[11px] font-bold text-emerald-500 mt-1 inline-flex items-center gap-1">
-                              +142.3% YoY
-                            </span>
-                          </div>
-
-                          <div className="p-4 rounded-xl bg-card border border-border/80 shadow-xs">
-                            <span className="text-[11px] font-bold text-ink-faint block uppercase tracking-wider">Нетна печалба (Net Income)</span>
-                            <div className="text-xl sm:text-2xl font-black text-emerald-500 font-mono mt-1">
-                              {cleanTicker === 'NVDA' ? '$192.88B' : formatLargeNum(data.financials.netIncome)}
-                            </div>
-                            <span className="text-[11px] font-bold text-emerald-500 mt-1 inline-flex items-center gap-1">
-                              +190.5% YoY
-                            </span>
-                          </div>
-
-                          <div className="p-4 rounded-xl bg-card border border-border/80 shadow-xs">
-                            <span className="text-[11px] font-bold text-ink-faint block uppercase tracking-wider">Свободен паричен поток (FCF)</span>
-                            <div className="text-xl sm:text-2xl font-black text-indigo-400 font-mono mt-1">
-                              {cleanTicker === 'NVDA' ? '$128.75B' : formatLargeNum(data.financials.freeCashFlow)}
-                            </div>
-                            <span className="text-[11px] font-bold text-ink-faint mt-1 block">
-                              Марж: {((128.75 / 302.97) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-
-                          <div className="p-4 rounded-xl bg-card border border-border/80 shadow-xs">
-                            <span className="text-[11px] font-bold text-ink-faint block uppercase tracking-wider">Парични наличности (Cash)</span>
-                            <div className="text-xl sm:text-2xl font-black text-blue-400 font-mono mt-1">
-                              {cleanTicker === 'NVDA' ? '$62.47B' : formatLargeNum(data.financials.cashAndEquivalents || (data.financials.revenue ? data.financials.revenue * 0.2 : null))}
-                            </div>
-                            <span className="text-[11px] font-bold text-ink-faint mt-1 block">
-                              Нето пари: $23.61B
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Revenue & Profit Composed Chart (StockAnalysis Style) */}
-                        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-sm space-y-4">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/60">
-                            <div>
-                              <h4 className="text-sm font-black text-ink flex items-center gap-2">
-                                <BarChart3 className="w-4 h-4 text-indigo-400" />
-                                Приходи и нетна печалба (Revenue & Profit)
-                              </h4>
-                              <p className="text-[11px] text-ink-faint mt-0.5">
-                                Историческо съпоставяне на общи приходи, нетна печалба и марж на рентабилност ({financialFreq === 'annual' ? 'Годишно' : 'Тримесечно'})
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="text-ink-faint text-[11px]">Валута:</span>
-                              <span className="font-mono font-bold text-ink">{data?.currency || 'USD'} ($B)</span>
-                            </div>
-                          </div>
-
-                          <div className="w-full h-72 sm:h-80">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <ComposedChart data={revenueProfitChartData} margin={{ top: 15, right: 20, left: -10, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.4} />
-                                <XAxis dataKey="period" stroke="var(--color-ink-faint)" fontSize={11} tickLine={false} />
-                                <YAxis 
-                                  yAxisId="left" 
-                                  stroke="var(--color-ink-faint)" 
-                                  fontSize={10} 
-                                  tickLine={false} 
-                                  tickFormatter={(v) => `$${v}B`} 
-                                />
-                                <YAxis 
-                                  yAxisId="right" 
-                                  orientation="right" 
-                                  stroke="#f59e0b" 
-                                  fontSize={10} 
-                                  tickLine={false} 
-                                  tickFormatter={(v) => `${v}%`} 
-                                />
-                                <RechartsTooltip 
-                                  content={({ active, payload }) => {
-                                    if (!active || !payload || !payload.length) return null;
-                                    const pt = payload[0].payload;
-                                    return (
-                                      <div className="bg-stone-950/95 border border-border rounded-xl p-3 shadow-xl text-xs space-y-1">
-                                        <div className="text-stone-400 font-bold border-b border-stone-800 pb-1 mb-1">{pt.period}</div>
-                                        <div className="flex items-center justify-between gap-4">
-                                          <span className="text-indigo-400 font-medium">Приходи:</span>
-                                          <span className="font-mono font-bold text-ink">${pt.revenue}B</span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-4">
-                                          <span className="text-emerald-400 font-medium">Нетна печалба:</span>
-                                          <span className="font-mono font-bold text-ink">${pt.netIncome}B</span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-4">
-                                          <span className="text-amber-400 font-medium">Марж на печалба:</span>
-                                          <span className="font-mono font-bold text-amber-400">{pt.margin}%</span>
-                                        </div>
-                                      </div>
-                                    );
-                                  }}
-                                />
-                                <Legend 
-                                  wrapperStyle={{ paddingTop: '8px', fontSize: '11px' }} 
-                                />
-                                <Bar yAxisId="left" dataKey="revenue" name="Приходи ($B)" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                                <Bar yAxisId="left" dataKey="netIncome" name="Нетна печалба ($B)" fill="#10b981" radius={[4, 4, 0, 0]} />
-                                <Line yAxisId="right" type="monotone" dataKey="margin" name="Марж на печалба %" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3, fill: '#f59e0b' }} />
-                              </ComposedChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-
-                        {/* Revenue by Segment & Market Platform Breakdown */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Segment Breakdown */}
-                          <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3">
-                            <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                              <h4 className="text-xs font-black uppercase text-ink">Приходи по Бизнес Сегмент</h4>
-                              <span className="text-[11px] text-ink-faint font-mono">FY 2026 / TTM</span>
-                            </div>
-                            <div className="space-y-3">
-                              {(companySegments?.primarySegments || []).map((s, idx) => (
-                                <div key={idx} className="space-y-1">
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-ink">{s.name}</span>
-                                    <div className="flex items-center gap-2 font-mono">
-                                      <span className="text-ink font-bold">{formatLargeNum(s.revenue)}</span>
-                                      <span className="text-ink-faint text-[11px]">({s.pct}%)</span>
-                                      {s.growthPct != null && (
-                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-500">
-                                          +{s.growthPct}% YoY
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="w-full h-2 rounded-full bg-border/40 overflow-hidden">
-                                    <div 
-                                      className={`h-full rounded-full ${idx === 0 ? 'bg-indigo-500' : 'bg-emerald-500'}`} 
-                                      style={{ width: `${s.pct}%` }} 
-                                    />
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Market Platforms Breakdown */}
-                          <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3">
-                            <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                              <h4 className="text-xs font-black uppercase text-ink">Пазарни Платформи & Индустрии</h4>
-                              <span className="text-[11px] text-ink-faint font-mono">Дял от приходите</span>
-                            </div>
-                            <div className="space-y-3">
-                              {(companySegments?.platformMarkets || []).map((pm, idx) => (
-                                <div key={idx} className="space-y-1">
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-ink">{pm.name}</span>
-                                    <div className="flex items-center gap-2 font-mono">
-                                      <span className="text-ink font-bold">{formatLargeNum(pm.revenue)}</span>
-                                      <span className="text-ink-faint text-[11px]">({pm.pct}%)</span>
-                                    </div>
-                                  </div>
-                                  <div className="w-full h-2 rounded-full bg-border/40 overflow-hidden">
-                                    <div 
-                                      className="h-full rounded-full bg-indigo-500" 
-                                      style={{ 
-                                        width: `${pm.pct}%`,
-                                        opacity: Math.max(0.3, pm.pct / 100) 
-                                      }} 
-                                    />
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Financial Health, Liquidity & Returns on Capital (3 Columns) */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {/* Margins */}
-                          <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2.5">
-                            <h4 className="text-xs font-black uppercase text-indigo-400 border-b border-border/60 pb-1.5">
-                              Маржове на рентабилност
-                            </h4>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">Брутен марж (Gross)</span>
-                              <span className="font-mono font-bold text-ink">75.0%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">Оперативен марж (Operating)</span>
-                              <span className="font-mono font-bold text-ink">61.5%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">Нетен марж (Profit Margin)</span>
-                              <span className="font-mono font-bold text-emerald-500">53.1%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">FCF марж (Free Cash Flow)</span>
-                              <span className="font-mono font-bold text-indigo-400">42.5%</span>
-                            </div>
-                          </div>
-
-                          {/* Balance & Liquidity */}
-                          <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2.5">
-                            <h4 className="text-xs font-black uppercase text-emerald-400 border-b border-border/60 pb-1.5">
-                              Баланс и ликвидност
-                            </h4>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">Парични средства (Total Cash)</span>
-                              <span className="font-mono font-bold text-ink">$62.47B</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">Общ дълг (Total Debt)</span>
-                              <span className="font-mono font-bold text-ink">$38.86B</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">Нето пари (Net Cash)</span>
-                              <span className="font-mono font-bold text-emerald-500">$23.61B</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">Дълг / Собствен капитал (D/E)</span>
-                              <span className="font-mono font-bold text-ink">0.17</span>
-                            </div>
-                          </div>
-
-                          {/* Capital Returns */}
-                          <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2.5">
-                            <h4 className="text-xs font-black uppercase text-amber-400 border-b border-border/60 pb-1.5">
-                              Възвръщаемост на капитала
-                            </h4>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">ROE (Собствен капитал)</span>
-                              <span className="font-mono font-bold text-emerald-500">84.2%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">ROA (Активи)</span>
-                              <span className="font-mono font-bold text-indigo-400">58.7%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">ROIC (Инвестиран капитал)</span>
-                              <span className="font-mono font-bold text-amber-400">68.4%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-ink-faint">Печалба на акция (EPS)</span>
-                              <span className="font-mono font-bold text-ink">$7.82</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Quick Jump Buttons to Financial Statements */}
-                        <div className="p-4 rounded-2xl bg-card-hover/40 border border-border/70 flex flex-wrap items-center justify-between gap-3">
-                          <span className="text-xs font-black text-ink uppercase tracking-wide">
-                            Детайлни финансови отчети за 10 години:
-                          </span>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setFinancialSubTab('income')}
-                              className="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-card-hover text-xs font-bold text-ink hover:text-indigo-400 transition-colors cursor-pointer shadow-xs"
-                            >
-                              Income Statement →
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFinancialSubTab('balance')}
-                              className="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-card-hover text-xs font-bold text-ink hover:text-indigo-400 transition-colors cursor-pointer shadow-xs"
-                            >
-                              Balance Sheet →
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFinancialSubTab('cashflow')}
-                              className="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-card-hover text-xs font-bold text-ink hover:text-indigo-400 transition-colors cursor-pointer shadow-xs"
-                            >
-                              Cash Flow →
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFinancialSubTab('ratios')}
-                              className="px-3 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-black text-indigo-400 transition-colors cursor-pointer shadow-xs"
-                            >
-                              Financial Ratios →
-                            </button>
-                          </div>
-                        </div>
-                      </div>
                     ) : (
-                      <>
-                        {/* Financial Key Margins Quick Summary */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="p-3 rounded-xl bg-card border border-border/80 text-center">
-                            <span className="text-[11px] font-bold text-ink-faint block">Брутен марж (Gross Margin)</span>
-                            <span className="text-base font-black text-emerald-500 font-mono">
-                              {data.financials.grossMargin ?? 75.0}%
-                            </span>
-                          </div>
-                          <div className="p-3 rounded-xl bg-card border border-border/80 text-center">
-                            <span className="text-[11px] font-bold text-ink-faint block">Оперативен марж (Operating Margin)</span>
-                            <span className="text-base font-black text-indigo-400 font-mono">
-                              {data.financials.operatingMargin ?? 61.5}%
-                            </span>
-                          </div>
-                          <div className="p-3 rounded-xl bg-card border border-border/80 text-center">
-                            <span className="text-[11px] font-bold text-ink-faint block">Марж на нетна печалба (Net Margin)</span>
-                            <span className="text-base font-black text-blue-400 font-mono">
-                              {data.financials.profitMargin ?? 53.1}%
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* ─── Large Interactive Metric Chart Popover / Modal (StockAnalysis Style) ─── */}
-                        {activeMetricRow && hoverPos && (
-                          <div
-                            className={`fixed z-50 p-4 sm:p-5 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/90 shadow-2xl animate-in fade-in zoom-in-95 duration-150 w-[480px] sm:w-[520px] max-w-[95vw] ${
-                              pinnedMetricRow ? 'pointer-events-auto ring-2 ring-indigo-500/50 shadow-indigo-500/10' : 'pointer-events-auto'
-                            }`}
-                            style={{
-                              top: hoverPos.y < 320 ? `${hoverPos.y + 24}px` : `${hoverPos.y - 12}px`,
-                              left: `${hoverPos.x}px`,
-                              transform: hoverPos.y < 320 ? 'translate(-50%, 0)' : 'translate(-50%, -100%)'
-                            }}
-                          >
-                            {/* Card Header */}
-                            <div className="flex items-start justify-between gap-3 pb-3 mb-2.5 border-b border-border/70">
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
-                                    <BarChart3 className="w-4 h-4" />
-                                  </span>
-                                  <h4 className="text-sm font-black text-ink truncate">
-                                    {activeMetricRow.name}
-                                  </h4>
+                      <div className="space-y-4">
+                        {/* ─── Inline Top Interactive Metric Chart (StockAnalysis Style) ─── */}
+                        {showChart && activeMetricRow && (
+                          <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border/60">
+                              <div className="flex items-center gap-2.5">
+                                <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                                  <BarChart3 className="w-4 h-4" />
                                 </div>
-                                <div className="text-[11px] text-ink-faint mt-0.5 font-medium">
-                                  {cleanTicker} · {data?.currency || 'USD'} · {financialFreq === 'annual' ? 'Годишни финансови данни' : 'Тримесечни финансови данни'}
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="text-sm font-black text-ink">
+                                      {cleanTicker} {activeMetricRow.name}
+                                    </h4>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-border/60 text-ink-muted">
+                                      {financialFreq === 'annual' ? 'Годишно' : 'Тримесечно'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-ink-faint">
+                                    {activeMetricRow.format === 'currency' 
+                                      ? `Стойности в ${financialScale === 'billions' ? 'милиарди' : financialScale === 'millions' ? 'милиони' : 'пълни'} (${data?.currency || 'USD'})` 
+                                      : activeMetricRow.format === 'percent'
+                                        ? 'Стойности в проценти (%)'
+                                        : 'Числена стойност'}
+                                  </p>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2 shrink-0">
-                                {pinnedMetricRow && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
-                                    Заключена
-                                  </span>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setPinnedMetricRow(null);
-                                    setHoveredMetricRow(null);
-                                    setSelectedBarIndex(null);
-                                  }}
-                                  className="p-1 rounded-lg border border-border text-ink-faint hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
-                                  title="Затвори графиката"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Inspected Bar Detail Banner */}
-                            {currentInspectBar && (
-                              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 mb-2 rounded-xl bg-card-hover/70 border border-border/60 text-xs tabular-nums">
-                                <div className="flex items-center gap-1.5 font-semibold text-ink">
-                                  <span className="text-ink-faint text-[11px]">Период:</span>
-                                  <span className="font-bold font-mono text-indigo-400">{currentInspectBar.period}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-ink-faint text-[11px]">Стойност:</span>
-                                  <span className="font-mono font-black text-ink text-sm sm:text-base">
+                              {currentInspectBar && (
+                                <div className="flex items-center gap-3 bg-card-hover/80 px-3 py-1.5 rounded-xl border border-border/70 text-xs">
+                                  <div className="text-ink-faint text-[11px]">
+                                    Период: <span className="font-bold text-ink">{currentInspectBar.period}</span>
+                                  </div>
+                                  <div className="font-mono font-black text-sm text-indigo-400">
                                     {currentInspectBar.formatted}
-                                  </span>
+                                  </div>
                                   {currentInspectBar.yoyGrowth != null && (
-                                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                                       currentInspectBar.yoyGrowth >= 0 
                                         ? 'bg-emerald-500/15 text-emerald-500' 
                                         : 'bg-rose-500/15 text-rose-500'
                                     }`}>
-                                      {currentInspectBar.yoyGrowth >= 0 ? '+' : ''}{currentInspectBar.yoyGrowth}%
+                                      {currentInspectBar.yoyGrowth >= 0 ? '+' : ''}{currentInspectBar.yoyGrowth}% YoY
                                     </span>
                                   )}
                                 </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
 
-                            {/* Large Bar Chart */}
-                            <div className="w-full h-48 sm:h-52">
+                            <div className="w-full h-56 sm:h-64">
                               <ResponsiveContainer width="100%" height="100%">
                                 <BarChart 
                                   data={activeChartData} 
-                                  margin={{ top: 22, right: 12, left: -15, bottom: 0 }}
+                                  margin={{ top: 22, right: 12, left: -10, bottom: 0 }}
                                 >
+                                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.35} vertical={false} />
                                   <XAxis 
                                     dataKey="period" 
                                     stroke="var(--color-ink-faint)" 
@@ -1610,10 +1370,15 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                   />
                                   <YAxis 
                                     stroke="var(--color-ink-faint)" 
-                                    fontSize={9} 
+                                    fontSize={10} 
                                     tickLine={false}
                                     tickFormatter={(v) => {
                                       if (activeMetricRow.format === 'percent') return `${v}%`;
+                                      if (financialScale === 'millions') {
+                                        if (Math.abs(v) >= 1e6) return `${(v / 1e6).toFixed(0)}M`;
+                                        if (Math.abs(v) >= 1e3) return `${(v / 1e3).toFixed(0)}K`;
+                                        return String(v);
+                                      }
                                       if (Math.abs(v) >= 1e12) return `$${(v / 1e12).toFixed(1)}T`;
                                       if (Math.abs(v) >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
                                       if (Math.abs(v) >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
@@ -1626,19 +1391,16 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                       if (!active || !payload || !payload.length) return null;
                                       const pt = payload[0].payload;
                                       return (
-                                        <div className="bg-stone-950/95 border border-indigo-500/40 rounded-xl px-3 py-2 shadow-xl text-xs">
-                                          <div className="text-stone-400 font-medium mb-0.5">{pt.period}</div>
+                                        <div className="bg-stone-950/95 border border-indigo-500/40 rounded-xl px-3 py-2 shadow-xl text-xs space-y-1">
+                                          <div className="text-stone-400 font-medium">{pt.period} (Край: {getPeriodEndDate(pt.period)})</div>
                                           <div className="font-mono font-black text-sm text-indigo-400">
                                             {pt.formatted}
                                           </div>
                                           {pt.yoyGrowth != null && (
-                                            <div className="text-[11px] font-bold mt-0.5" style={{ color: pt.yoyGrowth >= 0 ? '#10b981' : '#ef4444' }}>
+                                            <div className={`text-[11px] font-bold ${pt.yoyGrowth >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                                               {pt.yoyGrowth >= 0 ? '+' : ''}{pt.yoyGrowth}% спрямо предходен
                                             </div>
                                           )}
-                                          <div className="text-[10px] text-stone-500 mt-1">
-                                            💡 Кликнете за заключване
-                                          </div>
                                         </div>
                                       );
                                     }}
@@ -1681,10 +1443,6 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 </BarChart>
                               </ResponsiveContainer>
                             </div>
-
-                            <div className="text-center text-[10px] text-ink-faint mt-1">
-                              💡 Кликнете върху стълб за избор на период или кликнете върху иконката за заключване
-                            </div>
                           </div>
                         )}
 
@@ -1692,13 +1450,34 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                         <div className="overflow-x-auto rounded-xl border border-border/80 bg-card shadow-xs">
                           <table className="w-full text-xs text-left tabular-nums border-collapse">
                             <thead>
+                              {/* Tier 1: Statement Name + Units & Period Columns */}
                               <tr className="bg-card-hover/90 border-b border-border text-[11px] font-bold text-ink-muted">
                                 <th className="py-3 px-4 font-extrabold text-ink min-w-[280px] sticky left-0 bg-card z-10 border-r border-border/50">
-                                  <span>{financialSubTab === 'income' ? 'Income Statement' : financialSubTab === 'balance' ? 'Balance Sheet' : financialSubTab === 'cashflow' ? 'Cash Flow Statement' : 'Financial Ratios'} ({data?.currency || 'USD'})</span>
+                                  <span>
+                                    {financialSubTab === 'income' ? 'Income Statement' : 
+                                     financialSubTab === 'balance' ? 'Balance Sheet' : 
+                                     financialSubTab === 'cashflow' ? 'Cash Flow Statement' : 
+                                     financialSubTab === 'ratios' ? 'Financial Ratios' : 
+                                     'KPIs & Key Metrics'}
+                                  </span>
+                                  <span className="ml-2 font-normal text-ink-faint text-[10px]">
+                                    {financialScale === 'millions' ? '(USD in Millions)' : financialScale === 'billions' ? '(USD in Billions)' : '(USD Exact)'}
+                                  </span>
                                 </th>
                                 {(currentStatementTable?.periods || []).map(period => (
                                   <th key={period} className="py-3 px-4 text-right font-black text-ink min-w-[110px]">
                                     {period}
+                                  </th>
+                                ))}
+                              </tr>
+                              {/* Tier 2: Period Ending sub-header row */}
+                              <tr className="bg-card/70 border-b border-border/60 text-[10.5px] font-medium text-ink-faint">
+                                <th className="py-2 px-4 sticky left-0 bg-card z-10 border-r border-border/50 font-semibold italic text-ink-faint">
+                                  Period Ending:
+                                </th>
+                                {(currentStatementTable?.periods || []).map(period => (
+                                  <th key={period} className="py-2 px-4 text-right font-mono font-normal text-ink-faint min-w-[110px]">
+                                    {getPeriodEndDate(period)}
                                   </th>
                                 ))}
                               </tr>
@@ -1719,14 +1498,18 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 }
 
                                 const isBold = row.isBold;
-                                const isPinned = pinnedMetricRow?.key === row.key;
+                                const isActive = activeMetricRow?.key === row.key;
                                 const indentClass = row.indent === 1 ? 'pl-8' : row.indent === 2 ? 'pl-12' : 'pl-4';
 
                                 return (
                                   <tr 
                                     key={idx} 
-                                    className={`group transition-colors hover:bg-card-hover/60 ${
-                                      isPinned 
+                                    onClick={() => {
+                                      setPinnedMetricRow(row);
+                                      setSelectedBarIndex(null);
+                                    }}
+                                    className={`group transition-colors cursor-pointer hover:bg-card-hover/60 ${
+                                      isActive
                                         ? 'bg-indigo-500/10 border-l-4 border-indigo-500 font-bold' 
                                         : isBold 
                                           ? 'font-black text-ink border-t border-border/60 bg-card/60' 
@@ -1734,7 +1517,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                     }`}
                                   >
                                     <td className={`py-2 px-4 sticky left-0 bg-card z-10 border-r border-border/40 font-sans ${indentClass} ${
-                                      isPinned
+                                      isActive
                                         ? 'bg-indigo-950/20 text-indigo-300 font-black'
                                         : isBold 
                                           ? 'font-black text-ink' 
@@ -1744,15 +1527,17 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                         <span className="truncate">{row.name}</span>
                                         <button
                                           type="button"
-                                          onMouseEnter={(e) => handleIconMouseEnter(e, row)}
-                                          onMouseLeave={handleIconMouseLeave}
-                                          onClick={(e) => handleIconClick(e, row)}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPinnedMetricRow(row);
+                                            setSelectedBarIndex(null);
+                                          }}
                                           className={`p-1 rounded transition-colors cursor-pointer shrink-0 ${
-                                            isPinned
+                                            isActive
                                               ? 'text-indigo-400 bg-indigo-500/20 ring-1 ring-indigo-500/40 opacity-100'
                                               : 'text-ink-faint hover:text-indigo-400 hover:bg-card-hover/80 opacity-40 group-hover:opacity-100'
                                           }`}
-                                          title={isPinned ? 'Кликнете за затваряне на графиката' : 'Кликнете за заключване на графиката'}
+                                          title="Покажи в горната графика"
                                         >
                                           <BarChart3 className="w-3.5 h-3.5" />
                                         </button>
@@ -1761,7 +1546,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
                                     {(currentStatementTable?.periods || []).map(period => {
                                       const rawVal = row.values[period];
-                                      const formatted = formatFinancialValue(rawVal, row.format);
+                                      const formatted = formatFinancialValue(rawVal, row.format, financialScale, row.key);
                                       const isGrowthOrMargin = row.format === 'percent';
                                       const isPositive = rawVal != null && rawVal > 0;
                                       const isNegative = rawVal != null && rawVal < 0;
@@ -1787,7 +1572,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                             </tbody>
                           </table>
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
                 )}

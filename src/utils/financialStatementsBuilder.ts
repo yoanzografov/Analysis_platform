@@ -21,18 +21,90 @@ export const ANNUAL_10Y_PERIODS = ['TTM', '2026', '2025', '2024', '2023', '2022'
 export const BALANCE_10Y_PERIODS = ['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017'];
 export const QUARTERLY_PERIODS = ['Q3 2026', 'Q2 2026', 'Q1 2026', 'Q4 2025', 'Q3 2025', 'Q2 2025', 'Q1 2025', 'Q4 2024'];
 
-// Format numbers nicely: billions, millions, or decimals
-export function formatFinancialValue(val: number | null | undefined, format?: 'currency' | 'percent' | 'number'): string {
+export type FinancialScale = 'millions' | 'billions' | 'full';
+
+export const PERIOD_END_DATES: Record<string, string> = {
+  'TTM': 'Trailing',
+  '2026': 'Jan 25, 2026',
+  '2025': 'Jan 26, 2025',
+  '2024': 'Jan 28, 2024',
+  '2023': 'Jan 29, 2023',
+  '2022': 'Jan 30, 2022',
+  '2021': 'Jan 31, 2021',
+  '2020': 'Jan 26, 2020',
+  '2019': 'Jan 27, 2019',
+  '2018': 'Jan 28, 2018',
+  '2017': 'Jan 29, 2017',
+  'Q3 2026': 'Oct 26, 2025',
+  'Q2 2026': 'Jul 27, 2025',
+  'Q1 2026': 'Apr 27, 2025',
+  'Q4 2025': 'Jan 26, 2025',
+  'Q3 2025': 'Oct 27, 2024',
+  'Q2 2025': 'Jul 28, 2024',
+  'Q1 2025': 'Apr 28, 2024',
+  'Q4 2024': 'Jan 28, 2024'
+};
+
+export function getPeriodEndDate(period: string): string {
+  if (PERIOD_END_DATES[period]) return PERIOD_END_DATES[period];
+  if (period === 'TTM') return 'Trailing';
+  if (/^\d{4}$/.test(period)) return `Dec 31, ${period}`;
+  return period;
+}
+
+// Format numbers nicely matching StockAnalysis exact style: millions, billions, or full
+export function formatFinancialValue(
+  val: number | null | undefined, 
+  format?: 'currency' | 'percent' | 'number',
+  scale: FinancialScale = 'millions',
+  metricKey?: string
+): string {
   if (val === null || val === undefined || isNaN(val)) return '—';
   
   if (format === 'percent') {
-    return `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`;
+    return `${val >= 0 ? '+' : ''}${val.toFixed(1)}%`;
   }
   
+  const isPerShareOrUnit = metricKey && (
+    metricKey.includes('eps') || 
+    metricKey.includes('per_share') || 
+    metricKey.includes('fcf_per_share') || 
+    metricKey.includes('bv_per_share') || 
+    metricKey.includes('cash_per_share') ||
+    metricKey.includes('price_target')
+  );
+
+  if (isPerShareOrUnit) {
+    const isNeg = val < 0;
+    const abs = Math.abs(val);
+    const formatted = `$${abs.toFixed(2)}`;
+    return isNeg ? `(${formatted})` : formatted;
+  }
+
+  // Employee productivity (dollar amounts per employee)
+  if (metricKey?.includes('per_emp') || metricKey?.includes('per_employee')) {
+    const isNeg = val < 0;
+    const abs = Math.abs(val);
+    const formatted = `$${Math.round(abs).toLocaleString()}`;
+    return isNeg ? `(${formatted})` : formatted;
+  }
+
   if (format === 'number') {
-    if (Math.abs(val) >= 1e9) return `${(val / 1e9).toFixed(2)}B`;
-    if (Math.abs(val) >= 1e6) return `${(val / 1e6).toFixed(2)}M`;
-    return val.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    // If it's a small ratio like PE, PB, PS, Debt/Equity, Current Ratio
+    if (Math.abs(val) < 2000 && !metricKey?.includes('shares') && !metricKey?.includes('headcount') && !metricKey?.includes('employees')) {
+      return val.toFixed(2);
+    }
+    // Shares or Employee Headcount
+    if (metricKey?.includes('employees') || metricKey?.includes('headcount')) {
+      return Math.round(val).toLocaleString();
+    }
+    if (scale === 'millions') {
+      return `${Math.round(val / 1e6).toLocaleString()}M`;
+    }
+    if (scale === 'billions') {
+      return `${(val / 1e9).toFixed(2)}B`;
+    }
+    return Math.round(val).toLocaleString();
   }
 
   // Currency format
@@ -40,11 +112,23 @@ export function formatFinancialValue(val: number | null | undefined, format?: 'c
   const abs = Math.abs(val);
   let formatted = '';
 
-  if (abs >= 1e12) formatted = `$${(abs / 1e12).toFixed(2)}T`;
-  else if (abs >= 1e9) formatted = `$${(abs / 1e9).toFixed(2)}B`;
-  else if (abs >= 1e6) formatted = `$${(abs / 1e6).toFixed(2)}M`;
-  else if (abs >= 1e3) formatted = `$${(abs / 1e3).toFixed(1)}K`;
-  else formatted = `$${abs.toFixed(2)}`;
+  if (scale === 'millions') {
+    // In StockAnalysis "USD in Millions": display clean millions, e.g. 215,938
+    const inMillions = abs / 1e6;
+    if (inMillions >= 1000) {
+      formatted = Math.round(inMillions).toLocaleString();
+    } else if (inMillions >= 10) {
+      formatted = inMillions.toFixed(1);
+    } else {
+      formatted = inMillions.toFixed(2);
+    }
+  } else if (scale === 'billions') {
+    const inBillions = abs / 1e9;
+    formatted = `$${inBillions.toFixed(2)}B`;
+  } else {
+    // Full scale
+    formatted = `$${Math.round(abs).toLocaleString()}`;
+  }
 
   return isNegative ? `(${formatted})` : formatted;
 }
@@ -124,47 +208,47 @@ export function buildIncomeStatement(params: FinancialBuildParams, isQuarterly =
     if (!isQuarterly) {
       const periods = ANNUAL_10Y_PERIODS;
       
-      const revRow: FinancialStatementRow = { name: 'Revenue', key: 'revenue', isBold: true, format: 'currency', values: { 'TTM': 130497000000, '2026': 125000000000, '2025': 60922000000, '2024': 26974000000, '2023': 26914000000, '2022': 16675000000, '2021': 10918000000, '2020': 11716000000, '2019': 9714000000, '2018': 6910000000, '2017': 5010000000 } };
-      const gpRow: FinancialStatementRow = { name: 'Gross Profit', key: 'gross_profit', isBold: true, format: 'currency', values: { 'TTM': 97873000000, '2026': 93750000000, '2025': 46041000000, '2024': 15363000000, '2023': 15296000000, '2022': 10849000000, '2021': 6769000000, '2020': 7171000000, '2019': 5947000000, '2018': 4063000000, '2017': 2880000000 } };
-      const opExpRow: FinancialStatementRow = { name: 'Total Operating Expenses', key: 'total_op_exp', isBold: true, format: 'currency', values: { 'TTM': 17617000000, '2026': 16875000000, '2025': 11329000000, '2024': 8953000000, '2023': 8953000000, '2022': 6326000000, '2021': 4824000000, '2020': 3654000000, '2019': 3145000000, '2018': 2425000000, '2017': 2039000000 } };
-      const ebitRow: FinancialStatementRow = { name: 'Operating Income (EBIT)', key: 'ebit', isBold: true, format: 'currency', values: { 'TTM': 80256000000, '2026': 76875000000, '2025': 34712000000, '2024': 6410000000, '2023': 4224000000, '2022': 4523000000, '2021': 2845000000, '2020': 3804000000, '2019': 3210000000, '2018': 1934000000, '2017': 747000000 } };
-      const ebtRow: FinancialStatementRow = { name: 'Pretax Income (EBT)', key: 'ebt', isBold: true, format: 'currency', values: { 'TTM': 81506000000, '2026': 77975000000, '2025': 35362000000, '2024': 6153000000, '2023': 4181000000, '2022': 4342000000, '2021': 2800000000, '2020': 3850000000, '2019': 3250000000, '2018': 1940000000, '2017': 750000000 } };
-      const niRow: FinancialStatementRow = { name: 'Net Income', key: 'net_income', isBold: true, format: 'currency', values: { 'TTM': 69280000000, '2026': 66279000000, '2025': 29763000000, '2024': 4371000000, '2023': 4368000000, '2022': 4332000000, '2021': 2796000000, '2020': 3205000000, '2019': 3047000000, '2018': 1666000000, '2017': 614000000 } };
+      const revRow: FinancialStatementRow = { name: 'Revenue', key: 'revenue', isBold: true, format: 'currency', values: { 'TTM': 302970000000, '2026': 215938000000, '2025': 130497000000, '2024': 60922000000, '2023': 26974000000, '2022': 26914000000, '2021': 16675000000, '2020': 10918000000, '2019': 11716000000, '2018': 9714000000, '2017': 6910000000 } };
+      const gpRow: FinancialStatementRow = { name: 'Gross Profit', key: 'gross_profit', isBold: true, format: 'currency', values: { 'TTM': 226241000000, '2026': 153463000000, '2025': 97858000000, '2024': 44301000000, '2023': 15356000000, '2022': 17475000000, '2021': 10396000000, '2020': 6704000000, '2019': 7171000000, '2018': 5818000000, '2017': 4063000000 } };
+      const opExpRow: FinancialStatementRow = { name: 'Total Operating Expenses', key: 'total_op_exp', isBold: true, format: 'currency', values: { 'TTM': 28662000000, '2026': 23076000000, '2025': 16405000000, '2024': 11329000000, '2023': 9779000000, '2022': 7434000000, '2021': 5864000000, '2020': 3858000000, '2019': 3367000000, '2018': 2608000000, '2017': 2129000000 } };
+      const ebitRow: FinancialStatementRow = { name: 'Operating Income (EBIT)', key: 'ebit', isBold: true, format: 'currency', values: { 'TTM': 197579000000, '2026': 130387000000, '2025': 81453000000, '2024': 32972000000, '2023': 5577000000, '2022': 10041000000, '2021': 4532000000, '2020': 2846000000, '2019': 3804000000, '2018': 3210000000, '2017': 1934000000 } };
+      const ebtRow: FinancialStatementRow = { name: 'Pretax Income (EBT)', key: 'ebt', isBold: true, format: 'currency', values: { 'TTM': 229743000000, '2026': 141450000000, '2025': 84026000000, '2024': 33818000000, '2023': 4181000000, '2022': 10210000000, '2021': 4412000000, '2020': 2801000000, '2019': 3896000000, '2018': 3210000000, '2017': 1934000000 } };
+      const niRow: FinancialStatementRow = { name: 'Net Income', key: 'net_income', isBold: true, format: 'currency', values: { 'TTM': 192880000000, '2026': 120067000000, '2025': 72880000000, '2024': 29760000000, '2023': 4368000000, '2022': 9752000000, '2021': 4332000000, '2020': 2796000000, '2019': 4141000000, '2018': 3047000000, '2017': 1666000000 } };
       const sharesRow: FinancialStatementRow = { name: 'Shares Outstanding (Diluted)', key: 'shares_diluted', indent: 1, format: 'number', values: { 'TTM': 24750000000, '2026': 24650000000, '2025': 24500000000, '2024': 24640000000, '2023': 24870000000, '2022': 25050000000, '2021': 25100000000, '2020': 25150000000, '2019': 25200000000, '2018': 25250000000, '2017': 25300000000 } };
-      const epsRow: FinancialStatementRow = { name: 'EPS (Diluted)', key: 'eps_diluted', isBold: true, format: 'currency', values: { 'TTM': 2.80, '2026': 2.69, '2025': 1.19, '2024': 0.18, '2023': 0.17, '2022': 0.17, '2021': 0.11, '2020': 0.13, '2019': 0.12, '2018': 0.07, '2017': 0.02 } };
-      const ebitdaRow: FinancialStatementRow = { name: 'EBITDA', key: 'ebitda', isBold: true, format: 'currency', values: { 'TTM': 84520000000, '2026': 80500000000, '2025': 36500000000, '2024': 7890000000, '2023': 5760000000, '2022': 5820000000, '2021': 3740000000, '2020': 4280000000, '2019': 3650000000, '2018': 2280000000, '2017': 1050000000 } };
+      const epsRow: FinancialStatementRow = { name: 'EPS (Diluted)', key: 'eps_diluted', isBold: true, format: 'currency', values: { 'TTM': 7.91, '2026': 4.90, '2025': 2.94, '2024': 1.19, '2023': 0.17, '2022': 0.39, '2021': 0.17, '2020': 0.11, '2019': 0.17, '2018': 0.12, '2017': 0.07 } };
+      const ebitdaRow: FinancialStatementRow = { name: 'EBITDA', key: 'ebitda', isBold: true, format: 'currency', values: { 'TTM': 201270000000, '2026': 133500000000, '2025': 83500000000, '2024': 34480000000, '2023': 7121000000, '2022': 11215000000, '2021': 5690000000, '2020': 3290000000, '2019': 4180000000, '2018': 3550000000, '2017': 2130000000 } };
 
       const rows: FinancialStatementRow[] = [
         revRow,
         createGrowthRow(periods, revRow, 'Revenue Growth (YoY)'),
-        { name: 'Cost of Revenue', key: 'cor', indent: 1, format: 'currency', values: { 'TTM': 32624000000, '2026': 31250000000, '2025': 14881000000, '2024': 11611000000, '2023': 11618000000, '2022': 5826000000, '2021': 4149000000, '2020': 4545000000, '2019': 3767000000, '2018': 2847000000, '2017': 2130000000 } },
+        { name: 'Cost of Revenue', key: 'cor', indent: 1, format: 'currency', values: { 'TTM': 76729000000, '2026': 62475000000, '2025': 32639000000, '2024': 16621000000, '2023': 11618000000, '2022': 9439000000, '2021': 6279000000, '2020': 4214000000, '2019': 4545000000, '2018': 3896000000, '2017': 2847000000 } },
         gpRow,
         createGrowthRow(periods, gpRow, 'Gross Profit Growth (YoY)'),
-        { name: 'Gross Margin', key: 'gross_margin', indent: 1, format: 'percent', values: { 'TTM': 75.0, '2026': 75.0, '2025': 75.6, '2024': 57.0, '2023': 56.8, '2022': 65.1, '2021': 62.0, '2020': 61.2, '2019': 61.2, '2018': 58.8, '2017': 57.5 } },
+        { name: 'Gross Margin', key: 'gross_margin', indent: 1, format: 'percent', values: { 'TTM': 74.7, '2026': 71.1, '2025': 75.0, '2024': 72.7, '2023': 56.9, '2022': 64.9, '2021': 62.3, '2020': 61.4, '2019': 61.2, '2018': 59.9, '2017': 58.8 } },
         
         { name: 'Operating Expenses', key: 'op_exp_header', isHeader: true, values: {} },
-        { name: 'Research & Development (R&D)', key: 'rnd', indent: 1, format: 'currency', values: { 'TTM': 13050000000, '2026': 12500000000, '2025': 8675000000, '2024': 7339000000, '2023': 7339000000, '2022': 5268000000, '2021': 3924000000, '2020': 2829000000, '2019': 2376000000, '2018': 1797000000, '2017': 1463000000 } },
-        { name: 'Selling, General & Admin (SG&A)', key: 'sga', indent: 1, format: 'currency', values: { 'TTM': 4567000000, '2026': 4375000000, '2025': 2654000000, '2024': 1614000000, '2023': 1614000000, '2022': 1058000000, '2021': 900000000, '2020': 825000000, '2019': 769000000, '2018': 628000000, '2017': 576000000 } },
+        { name: 'Research & Development (R&D)', key: 'rnd', indent: 1, format: 'currency', values: { 'TTM': 23592000000, '2026': 18497000000, '2025': 12914000000, '2024': 8675000000, '2023': 7339000000, '2022': 5268000000, '2021': 3924000000, '2020': 2829000000, '2019': 2376000000, '2018': 1797000000, '2017': 1463000000 } },
+        { name: 'Selling, General & Admin (SG&A)', key: 'sga', indent: 1, format: 'currency', values: { 'TTM': 5070000000, '2026': 4579000000, '2025': 3491000000, '2024': 2654000000, '2023': 2440000000, '2022': 2166000000, '2021': 1940000000, '2020': 1029000000, '2019': 991000000, '2018': 811000000, '2017': 666000000 } },
         opExpRow,
         createGrowthRow(periods, opExpRow, 'Operating Expenses Growth (YoY)'),
         
         ebitRow,
         createGrowthRow(periods, ebitRow, 'Operating Income Growth (YoY)'),
-        { name: 'Operating Margin', key: 'oper_margin', indent: 1, format: 'percent', values: { 'TTM': 61.5, '2026': 61.5, '2025': 57.0, '2024': 23.8, '2023': 15.7, '2022': 27.1, '2021': 26.1, '2020': 32.5, '2019': 33.0, '2018': 28.0, '2017': 14.9 } },
-        { name: 'Interest Expense / (Income)', key: 'interest_exp', indent: 1, format: 'currency', values: { 'TTM': -1250000000, '2026': -1100000000, '2025': -650000000, '2024': 257000000, '2023': 257000000, '2022': 236000000, '2021': 184000000, '2020': 58000000, '2019': 62000000, '2018': 61000000, '2017': 59000000 } },
+        { name: 'Operating Margin', key: 'oper_margin', indent: 1, format: 'percent', values: { 'TTM': 65.2, '2026': 60.4, '2025': 62.4, '2024': 54.1, '2023': 20.7, '2022': 37.3, '2021': 27.2, '2020': 26.1, '2019': 32.5, '2018': 33.0, '2017': 28.0 } },
+        { name: 'Interest Expense / (Income)', key: 'interest_exp', indent: 1, format: 'currency', values: { 'TTM': -464000000, '2026': -259000000, '2025': -247000000, '2024': -257000000, '2023': -262000000, '2022': 236000000, '2021': 184000000, '2020': 58000000, '2019': 62000000, '2018': 61000000, '2017': 59000000 } },
         ebtRow,
         createGrowthRow(periods, ebtRow, 'Pretax Income Growth (YoY)'),
-        { name: 'Income Tax', key: 'income_tax', indent: 1, format: 'currency', values: { 'TTM': 12226000000, '2026': 11696000000, '2025': 5599000000, '2024': 1782000000, '2023': 500000000, '2022': 675000000, '2021': 204000000, '2020': 645000000, '2019': 203000000, '2018': 274000000, '2017': 136000000 } },
+        { name: 'Income Tax', key: 'income_tax', indent: 1, format: 'currency', values: { 'TTM': 36863000000, '2026': 21383000000, '2025': 11146000000, '2024': 4058000000, '2023': -187000000, '2022': 458000000, '2021': 80000000, '2020': 5000000, '2019': -245000000, '2018': 163000000, '2017': 268000000 } },
         niRow,
         createGrowthRow(periods, niRow, 'Net Income Growth (YoY)'),
-        { name: 'Net Profit Margin', key: 'net_margin', indent: 1, format: 'percent', values: { 'TTM': 53.1, '2026': 53.0, '2025': 48.9, '2024': 16.2, '2023': 16.2, '2022': 26.0, '2021': 25.6, '2020': 27.4, '2019': 31.4, '2018': 24.1, '2017': 12.3 } },
+        { name: 'Net Profit Margin', key: 'net_margin', indent: 1, format: 'percent', values: { 'TTM': 63.7, '2026': 55.6, '2025': 55.8, '2024': 48.9, '2023': 16.2, '2022': 36.2, '2021': 26.0, '2020': 25.6, '2019': 35.3, '2018': 31.4, '2017': 24.1 } },
         sharesRow,
         createGrowthRow(periods, sharesRow, 'Shares Change (YoY)', '_change'),
         epsRow,
         createGrowthRow(periods, epsRow, 'EPS Growth (YoY)'),
         ebitdaRow,
         createGrowthRow(periods, ebitdaRow, 'EBITDA Growth (YoY)'),
-        { name: 'EBITDA Margin', key: 'ebitda_margin', indent: 1, format: 'percent', values: { 'TTM': 64.8, '2026': 64.4, '2025': 59.9, '2024': 29.2, '2023': 21.4, '2022': 34.9, '2021': 34.3, '2020': 36.5, '2019': 37.6, '2018': 33.0, '2017': 21.0 } },
+        { name: 'EBITDA Margin', key: 'ebitda_margin', indent: 1, format: 'percent', values: { 'TTM': 66.4, '2026': 61.8, '2025': 64.0, '2024': 56.6, '2023': 26.4, '2022': 41.7, '2021': 34.1, '2020': 30.1, '2019': 35.7, '2018': 36.5, '2017': 30.8 } },
       ];
       return { periods, rows };
     } else {
@@ -371,11 +455,11 @@ export function buildBalanceSheet(params: FinancialBuildParams, isQuarterly = fa
     const periods = isQuarterly ? QUARTERLY_PERIODS : BALANCE_10Y_PERIODS;
 
     const totalCashRow: FinancialStatementRow = { name: 'Total Cash & ST Investments', key: 'total_cash', isBold: true, indent: 1, format: 'currency', values: { '2026': 34800000000, '2025': 25980000000, '2024': 25964000000, '2023': 13296000000, '2022': 21208000000, '2021': 11561000000, '2020': 10896000000, '2019': 7422000000, '2018': 7108000000, '2017': 6898000000, 'Q3 2026': 38400000000, 'Q2 2026': 34800000000, 'Q1 2026': 31400000000, 'Q4 2025': 25980000000, 'Q3 2025': 18320000000, 'Q2 2025': 15800000000, 'Q1 2025': 14700000000, 'Q4 2024': 25964000000 } };
-    const curAssetsRow: FinancialStatementRow = { name: 'Total Current Assets', key: 'total_cur_assets', isBold: true, format: 'currency', values: { '2026': 64500000000, '2025': 44345000000, '2024': 44345000000, '2023': 23073000000, '2022': 28829000000, '2021': 16061000000, '2020': 13997000000, '2019': 10730000000, '2018': 9460000000, '2017': 8780000000 } };
-    const totalAssetsRow: FinancialStatementRow = { name: 'Total Assets', key: 'total_assets', isBold: true, format: 'currency', values: { '2026': 92500000000, '2025': 65728000000, '2024': 65728000000, '2023': 41182000000, '2022': 44187000000, '2021': 28791000000, '2020': 17315000000, '2019': 13292000000, '2018': 11241000000, '2017': 9841000000 } };
-    const curLiabRow: FinancialStatementRow = { name: 'Total Current Liabilities', key: 'total_cur_liab', isBold: true, format: 'currency', values: { '2026': 15600000000, '2025': 10631000000, '2024': 10631000000, '2023': 6563000000, '2022': 4316000000, '2021': 3925000000, '2020': 1788000000, '2019': 1334000000, '2018': 1158000000, '2017': 1790000000 } };
-    const totalLiabRow: FinancialStatementRow = { name: 'Total Liabilities', key: 'total_liab', isBold: true, format: 'currency', values: { '2026': 29800000000, '2025': 22750000000, '2024': 22750000000, '2023': 19081000000, '2022': 17578000000, '2021': 11898000000, '2020': 5111000000, '2019': 3950000000, '2018': 3770000000, '2017': 4079000000 } };
-    const equityRow: FinancialStatementRow = { name: 'Total Shareholders\' Equity', key: 'total_equity', isBold: true, format: 'currency', values: { '2026': 62700000000, '2025': 42978000000, '2024': 42978000000, '2023': 22101000000, '2022': 26612000000, '2021': 16893000000, '2020': 12204000000, '2019': 9342000000, '2018': 7471000000, '2017': 5762000000 } };
+    const curAssetsRow: FinancialStatementRow = { name: 'Total Current Assets', key: 'total_cur_assets', isBold: true, format: 'currency', values: { '2026': 135800000000, '2025': 78450000000, '2024': 44345000000, '2023': 23073000000, '2022': 28829000000, '2021': 16061000000, '2020': 13997000000, '2019': 10730000000, '2018': 9460000000, '2017': 8780000000 } };
+    const totalAssetsRow: FinancialStatementRow = { name: 'Total Assets', key: 'total_assets', isBold: true, format: 'currency', values: { '2026': 206803000000, '2025': 111601000000, '2024': 65728000000, '2023': 41182000000, '2022': 44187000000, '2021': 28791000000, '2020': 17315000000, '2019': 13292000000, '2018': 11241000000, '2017': 9841000000 } };
+    const curLiabRow: FinancialStatementRow = { name: 'Total Current Liabilities', key: 'total_cur_liab', isBold: true, format: 'currency', values: { '2026': 32400000000, '2025': 21300000000, '2024': 10631000000, '2023': 6563000000, '2022': 4316000000, '2021': 3925000000, '2020': 1788000000, '2019': 1334000000, '2018': 1158000000, '2017': 1790000000 } };
+    const totalLiabRow: FinancialStatementRow = { name: 'Total Liabilities', key: 'total_liab', isBold: true, format: 'currency', values: { '2026': 49510000000, '2025': 32274000000, '2024': 22750000000, '2023': 19081000000, '2022': 17578000000, '2021': 11898000000, '2020': 5111000000, '2019': 3950000000, '2018': 3770000000, '2017': 4079000000 } };
+    const equityRow: FinancialStatementRow = { name: 'Total Shareholders\' Equity', key: 'total_equity', isBold: true, format: 'currency', values: { '2026': 157293000000, '2025': 79327000000, '2024': 42978000000, '2023': 22101000000, '2022': 26612000000, '2021': 16893000000, '2020': 12204000000, '2019': 9342000000, '2018': 7471000000, '2017': 5762000000 } };
 
     const rows: FinancialStatementRow[] = [
       { name: 'Assets', key: 'assets_header', isHeader: true, values: {} },
@@ -479,10 +563,10 @@ export function buildCashFlowStatement(params: FinancialBuildParams, isQuarterly
   if (clean === 'NVDA') {
     const periods = isQuarterly ? QUARTERLY_PERIODS : ANNUAL_10Y_PERIODS;
 
-    const ocfRow: FinancialStatementRow = { name: 'Cash Flow from Operations (OCF)', key: 'ocf', isBold: true, format: 'currency', values: { 'TTM': 70530000000, '2026': 67479000000, '2025': 28090000000, '2024': 9532000000, '2023': 5641000000, '2022': 9108000000, '2021': 5800000000, '2020': 4762000000, '2019': 3700000000, '2018': 3502000000, '2017': 1672000000 } };
-    const capexRow: FinancialStatementRow = { name: 'Capital Expenditures (CapEx)', key: 'capex', indent: 1, format: 'currency', values: { 'TTM': -4500000000, '2026': -4200000000, '2025': -2181000000, '2024': -2181000000, '2023': -1833000000, '2022': -976000000, '2021': -1128000000, '2020': -489000000, '2019': -600000000, '2018': -593000000, '2017': -176000000 } };
-    const netChangeCashRow: FinancialStatementRow = { name: 'Net Change in Cash', key: 'net_change_cash', isBold: true, format: 'currency', values: { 'TTM': 21080000000, '2026': 20359000000, '2025': 8072000000, '2024': -1276000000, '2023': -12430000000, '2022': -3061000000, '2021': -3090000000, '2020': -2617000000, '2019': -951000000, '2018': -141000000, '2017': -304000000 } };
-    const fcfRow: FinancialStatementRow = { name: 'Free Cash Flow (FCF)', key: 'fcf', isBold: true, format: 'currency', values: { 'TTM': 66030000000, '2026': 63279000000, '2025': 25909000000, '2024': 7351000000, '2023': 3808000000, '2022': 8132000000, '2021': 4672000000, '2020': 4273000000, '2019': 3100000000, '2018': 2909000000, '2017': 1496000000 } };
+    const ocfRow: FinancialStatementRow = { name: 'Cash Flow from Operations (OCF)', key: 'ocf', isBold: true, format: 'currency', values: { 'TTM': 134360000000, '2026': 102720000000, '2025': 64090000000, '2024': 28090000000, '2023': 5641000000, '2022': 9108000000, '2021': 5800000000, '2020': 4762000000, '2019': 3700000000, '2018': 3502000000, '2017': 1672000000 } };
+    const capexRow: FinancialStatementRow = { name: 'Capital Expenditures (CapEx)', key: 'capex', indent: 1, format: 'currency', values: { 'TTM': -7350000000, '2026': -6000000000, '2025': -3220000000, '2024': -1090000000, '2023': -1833000000, '2022': -976000000, '2021': -1128000000, '2020': -489000000, '2019': -600000000, '2018': -593000000, '2017': -176000000 } };
+    const netChangeCashRow: FinancialStatementRow = { name: 'Net Change in Cash', key: 'net_change_cash', isBold: true, format: 'currency', values: { 'TTM': 28400000000, '2026': 25359000000, '2025': 8072000000, '2024': -1276000000, '2023': -12430000000, '2022': -3061000000, '2021': -3090000000, '2020': -2617000000, '2019': -951000000, '2018': -141000000, '2017': -304000000 } };
+    const fcfRow: FinancialStatementRow = { name: 'Free Cash Flow (FCF)', key: 'fcf', isBold: true, format: 'currency', values: { 'TTM': 127010000000, '2026': 96720000000, '2025': 60870000000, '2024': 27000000000, '2023': 3808000000, '2022': 8132000000, '2021': 4672000000, '2020': 4273000000, '2019': 3100000000, '2018': 2909000000, '2017': 1496000000 } };
 
     const rows: FinancialStatementRow[] = [
       { name: 'Operating Activities', key: 'op_header', isHeader: true, values: {} },
@@ -508,8 +592,8 @@ export function buildCashFlowStatement(params: FinancialBuildParams, isQuarterly
       createGrowthRow(periods, netChangeCashRow, 'Net Change in Cash Growth (YoY)'),
       fcfRow,
       createGrowthRow(periods, fcfRow, 'Free Cash Flow Growth (YoY)'),
-      { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM': 50.6, '2026': 50.6, '2025': 42.5, '2024': 27.2, '2023': 14.1, '2022': 48.8, '2021': 42.8, '2020': 36.5, '2019': 31.9, '2018': 42.1, '2017': 29.9 } },
-      { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM': 2.67, '2026': 2.57, '2025': 1.05, '2024': 0.30, '2023': 0.15, '2022': 0.32, '2021': 0.19, '2020': 0.17, '2019': 0.12, '2018': 0.12, '2017': 0.06 } }
+      { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM': 41.9, '2026': 44.8, '2025': 46.6, '2024': 44.3, '2023': 14.1, '2022': 30.2, '2021': 28.0, '2020': 39.1, '2019': 26.5, '2018': 29.9, '2017': 21.7 } },
+      { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM': 5.13, '2026': 3.92, '2025': 2.48, '2024': 1.10, '2023': 0.15, '2022': 0.32, '2021': 0.19, '2020': 0.17, '2019': 0.12, '2018': 0.12, '2017': 0.06 } }
     ];
 
     return { periods, rows };
@@ -727,4 +811,107 @@ export function getCompanySegments(ticker: string, totalRevenue: number): Compan
       { name: 'Партньорска мрежа и лицензи', revenue: rev * 0.10, pct: 10.0, growthPct: 7.5 }
     ]
   };
+}
+
+// ─── 6. KPIS & KEY OPERATIONAL METRICS (10-YEAR SUITE) ───
+export function buildKpisMetrics(params: FinancialBuildParams, isQuarterly = false): FinancialStatementTable {
+  const clean = (params.ticker || '').toUpperCase().trim();
+
+  if (clean === 'NVDA') {
+    const periods = isQuarterly ? QUARTERLY_PERIODS : ANNUAL_10Y_PERIODS;
+
+    if (!isQuarterly) {
+      const rows: FinancialStatementRow[] = [
+        { name: 'Business Segments Revenue', key: 'seg_header', isHeader: true, values: {} },
+        { name: 'Compute & Networking', key: 'seg_compute', isBold: true, format: 'currency', values: { 'TTM': 265098000000, '2026': 187000000000, '2025': 111200000000, '2024': 47405000000, '2023': 15068000000, '2022': 14500000000, '2021': 9000000000, '2020': 5500000000, '2019': 4000000000, '2018': 3000000000, '2017': 2000000000 } },
+        createGrowthRow(periods, { name: 'Compute & Networking', key: 'seg_compute', isBold: true, format: 'currency', values: { 'TTM': 265098000000, '2026': 187000000000, '2025': 111200000000, '2024': 47405000000, '2023': 15068000000, '2022': 14500000000, '2021': 9000000000, '2020': 5500000000, '2019': 4000000000, '2018': 3000000000, '2017': 2000000000 } }, 'Compute & Networking Growth (YoY)'),
+        { name: 'Graphics', key: 'seg_graphics', isBold: true, format: 'currency', values: { 'TTM': 37872000000, '2026': 28938000000, '2025': 19297000000, '2024': 13517000000, '2023': 11906000000, '2022': 12414000000, '2021': 7675000000, '2020': 5418000000, '2019': 5714000000, '2018': 3910000000, '2017': 3010000000 } },
+        createGrowthRow(periods, { name: 'Graphics', key: 'seg_graphics', isBold: true, format: 'currency', values: { 'TTM': 37872000000, '2026': 28938000000, '2025': 19297000000, '2024': 13517000000, '2023': 11906000000, '2022': 12414000000, '2021': 7675000000, '2020': 5418000000, '2019': 5714000000, '2018': 3910000000, '2017': 3010000000 } }, 'Graphics Growth (YoY)'),
+
+        { name: 'Market Platforms Revenue', key: 'plat_header', isHeader: true, values: {} },
+        { name: 'Data Center', key: 'plat_datacenter', isBold: true, format: 'currency', values: { 'TTM': 251000000000, '2026': 175000000000, '2025': 102000000000, '2024': 47516000000, '2023': 15005000000, '2022': 10613000000, '2021': 6696000000, '2020': 2983000000, '2019': 2932000000, '2018': 1932000000, '2017': 830000000 } },
+        createGrowthRow(periods, { name: 'Data Center', key: 'plat_datacenter', isBold: true, format: 'currency', values: { 'TTM': 251000000000, '2026': 175000000000, '2025': 102000000000, '2024': 47516000000, '2023': 15005000000, '2022': 10613000000, '2021': 6696000000, '2020': 2983000000, '2019': 2932000000, '2018': 1932000000, '2017': 830000000 } }, 'Data Center Growth (YoY)'),
+        { name: 'Data Center % of Revenue', key: 'dc_pct_rev', indent: 1, format: 'percent', values: { 'TTM': 82.8, '2026': 81.0, '2025': 78.2, '2024': 78.0, '2023': 55.6, '2022': 39.4, '2021': 40.2, '2020': 27.3, '2019': 25.0, '2018': 19.9, '2017': 12.0 } },
+        { name: 'Gaming', key: 'plat_gaming', isBold: true, format: 'currency', values: { 'TTM': 13500000000, '2026': 12000000000, '2025': 10400000000, '2024': 10447000000, '2023': 9067000000, '2022': 12462000000, '2021': 7759000000, '2020': 5518000000, '2019': 6246000000, '2018': 4070000000, '2017': 3060000000 } },
+        createGrowthRow(periods, { name: 'Gaming', key: 'plat_gaming', isBold: true, format: 'currency', values: { 'TTM': 13500000000, '2026': 12000000000, '2025': 10400000000, '2024': 10447000000, '2023': 9067000000, '2022': 12462000000, '2021': 7759000000, '2020': 5518000000, '2019': 6246000000, '2018': 4070000000, '2017': 3060000000 } }, 'Gaming Growth (YoY)'),
+        { name: 'Professional Visualization', key: 'plat_proviz', indent: 1, format: 'currency', values: { 'TTM': 2100000000, '2026': 1900000000, '2025': 1550000000, '2024': 1553000000, '2023': 1544000000, '2022': 2111000000, '2021': 1053000000, '2020': 1212000000, '2019': 1130000000, '2018': 930000000, '2017': 710000000 } },
+        { name: 'Automotive & Robotics', key: 'plat_auto', indent: 1, format: 'currency', values: { 'TTM': 1900000000, '2026': 1600000000, '2025': 1100000000, '2024': 1091000000, '2023': 903000000, '2022': 566000000, '2021': 536000000, '2020': 700000000, '2019': 641000000, '2018': 558000000, '2017': 487000000 } },
+        { name: 'OEM & Other', key: 'plat_oem', indent: 1, format: 'currency', values: { 'TTM': 1200000000, '2026': 1000000000, '2025': 850000000, '2024': 315000000, '2023': 455000000, '2022': 1162000000, '2021': 631000000, '2020': 503000000, '2019': 767000000, '2018': 220000000, '2017': 123000000 } },
+
+        { name: 'Geographic Revenue Breakdown', key: 'geo_header', isHeader: true, values: {} },
+        { name: 'United States', key: 'geo_us', isBold: true, format: 'currency', values: { 'TTM': 110000000000, '2026': 85000000000, '2025': 58000000000, '2024': 26800000000, '2023': 8300000000, '2022': 4300000000, '2021': 2700000000, '2020': 1600000000, '2019': 1700000000, '2018': 1400000000, '2017': 1000000000 } },
+        { name: 'Taiwan', key: 'geo_taiwan', indent: 1, format: 'currency', values: { 'TTM': 65000000000, '2026': 52000000000, '2025': 28000000000, '2024': 13400000000, '2023': 6900000000, '2022': 8500000000, '2021': 4600000000, '2020': 3100000000, '2019': 3200000000, '2018': 2700000000, '2017': 1800000000 } },
+        { name: 'Singapore', key: 'geo_singapore', indent: 1, format: 'currency', values: { 'TTM': 45000000000, '2026': 35000000000, '2025': 20000000000, '2024': 9200000000, '2023': 1800000000, '2022': 1200000000, '2021': 800000000, '2020': 500000000, '2019': 400000000, '2018': 300000000, '2017': 200000000 } },
+        { name: 'China (incl. Hong Kong)', key: 'geo_china', indent: 1, format: 'currency', values: { 'TTM': 35000000000, '2026': 28000000000, '2025': 17000000000, '2024': 10300000000, '2023': 5800000000, '2022': 7100000000, '2021': 3800000000, '2020': 2600000000, '2019': 2800000000, '2018': 2200000000, '2017': 1600000000 } },
+        { name: 'Other Countries', key: 'geo_other', indent: 1, format: 'currency', values: { 'TTM': 47970000000, '2026': 15938000000, '2025': 7497000000, '2024': 1206000000, '2023': 4169000000, '2022': 2814000000, '2021': 4775000000, '2020': 3118000000, '2019': 3616000000, '2018': 3114000000, '2017': 2310000000 } },
+
+        { name: 'Operating Productivity & Employees', key: 'prod_header', isHeader: true, values: {} },
+        { name: 'Employees (Headcount)', key: 'employees_headcount', isBold: true, format: 'number', values: { 'TTM': 34500, '2026': 34500, '2025': 29600, '2024': 26196, '2023': 22473, '2022': 18975, '2021': 13775, '2020': 13277, '2019': 11528, '2018': 11528, '2017': 10299 } },
+        { name: 'Revenue per Employee', key: 'rev_per_emp', isBold: true, format: 'currency', values: { 'TTM': 8781739, '2026': 6259072, '2025': 4408682, '2024': 2325698, '2023': 1200284, '2022': 1418392, '2021': 1210526, '2020': 822324, '2019': 1016308, '2018': 842643, '2017': 670938 } },
+        { name: 'Net Income per Employee', key: 'ni_per_emp', indent: 1, format: 'currency', values: { 'TTM': 5590724, '2026': 3480202, '2025': 2462162, '2024': 1136051, '2023': 194366, '2022': 513939, '2021': 314482, '2020': 210514, '2019': 359212, '2018': 264312, '2017': 161763 } },
+        { name: 'R&D % of Revenue', key: 'rnd_pct_rev', indent: 1, format: 'percent', values: { 'TTM': 7.8, '2026': 8.6, '2025': 9.9, '2024': 14.2, '2023': 27.2, '2022': 19.6, '2021': 23.5, '2020': 25.9, '2019': 20.3, '2018': 18.5, '2017': 21.2 } },
+        { name: 'SG&A % of Revenue', key: 'sga_pct_rev', indent: 1, format: 'percent', values: { 'TTM': 1.7, '2026': 2.1, '2025': 2.7, '2024': 4.4, '2023': 9.0, '2022': 8.0, '2021': 11.6, '2020': 9.4, '2019': 8.5, '2018': 8.3, '2017': 9.6 } },
+        { name: 'CapEx % of Revenue', key: 'capex_pct_rev', indent: 1, format: 'percent', values: { 'TTM': 2.4, '2026': 2.8, '2025': 2.5, '2024': 1.8, '2023': 6.8, '2022': 3.6, '2021': 6.8, '2020': 4.5, '2019': 5.1, '2018': 6.1, '2017': 2.5 } }
+      ];
+      return { periods, rows };
+    }
+    // Quarterly NVDA KPIs
+    const rows: FinancialStatementRow[] = [
+      { name: 'Market Platforms Revenue (Quarterly)', key: 'plat_header', isHeader: true, values: {} },
+      { name: 'Data Center', key: 'plat_datacenter', isBold: true, format: 'currency', values: { 'Q3 2026': 30800000000, 'Q2 2026': 26300000000, 'Q1 2026': 22600000000, 'Q4 2025': 18400000000, 'Q3 2025': 14500000000, 'Q2 2025': 10300000000, 'Q1 2025': 4280000000, 'Q4 2024': 3620000000 } },
+      { name: 'Gaming', key: 'plat_gaming', isBold: true, format: 'currency', values: { 'Q3 2026': 3300000000, 'Q2 2026': 2900000000, 'Q1 2026': 2600000000, 'Q4 2025': 2870000000, 'Q3 2025': 2860000000, 'Q2 2025': 2490000000, 'Q1 2025': 2240000000, 'Q4 2024': 1830000000 } },
+      { name: 'Professional Visualization', key: 'plat_proviz', indent: 1, format: 'currency', values: { 'Q3 2026': 490000000, 'Q2 2026': 454000000, 'Q1 2026': 427000000, 'Q4 2025': 463000000, 'Q3 2025': 416000000, 'Q2 2025': 379000000, 'Q1 2025': 295000000, 'Q4 2024': 226000000 } },
+      { name: 'Automotive & Robotics', key: 'plat_auto', indent: 1, format: 'currency', values: { 'Q3 2026': 450000000, 'Q2 2026': 346000000, 'Q1 2026': 329000000, 'Q4 2025': 281000000, 'Q3 2025': 261000000, 'Q2 2025': 253000000, 'Q1 2025': 254000000, 'Q4 2024': 294000000 } }
+    ];
+    return { periods, rows };
+  }
+
+  // Generic dynamic generator for any stock
+  const periods = isQuarterly ? QUARTERLY_PERIODS : ANNUAL_10Y_PERIODS;
+  const rev = params.totalRevenue || (params.marketCap * 0.32);
+  const ni = params.netIncome || (rev * 0.22);
+  const headcount = Math.max(Math.round(rev / 650000), 5000);
+  const decay = isQuarterly
+    ? [1.0, 0.96, 0.92, 0.88, 0.84, 0.80, 0.76, 0.72]
+    : [1.0, 0.94, 0.85, 0.74, 0.63, 0.54, 0.45, 0.38, 0.32, 0.27, 0.22];
+
+  const makeRow = (name: string, key: string, baseVal: number, opts: Partial<FinancialStatementRow> = {}): FinancialStatementRow => {
+    const vals: { [p: string]: number | null } = {};
+    periods.forEach((p, idx) => {
+      vals[p] = Math.round(baseVal * decay[idx]);
+    });
+    return { name, key, values: vals, ...opts };
+  };
+
+  const rows: FinancialStatementRow[] = [
+    { name: 'Operating Segments', key: 'seg_header', isHeader: true, values: {} },
+    makeRow('Основни продукти и хардуерни решения', 'seg_core', rev * 0.72, { isBold: true, format: 'currency' }),
+    makeRow('Софтуер и дигитални услуги', 'seg_sw', rev * 0.28, { isBold: true, format: 'currency' }),
+
+    { name: 'Market Platforms', key: 'plat_header', isHeader: true, values: {} },
+    makeRow('Корпоративен сегмент (Enterprise)', 'plat_ent', rev * 0.58, { isBold: true, format: 'currency' }),
+    makeRow('Потребителски пазари (Consumer)', 'plat_cons', rev * 0.32, { indent: 1, format: 'currency' }),
+    makeRow('Лицензи и партньорства', 'plat_lic', rev * 0.10, { indent: 1, format: 'currency' }),
+
+    { name: 'Productivity & Employees', key: 'prod_header', isHeader: true, values: {} },
+    makeRow('Employees (Headcount)', 'employees_headcount', headcount, { isBold: true, format: 'number' }),
+    makeRow('Revenue per Employee', 'rev_per_emp', rev / headcount, { isBold: true, format: 'currency' }),
+    makeRow('Net Income per Employee', 'ni_per_emp', ni / headcount, { indent: 1, format: 'currency' }),
+    {
+      name: 'R&D % of Revenue',
+      key: 'rnd_pct_rev',
+      indent: 1,
+      format: 'percent',
+      values: periods.reduce((acc, p) => ({ ...acc, [p]: 14.5 }), {})
+    },
+    {
+      name: 'SG&A % of Revenue',
+      key: 'sga_pct_rev',
+      indent: 1,
+      format: 'percent',
+      values: periods.reduce((acc, p) => ({ ...acc, [p]: 8.2 }), {})
+    }
+  ];
+
+  return { periods, rows };
 }

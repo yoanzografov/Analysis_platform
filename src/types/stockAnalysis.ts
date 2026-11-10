@@ -86,6 +86,8 @@ export interface StockAnalysisData {
     quarterlyBalanceSheet?: FinancialStatementTable;
     quarterlyCashFlow?: FinancialStatementTable;
     quarterlyRatios?: FinancialStatementTable;
+    kpis?: FinancialStatementTable;
+    quarterlyKpis?: FinancialStatementTable;
     segments?: Array<{
       name: string;
       revenue: number;
