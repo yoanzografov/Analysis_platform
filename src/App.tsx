@@ -2629,7 +2629,7 @@ export default function App() {
     ) : activeMainTab === 'stocks' ? (
       <div className="space-y-4 font-sans">
         {/* Quick stock selector & search header */}
-        <div className="p-4 rounded-2xl bg-card border border-border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="p-3 sm:p-4 rounded-2xl bg-card/40 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold shrink-0">
               <BarChart2 className="w-5 h-5" />
@@ -2681,7 +2681,7 @@ export default function App() {
             <StockAnalysisExplorer
               key={currentTargetStock.ticker}
               stock={currentTargetStock}
-              className="rounded-2xl border border-border shadow-md"
+              className=""
             />
           );
         })()}

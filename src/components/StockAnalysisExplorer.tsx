@@ -641,7 +641,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   };
 
   return (
-    <div className={`w-full bg-bg border-t-2 border-indigo-500/50 shadow-2xl transition-all duration-200 overflow-hidden font-sans ${className}`}>
+    <div className={`w-full bg-bg font-sans ${className}`}>
       
       {/* ─── Top Header: Exact StockAnalysis Style ─── */}
       <div className="p-4 sm:p-5 bg-card/60 backdrop-blur-md border-b border-border/80">
@@ -762,7 +762,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
       {!isCollapsed && (
         <>
           {/* ─── 9 Tabs Navigation Bar (StockAnalysis Style) ─── */}
-          <div className="px-3 sm:px-5 py-2 bg-bg border-b border-border/80 overflow-x-auto scrollbar-thin">
+          <div className="px-3 sm:px-5 py-2 bg-bg border-b border-border/80 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <div className="flex items-center gap-1 sm:gap-2 min-w-max text-xs">
               {tabs.map(tab => {
                 const isActive = activeTab === tab.id;
@@ -787,8 +787,8 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
             </div>
           </div>
 
-          {/* ─── Active Tab Content Container ─── */}
-          <div className="p-4 sm:p-5 max-h-[550px] overflow-y-auto scrollbar-thin bg-bg">
+          {/* ─── Active Tab Content Container (Full Height, No Inner Scrollbar) ─── */}
+          <div className="p-4 sm:p-5 bg-bg">
             
             {/* Loading Indicator */}
             {isLoading && (
