@@ -13,6 +13,7 @@ import FairValueCalculatorModal from './FairValueCalculatorModal';
 import DcfCalculatorModal from './DcfCalculatorModal';
 import StockAnalysisExplorer from './StockAnalysisExplorer';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
+import { calculateBuySellStatus, calculateSignalStatus, calculateDifference } from '../utils/stockCalculations';
 
 interface Props {
   stocks: Stock[];
@@ -31,6 +32,7 @@ interface Props {
   onSetActiveFilter: (filter: TableFilter) => void;
   buyThreshold: number;
   sellThreshold: number;
+  signalThreshold?: number;
 }
 
 type SortField = 'ticker' | 'dailyChangePct' | 'currentPrice' | 'fairPrice' | 'difference' | 'marketCap';
@@ -256,7 +258,8 @@ export default function StockTable({
   activeFilter, 
   onSetActiveFilter, 
   buyThreshold, 
-  sellThreshold 
+  sellThreshold,
+  signalThreshold = 5
 }: Props) {
  // Search state
  const [search, setSearch] = useState('');
@@ -464,28 +467,10 @@ export default function StockTable({
  finalFair = original.fairPrice;
  }
 
- // Recalculate based on spreadsheet logic:
- // Difference = (Fair Price - Current Price) / Current Price
- let difference: number | null = null;
- if (finalFair !== null && parsedCurrentPrice > 0) {
- difference = parseFloat((((finalFair - parsedCurrentPrice) / parsedCurrentPrice) * 100).toFixed(2));
- }
-
-  let buySell = 'OVERVALUED';
-  if (finalFair !== null && parsedCurrentPrice > 0) {
-    buySell = (finalFair >= parsedCurrentPrice) ? 'UNDERVALUED' : 'OVERVALUED';
-  }
- 
-  // Signal formula matching Google Sheets: =IF(P<=AW*1.05, "Buy", IF(P>=AO*0.95, "Sell", "Hold"))
-  // P = currentPrice, AW = low52 (52-Week Low), AO = high52 (52-Week High)
-  const autoSignalFromPrices = (cp: number, lo: number | null, hi: number | null): string => {
-    if (!lo || !hi) return 'Hold';
-    if (cp <= lo * 1.05) return 'Buy';
-    if (cp >= hi * 0.95) return 'Sell';
-    return 'Hold';
-  };
-  const computedSignal = autoSignalFromPrices(parsedCurrentPrice, parsedLow52, parsedHigh52);
-  const finalSignal = computedSignal; // Always auto-calculated from 52W Low/High
+  // Recalculate based on central calculation logic:
+  const difference = calculateDifference(parsedCurrentPrice, finalFair);
+  const buySell = calculateBuySellStatus(parsedCurrentPrice, finalFair, buyThreshold, sellThreshold);
+  const finalSignal = calculateSignalStatus(parsedCurrentPrice, parsedLow52, parsedHigh52, signalThreshold);
 
  onUpdateStock(ticker, {
  ...original,
@@ -568,25 +553,16 @@ export default function StockTable({
    ? Number(quote.currentPrice)
    : (priceOfCalcNum !== null ? priceOfCalcNum : 100.0);
 
- // Calculate difference
- let diffPercent: number | null = null;
- if (fairPriceNum !== null && initialPrice > 0) {
- diffPercent = parseFloat((((fairPriceNum - initialPrice) / initialPrice) * 100).toFixed(2));
- }
-
-  let buySellValue = 'ДРУГИ';
-  if (fairPriceNum !== null && initialPrice > 0) {
-    buySellValue = (fairPriceNum >= initialPrice) ? 'UNDERVALUED' : 'OVERVALUED';
-  }
+  // Calculate difference & status
+  const diffPercent = calculateDifference(initialPrice, fairPriceNum);
+  const buySellValue = calculateBuySellStatus(initialPrice, fairPriceNum, buyThreshold, sellThreshold);
   const low52Default = (quote?.low52 && quote.low52 > 0)
     ? Number(quote.low52)
     : (initialPrice ? parseFloat((initialPrice * 0.78).toFixed(2)) : 80.0);
   const high52Default = (quote?.high52 && quote.high52 > 0)
     ? Number(quote.high52)
     : (initialPrice ? parseFloat((initialPrice * 1.25).toFixed(2)) : 125.0);
-  let autoSignal = 'Hold';
-  if (initialPrice <= low52Default * 1.05) autoSignal = 'Buy';
-  else if (initialPrice >= high52Default * 0.95) autoSignal = 'Sell';
+  const autoSignal = calculateSignalStatus(initialPrice, low52Default, high52Default, signalThreshold);
 
  const finalName = resolvedCompanyName || quote?.companyName || tickerUpper;
  const resolvedDate = newDate ? fromIsoDate(newDate) : fromIsoDate(new Date().toISOString().split('T')[0]);
@@ -896,17 +872,45 @@ export default function StockTable({
     {!currentUser && <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
   </button>
 
- {/* Special badges when filtering by signals from the charts */}
+ {/* Special badges when filtering by signals or buy/sell from the charts */}
  {activeFilter.type === 'signal' && activeFilter.value === 'buy' && (
- <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-[#10b981] text-ink border-[#10b981]/50 flex items-center gap-1 shrink-0">
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-[#10b981] text-black border-[#10b981]/50 flex items-center gap-1 shrink-0 shadow-sm">
  Активен Сигнал: КУПУВАЙ ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'buy').length})
- <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-900 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
  {activeFilter.type === 'signal' && activeFilter.value === 'sell' && (
- <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-[#f43f5e] text-ink border-[#f43f5e]/50 flex items-center gap-1 shrink-0">
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-[#f43f5e] text-white border-[#f43f5e]/50 flex items-center gap-1 shrink-0 shadow-sm">
  Активен Сигнал: ПРОДАВАЙ ({stocks.filter(s => s.signal?.trim().toLowerCase() === 'sell').length})
  <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-200 ml-1 font-bold cursor-pointer">×</button>
+ </span>
+ )}
+ {activeFilter.type === 'signal' && activeFilter.value === 'hold' && (
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-amber-500/20 text-amber-400 border-amber-500/40 flex items-center gap-1 shrink-0 shadow-sm">
+ Активен Сигнал: ИЗЧАКАЙ ({stocks.filter(s => {
+   const val = s.signal?.trim().toLowerCase();
+   return val === 'hold' || val === 'изчакай' || !val || val === '-';
+ }).length})
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-300 ml-1 font-bold cursor-pointer">×</button>
+ </span>
+ )}
+
+ {activeFilter.type === 'buySell' && activeFilter.value === 'UNDERVALUED' && (
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-emerald-500/20 text-emerald-400 border-emerald-500/40 flex items-center gap-1 shrink-0 shadow-sm">
+ Оценка: UNDERVALUED ({stocks.filter(s => s.buySell === 'UNDERVALUED').length})
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-300 ml-1 font-bold cursor-pointer">×</button>
+ </span>
+ )}
+ {activeFilter.type === 'buySell' && activeFilter.value === 'OVERVALUED' && (
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-rose-500/20 text-rose-400 border-rose-500/40 flex items-center gap-1 shrink-0 shadow-sm">
+ Оценка: OVERVALUED ({stocks.filter(s => s.buySell === 'OVERVALUED').length})
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-300 ml-1 font-bold cursor-pointer">×</button>
+ </span>
+ )}
+ {activeFilter.type === 'buySell' && activeFilter.value === 'ДРУГИ' && (
+ <span className="px-2.5 py-1 text-xs font-sans tabular-nums font-extrabold uppercase rounded-md border bg-slate-500/20 text-slate-300 border-slate-500/40 flex items-center gap-1 shrink-0 shadow-sm">
+ Оценка: ДРУГИ ({stocks.filter(s => s.buySell === 'ДРУГИ').length})
+ <button onClick={() => { onSetActiveFilter({ type: 'all', value: 'all' }); setCurrentPage(1); }} className="hover:text-red-300 ml-1 font-bold cursor-pointer">×</button>
  </span>
  )}
 
@@ -1354,7 +1358,7 @@ export default function StockTable({
 
 
  {/* 17. SIGNAL */}
- <td className="py-3 px-4 text-ink overflow-hidden text-ellipsis whitespace-nowrap">
+ <td className="py-3 px-4 text-center overflow-hidden text-ellipsis whitespace-nowrap">
  {isEditing ? (
  <input
  type="text"
@@ -1363,12 +1367,35 @@ export default function StockTable({
  className="w-full bg-bg rounded-2xl text-left font-sans tabular-nums text-xs text-ink border border-border px-1 py-0.5 rounded-md focus:outline-none"
  />
  ) : (
- <span className="truncate font-semibold text-xs uppercase">
-    {stock.signal?.trim().toLowerCase() === 'buy' ? 'КУПУВАЙ' : 
-     stock.signal?.trim().toLowerCase() === 'sell' ? 'ПРОДАВАЙ' : 
-     stock.signal?.trim().toLowerCase() === 'hold' ? 'ИЗЧАКАЙ' : 
-     (stock.signal || '-')}
-  </span>
+   (() => {
+     const sig = stock.signal?.trim().toLowerCase();
+     if (sig === 'buy') {
+       return (
+         <span className="inline-block w-24 text-center bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30 py-0.5 text-xs font-extrabold uppercase tracking-wide rounded-full shadow-2xs">
+           КУПУВАЙ
+         </span>
+       );
+     }
+     if (sig === 'sell') {
+       return (
+         <span className="inline-block w-24 text-center bg-[#f43f5e]/15 text-[#f43f5e] border border-[#f43f5e]/30 py-0.5 text-xs font-extrabold uppercase tracking-wide rounded-full shadow-2xs">
+           ПРОДАВАЙ
+         </span>
+       );
+     }
+     if (sig === 'hold' || sig === 'изчакай') {
+       return (
+         <span className="inline-block w-24 text-center bg-amber-500/15 text-amber-400 border border-amber-500/30 py-0.5 text-xs font-extrabold uppercase tracking-wide rounded-full shadow-2xs">
+           ИЗЧАКАЙ
+         </span>
+       );
+     }
+     return (
+       <span className="text-ink-muted text-xs font-semibold">
+         {stock.signal || '-'}
+       </span>
+     );
+   })()
  )}
  </td>
 
@@ -1925,14 +1952,8 @@ export default function StockTable({
       const original = stocks.find(s => s.ticker === ticker);
       if (!original) return;
       const cp = original.currentPrice;
-      let difference: number | null = null;
-      if (cp > 0) {
-        difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
-      }
-      let buySell = 'OVERVALUED';
-      if (cp > 0) {
-        buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
-      }
+      const difference = calculateDifference(cp, fairPrice);
+      const buySell = calculateBuySellStatus(cp, fairPrice, buyThreshold, sellThreshold);
       onUpdateStock(ticker, {
         ...original,
         fairPrice,
@@ -1959,14 +1980,8 @@ export default function StockTable({
       const original = stocks.find(s => s.ticker === ticker);
       if (!original) return;
       const cp = original.currentPrice;
-      let difference: number | null = null;
-      if (cp > 0) {
-        difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
-      }
-      let buySell = 'OVERVALUED';
-      if (cp > 0) {
-        buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
-      }
+      const difference = calculateDifference(cp, fairPrice);
+      const buySell = calculateBuySellStatus(cp, fairPrice, buyThreshold, sellThreshold);
       onUpdateStock(ticker, {
         ...original,
         fairPrice,

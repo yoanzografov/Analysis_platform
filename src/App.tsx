@@ -36,6 +36,7 @@ import PercentCalculatorModal from './components/PercentCalculatorModal';
 import WelcomeQuoteModal from './components/WelcomeQuoteModal';
 import AiAssistantDrawer from './components/AiAssistantDrawer';
 import StockAnalysisExplorer from './components/StockAnalysisExplorer';
+import { calculateBuySellStatus, calculateSignalStatus, calculateDifference } from './utils/stockCalculations';
 import { 
   Table,
   Save,
@@ -571,33 +572,19 @@ export default function App() {
 
   const handleUpdateSignalThreshold = (newVal: number) => {
     setSignalThreshold(newVal);
-    setStocks(prev => prev.map(stock => {
-      let newSignal = 'Hold';
-      if (stock.currentPrice > 0 && typeof stock.low52 === 'number' && typeof stock.high52 === 'number') {
-        const buyLimit = stock.low52 * (1 + newVal / 100);
-        const sellLimit = stock.high52 * (1 - newVal / 100);
-        if (stock.currentPrice <= buyLimit) newSignal = 'Buy';
-        else if (stock.currentPrice >= sellLimit) newSignal = 'Sell';
-      } else {
-        newSignal = '-';
-      }
-      return { ...stock, signal: newSignal };
-    }));
+    setStocks(prev => prev.map(stock => ({
+      ...stock,
+      signal: calculateSignalStatus(stock.currentPrice, stock.low52, stock.high52, newVal)
+    })));
   };
 
   const handleUpdateThresholds = (newBuy: number, newSell: number) => {
     setBuyThreshold(newBuy);
     setSellThreshold(newSell);
-    setStocks(prev => prev.map(s => {
-      let bs = 'OVERVALUED';
-      if (s.fairPrice !== null && s.currentPrice > 0) {
-        const dev = ((s.currentPrice - s.fairPrice) / s.fairPrice) * 100;
-        if (dev < -newBuy) bs = 'UNDERVALUED';
-        else if (dev > newSell) bs = 'OVERVALUED';
-        else bs = 'ДРУГИ';
-      }
-      return { ...s, buySell: bs };
-    }));
+    setStocks(prev => prev.map(s => ({
+      ...s,
+      buySell: calculateBuySellStatus(s.currentPrice, s.fairPrice, newBuy, newSell)
+    })));
   };
 
   // Yahoo Finance Ticker Mapping for European & Global ETFs/Stocks
@@ -688,32 +675,21 @@ export default function App() {
               const nextPrice = quote.currentPrice;
               let difference = stock.difference;
               if (stock.fairPrice !== null && nextPrice > 0) {
-                difference = parseFloat((((stock.fairPrice - nextPrice) / nextPrice) * 100).toFixed(2));
+                difference = calculateDifference(nextPrice, stock.fairPrice);
               }
-              let buySell = stock.buySell;
-              if (stock.fairPrice !== null && nextPrice > 0) {
-                buySell = (stock.fairPrice >= nextPrice) ? 'UNDERVALUED' : 'OVERVALUED';
-              }
-              
-              let signal = stock.signal || 'Hold';
               const l52 = quote ? (quote.low52 !== undefined ? quote.low52 : stock.low52) : stock.low52;
               const h52 = quote ? (quote.high52 !== undefined ? quote.high52 : stock.high52) : stock.high52;
               
-              if (nextPrice > 0 && typeof l52 === 'number' && typeof h52 === 'number') {
-                const buyLimit = l52 * (1 + signalThresholdRef.current / 100);
-                const sellLimit = h52 * (1 - signalThresholdRef.current / 100);
-                if (nextPrice <= buyLimit) signal = 'Buy';
-                else if (nextPrice >= sellLimit) signal = 'Sell';
-                else signal = 'Hold';
+              const buySell = calculateBuySellStatus(nextPrice, stock.fairPrice, buyThresholdRef.current, sellThresholdRef.current);
+              const signal = calculateSignalStatus(nextPrice, l52, h52, signalThresholdRef.current);
 
+              if (nextPrice > 0 && typeof l52 === 'number' && typeof h52 === 'number') {
                 if (l52 > 0 && nextPrice <= l52 * 1.03) {
                   low52List.push(stock.ticker);
                 }
                 if (h52 > 0 && nextPrice >= h52 * 0.97) {
                   high52List.push(stock.ticker);
                 }
-              } else {
-                signal = '-';
               }
 
               const isEtpName = quote.companyName && (quote.companyName.includes('ETP') || quote.companyName.includes('Tracker') || quote.companyName.includes('Leverage Shares'));
@@ -890,14 +866,19 @@ export default function App() {
             if (guestMap.has(sym)) {
               const base = guestMap.get(sym)!;
               const effectiveFair = (s.fairPrice !== null && s.fairPrice !== undefined && s.fairPrice > 0) ? s.fairPrice : base.fairPrice;
-              let effectiveDiff = s.difference;
-              let effectiveBuySell = s.buySell;
               const cp = s.currentPrice > 0 ? s.currentPrice : base.currentPrice;
-              if (effectiveFair !== null && cp > 0) {
-                effectiveDiff = parseFloat((((effectiveFair - cp) / cp) * 100).toFixed(2));
-                effectiveBuySell = (effectiveFair >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
-              }
-              guestMap.set(sym, { ...base, ...s, fairPrice: effectiveFair, difference: effectiveDiff, buySell: effectiveBuySell });
+              const effectiveDiff = calculateDifference(cp, effectiveFair);
+              const effectiveBuySell = calculateBuySellStatus(cp, effectiveFair, buyThresholdRef.current, sellThresholdRef.current);
+              const effectiveSignal = calculateSignalStatus(cp, s.low52 ?? base.low52, s.high52 ?? base.high52, signalThresholdRef.current);
+              guestMap.set(sym, { 
+                ...base, 
+                ...s, 
+                currentPrice: cp, 
+                fairPrice: effectiveFair, 
+                difference: effectiveDiff, 
+                buySell: effectiveBuySell,
+                signal: effectiveSignal
+              });
             } else {
               guestMap.set(sym, s);
             }
@@ -1060,13 +1041,13 @@ export default function App() {
                 ? s.currentPrice 
                 : (existingBase?.currentPrice ?? 100);
 
-              let effectiveDiff = s.difference;
-              let effectiveBuySell = s.buySell === 'BUY' || s.buySell === 'Buy' ? 'UNDERVALUED' : s.buySell === 'SELL' || s.buySell === 'Sell' ? 'OVERVALUED' : (s.buySell || 'ДРУГИ');
+              const currentBuyThreshold = data.settings?.buyThreshold ?? data.settings?.buySellThreshold ?? 10;
+              const currentSellThreshold = data.settings?.sellThreshold ?? data.settings?.buySellThreshold ?? 10;
+              const currentSignalThreshold = data.settings?.signalThreshold ?? 5;
 
-              if (effectiveFair !== null && currentP > 0) {
-                effectiveDiff = parseFloat((((effectiveFair - currentP) / currentP) * 100).toFixed(2));
-                effectiveBuySell = (effectiveFair >= currentP) ? 'UNDERVALUED' : 'OVERVALUED';
-              }
+              const effectiveDiff = calculateDifference(currentP, effectiveFair);
+              const effectiveBuySell = calculateBuySellStatus(currentP, effectiveFair, currentBuyThreshold, currentSellThreshold);
+              const effectiveSignal = calculateSignalStatus(currentP, s.low52 ?? existingBase?.low52, s.high52 ?? existingBase?.high52, currentSignalThreshold);
 
               const processedStock: Stock = {
                 ...s,
@@ -1075,7 +1056,7 @@ export default function App() {
                 difference: effectiveDiff,
                 buySell: effectiveBuySell,
                 watch: watchVal,
-                signal: s.signal === 'UNDERVALUED' ? 'Buy' : s.signal === 'OVERVALUED' ? 'Sell' : s.signal,
+                signal: effectiveSignal,
               };
 
               if (stocksMap.has(sym)) {
@@ -2545,6 +2526,7 @@ export default function App() {
           onSetActiveFilter={setActiveFilter}
           buyThreshold={buyThreshold}
           sellThreshold={sellThreshold}
+          signalThreshold={signalThreshold}
           onAddStock={(newStock) => {
             // Smart extraction in case someone passed "Samsung Electronics Co., Ltd. (KRX:005930)"
             let sym = newStock.ticker.trim();
@@ -3039,11 +3021,8 @@ export default function App() {
         if (existingIndex < 0) return prev;
         const original = prev[existingIndex];
         const cp = original.currentPrice;
-        let difference: number | null = null;
-        if (cp > 0) {
-          difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
-        }
-        const buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
+        const difference = calculateDifference(cp, fairPrice);
+        const buySell = calculateBuySellStatus(cp, fairPrice, buyThresholdRef.current, sellThresholdRef.current);
         const updated = [...prev];
         updated[existingIndex] = {
           ...original,
@@ -3075,11 +3054,8 @@ export default function App() {
         if (existingIndex < 0) return prev;
         const original = prev[existingIndex];
         const cp = original.currentPrice;
-        let difference: number | null = null;
-        if (cp > 0) {
-          difference = parseFloat((((fairPrice - cp) / cp) * 100).toFixed(2));
-        }
-        const buySell = (fairPrice >= cp) ? 'UNDERVALUED' : 'OVERVALUED';
+        const difference = calculateDifference(cp, fairPrice);
+        const buySell = calculateBuySellStatus(cp, fairPrice, buyThresholdRef.current, sellThresholdRef.current);
         const updated = [...prev];
         updated[existingIndex] = {
           ...original,
