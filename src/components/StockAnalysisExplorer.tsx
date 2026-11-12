@@ -1373,7 +1373,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                               <ResponsiveContainer width="100%" height="100%">
                                 <BarChart 
                                   data={activeChartData} 
-                                  margin={{ top: 22, right: 12, left: -15, bottom: 0 }}
+                                  margin={{ top: 22, right: 12, left: 10, bottom: 0 }}
                                 >
                                   <XAxis 
                                     dataKey="period" 
@@ -1385,16 +1385,13 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                     stroke="var(--color-ink-faint)" 
                                     fontSize={9} 
                                     tickLine={false}
+                                    width={48}
                                     tickFormatter={(v) => {
                                       if (activeMetricRow.format === 'percent') return `${v}%`;
-                                      if (financialScale === 'millions') {
-                                        if (Math.abs(v) >= 1e6) return `${(v / 1e6).toFixed(0)}M`;
-                                        if (Math.abs(v) >= 1e3) return `${(v / 1e3).toFixed(0)}K`;
-                                        return String(v);
-                                      }
                                       if (Math.abs(v) >= 1e12) return `$${(v / 1e12).toFixed(1)}T`;
                                       if (Math.abs(v) >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
                                       if (Math.abs(v) >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
+                                      if (Math.abs(v) >= 1e3) return `$${(v / 1e3).toFixed(0)}K`;
                                       return String(v);
                                     }} 
                                   />

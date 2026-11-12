@@ -36,6 +36,7 @@ import PercentCalculatorModal from './components/PercentCalculatorModal';
 import WelcomeQuoteModal from './components/WelcomeQuoteModal';
 import AiAssistantDrawer from './components/AiAssistantDrawer';
 import StockAnalysisExplorer from './components/StockAnalysisExplorer';
+import StockAnalysisSearchCombobox from './components/StockAnalysisSearchCombobox';
 import { calculateBuySellStatus, calculateSignalStatus, calculateDifference } from './utils/stockCalculations';
 import { 
   Table,
@@ -2629,24 +2630,20 @@ export default function App() {
             </div>
           </div>
 
-          {/* Stock Quick Selector / Switcher */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-ink-faint">Изберете актив:</span>
-            <select
-              value={selectedStockForStocksTab?.ticker || stocks[0]?.ticker || ''}
-              onChange={(e) => {
-                const found = stocks.find(s => s.ticker === e.target.value);
-                if (found) setSelectedStockForStocksTab(found);
-              }}
-              className="bg-bg border border-border rounded-xl px-3 py-1.5 text-xs font-bold text-ink focus:outline-none focus:border-indigo-500 cursor-pointer"
-            >
-              {stocks.map(s => (
-                <option key={s.ticker} value={s.ticker}>
-                  {s.ticker} — {s.companyName}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Stock Quick Selector / Search Combobox (StockAnalysis Style) */}
+          <StockAnalysisSearchCombobox
+            stocks={stocks}
+            selectedStock={selectedStockForStocksTab || stocks[0] || null}
+            onSelectStock={(stk) => setSelectedStockForStocksTab(stk)}
+            onAddStockToTable={(stk) => {
+              const sym = stk.ticker.toUpperCase().trim();
+              if (!stocks.some(s => s.ticker.toUpperCase().trim() === sym)) {
+                setStocks(prev => [stk, ...prev]);
+                setActiveAlertToast(`Активът ${stk.ticker} (${stk.companyName}) беше успешно добавен към Интерактивната таблица!`);
+                setTimeout(() => setActiveAlertToast(null), 4000);
+              }
+            }}
+          />
         </div>
 
         {/* The 9-Tab Stock Analysis Explorer Component */}
