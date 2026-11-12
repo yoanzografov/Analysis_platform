@@ -33,6 +33,7 @@ import {
   BarChart3,
   PlusCircle,
   Copy,
+  ArrowLeftRight,
   X
 } from 'lucide-react';
 import { 
@@ -82,6 +83,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   const [financialScale, setFinancialScale] = useState<FinancialScale>('millions');
   const [showChart, setShowChart] = useState<boolean>(true);
   const [financialFreq, setFinancialFreq] = useState<'annual' | 'quarterly'>('annual');
+  const [isReversedOrder, setIsReversedOrder] = useState<boolean>(false);
   const [hoveredMetricRow, setHoveredMetricRow] = useState<FinancialStatementRow | null>(null);
   const [pinnedMetricRow, setPinnedMetricRow] = useState<FinancialStatementRow | null>(null);
   const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
@@ -427,15 +429,20 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     return buildIncomeStatement(buildParams, isQ);
   }, [financialSubTab, financialFreq, data, cleanTicker, stock, activeStockPrice]);
 
+  const displayPeriods = useMemo(() => {
+    if (!currentStatementTable?.periods) return [];
+    return isReversedOrder ? [...currentStatementTable.periods].reverse() : currentStatementTable.periods;
+  }, [currentStatementTable?.periods, isReversedOrder]);
+
   const handleExportFinancialsCsv = () => {
     if (!currentStatementTable) return;
-    const headerRow = ['Metric', ...currentStatementTable.periods];
+    const headerRow = ['Metric', ...displayPeriods];
     const rows = [headerRow];
     currentStatementTable.rows.forEach(r => {
       if (r.isHeader) {
-        rows.push([r.name, ...currentStatementTable.periods.map(() => '')]);
+        rows.push([r.name, ...displayPeriods.map(() => '')]);
       } else {
-        const rowVals = currentStatementTable.periods.map(p => {
+        const rowVals = displayPeriods.map(p => {
           const val = r.values[p];
           return val != null ? String(val) : '';
         });
@@ -1233,6 +1240,21 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </button>
                         </div>
 
+                        {/* Reverse Order (Oldest/Newest Columns) Toggle (StockAnalysis Style) */}
+                        <button
+                          type="button"
+                          onClick={() => setIsReversedOrder(prev => !prev)}
+                          className={`p-2 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center ${
+                            isReversedOrder
+                              ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400 ring-1 ring-indigo-500/30'
+                              : 'border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink'
+                          }`}
+                          title={isReversedOrder ? "Обърни реда на периодите: Най-нови отляво (TTM -> 2017)" : "Обърни реда на периодите: Най-стари отляво (2017 -> TTM)"}
+                          aria-label="Reverse column order"
+                        >
+                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                        </button>
+
                         {/* Export CSV */}
                         <button
                           type="button"
@@ -1453,7 +1475,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                     {financialScale === 'millions' ? '(USD in Millions)' : financialScale === 'billions' ? '(USD in Billions)' : '(USD Exact)'}
                                   </span>
                                 </th>
-                                {(currentStatementTable?.periods || []).map(period => (
+                                {(displayPeriods || []).map(period => (
                                   <th key={period} className="py-3 px-4 text-right font-black text-ink min-w-[110px]">
                                     {period}
                                   </th>
@@ -1464,7 +1486,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 <th className="py-2 px-4 sticky left-0 bg-card z-10 border-r border-border/50 font-semibold italic text-ink-faint">
                                   Period Ending:
                                 </th>
-                                {(currentStatementTable?.periods || []).map(period => (
+                                {(displayPeriods || []).map(period => (
                                   <th key={period} className="py-2 px-4 text-right font-mono font-normal text-ink-faint min-w-[110px]">
                                     {getPeriodEndDate(period)}
                                   </th>
@@ -1477,7 +1499,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                   return (
                                     <tr key={idx} className="bg-card-hover/50 font-sans">
                                       <td
-                                        colSpan={(currentStatementTable?.periods?.length || 0) + 1}
+                                        colSpan={(displayPeriods?.length || 0) + 1}
                                         className="py-2.5 px-4 font-black uppercase text-[11px] text-indigo-400 tracking-wider"
                                       >
                                         {row.name}
@@ -1528,7 +1550,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                       </div>
                                     </td>
 
-                                    {(currentStatementTable?.periods || []).map(period => {
+                                    {(displayPeriods || []).map(period => {
                                       const rawVal = row.values[period];
                                       const formatted = formatFinancialValue(rawVal, row.format, financialScale, row.key);
                                       const isGrowthOrMargin = row.format === 'percent';
