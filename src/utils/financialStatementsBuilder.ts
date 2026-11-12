@@ -190,14 +190,16 @@ export function createGrowthRow(
   periods: string[],
   parentRow: FinancialStatementRow,
   customName?: string,
-  keySuffix: string = '_growth'
+  keySuffix: string = '_growth',
+  overrides?: { [period: string]: number }
 ): FinancialStatementRow {
+  const calculated = calculateYoYGrowth(periods, parentRow.values);
   return {
     name: customName || `${parentRow.name} Growth (YoY)`,
     key: `${parentRow.key}${keySuffix}`,
     indent: (parentRow.indent || 0) + 1,
     format: 'percent',
-    values: calculateYoYGrowth(periods, parentRow.values)
+    values: { ...calculated, ...(overrides || {}) }
   };
 }
 
@@ -220,10 +222,10 @@ export function buildIncomeStatement(params: FinancialBuildParams, isQuarterly =
 
       const rows: FinancialStatementRow[] = [
         revRow,
-        createGrowthRow(periods, revRow, 'Revenue Growth (YoY)'),
+        createGrowthRow(periods, revRow, 'Revenue Growth (YoY)', '_growth', { 'TTM': 83.4 }),
         { name: 'Cost of Revenue', key: 'cor', indent: 1, format: 'currency', values: { 'TTM': 76729000000, '2026': 62475000000, '2025': 32639000000, '2024': 16621000000, '2023': 11618000000, '2022': 9439000000, '2021': 6279000000, '2020': 4214000000, '2019': 4545000000, '2018': 3896000000, '2017': 2847000000 } },
         gpRow,
-        createGrowthRow(periods, gpRow, 'Gross Profit Growth (YoY)'),
+        createGrowthRow(periods, gpRow, 'Gross Profit Growth (YoY)', '_growth', { 'TTM': 95.8 }),
         { name: 'Gross Margin', key: 'gross_margin', indent: 1, format: 'percent', values: { 'TTM': 74.7, '2026': 71.1, '2025': 75.0, '2024': 72.7, '2023': 56.9, '2022': 64.9, '2021': 62.3, '2020': 61.4, '2019': 61.2, '2018': 59.9, '2017': 58.8 } },
         
         { name: 'Operating Expenses', key: 'op_exp_header', isHeader: true, values: {} },
@@ -233,21 +235,21 @@ export function buildIncomeStatement(params: FinancialBuildParams, isQuarterly =
         createGrowthRow(periods, opExpRow, 'Operating Expenses Growth (YoY)'),
         
         ebitRow,
-        createGrowthRow(periods, ebitRow, 'Operating Income Growth (YoY)'),
+        createGrowthRow(periods, ebitRow, 'Operating Income Growth (YoY)', '_growth', { 'TTM': 118.5 }),
         { name: 'Operating Margin', key: 'oper_margin', indent: 1, format: 'percent', values: { 'TTM': 65.2, '2026': 60.4, '2025': 62.4, '2024': 54.1, '2023': 20.7, '2022': 37.3, '2021': 27.2, '2020': 26.1, '2019': 32.5, '2018': 33.0, '2017': 28.0 } },
         { name: 'Interest Expense / (Income)', key: 'interest_exp', indent: 1, format: 'currency', values: { 'TTM': -464000000, '2026': -259000000, '2025': -247000000, '2024': -257000000, '2023': -262000000, '2022': 236000000, '2021': 184000000, '2020': 58000000, '2019': 62000000, '2018': 61000000, '2017': 59000000 } },
         ebtRow,
-        createGrowthRow(periods, ebtRow, 'Pretax Income Growth (YoY)'),
+        createGrowthRow(periods, ebtRow, 'Pretax Income Growth (YoY)', '_growth', { 'TTM': 120.4 }),
         { name: 'Income Tax', key: 'income_tax', indent: 1, format: 'currency', values: { 'TTM': 36863000000, '2026': 21383000000, '2025': 11146000000, '2024': 4058000000, '2023': -187000000, '2022': 458000000, '2021': 80000000, '2020': 5000000, '2019': -245000000, '2018': 163000000, '2017': 268000000 } },
         niRow,
-        createGrowthRow(periods, niRow, 'Net Income Growth (YoY)'),
+        createGrowthRow(periods, niRow, 'Net Income Growth (YoY)', '_growth', { 'TTM': 122.7 }),
         { name: 'Net Profit Margin', key: 'net_margin', indent: 1, format: 'percent', values: { 'TTM': 63.7, '2026': 55.6, '2025': 55.8, '2024': 48.9, '2023': 16.2, '2022': 36.2, '2021': 26.0, '2020': 25.6, '2019': 35.3, '2018': 31.4, '2017': 24.1 } },
         sharesRow,
         createGrowthRow(periods, sharesRow, 'Shares Change (YoY)', '_change'),
         epsRow,
-        createGrowthRow(periods, epsRow, 'EPS Growth (YoY)'),
+        createGrowthRow(periods, epsRow, 'EPS Growth (YoY)', '_growth', { 'TTM': 125.3 }),
         ebitdaRow,
-        createGrowthRow(periods, ebitdaRow, 'EBITDA Growth (YoY)'),
+        createGrowthRow(periods, ebitdaRow, 'EBITDA Growth (YoY)', '_growth', { 'TTM': 115.6 }),
         { name: 'EBITDA Margin', key: 'ebitda_margin', indent: 1, format: 'percent', values: { 'TTM': 66.4, '2026': 61.8, '2025': 64.0, '2024': 56.6, '2023': 26.4, '2022': 41.7, '2021': 34.1, '2020': 30.1, '2019': 35.7, '2018': 36.5, '2017': 30.8 } },
       ];
       return { periods, rows };
@@ -575,11 +577,11 @@ export function buildCashFlowStatement(params: FinancialBuildParams, isQuarterly
       { name: 'Stock-Based Compensation', key: 'sbc', indent: 1, format: 'currency', values: { 'TTM': 5200000000, '2026': 4800000000, '2025': 3537000000, '2024': 3537000000, '2023': 2709000000, '2022': 2004000000, '2021': 1284000000, '2020': 854000000, '2019': 682000000, '2018': 502000000, '2017': 356000000 } },
       { name: 'Change in Working Capital', key: 'wc', indent: 1, format: 'currency', values: { 'TTM': -6800000000, '2026': -6200000000, '2025': -5052000000, '2024': 120000000, '2023': -3010000000, '2022': 1600000000, '2021': 824000000, '2020': 225000000, '2019': -469000000, '2018': 989000000, '2017': 430000000 } },
       ocfRow,
-      createGrowthRow(periods, ocfRow, 'Operating Cash Flow Growth (YoY)'),
+      createGrowthRow(periods, ocfRow, 'Operating Cash Flow Growth (YoY)', '_growth', { 'TTM': 92.5 }),
       
       { name: 'Investing Activities', key: 'inv_header', isHeader: true, values: {} },
       capexRow,
-      createGrowthRow(periods, capexRow, 'CapEx Growth (YoY)'),
+      createGrowthRow(periods, capexRow, 'CapEx Growth (YoY)', '_growth', { 'TTM': 45.2 }),
       { name: 'Net Investment Sales / Purchases', key: 'net_inv', indent: 1, format: 'currency', values: { 'TTM': -12000000000, '2026': -11500000000, '2025': -7910000000, '2024': 1300000000, '2023': -5800000000, '2022': -8800000000, '2021': -6000000000, '2020': -6500000000, '2019': -2100000000, '2018': -1800000000, '2017': -800000000 } },
       { name: 'Cash Flow from Investing', key: 'cf_inv', isBold: true, format: 'currency', values: { 'TTM': -16500000000, '2026': -15700000000, '2025': -10091000000, '2024': -881000000, '2023': -7633000000, '2022': -9776000000, '2021': -7128000000, '2020': -6989000000, '2019': -2700000000, '2018': -2393000000, '2017': -976000000 } },
       
@@ -591,7 +593,7 @@ export function buildCashFlowStatement(params: FinancialBuildParams, isQuarterly
       netChangeCashRow,
       createGrowthRow(periods, netChangeCashRow, 'Net Change in Cash Growth (YoY)'),
       fcfRow,
-      createGrowthRow(periods, fcfRow, 'Free Cash Flow Growth (YoY)'),
+      createGrowthRow(periods, fcfRow, 'Free Cash Flow Growth (YoY)', '_growth', { 'TTM': 98.4 }),
       { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM': 41.9, '2026': 44.8, '2025': 46.6, '2024': 44.3, '2023': 14.1, '2022': 30.2, '2021': 28.0, '2020': 39.1, '2019': 26.5, '2018': 29.9, '2017': 21.7 } },
       { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM': 5.13, '2026': 3.92, '2025': 2.48, '2024': 1.10, '2023': 0.15, '2022': 0.32, '2021': 0.19, '2020': 0.17, '2019': 0.12, '2018': 0.12, '2017': 0.06 } }
     ];
