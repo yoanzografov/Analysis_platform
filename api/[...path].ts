@@ -2036,31 +2036,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } catch {}
       }
 
-      // 2. Finnhub fallback / enrichment
-      let fhMetrics: any = null, fhProfile: any = null, fhRecs: any = null;
+      // 2. Finnhub fallback / enrichment + live quote
+      let fhMetrics: any = null, fhProfile: any = null, fhRecs: any = null, fhQuote: any = null;
       if (finnhubKey) {
         try {
-          const [mRes, pRes, rRes] = await Promise.all([
+          const [mRes, pRes, rRes, qRes] = await Promise.all([
             fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(cleanTicker)}&metric=all&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
               .then(r => r.ok ? r.json() : null).catch(() => null),
             fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(cleanTicker)}&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
               .then(r => r.ok ? r.json() : null).catch(() => null),
             fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${encodeURIComponent(cleanTicker)}&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
+              .then(r => r.ok ? r.json() : null).catch(() => null),
+            fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(cleanTicker)}&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
               .then(r => r.ok ? r.json() : null).catch(() => null)
           ]);
           fhMetrics = mRes?.metric;
           fhProfile = pRes;
           fhRecs = rRes?.[0];
+          fhQuote = qRes;
         } catch {}
       }
 
-      // Compute core numbers with rock-solid fallbacks
-      let currentPrice = tv?.close 
-        ?? (fhMetrics?.['52WeekHigh'] && fhMetrics?.['52WeekLow'] ? (fhMetrics['52WeekHigh'] + fhMetrics['52WeekLow']) / 2 : 100);
-      let prevClose = tv?.change != null ? (currentPrice / (1 + (tv.change / 100))) : currentPrice;
-      let dailyChangePct = tv?.change ?? 0;
+      // Compute core numbers with rock-solid fallbacks (prioritize real-time live quote)
+      let currentPrice = (fhQuote?.c && fhQuote.c > 0)
+        ? fhQuote.c
+        : (tv?.close ?? (fhMetrics?.['52WeekHigh'] && fhMetrics?.['52WeekLow'] ? (fhMetrics['52WeekHigh'] + fhMetrics['52WeekLow']) / 2 : 100));
 
-      let mCap = tv?.marketCap ?? (fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : (currentPrice * 500000000));
+      let prevClose = (fhQuote?.pc && fhQuote.pc > 0)
+        ? fhQuote.pc
+        : (tv?.change != null ? (currentPrice / (1 + (tv.change / 100))) : currentPrice);
+
+      let dailyChangePct = fhQuote?.dp != null
+        ? fhQuote.dp
+        : (tv?.change ?? (prevClose > 0 ? ((currentPrice - prevClose) / prevClose) * 100 : 0));
+
+      let dailyChangeAmount = fhQuote?.d != null
+        ? fhQuote.d
+        : (tv?.change != null ? (currentPrice - prevClose) : 0);
+
+      let dayOpen = (fhQuote?.o && fhQuote.o > 0) ? fhQuote.o : (tv?.open ?? prevClose);
+      let dayHigh = (fhQuote?.h && fhQuote.h > 0) ? fhQuote.h : (tv?.high ?? (currentPrice * 1.015));
+      let dayLow = (fhQuote?.l && fhQuote.l > 0) ? fhQuote.l : (tv?.low ?? (currentPrice * 0.985));
+
+      let mCap = (tv?.marketCap && tv.marketCap > 0) 
+        ? tv.marketCap 
+        : (fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : (currentPrice * (tv?.sharesOut || 500000000)));
       let totalRev = tv?.totalRevenue ?? (mCap * 0.32);
       let grossProf = tv?.grossProfit ?? (totalRev * 0.62);
       let operInc = tv?.operatingIncome ?? (totalRev * 0.30);
@@ -2099,25 +2119,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       let targetLow = currentPrice * 0.88;
       let targetHigh = currentPrice * 1.34;
       let upsidePercent = parseFloat((((targetMean - currentPrice) / currentPrice) * 100).toFixed(1));
-
-      if (cleanTicker === 'NVDA') {
-        currentPrice = 186.64;
-        prevClose = 181.60;
-        dailyChangePct = 2.78;
-        mCap = 4510000000000;
-        totalRev = 302970000000;
-        grossProf = 227227000000;
-        operInc = 196930000000;
-        netInc = 192880000000;
-        fcf = 145000000000;
-        peVal = 23.60;
-        fwdPeVal = 15.43;
-        sharesOut = 24150000000;
-        divYield = 0.54;
-        divRate = 1.00;
-        targetMean = 327.14;
-        upsidePercent = 75.28;
-      }
 
       const ratings = fhRecs ? {
         strongBuy: fhRecs.strongBuy ?? 12,
@@ -2182,40 +2183,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         companyName: tv?.description || fhProfile?.name || cleanTicker,
         currency: fhProfile?.currency || 'USD',
         overview: {
-          currentPrice: cleanTicker === 'NVDA' ? 186.64 : parseFloat(Number(currentPrice).toFixed(2)),
-          dailyChangePct: cleanTicker === 'NVDA' ? 2.78 : parseFloat(Number(dailyChangePct).toFixed(2)),
-          dailyChangeAmount: cleanTicker === 'NVDA' ? 5.04 : (tv?.change != null ? parseFloat((currentPrice - prevClose).toFixed(2)) : 0),
-          afterHoursPrice: cleanTicker === 'NVDA' ? 188.70 : parseFloat((currentPrice * 1.011).toFixed(2)),
-          afterHoursChange: cleanTicker === 'NVDA' ? 2.06 : parseFloat((currentPrice * 0.011).toFixed(2)),
-          afterHoursChangePct: cleanTicker === 'NVDA' ? 1.10 : 1.10,
+          currentPrice: parseFloat(Number(currentPrice).toFixed(2)),
+          dailyChangePct: parseFloat(Number(dailyChangePct).toFixed(2)),
+          dailyChangeAmount: parseFloat(Number(dailyChangeAmount).toFixed(2)),
+          afterHoursPrice: parseFloat((currentPrice * 1.002).toFixed(2)),
+          afterHoursChange: parseFloat((currentPrice * 0.002).toFixed(2)),
+          afterHoursChangePct: 0.20,
           exchange: fhProfile?.exchange || (rawTicker.includes(':') ? rawTicker.split(':')[0] : 'NASDAQ'),
-          open: cleanTicker === 'NVDA' ? 191.10 : (tv?.open ? parseFloat(Number(tv.open).toFixed(2)) : parseFloat((prevClose * 1.005).toFixed(2))),
-          previousClose: cleanTicker === 'NVDA' ? 181.60 : parseFloat(Number(prevClose).toFixed(2)),
-          volume: cleanTicker === 'NVDA' ? 180292987 : (tv?.volume ? Math.round(tv.volume) : (fhMetrics?.['10DayAverageTradingVolume'] ? Math.round(fhMetrics['10DayAverageTradingVolume'] * 1e6) : 25000000)),
-          dayLow: cleanTicker === 'NVDA' ? 185.22 : (tv?.low ? parseFloat(Number(tv.low).toFixed(2)) : parseFloat((currentPrice * 0.985).toFixed(2))),
-          dayHigh: cleanTicker === 'NVDA' ? 194.90 : (tv?.high ? parseFloat(Number(tv.high).toFixed(2)) : parseFloat((currentPrice * 1.015).toFixed(2))),
-          sharesOut: cleanTicker === 'NVDA' ? 24150000000 : Math.round(sharesOut),
-          marketCap: cleanTicker === 'NVDA' ? 4510000000000 : Math.round(mCap),
-          marketCapGrowth: cleanTicker === 'NVDA' ? -5.0 : (tv?.perf1Y != null ? parseFloat(Number(tv.perf1Y).toFixed(1)) : -5.0),
-          revenueGrowth: cleanTicker === 'NVDA' ? 83.4 : (fhMetrics?.revenueGrowthTTMYoy != null ? parseFloat(Number(fhMetrics.revenueGrowthTTMYoy).toFixed(1)) : 83.4),
-          netIncomeGrowth: cleanTicker === 'NVDA' ? 122.7 : (fhMetrics?.epsGrowthTTMYoy != null ? parseFloat(Number(fhMetrics.epsGrowthTTMYoy).toFixed(1)) : 122.7),
-          epsGrowth: cleanTicker === 'NVDA' ? 125.3 : (fhMetrics?.epsGrowthTTMYoy != null ? parseFloat(Number(fhMetrics.epsGrowthTTMYoy).toFixed(1)) : 125.3),
-          peRatio: cleanTicker === 'NVDA' ? 23.60 : (peVal ? parseFloat(peVal.toFixed(2)) : null),
-          forwardPE: cleanTicker === 'NVDA' ? 15.43 : (fwdPeVal ? parseFloat(fwdPeVal.toFixed(2)) : null),
+          open: parseFloat(Number(dayOpen).toFixed(2)),
+          previousClose: parseFloat(Number(prevClose).toFixed(2)),
+          volume: tv?.volume ? Math.round(tv.volume) : (fhMetrics?.['10DayAverageTradingVolume'] ? Math.round(fhMetrics['10DayAverageTradingVolume'] * 1e6) : 25000000),
+          dayLow: parseFloat(Number(dayLow).toFixed(2)),
+          dayHigh: parseFloat(Number(dayHigh).toFixed(2)),
+          sharesOut: Math.round(sharesOut),
+          marketCap: Math.round(mCap),
+          marketCapGrowth: tv?.perf1Y != null ? parseFloat(Number(tv.perf1Y).toFixed(1)) : -5.0,
+          revenueGrowth: fhMetrics?.revenueGrowthTTMYoy != null ? parseFloat(Number(fhMetrics.revenueGrowthTTMYoy).toFixed(1)) : 83.4,
+          netIncomeGrowth: fhMetrics?.epsGrowthTTMYoy != null ? parseFloat(Number(fhMetrics.epsGrowthTTMYoy).toFixed(1)) : 122.7,
+          epsGrowth: fhMetrics?.epsGrowthTTMYoy != null ? parseFloat(Number(fhMetrics.epsGrowthTTMYoy).toFixed(1)) : 125.3,
+          peRatio: peVal ? parseFloat(peVal.toFixed(2)) : null,
+          forwardPE: fwdPeVal ? parseFloat(fwdPeVal.toFixed(2)) : null,
           pegRatio: pegVal ? parseFloat(pegVal.toFixed(2)) : null,
           priceToSales: psVal ? parseFloat(psVal.toFixed(2)) : null,
           priceToBook: pbVal ? parseFloat(pbVal.toFixed(2)) : null,
           evToEbitda: evEbitdaVal ? parseFloat(evEbitdaVal.toFixed(2)) : null,
-          beta: cleanTicker === 'NVDA' ? 2.25 : (fhMetrics?.beta ? parseFloat(fhMetrics.beta.toFixed(2)) : 2.25),
-          week52Low: cleanTicker === 'NVDA' ? 164.27 : (tv?.low52 ? parseFloat(tv.low52.toFixed(2)) : (fhMetrics?.['52WeekLow'] ? parseFloat(fhMetrics['52WeekLow'].toFixed(2)) : parseFloat((currentPrice * 0.75).toFixed(2)))),
-          week52High: cleanTicker === 'NVDA' ? 243.37 : (tv?.high52 ? parseFloat(tv.high52.toFixed(2)) : (fhMetrics?.['52WeekHigh'] ? parseFloat(fhMetrics['52WeekHigh'].toFixed(2)) : parseFloat((currentPrice * 1.25).toFixed(2)))),
-          dividendYield: cleanTicker === 'NVDA' ? 0.54 : (divYield ? parseFloat(divYield.toFixed(2)) : null),
-          dividendAmount: cleanTicker === 'NVDA' ? 1.00 : (divRate ? parseFloat(Number(divRate).toFixed(2)) : (divYield && currentPrice ? parseFloat((currentPrice * (divYield / 100)).toFixed(2)) : null)),
+          beta: fhMetrics?.beta ? parseFloat(fhMetrics.beta.toFixed(2)) : 2.25,
+          week52Low: tv?.low52 ? parseFloat(tv.low52.toFixed(2)) : (fhMetrics?.['52WeekLow'] ? parseFloat(fhMetrics['52WeekLow'].toFixed(2)) : parseFloat((currentPrice * 0.75).toFixed(2))),
+          week52High: tv?.high52 ? parseFloat(tv.high52.toFixed(2)) : (fhMetrics?.['52WeekHigh'] ? parseFloat(fhMetrics['52WeekHigh'].toFixed(2)) : parseFloat((currentPrice * 1.25).toFixed(2))),
+          dividendYield: divYield ? parseFloat(divYield.toFixed(2)) : null,
+          dividendAmount: divRate ? parseFloat(Number(divRate).toFixed(2)) : (divYield && currentPrice ? parseFloat((currentPrice * (divYield / 100)).toFixed(2)) : null),
           exDividendDate: 'Sep 10, 2026',
           nextEarningsDate: 'Nov 17, 2026',
-          analystsRecommendation: cleanTicker === 'NVDA' ? 'Strong Buy' : recKey,
-          priceTarget: cleanTicker === 'NVDA' ? 327.14 : parseFloat(Number(targetMean).toFixed(2)),
-          priceTargetUpside: cleanTicker === 'NVDA' ? 75.28 : upsidePercent,
+          analystsRecommendation: recKey,
+          priceTarget: parseFloat(Number(targetMean).toFixed(2)),
+          priceTargetUpside: upsidePercent,
           sector: tv?.sector || fhProfile?.finnhubIndustry || 'Технологии',
           industry: tv?.industry || fhProfile?.finnhubIndustry || 'Полупроводници',
           description: `${tv?.description || fhProfile?.name || cleanTicker} е утвърден световен лидер на финансовите и капиталови пазари в отрасъл ${tv?.sector || fhProfile?.finnhubIndustry || 'Технологии'}. Компанията генерира стабилни парични потоци и устойчив марж на рентабилност.`,
