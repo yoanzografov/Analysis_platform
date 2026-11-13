@@ -2129,6 +2129,8 @@ export function buildCashFlowStatement(params: FinancialBuildParams, freqOrQuart
       return { periods, rows };
     }
 
+    const periods = ANNUAL_10Y_PERIODS;
+
     const ocfRow: FinancialStatementRow = { 
       name: 'Cash Flow from Operations (OCF)', 
       key: 'ocf', 
