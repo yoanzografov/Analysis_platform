@@ -398,7 +398,13 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
       freeCashFlow: data?.financials?.freeCashFlow,
       sharesOut: data?.overview?.sharesOut,
       debtEquity: data?.statistics?.debtToEquity,
-      dividendYield: data?.overview?.dividendYield
+      dividendYield: data?.overview?.dividendYield,
+      revenueGrowth: data?.overview?.revenueGrowth ?? (stock as any)?.growth,
+      netIncomeGrowth: data?.overview?.netIncomeGrowth,
+      perf1Y: data?.overview?.marketCapGrowth,
+      grossMargin: data?.statistics?.grossMargin,
+      operatingMargin: data?.statistics?.operatingMargin,
+      netMargin: data?.statistics?.netProfitMargin
     };
 
     if (financialSubTab === 'income') {
@@ -1240,11 +1246,11 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </button>
                         </div>
 
-                        {/* Reverse Order (Oldest/Newest Columns) Toggle (StockAnalysis Style) */}
+                        {/* Reverse Order (Oldest/Newest Columns) Toggle (StockAnalysis 1:1 Style) */}
                         <button
                           type="button"
                           onClick={() => setIsReversedOrder(prev => !prev)}
-                          className={`p-2 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center ${
+                          className={`p-2 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center group ${
                             isReversedOrder
                               ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400 ring-1 ring-indigo-500/30'
                               : 'border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink'
@@ -1252,7 +1258,20 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           title={isReversedOrder ? "Обърни реда на периодите: Най-нови отляво (TTM -> 2017)" : "Обърни реда на периодите: Най-стари отляво (2017 -> TTM)"}
                           aria-label="Reverse column order"
                         >
-                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                          <svg 
+                            className={`w-4 h-4 transition-colors ${isReversedOrder ? 'text-indigo-400' : 'text-ink-muted group-hover:text-ink'}`}
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2.2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            <path d="M4 8h16" />
+                            <path d="M15 4l5 4-5 4" />
+                            <path d="M20 16H4" />
+                            <path d="M9 12l-5 4 5 4" />
+                          </svg>
                         </button>
 
                         {/* Export CSV */}
