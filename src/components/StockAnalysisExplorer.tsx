@@ -465,22 +465,6 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     document.body.removeChild(link);
   };
 
-  const handleIconMouseEnter = (e: React.MouseEvent, row: FinancialStatementRow) => {
-    if (pinnedMetricRow) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    setHoveredMetricRow(row);
-    setHoverPos({
-      x: rect.left + rect.width / 2,
-      y: rect.top
-    });
-  };
-
-  const handleIconMouseLeave = () => {
-    if (pinnedMetricRow) return;
-    setHoveredMetricRow(null);
-    setHoverPos(null);
-  };
-
   const handleIconClick = (e: React.MouseEvent, row: FinancialStatementRow) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
@@ -1316,8 +1300,8 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                               pinnedMetricRow ? 'pointer-events-auto ring-2 ring-indigo-500/50 shadow-indigo-500/10' : 'pointer-events-auto'
                             }`}
                             style={{
-                              top: hoverPos.y < 320 ? `${hoverPos.y + 24}px` : `${hoverPos.y - 12}px`,
-                              left: `${hoverPos.x}px`,
+                              top: hoverPos.y < 320 ? `${Math.max(10, hoverPos.y + 24)}px` : `${Math.max(10, hoverPos.y - 12)}px`,
+                              left: `${typeof window !== 'undefined' ? Math.max(260, Math.min(window.innerWidth - 260, hoverPos.x)) : hoverPos.x}px`,
                               transform: hoverPos.y < 320 ? 'translate(-50%, 0)' : 'translate(-50%, -100%)'
                             }}
                           >
@@ -1338,11 +1322,6 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                               </div>
 
                               <div className="flex items-center gap-2 shrink-0">
-                                {pinnedMetricRow && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
-                                    Заключена
-                                  </span>
-                                )}
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1471,7 +1450,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                             </div>
 
                             <div className="text-center text-[10px] text-ink-faint mt-1">
-                              💡 Кликнете върху иконката за заключване или затваряне
+                              💡 Кликнете върху бутона 📊 или ✕ за затваряне
                             </div>
                           </div>
                         )}
@@ -1534,8 +1513,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 return (
                                   <tr 
                                     key={idx} 
-                                    onClick={(e) => handleIconClick(e, row)}
-                                    className={`group transition-colors cursor-pointer hover:bg-card-hover/60 ${
+                                    className={`group transition-colors hover:bg-card-hover/40 ${
                                       isActive
                                         ? 'bg-indigo-500/10 border-l-4 border-indigo-500 font-bold' 
                                         : isBold 
@@ -1554,15 +1532,14 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                         <span className="truncate">{row.name}</span>
                                         <button
                                           type="button"
-                                          onMouseEnter={(e) => handleIconMouseEnter(e, row)}
-                                          onMouseLeave={handleIconMouseLeave}
                                           onClick={(e) => handleIconClick(e, row)}
-                                          className={`p-1 rounded transition-colors cursor-pointer shrink-0 ${
+                                          className={`p-1.5 rounded-lg transition-all cursor-pointer shrink-0 ${
                                             isActive
-                                              ? 'text-indigo-400 bg-indigo-500/20 ring-1 ring-indigo-500/40 opacity-100'
-                                              : 'text-ink-faint hover:text-indigo-400 hover:bg-card-hover/80 opacity-40 group-hover:opacity-100'
+                                              ? 'text-indigo-400 bg-indigo-500/25 ring-1 ring-indigo-500/50 shadow-xs opacity-100 scale-105'
+                                              : 'text-ink-faint hover:text-indigo-400 hover:bg-indigo-500/15 opacity-60 group-hover:opacity-100'
                                           }`}
-                                          title={isActive ? 'Затвори графиката' : 'Отвори графиката'}
+                                          title={isActive ? 'Затвори графиката' : `Покажи графика за ${row.name}`}
+                                          aria-label={`Графика за ${row.name}`}
                                         >
                                           <BarChart3 className="w-3.5 h-3.5" />
                                         </button>
