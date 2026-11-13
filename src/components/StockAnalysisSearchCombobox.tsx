@@ -149,10 +149,10 @@ export default function StockAnalysisSearchCombobox({
         </span>
       )}
 
-      {/* Combobox Search Trigger / Input */}
-      <div className="relative min-w-[240px] sm:min-w-[300px]">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-card hover:border-indigo-500/50 transition-all shadow-xs focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-500">
-          <Search className="w-3.5 h-3.5 text-ink-faint shrink-0" />
+      {/* Combobox Search Trigger / Input - Styled 1:1 like INTERACTIVE TABLE search bar */}
+      <div className="relative w-full sm:w-64 md:w-72">
+        <div className="relative w-full">
+          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-ink-faint pointer-events-none" />
           <input
             ref={inputRef}
             type="text"
@@ -179,12 +179,8 @@ export default function StockAnalysisSearchCombobox({
                 setIsOpen(false);
               }
             }}
-            placeholder={
-              selectedStock
-                ? `${selectedStock.ticker} — ${selectedStock.companyName || 'Търси актив...'}`
-                : 'Търси компания или тикер (напр. NVDA, AAPL, PLTR)...'
-            }
-            className="w-full bg-transparent text-xs font-bold text-ink placeholder:text-ink-faint focus:outline-none"
+            placeholder="Търсене по тикер или име..."
+            className="w-full bg-bg rounded-2xl border border-border pl-8 pr-8 py-1 text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:border-border font-sans tabular-nums"
           />
           {query ? (
             <button
@@ -193,15 +189,15 @@ export default function StockAnalysisSearchCombobox({
                 setQuery('');
                 inputRef.current?.focus();
               }}
-              className="p-0.5 rounded hover:bg-card-hover text-ink-faint hover:text-ink transition-colors cursor-pointer"
+              className="absolute right-2.5 top-1.5 p-0.5 rounded hover:bg-card-hover text-ink-faint hover:text-ink transition-colors cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
-          ) : (
-            <span className="text-[10px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-border/40 text-ink-faint shrink-0">
-              {selectedStock?.ticker || 'Search'}
+          ) : selectedStock ? (
+            <span className="absolute right-2.5 top-1.5 text-[10px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-border/40 text-ink-faint pointer-events-none">
+              {selectedStock.ticker}
             </span>
-          )}
+          ) : null}
         </div>
 
         {/* Dropdown Results Popover */}
