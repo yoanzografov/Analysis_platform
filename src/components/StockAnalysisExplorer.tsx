@@ -82,7 +82,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   const [financialSubTab, setFinancialSubTab] = useState<'overview' | 'income' | 'balance' | 'cashflow' | 'ratios' | 'kpis'>('overview');
   const [financialScale, setFinancialScale] = useState<FinancialScale>('millions');
   const [showChart, setShowChart] = useState<boolean>(true);
-  const [financialFreq, setFinancialFreq] = useState<'annual' | 'quarterly' | 'ttm'>('annual');
+  const [financialFreq, setFinancialFreq] = useState<'annual' | 'quarterly' | 'trailing'>('annual');
   const [showIndicators, setShowIndicators] = useState<boolean>(true);
   const [overviewRevenueChartFreq, setOverviewRevenueChartFreq] = useState<'annual' | 'ttm'>('annual');
   const [isFinancialsDropdownOpen, setIsFinancialsDropdownOpen] = useState<boolean>(false);
@@ -412,33 +412,33 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
     const income = (isQ && data?.financials?.quarterlyIncomeStatement) 
       ? data.financials.quarterlyIncomeStatement 
-      : (!isQ && data?.financials?.incomeStatement) 
+      : (!isQ && financialFreq === 'annual' && data?.financials?.incomeStatement) 
         ? data.financials.incomeStatement 
-        : buildIncomeStatement(buildParams, isQ);
+        : buildIncomeStatement(buildParams, financialFreq);
 
     const balance = (isQ && data?.financials?.quarterlyBalanceSheet)
       ? data.financials.quarterlyBalanceSheet
-      : (!isQ && data?.financials?.balanceSheet)
+      : (!isQ && financialFreq === 'annual' && data?.financials?.balanceSheet)
         ? data.financials.balanceSheet
-        : buildBalanceSheet(buildParams, isQ);
+        : buildBalanceSheet(buildParams, financialFreq);
 
     const cashflow = (isQ && data?.financials?.quarterlyCashFlow)
       ? data.financials.quarterlyCashFlow
-      : (!isQ && data?.financials?.cashFlow)
+      : (!isQ && financialFreq === 'annual' && data?.financials?.cashFlow)
         ? data.financials.cashFlow
-        : buildCashFlowStatement(buildParams, isQ);
+        : buildCashFlowStatement(buildParams, financialFreq);
 
     const ratios = (isQ && data?.financials?.quarterlyRatios)
       ? data.financials.quarterlyRatios
-      : (!isQ && data?.financials?.ratios)
+      : (!isQ && financialFreq === 'annual' && data?.financials?.ratios)
         ? data.financials.ratios
-        : buildFinancialRatios(buildParams, isQ);
+        : buildFinancialRatios(buildParams, financialFreq);
 
     const kpis = (isQ && data?.financials?.quarterlyKpis)
       ? data.financials.quarterlyKpis
-      : (!isQ && data?.financials?.kpis)
+      : (!isQ && financialFreq === 'annual' && data?.financials?.kpis)
         ? data.financials.kpis
-        : buildKpisMetrics(buildParams, isQ);
+        : buildKpisMetrics(buildParams, financialFreq);
 
     return { income, balance, cashflow, ratios, kpis };
   }, [financialFreq, data, cleanTicker, stock, activeStockPrice]);
@@ -455,11 +455,8 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
   const displayPeriods = useMemo(() => {
     if (!currentStatementTable?.periods) return [];
-    if (financialFreq === 'ttm') {
-      return ['TTM'];
-    }
     return isReversedOrder ? [...currentStatementTable.periods].reverse() : currentStatementTable.periods;
-  }, [currentStatementTable?.periods, isReversedOrder, financialFreq]);
+  }, [currentStatementTable?.periods, isReversedOrder]);
 
   const handleExportFinancialsCsv = () => {
     if (!currentStatementTable) return;
@@ -592,75 +589,19 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   }, [cleanTicker, data, activeStockPrice]);
 
   const revenueProfitChartData = useMemo(() => {
-    if (cleanTicker === 'AAPL') {
-      if (financialFreq === 'annual' || financialFreq === 'ttm') {
-        return [
-          { period: '2016', revenue: 215639, netIncome: 45687, margin: 21.2 },
-          { period: '2017', revenue: 229234, netIncome: 48351, margin: 21.1 },
-          { period: '2018', revenue: 265595, netIncome: 59531, margin: 22.4 },
-          { period: '2019', revenue: 260174, netIncome: 55256, margin: 21.2 },
-          { period: '2020', revenue: 274515, netIncome: 57411, margin: 20.9 },
-          { period: '2021', revenue: 365817, netIncome: 94680, margin: 25.9 },
-          { period: '2022', revenue: 394328, netIncome: 99803, margin: 25.3 },
-          { period: '2023', revenue: 383285, netIncome: 96995, margin: 25.3 },
-          { period: '2024', revenue: 391035, netIncome: 93736, margin: 24.0 },
-          { period: '2025', revenue: 416161, netIncome: 103450, margin: 24.9 },
-          { period: 'TTM', revenue: 478834, netIncome: 132175, margin: 27.6 }
-        ];
-      }
-      return [
-        { period: "Q4 '24", revenue: 94930, netIncome: 14736, margin: 15.5 },
-        { period: "Q1 '25", revenue: 124328, netIncome: 36330, margin: 29.2 },
-        { period: "Q2 '25", revenue: 95359, netIncome: 24780, margin: 26.0 },
-        { period: "Q3 '25", revenue: 85777, netIncome: 21448, margin: 25.0 },
-        { period: "Q4 '25", revenue: 102500, netIncome: 25800, margin: 25.2 },
-        { period: "Q1 '26", revenue: 138200, netIncome: 41200, margin: 29.8 },
-        { period: "Q2 '26", revenue: 105400, netIncome: 28500, margin: 27.0 },
-        { period: "Q3 '26", revenue: 94800, netIncome: 24600, margin: 26.0 }
-      ];
-    }
-
-    if (cleanTicker === 'NVDA') {
-      if (financialFreq === 'annual' || financialFreq === 'ttm') {
-        return [
-          { period: '2017', revenue: 5010, netIncome: 1670, margin: 33.3 },
-          { period: '2018', revenue: 6910, netIncome: 3050, margin: 44.1 },
-          { period: '2019', revenue: 9710, netIncome: 2800, margin: 28.8 },
-          { period: '2020', revenue: 11720, netIncome: 2800, margin: 23.9 },
-          { period: '2021', revenue: 10920, netIncome: 4330, margin: 39.7 },
-          { period: '2022', revenue: 16680, netIncome: 9750, margin: 58.5 },
-          { period: '2023', revenue: 26910, netIncome: 4370, margin: 16.2 },
-          { period: '2024', revenue: 26970, netIncome: 4370, margin: 16.2 },
-          { period: '2025', revenue: 60920, netIncome: 29760, margin: 48.9 },
-          { period: '2026', revenue: 125000, netIncome: 66380, margin: 53.1 },
-          { period: 'TTM', revenue: 302970, netIncome: 192880, margin: 63.7 }
-        ];
-      }
-      return [
-        { period: "Q4 '24", revenue: 22100, netIncome: 12290, margin: 55.6 },
-        { period: "Q1 '25", revenue: 26040, netIncome: 14880, margin: 57.1 },
-        { period: "Q2 '25", revenue: 30040, netIncome: 16600, margin: 55.3 },
-        { period: "Q3 '25", revenue: 35080, netIncome: 19310, margin: 55.0 },
-        { period: "Q4 '25", revenue: 40500, netIncome: 22280, margin: 55.0 },
-        { period: "Q1 '26", revenue: 48200, netIncome: 27520, margin: 57.1 },
-        { period: "Q2 '26", revenue: 58600, netIncome: 34220, margin: 58.4 },
-        { period: "Q3 '26", revenue: 68400, netIncome: 41040, margin: 60.0 }
-      ];
-    }
-
-    // Dynamic extraction from financialStatementsBundle.income
+    // Dynamic 1:1 extraction from financialStatementsBundle.income matching current period & frequency
     const revRow = financialStatementsBundle.income?.rows.find(r => r.key === 'revenue');
     const niRow = financialStatementsBundle.income?.rows.find(r => r.key === 'net_income');
     const periods = financialStatementsBundle.income?.periods || [];
     const chronoPeriods = [...periods].reverse();
 
     return chronoPeriods.map(p => {
-      const r = revRow?.values[p] ? Math.round(revRow.values[p]! / 1e6) : 0;
-      const n = niRow?.values[p] ? Math.round(niRow.values[p]! / 1e6) : 0;
+      const r = revRow?.values[p] != null ? Math.round(revRow.values[p]! / 1e6) : 0;
+      const n = niRow?.values[p] != null ? Math.round(niRow.values[p]! / 1e6) : 0;
       const m = r > 0 ? parseFloat(((n / r) * 100).toFixed(1)) : 20.0;
       return { period: p, revenue: r, netIncome: n, margin: m };
     });
-  }, [cleanTicker, financialFreq, data, activeStockPrice, financialStatementsBundle.income]);
+  }, [financialStatementsBundle.income]);
 
   const tabs: Array<{ id: StockAnalysisTabId; label: string; icon: any; desc: string; hasDropdown?: boolean; arrow?: boolean }> = [
     { id: 'overview',   label: 'Overview',   icon: LayoutDashboard, desc: 'Общ преглед, оценка и фундаментални данни' },
@@ -1294,14 +1235,15 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </button>
                           <button
                             type="button"
-                            onClick={() => setFinancialFreq('ttm')}
+                            onClick={() => setFinancialFreq('trailing')}
                             className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                              financialFreq === 'ttm'
+                              financialFreq === 'trailing'
                                 ? 'bg-ink text-bg shadow-xs font-black'
                                 : 'text-ink-muted hover:text-ink'
                             }`}
+                            title="Rolling Trailing Twelve Months (TTM) по тримесечия"
                           >
-                            TTM
+                            Trailing
                           </button>
                         </div>
 
@@ -1464,7 +1406,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                   </h4>
                                 </div>
                                 <div className="text-[11px] text-ink-faint mt-0.5 font-medium">
-                                  {cleanTicker} · {data?.currency || 'USD'} · {financialFreq === 'annual' ? 'Годишни финансови данни' : 'Тримесечни финансови данни'}
+                                  {cleanTicker} · {data?.currency || 'USD'} · {financialFreq === 'annual' ? 'Годишни финансови данни' : financialFreq === 'quarterly' ? 'Тримесечни финансови данни' : 'Trailing Twelve Months (TTM)'}
                                 </div>
                               </div>
 
