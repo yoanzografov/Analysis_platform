@@ -98,7 +98,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     });
   };
   const [overviewRevenueChartFreq, setOverviewRevenueChartFreq] = useState<'annual' | 'ttm'>('annual');
-  const [isFinancialsDropdownOpen, setIsFinancialsDropdownOpen] = useState<boolean>(false);
+
   const [isReversedOrder, setIsReversedOrder] = useState<boolean>(false);
   const [hoveredMetricRow, setHoveredMetricRow] = useState<FinancialStatementRow | null>(null);
   const [pinnedMetricRow, setPinnedMetricRow] = useState<FinancialStatementRow | null>(null);
@@ -831,64 +831,6 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
             <div className="flex items-center gap-1 sm:gap-3 min-w-max text-xs sm:text-[13px]">
               {tabs.map(tab => {
                 const isActive = activeTab === tab.id;
-                if (tab.id === 'financials') {
-                  return (
-                    <div
-                      key={tab.id}
-                      className="relative"
-                      onMouseEnter={() => setIsFinancialsDropdownOpen(true)}
-                      onMouseLeave={() => setIsFinancialsDropdownOpen(false)}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('financials');
-                          setIsFinancialsDropdownOpen(prev => !prev);
-                        }}
-                        className={`flex items-center gap-1 px-3 py-2 rounded-t-md font-semibold transition-all cursor-pointer ${
-                          isActive
-                            ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-bold'
-                            : 'text-[#0072b1] dark:text-sky-400 hover:text-[#005a8c] dark:hover:text-sky-300 font-medium hover:underline'
-                        }`}
-                        title={tab.desc}
-                      >
-                        <span>{tab.label}</span>
-                        <span className="text-[10px] opacity-70">⌄</span>
-                      </button>
-
-                      {isFinancialsDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-0.5 w-52 rounded-xl bg-card/95 backdrop-blur-xl border border-border/90 shadow-2xl z-50 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100">
-                          {[
-                            { id: 'overview', label: 'Financials', icon: '📄' },
-                            { id: 'income', label: 'Income Statement', icon: '📊' },
-                            { id: 'balance', label: 'Balance Sheet', icon: '🏛️' },
-                            { id: 'cashflow', label: 'Cash Flow', icon: '💵' },
-                            { id: 'ratios', label: 'Ratios', icon: '📈' },
-                            { id: 'kpis', label: 'KPIs', icon: '🎯' },
-                          ].map(sub => (
-                            <button
-                              key={sub.id}
-                              type="button"
-                              onClick={() => {
-                                setActiveTab('financials');
-                                setFinancialSubTab(sub.id as any);
-                                setIsFinancialsDropdownOpen(false);
-                              }}
-                              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-bold text-left transition-colors cursor-pointer ${
-                                financialSubTab === sub.id && isActive
-                                  ? 'bg-indigo-500/15 text-indigo-400 font-black'
-                                  : 'text-ink-muted hover:text-ink hover:bg-card-hover'
-                              }`}
-                            >
-                              <span className="text-sm">{sub.icon}</span>
-                              <span>{sub.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
                 return (
                   <button
                     key={tab.id}
