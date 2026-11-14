@@ -826,9 +826,9 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
       {!isCollapsed && (
         <>
-          {/* ─── 9 Tabs Navigation Bar (StockAnalysis Style) ─── */}
-          <div className="px-3 sm:px-5 py-2 bg-bg border-b border-border/80 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="flex items-center gap-1 sm:gap-2 min-w-max text-xs">
+          {/* ─── 9 Tabs Navigation Bar (StockAnalysis Style - Row 1) ─── */}
+          <div className="px-3 sm:px-6 pt-1 bg-bg border-b-2 border-[#18558b] overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex items-center gap-1 sm:gap-3 min-w-max text-xs sm:text-[13px]">
               {tabs.map(tab => {
                 const isActive = activeTab === tab.id;
                 if (tab.id === 'financials') {
@@ -845,10 +845,10 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           setActiveTab('financials');
                           setIsFinancialsDropdownOpen(prev => !prev);
                         }}
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-md font-semibold transition-all cursor-pointer ${
+                        className={`flex items-center gap-1 px-3 py-2 rounded-t-md font-semibold transition-all cursor-pointer ${
                           isActive
-                            ? 'bg-[#e6f0fa] dark:bg-slate-800 text-[#18558b] dark:text-sky-300 font-bold shadow-xs'
-                            : 'text-ink-muted hover:text-ink hover:bg-card-hover font-medium'
+                            ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-bold'
+                            : 'text-[#0072b1] dark:text-sky-400 hover:text-[#005a8c] dark:hover:text-sky-300 font-medium hover:underline'
                         }`}
                         title={tab.desc}
                       >
@@ -857,14 +857,14 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                       </button>
 
                       {isFinancialsDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-1 w-52 rounded-xl bg-card/95 backdrop-blur-xl border border-border/90 shadow-2xl z-50 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100">
+                        <div className="absolute top-full left-0 mt-0.5 w-52 rounded-xl bg-card/95 backdrop-blur-xl border border-border/90 shadow-2xl z-50 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100">
                           {[
-                            { id: 'overview', label: 'Financials Overview', icon: '📄' },
+                            { id: 'overview', label: 'Financials', icon: '📄' },
                             { id: 'income', label: 'Income Statement', icon: '📊' },
                             { id: 'balance', label: 'Balance Sheet', icon: '🏛️' },
                             { id: 'cashflow', label: 'Cash Flow', icon: '💵' },
                             { id: 'ratios', label: 'Ratios', icon: '📈' },
-                            { id: 'kpis', label: 'KPIs & Metrics', icon: '🎯' },
+                            { id: 'kpis', label: 'KPIs', icon: '🎯' },
                           ].map(sub => (
                             <button
                               key={sub.id}
@@ -894,10 +894,10 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-md font-semibold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 px-3 py-2 rounded-t-md font-semibold transition-all cursor-pointer ${
                       isActive
-                        ? 'bg-[#e6f0fa] dark:bg-slate-800 text-[#18558b] dark:text-sky-300 font-bold shadow-xs'
-                        : 'text-ink-muted hover:text-ink hover:bg-card-hover font-medium'
+                        ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-bold'
+                        : 'text-[#0072b1] dark:text-sky-400 hover:text-[#005a8c] dark:hover:text-sky-300 font-medium hover:underline'
                     }`}
                     title={tab.desc}
                   >
@@ -909,6 +909,81 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
               })}
             </div>
           </div>
+
+          {/* ─── Financials Sub-navigation Bar (StockAnalysis Style - Row 2) ─── */}
+          {activeTab === 'financials' && (
+            <div className="px-3 sm:px-6 py-2.5 bg-neutral-100/70 dark:bg-card/50 border-b border-border/70 flex items-center justify-between gap-3 overflow-x-auto scrollbar-none flex-nowrap text-xs sm:text-[13px]">
+              {/* Left: Statement Sub-tabs */}
+              <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 flex-nowrap">
+                {[
+                  { id: 'overview', label: 'Financials' },
+                  { id: 'income', label: 'Income Statement' },
+                  { id: 'balance', label: 'Balance Sheet' },
+                  { id: 'cashflow', label: 'Cash Flow' },
+                  { id: 'ratios', label: 'Ratios' },
+                  { id: 'kpis', label: 'KPIs' }
+                ].map(st => {
+                  const isSelected = financialSubTab === st.id;
+                  return (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => {
+                        setFinancialSubTab(st.id as any);
+                        setPinnedMetricRow(null);
+                        setSelectedBarIndex(null);
+                      }}
+                      className={`transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                        isSelected
+                          ? 'px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-700 font-bold text-neutral-900 dark:text-neutral-100 shadow-2xs'
+                          : 'px-1.5 py-1 font-medium text-[#0072b1] dark:text-sky-400 hover:underline'
+                      }`}
+                    >
+                      {st.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Right: Annual | Quarterly | TTM Frequency Switcher */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-nowrap font-medium">
+                <button
+                  type="button"
+                  onClick={() => setFinancialFreq('annual')}
+                  className={`transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    financialFreq === 'annual'
+                      ? 'px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-700 font-bold text-neutral-900 dark:text-neutral-100 shadow-2xs'
+                      : 'px-2 py-1 text-[#0072b1] dark:text-sky-400 hover:underline'
+                  }`}
+                >
+                  Annual
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFinancialFreq('quarterly')}
+                  className={`transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    financialFreq === 'quarterly'
+                      ? 'px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-700 font-bold text-neutral-900 dark:text-neutral-100 shadow-2xs'
+                      : 'px-2 py-1 text-[#0072b1] dark:text-sky-400 hover:underline'
+                  }`}
+                >
+                  Quarterly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFinancialFreq('trailing')}
+                  className={`transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    financialFreq === 'trailing'
+                      ? 'px-3 py-1 rounded bg-neutral-200 dark:bg-neutral-700 font-bold text-neutral-900 dark:text-neutral-100 shadow-2xs'
+                      : 'px-2 py-1 text-[#0072b1] dark:text-sky-400 hover:underline'
+                  }`}
+                  title="Rolling Trailing Twelve Months (TTM) по тримесечия"
+                >
+                  TTM
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* ─── Active Tab Content Container (Full Height, No Inner Scrollbar) ─── */}
           <div className="p-4 sm:p-5 bg-bg">
@@ -1243,77 +1318,23 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                 {/* ─── TAB 2: FINANCIALS (STOCKANALYSIS FINANCIAL STATEMENTS SUITE) ─── */}
                 {activeTab === 'financials' && (
                   <div className="space-y-4">
-                    {/* Sub-navigation & Period Controls (StockAnalysis Toolbar - Strictly 1 Single Row) */}
+                    {/* Financials Controls Header: Title on Left, Scale & Actions on Right */}
                     <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/70 overflow-x-auto scrollbar-none flex-nowrap">
-                      {/* 6 Statement Sub-tabs */}
-                      <div className="flex items-center gap-1 p-1 rounded-xl bg-card border border-border/80 shrink-0 flex-nowrap">
-                        {[
-                          { id: 'overview', label: 'Overview' },
-                          { id: 'income', label: 'Income Statement' },
-                          { id: 'balance', label: 'Balance Sheet' },
-                          { id: 'cashflow', label: 'Cash Flow' },
-                          { id: 'ratios', label: 'Ratios' },
-                          { id: 'kpis', label: 'KPIs & Metrics' }
-                        ].map(st => (
-                          <button
-                            key={st.id}
-                            type="button"
-                            onClick={() => {
-                              setFinancialSubTab(st.id as any);
-                              setPinnedMetricRow(null);
-                              setSelectedBarIndex(null);
-                            }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                              financialSubTab === st.id
-                                ? 'bg-ink text-bg shadow-sm font-black'
-                                : 'text-ink-muted hover:text-ink hover:bg-card-hover'
-                            }`}
-                          >
-                            {st.label}
-                          </button>
-                        ))}
+                      <div className="shrink-0 min-w-0">
+                        <h3 className="text-sm font-black text-ink uppercase tracking-tight truncate">
+                          {cleanTicker} {financialSubTab === 'overview' ? 'Financials Overview' :
+                           financialSubTab === 'income' ? 'Income Statement' :
+                           financialSubTab === 'balance' ? 'Balance Sheet' :
+                           financialSubTab === 'cashflow' ? 'Cash Flow Statement' :
+                           financialSubTab === 'ratios' ? 'Financial Ratios' : 'KPIs & Metrics'}
+                        </h3>
+                        <p className="text-xs text-ink-muted font-medium mt-0.5 truncate">
+                          Financials in {financialScale === 'billions' ? 'billions' : financialScale === 'full' ? 'exact' : 'millions'} USD. Fiscal year is {cleanTicker === 'AAPL' ? 'October - September' : cleanTicker === 'NVDA' ? 'February - January' : cleanTicker === 'MSFT' ? 'July - June' : 'January - December'}.
+                        </p>
                       </div>
 
-                      {/* Period Switcher, Scale & Action Controls */}
+                      {/* Scale: USD | $M / $B / Full & Actions */}
                       <div className="flex items-center gap-2 shrink-0 flex-nowrap">
-                        {/* Annual / Quarterly / TTM */}
-                        <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setFinancialFreq('annual')}
-                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
-                              financialFreq === 'annual'
-                                ? 'bg-ink text-bg shadow-xs font-black'
-                                : 'text-ink-muted hover:text-ink'
-                            }`}
-                          >
-                            Annual
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFinancialFreq('quarterly')}
-                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
-                              financialFreq === 'quarterly'
-                                ? 'bg-ink text-bg shadow-xs font-black'
-                                : 'text-ink-muted hover:text-ink'
-                            }`}
-                          >
-                            Quarterly
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFinancialFreq('trailing')}
-                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
-                              financialFreq === 'trailing'
-                                ? 'bg-ink text-bg shadow-xs font-black'
-                                : 'text-ink-muted hover:text-ink'
-                            }`}
-                            title="Rolling Trailing Twelve Months (TTM) по тримесечия"
-                          >
-                            Trailing
-                          </button>
-                        </div>
-
                         {/* Scale: USD | $M / $B / Full */}
                         <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold shrink-0">
                           <span className="px-2 py-0.5 text-[11px] font-mono font-bold text-ink-faint border-r border-border/60">
@@ -1406,20 +1427,6 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           {tvEmbedMode ? 'Таблица' : 'TradingView'}
                         </button>
                       </div>
-                    </div>
-
-                    {/* StockAnalysis Title & Fiscal Year Subtitle */}
-                    <div className="pb-1">
-                      <h3 className="text-sm font-black text-ink uppercase tracking-tight">
-                        {cleanTicker} {financialSubTab === 'overview' ? 'Financials Overview' :
-                         financialSubTab === 'income' ? 'Income Statement' :
-                         financialSubTab === 'balance' ? 'Balance Sheet' :
-                         financialSubTab === 'cashflow' ? 'Cash Flow Statement' :
-                         financialSubTab === 'ratios' ? 'Financial Ratios' : 'KPIs & Metrics'}
-                      </h3>
-                      <p className="text-xs text-ink-muted font-medium mt-0.5">
-                        Financials in {financialScale === 'billions' ? 'billions' : financialScale === 'full' ? 'exact' : 'millions'} USD. Fiscal year is {cleanTicker === 'AAPL' ? 'October - September' : cleanTicker === 'NVDA' ? 'February - January' : cleanTicker === 'MSFT' ? 'July - June' : 'January - December'}.
-                      </p>
                     </div>
 
                     {tvEmbedMode ? (
