@@ -1243,10 +1243,10 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                 {/* ─── TAB 2: FINANCIALS (STOCKANALYSIS FINANCIAL STATEMENTS SUITE) ─── */}
                 {activeTab === 'financials' && (
                   <div className="space-y-4">
-                    {/* Sub-navigation & Period Controls (StockAnalysis Toolbar) */}
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-border/70">
+                    {/* Sub-navigation & Period Controls (StockAnalysis Toolbar - Strictly 1 Single Row) */}
+                    <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/70 overflow-x-auto scrollbar-none flex-nowrap">
                       {/* 6 Statement Sub-tabs */}
-                      <div className="flex items-center gap-1 p-1 rounded-xl bg-card border border-border/80 overflow-x-auto scrollbar-none">
+                      <div className="flex items-center gap-1 p-1 rounded-xl bg-card border border-border/80 shrink-0 flex-nowrap">
                         {[
                           { id: 'overview', label: 'Overview' },
                           { id: 'income', label: 'Income Statement' },
@@ -1263,7 +1263,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                               setPinnedMetricRow(null);
                               setSelectedBarIndex(null);
                             }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                               financialSubTab === st.id
                                 ? 'bg-ink text-bg shadow-sm font-black'
                                 : 'text-ink-muted hover:text-ink hover:bg-card-hover'
@@ -1275,13 +1275,13 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                       </div>
 
                       {/* Period Switcher, Scale & Action Controls */}
-                      <div className="flex items-center gap-2 flex-wrap self-end lg:self-center">
+                      <div className="flex items-center gap-2 shrink-0 flex-nowrap">
                         {/* Annual / Quarterly / TTM */}
-                        <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold">
+                        <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold shrink-0">
                           <button
                             type="button"
                             onClick={() => setFinancialFreq('annual')}
-                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
                               financialFreq === 'annual'
                                 ? 'bg-ink text-bg shadow-xs font-black'
                                 : 'text-ink-muted hover:text-ink'
@@ -1292,7 +1292,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <button
                             type="button"
                             onClick={() => setFinancialFreq('quarterly')}
-                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
                               financialFreq === 'quarterly'
                                 ? 'bg-ink text-bg shadow-xs font-black'
                                 : 'text-ink-muted hover:text-ink'
@@ -1303,7 +1303,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <button
                             type="button"
                             onClick={() => setFinancialFreq('trailing')}
-                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
                               financialFreq === 'trailing'
                                 ? 'bg-ink text-bg shadow-xs font-black'
                                 : 'text-ink-muted hover:text-ink'
@@ -1315,14 +1315,14 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                         </div>
 
                         {/* Scale: USD | $M / $B / Full */}
-                        <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold">
+                        <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold shrink-0">
                           <span className="px-2 py-0.5 text-[11px] font-mono font-bold text-ink-faint border-r border-border/60">
                             USD
                           </span>
                           <button
                             type="button"
                             onClick={() => setFinancialScale('millions')}
-                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
+                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
                               financialScale === 'millions'
                                 ? 'bg-ink text-bg shadow-xs font-black'
                                 : 'text-ink-muted hover:text-ink'
@@ -1334,7 +1334,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <button
                             type="button"
                             onClick={() => setFinancialScale('billions')}
-                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
+                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
                               financialScale === 'billions'
                                 ? 'bg-ink text-bg shadow-xs font-black'
                                 : 'text-ink-muted hover:text-ink'
@@ -1346,7 +1346,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <button
                             type="button"
                             onClick={() => setFinancialScale('full')}
-                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
+                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
                               financialScale === 'full'
                                 ? 'bg-ink text-bg shadow-xs font-black'
                                 : 'text-ink-muted hover:text-ink'
@@ -1361,7 +1361,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                         <button
                           type="button"
                           onClick={() => setIsReversedOrder(prev => !prev)}
-                          className={`p-2 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center group ${
+                          className={`p-2 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center shrink-0 group ${
                             isReversedOrder
                               ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400 ring-1 ring-indigo-500/30'
                               : 'border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink'
@@ -1389,7 +1389,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                         <button
                           type="button"
                           onClick={handleExportFinancialsCsv}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink transition-colors cursor-pointer shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink transition-colors cursor-pointer shadow-xs shrink-0"
                           title="Свали текущия отчет в CSV"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -1400,7 +1400,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                         <button
                           type="button"
                           onClick={() => setTvEmbedMode(!tvEmbedMode)}
-                          className="text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold transition-colors cursor-pointer"
+                          className="text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold transition-colors cursor-pointer shrink-0"
                           title="Превключи към TradingView уиджет"
                         >
                           {tvEmbedMode ? 'Таблица' : 'TradingView'}
