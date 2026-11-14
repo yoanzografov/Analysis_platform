@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Stock } from '../types';
 import { StockAnalysisData, StockAnalysisTabId } from '../types/stockAnalysis';
 import { 
@@ -427,6 +427,36 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
       isPositive: pct >= 0,
     };
   }, [dragStartIndex, dragEndIndex, chartPoints]);
+
+  // Global mouseup/touchend listener so drag ends cleanly even if cursor leaves the chart
+  useEffect(() => {
+    if (!isDragging) return;
+    const handleGlobalRelease = () => {
+      setIsDragging(false);
+    };
+    window.addEventListener('mouseup', handleGlobalRelease);
+    window.addEventListener('touchend', handleGlobalRelease);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalRelease);
+      window.removeEventListener('touchend', handleGlobalRelease);
+    };
+  }, [isDragging]);
+
+  const extractChartPointIndex = useCallback((state: any): number | null => {
+    if (!state) return null;
+    if (state.activeTooltipIndex !== undefined && state.activeTooltipIndex !== null) {
+      const n = Number(state.activeTooltipIndex);
+      if (!isNaN(n) && n >= 0 && n < chartPoints.length) return n;
+    }
+    if (state.activePayload && state.activePayload.length > 0) {
+      const pt = state.activePayload[0].payload;
+      if (pt) {
+        const idx = chartPoints.findIndex(p => (p.fullDate && pt.fullDate ? p.fullDate === pt.fullDate : p.date === pt.date));
+        if (idx !== -1) return idx;
+      }
+    }
+    return null;
+  }, [chartPoints]);
 
   const handleDownloadCsv = () => {
     if (!chartPoints.length) return;
@@ -1226,17 +1256,19 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 data={chartPoints} 
                                 margin={{ top: 12, right: 58, left: 0, bottom: 5 }}
                                 onMouseDown={(state: any) => {
-                                  if (state && state.activeTooltipIndex !== undefined) {
-                                    const idx = Number(state.activeTooltipIndex);
+                                  const idx = extractChartPointIndex(state);
+                                  if (idx !== null) {
                                     setIsDragging(true);
                                     setDragStartIndex(idx);
                                     setDragEndIndex(idx);
                                   }
                                 }}
                                 onMouseMove={(state: any) => {
-                                  if (isDragging && state && state.activeTooltipIndex !== undefined) {
-                                    const idx = Number(state.activeTooltipIndex);
-                                    setDragEndIndex(idx);
+                                  if (isDragging) {
+                                    const idx = extractChartPointIndex(state);
+                                    if (idx !== null) {
+                                      setDragEndIndex(idx);
+                                    }
                                   }
                                 }}
                                 onMouseUp={() => {
