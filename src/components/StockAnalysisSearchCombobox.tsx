@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, X, Building2, Globe, Plus, Sparkles, Check } from 'lucide-react';
+import { Search, X, Plus, Sparkles, Check } from 'lucide-react';
 import { Stock } from '../types';
 import { GLOBAL_TICKERS_CATALOG, CatalogStockItem } from '../utils/globalTickersCatalog';
 
@@ -226,10 +226,6 @@ export default function StockAnalysisSearchCombobox({
             {/* Section 1: User's Table Stocks */}
             {userMatches.length > 0 && (
               <div className="space-y-1">
-                <div className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-ink-faint flex items-center gap-1.5">
-                  <Building2 className="w-3 h-3 text-blue-400" />
-                  <span>Вашите активи в платформата</span>
-                </div>
                 {userMatches.map((s) => {
                   const isSelected = selectedStock?.ticker.toUpperCase().trim() === s.ticker.toUpperCase().trim();
                   return (
@@ -269,11 +265,7 @@ export default function StockAnalysisSearchCombobox({
 
             {/* Section 2: Global S&P 500 & Global Catalog */}
             {globalMatches.length > 0 && (
-              <div className="space-y-1 pt-1 border-t border-border/60">
-                <div className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-ink-faint flex items-center gap-1.5">
-                  <Globe className="w-3 h-3 text-emerald-400" />
-                  <span>Глобални пазари & S&P 500 (StockAnalysis)</span>
-                </div>
+              <div className={`space-y-1 ${userMatches.length > 0 ? 'pt-1 border-t border-border/40' : ''}`}>
                 {globalMatches.map((item) => {
                   const isSelected = selectedStock?.ticker.toUpperCase().trim() === item.ticker;
                   return (
