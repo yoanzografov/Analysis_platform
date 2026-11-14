@@ -23,6 +23,7 @@ import {
   RefreshCw,
   Maximize2,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Bookmark,
   Bell,
@@ -83,7 +84,19 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   const [financialScale, setFinancialScale] = useState<FinancialScale>('millions');
   const [showChart, setShowChart] = useState<boolean>(true);
   const [financialFreq, setFinancialFreq] = useState<'annual' | 'quarterly' | 'trailing'>('annual');
-  const [showIndicators, setShowIndicators] = useState<boolean>(true);
+  const [collapsedRowKeys, setCollapsedRowKeys] = useState<Set<string>>(new Set());
+
+  const toggleRowCollapse = (key: string) => {
+    setCollapsedRowKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
   const [overviewRevenueChartFreq, setOverviewRevenueChartFreq] = useState<'annual' | 'ttm'>('annual');
   const [isFinancialsDropdownOpen, setIsFinancialsDropdownOpen] = useState<boolean>(false);
   const [isReversedOrder, setIsReversedOrder] = useState<boolean>(false);
@@ -457,6 +470,60 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     if (!currentStatementTable?.periods) return [];
     return isReversedOrder ? [...currentStatementTable.periods].reverse() : currentStatementTable.periods;
   }, [currentStatementTable?.periods, isReversedOrder]);
+
+  const statementRowsWithHierarchy = useMemo(() => {
+    if (!currentStatementTable?.rows) return [];
+    const rows = currentStatementTable.rows;
+
+    const childToParentMap = new Map<string, string>();
+    const parentsWithChildren = new Set<string>();
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (r.isHeader) continue;
+
+      if (i + 1 < rows.length) {
+        const nextR = rows[i + 1];
+        if (
+          nextR.key === `${r.key}_growth` ||
+          nextR.key === `${r.key}_change` ||
+          (nextR.indent === (r.indent || 0) + 1 && (nextR.name.includes('Growth') || nextR.name.includes('Change')))
+        ) {
+          parentsWithChildren.add(r.key);
+          childToParentMap.set(nextR.key, r.key);
+        }
+      }
+    }
+
+    const result: Array<{
+      row: FinancialStatementRow;
+      hasChildren: boolean;
+      isChild: boolean;
+      isCollapsed: boolean;
+    }> = [];
+
+    for (const r of rows) {
+      if (r.isHeader) {
+        result.push({ row: r, hasChildren: false, isChild: false, isCollapsed: false });
+        continue;
+      }
+
+      const parentKey = childToParentMap.get(r.key);
+      const isChild = !!parentKey;
+
+      // If its parent is collapsed, hide this child row
+      if (isChild && parentKey && collapsedRowKeys.has(parentKey)) {
+        continue;
+      }
+
+      const hasChildren = parentsWithChildren.has(r.key);
+      const isCollapsed = collapsedRowKeys.has(r.key);
+
+      result.push({ row: r, hasChildren, isChild, isCollapsed });
+    }
+
+    return result;
+  }, [currentStatementTable?.rows, collapsedRowKeys]);
 
   const handleExportFinancialsCsv = () => {
     if (!currentStatementTable) return;
@@ -1247,21 +1314,6 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </button>
                         </div>
 
-                        {/* Indicators Toggle */}
-                        <button
-                          type="button"
-                          onClick={() => setShowIndicators(prev => !prev)}
-                          className={`px-2.5 py-1 rounded-md border text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center gap-1.5 ${
-                            showIndicators
-                              ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400'
-                              : 'border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink'
-                          }`}
-                          title="Покажи/скрий редовете за годишен растеж (YoY Growth %)"
-                        >
-                          <Activity className="w-3.5 h-3.5" />
-                          <span>Indicators</span>
-                        </button>
-
                         {/* Scale: USD | $M / $B / Full */}
                         <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold">
                           <span className="px-2 py-0.5 text-[11px] font-mono font-bold text-ink-faint border-r border-border/60">
@@ -1929,9 +1981,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border/40 font-mono">
-                                {(currentStatementTable?.rows || [])
-                                  .filter(row => showIndicators || (!row.name.includes('Growth') && !row.key.includes('_growth') && !row.key.includes('_change')))
-                                  .map((row, idx) => {
+                                {(statementRowsWithHierarchy || []).map(({ row, hasChildren, isChild, isCollapsed }, idx) => {
                                   if (row.isHeader) {
                                     return (
                                       <tr key={idx} className="bg-card-hover/50 font-sans">
@@ -1947,11 +1997,17 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
                                   const isBold = row.isBold;
                                   const isActive = activeMetricRow?.key === row.key;
-                                  const indentClass = row.indent === 1 ? 'pl-8' : row.indent === 2 ? 'pl-12' : 'pl-4';
+                                  const indentClass = isChild 
+                                    ? 'pl-9 sm:pl-10 text-[11px] text-ink-muted' 
+                                    : row.indent === 1 
+                                      ? 'pl-8' 
+                                      : row.indent === 2 
+                                        ? 'pl-12' 
+                                        : 'pl-4';
 
                                   return (
                                     <tr 
-                                      key={idx} 
+                                      key={row.key || idx} 
                                       className={`group transition-colors hover:bg-card-hover/40 ${
                                         isActive
                                           ? 'bg-indigo-500/10 border-l-4 border-indigo-500 font-bold' 
@@ -1960,7 +2016,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                             : 'text-ink-muted'
                                       }`}
                                     >
-                                      <td className={`py-2 px-4 sticky left-0 bg-card z-10 border-r border-border/40 font-sans ${indentClass} ${
+                                      <td className={`py-2 px-3 sm:px-4 sticky left-0 bg-card z-10 border-r border-border/40 font-sans ${indentClass} ${
                                         isActive
                                           ? 'bg-indigo-950/20 text-indigo-300 font-black'
                                           : isBold 
@@ -1968,7 +2024,24 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                             : 'font-medium text-ink-faint group-hover:text-ink'
                                       }`}>
                                         <div className="flex items-center justify-between gap-2">
-                                          <span className="truncate">{row.name}</span>
+                                          <div className="flex items-center gap-1.5 min-w-0">
+                                            {hasChildren && (
+                                              <button
+                                                type="button"
+                                                onClick={() => toggleRowCollapse(row.key)}
+                                                className="w-5 h-5 rounded-full border border-border/80 hover:border-indigo-400 bg-card hover:bg-card-hover text-ink-muted hover:text-indigo-400 flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-2xs"
+                                                title={isCollapsed ? `Разгъни ${row.name}` : `Свий ${row.name}`}
+                                                aria-label={isCollapsed ? `Разгъни ${row.name}` : `Свий ${row.name}`}
+                                              >
+                                                {isCollapsed ? (
+                                                  <ChevronRight className="w-3 h-3 text-ink-muted" />
+                                                ) : (
+                                                  <ChevronDown className="w-3 h-3 text-ink-muted" />
+                                                )}
+                                              </button>
+                                            )}
+                                            <span className="truncate">{row.name}</span>
+                                          </div>
                                           <button
                                             type="button"
                                             onClick={(e) => handleIconClick(e, row)}
