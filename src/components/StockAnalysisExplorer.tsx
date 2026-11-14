@@ -52,6 +52,8 @@ import {
   YAxis, 
   Tooltip as RechartsTooltip,
   ReferenceLine,
+  ReferenceArea,
+  ReferenceDot,
   Legend
 } from 'recharts';
 import { AdvancedRealTimeChart, FundamentalData } from 'react-ts-tradingview-widgets';
@@ -385,6 +387,46 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   }, [chartPoints, chartRange, data]);
 
   const isChartPositive = periodReturnPct >= 0;
+
+  // Google Finance Drag-to-Measure range selection state
+  const [dragStartIndex, setDragStartIndex] = useState<number | null>(null);
+  const [dragEndIndex, setDragEndIndex] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  // Reset range selection whenever timeframe or stock changes
+  useEffect(() => {
+    setDragStartIndex(null);
+    setDragEndIndex(null);
+    setIsDragging(false);
+  }, [chartRange, cleanTicker]);
+
+  const selectedRangeData = useMemo(() => {
+    if (
+      dragStartIndex === null ||
+      dragEndIndex === null ||
+      dragStartIndex === dragEndIndex ||
+      !chartPoints.length
+    ) {
+      return null;
+    }
+    const startIdx = Math.max(0, Math.min(dragStartIndex, dragEndIndex));
+    const endIdx = Math.min(chartPoints.length - 1, Math.max(dragStartIndex, dragEndIndex));
+    const startPt = chartPoints[startIdx];
+    const endPt = chartPoints[endIdx];
+    if (!startPt || !endPt || startPt.price <= 0) return null;
+
+    const diff = endPt.price - startPt.price;
+    const pct = parseFloat(((diff / startPt.price) * 100).toFixed(2));
+    return {
+      startIdx,
+      endIdx,
+      startPt,
+      endPt,
+      diff,
+      pct,
+      isPositive: pct >= 0,
+    };
+  }, [dragStartIndex, dragEndIndex, chartPoints]);
 
   const handleDownloadCsv = () => {
     if (!chartPoints.length) return;
@@ -1101,20 +1143,20 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
                       </div>
 
-                      {/* RIGHT: Interactive Timeframe Price Chart */}
-                      <div className="lg:col-span-6 flex flex-col p-1 sm:p-2">
-                        {/* Timeframe Controls Bar */}
-                        <div className="flex items-center justify-between gap-2 pb-2">
-                          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+                      {/* RIGHT: Interactive Timeframe Price Chart (Google Finance 1:1) */}
+                      <div className="lg:col-span-6 flex flex-col p-1 sm:p-2 select-none">
+                        {/* Timeframe Controls Bar (Google Finance Style) */}
+                        <div className="flex items-center justify-between gap-2 pb-1.5">
+                          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none">
                             {(['1D', '5D', '1M', 'YTD', '3M', '6M', '1Y', '5Y', 'Max'] as const).map(tf => (
                               <button
                                 key={tf}
                                 type="button"
                                 onClick={() => setChartRange(tf)}
-                                className={`px-2 py-0.5 text-xs font-semibold rounded transition-all cursor-pointer ${
+                                className={`px-2 py-0.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                                   chartRange === tf
-                                    ? 'bg-slate-200 dark:bg-slate-700 text-ink font-bold shadow-2xs'
-                                    : 'text-ink-muted hover:text-ink hover:bg-card-hover'
+                                    ? 'bg-[#253248] text-white font-bold shadow-xs'
+                                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
                                 }`}
                               >
                                 {tf}
@@ -1125,26 +1167,54 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <button
                             type="button"
                             onClick={handleDownloadCsv}
-                            className="p-1 rounded-md text-ink-faint hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
+                            className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
                             title="Свали данните за графиката като CSV"
                           >
                             <Download className="w-4 h-4" />
                           </button>
                         </div>
 
-                        {/* Floating Performance Pill Aligned Under Selected Timeframe */}
-                        <div className="flex items-center justify-center my-1.5">
-                          <span className={`px-2 py-0.5 rounded text-xs font-black shadow-xs font-mono ${
-                            isChartPositive
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-[#d92d20] text-white'
-                          }`}>
-                            {isChartPositive ? '+' : ''}{periodReturnPct.toFixed(2)}%
-                          </span>
+                        {/* Floating Performance Pill Aligned Under Selected Timeframe (Google Finance Style) */}
+                        <div className="flex flex-col items-center justify-center my-1 min-h-[36px]">
+                          {(() => {
+                            const activePct = selectedRangeData ? selectedRangeData.pct : periodReturnPct;
+                            const activeIsPositive = selectedRangeData ? selectedRangeData.isPositive : isChartPositive;
+                            return (
+                              <>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`px-3 py-0.5 rounded-md text-xs sm:text-sm font-bold font-mono transition-all ${
+                                    activeIsPositive
+                                      ? 'bg-[#00c853] text-white shadow-xs'
+                                      : 'bg-[#d92d20] text-white shadow-xs'
+                                  }`}>
+                                    {activeIsPositive ? '+' : ''}{activePct.toFixed(2)}%
+                                  </span>
+                                  {selectedRangeData && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDragStartIndex(null);
+                                        setDragEndIndex(null);
+                                      }}
+                                      className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-700 transition-colors cursor-pointer"
+                                      title="Изчисти избора"
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                                {selectedRangeData && (
+                                  <div className="text-[10.5px] font-medium text-neutral-400 mt-0.5 animate-in fade-in duration-150">
+                                    {selectedRangeData.startPt.date} (${selectedRangeData.startPt.price.toFixed(2)}) → {selectedRangeData.endPt.date} (${selectedRangeData.endPt.price.toFixed(2)}) • {selectedRangeData.diff >= 0 ? '+' : ''}${selectedRangeData.diff.toFixed(2)}
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
 
-                        {/* Area Chart Container */}
-                        <div className="w-full h-[270px] relative">
+                        {/* Area Chart Container with Drag-to-Measure */}
+                        <div className="w-full h-[270px] relative cursor-crosshair">
                           {isChartLoading ? (
                             <div className="absolute inset-0 flex items-center justify-center gap-2 text-xs font-bold text-ink-faint">
                               <RefreshCw className="w-4 h-4 animate-spin text-indigo-400" />
@@ -1152,41 +1222,69 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                             </div>
                           ) : (
                             <ResponsiveContainer width="100%" height="100%">
-                              <AreaChart data={chartPoints} margin={{ top: 12, right: 58, left: 0, bottom: 5 }}>
+                              <AreaChart 
+                                data={chartPoints} 
+                                margin={{ top: 12, right: 58, left: 0, bottom: 5 }}
+                                onMouseDown={(state: any) => {
+                                  if (state && state.activeTooltipIndex !== undefined) {
+                                    const idx = Number(state.activeTooltipIndex);
+                                    setIsDragging(true);
+                                    setDragStartIndex(idx);
+                                    setDragEndIndex(idx);
+                                  }
+                                }}
+                                onMouseMove={(state: any) => {
+                                  if (isDragging && state && state.activeTooltipIndex !== undefined) {
+                                    const idx = Number(state.activeTooltipIndex);
+                                    setDragEndIndex(idx);
+                                  }
+                                }}
+                                onMouseUp={() => {
+                                  setIsDragging(false);
+                                  if (dragStartIndex !== null && dragEndIndex !== null && dragStartIndex === dragEndIndex) {
+                                    setDragStartIndex(null);
+                                    setDragEndIndex(null);
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  if (isDragging) setIsDragging(false);
+                                }}
+                              >
                                 <defs>
-                                  <linearGradient id="stockAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={isChartPositive ? '#10b981' : '#ef4444'} stopOpacity={0.28} />
-                                    <stop offset="95%" stopColor={isChartPositive ? '#10b981' : '#ef4444'} stopOpacity={0.02} />
+                                  <linearGradient id="googleFinanceGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={isChartPositive ? '#00c853' : '#ef4444'} stopOpacity={0.32} />
+                                    <stop offset="85%" stopColor={isChartPositive ? '#00c853' : '#ef4444'} stopOpacity={0.03} />
+                                    <stop offset="100%" stopColor={isChartPositive ? '#00c853' : '#ef4444'} stopOpacity={0.0} />
                                   </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.18)" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
                                 <XAxis
                                   dataKey="date"
                                   stroke="transparent"
-                                  tick={{ fill: 'var(--color-ink-faint)', fontSize: 11 }}
+                                  tick={{ fill: '#80868b', fontSize: 11 }}
                                   tickLine={false}
                                   minTickGap={24}
                                 />
                                 <YAxis
                                   orientation="right"
                                   stroke="transparent"
-                                  tick={{ fill: 'var(--color-ink-faint)', fontSize: 11 }}
+                                  tick={{ fill: '#80868b', fontSize: 11 }}
                                   tickLine={false}
                                   domain={['auto', 'auto']}
                                   tickFormatter={(v) => Number(v).toFixed(2)}
-                                  width={45}
+                                  width={48}
                                 />
                                 <ReferenceLine 
                                   y={activeStockPrice} 
-                                  stroke={isChartPositive ? '#10b981' : '#dc2626'} 
+                                  stroke={isChartPositive ? '#00c853' : '#dc2626'} 
                                   strokeDasharray="2 2" 
                                   strokeOpacity={0.8}
                                   label={(props: any) => {
                                     const { viewBox } = props;
                                     if (!viewBox) return null;
                                     const { x, y, width } = viewBox;
-                                    const badgeW = 52;
-                                    const badgeH = 19;
+                                    const badgeW = 54;
+                                    const badgeH = 20;
                                     return (
                                       <g>
                                         <rect
@@ -1194,16 +1292,16 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                           y={y - badgeH / 2}
                                           width={badgeW}
                                           height={badgeH}
-                                          rx={3}
-                                          ry={3}
-                                          fill={isChartPositive ? '#10b981' : '#dc2626'}
+                                          rx={4}
+                                          ry={4}
+                                          fill={isChartPositive ? '#00c853' : '#dc2626'}
                                         />
                                         <text
                                           x={x + width - 2 + badgeW / 2}
                                           y={y + 3.5}
                                           textAnchor="middle"
                                           fill="#ffffff"
-                                          fontSize={10.5}
+                                          fontSize={11}
                                           fontWeight="bold"
                                           fontFamily="monospace"
                                         >
@@ -1213,16 +1311,54 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                     );
                                   }}
                                 />
+                                {selectedRangeData && (
+                                  <>
+                                    <ReferenceArea
+                                      x1={selectedRangeData.startPt.date}
+                                      x2={selectedRangeData.endPt.date}
+                                      fill={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
+                                      fillOpacity={0.16}
+                                    />
+                                    <ReferenceLine
+                                      x={selectedRangeData.startPt.date}
+                                      stroke={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
+                                      strokeWidth={1.5}
+                                      strokeDasharray="2 2"
+                                    />
+                                    <ReferenceLine
+                                      x={selectedRangeData.endPt.date}
+                                      stroke={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
+                                      strokeWidth={1.5}
+                                      strokeDasharray="2 2"
+                                    />
+                                    <ReferenceDot
+                                      x={selectedRangeData.startPt.date}
+                                      y={selectedRangeData.startPt.price}
+                                      r={4.5}
+                                      fill="#ffffff"
+                                      stroke={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
+                                      strokeWidth={2}
+                                    />
+                                    <ReferenceDot
+                                      x={selectedRangeData.endPt.date}
+                                      y={selectedRangeData.endPt.price}
+                                      r={4.5}
+                                      fill="#ffffff"
+                                      stroke={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
+                                      strokeWidth={2}
+                                    />
+                                  </>
+                                )}
                                 <RechartsTooltip
                                   content={({ active, payload }) => {
                                     if (!active || !payload || !payload.length) return null;
                                     const pt = payload[0].payload;
                                     return (
-                                      <div className="bg-stone-950/95 border border-indigo-500/40 rounded-xl px-3 py-2 shadow-xl text-xs">
+                                      <div className="bg-stone-950/95 border border-neutral-700/80 rounded-xl px-3 py-2 shadow-2xl text-xs">
                                         <div className="text-stone-400 font-medium mb-0.5">{pt.fullDate || pt.date}</div>
                                         <div className="font-mono font-black text-sm text-white flex items-center gap-1.5">
                                           <span>Цена:</span>
-                                          <span style={{ color: isChartPositive ? '#10b981' : '#ef4444' }}>${Number(pt.price).toFixed(2)}</span>
+                                          <span style={{ color: isChartPositive ? '#00c853' : '#ef4444' }}>${Number(pt.price).toFixed(2)}</span>
                                         </div>
                                       </div>
                                     );
@@ -1231,10 +1367,10 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 <Area
                                   type="monotone"
                                   dataKey="price"
-                                  stroke={isChartPositive ? '#10b981' : '#dc2626'}
-                                  strokeWidth={2}
+                                  stroke={isChartPositive ? '#00c853' : '#dc2626'}
+                                  strokeWidth={2.4}
                                   fillOpacity={1}
-                                  fill="url(#stockAreaGrad)"
+                                  fill="url(#googleFinanceGrad)"
                                 />
                               </AreaChart>
                             </ResponsiveContainer>
