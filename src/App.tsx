@@ -2620,13 +2620,7 @@ export default function App() {
             <div>
               <h2 className="text-base font-black uppercase text-ink tracking-tight flex items-center gap-2">
                 <span>STOCKS DEEP ANALYSIS</span>
-                <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-xs font-bold font-mono">
-                  9 РАЗДЕЛА
-                </span>
               </h2>
-              <p className="text-xs text-ink-muted">
-                Пълен институционален фундаментален и технически анализ на всяка компания
-              </p>
             </div>
           </div>
 

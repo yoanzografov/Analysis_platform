@@ -143,12 +143,6 @@ export default function StockAnalysisSearchCombobox({
         </button>
       )}
 
-      {isCurrentStockInTable && (
-        <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500/80 px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-          <Check className="w-3 h-3" /> В портфолиото
-        </span>
-      )}
-
       {/* Combobox Search Trigger / Input - Styled 1:1 like INTERACTIVE TABLE search bar */}
       <div className="relative w-full sm:w-64 md:w-72">
         <div className="relative w-full">
