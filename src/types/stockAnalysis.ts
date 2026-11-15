@@ -102,6 +102,7 @@ export interface StockAnalysisData {
     targetMedian: number | null;
     currentPrice: number;
     recommendationKey: string;
+    recommendationMean?: number | null;
     numberOfAnalysts: number;
     upsidePercent: number | null;
     ratings: {
@@ -110,7 +111,36 @@ export interface StockAnalysisData {
       hold: number;
       underperform: number;
       sell: number;
+      strongSell?: number;
     };
+    revenueEstimates?: Array<{
+      period: string;
+      year: string;
+      avg: number | null;
+      low: number | null;
+      high: number | null;
+      growth: number | null;
+      numberOfAnalysts: number;
+    }>;
+    epsEstimates?: Array<{
+      period: string;
+      year: string;
+      avg: number | null;
+      low: number | null;
+      high: number | null;
+      growth: number | null;
+      forwardPE?: number | null;
+      numberOfAnalysts: number;
+    }>;
+    recentRatings?: Array<{
+      date: string;
+      firm: string;
+      toGrade: string;
+      fromGrade?: string;
+      action: string;
+      currentPriceTarget?: number | null;
+      priorPriceTarget?: number | null;
+    }>;
   };
   statistics: {
     peRatio: number | null;

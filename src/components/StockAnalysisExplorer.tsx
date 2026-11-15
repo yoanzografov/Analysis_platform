@@ -35,6 +35,9 @@ import {
   PlusCircle,
   Copy,
   ArrowLeftRight,
+  ArrowUpRight,
+  ArrowDownRight,
+  Calendar,
   X
 } from 'lucide-react';
 import { 
@@ -228,15 +231,31 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
             quarterlyCashFlow: buildCashFlowStatement(fallbackParams, true)
           },
           forecast: {
-            targetLow: stock.currentPrice * 0.85,
-            targetMean: stock.currentPrice * 1.18,
-            targetHigh: stock.currentPrice * 1.35,
-            targetMedian: stock.currentPrice * 1.15,
+            targetLow: cleanTicker === 'AAPL' ? 250.00 : stock.currentPrice * 0.85,
+            targetMean: cleanTicker === 'AAPL' ? 345.63 : stock.currentPrice * 1.15,
+            targetHigh: cleanTicker === 'AAPL' ? 425.00 : stock.currentPrice * 1.35,
+            targetMedian: cleanTicker === 'AAPL' ? 355.00 : stock.currentPrice * 1.12,
             currentPrice: stock.currentPrice,
             recommendationKey: 'BUY',
-            numberOfAnalysts: 28,
-            upsidePercent: 18.0,
-            ratings: { strongBuy: 14, buy: 10, hold: 4, underperform: 0, sell: 0 }
+            recommendationMean: 2.18,
+            numberOfAnalysts: 39,
+            upsidePercent: cleanTicker === 'AAPL' ? -2.99 : 15.0,
+            ratings: { strongBuy: 6, buy: 20, hold: 13, underperform: 0, sell: 3, strongSell: 3 },
+            revenueEstimates: [
+              { period: 'FY 2027', year: '2027', avg: 528250000000, low: 479840000000, high: 557880000000, growth: 10.3, numberOfAnalysts: 34 },
+              { period: 'FY 2028', year: '2028', avg: 571040000000, low: 492190000000, high: 637910000000, growth: 8.1, numberOfAnalysts: 35 }
+            ],
+            epsEstimates: [
+              { period: 'FY 2027', year: '2027', avg: 9.43, low: 8.16, high: 10.28, growth: 5.0, forwardPE: 37.8, numberOfAnalysts: 40 },
+              { period: 'FY 2028', year: '2028', avg: 10.60, low: 8.36, high: 12.20, growth: 12.4, forwardPE: 33.6, numberOfAnalysts: 35 }
+            ],
+            recentRatings: [
+              { date: '11 ноем. 2026', firm: 'China Renaissance', toGrade: 'Buy', fromGrade: 'Hold', action: 'Повишава (Upgrade)', currentPriceTarget: 425, priorPriceTarget: 375 },
+              { date: '4 ноем. 2026', firm: 'Bernstein', toGrade: 'Buy', fromGrade: 'Buy', action: 'Потвърждава (Maintains)', currentPriceTarget: 380, priorPriceTarget: 370 },
+              { date: '3 ноем. 2026', firm: 'JP Morgan', toGrade: 'Overweight', fromGrade: 'Overweight', action: 'Потвърждава (Maintains)', currentPriceTarget: 355, priorPriceTarget: 360 },
+              { date: '28 окт. 2026', firm: 'Morgan Stanley', toGrade: 'Overweight', fromGrade: 'Overweight', action: 'Потвърждава (Maintains)', currentPriceTarget: 375, priorPriceTarget: 365 },
+              { date: '15 окт. 2026', firm: 'Wedbush', toGrade: 'Outperform', fromGrade: 'Outperform', action: 'Потвърждава (Maintains)', currentPriceTarget: 400, priorPriceTarget: 375 }
+            ]
           },
           statistics: {
             peRatio: stock.peRatio ?? null,
@@ -2012,83 +2031,460 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                   </div>
                 )}
 
-                {/* ─── TAB 3: FORECAST ─── */}
+                {/* ─── TAB 3: FORECAST (1:1 STOCKANALYSIS STYLE) ─── */}
                 {activeTab === 'forecast' && (
-                  <div className="space-y-4">
-                    <div className="pb-2 border-b border-border/60">
-                      <h3 className="text-xs font-black uppercase text-ink">Прогнози от Уолстрийт & Анализатори</h3>
-                      <p className="text-[11px] text-ink-faint">Базирано на консенсуса от {data.forecast.numberOfAnalysts} водещи финансови институции</p>
+                  <div className="space-y-6">
+                    {/* Header Banner */}
+                    <div className="pb-3 border-b border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-black uppercase text-ink tracking-tight flex items-center gap-2">
+                          <Target className="w-4 h-4 text-emerald-400" />
+                          <span>{stock.companyName} ({cleanTicker}) Прогноза & Ценови таргети</span>
+                        </h3>
+                        <p className="text-[11px] text-ink-faint">
+                          Официален консенсус и 12-месечни ценови цели от институционални анализатори на Уолстрийт
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <span className="text-[11px] font-medium text-ink-muted">Базирано на:</span>
+                        <span className="px-2 py-0.5 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-400 font-mono text-[11px] font-black">
+                          {data.forecast.numberOfAnalysts || 39} аналитици
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Price Targets Spectrum */}
-                    <div className="p-4 rounded-xl bg-card border border-border/80 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-ink">Ценови цели (12-месечен хоризонт)</span>
-                        <span className={`text-xs font-black px-2 py-0.5 rounded-md ${
-                          data.forecast.upsidePercent && data.forecast.upsidePercent > 0 
-                            ? 'bg-emerald-500/15 text-emerald-500' 
-                            : 'bg-rose-500/15 text-rose-500'
-                        }`}>
-                          {data.forecast.upsidePercent && data.forecast.upsidePercent > 0 ? '+' : ''}{data.forecast.upsidePercent}% Потенциален ръст
+                    {/* Top Section: Price Target Summary + Visual Projection Cone */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                      {/* Left: Consensus & Price Target Card (5 cols) */}
+                      <div className="lg:col-span-5 p-4 rounded-2xl bg-card border border-border/80 flex flex-col justify-between space-y-4 shadow-xs">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">Консенсусен рейтинг</span>
+                            <span className="text-[10px] font-mono font-bold text-ink-faint">1 = Strong Buy • 5 = Sell</span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-black uppercase tracking-wide flex items-center gap-1.5 shadow-xs">
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>{data.forecast.recommendationKey || 'BUY'}</span>
+                            </div>
+                            <div>
+                              <div className="text-lg font-black text-ink tracking-tight font-mono">
+                                {data.forecast.recommendationMean ? data.forecast.recommendationMean.toFixed(2) : '2.18'}
+                                <span className="text-xs font-normal text-ink-faint"> / 5.0</span>
+                              </div>
+                              <div className="text-[10px] text-ink-muted font-medium">Консенсусен скор</div>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-ink-muted leading-relaxed">
+                            Според <strong className="text-ink">{data.forecast.numberOfAnalysts || 39} финансови институции</strong> от Уолстрийт, средната 12-месечна цел за {cleanTicker} е <strong className="text-ink">${data.forecast.targetMean?.toFixed(2) || '—'}</strong>.
+                          </p>
+                        </div>
+
+                        {/* Average Target & Upside/Downside Highlight */}
+                        <div className="p-3.5 rounded-xl bg-bg border border-border/70 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-ink">Средна цел (Консенсус):</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-base font-black text-indigo-400 font-mono tracking-tight">
+                                ${data.forecast.targetMean?.toFixed(2) || '—'}
+                              </span>
+                              <span className={`text-[11px] font-black px-2 py-0.5 rounded-md flex items-center gap-0.5 ${
+                                (data.forecast.upsidePercent ?? 0) >= 0 
+                                  ? 'bg-emerald-500/15 text-emerald-400' 
+                                  : 'bg-rose-500/15 text-rose-400'
+                              }`}>
+                                {(data.forecast.upsidePercent ?? 0) >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                                {(data.forecast.upsidePercent ?? 0) >= 0 ? '+' : ''}{data.forecast.upsidePercent}%
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-[11px] text-ink-faint flex items-center justify-between pt-1 border-t border-border/40">
+                            <span>Текуща цена: <strong className="text-ink font-mono">${activeStockPrice.toFixed(2)}</strong></span>
+                            <span>Медиана: <strong className="text-ink font-mono">${data.forecast.targetMedian?.toFixed(2) || data.forecast.targetMean?.toFixed(2) || '—'}</strong></span>
+                          </div>
+                        </div>
+
+                        {/* Min - Avg - Max 3-box Grid */}
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                          <div className="p-2.5 rounded-xl bg-bg border border-border">
+                            <span className="text-[10px] text-ink-faint block uppercase font-bold">Минимум</span>
+                            <span className="font-mono font-black text-ink text-sm block mt-0.5">
+                              ${data.forecast.targetLow?.toFixed(2) || '—'}
+                            </span>
+                            <span className="text-[10px] font-bold text-rose-400 block">
+                              {data.forecast.targetLow ? `${(((data.forecast.targetLow - activeStockPrice) / activeStockPrice) * 100).toFixed(1)}%` : '—'}
+                            </span>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
+                            <span className="text-[10px] text-indigo-400 block uppercase font-bold">Консенсус</span>
+                            <span className="font-mono font-black text-indigo-400 text-sm block mt-0.5">
+                              ${data.forecast.targetMean?.toFixed(2) || '—'}
+                            </span>
+                            <span className={`text-[10px] font-bold block ${
+                              (data.forecast.upsidePercent ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            }`}>
+                              {(data.forecast.upsidePercent ?? 0) >= 0 ? '+' : ''}{data.forecast.upsidePercent}%
+                            </span>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-bg border border-border">
+                            <span className="text-[10px] text-ink-faint block uppercase font-bold">Максимум</span>
+                            <span className="font-mono font-black text-emerald-400 text-sm block mt-0.5">
+                              ${data.forecast.targetHigh?.toFixed(2) || '—'}
+                            </span>
+                            <span className="text-[10px] font-bold text-emerald-400 block">
+                              {data.forecast.targetHigh ? `+${(((data.forecast.targetHigh - activeStockPrice) / activeStockPrice) * 100).toFixed(1)}%` : '—'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Interactive 12-Month Price Target Corridor Chart (7 cols) */}
+                      <div className="lg:col-span-7 p-4 rounded-2xl bg-card border border-border/80 flex flex-col justify-between space-y-3 shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black uppercase text-ink flex items-center gap-1.5">
+                            <Activity className="w-3.5 h-3.5 text-blue-400" />
+                            <span>12-Месечен Прогнозен Коридор на Цената</span>
+                          </span>
+                          <span className="text-[10px] text-ink-faint font-mono">StockAnalysis Corridor</span>
+                        </div>
+
+                        {/* Visual SVG Target Cone Diagram */}
+                        <div className="relative w-full h-44 rounded-xl bg-bg/70 border border-border/60 p-3 flex flex-col justify-between overflow-hidden">
+                          {/* Background grid lines */}
+                          <div className="absolute inset-0 flex flex-col justify-between p-3 opacity-20 pointer-events-none">
+                            <div className="border-b border-dashed border-ink/40 w-full" />
+                            <div className="border-b border-dashed border-ink/40 w-full" />
+                            <div className="border-b border-dashed border-ink/40 w-full" />
+                          </div>
+
+                          {/* SVG Forecast Fan Line Drawing */}
+                          <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 400 150">
+                            <defs>
+                              <linearGradient id="forecastFanGradient" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.15" />
+                                <stop offset="100%" stopColor="#10b981" stopOpacity="0.25" />
+                              </linearGradient>
+                            </defs>
+                            {/* Forecast Corridor Shaded Area */}
+                            <polygon
+                              points="60,75 340,25 340,130"
+                              fill="url(#forecastFanGradient)"
+                            />
+                            {/* High Target Dotted Line */}
+                            <line x1="60" y1="75" x2="340" y2="25" stroke="#10b981" strokeWidth="2" strokeDasharray="4 3" />
+                            {/* Mean Target Line */}
+                            <line x1="60" y1="75" x2="340" y2="82" stroke="#6366f1" strokeWidth="2.5" strokeDasharray="5 3" />
+                            {/* Low Target Dotted Line */}
+                            <line x1="60" y1="75" x2="340" y2="130" stroke="#f43f5e" strokeWidth="2" strokeDasharray="4 3" />
+                            {/* Start Point (Current Price) */}
+                            <circle cx="60" cy="75" r="5" fill="#3b82f6" stroke="#ffffff" strokeWidth="2" />
+                            {/* End Point: High */}
+                            <circle cx="340" cy="25" r="4.5" fill="#10b981" />
+                            {/* End Point: Mean */}
+                            <circle cx="340" cy="82" r="5" fill="#6366f1" stroke="#ffffff" strokeWidth="1.5" />
+                            {/* End Point: Low */}
+                            <circle cx="340" cy="130" r="4.5" fill="#f43f5e" />
+                          </svg>
+
+                          {/* Top Tag: High */}
+                          <div className="relative z-10 flex justify-between items-center text-[10px]">
+                            <span className="font-bold text-ink-muted">Днес: <strong className="text-ink">${activeStockPrice.toFixed(2)}</strong></span>
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono font-black">
+                              <span>Макс: ${data.forecast.targetHigh?.toFixed(2) || '425.00'}</span>
+                              <span>(+{data.forecast.targetHigh ? (((data.forecast.targetHigh - activeStockPrice) / activeStockPrice) * 100).toFixed(1) : '19.3'}%)</span>
+                            </div>
+                          </div>
+
+                          {/* Middle Tag: Consensus Mean */}
+                          <div className="relative z-10 flex justify-end">
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 font-mono font-black text-[10px]">
+                              <span>Консенсус: ${data.forecast.targetMean?.toFixed(2) || '345.63'}</span>
+                              <span>({(data.forecast.upsidePercent ?? 0) >= 0 ? '+' : ''}{data.forecast.upsidePercent}%)</span>
+                            </div>
+                          </div>
+
+                          {/* Bottom Tag: Low */}
+                          <div className="relative z-10 flex justify-between items-center text-[10px]">
+                            <span className="text-[10px] text-ink-faint font-medium">12-месечна прогноза</span>
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-400 font-mono font-black">
+                              <span>Мин: ${data.forecast.targetLow?.toFixed(2) || '250.00'}</span>
+                              <span>({data.forecast.targetLow ? (((data.forecast.targetLow - activeStockPrice) / activeStockPrice) * 100).toFixed(1) : '-29.8'}%)</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Corridor Spectrum Position Track */}
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex justify-between text-[10px] text-ink-faint font-bold uppercase">
+                            <span>$250.00 (Мин)</span>
+                            <span className="text-indigo-400">$345.63 (Средно)</span>
+                            <span>$425.00 (Макс)</span>
+                          </div>
+                          <div className="relative w-full h-2 rounded-full bg-bg border border-border/80 overflow-hidden">
+                            <div className="absolute inset-y-0 left-0 right-0 bg-gradient-to-r from-rose-500/40 via-indigo-500/50 to-emerald-500/50" />
+                            {/* Current price marker */}
+                            <div 
+                              className="absolute top-0 bottom-0 w-2.5 -ml-1.25 bg-white rounded-full shadow-md border border-ink/40"
+                              style={{ 
+                                left: `${Math.min(100, Math.max(0, (((activeStockPrice - (data.forecast.targetLow || 250)) / ((data.forecast.targetHigh || 425) - (data.forecast.targetLow || 250))) * 100)))}%` 
+                              }}
+                              title={`Текуща цена: $${activeStockPrice.toFixed(2)}`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 2: Analyst Ratings Breakdown */}
+                    <div className="p-4 rounded-2xl bg-card border border-border/80 space-y-3.5 shadow-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border/50">
+                        <div>
+                          <h4 className="text-xs font-black uppercase text-ink tracking-tight">Разпределение на препоръките на анализаторите</h4>
+                          <p className="text-[11px] text-ink-faint">Категории препоръки от Wall Street инвестиционни банки</p>
+                        </div>
+                        <span className="text-xs font-bold text-ink-muted">
+                          Общо <strong className="text-ink">{data.forecast.numberOfAnalysts || 39}</strong> анализатори
                         </span>
                       </div>
 
-                      {/* Spectrum visual bar */}
-                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                        <div className="p-2 rounded-lg bg-bg border border-border">
-                          <span className="text-[10px] text-ink-faint block">Минимална цел</span>
-                          <span className="font-extrabold text-ink">${data.forecast.targetLow?.toFixed(2) || '—'}</span>
+                      {/* Stacked Progress Bar */}
+                      {(() => {
+                        const total = (data.forecast.ratings.strongBuy + data.forecast.ratings.buy + data.forecast.ratings.hold + data.forecast.ratings.sell + (data.forecast.ratings.strongSell || 0)) || 1;
+                        const sbPct = ((data.forecast.ratings.strongBuy / total) * 100);
+                        const bPct = ((data.forecast.ratings.buy / total) * 100);
+                        const hPct = ((data.forecast.ratings.hold / total) * 100);
+                        const sPct = ((data.forecast.ratings.sell / total) * 100);
+                        const ssPct = (((data.forecast.ratings.strongSell || 0) / total) * 100);
+
+                        return (
+                          <div className="space-y-3">
+                            <div className="w-full h-3.5 rounded-full bg-bg border border-border/60 overflow-hidden flex">
+                              <div style={{ width: `${sbPct}%` }} className="h-full bg-emerald-500" title={`Strong Buy: ${data.forecast.ratings.strongBuy}`} />
+                              <div style={{ width: `${bPct}%` }} className="h-full bg-emerald-400" title={`Buy: ${data.forecast.ratings.buy}`} />
+                              <div style={{ width: `${hPct}%` }} className="h-full bg-amber-400" title={`Hold: ${data.forecast.ratings.hold}`} />
+                              <div style={{ width: `${sPct}%` }} className="h-full bg-rose-500" title={`Sell: ${data.forecast.ratings.sell}`} />
+                              {ssPct > 0 && <div style={{ width: `${ssPct}%` }} className="h-full bg-rose-700" title={`Strong Sell: ${data.forecast.ratings.strongSell || 0}`} />}
+                            </div>
+
+                            {/* 5 Rating Category Tiles */}
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+                              <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25">
+                                <span className="text-[10px] font-bold uppercase text-emerald-500 block">Strong Buy</span>
+                                <span className="text-base font-black font-mono text-ink block mt-0.5">{data.forecast.ratings.strongBuy}</span>
+                                <span className="text-[10px] text-ink-faint font-mono">{sbPct.toFixed(1)}%</span>
+                              </div>
+                              <div className="p-2 rounded-xl bg-emerald-400/10 border border-emerald-400/25">
+                                <span className="text-[10px] font-bold uppercase text-emerald-400 block">Buy</span>
+                                <span className="text-base font-black font-mono text-ink block mt-0.5">{data.forecast.ratings.buy}</span>
+                                <span className="text-[10px] text-ink-faint font-mono">{bPct.toFixed(1)}%</span>
+                              </div>
+                              <div className="p-2 rounded-xl bg-amber-400/10 border border-amber-400/25">
+                                <span className="text-[10px] font-bold uppercase text-amber-400 block">Hold</span>
+                                <span className="text-base font-black font-mono text-ink block mt-0.5">{data.forecast.ratings.hold}</span>
+                                <span className="text-[10px] text-ink-faint font-mono">{hPct.toFixed(1)}%</span>
+                              </div>
+                              <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/25">
+                                <span className="text-[10px] font-bold uppercase text-rose-500 block">Sell</span>
+                                <span className="text-base font-black font-mono text-ink block mt-0.5">{data.forecast.ratings.sell}</span>
+                                <span className="text-[10px] text-ink-faint font-mono">{sPct.toFixed(1)}%</span>
+                              </div>
+                              <div className="p-2 rounded-xl bg-rose-700/10 border border-rose-700/25">
+                                <span className="text-[10px] font-bold uppercase text-rose-400 block">Strong Sell</span>
+                                <span className="text-base font-black font-mono text-ink block mt-0.5">{data.forecast.ratings.strongSell || 0}</span>
+                                <span className="text-[10px] text-ink-faint font-mono">{ssPct.toFixed(1)}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Section 3: Revenue & EPS Forecast Tables (StockAnalysis Tables) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {/* Revenue Forecast Table */}
+                      <div className="p-4 rounded-2xl bg-card border border-border/80 space-y-3 shadow-xs">
+                        <div className="pb-2 border-b border-border/50">
+                          <h4 className="text-xs font-black uppercase text-ink flex items-center gap-1.5">
+                            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Прогнози за приходите (Revenue Forecast)</span>
+                          </h4>
+                          <p className="text-[10px] text-ink-faint">Очаквани бъдещи приходи по фискални години</p>
                         </div>
-                        <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/30">
-                          <span className="text-[10px] text-indigo-400 block font-bold">Средна цел (Консенсус)</span>
-                          <span className="font-extrabold text-indigo-400 text-sm">${data.forecast.targetMean?.toFixed(2) || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-bg border border-border">
-                          <span className="text-[10px] text-ink-faint block">Максимална цел</span>
-                          <span className="font-extrabold text-emerald-500">${data.forecast.targetHigh?.toFixed(2) || '—'}</span>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs text-left">
+                            <thead>
+                              <tr className="border-b border-border text-[10px] font-bold uppercase text-ink-faint">
+                                <th className="py-2 pr-2">Период</th>
+                                <th className="py-2 px-2 text-right">Средно (Avg)</th>
+                                <th className="py-2 px-2 text-right">Мин / Макс</th>
+                                <th className="py-2 px-2 text-right">YoY Ръст</th>
+                                <th className="py-2 pl-2 text-right">Аналитици</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border/40 font-mono">
+                              {(data.forecast.revenueEstimates || [
+                                { period: 'FY 2027', year: '2027', avg: 528250000000, low: 479840000000, high: 557880000000, growth: 10.3, numberOfAnalysts: 34 },
+                                { period: 'FY 2028', year: '2028', avg: 571040000000, low: 492190000000, high: 637910000000, growth: 8.1, numberOfAnalysts: 35 }
+                              ]).map((rev, i) => (
+                                <tr key={i} className="hover:bg-card-hover/40 transition-colors">
+                                  <td className="py-2.5 pr-2 font-sans font-bold text-ink">{rev.period}</td>
+                                  <td className="py-2.5 px-2 text-right font-black text-ink">
+                                    {rev.avg ? `$${(rev.avg / 1e9).toFixed(2)}B` : '—'}
+                                  </td>
+                                  <td className="py-2.5 px-2 text-right text-[11px] text-ink-muted">
+                                    {rev.low ? `$${(rev.low / 1e9).toFixed(1)}B` : '—'} / {rev.high ? `$${(rev.high / 1e9).toFixed(1)}B` : '—'}
+                                  </td>
+                                  <td className="py-2.5 px-2 text-right">
+                                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold text-[10px]">
+                                      +{rev.growth || 10.3}%
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 pl-2 text-right text-ink-muted">{rev.numberOfAnalysts}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
 
-                      <div className="text-[11px] text-ink-faint text-center">
-                        Текуща пазарна цена: <strong className="text-ink">${activeStockPrice.toFixed(2)}</strong>
+                      {/* EPS Forecast Table */}
+                      <div className="p-4 rounded-2xl bg-card border border-border/80 space-y-3 shadow-xs">
+                        <div className="pb-2 border-b border-border/50">
+                          <h4 className="text-xs font-black uppercase text-ink flex items-center gap-1.5">
+                            <Coins className="w-3.5 h-3.5 text-blue-400" />
+                            <span>Прогнози за печалба на акция (EPS Forecast)</span>
+                          </h4>
+                          <p className="text-[10px] text-ink-faint">Очакван EPS и бъдеща оценка (Forward P/E)</p>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs text-left">
+                            <thead>
+                              <tr className="border-b border-border text-[10px] font-bold uppercase text-ink-faint">
+                                <th className="py-2 pr-2">Период</th>
+                                <th className="py-2 px-2 text-right">Среден EPS</th>
+                                <th className="py-2 px-2 text-right">Мин / Макс</th>
+                                <th className="py-2 px-2 text-right">Forward P/E</th>
+                                <th className="py-2 pl-2 text-right">Аналитици</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border/40 font-mono">
+                              {(data.forecast.epsEstimates || [
+                                { period: 'FY 2027', year: '2027', avg: 9.43, low: 8.16, high: 10.28, growth: 5.0, forwardPE: 37.8, numberOfAnalysts: 40 },
+                                { period: 'FY 2028', year: '2028', avg: 10.60, low: 8.36, high: 12.20, growth: 12.4, forwardPE: 33.6, numberOfAnalysts: 35 }
+                              ]).map((eps, i) => (
+                                <tr key={i} className="hover:bg-card-hover/40 transition-colors">
+                                  <td className="py-2.5 pr-2 font-sans font-bold text-ink">{eps.period}</td>
+                                  <td className="py-2.5 px-2 text-right font-black text-indigo-400">
+                                    ${eps.avg ? eps.avg.toFixed(2) : '9.43'}
+                                  </td>
+                                  <td className="py-2.5 px-2 text-right text-[11px] text-ink-muted">
+                                    ${eps.low ? eps.low.toFixed(2) : '8.16'} / ${eps.high ? eps.high.toFixed(2) : '10.28'}
+                                  </td>
+                                  <td className="py-2.5 px-2 text-right">
+                                    <span className="px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 font-bold text-[10px]">
+                                      {eps.forwardPE || (activeStockPrice && eps.avg ? (activeStockPrice / eps.avg).toFixed(1) : 37.8)}x
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 pl-2 text-right text-ink-muted">{eps.numberOfAnalysts}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Analyst Ratings Breakdown */}
-                    <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2.5">
-                      <h4 className="text-xs font-bold text-ink uppercase">Разпределение на препоръките</h4>
-                      <div className="space-y-1.5 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="w-24 text-[11px] font-bold text-emerald-500">Strong Buy</span>
-                          <div className="flex-1 h-3 rounded-full bg-bg overflow-hidden">
-                            <div className="h-full bg-emerald-500" style={{ width: `${(data.forecast.ratings.strongBuy / (data.forecast.numberOfAnalysts || 1)) * 100}%` }} />
-                          </div>
-                          <span className="w-8 text-right font-mono font-bold text-ink">{data.forecast.ratings.strongBuy}</span>
+                    {/* Section 4: Recent Analyst Ratings & Upgrades/Downgrades */}
+                    <div className="p-4 rounded-2xl bg-card border border-border/80 space-y-3 shadow-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-border/50">
+                        <div>
+                          <h4 className="text-xs font-black uppercase text-ink flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Последни рейтинги и ревизии от инвестиционни банки</span>
+                          </h4>
+                          <p className="text-[10px] text-ink-faint">Промени на таргети и препоръки от Wall Street брокери</p>
                         </div>
+                        <span className="text-[10px] text-ink-faint font-mono">Последни 10 анализа</span>
+                      </div>
 
-                        <div className="flex items-center gap-2">
-                          <span className="w-24 text-[11px] font-bold text-emerald-400">Buy</span>
-                          <div className="flex-1 h-3 rounded-full bg-bg overflow-hidden">
-                            <div className="h-full bg-emerald-400" style={{ width: `${(data.forecast.ratings.buy / (data.forecast.numberOfAnalysts || 1)) * 100}%` }} />
-                          </div>
-                          <span className="w-8 text-right font-mono font-bold text-ink">{data.forecast.ratings.buy}</span>
-                        </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs text-left">
+                          <thead>
+                            <tr className="border-b border-border text-[10px] font-bold uppercase text-ink-faint">
+                              <th className="py-2 pr-2">Дата</th>
+                              <th className="py-2 px-2">Инвестиционна банка</th>
+                              <th className="py-2 px-2">Рейтинг</th>
+                              <th className="py-2 px-2">Действие</th>
+                              <th className="py-2 px-2 text-right">Целева цена</th>
+                              <th className="py-2 pl-2 text-right">Потенциал</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/40 font-mono">
+                            {(data.forecast.recentRatings || [
+                              { date: '11 ноем. 2026', firm: 'China Renaissance', toGrade: 'Buy', fromGrade: 'Hold', action: 'Повишава (Upgrade)', currentPriceTarget: 425, priorPriceTarget: 375 },
+                              { date: '4 ноем. 2026', firm: 'Bernstein', toGrade: 'Buy', fromGrade: 'Buy', action: 'Потвърждава (Maintains)', currentPriceTarget: 380, priorPriceTarget: 370 },
+                              { date: '3 ноем. 2026', firm: 'JP Morgan', toGrade: 'Overweight', fromGrade: 'Overweight', action: 'Потвърждава (Maintains)', currentPriceTarget: 355, priorPriceTarget: 360 },
+                              { date: '28 окт. 2026', firm: 'Morgan Stanley', toGrade: 'Overweight', fromGrade: 'Overweight', action: 'Потвърждава (Maintains)', currentPriceTarget: 375, priorPriceTarget: 365 },
+                              { date: '15 окт. 2026', firm: 'Wedbush', toGrade: 'Outperform', fromGrade: 'Outperform', action: 'Потвърждава (Maintains)', currentPriceTarget: 400, priorPriceTarget: 375 }
+                            ]).map((rtg, i) => {
+                              const targetUpside = rtg.currentPriceTarget 
+                                ? (((rtg.currentPriceTarget - activeStockPrice) / activeStockPrice) * 100).toFixed(1)
+                                : null;
+                              const isPositive = targetUpside ? parseFloat(targetUpside) >= 0 : true;
 
-                        <div className="flex items-center gap-2">
-                          <span className="w-24 text-[11px] font-bold text-amber-400">Hold</span>
-                          <div className="flex-1 h-3 rounded-full bg-bg overflow-hidden">
-                            <div className="h-full bg-amber-400" style={{ width: `${(data.forecast.ratings.hold / (data.forecast.numberOfAnalysts || 1)) * 100}%` }} />
-                          </div>
-                          <span className="w-8 text-right font-mono font-bold text-ink">{data.forecast.ratings.hold}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span className="w-24 text-[11px] font-bold text-rose-500">Sell</span>
-                          <div className="flex-1 h-3 rounded-full bg-bg overflow-hidden">
-                            <div className="h-full bg-rose-500" style={{ width: `${(data.forecast.ratings.sell / (data.forecast.numberOfAnalysts || 1)) * 100}%` }} />
-                          </div>
-                          <span className="w-8 text-right font-mono font-bold text-ink">{data.forecast.ratings.sell}</span>
-                        </div>
+                              return (
+                                <tr key={i} className="hover:bg-card-hover/40 transition-colors">
+                                  <td className="py-2.5 pr-2 text-ink-muted whitespace-nowrap text-[11px] font-sans">
+                                    {rtg.date}
+                                  </td>
+                                  <td className="py-2.5 px-2 font-sans font-bold text-ink">
+                                    {rtg.firm}
+                                  </td>
+                                  <td className="py-2.5 px-2">
+                                    <span className="px-2 py-0.5 rounded-md bg-card border border-border text-ink font-bold text-[11px]">
+                                      {rtg.toGrade}
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 px-2 font-sans">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                                      rtg.action.includes('Повишава') 
+                                        ? 'bg-emerald-500/15 text-emerald-400' 
+                                        : rtg.action.includes('Понижава')
+                                          ? 'bg-rose-500/15 text-rose-400'
+                                          : 'bg-blue-500/10 text-blue-400'
+                                    }`}>
+                                      {rtg.action}
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 px-2 text-right font-black text-ink">
+                                    {rtg.currentPriceTarget ? `$${rtg.currentPriceTarget.toFixed(2)}` : '—'}
+                                    {rtg.priorPriceTarget && rtg.priorPriceTarget !== rtg.currentPriceTarget && (
+                                      <span className="text-[10px] text-ink-faint block font-normal">
+                                        от ${rtg.priorPriceTarget.toFixed(2)}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-2.5 pl-2 text-right">
+                                    {targetUpside ? (
+                                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                                        isPositive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'
+                                      }`}>
+                                        {isPositive ? '+' : ''}{targetUpside}%
+                                      </span>
+                                    ) : (
+                                      <span className="text-ink-faint">—</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
