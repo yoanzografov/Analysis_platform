@@ -5,6 +5,7 @@ import { X, ExternalLink } from 'lucide-react';
 import { formatDividend } from '../utils/sectorHelper';
 import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
 import { getTradingViewSymbol } from '../utils/tvSymbolMap';
+import GoogleFinanceChart from './GoogleFinanceChart';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,6 +90,7 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
   const tvSymbol = getTradingViewSymbol(stock.companyName, stock.ticker);
 
   const [activeRange, setActiveRange] = useState<string>("1Y");
+  const [chartMode, setChartMode] = useState<'google' | 'tradingview'>('google');
 
   const RANGES = [
     { label: '1D', val: '1D', tvRange: '1D', interval: '5' },
@@ -174,46 +176,85 @@ export default function StockDetailChartModal({ stock, onClose }: Props) {
               {isUp ? '+' : ''}{(stock.dailyChangePct ?? 0).toFixed(2)}%
             </div>
             
-            {/* TIME RANGE BUTTONS */}
-            <div className="flex flex-wrap gap-1 mt-3 sm:mt-4 bg-border/40 p-1 rounded-lg">
-              {RANGES.map(r => (
-                <button
-                  key={r.val}
-                  onClick={() => setActiveRange(r.val)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
-                    activeRange === r.val 
-                      ? 'bg-bg text-ink shadow-sm' 
-                      : 'text-ink-faint hover:text-ink hover:bg-border/60'
-                  }`}
-                >
-                  {r.label}
-                </button>
-              ))}
+            {/* CHART MODE SWITCHER (Google Finance vs TradingView) */}
+            <div className="flex items-center gap-1 mt-3 sm:mt-4 bg-border/40 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setChartMode('google')}
+                className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                  chartMode === 'google'
+                    ? 'bg-[#18558b] text-white shadow-xs'
+                    : 'text-ink-faint hover:text-ink'
+                }`}
+              >
+                Google Finance
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartMode('tradingview')}
+                className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                  chartMode === 'tradingview'
+                    ? 'bg-[#18558b] text-white shadow-xs'
+                    : 'text-ink-faint hover:text-ink'
+                }`}
+              >
+                TradingView 🕯️
+              </button>
             </div>
+
+            {/* TIME RANGE BUTTONS (for TradingView) */}
+            {chartMode === 'tradingview' && (
+              <div className="flex flex-wrap gap-1 mt-2 bg-border/40 p-1 rounded-lg">
+                {RANGES.map(r => (
+                  <button
+                    key={r.val}
+                    onClick={() => setActiveRange(r.val)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                      activeRange === r.val 
+                        ? 'bg-bg text-ink shadow-sm' 
+                        : 'text-ink-faint hover:text-ink hover:bg-border/60'
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* CHART (TradingView AdvancedRealTimeChart Widget) */}
-        <div className="flex-1 relative mx-2 mb-4 min-h-0">
-          <AdvancedRealTimeChart
-            key={activeRange} // force re-render when changing ranges to avoid widget bug
-            symbol={tvSymbol}
-            theme={isDark ? "dark" : "light"}
-            autosize
-            style="1" // Candlestick chart
-            interval={currentConf.interval as any}
-            timezone="exchange"
-            hide_top_toolbar={false}
-            hide_side_toolbar={false}
-            hide_legend={false}
-            allow_symbol_change={true}
-            save_image={true}
-            details={false}
-            hotlist={false}
-            calendar={false}
-            withdateranges={false} // Disable native date ranges since we have our custom buttons
-            range={currentConf.tvRange as any}
-          />
+        {/* CHART CONTENT */}
+        <div className="flex-1 relative mx-2 mb-4 min-h-0 overflow-y-auto">
+          {chartMode === 'google' ? (
+            <div className="w-full h-full p-2">
+              <GoogleFinanceChart
+                ticker={stock.ticker}
+                companyName={stock.companyName}
+                currentPrice={stock.currentPrice}
+                height={500}
+              />
+            </div>
+          ) : (
+            <AdvancedRealTimeChart
+              key={activeRange} // force re-render when changing ranges to avoid widget bug
+              symbol={tvSymbol}
+              theme={isDark ? "dark" : "light"}
+              autosize
+              style="1" // Candlestick chart
+              interval={currentConf.interval as any}
+              timezone="exchange"
+              hide_top_toolbar={false}
+              hide_side_toolbar={false}
+              hide_legend={false}
+              allow_symbol_change={true}
+              save_image={true}
+              details={false}
+              hotlist={false}
+              calendar={false}
+              withdateranges={false}
+              range={currentConf.tvRange as any}
+            />
+          )}
         </div>
       </div>
     </div>,

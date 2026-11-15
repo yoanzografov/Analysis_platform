@@ -57,6 +57,7 @@ import {
   Legend
 } from 'recharts';
 import { AdvancedRealTimeChart, FundamentalData } from 'react-ts-tradingview-widgets';
+import GoogleFinanceChart from './GoogleFinanceChart';
 import { getTradingViewSymbol } from '../utils/tvSymbolMap';
 import { getSectorForStock } from '../utils/sectorHelper';
 import { 
@@ -120,6 +121,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   const [chartPoints, setChartPoints] = useState<Array<{ date: string; price: number; fullDate: string }>>([]);
   const [isChartLoading, setIsChartLoading] = useState<boolean>(false);
   const [isWatchlisted, setIsWatchlisted] = useState<boolean>(false);
+  const [chartTabMode, setChartTabMode] = useState<'google' | 'tradingview'>('google');
 
   function getCleanTicker(raw: string): string {
     if (!raw) return '';
@@ -1174,240 +1176,13 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                       </div>
 
                       {/* RIGHT: Interactive Timeframe Price Chart (Google Finance 1:1) */}
-                      <div className="lg:col-span-6 flex flex-col p-1 sm:p-2 select-none">
-                        {/* Timeframe Controls Bar (Google Finance Style) */}
-                        <div className="flex items-center justify-between gap-2 pb-1.5">
-                          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none">
-                            {(['1D', '5D', '1M', 'YTD', '3M', '6M', '1Y', '5Y', 'Max'] as const).map(tf => (
-                              <button
-                                key={tf}
-                                type="button"
-                                onClick={() => setChartRange(tf)}
-                                className={`px-2 py-0.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                                  chartRange === tf
-                                    ? 'bg-[#253248] text-white font-bold shadow-xs'
-                                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
-                                }`}
-                              >
-                                {tf}
-                              </button>
-                            ))}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={handleDownloadCsv}
-                            className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
-                            title="Свали данните за графиката като CSV"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        {/* Floating Performance Pill Aligned Under Selected Timeframe (Google Finance Style) */}
-                        <div className="flex flex-col items-center justify-center my-1 min-h-[36px]">
-                          {(() => {
-                            const activePct = selectedRangeData ? selectedRangeData.pct : periodReturnPct;
-                            const activeIsPositive = selectedRangeData ? selectedRangeData.isPositive : isChartPositive;
-                            return (
-                              <>
-                                <div className="flex items-center gap-1.5">
-                                  <span className={`px-3 py-0.5 rounded-md text-xs sm:text-sm font-bold font-mono transition-all ${
-                                    activeIsPositive
-                                      ? 'bg-[#00c853] text-white shadow-xs'
-                                      : 'bg-[#d92d20] text-white shadow-xs'
-                                  }`}>
-                                    {activeIsPositive ? '+' : ''}{activePct.toFixed(2)}%
-                                  </span>
-                                  {selectedRangeData && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setDragStartIndex(null);
-                                        setDragEndIndex(null);
-                                      }}
-                                      className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-700 transition-colors cursor-pointer"
-                                      title="Изчисти избора"
-                                    >
-                                      ✕
-                                    </button>
-                                  )}
-                                </div>
-                                {selectedRangeData && (
-                                  <div className="text-[10.5px] font-medium text-neutral-400 mt-0.5 animate-in fade-in duration-150">
-                                    {selectedRangeData.startPt.date} (${selectedRangeData.startPt.price.toFixed(2)}) → {selectedRangeData.endPt.date} (${selectedRangeData.endPt.price.toFixed(2)}) • {selectedRangeData.diff >= 0 ? '+' : ''}${selectedRangeData.diff.toFixed(2)}
-                                  </div>
-                                )}
-                              </>
-                            );
-                          })()}
-                        </div>
-
-                        {/* Area Chart Container with Drag-to-Measure */}
-                        <div className="w-full h-[270px] relative cursor-crosshair">
-                          {isChartLoading ? (
-                            <div className="absolute inset-0 flex items-center justify-center gap-2 text-xs font-bold text-ink-faint">
-                              <RefreshCw className="w-4 h-4 animate-spin text-indigo-400" />
-                              <span>Зареждане на графика за {cleanTicker}...</span>
-                            </div>
-                          ) : (
-                            <ResponsiveContainer width="100%" height="100%">
-                              <AreaChart 
-                                data={chartPoints} 
-                                margin={{ top: 12, right: 58, left: 0, bottom: 5 }}
-                                onMouseDown={(state: any) => {
-                                  const idx = extractChartPointIndex(state);
-                                  if (idx !== null) {
-                                    setIsDragging(true);
-                                    setDragStartIndex(idx);
-                                    setDragEndIndex(idx);
-                                  }
-                                }}
-                                onMouseMove={(state: any) => {
-                                  if (isDragging) {
-                                    const idx = extractChartPointIndex(state);
-                                    if (idx !== null) {
-                                      setDragEndIndex(idx);
-                                    }
-                                  }
-                                }}
-                                onMouseUp={() => {
-                                  setIsDragging(false);
-                                  if (dragStartIndex !== null && dragEndIndex !== null && dragStartIndex === dragEndIndex) {
-                                    setDragStartIndex(null);
-                                    setDragEndIndex(null);
-                                  }
-                                }}
-                                onMouseLeave={() => {
-                                  if (isDragging) setIsDragging(false);
-                                }}
-                              >
-                                <defs>
-                                  <linearGradient id="googleFinanceGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor={isChartPositive ? '#00c853' : '#ef4444'} stopOpacity={0.32} />
-                                    <stop offset="85%" stopColor={isChartPositive ? '#00c853' : '#ef4444'} stopOpacity={0.03} />
-                                    <stop offset="100%" stopColor={isChartPositive ? '#00c853' : '#ef4444'} stopOpacity={0.0} />
-                                  </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
-                                <XAxis
-                                  dataKey="date"
-                                  stroke="transparent"
-                                  tick={{ fill: '#80868b', fontSize: 11 }}
-                                  tickLine={false}
-                                  minTickGap={24}
-                                />
-                                <YAxis
-                                  orientation="right"
-                                  stroke="transparent"
-                                  tick={{ fill: '#80868b', fontSize: 11 }}
-                                  tickLine={false}
-                                  domain={['auto', 'auto']}
-                                  tickFormatter={(v) => Number(v).toFixed(2)}
-                                  width={48}
-                                />
-                                <ReferenceLine 
-                                  y={activeStockPrice} 
-                                  stroke={isChartPositive ? '#00c853' : '#dc2626'} 
-                                  strokeDasharray="2 2" 
-                                  strokeOpacity={0.8}
-                                  label={(props: any) => {
-                                    const { viewBox } = props;
-                                    if (!viewBox) return null;
-                                    const { x, y, width } = viewBox;
-                                    const badgeW = 54;
-                                    const badgeH = 20;
-                                    return (
-                                      <g>
-                                        <rect
-                                          x={x + width - 2}
-                                          y={y - badgeH / 2}
-                                          width={badgeW}
-                                          height={badgeH}
-                                          rx={4}
-                                          ry={4}
-                                          fill={isChartPositive ? '#00c853' : '#dc2626'}
-                                        />
-                                        <text
-                                          x={x + width - 2 + badgeW / 2}
-                                          y={y + 3.5}
-                                          textAnchor="middle"
-                                          fill="#ffffff"
-                                          fontSize={11}
-                                          fontWeight="bold"
-                                          fontFamily="monospace"
-                                        >
-                                          {activeStockPrice.toFixed(2)}
-                                        </text>
-                                      </g>
-                                    );
-                                  }}
-                                />
-                                {selectedRangeData && (
-                                  <>
-                                    <ReferenceArea
-                                      x1={selectedRangeData.startPt.date}
-                                      x2={selectedRangeData.endPt.date}
-                                      fill={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
-                                      fillOpacity={0.16}
-                                    />
-                                    <ReferenceLine
-                                      x={selectedRangeData.startPt.date}
-                                      stroke={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
-                                      strokeWidth={1.5}
-                                      strokeDasharray="2 2"
-                                    />
-                                    <ReferenceLine
-                                      x={selectedRangeData.endPt.date}
-                                      stroke={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
-                                      strokeWidth={1.5}
-                                      strokeDasharray="2 2"
-                                    />
-                                    <ReferenceDot
-                                      x={selectedRangeData.startPt.date}
-                                      y={selectedRangeData.startPt.price}
-                                      r={4.5}
-                                      fill="#ffffff"
-                                      stroke={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
-                                      strokeWidth={2}
-                                    />
-                                    <ReferenceDot
-                                      x={selectedRangeData.endPt.date}
-                                      y={selectedRangeData.endPt.price}
-                                      r={4.5}
-                                      fill="#ffffff"
-                                      stroke={selectedRangeData.isPositive ? '#00c853' : '#ef4444'}
-                                      strokeWidth={2}
-                                    />
-                                  </>
-                                )}
-                                <RechartsTooltip
-                                  content={({ active, payload }) => {
-                                    if (!active || !payload || !payload.length) return null;
-                                    const pt = payload[0].payload;
-                                    return (
-                                      <div className="bg-stone-950/95 border border-neutral-700/80 rounded-xl px-3 py-2 shadow-2xl text-xs">
-                                        <div className="text-stone-400 font-medium mb-0.5">{pt.fullDate || pt.date}</div>
-                                        <div className="font-mono font-black text-sm text-white flex items-center gap-1.5">
-                                          <span>Цена:</span>
-                                          <span style={{ color: isChartPositive ? '#00c853' : '#ef4444' }}>${Number(pt.price).toFixed(2)}</span>
-                                        </div>
-                                      </div>
-                                    );
-                                  }}
-                                />
-                                <Area
-                                  type="monotone"
-                                  dataKey="price"
-                                  stroke={isChartPositive ? '#00c853' : '#dc2626'}
-                                  strokeWidth={2.4}
-                                  fillOpacity={1}
-                                  fill="url(#googleFinanceGrad)"
-                                />
-                              </AreaChart>
-                            </ResponsiveContainer>
-                          )}
-                        </div>
+                      <div className="lg:col-span-6 flex flex-col p-1">
+                        <GoogleFinanceChart
+                          ticker={stock.ticker}
+                          companyName={stock.companyName}
+                          currentPrice={activeStockPrice}
+                          height={290}
+                        />
                       </div>
 
                     </div>
@@ -2597,32 +2372,76 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                   </div>
                 )}
 
-                {/* ─── TAB 9: CHART (FULL TRADINGVIEW ADVANCED) ─── */}
+                {/* ─── TAB 9: CHART (GOOGLE FINANCE 1:1 WITH TRADINGVIEW TOGGLE) ─── */}
                 {activeTab === 'chart' && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border/60">
                       <div>
-                        <h3 className="text-xs font-black uppercase text-ink">TradingView Интерактивна графика</h3>
-                        <p className="text-[11px] text-ink-faint">Технически свещи, индикатори и обеми в реално време</p>
+                        <h3 className="text-xs font-black uppercase text-ink flex items-center gap-2">
+                          <span>Интерактивна графика</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30">
+                            {chartTabMode === 'google' ? 'Google Finance Style' : 'TradingView Candlestick'}
+                          </span>
+                        </h3>
+                        <p className="text-[11px] text-ink-faint">
+                          {chartTabMode === 'google'
+                            ? 'Google Finance стил: задръж и дръпни мишката между две дати за изчисляване на точния % доходност'
+                            : 'TradingView технически свещи, индикатори и обеми в реално време'}
+                        </p>
+                      </div>
+
+                      {/* View Mode Switcher */}
+                      <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg border border-border/80 text-xs font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setChartTabMode('google')}
+                          className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                            chartTabMode === 'google'
+                              ? 'bg-[#18558b] text-white font-bold shadow-xs'
+                              : 'text-ink-muted hover:text-ink'
+                          }`}
+                        >
+                          Google Finance
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setChartTabMode('tradingview')}
+                          className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                            chartTabMode === 'tradingview'
+                              ? 'bg-[#18558b] text-white font-bold shadow-xs'
+                              : 'text-ink-muted hover:text-ink'
+                          }`}
+                        >
+                          TradingView 🕯️
+                        </button>
                       </div>
                     </div>
 
-                    <div className="w-full h-[450px] rounded-xl overflow-hidden border border-border/80 bg-black">
-                      <AdvancedRealTimeChart
-                        symbol={tvSymbol}
-                        theme="dark"
-                        autosize
-                        interval="D"
-                        timezone="Europe/Sofia"
-                        style="1"
-                        locale="en"
-                        toolbar_bg="#000000"
-                        enable_publishing={false}
-                        hide_side_toolbar={false}
-                        allow_symbol_change={false}
-                        save_image={false}
+                    {chartTabMode === 'google' ? (
+                      <GoogleFinanceChart
+                        ticker={stock.ticker}
+                        companyName={stock.companyName}
+                        currentPrice={activeStockPrice}
+                        height={460}
                       />
-                    </div>
+                    ) : (
+                      <div className="w-full h-[460px] rounded-xl overflow-hidden border border-border/80 bg-black">
+                        <AdvancedRealTimeChart
+                          symbol={tvSymbol}
+                          theme="dark"
+                          autosize
+                          interval="D"
+                          timezone="Europe/Sofia"
+                          style="1"
+                          locale="en"
+                          toolbar_bg="#000000"
+                          enable_publishing={false}
+                          hide_side_toolbar={false}
+                          allow_symbol_change={false}
+                          save_image={false}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </>
