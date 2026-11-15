@@ -2613,17 +2613,6 @@ export default function App() {
       <div className="space-y-4 font-sans">
         {/* Quick stock selector & search header */}
         <div className="p-3 sm:p-4 rounded-2xl bg-card/40 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold shrink-0">
-              <BarChart2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-black uppercase text-ink tracking-tight flex items-center gap-2">
-                <span>STOCKS DEEP ANALYSIS</span>
-              </h2>
-            </div>
-          </div>
-
           {/* Stock Quick Selector / Search Combobox (StockAnalysis Style) */}
           <StockAnalysisSearchCombobox
             stocks={stocks}
@@ -2638,6 +2627,17 @@ export default function App() {
               }
             }}
           />
+
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold shrink-0">
+              <BarChart2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-black uppercase text-ink tracking-tight flex items-center gap-2">
+                <span>STOCKS DEEP ANALYSIS</span>
+              </h2>
+            </div>
+          </div>
         </div>
 
         {/* The 9-Tab Stock Analysis Explorer Component */}
