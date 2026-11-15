@@ -1017,13 +1017,13 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                 {/* ─── TAB 1: OVERVIEW (EXACT STOCKANALYSIS 2-COLUMN SPLIT) ─── */}
                 {activeTab === 'overview' && (
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 border border-border/70 rounded-xl bg-card overflow-hidden">
                       
                       {/* LEFT: 2-Column Key Statistics Table */}
-                      <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0 text-xs">
+                      <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 text-xs p-3 sm:p-4 border-b lg:border-b-0 lg:border-r border-border/70">
                         
                         {/* Sub-column 1 */}
-                        <div className="divide-y divide-border/60">
+                        <div className="divide-y divide-border/60 sm:border-r sm:border-border/60 sm:pr-4">
                           <div className="py-2 flex items-center justify-between">
                             <span className="text-ink-faint border-b border-dashed border-ink-faint/60 hover:text-ink cursor-help">Market Cap</span>
                             <span className="font-bold text-ink tabular-nums flex items-center font-mono">
@@ -1105,7 +1105,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                         </div>
 
                         {/* Sub-column 2 */}
-                        <div className="divide-y divide-border/60">
+                        <div className="divide-y divide-border/60 sm:pl-4">
                           <div className="py-2 flex items-center justify-between">
                             <span className="text-ink-faint border-b border-dashed border-ink-faint/60 hover:text-ink cursor-help">Volume</span>
                             <span className="font-bold text-ink tabular-nums font-mono">
@@ -1175,13 +1175,13 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
                       </div>
 
-                      {/* RIGHT: Interactive Timeframe Price Chart (Google Finance 1:1) */}
-                      <div className="lg:col-span-6 flex flex-col p-1">
+                      {/* RIGHT: Interactive Timeframe Price Chart (StockAnalysis 1:1) */}
+                      <div className="lg:col-span-6 flex flex-col p-2 sm:p-3 bg-card justify-between">
                         <GoogleFinanceChart
                           ticker={stock.ticker}
                           companyName={stock.companyName}
                           currentPrice={activeStockPrice}
-                          height={290}
+                          height={235}
                         />
                       </div>
 

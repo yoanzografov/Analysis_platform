@@ -6,7 +6,7 @@ export interface GoogleFinanceChartProps {
   companyName: string;
   currentPrice: number;
   currency?: string;
-  initialTimeframe?: '1D' | '5D' | '1M' | '6M' | 'YTD' | '1Y' | '5Y' | 'Max';
+  initialTimeframe?: '1D' | '5D' | '1M' | 'YTD' | '3M' | '6M' | '1Y' | '5Y' | 'Max';
   height?: number;
   className?: string;
 }
@@ -18,14 +18,15 @@ interface ChartPoint {
 }
 
 const TIMEFRAMES = [
-  { id: '1D', label: '1 д.' },
-  { id: '5D', label: '5 д.' },
-  { id: '1M', label: '1 м.' },
-  { id: '6M', label: '6 м.' },
-  { id: 'YTD', label: 'ОНГД' },
-  { id: '1Y', label: '1 г.' },
-  { id: '5Y', label: '5 г.' },
-  { id: 'Max', label: 'Макс' },
+  { id: '1D', label: '1D' },
+  { id: '5D', label: '5D' },
+  { id: '1M', label: '1M' },
+  { id: 'YTD', label: 'YTD' },
+  { id: '3M', label: '3M' },
+  { id: '6M', label: '6M' },
+  { id: '1Y', label: '1Y' },
+  { id: '5Y', label: '5Y' },
+  { id: 'Max', label: 'Max' },
 ] as const;
 
 type TimeframeId = typeof TIMEFRAMES[number]['id'];
@@ -35,8 +36,8 @@ export default function GoogleFinanceChart({
   companyName,
   currentPrice,
   currency = 'USD',
-  initialTimeframe = '1Y',
-  height = 360,
+  initialTimeframe = '1D',
+  height = 250,
   className = '',
 }: GoogleFinanceChartProps) {
   const [timeframe, setTimeframe] = useState<TimeframeId>(initialTimeframe);
@@ -50,7 +51,7 @@ export default function GoogleFinanceChart({
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 680, height });
+  const [dimensions, setDimensions] = useState({ width: 500, height });
 
   // Clean ticker
   const cleanTicker = useMemo(() => {
@@ -67,7 +68,7 @@ export default function GoogleFinanceChart({
         if (entry.contentRect.width > 0) {
           setDimensions({
             width: Math.floor(entry.contentRect.width),
-            height: height || 360,
+            height: height || 250,
           });
         }
       }
@@ -105,17 +106,18 @@ export default function GoogleFinanceChart({
             const d = ts ? new Date(ts * 1000) : new Date();
 
             const dateLabel =
-              timeframe === '1D' || timeframe === '5D'
-                ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              timeframe === '1D'
+                ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+                : timeframe === '5D'
+                ? d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit' })
                 : timeframe === '1Y' || timeframe === '5Y' || timeframe === 'Max'
-                ? d.toLocaleDateString('bg-BG', { month: 'short', year: '2-digit' })
-                : d.toLocaleDateString('bg-BG', { month: 'short', day: 'numeric' });
+                ? d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+                : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-            const fullDate = d.toLocaleDateString('bg-BG', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            }) + ' г.';
+            const fullDate =
+              timeframe === '1D' || timeframe === '5D'
+                ? d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+                : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
             pts.push({ date: dateLabel, price: pr, fullDate });
           }
@@ -208,8 +210,8 @@ export default function GoogleFinanceChart({
     document.body.removeChild(link);
   };
 
-  // Dimensions & Margins (Y-axis on left like Google Finance)
-  const margin = { top: 40, right: 25, bottom: 25, left: 45 };
+  // Dimensions & Margins (Y-axis on RIGHT matching the screenshot)
+  const margin = { top: 18, right: 54, bottom: 22, left: 6 };
   const plotWidth = Math.max(10, dimensions.width - margin.left - margin.right);
   const plotHeight = Math.max(10, dimensions.height - margin.top - margin.bottom);
 
@@ -219,13 +221,13 @@ export default function GoogleFinanceChart({
     let min = Math.min(...chartPoints.map((p) => p.price));
     let max = Math.max(...chartPoints.map((p) => p.price));
     if (min === max) {
-      min = min * 0.95;
-      max = max * 1.05;
+      min = min * 0.98;
+      max = max * 1.02;
     }
     const pad = (max - min) * 0.08;
     min = Math.max(0, min - pad);
     max = max + pad;
-    const step = (max - min) / 4;
+    const step = (max - min) / 5;
     return { minPrice: min, maxPrice: max, priceStep: step };
   }, [chartPoints]);
 
@@ -314,16 +316,17 @@ export default function GoogleFinanceChart({
 
   // Color selection
   const isPositive = selectedRangeData ? selectedRangeData.isPositive : overallReturn.isPositive;
-  const strokeColor = isPositive ? '#34a853' : '#ea4335'; // Google Green (#34a853) / Google Red (#ea4335)
+  const strokeColor = isPositive ? '#10b981' : '#ef4444'; // Emerald / Rose
+  const activePrice = currentPrice || (chartPoints.length ? chartPoints[chartPoints.length - 1].price : 0);
   const activePoint = hoverIndex !== null && chartPoints[hoverIndex] ? chartPoints[hoverIndex] : null;
 
-  // Y-axis grid ticks (4 ticks)
-  const yTicks = [0, 1, 2, 3, 4].map((i) => minPrice + i * priceStep);
+  // Y-axis grid ticks (5-6 ticks)
+  const yTicks = [0, 1, 2, 3, 4, 5].map((i) => minPrice + i * priceStep);
 
-  // X-axis sample dates (every ~12-15% of width)
+  // X-axis sample dates (every ~80-100px)
   const xTickIndices = useMemo(() => {
-    if (chartPoints.length <= 4) return chartPoints.map((_, i) => i);
-    const count = Math.max(3, Math.min(7, Math.floor(plotWidth / 100)));
+    if (chartPoints.length <= 3) return chartPoints.map((_, i) => i);
+    const count = Math.max(2, Math.min(5, Math.floor(plotWidth / 85)));
     const step = (chartPoints.length - 1) / (count - 1);
     const res: number[] = [];
     for (let i = 0; i < count; i++) {
@@ -335,53 +338,33 @@ export default function GoogleFinanceChart({
   return (
     <div
       ref={containerRef}
-      className={`w-full bg-[#171a21] text-white rounded-2xl p-3 sm:p-5 select-none border border-[#2b313d] shadow-2xl relative font-sans ${className}`}
+      className={`w-full flex flex-col justify-between select-none relative font-sans ${className}`}
     >
-      {/* ─── Top Header: Timeframe Bar with Dividers (Exact Google Finance 1:1) ─── */}
-      <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#2b313d]">
-        <div className="flex items-center gap-1 sm:gap-2.5 overflow-x-auto scrollbar-none text-xs sm:text-[13px]">
-          {TIMEFRAMES.map((tf, i) => (
-            <React.Fragment key={tf.id}>
-              <button
-                type="button"
-                onClick={() => setTimeframe(tf.id)}
-                className={`px-1.5 py-1 transition-all cursor-pointer whitespace-nowrap font-medium ${
-                  timeframe === tf.id
-                    ? 'text-white font-bold border-b-2 border-sky-400'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                {tf.label}
-              </button>
-              {i < TIMEFRAMES.length - 1 && (
-                <span className="text-neutral-700 select-none">|</span>
-              )}
-            </React.Fragment>
+      {/* ─── Top Header: Timeframe Pills & Download (StockAnalysis 1:1) ─── */}
+      <div className="flex items-center justify-between gap-1 pb-1.5 border-b border-border/70">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none text-xs">
+          {TIMEFRAMES.map((tf) => (
+            <button
+              key={tf.id}
+              type="button"
+              onClick={() => setTimeframe(tf.id)}
+              className={`px-2 py-0.5 rounded text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                timeframe === tf.id
+                  ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-bold shadow-2xs'
+                  : 'text-ink-muted hover:text-ink hover:bg-card-hover'
+              }`}
+            >
+              {tf.label}
+            </button>
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={handleDownloadCsv}
-          className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
-          title="Свали историческите данни като CSV"
-        >
-          <Download className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* ─── Center: Performance & Range Measurement Pill ─── */}
-      <div className="flex flex-col items-center justify-center my-2.5 min-h-[44px]">
-        {selectedRangeData ? (
-          <div className="flex flex-col items-center gap-1 animate-in fade-in duration-150">
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-3.5 py-1 rounded-md text-sm font-bold font-mono tracking-tight shadow-md ${
-                  selectedRangeData.isPositive ? 'bg-[#34a853] text-white' : 'bg-[#ea4335] text-white'
-                }`}
-              >
-                {selectedRangeData.isPositive ? '+' : ''}
-                {selectedRangeData.pct.toFixed(2)}%
+        <div className="flex items-center gap-2">
+          {/* Subtle Range / Performance Display */}
+          {selectedRangeData ? (
+            <span className="flex items-center gap-1 text-[11px] font-mono font-bold">
+              <span className={`px-1.5 py-0.5 rounded ${selectedRangeData.isPositive ? 'bg-emerald-500/20 text-emerald-500' : 'bg-rose-500/20 text-rose-500'}`}>
+                {selectedRangeData.isPositive ? '+' : ''}{selectedRangeData.pct.toFixed(2)}%
               </span>
               <button
                 type="button"
@@ -389,47 +372,35 @@ export default function GoogleFinanceChart({
                   setDragStartIndex(null);
                   setDragEndIndex(null);
                 }}
-                className="text-[11px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-700 transition-colors cursor-pointer"
-                title="Изчисти избора (покажи целия период)"
+                className="text-[10px] text-ink-muted hover:text-ink cursor-pointer ml-0.5"
+                title="Изчисти"
               >
-                ✕ Изчисти
+                ✕
               </button>
-            </div>
-            <div className="text-xs text-neutral-300 font-medium font-mono flex items-center gap-1.5">
-              <span>{selectedRangeData.startPt.date}</span>
-              <span className="text-neutral-400">(${selectedRangeData.startPt.price.toFixed(2)})</span>
-              <span className="text-neutral-500">→</span>
-              <span>{selectedRangeData.endPt.date}</span>
-              <span className="text-neutral-400">(${selectedRangeData.endPt.price.toFixed(2)})</span>
-              <span className="text-neutral-500">•</span>
-              <span className={selectedRangeData.diff >= 0 ? 'text-[#34a853] font-bold' : 'text-[#ea4335] font-bold'}>
-                {selectedRangeData.diff >= 0 ? '+' : ''}${selectedRangeData.diff.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2.5">
-            <span
-              className={`px-3.5 py-1 rounded-md text-sm font-bold font-mono tracking-tight shadow-md ${
-                overallReturn.isPositive ? 'bg-[#34a853] text-white' : 'bg-[#ea4335] text-white'
-              }`}
-            >
-              {overallReturn.isPositive ? '+' : ''}
-              {overallReturn.pct.toFixed(2)}%
             </span>
-            <span className="text-xs text-neutral-400 font-medium font-mono">
-              {overallReturn.diff >= 0 ? '+' : ''}${overallReturn.diff.toFixed(2)} ({timeframe})
+          ) : (
+            <span className={`text-[11px] font-mono font-bold ${overallReturn.isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
+              {overallReturn.isPositive ? '+' : ''}{overallReturn.pct.toFixed(2)}%
             </span>
-          </div>
-        )}
+          )}
+
+          <button
+            type="button"
+            onClick={handleDownloadCsv}
+            className="p-1 rounded text-ink-faint hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
+            title="Свали историческите данни като CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
-      {/* ─── SVG Interactive Canvas with Google Finance Price Curve & Drag-to-Measure ─── */}
+      {/* ─── SVG Interactive Canvas (Exact Height, Right Y-Axis, Clean Lines) ─── */}
       <div className="relative w-full" style={{ height: dimensions.height }}>
         {isLoading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 text-xs font-semibold text-neutral-400 bg-neutral-950/40 backdrop-blur-2xs rounded-xl">
-            <RefreshCw className="w-4 h-4 animate-spin text-sky-400" />
-            <span>Зареждане на реална борсова история за {cleanTicker}...</span>
+          <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 text-xs font-semibold text-ink-faint bg-card/60 backdrop-blur-2xs rounded-lg">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+            <span>Зареждане на графика...</span>
           </div>
         )}
 
@@ -445,15 +416,15 @@ export default function GoogleFinanceChart({
           }}
         >
           <defs>
-            {/* Google Finance Vivid Emerald to Translucent Fade */}
-            <linearGradient id="gfGradReal" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={strokeColor} stopOpacity={0.28} />
-              <stop offset="70%" stopColor={strokeColor} stopOpacity={0.04} />
+            {/* Subtle Gradient Fade */}
+            <linearGradient id="saGradReal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={strokeColor} stopOpacity={0.22} />
+              <stop offset="80%" stopColor={strokeColor} stopOpacity={0.03} />
               <stop offset="100%" stopColor={strokeColor} stopOpacity={0.0} />
             </linearGradient>
           </defs>
 
-          {/* Horizontal grid lines with labels on LEFT (Google Finance 1:1) */}
+          {/* Thin Horizontal Grid Lines (StockAnalysis Style) */}
           {yTicks.map((tickVal, idx) => {
             const y = getY(tickVal);
             return (
@@ -463,26 +434,68 @@ export default function GoogleFinanceChart({
                   y1={y}
                   x2={margin.left + plotWidth}
                   y2={y}
-                  stroke="rgba(255, 255, 255, 0.08)"
+                  stroke="currentColor"
+                  className="text-border/60"
+                  strokeDasharray="2 2"
                 />
-                {/* Y-axis label on left */}
+                {/* Y-axis label on RIGHT (StockAnalysis Style) */}
                 <text
-                  x={margin.left - 8}
+                  x={margin.left + plotWidth + 6}
                   y={y + 3.5}
-                  textAnchor="end"
-                  fill="#7e8691"
-                  fontSize={11}
+                  fill="currentColor"
+                  className="text-ink-faint"
+                  fontSize={10.5}
                   fontWeight={500}
                   fontFamily="monospace"
                 >
-                  {Math.round(tickVal)}
+                  {tickVal.toFixed(2)}
                 </text>
               </g>
             );
           })}
 
+          {/* Thin Bottom Baseline separating plot from X-axis dates */}
+          <line
+            x1={margin.left}
+            y1={margin.top + plotHeight}
+            x2={margin.left + plotWidth}
+            y2={margin.top + plotHeight}
+            stroke="currentColor"
+            className="text-border/80"
+          />
+
+          {/* Dashed baseline reference line at active price */}
+          {activePrice > 0 && (
+            <g>
+              <line
+                x1={margin.left}
+                y1={getY(activePrice)}
+                x2={margin.left + plotWidth}
+                y2={getY(activePrice)}
+                stroke={strokeColor}
+                strokeDasharray="2 2"
+                strokeOpacity={0.8}
+              />
+              {/* Green Price Badge on Right Y-axis (StockAnalysis 1:1) */}
+              <g transform={`translate(${margin.left + plotWidth + 4}, ${getY(activePrice) - 9})`}>
+                <rect width={50} height={18} rx={3} fill={strokeColor} />
+                <text
+                  x={25}
+                  y={12.5}
+                  textAnchor="middle"
+                  fill="#ffffff"
+                  fontSize={10}
+                  fontWeight="bold"
+                  fontFamily="monospace"
+                >
+                  {activePrice.toFixed(2)}
+                </text>
+              </g>
+            </g>
+          )}
+
           {/* Area fill */}
-          {areaD && <path d={areaD} fill="url(#gfGradReal)" />}
+          {areaD && <path d={areaD} fill="url(#saGradReal)" />}
 
           {/* Real Price Movement Line */}
           {pathD && (
@@ -490,7 +503,7 @@ export default function GoogleFinanceChart({
               d={pathD}
               fill="none"
               stroke={strokeColor}
-              strokeWidth={2.2}
+              strokeWidth={1.8}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
@@ -505,7 +518,7 @@ export default function GoogleFinanceChart({
                 y={margin.top}
                 width={Math.abs(getX(selectedRangeData.endIdx) - getX(selectedRangeData.startIdx))}
                 height={plotHeight}
-                fill={selectedRangeData.isPositive ? '#34a853' : '#ea4335'}
+                fill={selectedRangeData.isPositive ? '#10b981' : '#ef4444'}
                 fillOpacity={0.16}
               />
               {/* Left Vertical Line */}
@@ -514,7 +527,7 @@ export default function GoogleFinanceChart({
                 y1={margin.top}
                 x2={getX(selectedRangeData.startIdx)}
                 y2={margin.top + plotHeight}
-                stroke={selectedRangeData.isPositive ? '#34a853' : '#ea4335'}
+                stroke={selectedRangeData.isPositive ? '#10b981' : '#ef4444'}
                 strokeWidth={1.5}
                 strokeDasharray="2 2"
               />
@@ -524,7 +537,7 @@ export default function GoogleFinanceChart({
                 y1={margin.top}
                 x2={getX(selectedRangeData.endIdx)}
                 y2={margin.top + plotHeight}
-                stroke={selectedRangeData.isPositive ? '#34a853' : '#ea4335'}
+                stroke={selectedRangeData.isPositive ? '#10b981' : '#ef4444'}
                 strokeWidth={1.5}
                 strokeDasharray="2 2"
               />
@@ -532,24 +545,24 @@ export default function GoogleFinanceChart({
               <circle
                 cx={getX(selectedRangeData.startIdx)}
                 cy={getY(selectedRangeData.startPt.price)}
-                r={4.5}
+                r={4}
                 fill="#ffffff"
-                stroke={selectedRangeData.isPositive ? '#34a853' : '#ea4335'}
-                strokeWidth={2.5}
+                stroke={selectedRangeData.isPositive ? '#10b981' : '#ef4444'}
+                strokeWidth={2}
               />
               {/* Dot at End Price */}
               <circle
                 cx={getX(selectedRangeData.endIdx)}
                 cy={getY(selectedRangeData.endPt.price)}
-                r={4.5}
+                r={4}
                 fill="#ffffff"
-                stroke={selectedRangeData.isPositive ? '#34a853' : '#ea4335'}
-                strokeWidth={2.5}
+                stroke={selectedRangeData.isPositive ? '#10b981' : '#ef4444'}
+                strokeWidth={2}
               />
             </g>
           )}
 
-          {/* ─── Hover Single Point Cursor Indicator (Google Finance 1:1) ─── */}
+          {/* ─── Hover Single Point Cursor Indicator (StockAnalysis 1:1) ─── */}
           {!selectedRangeData && activePoint && hoverIndex !== null && (
             <g>
               {/* Dotted Vertical Guide Line */}
@@ -558,45 +571,39 @@ export default function GoogleFinanceChart({
                 y1={margin.top}
                 x2={getX(hoverIndex)}
                 y2={margin.top + plotHeight}
-                stroke="rgba(255, 255, 255, 0.45)"
+                stroke="currentColor"
+                className="text-ink-muted/60"
                 strokeDasharray="2 2"
               />
 
-              {/* Glowing Dot on the Line */}
+              {/* Dot on the Line */}
               <circle
                 cx={getX(hoverIndex)}
                 cy={getY(activePoint.price)}
-                r={5}
-                fill="#93e6a8"
-                stroke="#171a21"
+                r={4}
+                fill="#ffffff"
+                stroke={strokeColor}
                 strokeWidth={2}
               />
 
-              {/* Tooltip Card: e.g. "248,04 USD  23.01.2026 г." */}
+              {/* Tooltip Card: e.g. "Nov 13, 2026, 2:19 PM EST" */}
               {(() => {
                 const xPos = getX(hoverIndex);
-                const isRightSide = xPos > dimensions.width - 180;
-                const cardX = isRightSide ? xPos - 195 : xPos + 10;
-                const cardY = margin.top + 5;
-                const priceFormatted = activePoint.price.toLocaleString('bg-BG', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                });
+                const isRightSide = xPos > dimensions.width - 150;
+                const cardX = isRightSide ? xPos - 145 : xPos + 10;
+                const cardY = margin.top - 5;
 
                 return (
                   <g transform={`translate(${cardX}, ${cardY})`}>
                     <rect
-                      width={185}
-                      height={32}
-                      rx={6}
-                      fill="#1e222b"
+                      width={140}
+                      height={24}
+                      rx={4}
+                      fill="#1f2937"
                       stroke="rgba(255, 255, 255, 0.15)"
-                      filter="drop-shadow(0 4px 6px rgba(0,0,0,0.5))"
+                      filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))"
                     />
-                    <text x={10} y={20} fill="#ffffff" fontSize={12} fontWeight="bold" fontFamily="monospace">
-                      {priceFormatted} {currency}
-                    </text>
-                    <text x={115} y={20} fill="#9ca3af" fontSize={11} fontWeight={500}>
+                    <text x={70} y={16} textAnchor="middle" fill="#ffffff" fontSize={10} fontWeight={600} fontFamily="sans-serif">
                       {activePoint.fullDate}
                     </text>
                   </g>
@@ -605,7 +612,7 @@ export default function GoogleFinanceChart({
             </g>
           )}
 
-          {/* Bottom X-axis Dates */}
+          {/* Bottom X-axis Dates/Times */}
           {xTickIndices.map((idx) => {
             const pt = chartPoints[idx];
             if (!pt) return null;
@@ -616,8 +623,9 @@ export default function GoogleFinanceChart({
                 x={x}
                 y={dimensions.height - 4}
                 textAnchor="middle"
-                fill="#7e8691"
-                fontSize={11}
+                fill="currentColor"
+                className="text-ink-faint"
+                fontSize={10.5}
                 fontWeight={500}
               >
                 {pt.date}
@@ -625,11 +633,6 @@ export default function GoogleFinanceChart({
             );
           })}
         </svg>
-      </div>
-
-      {/* Subtle Hint Footer */}
-      <div className="mt-2 text-center text-[10.5px] text-neutral-400">
-        💡 Задръж с мишката върху дата и дръпни към друга, за да измериш точния процент доходност (Google Finance Style).
       </div>
     </div>
   );
