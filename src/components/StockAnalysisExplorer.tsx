@@ -812,6 +812,39 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     return `$${num.toLocaleString()}`;
   };
 
+  const formatStatCurrency = (val: number | null | undefined): string => {
+    if (val == null || isNaN(Number(val))) return '—';
+    const abs = Math.abs(val);
+    const sign = val < 0 ? '-' : '';
+    if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(2)}T`;
+    if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}B`;
+    if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(1)}M`;
+    if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(1)}K`;
+    return `${sign}$${abs.toFixed(2)}`;
+  };
+
+  const formatStatCount = (val: number | null | undefined): string => {
+    if (val == null || isNaN(Number(val))) return '—';
+    const abs = Math.abs(val);
+    const sign = val < 0 ? '-' : '';
+    if (abs >= 1e12) return `${sign}${(abs / 1e12).toFixed(2)}T`;
+    if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(2)}B`;
+    if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1)}M`;
+    if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1)}K`;
+    return `${sign}${abs.toLocaleString()}`;
+  };
+
+  const formatStatPercent = (val: number | null | undefined, includePlus = false): string => {
+    if (val == null || isNaN(Number(val))) return '—';
+    const prefix = includePlus && val > 0 ? '+' : '';
+    return `${prefix}${val.toFixed(2)}%`;
+  };
+
+  const formatStatRatio = (val: number | null | undefined, suffix = ''): string => {
+    if (val == null || isNaN(Number(val))) return '—';
+    return `${val.toFixed(2)}${suffix}`;
+  };
+
   // Traffic light helpers
   const getPeBadge = (pe: number | null) => {
     if (!pe) return <span className="text-ink-faint">—</span>;
@@ -2491,79 +2524,453 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                   </div>
                 )}
 
-                {/* ─── TAB 4: STATISTICS (СВЕТОФАРНА ОЦЕНКА) ─── */}
+                {/* ─── TAB 4: STATISTICS (1:1 STOCKANALYSIS DASHBOARD) ─── */}
                 {activeTab === 'statistics' && (
-                  <div className="space-y-4">
-                    <div className="pb-2 border-b border-border/60">
-                      <h3 className="text-xs font-black uppercase text-ink">Оценъчни коефициенти & Мултипликатори</h3>
-                      <p className="text-[11px] text-ink-faint">Светофарна система за подцененост и ефективност</p>
+                  <div className="space-y-6">
+                    {/* Header Banner */}
+                    <div className="pb-3 border-b border-border/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div>
+                        <h2 className="text-sm font-bold text-ink">
+                          {stock.companyName} ({cleanTicker}) Статистика & Мултипликатори
+                        </h2>
+                        <p className="text-[11px] text-ink-faint">
+                          Оценъчни коефициенти, оперативни маржове, ликвидност, структура на капитала и пазарна волатилност
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-accent text-ink-faint border border-border/50">
+                          {(data.overview as any)?.exchange || 'NASDAQ'} • USD
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {/* Valuation Ratios */}
-                      <div className="p-3.5 rounded-xl bg-card border border-border/80 space-y-2">
-                        <span className="text-[11px] font-bold uppercase text-indigo-400 block border-b border-border/50 pb-1">Пазарна оценка</span>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">P/E Ratio:</span>
-                          {getPeBadge(data.statistics.peRatio)}
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Forward P/E:</span>
-                          <span className="font-bold text-ink">{data.statistics.forwardPE || '—'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">PEG Ratio:</span>
-                          {getPegBadge(data.statistics.pegRatio)}
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Price / Sales:</span>
-                          <span className="font-bold text-ink">{data.statistics.priceToSales || '—'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Price / Book:</span>
-                          <span className="font-bold text-ink">{data.statistics.priceToBook || '—'}</span>
+                    {/* 6 Comprehensive StockAnalysis Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* 1. Valuation Metrics */}
+                      <div className="rounded-xl bg-card border border-border/80 overflow-hidden shadow-xs flex flex-col justify-between">
+                        <div>
+                          <div className="px-3.5 py-2.5 bg-muted/20 border-b border-border/60 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Scale className="w-3.5 h-3.5 text-indigo-400" />
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-ink">Оценъчни коефициенти</h3>
+                            </div>
+                            <span className="text-[10px] font-mono text-ink-faint">Valuation</span>
+                          </div>
+                          <div className="divide-y divide-border/40 text-xs">
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Market Capitalization</span>
+                                <span className="text-[10px] text-ink-faint">Пазарна капитализация</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatCurrency(data.overview.marketCap)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Enterprise Value (EV)</span>
+                                <span className="text-[10px] text-ink-faint">Стойност на компанията</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">
+                                {formatStatCurrency(data.statistics.enterpriseValue ?? (data.overview.marketCap + (data.statistics.totalDebt ?? 0) - (data.statistics.totalCash ?? 0)))}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Trailing P/E Ratio</span>
+                                <span className="text-[10px] text-ink-faint">Цена / Печалба TTM</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                {getPeBadge(data.statistics.peRatio ?? data.overview.peRatio)}
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Forward P/E Ratio</span>
+                                <span className="text-[10px] text-ink-faint">Прогнозен P/E (FY+1)</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.forwardPE ?? data.overview.forwardPE)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">PEG Ratio (5Y)</span>
+                                <span className="text-[10px] text-ink-faint">P/E към ръст</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                {getPegBadge(data.statistics.pegRatio)}
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Price / Sales (P/S)</span>
+                                <span className="text-[10px] text-ink-faint">Цена / Приходи</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.priceToSales)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Price / Book (P/B)</span>
+                                <span className="text-[10px] text-ink-faint">Цена / Счетоводна ст-ст</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.priceToBook)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Price / Free Cash Flow</span>
+                                <span className="text-[10px] text-ink-faint">Цена / Свободен поток</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.priceToFcf)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">EV / Revenue</span>
+                                <span className="text-[10px] text-ink-faint">EV / Годишни приходи</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.evToRevenue)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">EV / EBITDA</span>
+                                <span className="text-[10px] text-ink-faint">EV / Оперативна печалба</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.evToEbitda)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">EV / Free Cash Flow</span>
+                                <span className="text-[10px] text-ink-faint">EV / Свободен паричен поток</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.evToFcf)}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Profitability */}
-                      <div className="p-3.5 rounded-xl bg-card border border-border/80 space-y-2">
-                        <span className="text-[11px] font-bold uppercase text-emerald-400 block border-b border-border/50 pb-1">Рентабилност (ROE / ROA)</span>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Return on Equity (ROE):</span>
-                          <span className="font-black text-emerald-500">{data.statistics.returnOnEquity ? `${data.statistics.returnOnEquity}%` : '—'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Return on Assets (ROA):</span>
-                          <span className="font-bold text-ink">{data.statistics.returnOnAssets ? `${data.statistics.returnOnAssets}%` : '—'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Operating Margin:</span>
-                          <span className="font-bold text-indigo-400">{data.statistics.operatingMargin ? `${data.statistics.operatingMargin}%` : '—'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Profit Margin:</span>
-                          <span className="font-bold text-emerald-400">{data.statistics.profitMargin ? `${data.statistics.profitMargin}%` : '—'}</span>
+                      {/* 2. Financial Efficiency & Profitability */}
+                      <div className="rounded-xl bg-card border border-border/80 overflow-hidden shadow-xs flex flex-col justify-between">
+                        <div>
+                          <div className="px-3.5 py-2.5 bg-muted/20 border-b border-border/60 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-ink">Рентабилност & Маржове</h3>
+                            </div>
+                            <span className="text-[10px] font-mono text-ink-faint">Profitability</span>
+                          </div>
+                          <div className="divide-y divide-border/40 text-xs">
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Gross Margin</span>
+                                <span className="text-[10px] text-ink-faint">Брутен марж</span>
+                              </div>
+                              <span className="font-bold font-mono text-emerald-500">{formatStatPercent(data.statistics.grossMargin ?? data.financials.grossMargin)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Operating Margin</span>
+                                <span className="text-[10px] text-ink-faint">Оперативен марж</span>
+                              </div>
+                              <span className="font-bold font-mono text-indigo-400">{formatStatPercent(data.statistics.operatingMargin ?? data.financials.operatingMargin)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Net Profit Margin</span>
+                                <span className="text-[10px] text-ink-faint">Чист марж на печалба</span>
+                              </div>
+                              <span className="font-bold font-mono text-emerald-500">{formatStatPercent(data.statistics.profitMargin ?? data.financials.profitMargin)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">FCF Margin</span>
+                                <span className="text-[10px] text-ink-faint">Марж на свободен паричен поток</span>
+                              </div>
+                              <span className="font-bold font-mono text-emerald-500">{formatStatPercent(data.statistics.fcfMargin)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Return on Equity (ROE)</span>
+                                <span className="text-[10px] text-ink-faint">Възвръщаемост на капитала</span>
+                              </div>
+                              <span className="font-bold font-mono text-emerald-500">{formatStatPercent(data.statistics.returnOnEquity)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Return on Assets (ROA)</span>
+                                <span className="text-[10px] text-ink-faint">Възвръщаемост на активите</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatPercent(data.statistics.returnOnAssets)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Return on Capital (ROIC)</span>
+                                <span className="text-[10px] text-ink-faint">Инвестиран капитал</span>
+                              </div>
+                              <span className="font-bold font-mono text-emerald-500">{formatStatPercent(data.statistics.returnOnCapital)}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Financial Health */}
-                      <div className="p-3.5 rounded-xl bg-card border border-border/80 space-y-2">
-                        <span className="text-[11px] font-bold uppercase text-amber-400 block border-b border-border/50 pb-1">Финансово здраве</span>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Current Ratio:</span>
-                          <span className="font-bold text-ink">{data.statistics.currentRatio || '—'}</span>
+                      {/* 3. Financial Health & Balance Sheet */}
+                      <div className="rounded-xl bg-card border border-border/80 overflow-hidden shadow-xs flex flex-col justify-between">
+                        <div>
+                          <div className="px-3.5 py-2.5 bg-muted/20 border-b border-border/60 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-ink">Финансово здраве & Баланс</h3>
+                            </div>
+                            <span className="text-[10px] font-mono text-ink-faint">Liquidity</span>
+                          </div>
+                          <div className="divide-y divide-border/40 text-xs">
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Total Cash & ST Inv.</span>
+                                <span className="text-[10px] text-ink-faint">Парични средства & екв.</span>
+                              </div>
+                              <span className="font-bold font-mono text-emerald-500">{formatStatCurrency(data.statistics.totalCash ?? data.financials.totalCash)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Total Debt</span>
+                                <span className="text-[10px] text-ink-faint">Общ дълг (краткоср. + дългоср.)</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatCurrency(data.statistics.totalDebt ?? data.financials.totalDebt)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Net Cash / (Debt)</span>
+                                <span className="text-[10px] text-ink-faint">Нетна парична позиция</span>
+                              </div>
+                              <span className={`font-bold font-mono ${(data.statistics.netCashDebt ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                {formatStatCurrency(data.statistics.netCashDebt)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Current Ratio</span>
+                                <span className="text-[10px] text-ink-faint">Текуща ликвидност</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.currentRatio)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Quick Ratio</span>
+                                <span className="text-[10px] text-ink-faint">Бърза ликвидност (без запаси)</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.quickRatio)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Debt / Equity</span>
+                                <span className="text-[10px] text-ink-faint">Дълг към собствен капитал</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.debtToEquity)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Debt / EBITDA</span>
+                                <span className="text-[10px] text-ink-faint">Задлъжнялост спрямо EBITDA</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.debtToEbitda)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Interest Coverage</span>
+                                <span className="text-[10px] text-ink-faint">Покритие на лихвените плащания</span>
+                              </div>
+                              <span className="font-bold font-mono text-emerald-500">{formatStatRatio(data.statistics.interestCoverage, 'x')}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Quick Ratio:</span>
-                          <span className="font-bold text-ink">{data.statistics.quickRatio || '—'}</span>
+                      </div>
+
+                      {/* 4. Share Statistics & Ownership */}
+                      <div className="rounded-xl bg-card border border-border/80 overflow-hidden shadow-xs flex flex-col justify-between">
+                        <div>
+                          <div className="px-3.5 py-2.5 bg-muted/20 border-b border-border/60 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Users className="w-3.5 h-3.5 text-blue-400" />
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-ink">Акции & Собственост</h3>
+                            </div>
+                            <span className="text-[10px] font-mono text-ink-faint">Ownership</span>
+                          </div>
+                          <div className="divide-y divide-border/40 text-xs">
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Shares Outstanding</span>
+                                <span className="text-[10px] text-ink-faint">Издадени акции общо</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatCount(data.statistics.sharesOutstanding ?? data.overview.sharesOut)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Float Shares</span>
+                                <span className="text-[10px] text-ink-faint">Свободно търгуеми (Float)</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatCount(data.statistics.floatShares)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Shares Short</span>
+                                <span className="text-[10px] text-ink-faint">Къси позиции (брой акции)</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatCount(data.statistics.sharesShort)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Short % of Float</span>
+                                <span className="text-[10px] text-ink-faint">Къси позиции % от флийт</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatPercent(data.statistics.shortPercentOfFloat)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Short Ratio (Days to Cover)</span>
+                                <span className="text-[10px] text-ink-faint">Дни за покриване на късите</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.shortRatio, ' дни')}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Insider Ownership</span>
+                                <span className="text-[10px] text-ink-faint">Дял на вътрешни лица (мениджмънт)</span>
+                              </div>
+                              <span className="font-bold font-mono text-indigo-400">{formatStatPercent(data.statistics.insiderOwnership)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Institutional Ownership</span>
+                                <span className="text-[10px] text-ink-faint">Институционални фондове</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatPercent(data.statistics.institutionalOwnership)}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">Debt to Equity:</span>
-                          <span className="font-bold text-ink">{data.statistics.debtToEquity || '—'}</span>
+                      </div>
+
+                      {/* 5. Stock Price Statistics & Volatility */}
+                      <div className="rounded-xl bg-card border border-border/80 overflow-hidden shadow-xs flex flex-col justify-between">
+                        <div>
+                          <div className="px-3.5 py-2.5 bg-muted/20 border-b border-border/60 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-ink">Ценова динамика & Риск</h3>
+                            </div>
+                            <span className="text-[10px] font-mono text-ink-faint">Price Stats</span>
+                          </div>
+                          <div className="divide-y divide-border/40 text-xs">
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Beta (5Y Monthly)</span>
+                                <span className="text-[10px] text-ink-faint">Волатилност спрямо S&P 500</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatRatio(data.statistics.beta ?? data.overview.beta)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">52-Week Range</span>
+                                <span className="text-[10px] text-ink-faint">Годишен диапазон Мин – Макс</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">
+                                {data.statistics.week52Low && data.statistics.week52High
+                                  ? `$${data.statistics.week52Low.toFixed(2)} – $${data.statistics.week52High.toFixed(2)}`
+                                  : (data.overview.week52Low && data.overview.week52High ? `$${data.overview.week52Low.toFixed(2)} – $${data.overview.week52High.toFixed(2)}` : '—')}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">52-Week Change</span>
+                                <span className="text-[10px] text-ink-faint">Изменение за последните 12м</span>
+                              </div>
+                              <span className={`font-bold font-mono ${(data.statistics.week52Change ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                {formatStatPercent(data.statistics.week52Change, true)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">50-Day Moving Average</span>
+                                <span className="text-[10px] text-ink-faint">50-дневна средна цена</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{data.statistics.movingAvg50 ? `$${data.statistics.movingAvg50.toFixed(2)}` : '—'}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">200-Day Moving Average</span>
+                                <span className="text-[10px] text-ink-faint">200-дневна средна цена</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{data.statistics.movingAvg200 ? `$${data.statistics.movingAvg200.toFixed(2)}` : '—'}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Avg Volume (10-Day)</span>
+                                <span className="text-[10px] text-ink-faint">Среден дневен обем 10 дни</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatCount(data.statistics.avgVolume10D)}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Avg Volume (3-Month)</span>
+                                <span className="text-[10px] text-ink-faint">Среден дневен обем 3 месеца</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{formatStatCount(data.statistics.avgVolume3M)}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-ink-faint">EV / EBITDA:</span>
-                          <span className="font-bold text-ink">{data.statistics.evToEbitda || '—'}</span>
+                      </div>
+
+                      {/* 6. Per-Share Data */}
+                      <div className="rounded-xl bg-card border border-border/80 overflow-hidden shadow-xs flex flex-col justify-between">
+                        <div>
+                          <div className="px-3.5 py-2.5 bg-muted/20 border-b border-border/60 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-ink">Показатели на акция</h3>
+                            </div>
+                            <span className="text-[10px] font-mono text-ink-faint">Per Share</span>
+                          </div>
+                          <div className="divide-y divide-border/40 text-xs">
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Diluted EPS (TTM)</span>
+                                <span className="text-[10px] text-ink-faint">Разводнена печалба на акция</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">
+                                {data.metrics.epsTrailing != null ? `$${data.metrics.epsTrailing.toFixed(2)}` : (stock.eps != null ? `$${stock.eps.toFixed(2)}` : '—')}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Forward EPS (Прогноза)</span>
+                                <span className="text-[10px] text-ink-faint">Очаквана печалба следваща година</span>
+                              </div>
+                              <span className="font-bold font-mono text-indigo-400">{data.metrics.epsForward != null ? `$${data.metrics.epsForward.toFixed(2)}` : '—'}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Revenue Per Share</span>
+                                <span className="text-[10px] text-ink-faint">Приходи на акция TTM</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{data.metrics.revenuePerShare != null ? `$${data.metrics.revenuePerShare.toFixed(2)}` : '—'}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Book Value Per Share</span>
+                                <span className="text-[10px] text-ink-faint">Счетоводна стойност на акция</span>
+                              </div>
+                              <span className="font-bold font-mono text-ink">{data.metrics.bookValuePerShare != null ? `$${data.metrics.bookValuePerShare.toFixed(2)}` : '—'}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Cash Per Share</span>
+                                <span className="text-[10px] text-ink-faint">Парични средства на акция</span>
+                              </div>
+                              <span className="font-bold font-mono text-emerald-500">{data.metrics.cashPerShare != null ? `$${data.metrics.cashPerShare.toFixed(2)}` : '—'}</span>
+                            </div>
+                            <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-ink font-medium">Free Cash Flow Per Share</span>
+                                <span className="text-[10px] text-ink-faint">Свободен паричен поток на акция</span>
+                              </div>
+                              <span className="font-bold font-mono text-emerald-500">{data.metrics.fcfPerShare != null ? `$${data.metrics.fcfPerShare.toFixed(2)}` : '—'}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
