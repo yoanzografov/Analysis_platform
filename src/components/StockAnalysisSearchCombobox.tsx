@@ -79,6 +79,7 @@ export default function StockAnalysisSearchCombobox({
 
   const handleSelectCatalogItem = (item: CatalogStockItem) => {
     const synthesizedStock: Stock = {
+      watch: '',
       ticker: item.ticker,
       companyName: item.companyName,
       currentPrice: item.price || 100,
@@ -105,6 +106,7 @@ export default function StockAnalysisSearchCombobox({
   const handleSelectCustomTypedTicker = () => {
     if (!cleanQuery) return;
     const synthesizedStock: Stock = {
+      watch: '',
       ticker: cleanQuery,
       companyName: cleanQuery,
       currentPrice: 100,

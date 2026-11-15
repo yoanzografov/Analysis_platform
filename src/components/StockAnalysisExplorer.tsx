@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Stock } from '../types';
-import { StockAnalysisData, StockAnalysisTabId } from '../types/stockAnalysis';
+import { StockAnalysisData, StockAnalysisTabId, FinancialStatementRow, FinancialStatementTable } from '../types/stockAnalysis';
 import { 
   LayoutDashboard, 
   DollarSign, 
@@ -82,6 +82,7 @@ interface Props {
   stock: Stock;
   onClose?: () => void;
   className?: string;
+  key?: React.Key;
 }
 
 export default function StockAnalysisExplorer({ stock, onClose, className = '' }: Props) {
