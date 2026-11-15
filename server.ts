@@ -2245,7 +2245,7 @@ app.get("/api/dividends", async (req, res) => {
 });
 
 // Endpoint for fetching stock historical data for the custom interactive chart
-app.get("/api/stock-history", async (req, res) => {
+app.get(["/api/stock-history", "/api/chart-history"], async (req, res) => {
   const ticker = req.query.ticker as string;
   const range = (req.query.range as string || "1y").toLowerCase();
   const currentPriceQuery = req.query.currentPrice ? parseFloat(req.query.currentPrice as string) : null;
@@ -2257,7 +2257,13 @@ app.get("/api/stock-history", async (req, res) => {
     return res.status(400).json({ error: "Липсва символ (ticker)" });
   }
 
-  // Translate original symbol to Yahoo Symbol representation
+  // Clean and map ticker to Yahoo Finance Symbol
+  let cleanTicker = ticker;
+  if (cleanTicker.includes(":")) {
+    cleanTicker = cleanTicker.split(":")[1];
+  }
+  cleanTicker = cleanTicker.trim().replace(/\./g, "-");
+
   let yahooSymbol = ticker;
   const historyExchangeMap: Record<string, string> = {
     "EPA": ".PA", "ETR": ".DE", "FRA": ".F", "LON": ".L", "AMS": ".AS",
@@ -2283,85 +2289,139 @@ app.get("/api/stock-history", async (req, res) => {
     }
   }
 
-  // Determine Yahoo range & interval parameters
+  // Determine period1 Date & interval for real Yahoo Finance chart
+  const now = new Date();
+  let period1Date = new Date(now.getTime() - 365 * 86400 * 1000);
+  let chartInterval: '5m' | '15m' | '1d' | '1wk' | '1mo' = '1d';
   let yahooRange = "1y";
-  let yahooInterval = "1d";
 
   switch (range) {
     case "1d":
+      period1Date = new Date(now.getTime() - 2 * 86400 * 1000);
+      chartInterval = "5m";
       yahooRange = "1d";
-      yahooInterval = "5m";
       break;
     case "7d":
     case "5d":
     case "1w":
+      period1Date = new Date(now.getTime() - 8 * 86400 * 1000);
+      chartInterval = "15m";
       yahooRange = "5d";
-      yahooInterval = "15m";
       break;
     case "1mo":
     case "1m":
+      period1Date = new Date(now.getTime() - 35 * 86400 * 1000);
+      chartInterval = "1d";
       yahooRange = "1mo";
-      yahooInterval = "1d";
       break;
     case "3mo":
     case "3m":
+      period1Date = new Date(now.getTime() - 95 * 86400 * 1000);
+      chartInterval = "1d";
       yahooRange = "3mo";
-      yahooInterval = "1d";
       break;
     case "6mo":
     case "6m":
+      period1Date = new Date(now.getTime() - 190 * 86400 * 1000);
+      chartInterval = "1d";
       yahooRange = "6mo";
-      yahooInterval = "1d";
       break;
     case "ytd":
+      period1Date = new Date(now.getFullYear(), 0, 1);
+      chartInterval = "1d";
       yahooRange = "ytd";
-      yahooInterval = "1d";
       break;
     case "1y":
+      period1Date = new Date(now.getTime() - 370 * 86400 * 1000);
+      chartInterval = "1d";
       yahooRange = "1y";
-      yahooInterval = "1d";
-      break;
-    case "2y":
-      yahooRange = "2y";
-      yahooInterval = "1d";
       break;
     case "5y":
+      period1Date = new Date(now.getTime() - 5 * 365 * 86400 * 1000);
+      chartInterval = "1wk";
       yahooRange = "5y";
-      yahooInterval = "1wk";
-      break;
-    case "10y":
-      yahooRange = "10y";
-      yahooInterval = "1wk";
       break;
     case "all":
     case "max":
+      period1Date = new Date(now.getTime() - 25 * 365 * 86400 * 1000);
+      chartInterval = "1mo";
       yahooRange = "max";
-      yahooInterval = "1mo";
       break;
     default:
+      period1Date = new Date(now.getTime() - 370 * 86400 * 1000);
+      chartInterval = "1d";
       yahooRange = "1y";
-      yahooInterval = "1d";
   }
 
-  const fallbackPrice = currentPriceQuery || serverPriceCache[ticker] || baselinePrices[ticker]?.price || (ticker === "^VIX" ? 18.5 : 150);
+  // Tier 1: Real-time Yahoo-Finance2 library instance
+  try {
+    const yfRes = await (yahooFinance as any).chart(yahooSymbol, {
+      period1: period1Date,
+      interval: chartInterval
+    });
+    if (yfRes && Array.isArray(yfRes.quotes) && yfRes.quotes.length > 0) {
+      const validTimestamps: number[] = [];
+      const validPrices: number[] = [];
+      for (const q of yfRes.quotes) {
+        const pr = q.adjclose ?? q.close ?? q.open;
+        if (pr !== null && pr !== undefined && !isNaN(pr) && q.date) {
+          const ts = Math.round(new Date(q.date).getTime() / 1000);
+          validTimestamps.push(ts);
+          validPrices.push(parseFloat(Number(pr).toFixed(2)));
+        }
+      }
+      if (validTimestamps.length > 0) {
+        return res.json({
+          timestamps: validTimestamps,
+          prices: validPrices,
+          source: "yahoo-finance-live"
+        });
+      }
+    }
+  } catch (err: any) {
+    console.log(`Инфо: yahooFinance.chart Tier 1 провал за ${yahooSymbol}: ${err.message}`);
+  }
 
+  // Tier 2: Finnhub Candles Fallback
+  const finnhubKey = process.env.FINNHUB_API_KEY;
+  if (finnhubKey) {
+    try {
+      const fromTs = Math.round(period1Date.getTime() / 1000);
+      const toTs = Math.round(now.getTime() / 1000);
+      const resVal = chartInterval === '5m' ? '5' : chartInterval === '15m' ? '15' : chartInterval === '1wk' ? 'W' : chartInterval === '1mo' ? 'M' : 'D';
+      const fhResp = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(cleanTicker)}&resolution=${resVal}&from=${fromTs}&to=${toTs}&token=${finnhubKey}`);
+      if (fhResp.ok) {
+        const fhData = await fhResp.json() as any;
+        if (fhData && fhData.s === 'ok' && Array.isArray(fhData.c) && fhData.c.length > 0) {
+          return res.json({
+            timestamps: fhData.t,
+            prices: fhData.c.map((p: number) => parseFloat(Number(p).toFixed(2))),
+            source: "finnhub-candle-live"
+          });
+        }
+      }
+    } catch (err: any) {
+      console.log(`Инфо: Finnhub candle Tier 2 провал за ${cleanTicker}: ${err.message}`);
+    }
+  }
+
+  // Tier 3: Direct Yahoo query fallback
   try {
     const encodedSym = encodeURIComponent(yahooSymbol);
     const urls = [
-      `https://query2.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${yahooRange}&interval=${yahooInterval}`,
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${yahooRange}&interval=${yahooInterval}`
+      `https://query2.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${yahooRange}&interval=${chartInterval}`,
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${yahooRange}&interval=${chartInterval}`
     ];
 
-    let dataLoaded = false;
     for (const url of urls) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout for history fetch
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
 
         const response = await fetch(url, {
           signal: controller.signal,
           headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Accept": "application/json"
           }
         });
@@ -2386,40 +2446,34 @@ app.get("/api/stock-history", async (req, res) => {
             }
 
             if (validTimestamps.length > 0) {
-              dataLoaded = true;
               return res.json({
                 timestamps: validTimestamps,
                 prices: validPrices,
-                source: "yahoo-finance-live"
+                source: "yahoo-query-live"
               });
             }
           }
         }
-      } catch (err: any) {
-        console.log(`Инфо: Провал при извличане от ${url}: ${err.message}`);
-      }
+      } catch {}
     }
+  } catch {}
 
-    if (!dataLoaded) {
-      throw new Error("Всички Yahoo URL-и се провалиха или върнаха празни данни");
-    }
-
-  } catch (error: any) {
-    console.log(`Инфо: Генериране на симулирана история за ${ticker} (${range}) поради: ${error.message}`);
-    const simulated = generateSimulatedHistory(
-      ticker, 
-      range, 
-      fallbackPrice, 
-      dailyChangeQuery, 
-      low52Query, 
-      high52Query
-    );
-    return res.json({
-      timestamps: simulated.timestamps,
-      prices: simulated.prices,
-      source: "live-simulated-history"
-    });
-  }
+  // Tier 4: Fallback simulation only if completely offline
+  const fallbackPrice = currentPriceQuery || serverPriceCache[ticker] || baselinePrices[ticker]?.price || (ticker === "^VIX" ? 18.5 : 150);
+  console.log(`Инфо: Генериране на симулирана история за ${ticker} (${range})`);
+  const simulated = generateSimulatedHistory(
+    ticker, 
+    range, 
+    fallbackPrice, 
+    dailyChangeQuery, 
+    low52Query, 
+    high52Query
+  );
+  return res.json({
+    timestamps: simulated.timestamps,
+    prices: simulated.prices,
+    source: "live-simulated-history"
+  });
 });
 
 // Exchange maps for server-side returns calculation
