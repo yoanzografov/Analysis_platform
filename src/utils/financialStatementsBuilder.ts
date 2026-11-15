@@ -25,8 +25,8 @@ export interface FinancialBuildParams {
 export type FinancialFrequency = 'annual' | 'quarterly' | 'trailing';
 
 // 10-Year Annual Periods list (StockAnalysis 1:1 completed fiscal years)
-export const ANNUAL_10Y_PERIODS = ['TTM', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016'];
-export const BALANCE_10Y_PERIODS = ['TTM', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016'];
+export const ANNUAL_10Y_PERIODS = ['TTM', '2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016'];
+export const BALANCE_10Y_PERIODS = ['TTM', '2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016'];
 export const QUARTERLY_PERIODS = ['Q4 2026', 'Q3 2026', 'Q2 2026', 'Q1 2026', 'Q4 2025', 'Q3 2025', 'Q2 2025', 'Q1 2025'];
 export const TRAILING_PERIODS = ['TTM Q4 2026', 'TTM Q3 2026', 'TTM Q2 2026', 'TTM Q1 2026', 'TTM Q4 2025', 'TTM Q3 2025', 'TTM Q2 2025', 'TTM Q1 2025'];
 
@@ -73,7 +73,7 @@ export function generateCompanyGrowthRates(params: FinancialBuildParams): number
 
 export const PERIOD_END_DATES: Record<string, string> = {
   'TTM': 'Trailing',
-  '2026': 'Jan 25, 2026',
+  '2026': 'Sep 26, 2026',
   '2025': 'Sep 27, 2025',
   '2024': 'Sep 28, 2024',
   '2023': 'Sep 30, 2023',
@@ -380,6 +380,7 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         format: 'currency', 
         values: { 
           'TTM': 478834000000, 
+          '2026': 478834000000, 
           '2025': 416161000000, 
           '2024': 391035000000, 
           '2023': 383285000000, 
@@ -400,7 +401,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         format: 'currency', 
         values: { 
           'TTM': 233602000000, 
-          '2025': 192427000000, 
+          '2026': 233602000000, 
+          '2025': 195201000000, 
           '2024': 180683000000, 
           '2023': 169148000000, 
           '2022': 170782000000, 
@@ -420,7 +422,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         format: 'currency', 
         values: { 
           'TTM': 75539000000, 
-          '2025': 61193000000, 
+          '2026': 75539000000, 
+          '2025': 62151000000, 
           '2024': 57467000000, 
           '2023': 54847000000, 
           '2022': 51345000000, 
@@ -440,7 +443,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         format: 'currency', 
         values: { 
           'TTM': 158063000000, 
-          '2025': 131234000000, 
+          '2026': 158063000000, 
+          '2025': 133050000000, 
           '2024': 123216000000, 
           '2023': 114301000000, 
           '2022': 119437000000, 
@@ -459,8 +463,9 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         isBold: true, 
         format: 'currency', 
         values: { 
-          'TTM': 158300000000, 
-          '2025': 131500000000, 
+          'TTM': 159237000000, 
+          '2026': 159237000000, 
+          '2025': 132729000000, 
           '2024': 123485000000, 
           '2023': 113736000000, 
           '2022': 119103000000, 
@@ -473,6 +478,27 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         } 
       };
 
+      const taxRow: FinancialStatementRow = {
+        name: 'Income Tax',
+        key: 'income_tax',
+        indent: 1,
+        format: 'currency',
+        values: {
+          'TTM': 27062000000,
+          '2026': 27062000000,
+          '2025': 20719000000,
+          '2024': 29749000000,
+          '2023': 16741000000,
+          '2022': 19300000000,
+          '2021': 14527000000,
+          '2020': 9680000000,
+          '2019': 10481000000,
+          '2018': 13372000000,
+          '2017': 15738000000,
+          '2016': 15685000000
+        }
+      };
+
       const niRow: FinancialStatementRow = { 
         name: 'Net Income', 
         key: 'net_income', 
@@ -480,7 +506,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         format: 'currency', 
         values: { 
           'TTM': 132175000000, 
-          '2025': 103450000000, 
+          '2026': 132175000000, 
+          '2025': 112010000000, 
           '2024': 93736000000, 
           '2023': 96995000000, 
           '2022': 99803000000, 
@@ -499,9 +526,10 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         indent: 1, 
         format: 'number', 
         values: { 
-          'TTM': 15150000000, 
-          '2025': 15250000000, 
-          '2024': 15418000000, 
+          'TTM': 14720000000, 
+          '2026': 14720000000, 
+          '2025': 15005000000, 
+          '2024': 15408000000, 
           '2023': 15813000000, 
           '2022': 16326000000, 
           '2021': 16865000000, 
@@ -520,7 +548,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         format: 'currency', 
         values: { 
           'TTM': 8.98, 
-          '2025': 6.82, 
+          '2026': 8.98, 
+          '2025': 7.46, 
           '2024': 6.08, 
           '2023': 6.13, 
           '2022': 6.11, 
@@ -540,7 +569,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         format: 'currency', 
         values: { 
           'TTM': 169500000000, 
-          '2025': 142300000000, 
+          '2026': 169500000000, 
+          '2025': 144300000000, 
           '2024': 134661000000, 
           '2023': 125820000000, 
           '2022': 130541000000, 
@@ -557,6 +587,7 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         revRow,
         createGrowthRow(periods, revRow, 'Revenue Growth (YoY)', '_growth', { 
           'TTM': 15.06, 
+          '2026': 15.06,
           '2025': 6.43, 
           '2024': 2.02, 
           '2023': -2.80, 
@@ -574,7 +605,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
           format: 'currency', 
           values: { 
             'TTM': 245232000000, 
-            '2025': 223734000000, 
+            '2026': 245232000000,
+            '2025': 220960000000, 
             '2024': 210352000000, 
             '2023': 214137000000, 
             '2022': 223546000000, 
@@ -595,7 +627,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
           format: 'percent', 
           values: { 
             'TTM': 48.8, 
-            '2025': 46.2, 
+            '2026': 48.8,
+            '2025': 46.9, 
             '2024': 46.2, 
             '2023': 44.1, 
             '2022': 43.3, 
@@ -615,7 +648,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
           format: 'currency', 
           values: { 
             'TTM': 45765000000, 
-            '2025': 33500000000, 
+            '2026': 45765000000,
+            '2025': 34550000000, 
             '2024': 31370000000, 
             '2023': 29915000000, 
             '2022': 26251000000, 
@@ -634,7 +668,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
           format: 'currency', 
           values: { 
             'TTM': 29774000000, 
-            '2025': 27693000000, 
+            '2026': 29774000000,
+            '2025': 27601000000, 
             '2024': 26097000000, 
             '2023': 24932000000, 
             '2022': 25094000000, 
@@ -657,7 +692,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
           format: 'percent', 
           values: { 
             'TTM': 33.0, 
-            '2025': 31.5, 
+            '2026': 33.0,
+            '2025': 32.0, 
             '2024': 31.5, 
             '2023': 29.8, 
             '2022': 30.3, 
@@ -671,6 +707,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
         },
         ebtRow,
         createGrowthRow(periods, ebtRow, 'Pretax Income Growth (YoY)'),
+        taxRow,
+        createGrowthRow(periods, taxRow, 'Income Tax Growth (YoY)'),
         niRow,
         createGrowthRow(periods, niRow, 'Net Income Growth (YoY)'),
         { 
@@ -680,7 +718,8 @@ export function buildIncomeStatement(params: FinancialBuildParams, freqOrQuarter
           format: 'percent', 
           values: { 
             'TTM': 27.6, 
-            '2025': 24.9, 
+            '2026': 27.6,
+            '2025': 26.9, 
             '2024': 24.0, 
             '2023': 25.3, 
             '2022': 25.3, 
@@ -1714,9 +1753,10 @@ export function buildBalanceSheet(params: FinancialBuildParams, freqOrQuarterly:
       indent: 1, 
       format: 'currency', 
       values: { 
-        'TTM': 68500000000,
-        '2025': 65584000000, 
-        '2024': 65221000000, 
+        'TTM': 62399000000,
+        '2026': 62399000000,
+        '2025': 54697000000, 
+        '2024': 65171000000, 
         '2023': 61555000000, 
         '2022': 48304000000, 
         '2021': 62639000000, 
@@ -1734,9 +1774,10 @@ export function buildBalanceSheet(params: FinancialBuildParams, freqOrQuarterly:
       isBold: true, 
       format: 'currency', 
       values: { 
-        'TTM': 158200000000,
-        '2025': 152980000000, 
-        '2024': 152980000000, 
+        'TTM': 155400000000,
+        '2026': 155400000000,
+        '2025': 147957000000, 
+        '2024': 152987000000, 
         '2023': 143566000000, 
         '2022': 135405000000, 
         '2021': 134836000000, 
@@ -1754,8 +1795,9 @@ export function buildBalanceSheet(params: FinancialBuildParams, freqOrQuarterly:
       isBold: true, 
       format: 'currency', 
       values: { 
-        'TTM': 372500000000,
-        '2025': 364980000000, 
+        'TTM': 383266000000,
+        '2026': 383266000000,
+        '2025': 359241000000, 
         '2024': 364980000000, 
         '2023': 352583000000, 
         '2022': 352755000000, 
@@ -1774,9 +1816,10 @@ export function buildBalanceSheet(params: FinancialBuildParams, freqOrQuarterly:
       isBold: true, 
       format: 'currency', 
       values: { 
-        'TTM': 148500000000,
-        '2025': 145308000000, 
-        '2024': 145308000000, 
+        'TTM': 154300000000,
+        '2026': 154300000000,
+        '2025': 159343000000, 
+        '2024': 162159000000, 
         '2023': 145308000000, 
         '2022': 153982000000, 
         '2021': 125481000000, 
@@ -1794,10 +1837,11 @@ export function buildBalanceSheet(params: FinancialBuildParams, freqOrQuarterly:
       isBold: true, 
       format: 'currency', 
       values: { 
-        'TTM': 298500000000,
-        '2025': 298180000000, 
-        '2024': 298180000000, 
-        '2023': 290437000000, 
+        'TTM': 275746000000,
+        '2026': 275746000000,
+        '2025': 311908000000, 
+        '2024': 324849000000, 
+        '2023': 319715000000, 
         '2022': 302083000000, 
         '2021': 287912000000, 
         '2020': 258549000000, 
@@ -1814,10 +1858,11 @@ export function buildBalanceSheet(params: FinancialBuildParams, freqOrQuarterly:
       isBold: true, 
       format: 'currency', 
       values: { 
-        'TTM': 74000000000,
-        '2025': 66800000000, 
-        '2024': 66800000000, 
-        '2023': 62146000000, 
+        'TTM': 107520000000,
+        '2026': 107520000000,
+        '2025': 47333000000, 
+        '2024': 40131000000, 
+        '2023': 32868000000, 
         '2022': 50672000000, 
         '2021': 63090000000, 
         '2020': 65339000000, 
@@ -1830,26 +1875,26 @@ export function buildBalanceSheet(params: FinancialBuildParams, freqOrQuarterly:
 
     const rows: FinancialStatementRow[] = [
       { name: 'Assets', key: 'assets_header', isHeader: true, values: {} },
-      { name: 'Cash & Cash Equivalents', key: 'cash', indent: 1, format: 'currency', values: { 'TTM': 42500000000, '2025': 39544000000, '2024': 29942000000, '2023': 29965000000, '2022': 23646000000, '2021': 34940000000, '2020': 38016000000, '2019': 48844000000, '2018': 25913000000, '2017': 20289000000, '2016': 20484000000 } },
-      { name: 'Short-Term Marketable Securities', key: 'st_inv', indent: 1, format: 'currency', values: { 'TTM': 26000000000, '2025': 26040000000, '2024': 35279000000, '2023': 31590000000, '2022': 24658000000, '2021': 27699000000, '2020': 52927000000, '2019': 51713000000, '2018': 40388000000, '2017': 53892000000, '2016': 46671000000 } },
+      { name: 'Cash & Cash Equivalents', key: 'cash', indent: 1, format: 'currency', values: { 'TTM': 39544000000, '2026': 39544000000, '2025': 35934000000, '2024': 29943000000, '2023': 29965000000, '2022': 23646000000, '2021': 34940000000, '2020': 38016000000, '2019': 48844000000, '2018': 25913000000, '2017': 20289000000, '2016': 20484000000 } },
+      { name: 'Short-Term Marketable Securities', key: 'st_inv', indent: 1, format: 'currency', values: { 'TTM': 22855000000, '2026': 22855000000, '2025': 18763000000, '2024': 35228000000, '2023': 31590000000, '2022': 24658000000, '2021': 27699000000, '2020': 52927000000, '2019': 51713000000, '2018': 40388000000, '2017': 53892000000, '2016': 46671000000 } },
       totalCashRow,
       createGrowthRow(periods, totalCashRow, 'Total Cash Growth (YoY)'),
-      { name: 'Receivables', key: 'ar', indent: 1, format: 'currency', values: { 'TTM': 62400000000, '2025': 58907000000, '2024': 65050000000, '2023': 60985000000, '2022': 60932000000, '2021': 51506000000, '2020': 37445000000, '2019': 45804000000, '2018': 48995000000, '2017': 35673000000, '2016': 29299000000 } },
-      { name: 'Inventories', key: 'inv', indent: 1, format: 'currency', values: { 'TTM': 7500000000, '2025': 7286000000, '2024': 7286000000, '2023': 6331000000, '2022': 4946000000, '2021': 6580000000, '2020': 4061000000, '2019': 4106000000, '2018': 3956000000, '2017': 4855000000, '2016': 2132000000 } },
+      { name: 'Receivables', key: 'ar', indent: 1, format: 'currency', values: { 'TTM': 62400000000, '2026': 62400000000, '2025': 58907000000, '2024': 65050000000, '2023': 60985000000, '2022': 60932000000, '2021': 51506000000, '2020': 37445000000, '2019': 45804000000, '2018': 48995000000, '2017': 35673000000, '2016': 29299000000 } },
+      { name: 'Inventories', key: 'inv', indent: 1, format: 'currency', values: { 'TTM': 7200000000, '2026': 7200000000, '2025': 6800000000, '2024': 6522000000, '2023': 6331000000, '2022': 4946000000, '2021': 6580000000, '2020': 4061000000, '2019': 4106000000, '2018': 3956000000, '2017': 4855000000, '2016': 2132000000 } },
       curAssetsRow,
       createGrowthRow(periods, curAssetsRow, 'Current Assets Growth (YoY)'),
-      { name: 'Property, Plant & Equipment (Net)', key: 'ppe', indent: 1, format: 'currency', values: { 'TTM': 46200000000, '2025': 51431000000, '2024': 45246000000, '2023': 43715000000, '2022': 42117000000, '2021': 39440000000, '2020': 36766000000, '2019': 37378000000, '2018': 41304000000, '2017': 33783000000, '2016': 27010000000 } },
+      { name: 'Property, Plant & Equipment (Net)', key: 'ppe', indent: 1, format: 'currency', values: { 'TTM': 45500000000, '2026': 45500000000, '2025': 44800000000, '2024': 43844000000, '2023': 43715000000, '2022': 42117000000, '2021': 39440000000, '2020': 36766000000, '2019': 37378000000, '2018': 41304000000, '2017': 33783000000, '2016': 27010000000 } },
       totalAssetsRow,
       createGrowthRow(periods, totalAssetsRow, 'Total Assets Growth (YoY)'),
       { name: 'Liabilities & Equity', key: 'liab_header', isHeader: true, values: {} },
       curLiabRow,
       createGrowthRow(periods, curLiabRow, 'Current Liabilities Growth (YoY)'),
-      { name: 'Total Debt', key: 'total_debt', indent: 1, format: 'currency', values: { 'TTM': 94500000000, '2025': 96420000000, '2024': 106629000000, '2023': 111088000000, '2022': 120069000000, '2021': 124719000000, '2020': 112436000000, '2019': 108047000000, '2018': 114600000000, '2017': 115680000000, '2016': 87032000000 } },
+      { name: 'Total Debt', key: 'total_debt', indent: 1, format: 'currency', values: { 'TTM': 98100000000, '2026': 98100000000, '2025': 102500000000, '2024': 106629000000, '2023': 111088000000, '2022': 120069000000, '2021': 124719000000, '2020': 112436000000, '2019': 108047000000, '2018': 114600000000, '2017': 115680000000, '2016': 87032000000 } },
       totalLiabRow,
       createGrowthRow(periods, totalLiabRow, 'Total Liabilities Growth (YoY)'),
       equityRow,
       createGrowthRow(periods, equityRow, 'Shareholders\' Equity Growth (YoY)'),
-      { name: 'Net Cash / (Debt)', key: 'net_cash', isBold: true, format: 'currency', values: { 'TTM': -26000000000, '2025': -30836000000, '2024': -41408000000, '2023': -49533000000, '2022': -71765000000, '2021': -62080000000, '2020': -21493000000, '2019': -7490000000, '2018': -48299000000, '2017': -41499000000, '2016': -19877000000 } }
+      { name: 'Net Cash / (Debt)', key: 'net_cash', isBold: true, format: 'currency', values: { 'TTM': -35701000000, '2026': -35701000000, '2025': -47803000000, '2024': -41458000000, '2023': -49533000000, '2022': -71765000000, '2021': -62080000000, '2020': -21493000000, '2019': -7490000000, '2018': -48299000000, '2017': -41499000000, '2016': -19877000000 } }
     ];
 
     return { periods, rows };
@@ -2099,14 +2144,14 @@ export function buildCashFlowStatement(params: FinancialBuildParams, freqOrQuart
         isBold: true, 
         format: 'currency', 
         values: { 
-          'TTM Q4 2026': 110650000000, 
-          'TTM Q3 2026': 109050000000, 
-          'TTM Q2 2026': 103950000000, 
-          'TTM Q1 2026': 102680000000, 
-          'TTM Q4 2025': 107154000000, 
-          'TTM Q3 2025': 104600000000, 
-          'TTM Q2 2025': 103700000000, 
-          'TTM Q1 2025': 102300000000 
+          'TTM Q4 2026': 136683000000, 
+          'TTM Q3 2026': 128500000000, 
+          'TTM Q2 2026': 118950000000, 
+          'TTM Q1 2026': 112680000000, 
+          'TTM Q4 2025': 98767000000, 
+          'TTM Q3 2025': 96600000000, 
+          'TTM Q2 2025': 95700000000, 
+          'TTM Q1 2025': 94300000000 
         } 
       };
 
@@ -2122,8 +2167,8 @@ export function buildCashFlowStatement(params: FinancialBuildParams, freqOrQuart
         { name: 'Dividends Paid', key: 'dividends_paid', indent: 1, format: 'currency', values: { 'TTM Q4 2026': -15100000000, 'TTM Q3 2026': -15050000000, 'TTM Q2 2026': -14950000000, 'TTM Q1 2026': -14880000000, 'TTM Q4 2025': -14780000000, 'TTM Q3 2025': -14700000000, 'TTM Q2 2025': -14600000000, 'TTM Q1 2025': -14500000000 } },
         fcfRow,
         createGrowthRow(periods, fcfRow, 'Free Cash Flow Growth (YoY)'),
-        { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 23.1, 'TTM Q3 2026': 23.4, 'TTM Q2 2026': 23.5, 'TTM Q1 2026': 24.0, 'TTM Q4 2025': 25.7, 'TTM Q3 2025': 25.8, 'TTM Q2 2025': 26.0, 'TTM Q1 2025': 26.0 } },
-        { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM Q4 2026': 7.30, 'TTM Q3 2026': 7.19, 'TTM Q2 2026': 6.83, 'TTM Q1 2026': 6.72, 'TTM Q4 2025': 7.03, 'TTM Q3 2025': 6.79, 'TTM Q2 2025': 6.71, 'TTM Q1 2025': 6.60 } }
+        { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 28.5, 'TTM Q3 2026': 27.4, 'TTM Q2 2026': 26.5, 'TTM Q1 2026': 25.0, 'TTM Q4 2025': 23.7, 'TTM Q3 2025': 24.8, 'TTM Q2 2025': 25.0, 'TTM Q1 2025': 25.0 } },
+        { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM Q4 2026': 9.28, 'TTM Q3 2026': 8.65, 'TTM Q2 2026': 8.01, 'TTM Q1 2026': 7.60, 'TTM Q4 2025': 6.58, 'TTM Q3 2025': 6.45, 'TTM Q2 2025': 6.38, 'TTM Q1 2025': 6.30 } }
       ];
 
       return { periods, rows };
@@ -2137,8 +2182,9 @@ export function buildCashFlowStatement(params: FinancialBuildParams, freqOrQuart
       isBold: true, 
       format: 'currency', 
       values: { 
-        'TTM': 122150000000, 
-        '2025': 118254000000, 
+        'TTM': 146724000000, 
+        '2026': 146724000000,
+        '2025': 111482000000, 
         '2024': 118254000000, 
         '2023': 110543000000, 
         '2022': 122151000000, 
@@ -2157,9 +2203,10 @@ export function buildCashFlowStatement(params: FinancialBuildParams, freqOrQuart
       indent: 1, 
       format: 'currency', 
       values: { 
-        'TTM': -11500000000, 
-        '2025': -11100000000, 
-        '2024': -9451000000, 
+        'TTM': -10041000000, 
+        '2026': -10041000000,
+        '2025': -12715000000, 
+        '2024': -9447000000, 
         '2023': -10959000000, 
         '2022': -10708000000, 
         '2021': -11085000000, 
@@ -2177,9 +2224,10 @@ export function buildCashFlowStatement(params: FinancialBuildParams, freqOrQuart
       isBold: true, 
       format: 'currency', 
       values: { 
-        'TTM': 110650000000, 
-        '2025': 107154000000, 
-        '2024': 108803000000, 
+        'TTM': 136683000000, 
+        '2026': 136683000000,
+        '2025': 98767000000, 
+        '2024': 108807000000, 
         '2023': 99584000000, 
         '2022': 111443000000, 
         '2021': 92953000000, 
@@ -2199,12 +2247,12 @@ export function buildCashFlowStatement(params: FinancialBuildParams, freqOrQuart
       capexRow,
       createGrowthRow(periods, capexRow, 'CapEx Growth (YoY)'),
       { name: 'Financing Activities', key: 'fin_header', isHeader: true, values: {} },
-      { name: 'Common Stock Repurchases (Buybacks)', key: 'buybacks', indent: 1, format: 'currency', values: { 'TTM': -95000000000, '2025': -90000000000, '2024': -95000000000, '2023': -77550000000, '2022': -89402000000, '2021': -85971000000, '2020': -72358000000, '2019': -66897000000, '2018': -72738000000, '2017': -32900000000, '2016': -29722000000 } },
-      { name: 'Dividends Paid', key: 'dividends_paid', indent: 1, format: 'currency', values: { 'TTM': -15300000000, '2025': -15100000000, '2024': -15025000000, '2023': -15025000000, '2022': -14841000000, '2021': -14467000000, '2020': -14081000000, '2019': -14119000000, '2018': -13712000000, '2017': -12769000000, '2016': -12150000000 } },
+      { name: 'Common Stock Repurchases (Buybacks)', key: 'buybacks', indent: 1, format: 'currency', values: { 'TTM': -98500000000, '2026': -98500000000, '2025': -90000000000, '2024': -95000000000, '2023': -77550000000, '2022': -89402000000, '2021': -85971000000, '2020': -72358000000, '2019': -66897000000, '2018': -72738000000, '2017': -32900000000, '2016': -29722000000 } },
+      { name: 'Dividends Paid', key: 'dividends_paid', indent: 1, format: 'currency', values: { 'TTM': -15400000000, '2026': -15400000000, '2025': -15100000000, '2024': -15025000000, '2023': -15025000000, '2022': -14841000000, '2021': -14467000000, '2020': -14081000000, '2019': -14119000000, '2018': -13712000000, '2017': -12769000000, '2016': -12150000000 } },
       fcfRow,
       createGrowthRow(periods, fcfRow, 'Free Cash Flow Growth (YoY)'),
-      { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM': 23.1, '2025': 25.7, '2024': 27.8, '2023': 26.0, '2022': 28.3, '2021': 25.4, '2020': 26.7, '2019': 22.6, '2018': 24.1, '2017': 22.3, '2016': 24.6 } },
-      { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM': 7.30, '2025': 7.03, '2024': 7.06, '2023': 6.30, '2022': 6.83, '2021': 5.51, '2020': 4.19, '2019': 3.17, '2018': 3.21, '2017': 2.43, '2016': 2.43 } }
+      { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM': 28.5, '2026': 28.5, '2025': 23.7, '2024': 27.8, '2023': 26.0, '2022': 28.3, '2021': 25.4, '2020': 26.7, '2019': 22.6, '2018': 24.1, '2017': 22.3, '2016': 24.6 } },
+      { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM': 9.28, '2026': 9.28, '2025': 6.58, '2024': 7.06, '2023': 6.30, '2022': 6.83, '2021': 5.51, '2020': 4.19, '2019': 3.17, '2018': 3.21, '2017': 2.43, '2016': 2.43 } }
     ];
 
     return { periods, rows };
@@ -2369,31 +2417,31 @@ export function buildFinancialRatios(params: FinancialBuildParams, freqOrQuarter
       const periods = TRAILING_PERIODS;
       const rows: FinancialStatementRow[] = [
         { name: 'Valuation & Multiples', key: 'val_header', isHeader: true, values: {} },
-        { name: 'PE Ratio', key: 'pe', isBold: true, format: 'number', values: { 'TTM Q4 2026': 34.20, 'TTM Q3 2026': 33.80, 'TTM Q2 2026': 32.50, 'TTM Q1 2026': 31.00, 'TTM Q4 2025': 33.80, 'TTM Q3 2025': 32.90, 'TTM Q2 2025': 31.40, 'TTM Q1 2025': 30.20 } },
-        { name: 'Forward PE Ratio', key: 'forward_pe', indent: 1, format: 'number', values: { 'TTM Q4 2026': 28.50, 'TTM Q3 2026': 28.60, 'TTM Q2 2026': 28.00, 'TTM Q1 2026': 27.20, 'TTM Q4 2025': 29.20, 'TTM Q3 2025': 28.40, 'TTM Q2 2025': 27.80, 'TTM Q1 2025': 26.50 } },
-        { name: 'PS Ratio (Price to Sales)', key: 'ps', indent: 1, format: 'number', values: { 'TTM Q4 2026': 9.45, 'TTM Q3 2026': 9.30, 'TTM Q2 2026': 8.95, 'TTM Q1 2026': 8.65, 'TTM Q4 2025': 8.42, 'TTM Q3 2025': 8.25, 'TTM Q2 2025': 8.00, 'TTM Q1 2025': 7.80 } },
-        { name: 'PB Ratio (Price to Book)', key: 'pb', indent: 1, format: 'number', values: { 'TTM Q4 2026': 45.20, 'TTM Q3 2026': 44.50, 'TTM Q2 2026': 43.80, 'TTM Q1 2026': 42.50, 'TTM Q4 2025': 42.50, 'TTM Q3 2025': 41.80, 'TTM Q2 2025': 40.50, 'TTM Q1 2025': 39.20 } },
-        { name: 'P/FCF Ratio', key: 'pfcf', indent: 1, format: 'number', values: { 'TTM Q4 2026': 36.50, 'TTM Q3 2026': 36.10, 'TTM Q2 2026': 35.20, 'TTM Q1 2026': 33.80, 'TTM Q4 2025': 34.20, 'TTM Q3 2025': 33.60, 'TTM Q2 2025': 32.50, 'TTM Q1 2025': 31.20 } },
-        { name: 'EV / EBITDA', key: 'ev_ebitda', indent: 1, format: 'number', values: { 'TTM Q4 2026': 24.80, 'TTM Q3 2026': 24.50, 'TTM Q2 2026': 24.00, 'TTM Q1 2026': 23.40, 'TTM Q4 2025': 24.50, 'TTM Q3 2025': 24.00, 'TTM Q2 2025': 23.20, 'TTM Q1 2025': 22.50 } },
+        { name: 'PE Ratio', key: 'pe', isBold: true, format: 'number', values: { 'TTM Q4 2026': 39.67, 'TTM Q3 2026': 38.50, 'TTM Q2 2026': 36.20, 'TTM Q1 2026': 34.50, 'TTM Q4 2025': 36.80, 'TTM Q3 2025': 35.20, 'TTM Q2 2025': 34.10, 'TTM Q1 2025': 33.20 } },
+        { name: 'Forward PE Ratio', key: 'forward_pe', indent: 1, format: 'number', values: { 'TTM Q4 2026': 37.82, 'TTM Q3 2026': 36.50, 'TTM Q2 2026': 35.20, 'TTM Q1 2026': 34.10, 'TTM Q4 2025': 34.20, 'TTM Q3 2025': 33.40, 'TTM Q2 2025': 32.50, 'TTM Q1 2025': 31.80 } },
+        { name: 'PS Ratio (Price to Sales)', key: 'ps', indent: 1, format: 'number', values: { 'TTM Q4 2026': 10.81, 'TTM Q3 2026': 10.20, 'TTM Q2 2026': 9.85, 'TTM Q1 2026': 9.45, 'TTM Q4 2025': 8.29, 'TTM Q3 2025': 8.25, 'TTM Q2 2025': 8.00, 'TTM Q1 2025': 7.80 } },
+        { name: 'PB Ratio (Price to Book)', key: 'pb', indent: 1, format: 'number', values: { 'TTM Q4 2026': 48.16, 'TTM Q3 2026': 46.50, 'TTM Q2 2026': 45.20, 'TTM Q1 2026': 43.80, 'TTM Q4 2025': 42.50, 'TTM Q3 2025': 41.80, 'TTM Q2 2025': 40.50, 'TTM Q1 2025': 39.20 } },
+        { name: 'P/FCF Ratio', key: 'pfcf', indent: 1, format: 'number', values: { 'TTM Q4 2026': 37.88, 'TTM Q3 2026': 37.20, 'TTM Q2 2026': 36.10, 'TTM Q1 2026': 35.00, 'TTM Q4 2025': 34.90, 'TTM Q3 2025': 33.60, 'TTM Q2 2025': 32.50, 'TTM Q1 2025': 31.20 } },
+        { name: 'EV / EBITDA', key: 'ev_ebitda', indent: 1, format: 'number', values: { 'TTM Q4 2026': 30.50, 'TTM Q3 2026': 29.20, 'TTM Q2 2026': 27.80, 'TTM Q1 2026': 26.40, 'TTM Q4 2025': 24.50, 'TTM Q3 2025': 24.00, 'TTM Q2 2025': 23.20, 'TTM Q1 2025': 22.50 } },
         
         { name: 'Profitability & Returns', key: 'prof_header', isHeader: true, values: {} },
-        { name: 'Gross Margin', key: 'gross_margin', isBold: true, format: 'percent', values: { 'TTM Q4 2026': 48.8, 'TTM Q3 2026': 48.3, 'TTM Q2 2026': 47.7, 'TTM Q1 2026': 47.0, 'TTM Q4 2025': 46.2, 'TTM Q3 2025': 45.8, 'TTM Q2 2025': 46.0, 'TTM Q1 2025': 46.2 } },
-        { name: 'Operating Margin', key: 'oper_margin', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 36.0, 'TTM Q3 2026': 35.4, 'TTM Q2 2026': 34.4, 'TTM Q1 2026': 33.6, 'TTM Q4 2025': 32.7, 'TTM Q3 2025': 32.2, 'TTM Q2 2025': 32.2, 'TTM Q1 2025': 32.5 } },
-        { name: 'Net Profit Margin', key: 'net_margin', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 27.6, 'TTM Q3 2026': 27.3, 'TTM Q2 2026': 26.8, 'TTM Q1 2026': 26.7, 'TTM Q4 2025': 24.9, 'TTM Q3 2025': 24.6, 'TTM Q2 2025': 24.6, 'TTM Q1 2025': 24.5 } },
-        { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 23.1, 'TTM Q3 2026': 23.4, 'TTM Q2 2026': 23.5, 'TTM Q1 2026': 24.0, 'TTM Q4 2025': 25.7, 'TTM Q3 2025': 25.8, 'TTM Q2 2025': 26.0, 'TTM Q1 2025': 26.0 } },
-        { name: 'Return on Equity (ROE)', key: 'roe', isBold: true, format: 'percent', values: { 'TTM Q4 2026': 162.5, 'TTM Q3 2026': 160.8, 'TTM Q2 2026': 159.4, 'TTM Q1 2026': 161.2, 'TTM Q4 2025': 158.2, 'TTM Q3 2025': 155.4, 'TTM Q2 2025': 154.0, 'TTM Q1 2025': 155.0 } },
-        { name: 'Return on Assets (ROA)', key: 'roa', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 32.5, 'TTM Q3 2026': 32.0, 'TTM Q2 2026': 31.4, 'TTM Q1 2026': 30.8, 'TTM Q4 2025': 28.5, 'TTM Q3 2025': 27.8, 'TTM Q2 2025': 27.4, 'TTM Q1 2025': 27.9 } },
-        { name: 'Return on Invested Capital (ROIC)', key: 'roic', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 56.4, 'TTM Q3 2026': 55.8, 'TTM Q2 2026': 55.0, 'TTM Q1 2026': 54.2, 'TTM Q4 2025': 54.2, 'TTM Q3 2025': 53.0, 'TTM Q2 2025': 52.4, 'TTM Q1 2025': 52.8 } },
+        { name: 'Gross Margin', key: 'gross_margin', isBold: true, format: 'percent', values: { 'TTM Q4 2026': 48.8, 'TTM Q3 2026': 48.3, 'TTM Q2 2026': 47.7, 'TTM Q1 2026': 47.0, 'TTM Q4 2025': 46.9, 'TTM Q3 2025': 46.5, 'TTM Q2 2025': 46.2, 'TTM Q1 2025': 46.2 } },
+        { name: 'Operating Margin', key: 'oper_margin', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 33.0, 'TTM Q3 2026': 32.8, 'TTM Q2 2026': 32.5, 'TTM Q1 2026': 32.2, 'TTM Q4 2025': 32.0, 'TTM Q3 2025': 31.8, 'TTM Q2 2025': 31.5, 'TTM Q1 2025': 31.2 } },
+        { name: 'Net Profit Margin', key: 'net_margin', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 27.6, 'TTM Q3 2026': 27.3, 'TTM Q2 2026': 27.0, 'TTM Q1 2026': 26.8, 'TTM Q4 2025': 26.9, 'TTM Q3 2025': 26.2, 'TTM Q2 2025': 25.8, 'TTM Q1 2025': 25.0 } },
+        { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 28.5, 'TTM Q3 2026': 27.4, 'TTM Q2 2026': 26.5, 'TTM Q1 2026': 25.0, 'TTM Q4 2025': 23.7, 'TTM Q3 2025': 24.8, 'TTM Q2 2025': 25.0, 'TTM Q1 2025': 25.0 } },
+        { name: 'Return on Equity (ROE)', key: 'roe', isBold: true, format: 'percent', values: { 'TTM Q4 2026': 142.26, 'TTM Q3 2026': 145.8, 'TTM Q2 2026': 149.4, 'TTM Q1 2026': 152.2, 'TTM Q4 2025': 158.2, 'TTM Q3 2025': 155.4, 'TTM Q2 2025': 154.0, 'TTM Q1 2025': 155.0 } },
+        { name: 'Return on Assets (ROA)', key: 'roa', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 25.87, 'TTM Q3 2026': 26.2, 'TTM Q2 2026': 26.8, 'TTM Q1 2026': 27.2, 'TTM Q4 2025': 28.5, 'TTM Q3 2025': 27.8, 'TTM Q2 2025': 27.4, 'TTM Q1 2025': 27.9 } },
+        { name: 'Return on Invested Capital (ROIC)', key: 'roic', indent: 1, format: 'percent', values: { 'TTM Q4 2026': 58.4, 'TTM Q3 2026': 57.2, 'TTM Q2 2026': 56.1, 'TTM Q1 2026': 55.0, 'TTM Q4 2025': 54.2, 'TTM Q3 2025': 53.0, 'TTM Q2 2025': 52.4, 'TTM Q1 2025': 52.8 } },
         
         { name: 'Liquidity & Solvency', key: 'liq_header', isHeader: true, values: {} },
-        { name: 'Current Ratio', key: 'current_ratio', isBold: true, format: 'number', values: { 'TTM Q4 2026': 1.07, 'TTM Q3 2026': 1.08, 'TTM Q2 2026': 1.08, 'TTM Q1 2026': 1.06, 'TTM Q4 2025': 1.07, 'TTM Q3 2025': 1.06, 'TTM Q2 2025': 1.07, 'TTM Q1 2025': 1.04 } },
-        { name: 'Debt to Equity Ratio', key: 'debt_equity', indent: 1, format: 'number', values: { 'TTM Q4 2026': 1.35, 'TTM Q3 2026': 1.38, 'TTM Q2 2026': 1.42, 'TTM Q1 2026': 1.40, 'TTM Q4 2025': 1.45, 'TTM Q3 2025': 1.48, 'TTM Q2 2025': 1.52, 'TTM Q1 2025': 1.50 } },
+        { name: 'Current Ratio', key: 'current_ratio', isBold: true, format: 'number', values: { 'TTM Q4 2026': 1.01, 'TTM Q3 2026': 1.02, 'TTM Q2 2026': 1.00, 'TTM Q1 2026': 0.98, 'TTM Q4 2025': 0.93, 'TTM Q3 2025': 0.94, 'TTM Q2 2025': 0.95, 'TTM Q1 2025': 0.96 } },
+        { name: 'Debt to Equity Ratio', key: 'debt_equity', indent: 1, format: 'number', values: { 'TTM Q4 2026': 0.91, 'TTM Q3 2026': 1.05, 'TTM Q2 2026': 1.25, 'TTM Q1 2026': 1.50, 'TTM Q4 2025': 2.16, 'TTM Q3 2025': 2.25, 'TTM Q2 2025': 2.35, 'TTM Q1 2025': 2.45 } },
         
         { name: 'Per Share Data', key: 'per_share_header', isHeader: true, values: {} },
-        { name: 'EPS Diluted', key: 'eps_diluted', isBold: true, format: 'currency', values: { 'TTM Q4 2026': 8.72, 'TTM Q3 2026': 8.39, 'TTM Q2 2026': 7.81, 'TTM Q1 2026': 7.47, 'TTM Q4 2025': 6.74, 'TTM Q3 2025': 6.48, 'TTM Q2 2025': 6.36, 'TTM Q1 2025': 6.24 } },
-        { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM Q4 2026': 7.30, 'TTM Q3 2026': 7.19, 'TTM Q2 2026': 6.83, 'TTM Q1 2026': 6.72, 'TTM Q4 2025': 7.03, 'TTM Q3 2025': 6.79, 'TTM Q2 2025': 6.71, 'TTM Q1 2025': 6.60 } },
-        { name: 'Book Value Per Share', key: 'bv_per_share', indent: 1, format: 'currency', values: { 'TTM Q4 2026': 4.90, 'TTM Q3 2026': 4.81, 'TTM Q2 2026': 4.68, 'TTM Q1 2026': 4.88, 'TTM Q4 2025': 4.56, 'TTM Q3 2025': 4.39, 'TTM Q2 2025': 4.25, 'TTM Q1 2025': 4.51 } },
-        { name: 'Cash Per Share', key: 'cash_per_share', indent: 1, format: 'currency', values: { 'TTM Q4 2026': 4.54, 'TTM Q3 2026': 4.44, 'TTM Q2 2026': 4.35, 'TTM Q1 2026': 4.82, 'TTM Q4 2025': 4.30, 'TTM Q3 2025': 4.19, 'TTM Q2 2025': 4.10, 'TTM Q1 2025': 4.46 } }
+        { name: 'EPS Diluted', key: 'eps_diluted', isBold: true, format: 'currency', values: { 'TTM Q4 2026': 8.98, 'TTM Q3 2026': 8.62, 'TTM Q2 2026': 8.24, 'TTM Q1 2026': 7.90, 'TTM Q4 2025': 7.46, 'TTM Q3 2025': 7.15, 'TTM Q2 2025': 6.85, 'TTM Q1 2025': 6.50 } },
+        { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM Q4 2026': 9.28, 'TTM Q3 2026': 8.65, 'TTM Q2 2026': 8.01, 'TTM Q1 2026': 7.60, 'TTM Q4 2025': 6.58, 'TTM Q3 2025': 6.45, 'TTM Q2 2025': 6.38, 'TTM Q1 2025': 6.30 } },
+        { name: 'Book Value Per Share', key: 'bv_per_share', indent: 1, format: 'currency', values: { 'TTM Q4 2026': 7.30, 'TTM Q3 2026': 6.80, 'TTM Q2 2026': 5.95, 'TTM Q1 2026': 5.20, 'TTM Q4 2025': 3.15, 'TTM Q3 2025': 3.10, 'TTM Q2 2025': 2.95, 'TTM Q1 2025': 2.80 } },
+        { name: 'Cash Per Share', key: 'cash_per_share', indent: 1, format: 'currency', values: { 'TTM Q4 2026': 4.24, 'TTM Q3 2026': 4.15, 'TTM Q2 2026': 4.05, 'TTM Q1 2026': 4.40, 'TTM Q4 2025': 3.65, 'TTM Q3 2025': 3.60, 'TTM Q2 2025': 3.55, 'TTM Q1 2025': 3.90 } }
       ];
       return { periods, rows };
     }
@@ -2402,32 +2450,32 @@ export function buildFinancialRatios(params: FinancialBuildParams, freqOrQuarter
     const periods = ANNUAL_10Y_PERIODS;
     const rows: FinancialStatementRow[] = [
       { name: 'Valuation & Multiples', key: 'val_header', isHeader: true, values: {} },
-      { name: 'Market Capitalization', key: 'mcap', isBold: true, format: 'currency', values: { 'TTM': 3720000000000, '2025': 3450000000000, '2024': 3430000000000, '2023': 2980000000000, '2022': 2370000000000, '2021': 2440000000000, '2020': 1980000000000, '2019': 1250000000000, '2018': 1050000000000, '2017': 860000000000, '2016': 600000000000 } },
-      { name: 'PE Ratio', key: 'pe', isBold: true, format: 'number', values: { 'TTM': 34.20, '2025': 33.80, '2024': 35.20, '2023': 29.50, '2022': 23.80, '2021': 28.50, '2020': 35.80, '2019': 24.70, '2018': 19.50, '2017': 18.20, '2016': 13.90 } },
-      { name: 'Forward PE Ratio', key: 'forward_pe', indent: 1, format: 'number', values: { 'TTM': 28.50, '2025': 29.20, '2024': 31.00, '2023': 26.40, '2022': 22.00, '2021': 25.10, '2020': 28.20, '2019': 19.80, '2018': 16.20, '2017': 14.80, '2016': 12.10 } },
-      { name: 'PS Ratio (Price to Sales)', key: 'ps', indent: 1, format: 'number', values: { 'TTM': 9.45, '2025': 8.42, '2024': 8.78, '2023': 7.82, '2022': 6.45, '2021': 7.85, '2020': 7.42, '2019': 4.85, '2018': 3.98, '2017': 3.75, '2016': 2.82 } },
-      { name: 'PB Ratio (Price to Book)', key: 'pb', indent: 1, format: 'number', values: { 'TTM': 45.20, '2025': 42.50, '2024': 48.20, '2023': 45.80, '2022': 39.50, '2021': 44.20, '2020': 32.50, '2019': 14.50, '2018': 9.80, '2017': 6.40, '2016': 4.80 } },
-      { name: 'P/FCF Ratio', key: 'pfcf', indent: 1, format: 'number', values: { 'TTM': 36.50, '2025': 34.20, '2024': 37.10, '2023': 31.20, '2022': 25.40, '2021': 31.00, '2020': 32.80, '2019': 22.10, '2018': 16.50, '2017': 15.20, '2016': 12.80 } },
-      { name: 'EV / EBITDA', key: 'ev_ebitda', indent: 1, format: 'number', values: { 'TTM': 24.80, '2025': 24.50, '2024': 25.80, '2023': 22.40, '2022': 18.90, '2021': 21.20, '2020': 26.50, '2019': 16.80, '2018': 13.20, '2017': 12.10, '2016': 9.40 } },
+      { name: 'Market Capitalization', key: 'mcap', isBold: true, format: 'currency', values: { 'TTM': 5178000000000, '2026': 5178000000000, '2025': 3450000000000, '2024': 3430000000000, '2023': 2980000000000, '2022': 2370000000000, '2021': 2440000000000, '2020': 1980000000000, '2019': 1250000000000, '2018': 1050000000000, '2017': 860000000000, '2016': 600000000000 } },
+      { name: 'PE Ratio', key: 'pe', isBold: true, format: 'number', values: { 'TTM': 39.67, '2026': 39.67, '2025': 36.80, '2024': 35.20, '2023': 29.50, '2022': 23.80, '2021': 28.50, '2020': 35.80, '2019': 24.70, '2018': 19.50, '2017': 18.20, '2016': 13.90 } },
+      { name: 'Forward PE Ratio', key: 'forward_pe', indent: 1, format: 'number', values: { 'TTM': 37.82, '2026': 37.82, '2025': 34.20, '2024': 31.00, '2023': 26.40, '2022': 22.00, '2021': 25.10, '2020': 28.20, '2019': 19.80, '2018': 16.20, '2017': 14.80, '2016': 12.10 } },
+      { name: 'PS Ratio (Price to Sales)', key: 'ps', indent: 1, format: 'number', values: { 'TTM': 10.81, '2026': 10.81, '2025': 8.29, '2024': 8.78, '2023': 7.82, '2022': 6.45, '2021': 7.85, '2020': 7.42, '2019': 4.85, '2018': 3.98, '2017': 3.75, '2016': 2.82 } },
+      { name: 'PB Ratio (Price to Book)', key: 'pb', indent: 1, format: 'number', values: { 'TTM': 48.16, '2026': 48.16, '2025': 42.50, '2024': 48.20, '2023': 45.80, '2022': 39.50, '2021': 44.20, '2020': 32.50, '2019': 14.50, '2018': 9.80, '2017': 6.40, '2016': 4.80 } },
+      { name: 'P/FCF Ratio', key: 'pfcf', indent: 1, format: 'number', values: { 'TTM': 37.88, '2026': 37.88, '2025': 34.90, '2024': 31.50, '2023': 31.20, '2022': 25.40, '2021': 31.00, '2020': 32.80, '2019': 22.10, '2018': 16.50, '2017': 15.20, '2016': 12.80 } },
+      { name: 'EV / EBITDA', key: 'ev_ebitda', indent: 1, format: 'number', values: { 'TTM': 30.50, '2026': 30.50, '2025': 24.50, '2024': 25.80, '2023': 22.40, '2022': 18.90, '2021': 21.20, '2020': 26.50, '2019': 16.80, '2018': 13.20, '2017': 12.10, '2016': 9.40 } },
       
       { name: 'Profitability & Returns', key: 'prof_header', isHeader: true, values: {} },
-      { name: 'Gross Margin', key: 'gross_margin', isBold: true, format: 'percent', values: { 'TTM': 48.8, '2025': 46.2, '2024': 46.2, '2023': 44.1, '2022': 43.3, '2021': 41.8, '2020': 38.2, '2019': 37.8, '2018': 38.3, '2017': 38.5, '2016': 39.1 } },
-      { name: 'Operating Margin', key: 'oper_margin', indent: 1, format: 'percent', values: { 'TTM': 35.8, '2025': 31.9, '2024': 31.5, '2023': 29.8, '2022': 30.3, '2021': 29.8, '2020': 24.1, '2019': 24.6, '2018': 26.7, '2017': 26.8, '2016': 27.8 } },
-      { name: 'Net Profit Margin', key: 'net_margin', indent: 1, format: 'percent', values: { 'TTM': 27.6, '2025': 24.9, '2024': 24.0, '2023': 25.3, '2022': 25.3, '2021': 25.9, '2020': 20.9, '2019': 21.2, '2018': 22.4, '2017': 21.1, '2016': 21.2 } },
-      { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM': 23.1, '2025': 25.7, '2024': 27.8, '2023': 26.0, '2022': 28.3, '2021': 25.4, '2020': 26.7, '2019': 22.6, '2018': 24.1, '2017': 22.3, '2016': 24.6 } },
-      { name: 'Return on Equity (ROE)', key: 'roe', isBold: true, format: 'percent', values: { 'TTM': 162.5, '2025': 158.2, '2024': 160.5, '2023': 156.1, '2022': 196.9, '2021': 147.4, '2020': 87.9, '2019': 61.1, '2018': 55.6, '2017': 36.9, '2016': 36.9 } },
-      { name: 'Return on Assets (ROA)', key: 'roa', indent: 1, format: 'percent', values: { 'TTM': 32.5, '2025': 28.5, '2024': 26.8, '2023': 27.5, '2022': 28.3, '2021': 26.9, '2020': 17.7, '2019': 15.7, '2018': 16.3, '2017': 13.9, '2016': 14.9 } },
-      { name: 'Return on Invested Capital (ROIC)', key: 'roic', indent: 1, format: 'percent', values: { 'TTM': 56.4, '2025': 54.2, '2024': 52.8, '2023': 51.5, '2022': 55.8, '2021': 48.6, '2020': 32.4, '2019': 29.8, '2018': 28.4, '2017': 22.5, '2016': 21.8 } },
+      { name: 'Gross Margin', key: 'gross_margin', isBold: true, format: 'percent', values: { 'TTM': 48.8, '2026': 48.8, '2025': 46.9, '2024': 46.2, '2023': 44.1, '2022': 43.3, '2021': 41.8, '2020': 38.2, '2019': 37.8, '2018': 38.3, '2017': 38.5, '2016': 39.1 } },
+      { name: 'Operating Margin', key: 'oper_margin', indent: 1, format: 'percent', values: { 'TTM': 33.0, '2026': 33.0, '2025': 32.0, '2024': 31.5, '2023': 29.8, '2022': 30.3, '2021': 29.8, '2020': 24.1, '2019': 24.6, '2018': 26.7, '2017': 26.8, '2016': 27.8 } },
+      { name: 'Net Profit Margin', key: 'net_margin', indent: 1, format: 'percent', values: { 'TTM': 27.6, '2026': 27.6, '2025': 26.9, '2024': 24.0, '2023': 25.3, '2022': 25.3, '2021': 25.9, '2020': 20.9, '2019': 21.2, '2018': 22.4, '2017': 21.1, '2016': 21.2 } },
+      { name: 'Free Cash Flow Margin', key: 'fcf_margin', indent: 1, format: 'percent', values: { 'TTM': 28.5, '2026': 28.5, '2025': 23.7, '2024': 27.8, '2023': 26.0, '2022': 28.3, '2021': 25.4, '2020': 26.7, '2019': 22.6, '2018': 24.1, '2017': 22.3, '2016': 24.6 } },
+      { name: 'Return on Equity (ROE)', key: 'roe', isBold: true, format: 'percent', values: { 'TTM': 142.26, '2026': 142.26, '2025': 158.20, '2024': 160.50, '2023': 156.10, '2022': 196.90, '2021': 147.40, '2020': 87.90, '2019': 61.10, '2018': 55.60, '2017': 36.90, '2016': 36.90 } },
+      { name: 'Return on Assets (ROA)', key: 'roa', indent: 1, format: 'percent', values: { 'TTM': 25.87, '2026': 25.87, '2025': 28.50, '2024': 26.80, '2023': 27.50, '2022': 28.30, '2021': 26.90, '2020': 17.70, '2019': 15.70, '2018': 16.30, '2017': 13.90, '2016': 14.90 } },
+      { name: 'Return on Invested Capital (ROIC)', key: 'roic', indent: 1, format: 'percent', values: { 'TTM': 58.4, '2026': 58.4, '2025': 54.2, '2024': 52.8, '2023': 51.5, '2022': 55.8, '2021': 48.6, '2020': 32.4, '2019': 29.8, '2018': 28.4, '2017': 22.5, '2016': 21.8 } },
       
       { name: 'Liquidity & Solvency', key: 'liq_header', isHeader: true, values: {} },
-      { name: 'Current Ratio', key: 'current_ratio', isBold: true, format: 'number', values: { 'TTM': 1.07, '2025': 1.07, '2024': 0.89, '2023': 0.99, '2022': 0.88, '2021': 1.07, '2020': 1.36, '2019': 1.54, '2018': 1.12, '2017': 1.28, '2016': 1.35 } },
-      { name: 'Debt to Equity Ratio', key: 'debt_equity', indent: 1, format: 'number', values: { 'TTM': 1.35, '2025': 1.45, '2024': 1.58, '2023': 1.76, '2022': 2.37, '2021': 1.98, '2020': 1.72, '2019': 1.19, '2018': 1.07, '2017': 0.86, '2016': 0.68 } },
+      { name: 'Current Ratio', key: 'current_ratio', isBold: true, format: 'number', values: { 'TTM': 1.01, '2026': 1.01, '2025': 0.93, '2024': 0.94, '2023': 0.99, '2022': 0.88, '2021': 1.07, '2020': 1.36, '2019': 1.54, '2018': 1.12, '2017': 1.28, '2016': 1.35 } },
+      { name: 'Debt to Equity Ratio', key: 'debt_equity', indent: 1, format: 'number', values: { 'TTM': 0.91, '2026': 0.91, '2025': 2.16, '2024': 2.66, '2023': 3.38, '2022': 2.37, '2021': 1.98, '2020': 1.72, '2019': 1.19, '2018': 1.07, '2017': 0.86, '2016': 0.68 } },
       
       { name: 'Per Share Data', key: 'per_share_header', isHeader: true, values: {} },
-      { name: 'EPS Diluted', key: 'eps_diluted', isBold: true, format: 'currency', values: { 'TTM': 8.98, '2025': 6.82, '2024': 6.08, '2023': 6.13, '2022': 6.11, '2021': 5.61, '2020': 3.28, '2019': 2.97, '2018': 2.98, '2017': 2.30, '2016': 2.08 } },
-      { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM': 7.30, '2025': 7.03, '2024': 7.06, '2023': 6.30, '2022': 6.83, '2021': 5.51, '2020': 4.19, '2019': 3.17, '2018': 3.21, '2017': 2.43, '2016': 2.43 } },
-      { name: 'Book Value Per Share', key: 'bv_per_share', indent: 1, format: 'currency', values: { 'TTM': 4.88, '2025': 4.56, '2024': 4.34, '2023': 3.93, '2022': 3.08, '2021': 3.74, '2020': 3.73, '2019': 4.87, '2018': 5.36, '2017': 6.38, '2016': 5.86 } },
-      { name: 'Cash Per Share', key: 'cash_per_share', indent: 1, format: 'currency', values: { 'TTM': 4.52, '2025': 4.30, '2024': 4.23, '2023': 3.89, '2022': 2.96, '2021': 3.71, '2020': 5.19, '2019': 5.41, '2018': 3.32, '2017': 3.53, '2016': 3.07 } }
+      { name: 'EPS Diluted', key: 'eps_diluted', isBold: true, format: 'currency', values: { 'TTM': 8.98, '2026': 8.98, '2025': 7.46, '2024': 6.08, '2023': 6.13, '2022': 6.11, '2021': 5.61, '2020': 3.28, '2019': 2.97, '2018': 2.98, '2017': 2.30, '2016': 2.08 } },
+      { name: 'Free Cash Flow Per Share', key: 'fcf_per_share', indent: 1, format: 'currency', values: { 'TTM': 9.28, '2026': 9.28, '2025': 6.58, '2024': 7.06, '2023': 6.30, '2022': 6.83, '2021': 5.51, '2020': 4.19, '2019': 3.17, '2018': 3.21, '2017': 2.43, '2016': 2.43 } },
+      { name: 'Book Value Per Share', key: 'bv_per_share', indent: 1, format: 'currency', values: { 'TTM': 7.30, '2026': 7.30, '2025': 3.15, '2024': 2.60, '2023': 2.08, '2022': 3.08, '2021': 3.74, '2020': 3.73, '2019': 4.87, '2018': 5.36, '2017': 6.38, '2016': 5.86 } },
+      { name: 'Cash Per Share', key: 'cash_per_share', indent: 1, format: 'currency', values: { 'TTM': 4.24, '2026': 4.24, '2025': 3.65, '2024': 4.23, '2023': 3.89, '2022': 2.96, '2021': 3.71, '2020': 5.19, '2019': 5.41, '2018': 3.32, '2017': 3.53, '2016': 3.07 } }
     ];
     return { periods, rows };
   }

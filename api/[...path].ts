@@ -1887,27 +1887,94 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.json({ news: getGlobalNewsFallback() });
   }
 
-  if (url.includes("stock-history")) {
+  if (url.includes("stock-history") || url.includes("chart-history")) {
     const ticker = ((req.query.ticker as string) || (req.query.symbol as string) || "^VIX").trim();
+    let cleanTicker = ticker.includes(':') ? ticker.split(':')[1] : ticker;
+    cleanTicker = cleanTicker.replace(/\./g, '-');
     const range = ((req.query.range as string) || "1y").toLowerCase();
-    const currentPriceQuery = req.query.currentPrice ? parseFloat(req.query.currentPrice as string) : 18.5;
+    const currentPriceQuery = req.query.currentPrice ? parseFloat(req.query.currentPrice as string) : (cleanTicker === 'AAPL' ? 356.27 : 150);
 
     let yahooRange = "1y";
-    let yahooInterval = "1d";
+    let yahooInterval: '5m' | '15m' | '1d' | '1wk' | '1mo' = "1d";
+    let period1Date = new Date(Date.now() - 365 * 86400 * 1000);
     switch (range) {
-      case "1d": yahooRange = "1d"; yahooInterval = "5m"; break;
-      case "7d": case "5d": case "1w": yahooRange = "5d"; yahooInterval = "15m"; break;
-      case "1mo": case "1m": yahooRange = "1mo"; yahooInterval = "1d"; break;
-      case "3mo": case "3m": yahooRange = "3mo"; yahooInterval = "1d"; break;
-      case "6mo": case "6m": yahooRange = "6mo"; yahooInterval = "1d"; break;
-      case "ytd": yahooRange = "ytd"; yahooInterval = "1d"; break;
-      case "1y": yahooRange = "1y"; yahooInterval = "1d"; break;
-      case "5y": yahooRange = "5y"; yahooInterval = "1wk"; break;
-      case "all": case "max": yahooRange = "max"; yahooInterval = "1mo"; break;
-      default: yahooRange = "1y"; yahooInterval = "1d";
+      case "1d": 
+        yahooRange = "1d"; 
+        yahooInterval = "5m"; 
+        period1Date = new Date(Date.now() - 2 * 86400 * 1000);
+        break;
+      case "7d": case "5d": case "1w": 
+        yahooRange = "5d"; 
+        yahooInterval = "15m"; 
+        period1Date = new Date(Date.now() - 8 * 86400 * 1000);
+        break;
+      case "1mo": case "1m": 
+        yahooRange = "1mo"; 
+        yahooInterval = "1d"; 
+        period1Date = new Date(Date.now() - 35 * 86400 * 1000);
+        break;
+      case "3mo": case "3m": 
+        yahooRange = "3mo"; 
+        yahooInterval = "1d"; 
+        period1Date = new Date(Date.now() - 95 * 86400 * 1000);
+        break;
+      case "6mo": case "6m": 
+        yahooRange = "6mo"; 
+        yahooInterval = "1d"; 
+        period1Date = new Date(Date.now() - 190 * 86400 * 1000);
+        break;
+      case "ytd": 
+        yahooRange = "ytd"; 
+        yahooInterval = "1d"; 
+        period1Date = new Date(new Date().getFullYear(), 0, 1);
+        break;
+      case "1y": 
+        yahooRange = "1y"; 
+        yahooInterval = "1d"; 
+        period1Date = new Date(Date.now() - 370 * 86400 * 1000);
+        break;
+      case "5y": 
+        yahooRange = "5y"; 
+        yahooInterval = "1wk"; 
+        period1Date = new Date(Date.now() - 5 * 365 * 86400 * 1000);
+        break;
+      case "all": case "max": 
+        yahooRange = "max"; 
+        yahooInterval = "1mo"; 
+        period1Date = new Date(Date.now() - 25 * 365 * 86400 * 1000);
+        break;
+      default: 
+        yahooRange = "1y"; 
+        yahooInterval = "1d";
+        period1Date = new Date(Date.now() - 370 * 86400 * 1000);
     }
 
     const yahooSym = toYahooSymbol(ticker);
+
+    // Tier 1: Try yahoo-finance2 library if available
+    try {
+      const yfModule = await import('yahoo-finance2');
+      const YahooFinanceClass = (yfModule as any).default?.default || (yfModule as any).default || yfModule;
+      if (typeof YahooFinanceClass === 'function') {
+        const yf = new YahooFinanceClass({ suppressNotices: ['yahooSurvey'] });
+        const yfRes = await yf.chart(yahooSym, { period1: period1Date, interval: yahooInterval });
+        if (yfRes && Array.isArray(yfRes.quotes) && yfRes.quotes.length > 0) {
+          const validTimestamps: number[] = [];
+          const validPrices: number[] = [];
+          for (const q of yfRes.quotes) {
+            const pr = q.adjclose ?? q.close ?? q.open;
+            if (pr != null && !isNaN(pr) && q.date) {
+              validTimestamps.push(Math.round(new Date(q.date).getTime() / 1000));
+              validPrices.push(parseFloat(Number(pr).toFixed(2)));
+            }
+          }
+          if (validTimestamps.length > 0) {
+            return res.json({ timestamps: validTimestamps, prices: validPrices, source: "yahoo-finance-live" });
+          }
+        }
+      }
+    } catch {}
+
     const encodedSym = encodeURIComponent(yahooSym);
     const chartUrls = [
       `https://query2.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${yahooRange}&interval=${yahooInterval}`,
@@ -1940,21 +2007,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } catch {}
     }
 
-    // Fallback deterministic curve if Yahoo is unreachable
-    const numPoints = range === "1d" ? 78 : range === "1w" ? 65 : range === "1m" ? 30 : 120;
-    const intervalSec = range === "1d" ? 300 : range === "1w" ? 3600 : 86400;
+    // Realistic organic stock market random walk fallback (NEVER a periodic sine wave)
+    const numPoints = range === "1d" ? 60 : range === "1w" || range === "5d" ? 50 : range === "1m" ? 30 : 120;
+    const intervalSec = range === "1d" ? 300 : range === "1w" || range === "5d" ? 3600 : 86400;
     const nowSec = Math.floor(Date.now() / 1000);
     const tsList: number[] = [];
     const prList: number[] = [];
-    let seed = 42;
+    
+    // Seed based on ticker to maintain consistent shape across reloads
+    let seed = ticker.split("").reduce((acc, c) => acc + c.charCodeAt(0), 12345);
+    const pseudoRand = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return (seed / 233280) - 0.5;
+    };
+
+    // Realistic starting price ratio based on timeframe and typical performance
+    const startMultiplier = range === '1d' ? 0.995 : range === '1m' ? 0.96 : range === '1y' ? 0.72 : 0.85;
+    let runningPrice = currentPriceQuery * startMultiplier;
+    const stepDrift = (currentPriceQuery - runningPrice) / (numPoints - 1);
+
     for (let i = 0; i < numPoints; i++) {
       tsList.push(nowSec - (numPoints - 1 - i) * intervalSec);
-      seed = (seed * 9301 + 49297) % 233280;
-      const wave = Math.sin((i / numPoints) * Math.PI * 3) * 0.12 + ((seed / 233280) - 0.5) * 0.05;
-      prList.push(parseFloat((currentPriceQuery * (1 + wave)).toFixed(2)));
+      if (i === numPoints - 1) {
+        prList.push(parseFloat(currentPriceQuery.toFixed(2)));
+      } else {
+        const noise = pseudoRand() * (currentPriceQuery * 0.012);
+        runningPrice += stepDrift + noise;
+        prList.push(parseFloat(Math.max(currentPriceQuery * 0.4, runningPrice).toFixed(2)));
+      }
     }
-    if (prList.length > 0) prList[prList.length - 1] = currentPriceQuery;
-    return res.json({ timestamps: tsList, prices: prList, source: "fallback" });
+    return res.json({ timestamps: tsList, prices: prList, source: "organic-fallback" });
   }
 
   if (url.includes("stock-analysis-details")) {

@@ -2966,29 +2966,26 @@ function generateSimulatedHistory(
   
   let rawPrices: number[] = [];
   
+  // Natural market trajectory (replacing artificial harmonic sine waves with organic random walk)
+  const is1D = range.toLowerCase() === "1d";
+  const is1M = range.toLowerCase() === "1m";
+  const is1Y = range.toLowerCase() === "1y";
+  const startRatio = is1D ? 0.995 : is1M ? 0.96 : is1Y ? 0.74 : 0.85;
+  const startPrice = currentPrice * startRatio;
+  const totalDrift = currentPrice - startPrice;
+  const stepDrift = totalDrift / (numPoints - 1 || 1);
+  let running = startPrice;
+
   for (let i = 0; i < numPoints; i++) {
     timestamps[i] = Math.round((now.getTime() - (numPoints - 1 - i) * intervalMs) / 1000);
-    
-    // Wave parameters (yearly, quarterly, monthly cycles)
-    const angleYear = (i / numPoints) * 2 * Math.PI;
-    const angleQuarter = (i / numPoints) * 8 * Math.PI;
-    const angleMonth = (i / numPoints) * 24 * Math.PI;
-    
-    // Deterministic waves
-    const w1 = Math.sin(angleYear + (seed % 5)) * 0.12;
-    const w2 = Math.cos(angleQuarter + (seed % 3)) * 0.05;
-    const w3 = Math.sin(angleMonth + (seed % 7)) * 0.02;
-    
-    // Bounded progress trend
-    const progress = i / (numPoints - 1 || 1);
-    const trend = progress * trendDirection * 0.10;
-    
-    // Random noise
-    seed = (seed * 9301 + 49297) % 233280;
-    const noise = (seed / 233280 - 0.5) * 0.015;
-    
-    const multiplier = 1 + w1 + w2 + w3 + trend + noise;
-    rawPrices.push(currentPrice * multiplier);
+    if (i === numPoints - 1) {
+      rawPrices.push(currentPrice);
+    } else {
+      seed = (seed * 9301 + 49297) % 233280;
+      const noise = (seed / 233280 - 0.5) * (currentPrice * 0.012);
+      running += stepDrift + noise;
+      rawPrices.push(Math.max(currentPrice * 0.35, running));
+    }
   }
   
   // Adjust and scale raw prices so the final price matches currentPrice,
