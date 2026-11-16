@@ -8,6 +8,7 @@ import fsSync from "fs";
 import Parser from "rss-parser";
 import * as yfModule from 'yahoo-finance2';
 import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement, buildFinancialRatios, getCompanySegments } from './src/utils/financialStatementsBuilder';
+import { buildDividendsData } from './src/utils/dividendHelper';
 
 const YahooFinance = (yfModule as any).default?.default || (yfModule as any).default || yfModule;
 const yahooFinance = new YahooFinance({
@@ -3110,6 +3111,7 @@ app.get("/api/stock-analysis-details", async (req, res) => {
     // 2. Finnhub fallback / enrichment + live quote + Yahoo Institutional Forecasts
     let fhMetrics: any = null, fhProfile: any = null, fhRecs: any = null, fhQuote: any = null;
     let yfSummary: any = null;
+    let yfChart: any = null;
 
     // Map ticker to Yahoo symbol
     let yahooSym = cleanTicker;
@@ -3139,6 +3141,11 @@ app.get("/api/stock-analysis-details", async (req, res) => {
       const promises: Promise<any>[] = [
         (yahooFinance as any).quoteSummary(yahooSym, {
           modules: ['financialData', 'recommendationTrend', 'earningsTrend', 'upgradeDowngradeHistory', 'defaultKeyStatistics', 'summaryDetail']
+        }).catch(() => null),
+        (yahooFinance as any).chart(yahooSym, {
+          period1: '2015-01-01',
+          period2: new Date(),
+          events: 'div'
         }).catch(() => null)
       ];
 
@@ -3157,11 +3164,12 @@ app.get("/api/stock-analysis-details", async (req, res) => {
 
       const results = await Promise.all(promises);
       yfSummary = results[0];
+      yfChart = results[1];
       if (finnhubKey) {
-        fhMetrics = results[1]?.metric;
-        fhProfile = results[2];
-        fhRecs = results[3]?.[0];
-        fhQuote = results[4];
+        fhMetrics = results[2]?.metric;
+        fhProfile = results[3];
+        fhRecs = results[4]?.[0];
+        fhQuote = results[5];
       }
     } catch {}
 
@@ -3528,21 +3536,17 @@ app.get("/api/stock-analysis-details", async (req, res) => {
         cashPerShare: cashPerShare ? parseFloat(cashPerShare.toFixed(2)) : null,
         fcfPerShare: fcfPerShare ? parseFloat(fcfPerShare.toFixed(2)) : null
       },
-      dividends: {
-        dividendYield: divYield ? parseFloat(divYield.toFixed(2)) : null,
-        dividendRate: divRate ? parseFloat(divRate.toFixed(2)) : null,
-        payoutRatio: payoutRatio ? parseFloat(payoutRatio.toFixed(1)) : 35.0,
-        fiveYearAvgYield: divYield ? parseFloat((divYield * 0.95).toFixed(2)) : null,
-        exDividendDate: 'Сеп 2026',
-        dividendDate: 'Окт 2026',
-        frequency: 'Тримесечно',
-        payouts: [
-          { date: 'Сеп 2026', amount: divRate ? `$${(divRate / 4).toFixed(2)}` : '$0.95', type: 'Редовен' },
-          { date: 'Юни 2026', amount: divRate ? `$${(divRate / 4).toFixed(2)}` : '$0.95', type: 'Редовен' },
-          { date: 'Мар 2026', amount: divRate ? `$${(divRate / 4).toFixed(2)}` : '$0.90', type: 'Редовен' },
-          { date: 'Дек 2025', amount: divRate ? `$${(divRate / 4).toFixed(2)}` : '$0.85', type: 'Редовен' }
-        ]
-      },
+      dividends: buildDividendsData({
+        ticker: rawTicker,
+        companyName: tv?.description || fhProfile?.name || cleanTicker,
+        currentPrice,
+        marketCap: mCap,
+        yfSummary,
+        chartEventsDividends: yfChart?.events?.dividends,
+        fallbackBuybacks: cleanTicker === 'NVDA' ? -32000000000 : (cleanTicker === 'AAPL' ? -98500000000 : -fcf * 0.5),
+        isBulgarian: rawTicker.includes('.SO') || rawTicker.includes(':SO'),
+        bgDividendStr: ''
+      }),
       history: {
         month1Return: tv?.perf1M != null ? parseFloat(tv.perf1M.toFixed(1)) : -2.5,
         month3Return: tv?.perf3M != null ? parseFloat(tv.perf3M.toFixed(1)) : 8.5,

@@ -200,10 +200,25 @@ export interface StockAnalysisData {
     exDividendDate: string;
     dividendDate: string;
     frequency: string;
+    payoutFrequency?: string;
+    dividendGrowth1Y?: number | null;
+    growthYears?: number;
+    buybackYield?: number | null;
+    shareholderYield?: number | null;
+    narrative?: string;
     payouts: Array<{
       date: string;
+      rawDate?: string;
       amount: string;
+      cashAmount?: number;
+      recordDate?: string;
+      payDate?: string;
       type: string;
+    }>;
+    annualHistory?: Array<{
+      year: string;
+      amount: number;
+      growth?: number | null;
     }>;
   };
   history: {
