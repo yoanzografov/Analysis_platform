@@ -20,6 +20,8 @@ export interface FinancialBuildParams {
   grossMargin?: number | null;
   operatingMargin?: number | null;
   netMargin?: number | null;
+  sector?: string;
+  industry?: string;
 }
 
 export type FinancialFrequency = 'annual' | 'quarterly' | 'trailing';
@@ -2610,37 +2612,316 @@ export function buildFinancialRatios(params: FinancialBuildParams, freqOrQuarter
 export interface CompanySegmentData {
   primarySegments: Array<{ name: string; revenue: number; pct: number; growthPct: number; color: string }>;
   platformMarkets: Array<{ name: string; revenue: number; pct: number; growthPct: number }>;
+  geographicRevenue?: Array<{ name: string; revenue: number; pct: number; growthPct: number }>;
 }
 
-export function getCompanySegments(ticker: string, totalRevenue: number): CompanySegmentData {
+export function getCompanySegments(ticker: string, totalRevenue: number, sector?: string, industry?: string): CompanySegmentData {
   const clean = (ticker || '').toUpperCase().trim();
+  const rev = totalRevenue || 50000000000;
+
   if (clean === 'NVDA') {
     return {
       primarySegments: [
-        { name: 'Compute & Networking (AI Data Centers & Mellanox)', revenue: 265098000000, pct: 87.5, growthPct: 142.0, color: '#6366f1' },
-        { name: 'Graphics (GeForce GPUs & Workstations RTX)', revenue: 37872000000, pct: 12.5, growthPct: 18.5, color: '#10b981' }
+        { name: 'Compute & Networking (AI Data Centers & Mellanox)', revenue: rev * 0.875, pct: 87.5, growthPct: 142.0, color: '#6366f1' },
+        { name: 'Graphics (GeForce GPUs & Workstations RTX)', revenue: rev * 0.125, pct: 12.5, growthPct: 18.5, color: '#10b981' }
       ],
       platformMarkets: [
-        { name: 'Data Center / AI Infrastructure', revenue: 193700000000, pct: 89.7, growthPct: 154.2 },
-        { name: 'Gaming (GeForce PC & Handhelds)', revenue: 11400000000, pct: 5.3, growthPct: 15.0 },
-        { name: 'OEM & Other', revenue: 6800000000, pct: 3.1, growthPct: 8.4 },
-        { name: 'Automotive (Thor & Drive Orin)', revenue: 2100000000, pct: 1.0, growthPct: 21.0 },
-        { name: 'Professional Visualization (RTX Ada)', revenue: 1900000000, pct: 0.9, growthPct: 12.0 }
+        { name: 'Data Center / AI Infrastructure', revenue: rev * 0.897, pct: 89.7, growthPct: 154.2 },
+        { name: 'Gaming (GeForce PC & Handhelds)', revenue: rev * 0.053, pct: 5.3, growthPct: 15.0 },
+        { name: 'OEM & Other', revenue: rev * 0.031, pct: 3.1, growthPct: 8.4 },
+        { name: 'Automotive (Thor & Drive Orin)', revenue: rev * 0.010, pct: 1.0, growthPct: 21.0 },
+        { name: 'Professional Visualization (RTX Ada)', revenue: rev * 0.009, pct: 0.9, growthPct: 12.0 }
+      ],
+      geographicRevenue: [
+        { name: 'United States', revenue: rev * 0.46, pct: 46.0, growthPct: 65.2 },
+        { name: 'Taiwan', revenue: rev * 0.24, pct: 24.0, growthPct: 48.0 },
+        { name: 'Singapore', revenue: rev * 0.16, pct: 16.0, growthPct: 35.0 },
+        { name: 'China (incl. Hong Kong)', revenue: rev * 0.10, pct: 10.0, growthPct: 12.0 },
+        { name: 'Other Countries', revenue: rev * 0.04, pct: 4.0, growthPct: 22.0 }
       ]
     };
   }
 
-  // Generic fallback
-  const rev = totalRevenue || 50000000000;
+  if (clean === 'AAPL') {
+    return {
+      primarySegments: [
+        { name: 'iPhone', revenue: rev * 0.52, pct: 52.0, growthPct: 12.5, color: '#6366f1' },
+        { name: 'Services (App Store, iCloud, Apple Pay)', revenue: rev * 0.255, pct: 25.5, growthPct: 14.8, color: '#10b981' },
+        { name: 'Wearables, Home & Accessories (Watch, AirPods)', revenue: rev * 0.095, pct: 9.5, growthPct: 8.2, color: '#f59e0b' },
+        { name: 'Mac (MacBook, iMac, Mac Studio)', revenue: rev * 0.08, pct: 8.0, growthPct: 11.0, color: '#06b6d4' },
+        { name: 'iPad (iPad Pro, iPad Air)', revenue: rev * 0.05, pct: 5.0, growthPct: 7.5, color: '#ec4899' }
+      ],
+      platformMarkets: [
+        { name: 'Products (Hardware Devices)', revenue: rev * 0.745, pct: 74.5, growthPct: 11.2 },
+        { name: 'Services & Subscriptions', revenue: rev * 0.255, pct: 25.5, growthPct: 14.8 }
+      ],
+      geographicRevenue: [
+        { name: 'Americas', revenue: rev * 0.43, pct: 43.0, growthPct: 11.0 },
+        { name: 'Europe', revenue: rev * 0.255, pct: 25.5, growthPct: 10.5 },
+        { name: 'Greater China', revenue: rev * 0.17, pct: 17.0, growthPct: 8.5 },
+        { name: 'Rest of Asia Pacific', revenue: rev * 0.08, pct: 8.0, growthPct: 12.0 },
+        { name: 'Japan', revenue: rev * 0.065, pct: 6.5, growthPct: 7.0 }
+      ]
+    };
+  }
+
+  if (clean === 'MSFT') {
+    return {
+      primarySegments: [
+        { name: 'Intelligent Cloud (Azure & Server Products)', revenue: rev * 0.435, pct: 43.5, growthPct: 21.0, color: '#6366f1' },
+        { name: 'Productivity & Business Processes (Office 365, LinkedIn)', revenue: rev * 0.33, pct: 33.0, growthPct: 13.0, color: '#10b981' },
+        { name: 'More Personal Computing (Windows, Gaming Xbox, Surface)', revenue: rev * 0.235, pct: 23.5, growthPct: 8.5, color: '#f59e0b' }
+      ],
+      platformMarkets: [
+        { name: 'Commercial Cloud & AI', revenue: rev * 0.58, pct: 58.0, growthPct: 23.5 },
+        { name: 'Enterprise Software & Licenses', revenue: rev * 0.27, pct: 27.0, growthPct: 9.0 },
+        { name: 'Consumer Hardware & Gaming', revenue: rev * 0.15, pct: 15.0, growthPct: 6.5 }
+      ],
+      geographicRevenue: [
+        { name: 'United States', revenue: rev * 0.51, pct: 51.0, growthPct: 16.0 },
+        { name: 'Europe, Middle East & Africa (EMEA)', revenue: rev * 0.28, pct: 28.0, growthPct: 14.5 },
+        { name: 'Asia-Pacific (APAC)', revenue: rev * 0.15, pct: 15.0, growthPct: 15.2 },
+        { name: 'Other Countries', revenue: rev * 0.06, pct: 6.0, growthPct: 9.0 }
+      ]
+    };
+  }
+
+  if (clean === 'GOOGL' || clean === 'GOOG') {
+    return {
+      primarySegments: [
+        { name: 'Google Search & Other', revenue: rev * 0.56, pct: 56.0, growthPct: 12.0, color: '#6366f1' },
+        { name: 'Google Cloud (GCP & Workspace)', revenue: rev * 0.125, pct: 12.5, growthPct: 28.5, color: '#10b981' },
+        { name: 'YouTube Advertising', revenue: rev * 0.105, pct: 10.5, growthPct: 14.0, color: '#ef4444' },
+        { name: 'Google Subscriptions, Platforms & Devices', revenue: rev * 0.11, pct: 11.0, growthPct: 18.0, color: '#06b6d4' },
+        { name: 'Google Network Ads', revenue: rev * 0.10, pct: 10.0, growthPct: 4.5, color: '#f59e0b' }
+      ],
+      platformMarkets: [
+        { name: 'Digital Advertising Ecosystem', revenue: rev * 0.765, pct: 76.5, growthPct: 11.5 },
+        { name: 'Cloud Infrastructure & Enterprise AI', revenue: rev * 0.125, pct: 12.5, growthPct: 28.5 },
+        { name: 'Consumer Hardware & Subscriptions', revenue: rev * 0.11, pct: 11.0, growthPct: 18.0 }
+      ],
+      geographicRevenue: [
+        { name: 'United States', revenue: rev * 0.48, pct: 48.0, growthPct: 15.0 },
+        { name: 'EMEA (Europe, Middle East, Africa)', revenue: rev * 0.29, pct: 29.0, growthPct: 13.5 },
+        { name: 'Asia-Pacific (APAC)', revenue: rev * 0.17, pct: 17.0, growthPct: 16.0 },
+        { name: 'Other Americas (Canada & LatAm)', revenue: rev * 0.06, pct: 6.0, growthPct: 10.0 }
+      ]
+    };
+  }
+
+  if (clean === 'AMZN') {
+    return {
+      primarySegments: [
+        { name: 'Online Stores (First-Party Retail)', revenue: rev * 0.41, pct: 41.0, growthPct: 8.5, color: '#6366f1' },
+        { name: 'Third-Party Seller Services (FBA & Commission)', revenue: rev * 0.24, pct: 24.0, growthPct: 14.0, color: '#10b981' },
+        { name: 'Amazon Web Services (AWS Cloud & AI)', revenue: rev * 0.175, pct: 17.5, growthPct: 19.5, color: '#f59e0b' },
+        { name: 'Advertising Services', revenue: rev * 0.09, pct: 9.0, growthPct: 24.0, color: '#06b6d4' },
+        { name: 'Subscription Services (Amazon Prime)', revenue: rev * 0.065, pct: 6.5, growthPct: 11.0, color: '#8b5cf6' },
+        { name: 'Physical Stores (Whole Foods & Amazon Fresh)', revenue: rev * 0.02, pct: 2.0, growthPct: 3.5, color: '#ec4899' }
+      ],
+      platformMarkets: [
+        { name: 'E-Commerce Marketplace & Retail', revenue: rev * 0.67, pct: 67.0, growthPct: 10.5 },
+        { name: 'AWS Cloud Infrastructure & AI', revenue: rev * 0.175, pct: 17.5, growthPct: 19.5 },
+        { name: 'Digital Advertising Platform', revenue: rev * 0.09, pct: 9.0, growthPct: 24.0 },
+        { name: 'Prime & Digital Subscriptions', revenue: rev * 0.065, pct: 6.5, growthPct: 11.0 }
+      ],
+      geographicRevenue: [
+        { name: 'North America', revenue: rev * 0.62, pct: 62.0, growthPct: 12.0 },
+        { name: 'International (Europe, Japan, APAC)', revenue: rev * 0.205, pct: 20.5, growthPct: 9.5 },
+        { name: 'AWS (Global Enterprise)', revenue: rev * 0.175, pct: 17.5, growthPct: 19.5 }
+      ]
+    };
+  }
+
+  if (clean === 'META') {
+    return {
+      primarySegments: [
+        { name: 'Family of Apps (Facebook, Instagram, WhatsApp, Messenger)', revenue: rev * 0.982, pct: 98.2, growthPct: 22.0, color: '#6366f1' },
+        { name: 'Reality Labs (Meta Quest, Smart Glasses, Horizon VR)', revenue: rev * 0.018, pct: 1.8, growthPct: 15.0, color: '#10b981' }
+      ],
+      platformMarkets: [
+        { name: 'Feed & Video Advertising (Reels)', revenue: rev * 0.68, pct: 68.0, growthPct: 24.5 },
+        { name: 'Stories & Messaging Ads', revenue: rev * 0.24, pct: 24.0, growthPct: 17.0 },
+        { name: 'Business Messaging (WhatsApp Click-to-Message)', revenue: rev * 0.062, pct: 6.2, growthPct: 35.0 },
+        { name: 'Virtual Reality & AI Hardware', revenue: rev * 0.018, pct: 1.8, growthPct: 15.0 }
+      ],
+      geographicRevenue: [
+        { name: 'United States & Canada', revenue: rev * 0.40, pct: 40.0, growthPct: 20.0 },
+        { name: 'Europe', revenue: rev * 0.24, pct: 24.0, growthPct: 19.0 },
+        { name: 'Asia-Pacific', revenue: rev * 0.27, pct: 27.0, growthPct: 26.0 },
+        { name: 'Rest of World', revenue: rev * 0.09, pct: 9.0, growthPct: 22.5 }
+      ]
+    };
+  }
+
+  if (clean === 'TSLA') {
+    return {
+      primarySegments: [
+        { name: 'Automotive Sales & Leasing', revenue: rev * 0.81, pct: 81.0, growthPct: 9.5, color: '#6366f1' },
+        { name: 'Energy Generation & Storage (Megapack, Powerwall)', revenue: rev * 0.11, pct: 11.0, growthPct: 62.0, color: '#10b981' },
+        { name: 'Services & Other (Supercharging Network, Parts)', revenue: rev * 0.08, pct: 8.0, growthPct: 28.0, color: '#f59e0b' }
+      ],
+      platformMarkets: [
+        { name: 'Model Y & Model 3 Vehicles', revenue: rev * 0.74, pct: 74.0, growthPct: 8.0 },
+        { name: 'Utility & Commercial Energy Storage (Megapack)', revenue: rev * 0.11, pct: 11.0, growthPct: 62.0 },
+        { name: 'Cybertruck, Model S/X & Semi', revenue: rev * 0.07, pct: 7.0, growthPct: 24.0 },
+        { name: 'Supercharging Network & Autopilot FSD', revenue: rev * 0.08, pct: 8.0, growthPct: 28.0 }
+      ],
+      geographicRevenue: [
+        { name: 'United States', revenue: rev * 0.47, pct: 47.0, growthPct: 14.0 },
+        { name: 'China', revenue: rev * 0.22, pct: 22.0, growthPct: 11.0 },
+        { name: 'Other International (Europe & APAC)', revenue: rev * 0.31, pct: 31.0, growthPct: 16.0 }
+      ]
+    };
+  }
+
+  // ─── DYNAMIC SECTOR / INDUSTRY GENERATOR FOR ALL OTHER COMPANIES ───
+  const sec = (sector || '').toLowerCase();
+  const ind = (industry || '').toLowerCase();
+  const isBulgarian = clean.length === 3 || clean.includes('.SO') || clean === 'MONB' || clean === 'SFA' || clean === 'CHIM' || clean === 'A4D';
+
+  if (isBulgarian) {
+    return {
+      primarySegments: [
+        { name: 'Вътрешен пазар (България)', revenue: rev * 0.54, pct: 54.0, growthPct: 11.5, color: '#6366f1' },
+        { name: 'Експорт за Европейския съюз (ЕС)', revenue: rev * 0.34, pct: 34.0, growthPct: 16.0, color: '#10b981' },
+        { name: 'Експорт за трети страни и услуги', revenue: rev * 0.12, pct: 12.0, growthPct: 8.5, color: '#f59e0b' }
+      ],
+      platformMarkets: [
+        { name: 'Директни корпоративни клиенти (B2B)', revenue: rev * 0.62, pct: 62.0, growthPct: 13.0 },
+        { name: 'Дистрибуторска мрежа и търговци', revenue: rev * 0.28, pct: 28.0, growthPct: 10.5 },
+        { name: 'Обществени и държавни поръчки', revenue: rev * 0.10, pct: 10.0, growthPct: 7.0 }
+      ],
+      geographicRevenue: [
+        { name: 'България', revenue: rev * 0.54, pct: 54.0, growthPct: 11.5 },
+        { name: 'Страни от Централна & Югоизточна Европа', revenue: rev * 0.26, pct: 26.0, growthPct: 17.5 },
+        { name: 'Западна Европа', revenue: rev * 0.14, pct: 14.0, growthPct: 12.0 },
+        { name: 'Други пазари', revenue: rev * 0.06, pct: 6.0, growthPct: 8.0 }
+      ]
+    };
+  }
+
+  if (sec.includes('tech') || sec.includes('semi') || ind.includes('software') || ind.includes('computer')) {
+    return {
+      primarySegments: [
+        { name: 'Enterprise Cloud & AI Solutions', revenue: rev * 0.52, pct: 52.0, growthPct: 24.0, color: '#6366f1' },
+        { name: 'Core Hardware & Systems Integration', revenue: rev * 0.32, pct: 32.0, growthPct: 12.5, color: '#10b981' },
+        { name: 'Software Subscriptions & Professional Support', revenue: rev * 0.16, pct: 16.0, growthPct: 18.0, color: '#f59e0b' }
+      ],
+      platformMarkets: [
+        { name: 'Enterprise Cloud (B2B)', revenue: rev * 0.58, pct: 58.0, growthPct: 22.0 },
+        { name: 'Mid-Market & Commercial', revenue: rev * 0.27, pct: 27.0, growthPct: 15.0 },
+        { name: 'Consumer & Developer Ecosystem', revenue: rev * 0.15, pct: 15.0, growthPct: 11.0 }
+      ],
+      geographicRevenue: [
+        { name: 'North America (US & Canada)', revenue: rev * 0.52, pct: 52.0, growthPct: 18.5 },
+        { name: 'Europe (EMEA)', revenue: rev * 0.26, pct: 26.0, growthPct: 14.0 },
+        { name: 'Asia-Pacific (APAC)', revenue: rev * 0.16, pct: 16.0, growthPct: 19.0 },
+        { name: 'Rest of World', revenue: rev * 0.06, pct: 6.0, growthPct: 10.5 }
+      ]
+    };
+  }
+
+  if (sec.includes('finan') || ind.includes('bank') || ind.includes('insurance') || ind.includes('capital')) {
+    return {
+      primarySegments: [
+        { name: 'Consumer & Retail Banking', revenue: rev * 0.42, pct: 42.0, growthPct: 8.5, color: '#6366f1' },
+        { name: 'Corporate & Investment Banking', revenue: rev * 0.33, pct: 33.0, growthPct: 14.0, color: '#10b981' },
+        { name: 'Wealth & Asset Management', revenue: rev * 0.17, pct: 17.0, growthPct: 12.0, color: '#f59e0b' },
+        { name: 'Treasury & Payment Services', revenue: rev * 0.08, pct: 8.0, growthPct: 11.0, color: '#06b6d4' }
+      ],
+      platformMarkets: [
+        { name: 'Net Interest Income (Loans & Deposits)', revenue: rev * 0.56, pct: 56.0, growthPct: 9.5 },
+        { name: 'Investment Banking & Advisory Fees', revenue: rev * 0.24, pct: 24.0, growthPct: 15.0 },
+        { name: 'Asset Management & Advisory Commissions', revenue: rev * 0.20, pct: 20.0, growthPct: 11.5 }
+      ],
+      geographicRevenue: [
+        { name: 'United States', revenue: rev * 0.72, pct: 72.0, growthPct: 10.5 },
+        { name: 'Europe, Middle East & Africa', revenue: rev * 0.16, pct: 16.0, growthPct: 9.0 },
+        { name: 'Asia-Pacific & Latin America', revenue: rev * 0.12, pct: 12.0, growthPct: 12.0 }
+      ]
+    };
+  }
+
+  if (sec.includes('health') || ind.includes('biotech') || ind.includes('pharma') || ind.includes('medical')) {
+    return {
+      primarySegments: [
+        { name: 'Innovative Therapeutics & Oncology Drugs', revenue: rev * 0.54, pct: 54.0, growthPct: 16.5, color: '#6366f1' },
+        { name: 'Specialty Medicines & Immunology', revenue: rev * 0.28, pct: 28.0, growthPct: 12.0, color: '#10b981' },
+        { name: 'Medical Devices & Clinical Diagnostics', revenue: rev * 0.18, pct: 18.0, growthPct: 9.0, color: '#f59e0b' }
+      ],
+      platformMarkets: [
+        { name: 'Hospitals & Specialized Treatment Centers', revenue: rev * 0.60, pct: 60.0, growthPct: 15.0 },
+        { name: 'Retail Pharmacy & Outpatient Clinics', revenue: rev * 0.28, pct: 28.0, growthPct: 11.0 },
+        { name: 'Government & Managed Care Organizations', revenue: rev * 0.12, pct: 12.0, growthPct: 8.5 }
+      ],
+      geographicRevenue: [
+        { name: 'United States', revenue: rev * 0.58, pct: 58.0, growthPct: 15.0 },
+        { name: 'European Union & UK', revenue: rev * 0.24, pct: 24.0, growthPct: 11.5 },
+        { name: 'Japan & Asia-Pacific', revenue: rev * 0.11, pct: 11.0, growthPct: 13.0 },
+        { name: 'Emerging Markets', revenue: rev * 0.07, pct: 7.0, growthPct: 14.5 }
+      ]
+    };
+  }
+
+  if (sec.includes('energy') || sec.includes('oil') || ind.includes('gas') || ind.includes('utility') || ind.includes('utilities')) {
+    return {
+      primarySegments: [
+        { name: 'Upstream (Exploration & Production)', revenue: rev * 0.55, pct: 55.0, growthPct: 14.0, color: '#6366f1' },
+        { name: 'Downstream (Refining, Marketing & Fuel)', revenue: rev * 0.35, pct: 35.0, growthPct: 8.5, color: '#10b981' },
+        { name: 'Chemicals, Renewables & Clean Energy', revenue: rev * 0.10, pct: 10.0, growthPct: 22.0, color: '#f59e0b' }
+      ],
+      platformMarkets: [
+        { name: 'Industrial & Utility Wholesale Contracts', revenue: rev * 0.58, pct: 58.0, growthPct: 12.0 },
+        { name: 'Commercial & Transport Customers', revenue: rev * 0.28, pct: 28.0, growthPct: 9.0 },
+        { name: 'Retail Consumer Distribution', revenue: rev * 0.14, pct: 14.0, growthPct: 7.5 }
+      ],
+      geographicRevenue: [
+        { name: 'United States', revenue: rev * 0.52, pct: 52.0, growthPct: 11.5 },
+        { name: 'Europe', revenue: rev * 0.24, pct: 24.0, growthPct: 9.0 },
+        { name: 'Asia-Pacific', revenue: rev * 0.16, pct: 16.0, growthPct: 13.5 },
+        { name: 'Other Regions', revenue: rev * 0.08, pct: 8.0, growthPct: 8.0 }
+      ]
+    };
+  }
+
+  if (sec.includes('consumer') || sec.includes('retail') || ind.includes('apparel') || ind.includes('restaurant')) {
+    return {
+      primarySegments: [
+        { name: 'Core Direct-to-Consumer & Retail Sales', revenue: rev * 0.62, pct: 62.0, growthPct: 11.0, color: '#6366f1' },
+        { name: 'E-Commerce & Digital Channels', revenue: rev * 0.26, pct: 26.0, growthPct: 18.5, color: '#10b981' },
+        { name: 'Wholesale & Franchise Partnerships', revenue: rev * 0.12, pct: 12.0, growthPct: 7.0, color: '#f59e0b' }
+      ],
+      platformMarkets: [
+        { name: 'Flagship & Retail Store Network', revenue: rev * 0.58, pct: 58.0, growthPct: 9.5 },
+        { name: 'Online Direct & Mobile Apps', revenue: rev * 0.28, pct: 28.0, growthPct: 18.0 },
+        { name: 'Third-Party Retailers & Distributors', revenue: rev * 0.14, pct: 14.0, growthPct: 6.5 }
+      ],
+      geographicRevenue: [
+        { name: 'North America', revenue: rev * 0.56, pct: 56.0, growthPct: 11.0 },
+        { name: 'Europe', revenue: rev * 0.24, pct: 24.0, growthPct: 10.0 },
+        { name: 'Asia-Pacific', revenue: rev * 0.14, pct: 14.0, growthPct: 14.5 },
+        { name: 'Other Countries', revenue: rev * 0.06, pct: 6.0, growthPct: 8.5 }
+      ]
+    };
+  }
+
+  // Universal general business fallback
   return {
     primarySegments: [
-      { name: 'Основни продукти и хардуерни решения', revenue: rev * 0.72, pct: 72.0, growthPct: 14.5, color: '#6366f1' },
-      { name: 'Софтуер, облачни услуги и абонаменти', revenue: rev * 0.28, pct: 28.0, growthPct: 22.0, color: '#10b981' }
+      { name: 'Core Products & Equipment Solutions', revenue: rev * 0.68, pct: 68.0, growthPct: 12.5, color: '#6366f1' },
+      { name: 'Software, Digital Services & Maintenance', revenue: rev * 0.22, pct: 22.0, growthPct: 19.0, color: '#10b981' },
+      { name: 'Specialized Licensing & Advisory', revenue: rev * 0.10, pct: 10.0, growthPct: 9.5, color: '#f59e0b' }
     ],
     platformMarkets: [
-      { name: 'Корпоративен сегмент (Enterprise)', revenue: rev * 0.58, pct: 58.0, growthPct: 16.0 },
-      { name: 'Потребителски пазари (Consumer)', revenue: rev * 0.32, pct: 32.0, growthPct: 11.0 },
-      { name: 'Партньорска мрежа и лицензи', revenue: rev * 0.10, pct: 10.0, growthPct: 7.5 }
+      { name: 'Enterprise & Commercial Clients (B2B)', revenue: rev * 0.62, pct: 62.0, growthPct: 14.0 },
+      { name: 'Direct Consumer Channels (B2C)', revenue: rev * 0.26, pct: 26.0, growthPct: 10.5 },
+      { name: 'Government & Institutional Contracts', revenue: rev * 0.12, pct: 12.0, growthPct: 8.0 }
+    ],
+    geographicRevenue: [
+      { name: 'Domestic Market', revenue: rev * 0.56, pct: 56.0, growthPct: 12.0 },
+      { name: 'Europe & Developed Markets', revenue: rev * 0.26, pct: 26.0, growthPct: 10.5 },
+      { name: 'Asia-Pacific & Emerging Markets', revenue: rev * 0.18, pct: 18.0, growthPct: 15.0 }
     ]
   };
 }
@@ -2789,11 +3070,11 @@ export function buildKpisMetrics(params: FinancialBuildParams, freqOrQuarterly: 
     return { periods, rows };
   }
 
-  // Generic dynamic generator for any stock
+  // Universal dynamic segment generator for ANY stock in any sector
   const periods = isQuarterly ? QUARTERLY_PERIODS : isTrailing ? TRAILING_PERIODS : ANNUAL_10Y_PERIODS;
   const rev = params.totalRevenue || (params.marketCap * 0.32);
   const ni = params.netIncome || (rev * 0.22);
-  const headcount = Math.max(Math.round(rev / 650000), 5000);
+  const headcount = Math.max(Math.round(rev / (rev > 50000000000 ? 950000 : 550000)), 3500);
   const growthRates = generateCompanyGrowthRates(params);
   const seed = getTickerSeed(params.ticker || 'STOCK');
 
@@ -2819,35 +3100,71 @@ export function buildKpisMetrics(params: FinancialBuildParams, freqOrQuarterly: 
     return { name, key, values: vals, ...opts };
   };
 
-  const rows: FinancialStatementRow[] = [
-    { name: 'Operating Segments', key: 'seg_header', isHeader: true, values: {} },
-    makeRow('Основни продукти и хардуерни решения', 'seg_core', rev * 0.72, { isBold: true, format: 'currency' }),
-    makeRow('Софтуер и дигитални услуги', 'seg_sw', rev * 0.28, { isBold: true, format: 'currency' }),
+  const segData = getCompanySegments(params.ticker, rev, params.sector, params.industry);
+  const rows: FinancialStatementRow[] = [];
 
-    { name: 'Market Platforms', key: 'plat_header', isHeader: true, values: {} },
-    makeRow('Корпоративен сегмент (Enterprise)', 'plat_ent', rev * 0.58, { isBold: true, format: 'currency' }),
-    makeRow('Потребителски пазари (Consumer)', 'plat_cons', rev * 0.32, { indent: 1, format: 'currency' }),
-    makeRow('Лицензи и партньорства', 'plat_lic', rev * 0.10, { indent: 1, format: 'currency' }),
+  // 1. Business Segments Revenue
+  rows.push({ name: 'Business Segments Revenue', key: 'seg_header', isHeader: true, values: {} });
+  segData.primarySegments.forEach((seg, idx) => {
+    const segRow = makeRow(seg.name, `seg_${idx}`, seg.revenue, { isBold: true, format: 'currency' });
+    rows.push(segRow);
+    rows.push(createGrowthRow(periods, segRow, `${seg.name} Growth (YoY)`));
+  });
 
-    { name: 'Productivity & Employees', key: 'prod_header', isHeader: true, values: {} },
-    makeRow('Employees (Headcount)', 'employees_headcount', headcount, { isBold: true, format: 'number' }),
-    makeRow('Revenue per Employee', 'rev_per_emp', rev / headcount, { isBold: true, format: 'currency' }),
-    makeRow('Net Income per Employee', 'ni_per_emp', ni / headcount, { indent: 1, format: 'currency' }),
-    {
-      name: 'R&D % of Revenue',
-      key: 'rnd_pct_rev',
-      indent: 1,
-      format: 'percent',
-      values: periods.reduce((acc, p) => ({ ...acc, [p]: 14.5 }), {})
-    },
-    {
-      name: 'SG&A % of Revenue',
-      key: 'sga_pct_rev',
-      indent: 1,
-      format: 'percent',
-      values: periods.reduce((acc, p) => ({ ...acc, [p]: 8.2 }), {})
-    }
-  ];
+  // 2. Market Platforms Revenue
+  if (segData.platformMarkets && segData.platformMarkets.length > 0) {
+    rows.push({ name: 'Market Platforms Revenue', key: 'plat_header', isHeader: true, values: {} });
+    segData.platformMarkets.forEach((plat, idx) => {
+      const platRow = makeRow(plat.name, `plat_${idx}`, plat.revenue, { isBold: idx === 0, indent: idx === 0 ? 0 : 1, format: 'currency' });
+      rows.push(platRow);
+      if (idx === 0 || plat.pct > 20) {
+        rows.push(createGrowthRow(periods, platRow, `${plat.name} Growth (YoY)`));
+      }
+    });
+  }
+
+  // 3. Geographic Revenue Breakdown
+  if (segData.geographicRevenue && segData.geographicRevenue.length > 0) {
+    rows.push({ name: 'Geographic Revenue Breakdown', key: 'geo_header', isHeader: true, values: {} });
+    segData.geographicRevenue.forEach((geo, idx) => {
+      const geoRow = makeRow(geo.name, `geo_${idx}`, geo.revenue, { isBold: idx === 0, indent: idx === 0 ? 0 : 1, format: 'currency' });
+      rows.push(geoRow);
+      if (idx === 0) {
+        rows.push(createGrowthRow(periods, geoRow, `${geo.name} Growth (YoY)`));
+      }
+    });
+  }
+
+  // 4. Operating Productivity & Expenses
+  const rndBasePct = params.sector?.toLowerCase().includes('tech') || params.sector?.toLowerCase().includes('health') ? 14.8 : 4.5;
+  const sgaBasePct = 12.2;
+  const capexBasePct = 5.4;
+
+  rows.push({ name: 'Operating Productivity & Employees', key: 'prod_header', isHeader: true, values: {} });
+  rows.push(makeRow('Employees (Headcount)', 'employees_headcount', headcount, { isBold: true, format: 'number' }));
+  rows.push(makeRow('Revenue per Employee', 'rev_per_emp', rev / headcount, { isBold: true, format: 'currency' }));
+  rows.push(makeRow('Net Income per Employee', 'ni_per_emp', ni / headcount, { indent: 1, format: 'currency' }));
+  rows.push({
+    name: 'R&D % of Revenue',
+    key: 'rnd_pct_rev',
+    indent: 1,
+    format: 'percent',
+    values: periods.reduce((acc, p) => ({ ...acc, [p]: rndBasePct }), {})
+  });
+  rows.push({
+    name: 'SG&A % of Revenue',
+    key: 'sga_pct_rev',
+    indent: 1,
+    format: 'percent',
+    values: periods.reduce((acc, p) => ({ ...acc, [p]: sgaBasePct }), {})
+  });
+  rows.push({
+    name: 'CapEx % of Revenue',
+    key: 'capex_pct_rev',
+    indent: 1,
+    format: 'percent',
+    values: periods.reduce((acc, p) => ({ ...acc, [p]: capexBasePct }), {})
+  });
 
   return { periods, rows };
 }

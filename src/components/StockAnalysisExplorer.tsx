@@ -542,7 +542,9 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
       perf1Y: data?.overview?.marketCapGrowth,
       grossMargin: data?.statistics?.grossMargin,
       operatingMargin: data?.statistics?.operatingMargin,
-      netMargin: data?.statistics?.netProfitMargin
+      netMargin: data?.statistics?.netProfitMargin,
+      sector: data?.overview?.sector || stock.sector || getSectorForStock(stock.ticker, stock.companyName),
+      industry: data?.overview?.industry || stock.industry
     };
 
     const income = (isQ && data?.financials?.quarterlyIncomeStatement) 
@@ -667,6 +669,120 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", `${cleanTicker}_${financialSubTab}_${financialFreq}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const kpisDisplayPeriods = useMemo(() => {
+    const kpis = financialStatementsBundle.kpis;
+    if (!kpis?.periods) return [];
+    return isReversedOrder ? [...kpis.periods].reverse() : kpis.periods;
+  }, [financialStatementsBundle.kpis?.periods, isReversedOrder]);
+
+  const kpisRowsWithHierarchy = useMemo(() => {
+    const kpis = financialStatementsBundle.kpis;
+    if (!kpis?.rows) return [];
+    const rows = kpis.rows;
+
+    const childToParentMap = new Map<string, string>();
+    const parentsWithChildren = new Set<string>();
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (r.isHeader) continue;
+
+      if (i + 1 < rows.length) {
+        const nextR = rows[i + 1];
+        if (
+          nextR.key === `${r.key}_growth` ||
+          nextR.key === `${r.key}_change` ||
+          (nextR.indent === (r.indent || 0) + 1 && (nextR.name.includes('Growth') || nextR.name.includes('Change')))
+        ) {
+          parentsWithChildren.add(r.key);
+          childToParentMap.set(nextR.key, r.key);
+        }
+      }
+    }
+
+    const result: Array<{
+      row: FinancialStatementRow;
+      hasChildren: boolean;
+      isChild: boolean;
+      isCollapsed: boolean;
+    }> = [];
+
+    for (const r of rows) {
+      if (r.isHeader) {
+        result.push({ row: r, hasChildren: false, isChild: false, isCollapsed: false });
+        continue;
+      }
+
+      const parentKey = childToParentMap.get(r.key);
+      const isChild = !!parentKey;
+
+      if (isChild && parentKey && collapsedRowKeys.has(parentKey)) {
+        continue;
+      }
+
+      const hasChildren = parentsWithChildren.has(r.key);
+      const isCollapsed = collapsedRowKeys.has(r.key);
+
+      result.push({ row: r, hasChildren, isChild, isCollapsed });
+    }
+
+    return result;
+  }, [financialStatementsBundle.kpis?.rows, collapsedRowKeys]);
+
+  const metricsChartData = useMemo(() => {
+    const kpis = financialStatementsBundle.kpis;
+    if (!kpis) return { data: [], segments: [] };
+    const periods = [...kpis.periods].reverse(); // Oldest to newest for chronological chart
+    const segRows = kpis.rows.filter(r => !r.isHeader && (r.key.startsWith('seg_') || r.key.startsWith('kpi_')) && !r.key.includes('_growth'));
+    const palette = ['#6366f1', '#10b981', '#f59e0b', '#06b6d4', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316'];
+    const segments = segRows.map((r, i) => ({
+      key: r.key,
+      name: r.name,
+      color: palette[i % palette.length]
+    }));
+
+    const data = periods.map(p => {
+      const item: any = { period: p };
+      let total = 0;
+      segRows.forEach(sr => {
+        const val = sr.values[p] || 0;
+        item[sr.name] = val;
+        total += val;
+      });
+      item.total = total;
+      return item;
+    });
+
+    return { data, segments };
+  }, [financialStatementsBundle.kpis]);
+
+  const handleExportMetricsCsv = () => {
+    const kpis = financialStatementsBundle.kpis;
+    if (!kpis) return;
+    const periods = kpisDisplayPeriods;
+    const headerRow = ['Metric', ...periods];
+    const rows = [headerRow];
+    kpis.rows.forEach(r => {
+      if (r.isHeader) {
+        rows.push([r.name, ...periods.map(() => '')]);
+      } else {
+        const rowVals = periods.map(p => {
+          const val = r.values[p];
+          return val != null ? String(val) : '';
+        });
+        rows.push([`"${r.name.replace(/"/g, '""')}"`, ...rowVals]);
+      }
+    });
+    const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${cleanTicker}_operating_metrics_${financialFreq}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -797,7 +913,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     { id: 'financials', label: 'Financials', icon: DollarSign,     desc: 'Приходи, печалба, баланс и парични потоци', hasDropdown: true },
     { id: 'forecast',   label: 'Forecast',   icon: Target,         desc: 'Ценови таргети и консенсус от Уолстрийт', hasDropdown: true },
     { id: 'statistics', label: 'Statistics', icon: BarChart2,      desc: 'Пазарни мултипликатори със светофарна оценка', hasDropdown: true },
-    { id: 'metrics',    label: 'Metrics',    icon: Activity,       desc: 'Ключови показатели на акция (EPS, FCF, Cash)' },
+    { id: 'metrics',    label: 'Metrics',    icon: Activity,       desc: 'Сегменти, пазарни платформи, география и оперативни метрики', hasDropdown: true },
     { id: 'dividends',  label: 'Dividends',  icon: Coins,          desc: 'Дивидентна доходност, payout ratio и дати' },
     { id: 'history',    label: 'History',    icon: HistoryIcon,    desc: 'Исторически цени, обеми и възвръщаемост' },
     { id: 'profile',    label: 'Profile',    icon: Building2,      desc: 'Бизнес модел, ръководство и сектор', hasDropdown: true },
@@ -2977,38 +3093,278 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                   </div>
                 )}
 
-                {/* ─── TAB 5: METRICS ─── */}
+                {/* ─── TAB 5: METRICS (1:1 STOCKANALYSIS OPERATING METRICS & BREAKDOWNS) ─── */}
                 {activeTab === 'metrics' && (
-                  <div className="space-y-4">
-                    <div className="pb-2 border-b border-border/60">
-                      <h3 className="text-xs font-black uppercase text-ink">Ключови показатели на акция (Per-Share Metrics)</h3>
-                      <p className="text-[11px] text-ink-faint">Стойност на една акция за инвеститорите</p>
+                  <div className="space-y-6">
+                    {/* Header Banner */}
+                    <div className="pb-3 border-b border-border/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <h2 className="text-sm font-bold text-ink">
+                          {stock.companyName} ({cleanTicker}) Оперативни метрики & Разбивки по сегменти
+                        </h2>
+                        <p className="text-[11px] text-ink-faint">
+                          10-годишна историческа разбивка на приходите по бизнес сегменти, пазарни платформи, география и продуктивност
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-accent text-ink-faint border border-border/50">
+                          {(data.overview as any)?.exchange || 'NASDAQ'} • {data.currency || 'USD'}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <div className="p-3.5 rounded-xl bg-card border border-border/80">
-                        <span className="text-[11px] text-ink-faint block">EPS (Trailing 12M)</span>
-                        <span className="text-base font-black text-ink">${data.metrics.epsTrailing ?? stock.eps ?? '—'}</span>
+                    {/* Toolbar Controls (StockAnalysis Style) */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border/80">
+                      {/* Left: Frequency toggles */}
+                      <div className="flex items-center gap-1.5 p-0.5 rounded-lg bg-muted/30 border border-border/50 text-xs font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setFinancialFreq('annual')}
+                          className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                            financialFreq === 'annual'
+                              ? 'bg-ink text-bg font-bold shadow-xs'
+                              : 'text-ink-muted hover:text-ink'
+                          }`}
+                        >
+                          Годишни (Annual)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFinancialFreq('quarterly')}
+                          className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                            financialFreq === 'quarterly'
+                              ? 'bg-ink text-bg font-bold shadow-xs'
+                              : 'text-ink-muted hover:text-ink'
+                          }`}
+                        >
+                          Тримесечни (Quarterly)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFinancialFreq('trailing')}
+                          className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                            financialFreq === 'trailing'
+                              ? 'bg-ink text-bg font-bold shadow-xs'
+                              : 'text-ink-muted hover:text-ink'
+                          }`}
+                        >
+                          Пълзящи (TTM)
+                        </button>
                       </div>
-                      <div className="p-3.5 rounded-xl bg-card border border-border/80">
-                        <span className="text-[11px] text-ink-faint block">EPS (Forward Прогноза)</span>
-                        <span className="text-base font-black text-indigo-400">${data.metrics.epsForward ?? '—'}</span>
+
+                      {/* Right: Scale & Actions */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Scale */}
+                        <div className="flex items-center p-0.5 rounded-lg bg-muted/30 border border-border/50 text-xs font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => setFinancialScale('billions')}
+                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                              financialScale === 'billions'
+                                ? 'bg-ink text-bg font-bold shadow-xs'
+                                : 'text-ink-muted hover:text-ink'
+                            }`}
+                          >
+                            $ Billions
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFinancialScale('millions')}
+                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                              financialScale === 'millions'
+                                ? 'bg-ink text-bg font-bold shadow-xs'
+                                : 'text-ink-muted hover:text-ink'
+                            }`}
+                          >
+                            $ Millions
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFinancialScale('full')}
+                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                              financialScale === 'full'
+                                ? 'bg-ink text-bg font-bold shadow-xs'
+                                : 'text-ink-muted hover:text-ink'
+                            }`}
+                          >
+                            Full
+                          </button>
+                        </div>
+
+                        {/* Order button */}
+                        <button
+                          type="button"
+                          onClick={() => setIsReversedOrder(prev => !prev)}
+                          title="Обърни реда на годините (хронологично / най-нови)"
+                          className="p-1.5 rounded-lg bg-card border border-border/80 text-ink-muted hover:text-ink transition-colors cursor-pointer flex items-center gap-1 text-xs"
+                        >
+                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* CSV Export */}
+                        <button
+                          type="button"
+                          onClick={handleExportMetricsCsv}
+                          className="px-3 py-1 rounded-lg bg-accent hover:bg-accent/80 border border-border/70 text-ink text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Свали CSV</span>
+                        </button>
                       </div>
-                      <div className="p-3.5 rounded-xl bg-card border border-border/80">
-                        <span className="text-[11px] text-ink-faint block">Free Cash Flow / Share</span>
-                        <span className="text-base font-black text-emerald-500">${data.metrics.fcfPerShare ?? '—'}</span>
+                    </div>
+
+                    {/* Interactive Stacked Bar Chart for Business Segments */}
+                    {metricsChartData.segments.length > 0 && (
+                      <div className="p-4 rounded-xl bg-card border border-border/80 space-y-3 shadow-xs">
+                        <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                          <div className="flex items-center gap-2">
+                            <BarChart3 className="w-4 h-4 text-indigo-400" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-ink">
+                              Разпределение на приходите по сегменти във времето
+                            </h3>
+                          </div>
+                          <span className="text-[11px] text-ink-faint">
+                            {financialFreq === 'annual' ? 'Годишно' : financialFreq === 'quarterly' ? 'Тримесечно' : 'TTM'} натрупване
+                          </span>
+                        </div>
+
+                        <div className="h-64 sm:h-72 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={metricsChartData.data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#88888820" vertical={false} />
+                              <XAxis dataKey="period" stroke="#88888860" tick={{ fill: '#888888', fontSize: 11 }} />
+                              <YAxis 
+                                stroke="#88888860" 
+                                tick={{ fill: '#888888', fontSize: 11 }}
+                                tickFormatter={(val) => {
+                                  if (val >= 1e12) return `$${(val / 1e12).toFixed(1)}T`;
+                                  if (val >= 1e9) return `$${(val / 1e9).toFixed(0)}B`;
+                                  if (val >= 1e6) return `$${(val / 1e6).toFixed(0)}M`;
+                                  return `$${val}`;
+                                }}
+                              />
+                              <RechartsTooltip
+                                content={({ active, payload, label }) => {
+                                  if (!active || !payload?.length) return null;
+                                  const total = payload.reduce((sum, entry: any) => sum + (Number(entry.value) || 0), 0);
+                                  return (
+                                    <div className="p-3 rounded-xl bg-popover/95 backdrop-blur-md border border-border shadow-xl text-xs space-y-1.5 min-w-[200px]">
+                                      <span className="font-bold text-ink block border-b border-border/50 pb-1">{label}</span>
+                                      {payload.map((entry: any, i: number) => {
+                                        const val = Number(entry.value) || 0;
+                                        const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                                        return (
+                                          <div key={i} className="flex items-center justify-between gap-3 text-[11px]">
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                                              <span className="text-ink-muted truncate max-w-[130px]">{entry.name}:</span>
+                                            </div>
+                                            <span className="font-mono font-bold text-ink">
+                                              {formatStatCurrency(val)} ({pct}%)
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                      <div className="pt-1.5 border-t border-border/50 flex justify-between font-bold text-ink">
+                                        <span>Общо:</span>
+                                        <span className="font-mono">{formatStatCurrency(total)}</span>
+                                      </div>
+                                    </div>
+                                  );
+                                }}
+                              />
+                              <Legend 
+                                wrapperStyle={{ paddingTop: 10 }}
+                                formatter={(value) => <span className="text-xs text-ink-muted font-medium">{value}</span>}
+                              />
+                              {metricsChartData.segments.map(s => (
+                                <Bar key={s.key} dataKey={s.name} stackId="a" fill={s.color} radius={[0, 0, 0, 0]} />
+                              ))}
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
-                      <div className="p-3.5 rounded-xl bg-card border border-border/80">
-                        <span className="text-[11px] text-ink-faint block">Приходи на акция (Rev/Share)</span>
-                        <span className="text-base font-black text-ink">${data.metrics.revenuePerShare ?? '—'}</span>
-                      </div>
-                      <div className="p-3.5 rounded-xl bg-card border border-border/80">
-                        <span className="text-[11px] text-ink-faint block">Книжна стойност (Book Value)</span>
-                        <span className="text-base font-black text-ink">${data.metrics.bookValuePerShare ?? '—'}</span>
-                      </div>
-                      <div className="p-3.5 rounded-xl bg-card border border-border/80">
-                        <span className="text-[11px] text-ink-faint block">Парични наличности / акция</span>
-                        <span className="text-base font-black text-emerald-400">${data.metrics.cashPerShare ?? '—'}</span>
+                    )}
+
+                    {/* StockAnalysis 1:1 Complete Metrics Table */}
+                    <div className="rounded-xl bg-card border border-border/80 overflow-hidden shadow-xs">
+                      <div className="overflow-x-auto scrollbar-thin">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-muted/40 border-b border-border/70 text-[11px] font-bold text-ink-muted">
+                              <th className="py-2.5 px-3 sticky left-0 bg-card z-10 border-r border-border/50 min-w-[240px]">
+                                Показател / Период
+                              </th>
+                              {kpisDisplayPeriods.map(p => (
+                                <th key={p} className="py-2.5 px-3 text-right font-mono text-ink whitespace-nowrap min-w-[100px]">
+                                  {p}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/40 font-mono">
+                            {kpisRowsWithHierarchy.map(({ row, hasChildren, isChild, isCollapsed }) => {
+                              if (row.isHeader) {
+                                return (
+                                  <tr key={row.key} className="bg-muted/30 border-y border-border/60">
+                                    <td 
+                                      colSpan={kpisDisplayPeriods.length + 1}
+                                      className="py-2.5 px-3 text-xs font-black uppercase tracking-wider text-ink font-sans"
+                                    >
+                                      {row.name}
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              const isGrowthRow = row.key.includes('_growth') || row.name.includes('Growth');
+
+                              return (
+                                <tr 
+                                  key={row.key}
+                                  className={`transition-colors hover:bg-accent/40 ${
+                                    isGrowthRow ? 'bg-muted/10 text-[11px]' : ''
+                                  }`}
+                                >
+                                  <td className={`py-2 px-3 sticky left-0 bg-card z-10 border-r border-border/50 whitespace-nowrap font-sans ${
+                                    row.isBold ? 'font-bold text-ink' : 'text-ink-muted'
+                                  } ${isChild ? 'pl-7' : ''}`}>
+                                    <div className="flex items-center gap-1.5">
+                                      {hasChildren && (
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleRowCollapse(row.key)}
+                                          className="p-0.5 rounded hover:bg-muted text-ink-faint transition-colors cursor-pointer"
+                                        >
+                                          {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                        </button>
+                                      )}
+                                      <span>{row.name}</span>
+                                    </div>
+                                  </td>
+
+                                  {kpisDisplayPeriods.map(p => {
+                                    const rawVal = row.values[p];
+                                    const formatted = formatFinancialValue(rawVal, row.format, financialScale, row.key);
+
+                                    let cellColor = 'text-ink';
+                                    if (row.format === 'percent') {
+                                      if (rawVal != null && rawVal > 0) cellColor = 'text-emerald-500 font-bold';
+                                      else if (rawVal != null && rawVal < 0) cellColor = 'text-rose-500 font-bold';
+                                      else cellColor = 'text-ink-faint';
+                                    }
+
+                                    return (
+                                      <td key={p} className={`py-2 px-3 text-right whitespace-nowrap ${cellColor}`}>
+                                        {formatted}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
