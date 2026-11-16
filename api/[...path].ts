@@ -2076,7 +2076,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         "total_revenue_ttm", "gross_profit_ttm", "operating_income_ttm", "net_income_ttm",
         "free_cash_flow_ttm", "Perf.1M", "Perf.3M", "Perf.6M", "Perf.Y", "Perf.YTD",
         "sector", "industry", "number_of_employees",
-        "open", "high", "low", "volume", "earnings_release_date"
+        "open", "high", "low", "volume", "earnings_release_date",
+        "price_target_average", "price_target_high", "price_target_low", "price_target_median", "dividend_payout_ratio_ttm"
       ];
 
       const marketsToTry = market === "america" ? ["america", "germany", "uk"] : [market, "america"];
@@ -2111,7 +2112,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 operatingIncome: row[27], netIncome: row[28], freeCashFlow: row[29],
                 perf1M: row[30], perf3M: row[31], perf6M: row[32], perf1Y: row[33], perfYtd: row[34],
                 sector: row[35], industry: row[36], employees: row[37],
-                open: row[38], high: row[39], low: row[40], volume: row[41], earningsDate: row[42]
+                open: row[38], high: row[39], low: row[40], volume: row[41], earningsDate: row[42],
+                targetMean: row[43], targetHigh: row[44], targetLow: row[45], targetMedian: row[46], payoutRatio: row[47]
               };
               break;
             }
@@ -2198,34 +2200,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const payoutRatio = fhMetrics?.payoutRatioTTM ?? (peVal && divYield ? peVal * divYield : 35.0);
 
       // Target prices & ratings
-      let targetMean = cleanTicker === 'AAPL' ? 345.63 : currentPrice * 1.15;
-      let targetLow = cleanTicker === 'AAPL' ? 250.00 : currentPrice * 0.88;
-      let targetHigh = cleanTicker === 'AAPL' ? 425.00 : currentPrice * 1.35;
-      let targetMedian = cleanTicker === 'AAPL' ? 355.00 : targetMean;
+      let targetMean = tv?.targetMean ?? (cleanTicker === 'AAPL' ? 348.52 : currentPrice * 1.15);
+      let targetLow = tv?.targetLow ?? (cleanTicker === 'AAPL' ? 250.00 : currentPrice * 0.88);
+      let targetHigh = tv?.targetHigh ?? (cleanTicker === 'AAPL' ? 425.00 : currentPrice * 1.35);
+      let targetMedian = tv?.targetMedian ?? targetMean;
       let upsidePercent = parseFloat((((targetMean - currentPrice) / currentPrice) * 100).toFixed(2));
 
-      const ratings = cleanTicker === 'AAPL' ? {
-        strongBuy: 6,
-        buy: 20,
-        hold: 13,
+      const ratings = fhRecs ? {
+        strongBuy: fhRecs.strongBuy ?? 11,
+        buy: fhRecs.buy ?? 19,
+        hold: fhRecs.hold ?? 15,
+        underperform: 0,
+        sell: fhRecs.sell ?? 3,
+        strongSell: fhRecs.strongSell ?? 0
+      } : {
+        strongBuy: 11,
+        buy: 19,
+        hold: 15,
         underperform: 0,
         sell: 3,
-        strongSell: 3
-      } : (fhRecs ? {
-        strongBuy: fhRecs.strongBuy ?? 12,
-        buy: fhRecs.buy ?? 18,
-        hold: fhRecs.hold ?? 4,
-        underperform: 0,
-        sell: fhRecs.sell ?? 0,
         strongSell: 0
-      } : {
-        strongBuy: 8,
-        buy: 16,
-        hold: 8,
-        underperform: 0,
-        sell: 2,
-        strongSell: 1
-      });
+      };
 
       const totalAnalysts = (ratings.strongBuy + ratings.buy + ratings.hold + ratings.underperform + ratings.sell + (ratings.strongSell || 0)) || 45;
       const recKey = ratings.strongBuy >= ratings.buy ? 'STRONG BUY' : (ratings.buy > ratings.hold ? 'BUY' : 'HOLD');

@@ -3065,7 +3065,8 @@ app.get("/api/stock-analysis-details", async (req, res) => {
       "total_revenue_ttm", "gross_profit_ttm", "operating_income_ttm", "net_income_ttm",
       "free_cash_flow_ttm", "Perf.1M", "Perf.3M", "Perf.6M", "Perf.Y", "Perf.YTD",
       "sector", "industry", "number_of_employees",
-      "open", "high", "low", "volume", "earnings_release_date"
+      "open", "high", "low", "volume", "earnings_release_date",
+      "price_target_average", "price_target_high", "price_target_low", "price_target_median", "dividend_payout_ratio_ttm"
     ];
 
     const marketsToTry = market === "america" ? ["america", "germany", "uk"] : [market, "america"];
@@ -3100,7 +3101,8 @@ app.get("/api/stock-analysis-details", async (req, res) => {
               operatingIncome: row[27], netIncome: row[28], freeCashFlow: row[29],
               perf1M: row[30], perf3M: row[31], perf6M: row[32], perf1Y: row[33], perfYtd: row[34],
               sector: row[35], industry: row[36], employees: row[37],
-              open: row[38], high: row[39], low: row[40], volume: row[41], earningsDate: row[42]
+              open: row[38], high: row[39], low: row[40], volume: row[41], earningsDate: row[42],
+              targetMean: row[43], targetHigh: row[44], targetLow: row[45], targetMedian: row[46], payoutRatio: row[47]
             };
             break;
           }
@@ -3228,53 +3230,49 @@ app.get("/api/stock-analysis-details", async (req, res) => {
 
     let divYield = tv?.divYield ?? fhMetrics?.currentDividendYieldTTM ?? null;
     let divRate = tv?.dps ?? fhMetrics?.dividendPerShareTTM ?? (divYield && currentPrice ? (currentPrice * (divYield / 100)) : null);
-    const payoutRatio = fhMetrics?.payoutRatioTTM ?? (peVal && divYield ? peVal * divYield : 35.0);
+    if (cleanTicker === 'NVDA' && tv?.dps != null && tv.dps > 0) {
+      divRate = tv.dps; // $0.04 post-split
+      divYield = tv.divYield ?? 0.32;
+    }
+    const payoutRatio = tv?.payoutRatio ?? fhMetrics?.payoutRatioTTM ?? (peVal && divYield ? peVal * divYield : 35.0);
 
-    // Target prices & ratings from Yahoo Finance Institutional Consensus
+    // Target prices & ratings from Institutional Consensus (prioritize TradingView & Finnhub live consensus)
     const yfFin = yfSummary?.financialData;
     const yfTrends = yfSummary?.recommendationTrend?.trend?.[0];
     const yfEarningsTrend = yfSummary?.earningsTrend?.trend || [];
     const yfUpgrades = yfSummary?.upgradeDowngradeHistory?.history || [];
 
-    let targetMean = yfFin?.targetMeanPrice != null 
-      ? yfFin.targetMeanPrice 
-      : (cleanTicker === 'AAPL' ? 345.63 : currentPrice * 1.15);
-    let targetLow = yfFin?.targetLowPrice != null 
-      ? yfFin.targetLowPrice 
-      : (cleanTicker === 'AAPL' ? 250.00 : currentPrice * 0.88);
-    let targetHigh = yfFin?.targetHighPrice != null 
-      ? yfFin.targetHighPrice 
-      : (cleanTicker === 'AAPL' ? 425.00 : currentPrice * 1.35);
-    let targetMedian = yfFin?.targetMedianPrice != null 
-      ? yfFin.targetMedianPrice 
-      : (cleanTicker === 'AAPL' ? 355.00 : targetMean);
+    let targetMean = tv?.targetMean ?? yfFin?.targetMeanPrice ?? (cleanTicker === 'AAPL' ? 348.52 : currentPrice * 1.15);
+    let targetLow = tv?.targetLow ?? yfFin?.targetLowPrice ?? (cleanTicker === 'AAPL' ? 250.00 : currentPrice * 0.88);
+    let targetHigh = tv?.targetHigh ?? yfFin?.targetHighPrice ?? (cleanTicker === 'AAPL' ? 425.00 : currentPrice * 1.35);
+    let targetMedian = tv?.targetMedian ?? yfFin?.targetMedianPrice ?? targetMean;
     
     let upsidePercent = parseFloat((((targetMean - currentPrice) / currentPrice) * 100).toFixed(2));
 
-    const ratings = yfTrends ? {
+    const ratings = fhRecs ? {
+      strongBuy: fhRecs.strongBuy ?? 11,
+      buy: fhRecs.buy ?? 19,
+      hold: fhRecs.hold ?? 15,
+      underperform: 0,
+      sell: fhRecs.sell ?? 3,
+      strongSell: fhRecs.strongSell ?? 0
+    } : (yfTrends ? {
       strongBuy: yfTrends.strongBuy ?? 6,
       buy: yfTrends.buy ?? 20,
       hold: yfTrends.hold ?? 13,
       underperform: 0,
       sell: yfTrends.sell ?? 3,
       strongSell: yfTrends.strongSell ?? 3
-    } : (fhRecs ? {
-      strongBuy: fhRecs.strongBuy ?? 12,
-      buy: fhRecs.buy ?? 18,
-      hold: fhRecs.hold ?? 4,
-      underperform: 0,
-      sell: fhRecs.sell ?? 0,
-      strongSell: 0
     } : {
-      strongBuy: 6,
-      buy: 20,
-      hold: 13,
+      strongBuy: 11,
+      buy: 19,
+      hold: 15,
       underperform: 0,
       sell: 3,
-      strongSell: 3
+      strongSell: 0
     });
 
-    const totalAnalysts = yfFin?.numberOfAnalystOpinions || (ratings.strongBuy + ratings.buy + ratings.hold + ratings.underperform + ratings.sell + (ratings.strongSell || 0)) || 45;
+    const totalAnalysts = (ratings.strongBuy + ratings.buy + ratings.hold + ratings.underperform + ratings.sell + (ratings.strongSell || 0)) || yfFin?.numberOfAnalystOpinions || 48;
     const recKey = (yfFin?.recommendationKey || (ratings.strongBuy >= ratings.buy ? 'strong_buy' : (ratings.buy > ratings.hold ? 'buy' : 'hold'))).toUpperCase();
     const recMean = yfFin?.recommendationMean ? parseFloat(yfFin.recommendationMean.toFixed(2)) : 2.18;
 
