@@ -119,7 +119,8 @@ export function formatFinancialValue(
   val: number | null | undefined, 
   format?: 'currency' | 'percent' | 'number',
   scale: FinancialScale = 'millions',
-  metricKey?: string
+  metricKey?: string,
+  currencySymbol: string = '$'
 ): string {
   if (val === null || val === undefined || isNaN(val)) return '—';
   
@@ -139,15 +140,15 @@ export function formatFinancialValue(
   if (isPerShareOrUnit) {
     const isNeg = val < 0;
     const abs = Math.abs(val);
-    const formatted = `$${abs.toFixed(2)}`;
+    const formatted = `${currencySymbol}${abs.toFixed(2)}`;
     return isNeg ? `(${formatted})` : formatted;
   }
 
-  // Employee productivity (dollar amounts per employee)
+  // Employee productivity (amounts per employee)
   if (metricKey?.includes('per_emp') || metricKey?.includes('per_employee')) {
     const isNeg = val < 0;
     const abs = Math.abs(val);
-    const formatted = `$${Math.round(abs).toLocaleString()}`;
+    const formatted = `${currencySymbol}${Math.round(abs).toLocaleString()}`;
     return isNeg ? `(${formatted})` : formatted;
   }
 
@@ -175,7 +176,7 @@ export function formatFinancialValue(
   let formatted = '';
 
   if (scale === 'millions') {
-    // In StockAnalysis "USD in Millions": display clean millions, e.g. 215,938
+    // In StockAnalysis "USD / EUR in Millions": display clean millions, e.g. 215,938
     const inMillions = abs / 1e6;
     if (inMillions >= 1000) {
       formatted = Math.round(inMillions).toLocaleString();
@@ -186,10 +187,10 @@ export function formatFinancialValue(
     }
   } else if (scale === 'billions') {
     const inBillions = abs / 1e9;
-    formatted = `$${inBillions.toFixed(2)}B`;
+    formatted = `${currencySymbol}${inBillions.toFixed(2)}B`;
   } else {
     // Full scale
-    formatted = `$${Math.round(abs).toLocaleString()}`;
+    formatted = `${currencySymbol}${Math.round(abs).toLocaleString()}`;
   }
 
   return isNegative ? `(${formatted})` : formatted;

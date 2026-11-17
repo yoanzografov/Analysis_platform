@@ -68,6 +68,8 @@ export function buildDividendsData(params: {
   fallbackBuybacks?: number;
   isBulgarian?: boolean;
   bgDividendStr?: string;
+  currency?: string;
+  currencySymbol?: string;
 }): StockDividendsSection {
   const {
     ticker,
@@ -78,18 +80,24 @@ export function buildDividendsData(params: {
     chartEventsDividends,
     fallbackBuybacks = 0,
     isBulgarian = false,
-    bgDividendStr = ''
+    bgDividendStr = '',
+    currency = 'USD',
+    currencySymbol
   } = params;
 
   const rawUpper = ticker.toUpperCase();
   const cleanTicker = rawUpper.replace(/[^A-Z0-9]/g, '');
   const baseTicker = rawUpper.replace('.SO', '').replace('BUL:', '').replace('BSE:', '').replace(/[^A-Z0-9]/g, '');
 
-  // 1. Check for Bulgarian stock specifics
+  const currSym = currencySymbol || (currency === 'EUR' ? '€' : (currency === 'GBP' || currency === 'GBX' ? '£' : (currency === 'CHF' ? 'CHF' : '$')));
+
+  // 1. Check for Bulgarian stock specifics (now in EUR €)
   const isBg = isBulgarian || rawUpper.includes('.SO') || rawUpper.includes(':SO') || baseTicker === 'SFA' || baseTicker === 'MONB' || baseTicker === 'CHIM';
   if (isBg) {
-    const parsedBgDiv = parseFloat(String(bgDividendStr || '').replace(',', '.'));
-    const divPerShare = !isNaN(parsedBgDiv) && parsedBgDiv > 0 ? parsedBgDiv : (baseTicker === 'SFA' ? 0.20 : (baseTicker === 'MONB' ? 0.14 : 0));
+    const rawParsed = parseFloat(String(bgDividendStr || '').replace(',', '.'));
+    // Convert old BGN dividends to EUR (1 EUR = 1.95583 BGN)
+    let divPerShare = !isNaN(rawParsed) && rawParsed > 0 ? (rawParsed > 0.5 ? rawParsed / 1.95583 : rawParsed) : (baseTicker === 'SFA' ? 0.10 : (baseTicker === 'MONB' ? 0.07 : 0));
+    divPerShare = +(divPerShare).toFixed(2);
     
     if (divPerShare > 0) {
       const yieldPct = currentPrice > 0 ? (divPerShare / currentPrice) * 100 : 4.5;
@@ -103,7 +111,7 @@ export function buildDividendsData(params: {
         payouts.push({
           date: `25 Юли ${y}`,
           rawDate: `${y}-07-25`,
-          amount: `${amt.toFixed(2)} лв`,
+          amount: `€${amt.toFixed(2)}`,
           cashAmount: amt,
           recordDate: `26 Юли ${y}`,
           payDate: `15 Сеп ${y}`,
@@ -116,7 +124,7 @@ export function buildDividendsData(params: {
         });
       }
 
-      const narrative = `${companyName} (${ticker}) изплаща годишен дивидент от ${divPerShare.toFixed(2)} лв на акция, с дивидентна доходност от ${yieldPct.toFixed(2)}%. Дивидентът се гласува на годишното общо събрание на акционерите и последната екс-дивидент дата беше през юли ${currentYear}.`;
+      const narrative = `${companyName} (${ticker}) изплаща годишен дивидент от €${divPerShare.toFixed(2)} на акция, с дивидентна доходност от ${yieldPct.toFixed(2)}%. Дивидентът се гласува на годишното общо събрание на акционерите и последната екс-дивидент дата беше през юли ${currentYear}.`;
 
       return {
         dividendYield: parseFloat(yieldPct.toFixed(2)),
@@ -244,7 +252,7 @@ export function buildDividendsData(params: {
     payouts.push({
       date: dateFormatted,
       rawDate,
-      amount: `$${e.amount.toFixed(4)}`,
+      amount: `${currSym}${e.amount.toFixed(4)}`,
       cashAmount: e.amount,
       recordDate: recFormatted,
       payDate: payFormatted,
@@ -326,7 +334,7 @@ export function buildDividendsData(params: {
 
   // Build Narrative Summary 1:1 with StockAnalysis
   const freqDesc = payoutFrequency === 'Тримесечно' ? 'на всеки три месеца (тримесечно)' : (payoutFrequency === 'Годишно' ? 'веднъж годишно' : 'два пъти в годината');
-  const narrative = `${companyName} (${ticker}) има годишен дивидент от $${finalRate.toFixed(2)} на акция, с дивидентна доходност от ${finalYield.toFixed(2)}%. Дивидентът се изплаща ${freqDesc} и последната дата без право на дивидент (екс-дивидент дата) беше на ${exDividendDateFormatted}.`;
+  const narrative = `${companyName} (${ticker}) има годишен дивидент от ${currSym}${finalRate.toFixed(2)} на акция, с дивидентна доходност от ${finalYield.toFixed(2)}%. Дивидентът се изплаща ${freqDesc} и последната дата без право на дивидент (екс-дивидент дата) беше на ${exDividendDateFormatted}.`;
 
   return {
     dividendYield: finalYield,

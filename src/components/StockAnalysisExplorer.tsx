@@ -141,11 +141,29 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
   const cleanTicker = useMemo(() => getCleanTicker(stock.ticker), [stock.ticker]);
   const tvSymbol = useMemo(() => getTradingViewSymbol(stock.companyName, stock.ticker), [stock.companyName, stock.ticker]);
 
+  const isEuropean = useMemo(() => {
+    const raw = (stock.ticker || '').toUpperCase();
+    return raw.includes('.DE') || raw.includes('.PA') || raw.includes('.AS') || raw.includes('.MC') ||
+           raw.includes('.MI') || raw.includes('.BR') || raw.includes('.VI') || raw.includes('.SO') ||
+           raw.startsWith('ETR:') || raw.startsWith('EPA:') || raw.startsWith('AMS:') || raw.startsWith('BUL:') || raw.startsWith('BSE:') ||
+           raw.startsWith('BIT:') || raw.startsWith('BME:');
+  }, [stock.ticker]);
+
+  const currencySymbol = useMemo(() => {
+    if (data?.currencySymbol) return data.currencySymbol;
+    const curr = (data?.currency || (isEuropean ? 'EUR' : 'USD')).toUpperCase();
+    if (curr === 'EUR') return '€';
+    if (curr === 'GBP' || curr === 'GBX') return '£';
+    if (curr === 'CHF') return 'CHF';
+    return '$';
+  }, [data?.currencySymbol, data?.currency, isEuropean]);
+
   // Fetch stock analysis data from our backend
   useEffect(() => {
-    if (!cleanTicker) return;
+    const tickerToFetch = stock.ticker || cleanTicker;
+    if (!tickerToFetch) return;
 
-    const cached = clientAnalysisCache.get(cleanTicker);
+    const cached = clientAnalysisCache.get(tickerToFetch) || clientAnalysisCache.get(cleanTicker);
     if (cached && (Date.now() - cached.timestamp < 60000)) {
       setData(cached.data);
       setIsLoading(false);
@@ -156,20 +174,21 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
     setIsLoading(true);
     setError(null);
 
-    fetch(`/api/stock-analysis-details?ticker=${encodeURIComponent(cleanTicker)}`)
+    fetch(`/api/stock-analysis-details?symbol=${encodeURIComponent(tickerToFetch)}`)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then((json: StockAnalysisData) => {
         if (!isMounted) return;
+        clientAnalysisCache.set(tickerToFetch, { data: json, timestamp: Date.now() });
         clientAnalysisCache.set(cleanTicker, { data: json, timestamp: Date.now() });
         setData(json);
         setIsLoading(false);
       })
       .catch(err => {
         if (!isMounted) return;
-        console.warn(`Could not load full analysis for ${cleanTicker}:`, err);
+        console.warn(`Could not load full analysis for ${tickerToFetch}:`, err);
         const fallbackParams = {
           ticker: cleanTicker,
           companyName: stock.companyName || cleanTicker,
@@ -300,10 +319,10 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
             buybackYield: 1.5,
             shareholderYield: (stock.dividendYield || 0) + 1.5,
             payouts: [
-              { date: '10 Сеп 2026', rawDate: '2026-09-10', amount: stock.dividend || '$0.25', recordDate: '11 Сеп 2026', payDate: '03 Окт 2026', type: 'Редовен' },
-              { date: '04 Юни 2026', rawDate: '2026-06-04', amount: stock.dividend || '$0.25', recordDate: '05 Юни 2026', payDate: '26 Юни 2026', type: 'Редовен' },
-              { date: '12 Мар 2026', rawDate: '2026-03-12', amount: stock.dividend || '$0.25', recordDate: '13 Мар 2026', payDate: '02 Апр 2026', type: 'Редовен' },
-              { date: '11 Дек 2025', rawDate: '2025-12-11', amount: stock.dividend || '$0.24', recordDate: '12 Дек 2025', payDate: '03 Яну 2026', type: 'Редовен' }
+              { date: '10 Сеп 2026', rawDate: '2026-09-10', amount: stock.dividend || `${currencySymbol}0.25`, recordDate: '11 Сеп 2026', payDate: '03 Окт 2026', type: 'Редовен' },
+              { date: '04 Юни 2026', rawDate: '2026-06-04', amount: stock.dividend || `${currencySymbol}0.25`, recordDate: '05 Юни 2026', payDate: '26 Юни 2026', type: 'Редовен' },
+              { date: '12 Мар 2026', rawDate: '2026-03-12', amount: stock.dividend || `${currencySymbol}0.25`, recordDate: '13 Мар 2026', payDate: '02 Апр 2026', type: 'Редовен' },
+              { date: '11 Дек 2025', rawDate: '2025-12-11', amount: stock.dividend || `${currencySymbol}0.24`, recordDate: '12 Дек 2025', payDate: '03 Яну 2026', type: 'Редовен' }
             ],
             annualHistory: [
               { year: '2023', amount: 0.88, growth: 5.0 },
@@ -871,22 +890,22 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
       } else {
         const abs = Math.abs(val);
         const sign = val < 0 ? '-' : '';
-        if (abs >= 1e12) compact = `${sign}$${(abs / 1e12).toFixed(1)}T`;
-        else if (abs >= 1e9) compact = `${sign}$${(abs / 1e9).toFixed(1)}B`;
-        else if (abs >= 1e6) compact = `${sign}$${(abs / 1e6).toFixed(0)}M`;
-        else if (abs >= 1e3) compact = `${sign}$${(abs / 1e3).toFixed(0)}K`;
-        else compact = `${sign}$${abs.toFixed(1)}`;
+        if (abs >= 1e12) compact = `${sign}${currencySymbol}${(abs / 1e12).toFixed(1)}T`;
+        else if (abs >= 1e9) compact = `${sign}${currencySymbol}${(abs / 1e9).toFixed(1)}B`;
+        else if (abs >= 1e6) compact = `${sign}${currencySymbol}${(abs / 1e6).toFixed(0)}M`;
+        else if (abs >= 1e3) compact = `${sign}${currencySymbol}${(abs / 1e3).toFixed(0)}K`;
+        else compact = `${sign}${currencySymbol}${abs.toFixed(1)}`;
       }
 
       return {
         period,
         value: val,
-        formatted: formatFinancialValue(val, activeMetricRow.format, financialScale, activeMetricRow.key),
+        formatted: formatFinancialValue(val, activeMetricRow.format, financialScale, activeMetricRow.key, currencySymbol),
         formattedCompact: compact,
         yoyGrowth
       };
     });
-  }, [activeMetricRow, currentStatementTable.periods, financialScale]);
+  }, [activeMetricRow, currentStatementTable.periods, financialScale, currencySymbol]);
 
   const currentInspectBar = useMemo(() => {
     if (!activeChartData.length) return null;
@@ -1020,21 +1039,21 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
   const formatLargeNum = (num: number | null | undefined): string => {
     if (num == null || isNaN(Number(num))) return '—';
-    if (Math.abs(num) >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
-    if (Math.abs(num) >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
-    if (Math.abs(num) >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
-    return `$${num.toLocaleString()}`;
+    if (Math.abs(num) >= 1e12) return `${currencySymbol}${(num / 1e12).toFixed(2)}T`;
+    if (Math.abs(num) >= 1e9) return `${currencySymbol}${(num / 1e9).toFixed(2)}B`;
+    if (Math.abs(num) >= 1e6) return `${currencySymbol}${(num / 1e6).toFixed(1)}M`;
+    return `${currencySymbol}${num.toLocaleString()}`;
   };
 
   const formatStatCurrency = (val: number | null | undefined): string => {
     if (val == null || isNaN(Number(val))) return '—';
     const abs = Math.abs(val);
     const sign = val < 0 ? '-' : '';
-    if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(2)}T`;
-    if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}B`;
-    if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(1)}M`;
-    if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(1)}K`;
-    return `${sign}$${abs.toFixed(2)}`;
+    if (abs >= 1e12) return `${sign}${currencySymbol}${(abs / 1e12).toFixed(2)}T`;
+    if (abs >= 1e9) return `${sign}${currencySymbol}${(abs / 1e9).toFixed(2)}B`;
+    if (abs >= 1e6) return `${sign}${currencySymbol}${(abs / 1e6).toFixed(2)}M`;
+    if (abs >= 1e3) return `${sign}${currencySymbol}${(abs / 1e3).toFixed(1)}K`;
+    return `${sign}${currencySymbol}${abs.toFixed(2)}`;
   };
 
   const formatStatCount = (val: number | null | undefined): string => {
@@ -1364,7 +1383,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                               Shares Out <span className="text-[10px] text-ink-faint opacity-70">ⓘ</span>
                             </span>
                             <span className="font-bold text-ink tabular-nums font-mono">
-                              {data.overview.sharesOut ? formatLargeNum(data.overview.sharesOut).replace('$', '') : `${((data.overview.marketCap || 1e10) / activeStockPrice / 1e9).toFixed(2)}B`}
+                              {data.overview.sharesOut ? formatStatCount(data.overview.sharesOut) : `${((data.overview.marketCap || 1e10) / activeStockPrice / 1e9).toFixed(2)}B`}
                             </span>
                           </div>
 
@@ -1386,7 +1405,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                             <span className="text-ink-faint border-b border-dashed border-ink-faint/60 hover:text-ink cursor-help">Dividend</span>
                             <span className="font-bold text-ink tabular-nums font-mono">
                               {data.overview.dividendYield && data.overview.dividendYield > 0
-                                ? `$${data.overview.dividendAmount ? data.overview.dividendAmount.toFixed(2) : (activeStockPrice * (data.overview.dividendYield / 100)).toFixed(2)} (${data.overview.dividendYield.toFixed(2)}%)`
+                                ? `${currencySymbol}${data.overview.dividendAmount ? data.overview.dividendAmount.toFixed(2) : (activeStockPrice * (data.overview.dividendYield / 100)).toFixed(2)} (${data.overview.dividendYield.toFixed(2)}%)`
                                 : '—'}
                             </span>
                           </div>
@@ -1453,7 +1472,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <div className="py-2 flex items-center justify-between">
                             <span className="text-ink-faint border-b border-dashed border-ink-faint/60 hover:text-ink cursor-help">Price Target</span>
                             <span className="font-bold text-ink tabular-nums font-mono">
-                              {data.overview.priceTarget ? data.overview.priceTarget.toFixed(2) : (data.forecast?.targetMean ? data.forecast.targetMean.toFixed(2) : (activeStockPrice * 1.15).toFixed(2))}
+                              {currencySymbol}{data.overview.priceTarget ? data.overview.priceTarget.toFixed(2) : (data.forecast?.targetMean ? data.forecast.targetMean.toFixed(2) : (activeStockPrice * 1.15).toFixed(2))}
                               <span className="ml-1 text-[11px] font-bold text-emerald-500 font-mono">
                                 (+{data.overview.priceTargetUpside || data.forecast?.upsidePercent || '15.0'}%)
                               </span>
@@ -1528,9 +1547,9 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 ? 'bg-ink text-bg shadow-xs font-black'
                                 : 'text-ink-muted hover:text-ink'
                             }`}
-                            title="Стойности в милиони (USD in Millions)"
+                            title={`Стойности в милиони (${data?.currency || 'USD'} in Millions)`}
                           >
-                            $M
+                            {currencySymbol}M
                           </button>
                           <button
                             type="button"
@@ -1540,9 +1559,9 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 ? 'bg-ink text-bg shadow-xs font-black'
                                 : 'text-ink-muted hover:text-ink'
                             }`}
-                            title="Стойности в милиарди (USD in Billions)"
+                            title={`Стойности в милиарди (${data?.currency || 'USD'} in Billions)`}
                           >
-                            $B
+                            {currencySymbol}B
                           </button>
                           <button
                             type="button"
@@ -1795,7 +1814,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                     <span>Revenue & Profits</span>
                                   </h4>
                                   <span className="text-[11px] text-ink-faint font-medium">
-                                    (USD in Millions)
+                                    ({data?.currency || 'USD'} in Millions)
                                   </span>
                                 </div>
 
@@ -1920,7 +1939,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                     <h4 className="text-xs font-black uppercase text-ink tracking-tight flex items-center gap-1.5">
                                       <span>Income Statement</span>
                                     </h4>
-                                    <span className="text-[10px] text-ink-faint font-medium">USD in Millions</span>
+                                    <span className="text-[10px] text-ink-faint font-medium">{data?.currency || 'USD'} in Millions</span>
                                   </div>
                                   <div className="overflow-x-auto">
                                     <table className="w-full text-xs text-left tabular-nums border-collapse">
@@ -1948,7 +1967,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                             </td>
                                             {displayPeriods.slice(0, 5).map(p => (
                                               <td key={p} className="py-1.5 px-2 text-right text-ink font-medium">
-                                                {formatFinancialValue(row.values[p], row.format, financialScale, row.key)}
+                                                {formatFinancialValue(row.values[p], row.format, financialScale, row.key, currencySymbol)}
                                               </td>
                                             ))}
                                           </tr>
@@ -1974,7 +1993,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                     <h4 className="text-xs font-black uppercase text-ink tracking-tight flex items-center gap-1.5">
                                       <span>Balance Sheet</span>
                                     </h4>
-                                    <span className="text-[10px] text-ink-faint font-medium">USD in Millions</span>
+                                    <span className="text-[10px] text-ink-faint font-medium">{data?.currency || 'USD'} in Millions</span>
                                   </div>
                                   <div className="overflow-x-auto">
                                     <table className="w-full text-xs text-left tabular-nums border-collapse">
@@ -2002,7 +2021,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                             </td>
                                             {(financialStatementsBundle.balance?.periods.slice(0, 5) || []).map(p => (
                                               <td key={p} className="py-1.5 px-2 text-right text-ink font-medium">
-                                                {formatFinancialValue(row.values[p], row.format, financialScale, row.key)}
+                                                {formatFinancialValue(row.values[p], row.format, financialScale, row.key, currencySymbol)}
                                               </td>
                                             ))}
                                           </tr>
@@ -2028,7 +2047,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                     <h4 className="text-xs font-black uppercase text-ink tracking-tight flex items-center gap-1.5">
                                       <span>Cash Flow</span>
                                     </h4>
-                                    <span className="text-[10px] text-ink-faint font-medium">USD in Millions</span>
+                                    <span className="text-[10px] text-ink-faint font-medium">{data?.currency || 'USD'} in Millions</span>
                                   </div>
                                   <div className="overflow-x-auto">
                                     <table className="w-full text-xs text-left tabular-nums border-collapse">
@@ -2056,7 +2075,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                             </td>
                                             {displayPeriods.slice(0, 5).map(p => (
                                               <td key={p} className="py-1.5 px-2 text-right text-ink font-medium">
-                                                {formatFinancialValue(row.values[p], row.format, financialScale, row.key)}
+                                                {formatFinancialValue(row.values[p], row.format, financialScale, row.key, currencySymbol)}
                                               </td>
                                             ))}
                                           </tr>
@@ -2110,7 +2129,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                             </td>
                                             {displayPeriods.slice(0, 5).map(p => (
                                               <td key={p} className="py-1.5 px-2 text-right text-ink font-medium">
-                                                {formatFinancialValue(row.values[p], row.format, financialScale, row.key)}
+                                                {formatFinancialValue(row.values[p], row.format, financialScale, row.key, currencySymbol)}
                                               </td>
                                             ))}
                                           </tr>
@@ -2146,7 +2165,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                        'KPIs & Key Metrics'}
                                     </span>
                                     <span className="ml-2 font-normal text-ink-faint text-[10px]">
-                                      {financialScale === 'millions' ? '(USD in Millions)' : financialScale === 'billions' ? '(USD in Billions)' : '(USD Exact)'}
+                                      {financialScale === 'millions' ? `(${data?.currency || 'USD'} in Millions)` : financialScale === 'billions' ? `(${data?.currency || 'USD'} in Billions)` : `(${data?.currency || 'USD'} Exact)`}
                                     </span>
                                   </th>
                                   {(displayPeriods || []).map(period => (
@@ -2247,7 +2266,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
                                       {(displayPeriods || []).map(period => {
                                         const rawVal = row.values[period];
-                                        const formatted = formatFinancialValue(rawVal, row.format, financialScale, row.key);
+                                        const formatted = formatFinancialValue(rawVal, row.format, financialScale, row.key, currencySymbol);
                                         const isGrowthOrMargin = row.format === 'percent';
                                         const isPositive = rawVal != null && rawVal > 0;
                                         const isNegative = rawVal != null && rawVal < 0;
@@ -2326,7 +2345,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </div>
 
                           <p className="text-xs text-ink-muted leading-relaxed">
-                            Според <strong className="text-ink">{data.forecast.numberOfAnalysts || 39} финансови институции</strong> от Уолстрийт, средната 12-месечна цел за {cleanTicker} е <strong className="text-ink">${data.forecast.targetMean?.toFixed(2) || '—'}</strong>.
+                            Според <strong className="text-ink">{data.forecast.numberOfAnalysts || 39} финансови институции</strong> от Уолстрийт, средната 12-месечна цел за {cleanTicker} е <strong className="text-ink">{currencySymbol}{data.forecast.targetMean?.toFixed(2) || '—'}</strong>.
                           </p>
                         </div>
 
@@ -2336,7 +2355,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                             <span className="text-xs font-bold text-ink">Средна цел (Консенсус):</span>
                             <div className="flex items-center gap-1.5">
                               <span className="text-base font-black text-indigo-400 font-mono tracking-tight">
-                                ${data.forecast.targetMean?.toFixed(2) || '—'}
+                                {currencySymbol}{data.forecast.targetMean?.toFixed(2) || '—'}
                               </span>
                               <span className={`text-[11px] font-black px-2 py-0.5 rounded-md flex items-center gap-0.5 ${
                                 (data.forecast.upsidePercent ?? 0) >= 0 
@@ -2350,8 +2369,8 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           </div>
 
                           <div className="text-[11px] text-ink-faint flex items-center justify-between pt-1 border-t border-border/40">
-                            <span>Текуща цена: <strong className="text-ink font-mono">${activeStockPrice.toFixed(2)}</strong></span>
-                            <span>Медиана: <strong className="text-ink font-mono">${data.forecast.targetMedian?.toFixed(2) || data.forecast.targetMean?.toFixed(2) || '—'}</strong></span>
+                            <span>Текуща цена: <strong className="text-ink font-mono">{currencySymbol}{activeStockPrice.toFixed(2)}</strong></span>
+                            <span>Медиана: <strong className="text-ink font-mono">{currencySymbol}{data.forecast.targetMedian?.toFixed(2) || data.forecast.targetMean?.toFixed(2) || '—'}</strong></span>
                           </div>
                         </div>
 
@@ -2360,7 +2379,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <div className="p-2.5 rounded-xl bg-bg border border-border">
                             <span className="text-[10px] text-ink-faint block uppercase font-bold">Минимум</span>
                             <span className="font-mono font-black text-ink text-sm block mt-0.5">
-                              ${data.forecast.targetLow?.toFixed(2) || '—'}
+                              {currencySymbol}{data.forecast.targetLow?.toFixed(2) || '—'}
                             </span>
                             <span className="text-[10px] font-bold text-rose-400 block">
                               {data.forecast.targetLow ? `${(((data.forecast.targetLow - activeStockPrice) / activeStockPrice) * 100).toFixed(1)}%` : '—'}
@@ -2369,7 +2388,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
                             <span className="text-[10px] text-indigo-400 block uppercase font-bold">Консенсус</span>
                             <span className="font-mono font-black text-indigo-400 text-sm block mt-0.5">
-                              ${data.forecast.targetMean?.toFixed(2) || '—'}
+                              {currencySymbol}{data.forecast.targetMean?.toFixed(2) || '—'}
                             </span>
                             <span className={`text-[10px] font-bold block ${
                               (data.forecast.upsidePercent ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
@@ -2380,7 +2399,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <div className="p-2.5 rounded-xl bg-bg border border-border">
                             <span className="text-[10px] text-ink-faint block uppercase font-bold">Максимум</span>
                             <span className="font-mono font-black text-emerald-400 text-sm block mt-0.5">
-                              ${data.forecast.targetHigh?.toFixed(2) || '—'}
+                              {currencySymbol}{data.forecast.targetHigh?.toFixed(2) || '—'}
                             </span>
                             <span className="text-[10px] font-bold text-emerald-400 block">
                               {data.forecast.targetHigh ? `+${(((data.forecast.targetHigh - activeStockPrice) / activeStockPrice) * 100).toFixed(1)}%` : '—'}
@@ -2439,9 +2458,9 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
                           {/* Top Tag: High */}
                           <div className="relative z-10 flex justify-between items-center text-[10px]">
-                            <span className="font-bold text-ink-muted">Днес: <strong className="text-ink">${activeStockPrice.toFixed(2)}</strong></span>
+                            <span className="font-bold text-ink-muted">Днес: <strong className="text-ink">{currencySymbol}{activeStockPrice.toFixed(2)}</strong></span>
                             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono font-black">
-                              <span>Макс: ${data.forecast.targetHigh?.toFixed(2) || '425.00'}</span>
+                              <span>Макс: {currencySymbol}{data.forecast.targetHigh?.toFixed(2) || (activeStockPrice * 1.25).toFixed(2)}</span>
                               <span>(+{data.forecast.targetHigh ? (((data.forecast.targetHigh - activeStockPrice) / activeStockPrice) * 100).toFixed(1) : '19.3'}%)</span>
                             </div>
                           </div>
@@ -2449,7 +2468,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           {/* Middle Tag: Consensus Mean */}
                           <div className="relative z-10 flex justify-end">
                             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 font-mono font-black text-[10px]">
-                              <span>Консенсус: ${data.forecast.targetMean?.toFixed(2) || '345.63'}</span>
+                              <span>Консенсус: {currencySymbol}{data.forecast.targetMean?.toFixed(2) || activeStockPrice.toFixed(2)}</span>
                               <span>({(data.forecast.upsidePercent ?? 0) >= 0 ? '+' : ''}{data.forecast.upsidePercent}%)</span>
                             </div>
                           </div>
@@ -2458,7 +2477,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <div className="relative z-10 flex justify-between items-center text-[10px]">
                             <span className="text-[10px] text-ink-faint font-medium">12-месечна прогноза</span>
                             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-400 font-mono font-black">
-                              <span>Мин: ${data.forecast.targetLow?.toFixed(2) || '250.00'}</span>
+                              <span>Мин: {currencySymbol}{data.forecast.targetLow?.toFixed(2) || (activeStockPrice * 0.85).toFixed(2)}</span>
                               <span>({data.forecast.targetLow ? (((data.forecast.targetLow - activeStockPrice) / activeStockPrice) * 100).toFixed(1) : '-29.8'}%)</span>
                             </div>
                           </div>
@@ -2467,9 +2486,9 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                         {/* Corridor Spectrum Position Track */}
                         <div className="space-y-1.5 pt-1">
                           <div className="flex justify-between text-[10px] text-ink-faint font-bold uppercase">
-                            <span>$250.00 (Мин)</span>
-                            <span className="text-indigo-400">$345.63 (Средно)</span>
-                            <span>$425.00 (Макс)</span>
+                            <span>{currencySymbol}{data.forecast.targetLow?.toFixed(2) || (activeStockPrice * 0.85).toFixed(2)} (Мин)</span>
+                            <span className="text-indigo-400">{currencySymbol}{data.forecast.targetMean?.toFixed(2) || activeStockPrice.toFixed(2)} (Средно)</span>
+                            <span>{currencySymbol}{data.forecast.targetHigh?.toFixed(2) || (activeStockPrice * 1.25).toFixed(2)} (Макс)</span>
                           </div>
                           <div className="relative w-full h-2 rounded-full bg-bg border border-border/80 overflow-hidden">
                             <div className="absolute inset-y-0 left-0 right-0 bg-gradient-to-r from-rose-500/40 via-indigo-500/50 to-emerald-500/50" />
@@ -2477,9 +2496,9 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                             <div 
                               className="absolute top-0 bottom-0 w-2.5 -ml-1.25 bg-white rounded-full shadow-md border border-ink/40"
                               style={{ 
-                                left: `${Math.min(100, Math.max(0, (((activeStockPrice - (data.forecast.targetLow || 250)) / ((data.forecast.targetHigh || 425) - (data.forecast.targetLow || 250))) * 100)))}%` 
+                                left: `${Math.min(100, Math.max(0, (((activeStockPrice - (data.forecast.targetLow || (activeStockPrice * 0.85))) / (((data.forecast.targetHigh || (activeStockPrice * 1.25)) - (data.forecast.targetLow || (activeStockPrice * 0.85))) || 1)) * 100)))}%` 
                               }}
-                              title={`Текуща цена: $${activeStockPrice.toFixed(2)}`}
+                              title={`Текуща цена: ${currencySymbol}${activeStockPrice.toFixed(2)}`}
                             />
                           </div>
                         </div>
@@ -2581,10 +2600,10 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 <tr key={i} className="hover:bg-card-hover/40 transition-colors">
                                   <td className="py-2.5 pr-2 font-sans font-bold text-ink">{rev.period}</td>
                                   <td className="py-2.5 px-2 text-right font-black text-ink">
-                                    {rev.avg ? `$${(rev.avg / 1e9).toFixed(2)}B` : '—'}
+                                    {rev.avg ? `${currencySymbol}${(rev.avg / 1e9).toFixed(2)}B` : '—'}
                                   </td>
                                   <td className="py-2.5 px-2 text-right text-[11px] text-ink-muted">
-                                    {rev.low ? `$${(rev.low / 1e9).toFixed(1)}B` : '—'} / {rev.high ? `$${(rev.high / 1e9).toFixed(1)}B` : '—'}
+                                    {rev.low ? `${currencySymbol}${(rev.low / 1e9).toFixed(1)}B` : '—'} / {rev.high ? `${currencySymbol}${(rev.high / 1e9).toFixed(1)}B` : '—'}
                                   </td>
                                   <td className="py-2.5 px-2 text-right">
                                     <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold text-[10px]">
@@ -2628,10 +2647,10 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 <tr key={i} className="hover:bg-card-hover/40 transition-colors">
                                   <td className="py-2.5 pr-2 font-sans font-bold text-ink">{eps.period}</td>
                                   <td className="py-2.5 px-2 text-right font-black text-indigo-400">
-                                    ${eps.avg ? eps.avg.toFixed(2) : '9.43'}
+                                    {currencySymbol}{eps.avg ? eps.avg.toFixed(2) : '9.43'}
                                   </td>
                                   <td className="py-2.5 px-2 text-right text-[11px] text-ink-muted">
-                                    ${eps.low ? eps.low.toFixed(2) : '8.16'} / ${eps.high ? eps.high.toFixed(2) : '10.28'}
+                                    {currencySymbol}{eps.low ? eps.low.toFixed(2) : '8.16'} / {currencySymbol}{eps.high ? eps.high.toFixed(2) : '10.28'}
                                   </td>
                                   <td className="py-2.5 px-2 text-right">
                                     <span className="px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 font-bold text-[10px]">
@@ -2710,10 +2729,10 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                     </span>
                                   </td>
                                   <td className="py-2.5 px-2 text-right font-black text-ink">
-                                    {rtg.currentPriceTarget ? `$${rtg.currentPriceTarget.toFixed(2)}` : '—'}
+                                    {rtg.currentPriceTarget ? `${currencySymbol}${rtg.currentPriceTarget.toFixed(2)}` : '—'}
                                     {rtg.priorPriceTarget && rtg.priorPriceTarget !== rtg.currentPriceTarget && (
                                       <span className="text-[10px] text-ink-faint block font-normal">
-                                        от ${rtg.priorPriceTarget.toFixed(2)}
+                                        от {currencySymbol}{rtg.priorPriceTarget.toFixed(2)}
                                       </span>
                                     )}
                                   </td>
@@ -3084,8 +3103,8 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                               </div>
                               <span className="font-bold font-mono text-ink">
                                 {data.statistics.week52Low && data.statistics.week52High
-                                  ? `$${data.statistics.week52Low.toFixed(2)} – $${data.statistics.week52High.toFixed(2)}`
-                                  : (data.overview.week52Low && data.overview.week52High ? `$${data.overview.week52Low.toFixed(2)} – $${data.overview.week52High.toFixed(2)}` : '—')}
+                                  ? `${currencySymbol}${data.statistics.week52Low.toFixed(2)} – ${currencySymbol}${data.statistics.week52High.toFixed(2)}`
+                                  : (data.overview.week52Low && data.overview.week52High ? `${currencySymbol}${data.overview.week52Low.toFixed(2)} – ${currencySymbol}${data.overview.week52High.toFixed(2)}` : '—')}
                               </span>
                             </div>
                             <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
@@ -3102,14 +3121,14 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 <span className="text-ink font-medium">50-Day Moving Average</span>
                                 <span className="text-[10px] text-ink-faint">50-дневна средна цена</span>
                               </div>
-                              <span className="font-bold font-mono text-ink">{data.statistics.movingAvg50 ? `$${data.statistics.movingAvg50.toFixed(2)}` : '—'}</span>
+                              <span className="font-bold font-mono text-ink">{data.statistics.movingAvg50 ? `${currencySymbol}${data.statistics.movingAvg50.toFixed(2)}` : '—'}</span>
                             </div>
                             <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
                               <div className="flex flex-col">
                                 <span className="text-ink font-medium">200-Day Moving Average</span>
                                 <span className="text-[10px] text-ink-faint">200-дневна средна цена</span>
                               </div>
-                              <span className="font-bold font-mono text-ink">{data.statistics.movingAvg200 ? `$${data.statistics.movingAvg200.toFixed(2)}` : '—'}</span>
+                              <span className="font-bold font-mono text-ink">{data.statistics.movingAvg200 ? `${currencySymbol}${data.statistics.movingAvg200.toFixed(2)}` : '—'}</span>
                             </div>
                             <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
                               <div className="flex flex-col">
@@ -3146,7 +3165,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 <span className="text-[10px] text-ink-faint">Разводнена печалба на акция</span>
                               </div>
                               <span className="font-bold font-mono text-ink">
-                                {data.metrics.epsTrailing != null ? `$${data.metrics.epsTrailing.toFixed(2)}` : (stock.eps != null ? `$${stock.eps.toFixed(2)}` : '—')}
+                                {data.metrics.epsTrailing != null ? `${currencySymbol}${data.metrics.epsTrailing.toFixed(2)}` : (stock.eps != null ? `${currencySymbol}${stock.eps.toFixed(2)}` : '—')}
                               </span>
                             </div>
                             <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
@@ -3154,35 +3173,35 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 <span className="text-ink font-medium">Forward EPS (Прогноза)</span>
                                 <span className="text-[10px] text-ink-faint">Очаквана печалба следваща година</span>
                               </div>
-                              <span className="font-bold font-mono text-indigo-400">{data.metrics.epsForward != null ? `$${data.metrics.epsForward.toFixed(2)}` : '—'}</span>
+                              <span className="font-bold font-mono text-indigo-400">{data.metrics.epsForward != null ? `${currencySymbol}${data.metrics.epsForward.toFixed(2)}` : '—'}</span>
                             </div>
                             <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
                               <div className="flex flex-col">
                                 <span className="text-ink font-medium">Revenue Per Share</span>
                                 <span className="text-[10px] text-ink-faint">Приходи на акция TTM</span>
                               </div>
-                              <span className="font-bold font-mono text-ink">{data.metrics.revenuePerShare != null ? `$${data.metrics.revenuePerShare.toFixed(2)}` : '—'}</span>
+                              <span className="font-bold font-mono text-ink">{data.metrics.revenuePerShare != null ? `${currencySymbol}${data.metrics.revenuePerShare.toFixed(2)}` : '—'}</span>
                             </div>
                             <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
                               <div className="flex flex-col">
                                 <span className="text-ink font-medium">Book Value Per Share</span>
                                 <span className="text-[10px] text-ink-faint">Счетоводна стойност на акция</span>
                               </div>
-                              <span className="font-bold font-mono text-ink">{data.metrics.bookValuePerShare != null ? `$${data.metrics.bookValuePerShare.toFixed(2)}` : '—'}</span>
+                              <span className="font-bold font-mono text-ink">{data.metrics.bookValuePerShare != null ? `${currencySymbol}${data.metrics.bookValuePerShare.toFixed(2)}` : '—'}</span>
                             </div>
                             <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
                               <div className="flex flex-col">
                                 <span className="text-ink font-medium">Cash Per Share</span>
                                 <span className="text-[10px] text-ink-faint">Парични средства на акция</span>
                               </div>
-                              <span className="font-bold font-mono text-emerald-500">{data.metrics.cashPerShare != null ? `$${data.metrics.cashPerShare.toFixed(2)}` : '—'}</span>
+                              <span className="font-bold font-mono text-emerald-500">{data.metrics.cashPerShare != null ? `${currencySymbol}${data.metrics.cashPerShare.toFixed(2)}` : '—'}</span>
                             </div>
                             <div className="flex justify-between items-center px-3.5 py-2 hover:bg-accent/30 transition-colors">
                               <div className="flex flex-col">
                                 <span className="text-ink font-medium">Free Cash Flow Per Share</span>
                                 <span className="text-[10px] text-ink-faint">Свободен паричен поток на акция</span>
                               </div>
-                              <span className="font-bold font-mono text-emerald-500">{data.metrics.fcfPerShare != null ? `$${data.metrics.fcfPerShare.toFixed(2)}` : '—'}</span>
+                              <span className="font-bold font-mono text-emerald-500">{data.metrics.fcfPerShare != null ? `${currencySymbol}${data.metrics.fcfPerShare.toFixed(2)}` : '—'}</span>
                             </div>
                           </div>
                         </div>
@@ -3263,7 +3282,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 : 'text-ink-muted hover:text-ink'
                             }`}
                           >
-                            $ Billions
+                            {currencySymbol} Billions
                           </button>
                           <button
                             type="button"
@@ -3274,7 +3293,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                                 : 'text-ink-muted hover:text-ink'
                             }`}
                           >
-                            $ Millions
+                            {currencySymbol} Millions
                           </button>
                           <button
                             type="button"
@@ -3443,7 +3462,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
 
                                   {kpisDisplayPeriods.map(p => {
                                     const rawVal = row.values[p];
-                                    const formatted = formatFinancialValue(rawVal, row.format, financialScale, row.key);
+                                    const formatted = formatFinancialValue(rawVal, row.format, financialScale, row.key, currencySymbol);
 
                                     let cellColor = 'text-ink';
                                     if (row.format === 'percent') {
@@ -3508,7 +3527,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                           <p className="text-xs text-ink-muted leading-relaxed">
                             {data.dividends.narrative || (
                               data.dividends.dividendYield && data.dividends.dividendYield > 0
-                                ? `${stock.companyName} (${cleanTicker}) има годишен дивидент от $${(data.dividends.dividendRate || 0).toFixed(2)} на акция, с текуща дивидентна доходност от ${data.dividends.dividendYield.toFixed(2)}%. Дивидентът се изплаща ${(data.dividends.payoutFrequency || data.dividends.frequency || 'тримесечно').toLowerCase()} и последната дата без право на дивидент (екс-дивидент дата) беше на ${data.dividends.exDividendDate || '—'}.`
+                                ? `${stock.companyName} (${cleanTicker}) има годишен дивидент от ${currencySymbol}${(data.dividends.dividendRate || 0).toFixed(2)} на акция, с текуща дивидентна доходност от ${data.dividends.dividendYield.toFixed(2)}%. Дивидентът се изплаща ${(data.dividends.payoutFrequency || data.dividends.frequency || 'тримесечно').toLowerCase()} и последната дата без право на дивидент (екс-дивидент дата) беше на ${data.dividends.exDividendDate || '—'}.`
                                 : `${stock.companyName} (${cleanTicker}) към момента не изплаща редовен дивидент на акция. Компанията насочва свободния си паричен поток към реинвестиции в бизнеса или възнаграждава акционерите чрез обратно изкупуване на акции (Buyback Yield: ${(data.dividends.buybackYield || 0).toFixed(2)}%).`
                             )}
                           </p>
@@ -3542,7 +3561,7 @@ export default function StockAnalysisExplorer({ stock, onClose, className = '' }
                             <span className="text-[10px] px-1.5 py-0.2 rounded bg-accent text-ink-faint font-semibold">DPS</span>
                           </div>
                           <span className="text-lg font-black text-ink block mt-1">
-                            {data.dividends.dividendRate ? `$${data.dividends.dividendRate.toFixed(2)}` : (stock.dividend || '$0.00')}
+                            {data.dividends.dividendRate ? `${currencySymbol}${data.dividends.dividendRate.toFixed(2)}` : (stock.dividend || `${currencySymbol}0.00`)}
                           </span>
                         </div>
                         <span className="text-[10px] text-ink-faint mt-2 block border-t border-border/40 pt-1">

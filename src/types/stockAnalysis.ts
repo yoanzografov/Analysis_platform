@@ -17,6 +17,7 @@ export interface StockAnalysisData {
   ticker: string;
   companyName: string;
   currency: string;
+  currencySymbol?: string;
   overview: {
     currentPrice: number;
     dailyChangePct: number;

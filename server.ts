@@ -3021,17 +3021,138 @@ function generateSimulatedHistory(
 const stockAnalysisCache = new Map<string, { data: any; timestamp: number }>();
 const STOCK_ANALYSIS_CACHE_TTL = 60 * 1000; // 1 min
 
+interface ParsedStock {
+  rawTicker: string;
+  cleanTicker: string;
+  baseSymbol: string;
+  exchange: string;
+  market: string;
+  yahooSym: string;
+  currency: string;
+  currencySymbol: string;
+  isEuropean: boolean;
+  isBulgarian: boolean;
+}
+
+function parseStockExchangeAndMarket(rawTickerInput: string): ParsedStock {
+  const rawTicker = rawTickerInput.trim().toUpperCase();
+  let prefix = '';
+  let baseSymbol = rawTicker;
+  let suffix = '';
+
+  if (rawTicker.includes(':')) {
+    const parts = rawTicker.split(':');
+    prefix = parts[0];
+    baseSymbol = parts[1];
+  } else if (rawTicker.includes('.')) {
+    const dotIdx = rawTicker.lastIndexOf('.');
+    baseSymbol = rawTicker.substring(0, dotIdx);
+    suffix = rawTicker.substring(dotIdx); // e.g. .DE, .PA, .SO
+  }
+
+  const exchangeMap: Record<string, { market: string; yahooSuffix: string; currency: string; sym: string; isEur: boolean }> = {
+    'ETR': { market: 'germany', yahooSuffix: '.DE', currency: 'EUR', sym: '€', isEur: true },
+    'FRA': { market: 'germany', yahooSuffix: '.F', currency: 'EUR', sym: '€', isEur: true },
+    'XETRA': { market: 'germany', yahooSuffix: '.DE', currency: 'EUR', sym: '€', isEur: true },
+    'EPA': { market: 'france', yahooSuffix: '.PA', currency: 'EUR', sym: '€', isEur: true },
+    'PAR': { market: 'france', yahooSuffix: '.PA', currency: 'EUR', sym: '€', isEur: true },
+    'AMS': { market: 'netherlands', yahooSuffix: '.AS', currency: 'EUR', sym: '€', isEur: true },
+    'BME': { market: 'spain', yahooSuffix: '.MC', currency: 'EUR', sym: '€', isEur: true },
+    'BIT': { market: 'italy', yahooSuffix: '.MI', currency: 'EUR', sym: '€', isEur: true },
+    'MIL': { market: 'italy', yahooSuffix: '.MI', currency: 'EUR', sym: '€', isEur: true },
+    'EBR': { market: 'belgium', yahooSuffix: '.BR', currency: 'EUR', sym: '€', isEur: true },
+    'VIE': { market: 'austria', yahooSuffix: '.VI', currency: 'EUR', sym: '€', isEur: true },
+    'LIS': { market: 'portugal', yahooSuffix: '.LS', currency: 'EUR', sym: '€', isEur: true },
+    'HEL': { market: 'finland', yahooSuffix: '.HE', currency: 'EUR', sym: '€', isEur: true },
+    'LON': { market: 'uk', yahooSuffix: '.L', currency: 'GBP', sym: '£', isEur: true },
+    'LSE': { market: 'uk', yahooSuffix: '.L', currency: 'GBP', sym: '£', isEur: true },
+    'SWX': { market: 'switzerland', yahooSuffix: '.SW', currency: 'CHF', sym: 'CHF', isEur: true },
+    'SIX': { market: 'switzerland', yahooSuffix: '.SW', currency: 'CHF', sym: 'CHF', isEur: true },
+    'STO': { market: 'sweden', yahooSuffix: '.ST', currency: 'SEK', sym: 'kr', isEur: true },
+    'BUL': { market: 'bulgaria', yahooSuffix: '.SO', currency: 'EUR', sym: '€', isEur: true },
+    'BSE': { market: 'bulgaria', yahooSuffix: '.SO', currency: 'EUR', sym: '€', isEur: true },
+    'SOF': { market: 'bulgaria', yahooSuffix: '.SO', currency: 'EUR', sym: '€', isEur: true },
+  };
+
+  const suffixMap: Record<string, { market: string; currency: string; sym: string; isEur: boolean }> = {
+    '.DE': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
+    '.F': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
+    '.PA': { market: 'france', currency: 'EUR', sym: '€', isEur: true },
+    '.AS': { market: 'netherlands', currency: 'EUR', sym: '€', isEur: true },
+    '.MC': { market: 'spain', currency: 'EUR', sym: '€', isEur: true },
+    '.MI': { market: 'italy', currency: 'EUR', sym: '€', isEur: true },
+    '.BR': { market: 'belgium', currency: 'EUR', sym: '€', isEur: true },
+    '.VI': { market: 'austria', currency: 'EUR', sym: '€', isEur: true },
+    '.LS': { market: 'portugal', currency: 'EUR', sym: '€', isEur: true },
+    '.HE': { market: 'finland', currency: 'EUR', sym: '€', isEur: true },
+    '.L': { market: 'uk', currency: 'GBP', sym: '£', isEur: true },
+    '.SW': { market: 'switzerland', currency: 'CHF', sym: 'CHF', isEur: true },
+    '.ST': { market: 'sweden', currency: 'SEK', sym: 'kr', isEur: true },
+    '.SO': { market: 'bulgaria', currency: 'EUR', sym: '€', isEur: true },
+  };
+
+  let market = 'america';
+  let currency = 'USD';
+  let currencySymbol = '$';
+  let isEuropean = false;
+  let isBulgarian = false;
+  let yahooSym = baseSymbol;
+  let exchange = prefix || 'NASDAQ';
+
+  if (prefix && exchangeMap[prefix]) {
+    const info = exchangeMap[prefix];
+    market = info.market;
+    currency = info.currency;
+    currencySymbol = info.sym;
+    isEuropean = info.isEur;
+    yahooSym = baseSymbol + info.yahooSuffix;
+    exchange = prefix;
+  } else if (suffix && suffixMap[suffix]) {
+    const info = suffixMap[suffix];
+    market = info.market;
+    currency = info.currency;
+    currencySymbol = info.sym;
+    isEuropean = info.isEur;
+    yahooSym = rawTicker;
+    exchange = suffix.replace('.', '');
+  }
+
+  if (prefix === 'ETR' && baseSymbol === 'DHL') {
+    yahooSym = 'DPW.DE';
+  }
+
+  if (rawTicker.endsWith('.SO') || rawTicker.includes(':SO') || prefix === 'BUL' || prefix === 'BSE' || market === 'bulgaria') {
+    isBulgarian = true;
+    currency = 'EUR';
+    currencySymbol = '€';
+  }
+
+  return {
+    rawTicker,
+    cleanTicker: baseSymbol,
+    baseSymbol,
+    exchange,
+    market,
+    yahooSym,
+    currency,
+    currencySymbol,
+    isEuropean,
+    isBulgarian
+  };
+}
+
 app.get("/api/stock-analysis-details", async (req, res) => {
   const rawTicker = ((req.query.symbol as string) || (req.query.ticker as string) || '').trim().toUpperCase();
   if (!rawTicker) {
     return res.status(400).json({ error: "Липсва тикер символ (symbol)" });
   }
 
-  // Clean symbol: remove prefix like NASDAQ: or KRX:
-  let cleanTicker = rawTicker.includes(':') ? rawTicker.split(':')[1] : rawTicker;
-  cleanTicker = cleanTicker.replace(/\./g, '-');
+  const parsed = parseStockExchangeAndMarket(rawTicker);
+  let cleanTicker = parsed.cleanTicker;
+  let yahooSym = parsed.yahooSym;
+  let market = parsed.market;
 
-  const cacheKey = cleanTicker;
+  const cacheKey = rawTicker;
   const cached = stockAnalysisCache.get(cacheKey);
   const now = Date.now();
   if (cached && (now - cached.timestamp < STOCK_ANALYSIS_CACHE_TTL)) {
@@ -3039,18 +3160,6 @@ app.get("/api/stock-analysis-details", async (req, res) => {
   }
 
   const finnhubKey = process.env.FINNHUB_API_KEY || "d9jqo91r01qr77bnqkc0d9jqo91r01qr77bnqkcg";
-
-  // Detect primary TradingView market
-  let market = "america";
-  if (rawTicker.startsWith("ETR:") || rawTicker.endsWith(".DE")) market = "germany";
-  else if (rawTicker.startsWith("EPA:") || rawTicker.endsWith(".PA")) market = "france";
-  else if (rawTicker.startsWith("LON:") || rawTicker.endsWith(".L")) market = "uk";
-  else if (rawTicker.startsWith("AMS:") || rawTicker.endsWith(".AS")) market = "netherlands";
-  else if (rawTicker.startsWith("SWX:") || rawTicker.endsWith(".SW")) market = "switzerland";
-  else if (rawTicker.startsWith("STO:") || rawTicker.endsWith(".ST")) market = "sweden";
-  else if (rawTicker.startsWith("BIT:") || rawTicker.endsWith(".MI")) market = "italy";
-  else if (rawTicker.startsWith("BME:") || rawTicker.endsWith(".MC")) market = "spain";
-  else if (rawTicker.startsWith("KRX:") || rawTicker.endsWith(".KS")) market = "korea";
 
   try {
     // 1. TradingView scanner fundamentals
@@ -3066,10 +3175,15 @@ app.get("/api/stock-analysis-details", async (req, res) => {
       "free_cash_flow_ttm", "Perf.1M", "Perf.3M", "Perf.6M", "Perf.Y", "Perf.YTD",
       "sector", "industry", "number_of_employees",
       "open", "high", "low", "volume", "earnings_release_date",
-      "price_target_average", "price_target_high", "price_target_low", "price_target_median", "dividend_payout_ratio_ttm"
+      "price_target_average", "price_target_high", "price_target_low", "price_target_median", "dividend_payout_ratio_ttm",
+      "currency"
     ];
 
-    const marketsToTry = market === "america" ? ["america", "germany", "uk"] : [market, "america"];
+    const searchNames = Array.from(new Set([cleanTicker, parsed.baseSymbol, rawTicker])).filter(Boolean);
+    const marketsToTry = parsed.isEuropean 
+      ? [parsed.market, 'germany', 'france', 'netherlands', 'spain', 'italy', 'uk', 'america']
+      : (parsed.market === 'america' ? ['america', 'germany', 'uk'] : [parsed.market, 'america']);
+
     for (const m of marketsToTry) {
       try {
         const tvRes = await fetch(`https://scanner.tradingview.com/${m}/scan`, {
@@ -3082,7 +3196,7 @@ app.get("/api/stock-analysis-details", async (req, res) => {
           },
           signal: AbortSignal.timeout(3500),
           body: JSON.stringify({
-            filter: [{ left: "name", operation: "in_range", right: [cleanTicker] }],
+            filter: [{ left: "name", operation: "in_range", right: searchNames }],
             columns: tvColumns
           })
         });
@@ -3102,7 +3216,8 @@ app.get("/api/stock-analysis-details", async (req, res) => {
               perf1M: row[30], perf3M: row[31], perf6M: row[32], perf1Y: row[33], perfYtd: row[34],
               sector: row[35], industry: row[36], employees: row[37],
               open: row[38], high: row[39], low: row[40], volume: row[41], earningsDate: row[42],
-              targetMean: row[43], targetHigh: row[44], targetLow: row[45], targetMedian: row[46], payoutRatio: row[47]
+              targetMean: row[43], targetHigh: row[44], targetLow: row[45], targetMedian: row[46], payoutRatio: row[47],
+              currency: row[48]
             };
             break;
           }
@@ -3114,30 +3229,6 @@ app.get("/api/stock-analysis-details", async (req, res) => {
     let fhMetrics: any = null, fhProfile: any = null, fhRecs: any = null, fhQuote: any = null;
     let yfSummary: any = null;
     let yfChart: any = null;
-
-    // Map ticker to Yahoo symbol
-    let yahooSym = cleanTicker;
-    if (rawTicker.includes(":")) {
-      const parts = rawTicker.split(":");
-      const prefix = parts[0];
-      const raw = parts[1];
-      const exchangeMap: Record<string, string> = {
-        "EPA": ".PA", "ETR": ".DE", "FRA": ".F", "LON": ".L", "AMS": ".AS",
-        "EBR": ".BR", "BIT": ".MI", "BME": ".MC", "VIE": ".VI", "CPH": ".CO",
-        "HEL": ".HE", "STO": ".ST", "SWX": ".SW", "OSL": ".OL", "LIS": ".LS",
-        "ATH": ".AT", "IST": ".IS", "WSE": ".WA", "PRG": ".PR", "TSE": ".T",
-        "HKG": ".HK", "BSE": ".BO", "NSE": ".NS", "TPE": ".TW", "ASX": ".AX",
-        "NZZE": ".NZ", "TSX": ".TO", "CVE": ".V", "BMFBOVESPA": ".SA", "JSE": ".JO",
-        "KRX": ".KS", "KOSDAQ": ".KQ", "SHA": ".SS", "SHE": ".SZ", "SGX": ".SI"
-      };
-      if (prefix === "ETR" && raw === "DHL") {
-        yahooSym = "DPW.DE";
-      } else if (exchangeMap[prefix]) {
-        yahooSym = raw + exchangeMap[prefix];
-      } else if (["NASDAQ", "NYSE", "BATS", "AMEX", "ARCA", "OTCMKTS"].includes(prefix)) {
-        yahooSym = raw;
-      }
-    }
 
     try {
       const promises: Promise<any>[] = [
@@ -3151,7 +3242,9 @@ app.get("/api/stock-analysis-details", async (req, res) => {
         }).catch(() => null)
       ];
 
-      if (finnhubKey) {
+      // Only query Finnhub free tier for US stocks, because Finnhub free tier conflates European tickers like 'MC' with US Moelis & Co ($404)
+      const shouldQueryFinnhub = Boolean(finnhubKey && !parsed.isEuropean && !parsed.isBulgarian);
+      if (shouldQueryFinnhub) {
         promises.push(
           fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(cleanTicker)}&metric=all&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
             .then(r => r.ok ? r.json() : null).catch(() => null),
@@ -3167,7 +3260,7 @@ app.get("/api/stock-analysis-details", async (req, res) => {
       const results = await Promise.all(promises);
       yfSummary = results[0];
       yfChart = results[1];
-      if (finnhubKey) {
+      if (shouldQueryFinnhub) {
         fhMetrics = results[2]?.metric;
         fhProfile = results[3];
         fhRecs = results[4]?.[0];
@@ -3343,12 +3436,20 @@ app.get("/api/stock-analysis-details", async (req, res) => {
       { date: '15 окт. 2026', firm: 'Wedbush', toGrade: 'Outperform', fromGrade: 'Outperform', action: 'Потвърждава (Maintains)', currentPriceTarget: 400, priorPriceTarget: 375 }
     ];
 
+    let finalCurrency = (tv?.currency && tv.currency !== 'USD') 
+      ? tv.currency 
+      : (parsed.currency || fhProfile?.currency || 'USD');
+    if (parsed.isBulgarian) {
+      finalCurrency = 'EUR';
+    }
+    const finalCurrencySymbol = finalCurrency === 'EUR' ? '€' : (finalCurrency === 'GBP' || finalCurrency === 'GBX' ? '£' : (finalCurrency === 'CHF' ? 'CHF' : '$'));
+
     const fmtLarge = (val: number) => {
-      if (!val || isNaN(val)) return '$0';
-      if (Math.abs(val) >= 1e12) return `$${(val / 1e12).toFixed(1)}T`;
-      if (Math.abs(val) >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
-      if (Math.abs(val) >= 1e6) return `$${(val / 1e6).toFixed(1)}M`;
-      return `$${val.toFixed(0)}`;
+      if (!val || isNaN(val)) return `${finalCurrencySymbol}0`;
+      if (Math.abs(val) >= 1e12) return `${finalCurrencySymbol}${(val / 1e12).toFixed(1)}T`;
+      if (Math.abs(val) >= 1e9) return `${finalCurrencySymbol}${(val / 1e9).toFixed(1)}B`;
+      if (Math.abs(val) >= 1e6) return `${finalCurrencySymbol}${(val / 1e6).toFixed(1)}M`;
+      return `${finalCurrencySymbol}${val.toFixed(0)}`;
     };
 
     const statementRows = [
@@ -3402,7 +3503,8 @@ app.get("/api/stock-analysis-details", async (req, res) => {
     const data = {
       ticker: cleanTicker,
       companyName: tv?.description || fhProfile?.name || cleanTicker,
-      currency: fhProfile?.currency || 'USD',
+      currency: finalCurrency,
+      currencySymbol: finalCurrencySymbol,
       overview: {
         currentPrice: parseFloat(Number(currentPrice).toFixed(2)),
         dailyChangePct: parseFloat(Number(dailyChangePct).toFixed(2)),
@@ -3410,7 +3512,7 @@ app.get("/api/stock-analysis-details", async (req, res) => {
         afterHoursPrice: parseFloat((currentPrice * 1.002).toFixed(2)),
         afterHoursChange: parseFloat((currentPrice * 0.002).toFixed(2)),
         afterHoursChangePct: 0.20,
-        exchange: fhProfile?.exchange || (rawTicker.includes(':') ? rawTicker.split(':')[0] : 'NASDAQ'),
+        exchange: tv?.exchange || (rawTicker.includes(':') ? rawTicker.split(':')[0] : (parsed.exchange || 'NASDAQ')),
         open: parseFloat(Number(dayOpen).toFixed(2)),
         previousClose: parseFloat(Number(prevClose).toFixed(2)),
         volume: tv?.volume ? Math.round(tv.volume) : (fhMetrics?.['10DayAverageTradingVolume'] ? Math.round(fhMetrics['10DayAverageTradingVolume'] * 1e6) : 25000000),
@@ -3542,8 +3644,10 @@ app.get("/api/stock-analysis-details", async (req, res) => {
         yfSummary,
         chartEventsDividends: yfChart?.events?.dividends,
         fallbackBuybacks: cleanTicker === 'NVDA' ? -32000000000 : (cleanTicker === 'AAPL' ? -98500000000 : -fcf * 0.5),
-        isBulgarian: rawTicker.includes('.SO') || rawTicker.includes(':SO'),
-        bgDividendStr: ''
+        isBulgarian: parsed.isBulgarian,
+        bgDividendStr: '',
+        currency: finalCurrency,
+        currencySymbol: finalCurrencySymbol
       }),
       history: {
         month1Return: tv?.perf1M != null ? parseFloat(tv.perf1M.toFixed(1)) : -2.5,
