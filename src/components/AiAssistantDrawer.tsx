@@ -260,22 +260,7 @@ export default function AiAssistantDrawer({
     try {
       localStorage.removeItem('ai_assistant_chat_history');
     } catch {}
-    return [
-      {
-        role: 'assistant',
-        content: `👋 **Здравейте! С удоволствие съм на ваше разположение!**
-
-Аз съм вашият личен AI инвестиционен асистент в платформата **RayVes Capital**. Готов съм да ви съдействам вежливо, търпеливо и задълбочено във **всяка една ситуация**:
-* 💼 **Помощ с портфолиото**: Добавяне и редакция на акции, обединяване на дублирани редове, импорт от брокери (Interactive Brokers, Trading 212, Revolut), кеш наличности и семейни сметки.
-* 🏛️ **Обединен инвестиционен мозък**: Уорън Бъфет, Чарли Мънгър, Бенджамин Греъм, Питър Линч, Рей Далио и 13-те стълба на Димитър Ангелов.
-* 🚦 **Финансов светофар (BojanFin & Brian Feroldi)**: Пълен одит за зелени, жълти и червени флагове в отчетите Form 10-K.
-* 📰 **Пазарен пулс и актуални новини**: Извличане в реално време от Investing.com, Yahoo Finance, Reuters и The Guardian Europe.
-* 🛠️ **Инструменти и формули**: Разяснение на всеки показател, калкулатор за справедлива цена (DCF, Graham, ROI) или иконка в сайта.
-
-*Чувствайте се свободни да ме попитате за всичко – винаги съм насреща да ви помогна!* 😊`,
-        timestamp: new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })
-      }
-    ];
+    return [];
   });
 
   const [inputMessage, setInputMessage] = useState('');
@@ -498,12 +483,7 @@ export default function AiAssistantDrawer({
   };
 
   const handleClearHistory = () => {
-    const initial: AiChatMessage = {
-      role: 'assistant',
-      content: 'Историята беше изчистена. С какво мога да ви помогна днес?',
-      timestamp: new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })
-    };
-    setMessages([initial]);
+    setMessages([]);
     try {
       localStorage.removeItem('ai_assistant_chat_history');
     } catch {}
@@ -772,6 +752,29 @@ export default function AiAssistantDrawer({
 
           {/* Chat Messages Scrollable Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {messages.length === 0 && (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 my-auto">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
+                  <Sparkles className="w-6 h-6 text-amber-400" />
+                </div>
+                <h4 className="text-sm font-bold text-white mb-1">AI Инвестиционен Анализатор</h4>
+                <p className="text-xs text-slate-400 max-w-xs mb-4">
+                  Задайте въпрос за компания, анализирайте портфолиото или поискайте фундаментална оценка.
+                </p>
+                <div className="flex flex-wrap gap-1.5 justify-center max-w-sm">
+                  {['Анализирай портфолиото ми', 'Fair Value за AAPL', 'Дивиденти за 2026'].map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      onClick={() => handleSendMessage(q)}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/80 transition-colors cursor-pointer"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {messages.map((msg, idx) => {
               const isAssistant = msg.role === 'assistant';
               return (
