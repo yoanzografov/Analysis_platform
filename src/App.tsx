@@ -2743,6 +2743,7 @@ export default function App() {
               stock={currentTargetStock}
               className=""
               displayCurrency={baseCurrency}
+              onChangeDisplayCurrency={setBaseCurrency}
               eurUsdRate={eurUsdRate}
               fxRates={fxRates}
             />

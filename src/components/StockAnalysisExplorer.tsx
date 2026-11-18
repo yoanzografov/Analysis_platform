@@ -87,6 +87,7 @@ interface Props {
   className?: string;
   key?: React.Key;
   displayCurrency?: DisplayCurrency;
+  onChangeDisplayCurrency?: (curr: DisplayCurrency) => void;
   eurUsdRate?: number;
   fxRates?: FxRates;
 }
@@ -96,6 +97,7 @@ export default function StockAnalysisExplorer({
   onClose, 
   className = '',
   displayCurrency = 'AUTO',
+  onChangeDisplayCurrency,
   eurUsdRate = 1.08,
   fxRates
 }: Props) {
@@ -1570,17 +1572,26 @@ export default function StockAnalysisExplorer({
                            financialSubTab === 'ratios' ? 'Financial Ratios' : 'KPIs & Metrics'}
                         </h3>
                         <p className="text-xs text-ink-muted font-medium mt-0.5 truncate">
-                          Financials in {financialScale === 'billions' ? 'billions' : financialScale === 'full' ? 'exact' : 'millions'} USD. Fiscal year is {cleanTicker === 'AAPL' ? 'October - September' : cleanTicker === 'NVDA' ? 'February - January' : cleanTicker === 'MSFT' ? 'July - June' : 'January - December'}.
+                          Financials in {financialScale === 'billions' ? 'billions' : financialScale === 'full' ? 'exact' : 'millions'} {activeCurrency}. Fiscal year is {cleanTicker === 'AAPL' ? 'October - September' : cleanTicker === 'NVDA' ? 'February - January' : cleanTicker === 'MSFT' ? 'July - June' : 'January - December'}.
                         </p>
                       </div>
 
-                      {/* Scale: USD | $M / $B / Full & Actions */}
+                      {/* Scale & Currency Selector: [Currency] | M / B / Full & Actions */}
                       <div className="flex items-center gap-2 shrink-0 flex-nowrap">
-                        {/* Scale: USD | $M / $B / Full */}
+                        {/* Scale & Currency: [Currency] | M / B / Full */}
                         <div className="flex items-center p-0.5 rounded-lg bg-card border border-border/80 text-xs font-bold shrink-0">
-                          <span className="px-2 py-0.5 text-[11px] font-mono font-bold text-ink-faint border-r border-border/60">
-                            USD
-                          </span>
+                          <select
+                            value={displayCurrency}
+                            onChange={(e) => onChangeDisplayCurrency?.(e.target.value as DisplayCurrency)}
+                            className="bg-transparent text-[11px] font-mono font-black text-indigo-400 hover:text-indigo-300 px-2 py-1 pr-1 border-r border-border/60 outline-none cursor-pointer"
+                            title="Изберете валута на отчетите и цените"
+                          >
+                            <option value="AUTO" className="bg-bg text-ink">🌐 {reportedCurrency} (Борсова)</option>
+                            <option value="EUR" className="bg-bg text-ink">€ EUR</option>
+                            <option value="USD" className="bg-bg text-ink">$ USD</option>
+                            <option value="CNY" className="bg-bg text-ink">¥ CNY</option>
+                            <option value="GBP" className="bg-bg text-ink">£ GBP</option>
+                          </select>
                           <button
                             type="button"
                             onClick={() => setFinancialScale('millions')}
@@ -1706,7 +1717,7 @@ export default function StockAnalysisExplorer({
                                   </h4>
                                 </div>
                                 <div className="text-[11px] text-ink-faint mt-0.5 font-medium">
-                                  {cleanTicker} · {data?.currency || 'USD'} · {financialFreq === 'annual' ? 'Годишни финансови данни' : financialFreq === 'quarterly' ? 'Тримесечни финансови данни' : 'Trailing Twelve Months (TTM)'}
+                                  {cleanTicker} · {activeCurrency} · {financialFreq === 'annual' ? 'Годишни финансови данни' : financialFreq === 'quarterly' ? 'Тримесечни финансови данни' : 'Trailing Twelve Months (TTM)'}
                                 </div>
                               </div>
 
@@ -1856,7 +1867,7 @@ export default function StockAnalysisExplorer({
                                     <span>Revenue & Profits</span>
                                   </h4>
                                   <span className="text-[11px] text-ink-faint font-medium">
-                                    ({data?.currency || 'USD'} in Millions)
+                                    ({activeCurrency} in Millions)
                                   </span>
                                 </div>
 
@@ -1981,7 +1992,7 @@ export default function StockAnalysisExplorer({
                                     <h4 className="text-xs font-black uppercase text-ink tracking-tight flex items-center gap-1.5">
                                       <span>Income Statement</span>
                                     </h4>
-                                    <span className="text-[10px] text-ink-faint font-medium">{data?.currency || 'USD'} in Millions</span>
+                                    <span className="text-[10px] text-ink-faint font-medium">{activeCurrency} in Millions</span>
                                   </div>
                                   <div className="overflow-x-auto">
                                     <table className="w-full text-xs text-left tabular-nums border-collapse">
@@ -2035,7 +2046,7 @@ export default function StockAnalysisExplorer({
                                     <h4 className="text-xs font-black uppercase text-ink tracking-tight flex items-center gap-1.5">
                                       <span>Balance Sheet</span>
                                     </h4>
-                                    <span className="text-[10px] text-ink-faint font-medium">{data?.currency || 'USD'} in Millions</span>
+                                    <span className="text-[10px] text-ink-faint font-medium">{activeCurrency} in Millions</span>
                                   </div>
                                   <div className="overflow-x-auto">
                                     <table className="w-full text-xs text-left tabular-nums border-collapse">
@@ -2089,7 +2100,7 @@ export default function StockAnalysisExplorer({
                                     <h4 className="text-xs font-black uppercase text-ink tracking-tight flex items-center gap-1.5">
                                       <span>Cash Flow</span>
                                     </h4>
-                                    <span className="text-[10px] text-ink-faint font-medium">{data?.currency || 'USD'} in Millions</span>
+                                    <span className="text-[10px] text-ink-faint font-medium">{activeCurrency} in Millions</span>
                                   </div>
                                   <div className="overflow-x-auto">
                                     <table className="w-full text-xs text-left tabular-nums border-collapse">
@@ -2207,7 +2218,7 @@ export default function StockAnalysisExplorer({
                                        'KPIs & Key Metrics'}
                                     </span>
                                     <span className="ml-2 font-normal text-ink-faint text-[10px]">
-                                      {financialScale === 'millions' ? `(${data?.currency || 'USD'} in Millions)` : financialScale === 'billions' ? `(${data?.currency || 'USD'} in Billions)` : `(${data?.currency || 'USD'} Exact)`}
+                                      {financialScale === 'millions' ? `(${activeCurrency} in Millions)` : financialScale === 'billions' ? `(${activeCurrency} in Billions)` : `(${activeCurrency} Exact)`}
                                     </span>
                                   </th>
                                   {(displayPeriods || []).map(period => (
@@ -2814,7 +2825,7 @@ export default function StockAnalysisExplorer({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-accent text-ink-faint border border-border/50">
-                          {(data.overview as any)?.exchange || 'NASDAQ'} • USD
+                          {(data.overview as any)?.exchange || 'NASDAQ'} • {activeCurrency}
                         </span>
                       </div>
                     </div>
@@ -3267,7 +3278,7 @@ export default function StockAnalysisExplorer({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-accent text-ink-faint border border-border/50">
-                          {(data.overview as any)?.exchange || 'NASDAQ'} • {data.currency || 'USD'}
+                          {(data.overview as any)?.exchange || 'NASDAQ'} • {activeCurrency}
                         </span>
                       </div>
                     </div>
@@ -3544,7 +3555,7 @@ export default function StockAnalysisExplorer({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-accent text-ink-faint border border-border/50">
-                          {(data.overview as any)?.exchange || 'NASDAQ'} • {data.currency || 'USD'}
+                          {(data.overview as any)?.exchange || 'NASDAQ'} • {activeCurrency}
                         </span>
                       </div>
                     </div>
