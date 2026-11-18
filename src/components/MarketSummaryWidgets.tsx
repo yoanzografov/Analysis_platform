@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Stock, TableFilter } from '../types';
 import { ArrowUpRight, ArrowDownRight, Info, Clock, ExternalLink, HelpCircle, X, Flame, AlertCircle } from 'lucide-react';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import CmeFedWatchModal, { getNextFomcMeeting } from './CmeFedWatchModal';
-import { DisplayCurrency, getStockNativeCurrency, getCurrencySymbol, convertCurrency } from '../utils/currencyConverter';
+import { DisplayCurrency, FxRates, getStockNativeCurrency, getCurrencySymbol, convertCurrency, getCachedFxRates } from '../utils/currencyConverter';
 
 interface Props {
   stocks: Stock[];
   activeFilter: TableFilter;
   onSetActiveFilter: (filter: TableFilter) => void;
   displayCurrency?: DisplayCurrency;
+  fxRates?: FxRates;
 }
 
 interface CnnData {
@@ -351,11 +352,18 @@ export default function MarketSummaryWidgets({
   stocks, 
   activeFilter, 
   onSetActiveFilter,
-  displayCurrency = 'EUR'
+  displayCurrency = 'AUTO',
+  fxRates
 }: Props) {
-  const eurUsdStock = stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
-  const eurUsdRate = eurUsdStock?.currentPrice || eurUsdStock?.priceOfCalc || 1.08;
-  const currencySymbol = getCurrencySymbol(displayCurrency);
+  const activeFxRates: FxRates = useMemo(() => {
+    if (fxRates) return fxRates;
+    const eurUsdStock = stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
+    const eurUsdRate = eurUsdStock?.currentPrice || eurUsdStock?.priceOfCalc || 1.08;
+    return {
+      ...getCachedFxRates(),
+      EUR_USD: eurUsdRate
+    };
+  }, [fxRates, stocks]);
 
   const [fomcTimeLeft, setFomcTimeLeft] = useState<TimeLeft | null>(null);
   const [nextFomcLabel, setNextFomcLabel] = useState<string>('');
@@ -583,7 +591,12 @@ export default function MarketSummaryWidgets({
                       </span>
                     </div>
                     <div className="flex items-center gap-2 font-sans tabular-nums text-xs shrink-0">
-                      <span className="text-ink-faint font-bold">{currencySymbol}{convertCurrency(item.currentPrice, getStockNativeCurrency(item), displayCurrency, eurUsdRate).toFixed(2)}</span>
+                      <span className="text-ink-faint font-bold">{(() => {
+                        const itemNat = getStockNativeCurrency(item);
+                        const itemTarget = displayCurrency === 'AUTO' ? itemNat : displayCurrency;
+                        const itemSym = getCurrencySymbol(itemTarget);
+                        return `${itemSym}${convertCurrency(item.currentPrice, itemNat, itemTarget, activeFxRates).toFixed(2)}`;
+                      })()}</span>
                       <span className="font-extrabold text-emerald-700">+{item.dailyChangePct.toFixed(2)}%</span>
                     </div>
                   </div>
@@ -644,7 +657,12 @@ export default function MarketSummaryWidgets({
                       </span>
                     </div>
                     <div className="flex items-center gap-2 font-sans tabular-nums text-xs shrink-0">
-                      <span className="text-ink-faint font-bold">{currencySymbol}{convertCurrency(item.currentPrice, getStockNativeCurrency(item), displayCurrency, eurUsdRate).toFixed(2)}</span>
+                      <span className="text-ink-faint font-bold">{(() => {
+                        const itemNat = getStockNativeCurrency(item);
+                        const itemTarget = displayCurrency === 'AUTO' ? itemNat : displayCurrency;
+                        const itemSym = getCurrencySymbol(itemTarget);
+                        return `${itemSym}${convertCurrency(item.currentPrice, itemNat, itemTarget, activeFxRates).toFixed(2)}`;
+                      })()}</span>
                       <span className="font-extrabold text-red-700">{item.dailyChangePct.toFixed(2)}%</span>
                     </div>
                   </div>

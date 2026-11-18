@@ -76,7 +76,7 @@ import {
   getPeriodEndDate,
   FinancialScale
 } from '../utils/financialStatementsBuilder';
-import { DisplayCurrency, getCurrencySymbol, convertCurrency } from '../utils/currencyConverter';
+import { DisplayCurrency, FxRates, getCurrencySymbol, convertCurrency, getStockNativeCurrency, getCachedFxRates } from '../utils/currencyConverter';
 
 // Module-level cache for instant tab switching across stocks (with 60s TTL for live market updates)
 const clientAnalysisCache = new Map<string, { data: StockAnalysisData; timestamp: number }>();
@@ -88,14 +88,16 @@ interface Props {
   key?: React.Key;
   displayCurrency?: DisplayCurrency;
   eurUsdRate?: number;
+  fxRates?: FxRates;
 }
 
 export default function StockAnalysisExplorer({ 
   stock, 
   onClose, 
   className = '',
-  displayCurrency = 'EUR',
-  eurUsdRate = 1.08
+  displayCurrency = 'AUTO',
+  eurUsdRate = 1.08,
+  fxRates
 }: Props) {
   const [activeTab, setActiveTab] = useState<StockAnalysisTabId>('overview');
   const [financialSubTab, setFinancialSubTab] = useState<'overview' | 'income' | 'balance' | 'cashflow' | 'ratios' | 'kpis'>('overview');
@@ -158,23 +160,34 @@ export default function StockAnalysisExplorer({
            raw.startsWith('BIT:') || raw.startsWith('BME:');
   }, [stock.ticker]);
 
+  const activeFxRates: FxRates = useMemo(() => {
+    if (fxRates) return fxRates;
+    return {
+      ...getCachedFxRates(),
+      EUR_USD: eurUsdRate > 0 ? eurUsdRate : 1.08
+    };
+  }, [fxRates, eurUsdRate]);
+
   const reportedCurrency = useMemo(() => {
     if (data?.currency) return data.currency.toUpperCase();
-    if (isEuropean) return 'EUR';
-    const raw = (stock.ticker || '').toUpperCase();
-    if (raw.endsWith('.L') || raw.endsWith('.LON')) return 'GBP';
-    return 'USD';
-  }, [data?.currency, isEuropean, stock.ticker]);
+    return getStockNativeCurrency(stock);
+  }, [data?.currency, stock]);
 
-  const activeCurrency = displayCurrency || reportedCurrency;
+  const activeCurrency = useMemo(() => {
+    if (!displayCurrency || displayCurrency === 'AUTO') {
+      return reportedCurrency;
+    }
+    return displayCurrency;
+  }, [displayCurrency, reportedCurrency]);
 
   const currencySymbol = useMemo(() => {
     return getCurrencySymbol(activeCurrency);
   }, [activeCurrency]);
 
   const fxMultiplier = useMemo(() => {
-    return convertCurrency(1, reportedCurrency, activeCurrency, eurUsdRate);
-  }, [reportedCurrency, activeCurrency, eurUsdRate]);
+    if (reportedCurrency === activeCurrency) return 1;
+    return convertCurrency(1, reportedCurrency, activeCurrency, activeFxRates);
+  }, [reportedCurrency, activeCurrency, activeFxRates]);
 
   // Fetch stock analysis data from our backend
   useEffect(() => {

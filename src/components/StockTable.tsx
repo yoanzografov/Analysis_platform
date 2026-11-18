@@ -14,7 +14,7 @@ import DcfCalculatorModal from './DcfCalculatorModal';
 import StockAnalysisExplorer from './StockAnalysisExplorer';
 import { getSectorForStock, formatDividend } from '../utils/sectorHelper';
 import { calculateBuySellStatus, calculateSignalStatus, calculateDifference } from '../utils/stockCalculations';
-import { DisplayCurrency, getStockNativeCurrency, getCurrencySymbol, convertCurrency, formatCurrencyMarketCap } from '../utils/currencyConverter';
+import { DisplayCurrency, FxRates, getStockNativeCurrency, getCurrencySymbol, convertCurrency, formatCurrencyMarketCap, getCachedFxRates } from '../utils/currencyConverter';
 
 interface Props {
   stocks: Stock[];
@@ -35,6 +35,7 @@ interface Props {
   sellThreshold: number;
   signalThreshold?: number;
   displayCurrency?: DisplayCurrency;
+  fxRates?: FxRates;
 }
 
 type SortField = 'ticker' | 'dailyChangePct' | 'currentPrice' | 'fairPrice' | 'difference' | 'marketCap';
@@ -262,14 +263,22 @@ export default function StockTable({
   buyThreshold, 
   sellThreshold,
   signalThreshold = 5,
-  displayCurrency = 'EUR'
+  displayCurrency = 'AUTO',
+  fxRates
 }: Props) {
-  // Live EUR/USD conversion rate
-  const eurUsdStock = useMemo(() => {
-    return stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
-  }, [stocks]);
-  const eurUsdRate = eurUsdStock?.currentPrice || eurUsdStock?.priceOfCalc || 1.08;
-  const currencySymbol = getCurrencySymbol(displayCurrency);
+  // Active live FX rates
+  const activeFxRates: FxRates = useMemo(() => {
+    if (fxRates) return fxRates;
+    const eurUsdStock = stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
+    const eurUsdRate = eurUsdStock?.currentPrice || eurUsdStock?.priceOfCalc || 1.08;
+    return {
+      ...getCachedFxRates(),
+      EUR_USD: eurUsdRate
+    };
+  }, [fxRates, stocks]);
+
+  const isAutoCurrency = displayCurrency === 'AUTO';
+  const globalHeaderSymbol = isAutoCurrency ? '' : ` (${getCurrencySymbol(displayCurrency)})`;
 
  // Search state
  const [search, setSearch] = useState('');
@@ -699,8 +708,9 @@ export default function StockTable({
  if (sortField === 'currentPrice' || sortField === 'fairPrice' || sortField === 'marketCap') {
    const natA = getStockNativeCurrency(a);
    const natB = getStockNativeCurrency(b);
-   const numA = convertCurrency(Number(valA || 0), natA, displayCurrency, eurUsdRate);
-   const numB = convertCurrency(Number(valB || 0), natB, displayCurrency, eurUsdRate);
+   const targetSortCurr = displayCurrency === 'AUTO' ? 'USD' : displayCurrency;
+   const numA = convertCurrency(Number(valA || 0), natA, targetSortCurr, activeFxRates);
+   const numB = convertCurrency(Number(valB || 0), natB, targetSortCurr, activeFxRates);
    return sortOrder === 'asc' ? numA - numB : numB - numA;
  }
 
@@ -972,29 +982,29 @@ export default function StockTable({
  <th className="py-3 px-4 text-center whitespace-nowrap">Statistics</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">365 Chart</th>
  <th className="py-3 px-4 whitespace-nowrap">Date</th>
- <th className="py-3 px-4 text-right whitespace-nowrap">Price of Calc. ({currencySymbol})</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">Price of Calc.{globalHeaderSymbol}</th>
  <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('dailyChangePct')}>
  Daily Change %{sortField === 'dailyChangePct' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('currentPrice')}>
- Current Price ({currencySymbol}){sortField === 'currentPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+ Current Price{globalHeaderSymbol}{sortField === 'currentPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('fairPrice')}>
- Fair Price ({currencySymbol}){sortField === 'fairPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+ Fair Price{globalHeaderSymbol}{sortField === 'fairPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('difference')}>
  Difference{sortField === 'difference' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 text-center whitespace-nowrap">Over/Under</th>
  <th className="py-3 px-4 text-right cursor-pointer hover:bg-white/10/50 whitespace-nowrap" onClick={() => handleSort('marketCap')}>
- Market Cap ({currencySymbol}){sortField === 'marketCap' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
+ Market Cap{globalHeaderSymbol}{sortField === 'marketCap' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''}
  </th>
  <th className="py-3 px-4 text-right whitespace-nowrap">P/E Ratio</th>
- <th className="py-3 px-4 text-right whitespace-nowrap">EPS ({currencySymbol})</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">EPS{globalHeaderSymbol}</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">Sector</th>
  <th className="py-3 px-4 whitespace-nowrap">Signal</th>
- <th className="py-3 px-4 text-right whitespace-nowrap">52 Low ({currencySymbol})</th>
- <th className="py-3 px-4 text-right whitespace-nowrap">52 High ({currencySymbol})</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">52 Low{globalHeaderSymbol}</th>
+ <th className="py-3 px-4 text-right whitespace-nowrap">52 High{globalHeaderSymbol}</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">AI Анализ</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">Калк</th>
  <th className="py-3 px-4 text-center whitespace-nowrap">Важни Новини</th>
@@ -1009,21 +1019,24 @@ export default function StockTable({
  const st52 = check52WeekStatus(stock);
 
  const nativeCurr = getStockNativeCurrency(stock);
- const convCurrentPrice = convertCurrency(stock.currentPrice, nativeCurr, displayCurrency, eurUsdRate);
+ const targetRowCurr = displayCurrency === 'AUTO' ? nativeCurr : displayCurrency;
+ const rowSymbol = getCurrencySymbol(targetRowCurr);
+
+ const convCurrentPrice = convertCurrency(stock.currentPrice, nativeCurr, targetRowCurr, activeFxRates);
  const convFairPrice = stock.fairPrice != null && !isNaN(Number(stock.fairPrice))
-   ? convertCurrency(Number(stock.fairPrice), nativeCurr, displayCurrency, eurUsdRate)
+   ? convertCurrency(Number(stock.fairPrice), nativeCurr, targetRowCurr, activeFxRates)
    : null;
  const convPriceOfCalc = stock.priceOfCalc != null && !isNaN(Number(stock.priceOfCalc))
-   ? convertCurrency(Number(stock.priceOfCalc), nativeCurr, displayCurrency, eurUsdRate)
+   ? convertCurrency(Number(stock.priceOfCalc), nativeCurr, targetRowCurr, activeFxRates)
    : null;
  const convLow52 = stock.low52 != null && !isNaN(Number(stock.low52))
-   ? convertCurrency(Number(stock.low52), nativeCurr, displayCurrency, eurUsdRate)
+   ? convertCurrency(Number(stock.low52), nativeCurr, targetRowCurr, activeFxRates)
    : null;
  const convHigh52 = stock.high52 != null && !isNaN(Number(stock.high52))
-   ? convertCurrency(Number(stock.high52), nativeCurr, displayCurrency, eurUsdRate)
+   ? convertCurrency(Number(stock.high52), nativeCurr, targetRowCurr, activeFxRates)
    : null;
  const convEps = stock.eps != null && !isNaN(Number(stock.eps))
-   ? convertCurrency(Number(stock.eps), nativeCurr, displayCurrency, eurUsdRate)
+   ? convertCurrency(Number(stock.eps), nativeCurr, targetRowCurr, activeFxRates)
    : null;
 
  return (
@@ -1285,7 +1298,7 @@ export default function StockTable({
  placeholder="-"
  />
  ) : (
- <span>{convPriceOfCalc != null ? `${currencySymbol}${convPriceOfCalc.toFixed(2)}` : '-'}</span>
+ <span>{convPriceOfCalc != null ? `${rowSymbol}${convPriceOfCalc.toFixed(2)}` : '-'}</span>
  )}
  </td>
 
@@ -1315,7 +1328,7 @@ export default function StockTable({
  className="w-full bg-bg rounded-2xl text-right font-bold text-ink border border-border p-0.5 rounded-md font-sans tabular-nums text-xs focus:outline-none"
  />
  ) : (
- <span>{currencySymbol}{convCurrentPrice.toFixed(2)}</span>
+ <span>{rowSymbol}{convCurrentPrice.toFixed(2)}</span>
  )}
  </td>
 
@@ -1330,7 +1343,7 @@ export default function StockTable({
  placeholder="-"
  />
  ) : (
- <span>{convFairPrice != null ? `${currencySymbol}${convFairPrice.toFixed(2)}` : 'N/A'}</span>
+ <span>{convFairPrice != null ? `${rowSymbol}${convFairPrice.toFixed(2)}` : 'N/A'}</span>
  )}
  </td>
 
@@ -1362,7 +1375,7 @@ export default function StockTable({
 
  {/* 12. MARKET CAP [LOCKED] */}
  <td className="py-3 px-4 text-right text-ink-muted font-sans tabular-nums ">
- {formatCurrencyMarketCap(stock.marketCap, nativeCurr, displayCurrency, eurUsdRate)}
+ {formatCurrencyMarketCap(stock.marketCap, nativeCurr, targetRowCurr, activeFxRates)}
  </td>
 
  {/* 13. P/E RATIO [LOCKED] */}
@@ -1372,7 +1385,7 @@ export default function StockTable({
 
  {/* 14. EPS [LOCKED] */}
  <td className="py-3 px-4 text-right text-ink font-bold ">
- {convEps != null ? `${currencySymbol}${convEps.toFixed(2)}` : '-'}
+ {convEps != null ? `${rowSymbol}${convEps.toFixed(2)}` : '-'}
  </td>
 
  {/* 15. SECTOR */}
@@ -1451,7 +1464,7 @@ export default function StockTable({
  />
  ) : (
  <div className="flex flex-col items-end leading-tight">
- <span>{convLow52 != null ? `${currencySymbol}${convLow52.toFixed(2)}` : '-'}</span>
+ <span>{convLow52 != null ? `${rowSymbol}${convLow52.toFixed(2)}` : '-'}</span>
  {st52.distToLowPct !== null && (
  <span className={`text-[10px] ${st52.is52Low ? 'text-emerald-400 font-bold' : 'text-ink-faint'}`}>
  {st52.distToLowPct <= 0 ? '0.0%' : `+${st52.distToLowPct.toFixed(1)}%`}
@@ -1478,7 +1491,7 @@ export default function StockTable({
  ) : (
  <div className="flex flex-col items-end leading-tight">
  <div className="flex items-center justify-end gap-1 group/cell">
- <span>{convHigh52 != null ? `${currencySymbol}${convHigh52.toFixed(2)}` : '-'}</span>
+ <span>{convHigh52 != null ? `${rowSymbol}${convHigh52.toFixed(2)}` : '-'}</span>
  <button
  onClick={() => startInlineEdit(stock)}
  className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover/cell:opacity-100 text-ink-faint hover:text-ink transition-opacity p-0.5 shrink-0"
@@ -1621,7 +1634,12 @@ export default function StockTable({
          {activeSelectedStock.ticker}
        </span>
        <span className="text-xs font-bold text-ink">
-         {currencySymbol}{activeSelectedStock.currentPrice > 0 ? convertCurrency(activeSelectedStock.currentPrice, getStockNativeCurrency(activeSelectedStock), displayCurrency, eurUsdRate).toFixed(2) : '-'}
+         {activeSelectedStock.currentPrice > 0 ? (() => {
+           const selNat = getStockNativeCurrency(activeSelectedStock);
+           const selTarget = displayCurrency === 'AUTO' ? selNat : displayCurrency;
+           const selSym = getCurrencySymbol(selTarget);
+           return `${selSym}${convertCurrency(activeSelectedStock.currentPrice, selNat, selTarget, activeFxRates).toFixed(2)}`;
+         })() : '-'}
        </span>
        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${
          activeSelectedStock.dailyChangePct >= 0 ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'

@@ -19,6 +19,7 @@ import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
+import { DisplayCurrency, FxRates, DEFAULT_FX_RATES, fetchLiveFxRates } from './utils/currencyConverter';
 import { db, auth } from './lib/firebase';
 import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
@@ -444,13 +445,26 @@ export default function App() {
     } catch (e) {}
   }, [cashBalance]);
 
-  const [baseCurrency, setBaseCurrency] = useState<'USD' | 'EUR'>(() => {
+  const [baseCurrency, setBaseCurrency] = useState<DisplayCurrency>(() => {
     try {
-      const saved = localStorage.getItem('user_portfolio_base_currency');
-      if (saved === 'EUR' || saved === 'USD') return saved;
+      const saved = localStorage.getItem('user_portfolio_base_currency') as DisplayCurrency;
+      if (['AUTO', 'EUR', 'USD', 'CNY', 'GBP'].includes(saved)) return saved;
     } catch (e) {}
-    return 'EUR';
+    return 'AUTO';
   });
+
+  const [fxRates, setFxRates] = useState<FxRates>(DEFAULT_FX_RATES);
+
+  // Live real-time FX rates auto-fetcher
+  useEffect(() => {
+    fetchLiveFxRates().then(rates => {
+      setFxRates(rates);
+    });
+    const interval = setInterval(() => {
+      fetchLiveFxRates().then(rates => setFxRates(rates));
+    }, 120000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     try {
@@ -1943,31 +1957,67 @@ export default function App() {
 
         {/* Top-Right Controls: Currency Switcher, Theme Toggle & User Account Status Indicator */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Global Currency Switcher (EUR / USD) */}
-          <div className="flex items-center bg-card/80 border border-border rounded-xl p-0.5 shadow-xs">
+          {/* Global Multi-Currency Switcher (AUTO, EUR, USD, CNY, GBP) */}
+          <div className="flex items-center bg-card/90 border border-border rounded-xl p-0.5 shadow-xs overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setBaseCurrency('AUTO')}
+              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                baseCurrency === 'AUTO'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+              title="Борсова / Оригинална валута (САЩ в $, Европа в €, Китай в ¥, Великобритания в £)"
+            >
+              <span>🌐</span>
+              <span className="hidden sm:inline">Борсова</span>
+            </button>
             <button
               onClick={() => setBaseCurrency('EUR')}
-              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
+              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 baseCurrency === 'EUR'
                   ? 'bg-indigo-600 text-white shadow-xs'
                   : 'text-ink-muted hover:text-ink'
               }`}
-              title="Показване на всички стойности в Евро (€)"
+              title="Превалутиране на всички стойности в Евро (€ EUR)"
             >
               <span>€</span>
               <span>EUR</span>
             </button>
             <button
               onClick={() => setBaseCurrency('USD')}
-              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
+              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 baseCurrency === 'USD'
                   ? 'bg-indigo-600 text-white shadow-xs'
                   : 'text-ink-muted hover:text-ink'
               }`}
-              title="Показване на всички стойности в Щатски Долари ($)"
+              title="Превалутиране на всички стойности в Щатски Долари ($ USD)"
             >
               <span>$</span>
               <span>USD</span>
+            </button>
+            <button
+              onClick={() => setBaseCurrency('CNY')}
+              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                baseCurrency === 'CNY'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+              title="Превалутиране на всички стойности в Китайски Юани (¥ CNY)"
+            >
+              <span>¥</span>
+              <span>CNY</span>
+            </button>
+            <button
+              onClick={() => setBaseCurrency('GBP')}
+              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                baseCurrency === 'GBP'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+              title="Превалутиране на всички стойности в Британски Паунди (£ GBP)"
+            >
+              <span>£</span>
+              <span>GBP</span>
             </button>
           </div>
 
@@ -2524,6 +2574,7 @@ export default function App() {
             activeFilter={activeFilter}
             onSetActiveFilter={setActiveFilter}
             displayCurrency={baseCurrency}
+            fxRates={fxRates}
           />
 
           {/* Bento Board: Analytics charts, Distribution */}
@@ -2563,6 +2614,7 @@ export default function App() {
           sellThreshold={sellThreshold}
           signalThreshold={signalThreshold}
           displayCurrency={baseCurrency}
+          fxRates={fxRates}
           onAddStock={(newStock) => {
             // Smart extraction in case someone passed "Samsung Electronics Co., Ltd. (KRX:005930)"
             let sym = newStock.ticker.trim();
@@ -2692,6 +2744,7 @@ export default function App() {
               className=""
               displayCurrency={baseCurrency}
               eurUsdRate={eurUsdRate}
+              fxRates={fxRates}
             />
           );
         })()}

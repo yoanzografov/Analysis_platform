@@ -8,6 +8,7 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { AuthModal } from './AuthModal';
 import BrokerImportModal from './BrokerImportModal';
 import { getSectorForStock } from '../utils/sectorHelper';
+import { convertCurrency } from '../utils/currencyConverter';
 import { 
   Briefcase, 
   PlusCircle, 
@@ -922,12 +923,7 @@ export default function PortfolioTracker({
 
   // Currency Converter helper to Portfolio Base Currency
   const convertToBase = (val: number, fromCurr: string = 'USD') => {
-    if (fromCurr === baseCurrency) return val;
-    if (fromCurr === 'EUR' && baseCurrency === 'USD') return val * eurUsdRate;
-    if (fromCurr === 'USD' && baseCurrency === 'EUR') return val / eurUsdRate;
-    if (fromCurr === 'GBP' && baseCurrency === 'USD') return val * 1.27;
-    if (fromCurr === 'GBP' && baseCurrency === 'EUR') return (val * 1.27) / eurUsdRate;
-    return val;
+    return convertCurrency(val, fromCurr, baseCurrency, eurUsdRate);
   };
 
   // Portfolio Dashboard Calculations in Base Currency
