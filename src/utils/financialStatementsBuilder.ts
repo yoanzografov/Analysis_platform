@@ -116,18 +116,19 @@ export function getPeriodEndDate(period: string): string {
 
 // Format numbers nicely matching StockAnalysis exact style: millions, billions, or full
 export function formatFinancialValue(
-  val: number | null | undefined, 
+  rawVal: number | null | undefined, 
   format?: 'currency' | 'percent' | 'number',
   scale: FinancialScale = 'millions',
   metricKey?: string,
-  currencySymbol: string = '$'
+  currencySymbol: string = '$',
+  fxMultiplier: number = 1
 ): string {
-  if (val === null || val === undefined || isNaN(val)) return '—';
+  if (rawVal === null || rawVal === undefined || isNaN(rawVal)) return '—';
   
   if (format === 'percent') {
-    return `${val >= 0 ? '+' : ''}${val.toFixed(1)}%`;
+    return `${rawVal >= 0 ? '+' : ''}${rawVal.toFixed(1)}%`;
   }
-  
+
   const isPerShareOrUnit = metricKey && (
     metricKey.includes('eps') || 
     metricKey.includes('per_share') || 
@@ -136,6 +137,9 @@ export function formatFinancialValue(
     metricKey.includes('cash_per_share') ||
     metricKey.includes('price_target')
   );
+  const isEmpMonetary = metricKey?.includes('per_emp') || metricKey?.includes('per_employee');
+  const shouldConvert = (format === 'currency' || isPerShareOrUnit || isEmpMonetary) && fxMultiplier > 0 && fxMultiplier !== 1;
+  const val = shouldConvert ? rawVal * fxMultiplier : rawVal;
 
   if (isPerShareOrUnit) {
     const isNeg = val < 0;

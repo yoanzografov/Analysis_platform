@@ -3,11 +3,13 @@ import { Stock, TableFilter } from '../types';
 import { ArrowUpRight, ArrowDownRight, Info, Clock, ExternalLink, HelpCircle, X, Flame, AlertCircle } from 'lucide-react';
 import { EconomicCalendar } from 'react-ts-tradingview-widgets';
 import CmeFedWatchModal, { getNextFomcMeeting } from './CmeFedWatchModal';
+import { DisplayCurrency, getStockNativeCurrency, getCurrencySymbol, convertCurrency } from '../utils/currencyConverter';
 
 interface Props {
   stocks: Stock[];
   activeFilter: TableFilter;
   onSetActiveFilter: (filter: TableFilter) => void;
+  displayCurrency?: DisplayCurrency;
 }
 
 interface CnnData {
@@ -345,7 +347,16 @@ interface IndicatorStats {
   lowerIsBetter?: boolean;
 }
 
-export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActiveFilter }: Props) {
+export default function MarketSummaryWidgets({ 
+  stocks, 
+  activeFilter, 
+  onSetActiveFilter,
+  displayCurrency = 'EUR'
+}: Props) {
+  const eurUsdStock = stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
+  const eurUsdRate = eurUsdStock?.currentPrice || eurUsdStock?.priceOfCalc || 1.08;
+  const currencySymbol = getCurrencySymbol(displayCurrency);
+
   const [fomcTimeLeft, setFomcTimeLeft] = useState<TimeLeft | null>(null);
   const [nextFomcLabel, setNextFomcLabel] = useState<string>('');
   const [showCmeModal, setShowCmeModal] = useState<boolean>(false);
@@ -572,7 +583,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                       </span>
                     </div>
                     <div className="flex items-center gap-2 font-sans tabular-nums text-xs shrink-0">
-                      <span className="text-ink-faint font-bold">${item.currentPrice.toFixed(2)}</span>
+                      <span className="text-ink-faint font-bold">{currencySymbol}{convertCurrency(item.currentPrice, getStockNativeCurrency(item), displayCurrency, eurUsdRate).toFixed(2)}</span>
                       <span className="font-extrabold text-emerald-700">+{item.dailyChangePct.toFixed(2)}%</span>
                     </div>
                   </div>
@@ -633,7 +644,7 @@ export default function MarketSummaryWidgets({ stocks, activeFilter, onSetActive
                       </span>
                     </div>
                     <div className="flex items-center gap-2 font-sans tabular-nums text-xs shrink-0">
-                      <span className="text-ink-faint font-bold">${item.currentPrice.toFixed(2)}</span>
+                      <span className="text-ink-faint font-bold">{currencySymbol}{convertCurrency(item.currentPrice, getStockNativeCurrency(item), displayCurrency, eurUsdRate).toFixed(2)}</span>
                       <span className="font-extrabold text-red-700">{item.dailyChangePct.toFixed(2)}%</span>
                     </div>
                   </div>

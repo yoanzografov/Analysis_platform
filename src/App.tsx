@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Stock, MarketIndex, PriceAlert, NotificationLog, TableFilter, PortfolioPosition, PortfolioTransaction, PortfolioDividendRecord } from './types';
 import { consolidatePositions } from './utils/portfolioCalculations';
 import { RAW_SPREADSHEET_CSV, parseCSVData } from './data/initialStocks';
@@ -457,6 +457,11 @@ export default function App() {
       localStorage.setItem('user_portfolio_base_currency', baseCurrency);
     } catch (e) {}
   }, [baseCurrency]);
+
+  const eurUsdStock = useMemo(() => {
+    return stocks.find(s => s.ticker === 'EURUSD=X' || s.ticker === 'EURUSD');
+  }, [stocks]);
+  const eurUsdRate = eurUsdStock?.currentPrice || eurUsdStock?.priceOfCalc || 1.08;
 
   const [portfolioPrices, setPortfolioPrices] = useState<Record<string, { currentPrice: number; dailyChangePct: number; companyName?: string; currency?: string }>>(() => {
     try {
@@ -1936,8 +1941,36 @@ export default function App() {
           </div>
         </a>
 
-        {/* Top-Right Controls: Theme Toggle & User Account Status Indicator */}
+        {/* Top-Right Controls: Currency Switcher, Theme Toggle & User Account Status Indicator */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Global Currency Switcher (EUR / USD) */}
+          <div className="flex items-center bg-card/80 border border-border rounded-xl p-0.5 shadow-xs">
+            <button
+              onClick={() => setBaseCurrency('EUR')}
+              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
+                baseCurrency === 'EUR'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+              title="Показване на всички стойности в Евро (€)"
+            >
+              <span>€</span>
+              <span>EUR</span>
+            </button>
+            <button
+              onClick={() => setBaseCurrency('USD')}
+              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
+                baseCurrency === 'USD'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+              title="Показване на всички стойности в Щатски Долари ($)"
+            >
+              <span>$</span>
+              <span>USD</span>
+            </button>
+          </div>
+
           <ThemeToggle />
           <button
             onClick={() => {
@@ -2490,6 +2523,7 @@ export default function App() {
             stocks={stocks}
             activeFilter={activeFilter}
             onSetActiveFilter={setActiveFilter}
+            displayCurrency={baseCurrency}
           />
 
           {/* Bento Board: Analytics charts, Distribution */}
@@ -2528,6 +2562,7 @@ export default function App() {
           buyThreshold={buyThreshold}
           sellThreshold={sellThreshold}
           signalThreshold={signalThreshold}
+          displayCurrency={baseCurrency}
           onAddStock={(newStock) => {
             // Smart extraction in case someone passed "Samsung Electronics Co., Ltd. (KRX:005930)"
             let sym = newStock.ticker.trim();
@@ -2655,6 +2690,8 @@ export default function App() {
               key={currentTargetStock.ticker}
               stock={currentTargetStock}
               className=""
+              displayCurrency={baseCurrency}
+              eurUsdRate={eurUsdRate}
             />
           );
         })()}
