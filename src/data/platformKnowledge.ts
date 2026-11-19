@@ -32,7 +32,7 @@ export const PLATFORM_KNOWLEDGE = `
   7. *History:* Възвръщаемост (1M, 3M, 6M, 1Y, YTD) и исторически котировки.
   8. *Profile:* Company Description, Key Executives, Contact Details и Stock Details (Exchange, CIK, CUSIP, ISIN).
   9. *Chart:* Превключване между Google Finance стил (с плъзгане за % доходност) и TradingView Candlestick.
-- **PRICE ALERTS (#alerts):** Ценови известия (ABOVE / BELOW целева цена), достъпни след вход в профил.
+- **Watchlist (#alerts):** Ценови известия и списък за следене (ABOVE / BELOW целева цена), достъпни след вход в профил.
 - **PORTFOLIO TRACKER (#portfolio):** Лично портфолио с реални котировки, средна цена, Unrealized/Realized P&L, дивиденти, кеш баланс, семейни/лични акаунти и импорт от IBKR / Trading 212.
 - **NEWS (#news):** Структуриран хъб в 6 блока: Stock & Market News, Economic News, World News & Politics, Economic Events, Recent & Upcoming Earnings (BMO/AMC с Beat/Miss) и This Week's IPOs.
 
