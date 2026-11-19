@@ -13,6 +13,7 @@ const yahooFinance = new YahooFinance({
   suppressNotices: ['yahooSurvey']
 });
 const yahooTsCache = new Map<string, { annual: any[]; quarterly: any[]; trailing: any[]; ts: number }>();
+const yahooProfileCache = new Map<string, { profile: any; ts: number }>();
 
 // Google Finance exchange prefix → Yahoo Finance suffix
 const EXCHANGE_MAP: Record<string, string> = {
@@ -2247,15 +2248,33 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
         } catch {}
       }
 
-      // 2. Finnhub fallback / enrichment + live quote & Yahoo Finance real historical fundamentals
+      // 2. Finnhub fallback / enrichment + live quote & Yahoo Finance real historical fundamentals + assetProfile
       let fhMetrics: any = null, fhProfile: any = null, fhRecs: any = null, fhQuote: any = null;
       let yfAnnual: any[] = [], yfQuarterly: any[] = [], yfTrailing: any[] = [];
+      let yfAssetProfile: any = null;
       const shouldQueryFinnhub = Boolean(finnhubKey && !parsed.isEuropean && !parsed.isBulgarian);
       const yahooTargetSym = parsed.yahooSym || cleanTicker;
       const cachedTs = yahooTsCache.get(yahooTargetSym);
       const hasFreshTs = Boolean(cachedTs && (Date.now() - cachedTs.ts < 15 * 60 * 1000));
+      const cachedProf = yahooProfileCache.get(yahooTargetSym);
+      const hasFreshProf = Boolean(cachedProf && (Date.now() - cachedProf.ts < 30 * 60 * 1000));
 
       await Promise.all([
+        (async () => {
+          if (hasFreshProf && cachedProf) {
+            yfAssetProfile = cachedProf.profile;
+            return;
+          }
+          try {
+            const qsPromise = yahooFinance.quoteSummary(yahooTargetSym, { modules: ['assetProfile'] }).catch(() => null);
+            const timeoutP = new Promise<any>(r => setTimeout(() => r(null), 3500));
+            const qs = await Promise.race([qsPromise, timeoutP]);
+            if (qs?.assetProfile) {
+              yfAssetProfile = qs.assetProfile;
+              yahooProfileCache.set(yahooTargetSym, { profile: yfAssetProfile, ts: Date.now() });
+            }
+          } catch {}
+        })(),
         (async () => {
           if (!shouldQueryFinnhub) return;
           try {
@@ -2539,12 +2558,12 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
           analystsRecommendation: recKey,
           priceTarget: parseFloat(Number(targetMean).toFixed(2)),
           priceTargetUpside: upsidePercent,
-          sector: tv?.sector || fhProfile?.finnhubIndustry || 'Технологии',
-          industry: tv?.industry || fhProfile?.finnhubIndustry || 'Полупроводници',
-          description: `${tv?.description || fhProfile?.name || cleanTicker} е утвърден световен лидер на финансовите и капиталови пазари в отрасъл ${tv?.sector || fhProfile?.finnhubIndustry || 'Технологии'}. Компанията генерира стабилни парични потоци и устойчив марж на рентабилност.`,
-          website: fhProfile?.weburl || `https://${cleanTicker.toLowerCase()}.com`,
-          employees: tv?.employees || 24500,
-          country: fhProfile?.country === 'US' ? 'САЩ' : (fhProfile?.country || 'САЩ')
+          sector: yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Технологии',
+          industry: yfAssetProfile?.industry || tv?.industry || fhProfile?.finnhubIndustry || 'Финансови услуги',
+          description: yfAssetProfile?.longBusinessSummary || `${tv?.description || fhProfile?.name || cleanTicker} е публично търгувана компания в сектор ${yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Финанси / Технологии'}.`,
+          website: yfAssetProfile?.website || fhProfile?.weburl || `https://www.google.com/search?q=${encodeURIComponent(cleanTicker)}+investor+relations`,
+          employees: yfAssetProfile?.fullTimeEmployees || tv?.employees || null,
+          country: yfAssetProfile?.country || (fhProfile?.country === 'US' ? 'United States' : (fhProfile?.country || 'United States'))
         },
         financials: {
           revenue: totalRev,
@@ -2667,21 +2686,22 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
         },
         profile: {
           companyName: tv?.description || fhProfile?.name || cleanTicker,
-          sector: tv?.sector || fhProfile?.finnhubIndustry || 'Технологии',
-          industry: tv?.industry || fhProfile?.finnhubIndustry || 'Полупроводници',
-          ceo: 'Vincent Roche (CEO)',
-          employees: tv?.employees || 24500,
-          city: 'Уилмингтън',
-          state: 'Масачузетс',
-          country: fhProfile?.country === 'US' ? 'САЩ' : (fhProfile?.country || 'САЩ'),
-          website: fhProfile?.weburl || `https://${cleanTicker.toLowerCase()}.com`,
-          description: `${tv?.description || fhProfile?.name || cleanTicker} разработва високопроизводителни аналогови, цифрови и сигнални интегрални схеми, софтуер и подсистеми за индустриални, автомобилни и комуникационни приложения в целия свят.`,
-          officers: [
-            { name: 'Vincent Roche', title: 'Председател и CEO', pay: '$18.4M' },
-            { name: 'Richard C. Puccio Jr.', title: 'Изпълнителен вицепрезидент и CFO', pay: '$6.2M' },
-            { name: 'Gregory Henderson', title: 'Президент, Индустриални пазари', pay: '$4.8M' },
-            { name: 'Anelise Sacks', title: 'Главен клиентски директор (CCO)', pay: '$4.1M' }
-          ]
+          sector: yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Технологии',
+          industry: yfAssetProfile?.industry || tv?.industry || fhProfile?.finnhubIndustry || 'Финансови услуги',
+          ceo: (yfAssetProfile?.companyOfficers?.[0]?.name) ? `${yfAssetProfile.companyOfficers[0].name} (${yfAssetProfile.companyOfficers[0].title || 'CEO'})` : '—',
+          employees: yfAssetProfile?.fullTimeEmployees || tv?.employees || null,
+          city: yfAssetProfile?.city || '—',
+          state: yfAssetProfile?.state || '',
+          country: yfAssetProfile?.country || (fhProfile?.country === 'US' ? 'United States' : (fhProfile?.country || 'United States')),
+          website: yfAssetProfile?.website || fhProfile?.weburl || `https://www.google.com/search?q=${encodeURIComponent(cleanTicker)}+investor+relations`,
+          description: yfAssetProfile?.longBusinessSummary || `${tv?.description || fhProfile?.name || cleanTicker} е публично търгувана компания в сектор ${yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Финанси / Технологии'}.`,
+          officers: Array.isArray(yfAssetProfile?.companyOfficers) && yfAssetProfile.companyOfficers.length > 0
+            ? yfAssetProfile.companyOfficers.slice(0, 5).map((o: any) => ({
+                name: o.name,
+                title: o.title || 'Executive',
+                pay: o.totalPay?.raw ? `$${(o.totalPay.raw / 1e6).toFixed(2)}M` : (typeof o.totalPay === 'number' ? `$${(o.totalPay / 1e6).toFixed(2)}M` : undefined)
+              }))
+            : []
         }
       };
 

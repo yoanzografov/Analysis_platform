@@ -77,6 +77,7 @@ import {
   FinancialScale
 } from '../utils/financialStatementsBuilder';
 import { DisplayCurrency, FxRates, getCurrencySymbol, convertCurrency, getStockNativeCurrency, getCachedFxRates } from '../utils/currencyConverter';
+import officialProfiles from '../data/officialCompanyProfiles.json';
 
 // Module-level cache for instant tab switching across stocks (with 60s TTL for live market updates)
 const clientAnalysisCache = new Map<string, { data: StockAnalysisData; timestamp: number }>();
@@ -153,6 +154,22 @@ export default function StockAnalysisExplorer({
 
   const cleanTicker = useMemo(() => getCleanTicker(stock.ticker), [stock.ticker]);
   const tvSymbol = useMemo(() => getTradingViewSymbol(stock.companyName, stock.ticker), [stock.companyName, stock.ticker]);
+
+  const resolvedCompanyDescription = useMemo(() => {
+    const profMap = officialProfiles as Record<string, { officialDescription?: string }>;
+    const rawUp = (stock.ticker || '').toUpperCase().trim();
+    const localDesc =
+      profMap[rawUp]?.officialDescription ||
+      profMap[cleanTicker]?.officialDescription ||
+      profMap[cleanTicker.replace('-', '.')]?.officialDescription ||
+      '';
+    const apiDesc = data?.profile?.description || data?.overview?.description || '';
+    const isGenericApi = apiDesc.includes('е публично търгувана компания в сектор') || apiDesc.includes('е утвърден световен лидер');
+    if (apiDesc && !isGenericApi && apiDesc.length >= localDesc.length) {
+      return apiDesc;
+    }
+    return localDesc || apiDesc;
+  }, [stock.ticker, cleanTicker, data?.profile?.description, data?.overview?.description]);
 
   const isEuropean = useMemo(() => {
     const raw = (stock.ticker || '').toUpperCase();
@@ -1553,12 +1570,21 @@ export default function StockAnalysisExplorer({
 
                     {/* Company Brief Description Box */}
                     <div className="p-4 rounded-xl bg-card border border-border/80">
-                      <h4 className="text-xs font-black uppercase text-ink tracking-wider mb-1.5 flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-indigo-400" />
-                        За компанията ({cleanTicker})
-                      </h4>
-                      <p className="text-xs text-ink-muted leading-relaxed line-clamp-3">
-                        {data.overview.description}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <h4 className="text-xs font-black uppercase text-ink tracking-wider flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>За компанията ({cleanTicker})</span>
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('profile')}
+                          className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+                        >
+                          Пълен профил →
+                        </button>
+                      </div>
+                      <p className="text-xs text-ink-muted leading-relaxed">
+                        {resolvedCompanyDescription || data.overview.description}
                       </p>
                     </div>
                   </div>
@@ -4079,9 +4105,9 @@ export default function StockAnalysisExplorer({
 
                     {/* Long Business Summary */}
                     <div className="p-4 rounded-xl bg-card border border-border/80">
-                      <h4 className="text-xs font-bold text-ink uppercase mb-2">Бизнес модел и дейност</h4>
+                      <h4 className="text-xs font-bold text-ink uppercase mb-2">За компанията / Бизнес модел и дейност ({cleanTicker})</h4>
                       <p className="text-xs text-ink-muted leading-relaxed">
-                        {data.profile.description}
+                        {resolvedCompanyDescription || data.profile.description}
                       </p>
                     </div>
                   </div>
