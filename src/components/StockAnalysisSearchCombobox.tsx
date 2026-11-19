@@ -154,10 +154,13 @@ export default function StockAnalysisSearchCombobox({
             type="text"
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
-              if (!isOpen) setIsOpen(true);
+              const val = e.target.value;
+              setQuery(val);
+              setIsOpen(val.trim().length > 0);
             }}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => {
+              if (query.trim().length > 0) setIsOpen(true);
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 if (exactUserMatch) {
@@ -196,8 +199,8 @@ export default function StockAnalysisSearchCombobox({
           ) : null}
         </div>
 
-        {/* Dropdown Results Popover */}
-        {isOpen && (
+        {/* Dropdown Results Popover (only when user types a search query) */}
+        {isOpen && cleanQuery.length > 0 && (
           <div className="absolute top-full mt-2 left-0 right-0 max-h-[380px] overflow-y-auto rounded-2xl bg-card/95 backdrop-blur-xl border border-border/90 shadow-2xl z-[999] p-2 space-y-2 animate-in fade-in zoom-in-95 duration-100">
             {/* Quick action to load typed ticker directly */}
             {cleanQuery && !exactUserMatch && !exactGlobalMatch && (
