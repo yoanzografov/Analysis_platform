@@ -22,7 +22,7 @@ const yahooFinance = new YahooFinance({
   suppressNotices: ['yahooSurvey']
 });
 const yahooTsCache = new Map<string, { annual: any[]; quarterly: any[]; trailing: any[]; ts: number }>();
-const yahooProfileCache = new Map<string, { profile: any; ts: number }>();
+const yahooProfileCache = new Map<string, { profile: any; summary?: any; ts: number }>();
 
 // Google Finance exchange prefix → Yahoo Finance suffix
 const EXCHANGE_MAP: Record<string, string> = {
@@ -2307,13 +2307,14 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       let fhMetrics: any = null, fhProfile: any = null, fhRecs: any = null, fhQuote: any = null;
       let yfAnnual: any[] = [], yfQuarterly: any[] = [], yfTrailing: any[] = [];
       let yfAssetProfile: any = null;
+      let yfSummary: any = null;
       let saProfile: any = null;
       const shouldQueryFinnhub = Boolean(finnhubKey && !parsed.isEuropean && !parsed.isBulgarian);
       const yahooTargetSym = parsed.yahooSym || cleanTicker;
       const cachedTs = yahooTsCache.get(yahooTargetSym);
       const hasFreshTs = Boolean(cachedTs && (Date.now() - cachedTs.ts < 15 * 60 * 1000));
       const cachedProf = yahooProfileCache.get(yahooTargetSym);
-      const hasFreshProf = Boolean(cachedProf && (Date.now() - cachedProf.ts < 30 * 60 * 1000));
+      const hasFreshProf = Boolean(cachedProf && (Date.now() - cachedProf.ts < 15 * 60 * 1000));
 
       await Promise.all([
         (async () => {
@@ -2322,15 +2323,19 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
         (async () => {
           if (hasFreshProf && cachedProf) {
             yfAssetProfile = cachedProf.profile;
+            yfSummary = cachedProf.summary || null;
             return;
           }
           try {
-            const qsPromise = yahooFinance.quoteSummary(yahooTargetSym, { modules: ['assetProfile'] }).catch(() => null);
-            const timeoutP = new Promise<any>(r => setTimeout(() => r(null), 3500));
+            const qsPromise = yahooFinance.quoteSummary(yahooTargetSym, {
+              modules: ['assetProfile', 'financialData', 'defaultKeyStatistics', 'summaryDetail']
+            }).catch(() => null);
+            const timeoutP = new Promise<any>(r => setTimeout(() => r(null), 4000));
             const qs = await Promise.race([qsPromise, timeoutP]);
-            if (qs?.assetProfile) {
-              yfAssetProfile = qs.assetProfile;
-              yahooProfileCache.set(yahooTargetSym, { profile: yfAssetProfile, ts: Date.now() });
+            if (qs) {
+              yfAssetProfile = qs.assetProfile || null;
+              yfSummary = qs;
+              yahooProfileCache.set(yahooTargetSym, { profile: yfAssetProfile, summary: qs, ts: Date.now() });
             }
           } catch {}
         })(),
@@ -2577,6 +2582,92 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       const trailingRatios = yahooBundle?.trailingRatios;
       const companySegments = getCompanySegments(cleanTicker, totalRev);
 
+      const yfSD = yfSummary?.summaryDetail;
+      const yfKS = yfSummary?.defaultKeyStatistics;
+      const yfFD = yfSummary?.financialData;
+
+      const realTotalCash = yfFD?.totalCash ?? yahooBundle?.latestTtm?.totalCash ?? null;
+      const realTotalDebt = yfFD?.totalDebt ?? yahooBundle?.latestTtm?.totalDebt ?? null;
+      const realMarketCap = yfSD?.marketCap || mCap;
+      const realEnterpriseValue = yfKS?.enterpriseValue ?? (
+        realMarketCap && realTotalDebt != null && realTotalCash != null
+          ? realMarketCap + realTotalDebt - realTotalCash
+          : null
+      );
+      const realFcf = yfFD?.freeCashflow ?? (fcf || null);
+      const realRev = yfFD?.totalRevenue ?? (totalRev || null);
+      const realEbitda = yfFD?.ebitda ?? null;
+      const realSharesOut = yfKS?.sharesOutstanding ?? (sharesOut || null);
+
+      const roundOrNull = (val: any, decimals = 2): number | null => {
+        if (val == null || typeof val !== 'number' || !Number.isFinite(val)) return null;
+        return parseFloat(val.toFixed(decimals));
+      };
+
+      const realPeRatio = roundOrNull(yfSD?.trailingPE ?? peVal);
+      const realForwardPe = roundOrNull(yfSD?.forwardPE ?? yfKS?.forwardPE ?? fwdPeVal);
+      const realPegRatio = roundOrNull(yfKS?.pegRatio ?? pegVal);
+      const realPriceToSales = roundOrNull(yfSD?.priceToSalesTrailing12Months ?? psVal);
+      const realPriceToBook = roundOrNull(yfKS?.priceToBook ?? pbVal);
+      const realPriceToFcf = roundOrNull(
+        tv?.pfcf ?? (realFcf && realFcf > 0 && realMarketCap > 0 ? realMarketCap / realFcf : null)
+      );
+      const realEvToRevenue = roundOrNull(
+        yfKS?.enterpriseToRevenue ?? (realEnterpriseValue && realRev && realRev > 0 ? realEnterpriseValue / realRev : null)
+      );
+      const realEvToEbitda = roundOrNull(yfKS?.enterpriseToEbitda ?? evEbitdaVal);
+      const realEvToFcf = roundOrNull(
+        realEnterpriseValue && realFcf && realFcf > 0 ? realEnterpriseValue / realFcf : null
+      );
+
+      const realRoe = roundOrNull(yfFD?.returnOnEquity != null ? yfFD.returnOnEquity * 100 : roeVal, 1);
+      const realRoa = roundOrNull(yfFD?.returnOnAssets != null ? yfFD.returnOnAssets * 100 : roaVal, 1);
+      const findTableLatestVal = (tbl: any, keys: string[]): number | null => {
+        const rows = Array.isArray(tbl?.rows) ? tbl.rows : [];
+        const row = rows.find((r: any) => keys.includes(r?.id) || keys.some(k => String(r?.label || '').toLowerCase().includes(k.toLowerCase())));
+        const v = Array.isArray(row?.values) ? row.values[0] : null;
+        return typeof v === 'number' && Number.isFinite(v) ? v : null;
+      };
+      const realRoic = roundOrNull(
+        findTableLatestVal(trailingRatios, ['roic', 'Return on Invested Capital', 'Return on Capital']) ??
+        findTableLatestVal(ratios, ['roic', 'Return on Invested Capital', 'Return on Capital']) ??
+        fhMetrics?.roicTTM ??
+        null,
+        1
+      );
+      const realGrossMargin = roundOrNull(
+        yfFD?.grossMargins != null ? yfFD.grossMargins * 100 : (totalRev > 0 ? (grossProf / totalRev) * 100 : null),
+        1
+      );
+      const realProfitMargin = roundOrNull(
+        yfFD?.profitMargins != null ? yfFD.profitMargins * 100 : netMarginVal,
+        1
+      );
+      const realOperMargin = roundOrNull(
+        yfFD?.operatingMargins != null ? yfFD.operatingMargins * 100 : operMarginVal,
+        1
+      );
+      const realFcfMargin = roundOrNull(
+        realFcf != null && realRev && realRev > 0 ? (realFcf / realRev) * 100 : null,
+        1
+      );
+      const realDebtToEquity = roundOrNull(
+        yfFD?.debtToEquity != null ? yfFD.debtToEquity / 100 : debtEqVal
+      );
+      const realDebtToEbitda = roundOrNull(
+        realTotalDebt != null && realEbitda && realEbitda > 0 ? realTotalDebt / realEbitda : null
+      );
+      const ttmIntExp = findTableLatestVal(trailingIncomeStatement, ['interestExpense', 'Interest Expense']) ??
+        findTableLatestVal(incomeStatement, ['interestExpense', 'Interest Expense']) ?? null;
+      const ttmOpInc = findTableLatestVal(trailingIncomeStatement, ['operatingIncome', 'Operating Income']) ?? operInc ?? null;
+      const realInterestCoverage = roundOrNull(
+        ttmOpInc != null && ttmIntExp != null && Math.abs(ttmIntExp) > 0 ? ttmOpInc / Math.abs(ttmIntExp) : null,
+        1
+      );
+      const realBeta = roundOrNull(yfSD?.beta ?? yfKS?.beta ?? tv?.beta ?? fhMetrics?.beta);
+      const realWeek52Low = roundOrNull(yfSD?.fiftyTwoWeekLow ?? tv?.low52 ?? fhMetrics?.['52WeekLow']);
+      const realWeek52High = roundOrNull(yfSD?.fiftyTwoWeekHigh ?? tv?.high52 ?? fhMetrics?.['52WeekHigh']);
+
       const data = {
         ticker: cleanTicker,
         companyName: tv?.description || fhProfile?.name || cleanTicker,
@@ -2601,15 +2692,15 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
           revenueGrowth: revGrowthVal,
           netIncomeGrowth: netIncGrowthVal,
           epsGrowth: netIncGrowthVal,
-          peRatio: peVal ? parseFloat(peVal.toFixed(2)) : null,
-          forwardPE: fwdPeVal ? parseFloat(fwdPeVal.toFixed(2)) : null,
-          pegRatio: pegVal ? parseFloat(pegVal.toFixed(2)) : null,
-          priceToSales: psVal ? parseFloat(psVal.toFixed(2)) : null,
-          priceToBook: pbVal ? parseFloat(pbVal.toFixed(2)) : null,
-          evToEbitda: evEbitdaVal ? parseFloat(evEbitdaVal.toFixed(2)) : null,
-          beta: fhMetrics?.beta ? parseFloat(fhMetrics.beta.toFixed(2)) : 2.25,
-          week52Low: tv?.low52 ? parseFloat(tv.low52.toFixed(2)) : (fhMetrics?.['52WeekLow'] ? parseFloat(fhMetrics['52WeekLow'].toFixed(2)) : parseFloat((currentPrice * 0.75).toFixed(2))),
-          week52High: tv?.high52 ? parseFloat(tv.high52.toFixed(2)) : (fhMetrics?.['52WeekHigh'] ? parseFloat(fhMetrics['52WeekHigh'].toFixed(2)) : parseFloat((currentPrice * 1.25).toFixed(2))),
+          peRatio: realPeRatio,
+          forwardPE: realForwardPe,
+          pegRatio: realPegRatio,
+          priceToSales: realPriceToSales,
+          priceToBook: realPriceToBook,
+          evToEbitda: realEvToEbitda,
+          beta: realBeta,
+          week52Low: realWeek52Low ?? parseFloat((currentPrice * 0.75).toFixed(2)),
+          week52High: realWeek52High ?? parseFloat((currentPrice * 1.25).toFixed(2)),
           dividendYield: divYield ? parseFloat(divYield.toFixed(2)) : null,
           dividendAmount: divRate ? parseFloat(Number(divRate).toFixed(2)) : (divYield && currentPrice ? parseFloat((currentPrice * (divYield / 100)).toFixed(2)) : null),
           exDividendDate: 'Sep 10, 2026',
@@ -2668,46 +2759,49 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
           recentRatings
         },
         statistics: {
-          peRatio: peVal ? parseFloat(peVal.toFixed(2)) : (cleanTicker === 'NVDA' ? 20.59 : 28.5),
-          forwardPE: fwdPeVal ? parseFloat(fwdPeVal.toFixed(2)) : (cleanTicker === 'NVDA' ? 10.27 : 24.0),
-          pegRatio: pegVal ? parseFloat(pegVal.toFixed(2)) : (cleanTicker === 'NVDA' ? 0.27 : 1.15),
-          priceToSales: psVal ? parseFloat(psVal.toFixed(2)) : (cleanTicker === 'NVDA' ? 12.98 : 6.5),
-          priceToBook: pbVal ? parseFloat(pbVal.toFixed(2)) : (cleanTicker === 'NVDA' ? 17.17 : 4.8),
-          priceToFcf: tv?.pfcf ? parseFloat(tv.pfcf.toFixed(2)) : (cleanTicker === 'NVDA' ? 30.96 : (fcf > 0 ? parseFloat((mCap / fcf).toFixed(2)) : 32.5)),
-          enterpriseValue: cleanTicker === 'NVDA' ? 3901000000000 : (cleanTicker === 'AAPL' ? 5210000000000 : mCap),
-          evToRevenue: cleanTicker === 'NVDA' ? 12.88 : (totalRev > 0 ? parseFloat((mCap / totalRev).toFixed(2)) : 8.5),
-          evToEbitda: cleanTicker === 'NVDA' ? 19.38 : (evEbitdaVal || 18.5),
-          evToFcf: cleanTicker === 'NVDA' ? 30.78 : (fcf > 0 ? parseFloat((mCap / fcf).toFixed(2)) : 31.5),
-          returnOnEquity: roeVal ? parseFloat(roeVal.toFixed(1)) : (cleanTicker === 'NVDA' ? 117.0 : 18.5),
-          returnOnAssets: roaVal ? parseFloat(roaVal.toFixed(1)) : (cleanTicker === 'NVDA' ? 68.0 : 9.2),
-          returnOnCapital: cleanTicker === 'NVDA' ? 62.4 : 24.5,
-          grossMargin: parseFloat(((grossProf / (totalRev || 1)) * 100).toFixed(1)) || (cleanTicker === 'NVDA' ? 74.8 : 62.0),
-          profitMargin: netMarginVal ? parseFloat(netMarginVal.toFixed(1)) : (cleanTicker === 'NVDA' ? 55.0 : 24.5),
-          operatingMargin: operMarginVal ? parseFloat(operMarginVal.toFixed(1)) : (cleanTicker === 'NVDA' ? 64.8 : 32.0),
-          fcfMargin: parseFloat(((fcf / (totalRev || 1)) * 100).toFixed(1)) || 28.5,
-          currentRatio: cleanTicker === 'NVDA' ? 4.59 : currRatioVal,
-          quickRatio: cleanTicker === 'NVDA' ? 2.92 : quickRatioVal,
-          debtToEquity: cleanTicker === 'NVDA' ? 0.17 : debtEqVal,
-          debtToEbitda: cleanTicker === 'NVDA' ? 0.35 : 0.65,
-          interestCoverage: cleanTicker === 'NVDA' ? 420.0 : 45.0,
-          totalCash: cleanTicker === 'NVDA' ? 62470000000 : (cleanTicker === 'AAPL' ? 61640000000 : mCap * 0.08),
-          totalDebt: cleanTicker === 'NVDA' ? 38860000000 : (cleanTicker === 'AAPL' ? 94480000000 : mCap * 0.15),
-          netCashDebt: (cleanTicker === 'NVDA' ? 62470000000 - 38860000000 : (cleanTicker === 'AAPL' ? 61640000000 - 94480000000 : (mCap * 0.08) - (mCap * 0.15))),
-          sharesOutstanding: cleanTicker === 'NVDA' ? 24150000000 : (cleanTicker === 'AAPL' ? 14530000000 : sharesOut),
-          floatShares: cleanTicker === 'NVDA' ? 23130000000 : (sharesOut * 0.95),
-          sharesShort: cleanTicker === 'NVDA' ? 279580000 : 125000000,
-          shortPercentOfFloat: cleanTicker === 'NVDA' ? 1.21 : 0.85,
-          shortRatio: cleanTicker === 'NVDA' ? 2.71 : 1.8,
-          insiderOwnership: cleanTicker === 'NVDA' ? 4.16 : 0.08,
-          institutionalOwnership: cleanTicker === 'NVDA' ? 71.17 : 61.5,
-          beta: cleanTicker === 'NVDA' ? 2.25 : (tv?.beta || 1.15),
-          week52Low: cleanTicker === 'NVDA' ? 148.80 : (cleanTicker === 'AAPL' ? 243.42 : dayLow * 0.85),
-          week52High: cleanTicker === 'NVDA' ? 243.37 : (cleanTicker === 'AAPL' ? 360.83 : dayHigh * 1.15),
-          week52Change: cleanTicker === 'NVDA' ? 95.4 : 44.5,
-          movingAvg50: parseFloat((currentPrice * 0.96).toFixed(2)),
-          movingAvg200: parseFloat((currentPrice * 0.88).toFixed(2)),
-          avgVolume10D: 145000000,
-          avgVolume3M: cleanTicker === 'NVDA' ? 146130000 : 48000000
+          peRatio: realPeRatio,
+          forwardPE: realForwardPe,
+          pegRatio: realPegRatio,
+          priceToSales: realPriceToSales,
+          priceToBook: realPriceToBook,
+          priceToFcf: realPriceToFcf,
+          enterpriseValue: realEnterpriseValue,
+          evToRevenue: realEvToRevenue,
+          evToEbitda: realEvToEbitda,
+          evToFcf: realEvToFcf,
+          returnOnEquity: realRoe,
+          returnOnAssets: realRoa,
+          returnOnCapital: realRoic ?? roundOrNull(fhMetrics?.roicTTM, 1),
+          grossMargin: realGrossMargin,
+          profitMargin: realProfitMargin,
+          operatingMargin: realOperMargin,
+          fcfMargin: realFcfMargin,
+          currentRatio: roundOrNull(yfFD?.currentRatio ?? currRatioVal),
+          quickRatio: roundOrNull(yfFD?.quickRatio ?? quickRatioVal),
+          debtToEquity: realDebtToEquity,
+          debtToEbitda: realDebtToEbitda,
+          interestCoverage: realInterestCoverage,
+          totalCash: realTotalCash,
+          totalDebt: realTotalDebt,
+          netCashDebt: (realTotalCash != null && realTotalDebt != null) ? (realTotalCash - realTotalDebt) : null,
+          sharesOutstanding: realSharesOut,
+          floatShares: yfKS?.floatShares ?? null,
+          sharesShort: yfKS?.sharesShort ?? null,
+          shortPercentOfFloat: roundOrNull(yfKS?.shortPercentOfFloat != null ? yfKS.shortPercentOfFloat * 100 : null),
+          shortRatio: roundOrNull(yfKS?.shortRatio),
+          insiderOwnership: roundOrNull(yfKS?.heldPercentInsiders != null ? yfKS.heldPercentInsiders * 100 : null),
+          institutionalOwnership: roundOrNull(yfKS?.heldPercentInstitutions != null ? yfKS.heldPercentInstitutions * 100 : null),
+          beta: realBeta,
+          week52Low: realWeek52Low,
+          week52High: realWeek52High,
+          week52Change: roundOrNull(
+            yfKS?.['52WeekChange'] != null ? yfKS['52WeekChange'] * 100 : tv?.perf1Y,
+            1
+          ),
+          movingAvg50: roundOrNull(yfSD?.fiftyDayAverage),
+          movingAvg200: roundOrNull(yfSD?.twoHundredDayAverage),
+          avgVolume10D: yfSD?.averageDailyVolume10Day ?? (fhMetrics?.['10DayAverageTradingVolume'] ? Math.round(fhMetrics['10DayAverageTradingVolume'] * 1e6) : null),
+          avgVolume3M: yfSD?.averageVolume ?? (fhMetrics?.['3MonthAverageTradingVolume'] ? Math.round(fhMetrics['3MonthAverageTradingVolume'] * 1e6) : null)
         },
         metrics: {
           epsTrailing: epsTrailing ? parseFloat(epsTrailing.toFixed(2)) : null,
