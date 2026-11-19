@@ -5,6 +5,7 @@ import handleDividends from './dividends.js';
 import handleEarnings from './earnings.js';
 import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement, buildFinancialRatios, getCompanySegments } from '../src/utils/financialStatementsBuilder.js';
 import { buildStatementsFromYahoo } from '../src/utils/yahooStatementsParser.js';
+import { fetchSecAnnualRecords } from '../src/utils/secEdgarParser.js';
 import { buildDividendsData } from '../src/utils/dividendHelper.js';
 
 const YahooFinance = (yfModule as any).default?.default || (yfModule as any).default || yfModule;
@@ -2282,15 +2283,21 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
             return;
           }
           try {
+            const isUsStock = !parsed.isEuropean && !parsed.isBulgarian && !yahooTargetSym.includes('.');
             const tsPromise = Promise.all([
               yahooFinance.fundamentalsTimeSeries(yahooTargetSym, { period1: '2016-01-01', type: 'annual', module: 'all' }, { validateResult: false }).catch(() => []),
               yahooFinance.fundamentalsTimeSeries(yahooTargetSym, { period1: '2023-01-01', type: 'quarterly', module: 'all' }, { validateResult: false }).catch(() => []),
-              yahooFinance.fundamentalsTimeSeries(yahooTargetSym, { period1: '2023-01-01', type: 'trailing', module: 'all' }, { validateResult: false }).catch(() => [])
+              yahooFinance.fundamentalsTimeSeries(yahooTargetSym, { period1: '2023-01-01', type: 'trailing', module: 'all' }, { validateResult: false }).catch(() => []),
+              isUsStock ? fetchSecAnnualRecords(yahooTargetSym).catch(() => []) : Promise.resolve([])
             ]);
-            const timeoutPromise = new Promise<[any[], any[], any[]]>((resolve) => setTimeout(() => resolve([[], [], []]), 4500));
-            const [ann, qtr, trl] = await Promise.race([tsPromise, timeoutPromise]);
-            if (Array.isArray(ann) && ann.length > 0) {
-              yfAnnual = ann;
+            const timeoutPromise = new Promise<[any[], any[], any[], any[]]>((resolve) => setTimeout(() => resolve([[], [], [], []]), 5000));
+            const [ann, qtr, trl, secAnn] = await Promise.race([tsPromise, timeoutPromise]);
+            const mergedAnnual = [
+              ...(Array.isArray(ann) ? ann : []),
+              ...(Array.isArray(secAnn) ? secAnn : [])
+            ];
+            if (mergedAnnual.length > 0) {
+              yfAnnual = mergedAnnual;
               yfQuarterly = Array.isArray(qtr) ? qtr : [];
               yfTrailing = Array.isArray(trl) ? trl : [];
               yahooTsCache.set(yahooTargetSym, { annual: yfAnnual, quarterly: yfQuarterly, trailing: yfTrailing, ts: Date.now() });

@@ -172,6 +172,7 @@ export function buildStatementsFromYahoo(
   }
 
   for (const rec of annualSorted) {
+    if (annualPeriods.length >= 11) break;
     const dt = toDate(rec.date)!;
     const yr = String(dt.getUTCFullYear());
     if (!annualByPeriod[yr]) {
