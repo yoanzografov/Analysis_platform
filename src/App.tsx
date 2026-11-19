@@ -283,7 +283,7 @@ export default function App() {
         if (hash === 'alerts' || hash === 'price-alerts') {
           if (isAuthChecking) return;
           if (!user) {
-            handleRequireAuth('Watchlist');
+            handleRequireAuth('PRICE ALERTS SCHEDULE');
             clearHashUrl();
             setActiveMainTab('table');
             activeMainTabRef.current = 'table';
@@ -2087,13 +2087,13 @@ export default function App() {
               </span>
             </a>
 
-            {/* Tab 2: Watchlist */}
+            {/* Tab 2: PRICE ALERTS SCHEDULE */}
             <a
               href="#alerts"
               onClick={(e) => {
                 e.preventDefault();
                 if (!currentUser) {
-                  handleRequireAuth('Watchlist');
+                  handleRequireAuth('PRICE ALERTS SCHEDULE');
                   return;
                 }
                 switchTab('alerts');
@@ -2106,7 +2106,7 @@ export default function App() {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <Bell className={`w-4 h-4 shrink-0 ${activeMainTab === 'alerts' ? 'text-white' : 'text-amber-400 group-hover:scale-110 transition-transform'}`} />
-                <span className="truncate">Watchlist</span>
+                <span className="truncate">PRICE ALERTS</span>
                 {!currentUser && <Lock className="w-3 h-3 text-amber-400 shrink-0" />}
               </div>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
@@ -2717,13 +2717,13 @@ export default function App() {
             <Lock className="w-6 h-6" />
           </div>
           <h3 className="text-base font-black uppercase text-ink tracking-wide">
-            Watchlist
+            PRICE ALERTS SCHEDULE
           </h3>
           <p className="text-xs text-ink-muted leading-relaxed">
             Планирането и управлението на персонализирани ценови известия е достъпно само за регистрирани потребители. Моля, влезте в профила си или се регистрирайте.
           </p>
           <button
-            onClick={() => handleRequireAuth('Watchlist')}
+            onClick={() => handleRequireAuth('PRICE ALERTS SCHEDULE')}
             className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase shadow-md shadow-indigo-600/20 transition-all cursor-pointer inline-flex items-center gap-2"
           >
             <Lock className="w-3.5 h-3.5" />
