@@ -1232,11 +1232,12 @@ export default function StockAnalysisExplorer({
 
             <button
               type="button"
-              onClick={() => setIsWatchlisted(!isWatchlisted)}
+              onClick={() => window.open(`${window.location.origin}/#alerts`, '_blank', 'noopener,noreferrer')}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-[#18558b] hover:bg-[#144775] text-white transition-colors cursor-pointer shadow-xs"
+              title="Отвори PRICE ALERTS в нов прозорец"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Watchlist</span>
+              <Bell className="w-3.5 h-3.5" />
+              <span>PRICE ALERTS</span>
             </button>
 
             <button
