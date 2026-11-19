@@ -1,9 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Parser from 'rss-parser';
+import * as yfModule from 'yahoo-finance2';
 import handleDividends from './dividends.js';
 import handleEarnings from './earnings.js';
 import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement, buildFinancialRatios, getCompanySegments } from '../src/utils/financialStatementsBuilder.js';
+import { buildStatementsFromYahoo } from '../src/utils/yahooStatementsParser.js';
 import { buildDividendsData } from '../src/utils/dividendHelper.js';
+
+const YahooFinance = (yfModule as any).default?.default || (yfModule as any).default || yfModule;
+const yahooFinance = new YahooFinance({
+  suppressNotices: ['yahooSurvey']
+});
+const yahooTsCache = new Map<string, { annual: any[]; quarterly: any[]; trailing: any[]; ts: number }>();
 
 // Google Finance exchange prefix → Yahoo Finance suffix
 const EXCHANGE_MAP: Record<string, string> = {
@@ -2223,27 +2231,58 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
         } catch {}
       }
 
-      // 2. Finnhub fallback / enrichment + live quote
+      // 2. Finnhub fallback / enrichment + live quote & Yahoo Finance real historical fundamentals
       let fhMetrics: any = null, fhProfile: any = null, fhRecs: any = null, fhQuote: any = null;
+      let yfAnnual: any[] = [], yfQuarterly: any[] = [], yfTrailing: any[] = [];
       const shouldQueryFinnhub = Boolean(finnhubKey && !parsed.isEuropean && !parsed.isBulgarian);
-      if (shouldQueryFinnhub) {
-        try {
-          const [mRes, pRes, rRes, qRes] = await Promise.all([
-            fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(cleanTicker)}&metric=all&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
-              .then(r => r.ok ? r.json() : null).catch(() => null),
-            fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(cleanTicker)}&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
-              .then(r => r.ok ? r.json() : null).catch(() => null),
-            fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${encodeURIComponent(cleanTicker)}&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
-              .then(r => r.ok ? r.json() : null).catch(() => null),
-            fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(cleanTicker)}&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
-              .then(r => r.ok ? r.json() : null).catch(() => null)
-          ]);
-          fhMetrics = mRes?.metric;
-          fhProfile = pRes;
-          fhRecs = rRes?.[0];
-          fhQuote = qRes;
-        } catch {}
-      }
+      const yahooTargetSym = parsed.yahooSym || cleanTicker;
+      const cachedTs = yahooTsCache.get(yahooTargetSym);
+      const hasFreshTs = Boolean(cachedTs && (Date.now() - cachedTs.ts < 15 * 60 * 1000));
+
+      await Promise.all([
+        (async () => {
+          if (!shouldQueryFinnhub) return;
+          try {
+            const [mRes, pRes, rRes, qRes] = await Promise.all([
+              fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(cleanTicker)}&metric=all&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
+                .then(r => r.ok ? r.json() : null).catch(() => null),
+              fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(cleanTicker)}&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
+                .then(r => r.ok ? r.json() : null).catch(() => null),
+              fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${encodeURIComponent(cleanTicker)}&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
+                .then(r => r.ok ? r.json() : null).catch(() => null),
+              fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(cleanTicker)}&token=${finnhubKey}`, { signal: AbortSignal.timeout(3000) })
+                .then(r => r.ok ? r.json() : null).catch(() => null)
+            ]);
+            fhMetrics = mRes?.metric;
+            fhProfile = pRes;
+            fhRecs = rRes?.[0];
+            fhQuote = qRes;
+          } catch {}
+        })(),
+        (async () => {
+          if (hasFreshTs && cachedTs) {
+            yfAnnual = cachedTs.annual;
+            yfQuarterly = cachedTs.quarterly;
+            yfTrailing = cachedTs.trailing;
+            return;
+          }
+          try {
+            const tsPromise = Promise.all([
+              yahooFinance.fundamentalsTimeSeries(yahooTargetSym, { period1: '2016-01-01', type: 'annual', module: 'all' }, { validateResult: false }).catch(() => []),
+              yahooFinance.fundamentalsTimeSeries(yahooTargetSym, { period1: '2023-01-01', type: 'quarterly', module: 'all' }, { validateResult: false }).catch(() => []),
+              yahooFinance.fundamentalsTimeSeries(yahooTargetSym, { period1: '2023-01-01', type: 'trailing', module: 'all' }, { validateResult: false }).catch(() => [])
+            ]);
+            const timeoutPromise = new Promise<[any[], any[], any[]]>((resolve) => setTimeout(() => resolve([[], [], []]), 4500));
+            const [ann, qtr, trl] = await Promise.race([tsPromise, timeoutPromise]);
+            if (Array.isArray(ann) && ann.length > 0) {
+              yfAnnual = ann;
+              yfQuarterly = Array.isArray(qtr) ? qtr : [];
+              yfTrailing = Array.isArray(trl) ? trl : [];
+              yahooTsCache.set(yahooTargetSym, { annual: yfAnnual, quarterly: yfQuarterly, trailing: yfTrailing, ts: Date.now() });
+            }
+          } catch {}
+        })()
+      ]);
 
       // Compute core numbers with rock-solid fallbacks (prioritize real-time live quote)
       let currentPrice = (fhQuote?.c && fhQuote.c > 0)
@@ -2410,14 +2449,29 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
         netMargin: netMarginVal
       };
 
-      const incomeStatement = buildIncomeStatement(buildParams, false);
-      const balanceSheet = buildBalanceSheet(buildParams, false);
-      const cashFlow = buildCashFlowStatement(buildParams, false);
-      const ratios = buildFinancialRatios(buildParams, false);
-      const quarterlyIncomeStatement = buildIncomeStatement(buildParams, true);
-      const quarterlyBalanceSheet = buildBalanceSheet(buildParams, true);
-      const quarterlyCashFlow = buildCashFlowStatement(buildParams, true);
-      const quarterlyRatios = buildFinancialRatios(buildParams, true);
+      const yahooBundle = buildStatementsFromYahoo(yfAnnual, yfQuarterly, yfTrailing, {
+        currentPrice: parseFloat(Number(currentPrice).toFixed(2)),
+        marketCap: Math.round(mCap),
+        employees: tv?.employees ?? null
+      });
+
+      if (yahooBundle?.latestTtm) {
+        if (yahooBundle.latestTtm.revenue != null) totalRev = yahooBundle.latestTtm.revenue;
+        if (yahooBundle.latestTtm.grossProfit != null) grossProf = yahooBundle.latestTtm.grossProfit;
+        if (yahooBundle.latestTtm.operatingIncome != null) operInc = yahooBundle.latestTtm.operatingIncome;
+        if (yahooBundle.latestTtm.netIncome != null) netInc = yahooBundle.latestTtm.netIncome;
+        if (yahooBundle.latestTtm.freeCashFlow != null) fcf = yahooBundle.latestTtm.freeCashFlow;
+      }
+
+      const incomeStatement = yahooBundle?.incomeStatement ?? buildIncomeStatement(buildParams, false);
+      const balanceSheet = yahooBundle?.balanceSheet ?? buildBalanceSheet(buildParams, false);
+      const cashFlow = yahooBundle?.cashFlow ?? buildCashFlowStatement(buildParams, false);
+      const ratios = yahooBundle?.ratios ?? buildFinancialRatios(buildParams, false);
+      const kpis = yahooBundle?.kpis ?? undefined;
+      const quarterlyIncomeStatement = yahooBundle?.quarterlyIncomeStatement ?? buildIncomeStatement(buildParams, true);
+      const quarterlyBalanceSheet = yahooBundle?.quarterlyBalanceSheet ?? buildBalanceSheet(buildParams, true);
+      const quarterlyCashFlow = yahooBundle?.quarterlyCashFlow ?? buildCashFlowStatement(buildParams, true);
+      const quarterlyRatios = yahooBundle?.quarterlyRatios ?? buildFinancialRatios(buildParams, true);
       const companySegments = getCompanySegments(cleanTicker, totalRev);
 
       const data = {
@@ -2472,10 +2526,10 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
           grossProfit: grossProf,
           operatingIncome: operInc,
           netIncome: netInc,
-          operatingCashFlow: fcf * 1.15,
+          operatingCashFlow: yahooBundle?.latestTtm?.operatingCashFlow ?? (fcf * 1.15),
           freeCashFlow: fcf,
-          totalCash: mCap * 0.08,
-          totalDebt: mCap * (debtEqVal || 0.25),
+          totalCash: yahooBundle?.latestTtm?.totalCash ?? (mCap * 0.08),
+          totalDebt: yahooBundle?.latestTtm?.totalDebt ?? (mCap * (debtEqVal || 0.25)),
           grossMargin: parseFloat(((grossProf / (totalRev || 1)) * 100).toFixed(1)),
           operatingMargin: parseFloat(operMarginVal.toFixed(1)),
           profitMargin: parseFloat(netMarginVal.toFixed(1)),
@@ -2484,6 +2538,7 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
           balanceSheet,
           cashFlow,
           ratios,
+          kpis,
           quarterlyIncomeStatement,
           quarterlyBalanceSheet,
           quarterlyCashFlow,

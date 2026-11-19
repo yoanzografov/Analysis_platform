@@ -1797,7 +1797,7 @@ export default function StockAnalysisExplorer({
                                       const pt = payload[0].payload;
                                       return (
                                         <div className="bg-stone-950/95 border border-indigo-500/40 rounded-xl px-3 py-2 shadow-xl text-xs space-y-1">
-                                          <div className="text-stone-400 font-medium">{pt.period} (Край: {getPeriodEndDate(pt.period)})</div>
+                                          <div className="text-stone-400 font-medium">{pt.period} (Край: {currentStatementTable.periodEndDates?.[pt.period] || getPeriodEndDate(pt.period)})</div>
                                           <div className="font-mono font-black text-sm text-indigo-400">
                                             {pt.formatted}
                                           </div>
@@ -2234,7 +2234,7 @@ export default function StockAnalysisExplorer({
                                   </th>
                                   {(displayPeriods || []).map(period => (
                                     <th key={period} className="py-2 px-4 text-right font-mono font-normal text-ink-faint min-w-[110px]">
-                                      {getPeriodEndDate(period)}
+                                      {currentStatementTable.periodEndDates?.[period] || getPeriodEndDate(period)}
                                     </th>
                                   ))}
                                 </tr>

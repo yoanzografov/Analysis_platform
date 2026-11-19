@@ -10,6 +10,7 @@ export interface FinancialStatementRow {
 
 export interface FinancialStatementTable {
   periods: string[];
+  periodEndDates?: Record<string, string>;
   rows: FinancialStatementRow[];
 }
 
