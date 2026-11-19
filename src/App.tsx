@@ -1955,72 +1955,8 @@ export default function App() {
           </div>
         </a>
 
-        {/* Top-Right Controls: Currency Switcher, Theme Toggle & User Account Status Indicator */}
+        {/* Top-Right Controls: Theme Toggle & User Account Status Indicator */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Global Multi-Currency Switcher (AUTO, EUR, USD, CNY, GBP) */}
-          <div className="flex items-center bg-card/90 border border-border rounded-xl p-0.5 shadow-xs overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setBaseCurrency('AUTO')}
-              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                baseCurrency === 'AUTO'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-ink-muted hover:text-ink'
-              }`}
-              title="Борсова / Оригинална валута (САЩ в $, Европа в €, Китай в ¥, Великобритания в £)"
-            >
-              <span>🌐</span>
-              <span className="hidden sm:inline">Борсова</span>
-            </button>
-            <button
-              onClick={() => setBaseCurrency('EUR')}
-              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                baseCurrency === 'EUR'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-ink-muted hover:text-ink'
-              }`}
-              title="Превалутиране на всички стойности в Евро (€ EUR)"
-            >
-              <span>€</span>
-              <span>EUR</span>
-            </button>
-            <button
-              onClick={() => setBaseCurrency('USD')}
-              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                baseCurrency === 'USD'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-ink-muted hover:text-ink'
-              }`}
-              title="Превалутиране на всички стойности в Щатски Долари ($ USD)"
-            >
-              <span>$</span>
-              <span>USD</span>
-            </button>
-            <button
-              onClick={() => setBaseCurrency('CNY')}
-              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                baseCurrency === 'CNY'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-ink-muted hover:text-ink'
-              }`}
-              title="Превалутиране на всички стойности в Китайски Юани (¥ CNY)"
-            >
-              <span>¥</span>
-              <span>CNY</span>
-            </button>
-            <button
-              onClick={() => setBaseCurrency('GBP')}
-              className={`h-8 px-2.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                baseCurrency === 'GBP'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-ink-muted hover:text-ink'
-              }`}
-              title="Превалутиране на всички стойности в Британски Паунди (£ GBP)"
-            >
-              <span>£</span>
-              <span>GBP</span>
-            </button>
-          </div>
-
           <ThemeToggle />
           <button
             onClick={() => {
