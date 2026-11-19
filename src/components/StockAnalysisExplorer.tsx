@@ -4056,22 +4056,11 @@ export default function StockAnalysisExplorer({
                 {/* ─── TAB 8: PROFILE (STOCKANALYSIS /company/ 1:1 2-COLUMN LAYOUT) ─── */}
                 {activeTab === 'profile' && (
                   <div className="space-y-4">
-                    <div className="pb-2 border-b border-border/60 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <h3 className="text-sm font-black uppercase text-ink tracking-tight">
-                          {data.profile.companyName || stock.companyName || cleanTicker} — Профил на компанията
-                        </h3>
-                        <p className="text-[11px] text-ink-faint">Бизнес описание, ръководство, корпоративни и борсови детайли</p>
-                      </div>
-                      <a
-                        href={`https://stockanalysis.com/stocks/${cleanTicker.toLowerCase()}/company/`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[11px] font-bold text-indigo-400 hover:underline inline-flex items-center gap-1"
-                      >
-                        <span>StockAnalysis</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                    <div className="pb-2 border-b border-border/60">
+                      <h3 className="text-sm font-black uppercase text-ink tracking-tight">
+                        {data.profile.companyName || stock.companyName || cleanTicker} — Профил на компанията
+                      </h3>
+                      <p className="text-[11px] text-ink-faint">Бизнес описание, ръководство, корпоративни и борсови детайли</p>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
