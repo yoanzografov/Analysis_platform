@@ -40,7 +40,8 @@ import {
   Calendar,
   ChevronLeft,
   Search,
-  X
+  X,
+  Star
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -1242,11 +1243,16 @@ export default function StockAnalysisExplorer({
 
             <button
               type="button"
-              onClick={() => setActiveTab('forecast')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-[#18558b] hover:bg-[#144775] text-white transition-colors cursor-pointer shadow-xs"
+              onClick={() => setIsWatchlisted(!isWatchlisted)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer shadow-xs ${
+                isWatchlisted
+                  ? 'bg-amber-500/20 border border-amber-400/50 text-amber-300'
+                  : 'bg-[#18558b] hover:bg-[#144775] text-white'
+              }`}
+              title={isWatchlisted ? 'Премахни от Watchlist' : 'Добави в Watchlist'}
             >
-              <Bell className="w-3.5 h-3.5" />
-              <span>Alerts</span>
+              <Star className={`w-3.5 h-3.5 ${isWatchlisted ? 'fill-amber-400 text-amber-400' : ''}`} />
+              <span>Watchlist</span>
             </button>
 
             <button
