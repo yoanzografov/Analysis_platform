@@ -886,7 +886,29 @@ export default function AiAssistantDrawer({
           </div>
 
           {/* Bottom Chat Input Form */}
-          <div className="p-4 border-t border-indigo-500/20 bg-slate-900/90 backdrop-blur shrink-0">
+          <div className="p-4 border-t border-indigo-500/20 bg-slate-900/90 backdrop-blur shrink-0 space-y-2.5">
+            {/* Quick Prompt Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {[
+                { label: '📊 Сравни 2 актива (Цена, Риск, Фундамент)', prompt: 'Сравни NVDA и AMD за 1Y (Цена, Риск, Фундамент)' },
+                { label: '☀️ Дневен пазарен обзор', prompt: 'Дай ми Дневния пазарен обзор за днес' },
+                { label: '📰 Най-важните новини днес', prompt: 'Кои са най-важните пазарни новини днес?' },
+                { label: '📅 Кои компании излизат на отчет днес?', prompt: 'Кои компании излизат на отчет днес (BMO и AMC)?' },
+                { label: '🏦 Калкулатор: Кредит vs Инвестиция', prompt: 'Изчисли Кредит vs Инвестиция: 50000 евро, 3.5% лихва, 10 години при 8% очаквана доходност' },
+                { label: '❓ Как да използвам платформата?', prompt: 'Как да използвам платформата, как се въвеждат тикери и как работят калкулаторите?' }
+              ].map((chip, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => handleSendMessage(chip.prompt)}
+                  className="px-2.5 py-1 rounded-full bg-slate-800/90 hover:bg-indigo-600/30 border border-slate-700 hover:border-indigo-500/50 text-[10.5px] font-bold text-slate-200 whitespace-nowrap shrink-0 transition-colors cursor-pointer disabled:opacity-40"
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();

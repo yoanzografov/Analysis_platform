@@ -16,6 +16,7 @@ import BentoCharts from './components/BentoCharts';
 import PriceAlertPlanner from './components/PriceAlertPlanner';
 import PortfolioTracker from './components/PortfolioTracker';
 import MarketSummaryWidgets from './components/MarketSummaryWidgets';
+import MorningBriefingCard from './components/MorningBriefingCard';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
@@ -2505,6 +2506,21 @@ export default function App() {
         {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
       {activeMainTab === 'table' && (
         <>
+          <MorningBriefingCard
+            userName={currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : undefined)}
+            onSelectTicker={(sym) => {
+              const found = stocks.find(s => s.ticker.toUpperCase() === sym.toUpperCase());
+              setSelectedStockForStocksTab(found || {
+                watch: '', ticker: sym.toUpperCase(), companyName: sym.toUpperCase(),
+                date: '', priceOfCalc: null, dailyChangePct: 0, currentPrice: 0,
+                fairPrice: null, difference: null, buySell: 'ДРУГИ', marketCap: 0,
+                peRatio: null, eps: null, profileLink: '', dividend: '-',
+                signal: 'Hold', low52: null, high52: null
+              });
+              switchTab('stocks');
+            }}
+          />
+
           <MarketSummaryWidgets 
             stocks={stocks}
             activeFilter={activeFilter}

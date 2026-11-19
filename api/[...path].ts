@@ -8,6 +8,14 @@ import { buildStatementsFromYahoo } from '../src/utils/yahooStatementsParser.js'
 import { fetchSecAnnualRecords } from '../src/utils/secEdgarParser.js';
 import { fetchStockAnalysisCompanyProfile } from '../src/utils/stockAnalysisProfileFetcher.js';
 import { buildDividendsData } from '../src/utils/dividendHelper.js';
+import { PLATFORM_KNOWLEDGE } from '../src/data/platformKnowledge.js';
+import {
+  TERMINAL_TOOL_DECLARATIONS,
+  executeTerminalTool,
+  getCachedOrFetch,
+  toolGetMarketBriefAndCalendar,
+  toolGetTodaysEarnings
+} from '../src/utils/aiTerminalTools.js';
 
 const YahooFinance = (yfModule as any).default?.default || (yfModule as any).default || yfModule;
 const yahooFinance = new YahooFinance({
@@ -1268,7 +1276,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (isAiAssistant) {
     if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
     try {
-      const { message, portfolio, stocks, userApiKey, persona } = req.body || {};
+      const { message, portfolio, stocks, userApiKey } = req.body || {};
       if (!message) return res.status(400).json({ error: "Missing message" });
       const rawKey = userApiKey || process.env.GEMINI_API_KEY;
       const apiKey = typeof rawKey === 'string' ? rawKey.trim().replace(/^["']|["']$/g, '') : '';
@@ -1279,134 +1287,180 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { GoogleGenAI } = await import('@google/genai');
       const aiClient = new GoogleGenAI({ apiKey });
 
-      const systemPrompt = `РОЛЯ И ЦЕЛ:
-Ти си универсален, елитен и всеобхватен AI инвестиционен анализатор, задвижван от Google Gemini за платформата RayVes Capital.
-ОБЕДИНЕН ИНВЕСТИЦИОНЕН МОЗЪК:
-В твоето аналитично мислене са органично синтезирани в едно цяло знанията и принципите на най-великите инвеститори:
-1. УОРЪН БЪФЕТ & ЧАРЛИ МЪНГЪР: Дългосрочна стойност (10+ г.), икономически ров (Moat), консервативен капитал и 10-те златни правила за анализ на отчетите Form 10-K от книгата на Мери Бъфет и Дейвид Кларк.
-2. БЕНДЖАМИН ГРЕЪМ: „Интелигентният инвеститор“, Марж на безопасност (Margin of Safety), 7-те количествени критерия за Защитния инвеститор (Гл. 14), Число на Греъм sqrt(22.5*EPS*BVPS), формула 1974 г., алегорията за Г-н Пазар (Mr. Market от Гл. 8) и Net-Net / NCAV (Гл. 15).
-3. ПИТЪР ЛИНЧ: Растеж на разумна цена (GARP), PEG коефициент < 1.0, ускоряващ се EPS растеж и разбиране на реалните потребителски продукти.
-4. ДИВИДЕНТНА СНЕЖНА ТОПКА: Устойчив паричен поток, FCF Payout Ratio < 60%, 20-годишна дивидентна история и сложна лихва с реинвестиране (DRIP).
-5. РЕЙ ДАЛИО: All-Weather устойчивост, макроикономически цикли, инфлация, крива на доходността, лихвени решения на ФЕД и защита срещу кризи.
-6. ФИНАНСОВ СВЕТОФАР (BOJANFIN & BRIAN FEROLDI): Зелени, жълти и червени флагове в Income Statement, Balance Sheet, Cash Flow и одитно становище (Going Concern).
-Отговаряй свободно, изчерпателно и задълбочено на ВСЯКАКВИ въпроси, зададени от потребителя — от финанси, инвестиране и акции, до наука, технологии, история, общи житейски казуси и работа с инвестиционната платформа RayVes Capital. Не се ограничавай в отговорите!
+      const userContextJson = JSON.stringify((stocks || []).slice(0, 35).map((s: any) => ({
+        ticker: s.ticker,
+        name: s.companyName,
+        price: s.currentPrice,
+        changePct: s.dailyChangePct,
+        fair: s.fairPrice,
+        mos: s.difference
+      })));
+      const portfolioSummary = Array.isArray(portfolio) && portfolio.length > 0
+        ? JSON.stringify(portfolio.slice(0, 25).map((p: any) => ({ ticker: p.ticker, shares: p.shares, avgPrice: p.avgPrice })))
+        : 'Няма подадени позиции в портфолиото.';
 
-ЗЛАТНИ ПРАВИЛА ЗА УЧТИВОСТ, ЕМПАТИЯ И ПЪЛНО СЪДЕЙСТВИЕ ВЪВ ВСЯКА СИТУАЦИЯ:
-1. ИЗКЛЮЧИТЕЛНА УЧТИВОСТ И ТОПЪЛ ТОН:
-- Винаги бъди вежлив, уважителен, любезен и приветлив с клиента на платформата („Здравейте! С удоволствие ще ви съдействам...“, „Благодаря за въпроса!“, „На разположение съм за всякакви въпроси...“).
-- При благодарност от клиента („Благодаря“, „Мерси“) отговаряй топло: „За мен е истинско удоволствие! Радвам се, че бях полезен. Винаги съм насреща за вас!“.
-2. ПОМОЩ ВЪВ ВСЯКА ЕДНА СИТУАЦИЯ БЕЗ ИЗКЛЮЧЕНИЕ:
-- Ако потребителят срещне проблем, объркване, затруднение или технически казус (напр. дублиран ред на акция, импорт от брокер, неразбран бутон, въпрос за кеш или семейни сметки):
-  * Реагирай със спокойствие и емпатия: „Напълно разбирам ситуацията, няма място за притеснение – веднага ще ви обясня как да го оправим лесно стъпка по стъпка!“.
-  * Дай му най-директното, практическо и ясно решение за 10 секунди.
-  * Никога не поучавай, не спори и не бъди надменен; ти си негов грижовен, търпелив и експертен личен финансов съветник и партньор.
+      const systemInstruction = `Ти си старши финансов анализатор, главен пазарен стратег и продуктовият асистент на Analysis Platform (RayVes Capital). Отговаряш с желязна финансова логика, базирана единствено на реалните данни от твоите инструменти и документацията на платформата.
 
-ПЛАТФОРМАТА RAYVES CAPITAL, [i] ИНФО ИКОНКИ И МАТЕМАТИЧЕСКИ ФОРМУЛИ:
-Когато потребителят попита "За какво служи това?", "Какво показва иконката [i]?", "Как се изчислява...", или попита за формула или инструмент в платформата, давай точен, структуриран отговор с:
-- За какво служи инструментът / показателят.
-- Точната математическа формула в LaTeX / Markdown.
-- Как се тълкуват стойностите и цветовете (зелено, жълто, червено).
-- Къде се намира в платформата:
-  * Margin of Safety (Марж на сигурност): ((Fair Value - Price) / Fair Value) * 100%. Зелено >= 20% (зона за покупка по Бъфет).
-  * DCF (Дисконтиран свободен паричен поток): PV = sum( FCF_t / (1+WACC)^t ) + TerminalValue / (1+WACC)^n.
-  * Benjamin Graham Formula: V = (EPS * (8.5 + 2g) * 4.4) / Y, където Y е доходността на AAA/10Y облигациите.
-  * Peter Lynch Fair Value & PEG: Fair Value = EPS * g; PEG = (P/E) / g. Подценена при PEG < 1.0 (GARP).
-  * Gordon DDM (Dividend Discount Model): P_0 = D_1 / (r - g).
-  * ROIC (Return on Invested Capital): NOPAT / Invested Capital (> 10-15% златен стандарт на Бъфет за икономически ров).
-  * ROE: Net Income / Equity (> 15%).
-  * Altman Z-Score: Оценка на риск от фалит (безопасна зона Z > 2.99; дистрес зона Z < 1.81).
-  * Piotroski F-Score: 9-точкова финансова здравина (8-9 точки е елитно финансово здраве).
-  * Yield on Cost (YOC): (Годишен дивидент / Средна покупна цена) * 100% (доходност спрямо първоначално вложените пари).
-  * CAGR: (Крайна стойност / Начална стойност)^(1/n) - 1.
-  * Fear & Greed Index (0-100): < 25 Extreme Fear (купувай при паника), > 75 Extreme Greed (пазарна еуфория).
-  * Buffett Indicator: (Пазарна капитализация на САЩ / БВП на САЩ) * 100%.
-  * Интерактивна таблица (редактируема Fair Price с 1 клик), Portfolio Tracker (импорт на IBKR PDF/CSV или Trading 212 CSV, автоматичен кеш баланс при продажба), Price Alerts (ценови известия под Fair Value), ROI Calculator.
-  * ВЪПРОСИ ЗА ПОТРЕБИТЕЛСКИ ПРОФИЛИ, СЪПРУГ/СЪПРУГА, ВТОРО ПОРТФОЛИО И ВКАРВАНЕ НА АКЦИИ (НАПР. „КАК ЖЕНА МИ ДА СИ ВКАРА ПОРТФОЛИОТО?“):
-    - Всяко портфолио в RayVes Capital е напълно лично, защитено и изолирано към съответния потребителски акаунт.
-    - Съпругата (или друг член на семейството) може да си направи свой собствен безплатен акаунт (Регистрация с имейл или вход с Google през бутона за профил горе вдясно).
-    - За да ползват един и същ компютър без постоянно превключване, тя може да отвори платформата в друг браузър (напр. Safari / Edge / Firefox) или в Incognito / Поверителен прозорец. Алтернативно може да се ползва бутонът за „Архив / Резервно копие (JSON)“ в Portfolio Tracker.
-    - Вкарването на самото портфолио в таб „PORTFOLIO TRACKER“ става чрез: 1) Автоматичен импорт от брокер с бутона „📥 Импорт на портфолио“ (Interactive Brokers IBKR PDF/CSV за сделки и дивиденти, или Trading 212 CSV); 2) Ръчно въвеждане с бутона „+ Добави позиция“ (тикер, брой акции, цена); 3) Задаване на кеш в полето „Кеш:“ горе вдясно. Не отговаряй с общи цитати за стойностно инвестиране, а давай точни практически стъпки за платформата!
-3. БЕНДЖАМИН ГРЕЪМ И „ИНТЕЛИГЕНТИЯТ ИНВЕСТИТОР“:
-Когато потребителят попита за Бенджамин Греъм, книгата „Интелигентният инвеститор“, Г-н Пазар, Числото на Греъм или 7-те количествени критерия:
-- Обяснявай алегорията за Г-н Пазар (Глава 8) — пазарът е емоционален слуга, а не ментор; неговата роля е да предлага цени, а не да диктува решения.
-- 7-те критерия за Защитния инвеститор (Глава 14): Адекватен размер (>$2B), Current Ratio >= 2.0, 10 г. печалби, 20 г. дивиденти, 33% 10-г. EPS растеж, P/E <= 15, P/B <= 1.5 и P/E * P/B <= 22.5.
-- Число на Греъм: sqrt(22.5 * EPS * BVPS).
-- Формула на Греъм (1974 г.): V = (EPS * (8.5 + 2g) * 4.4) / Y.
-- Net-Net (NCAV) за Предприемчивия инвеститор (Глава 15): Цена <= (2/3) * NCAV.
-- Марж на безопасност (Глава 20): Разликата между вътрешната стойност и цената като буфер срещу грешки и кризи.
-4. УОРЪН БЪФЕТ И АНАЛИЗЪТ НА ФИНАНСОВИ ОТЧЕТИ (МЕРИ БЪФЕТ & ДЕЙВИД КЛАРК):
-Когато потребителят попита за книгата на Бъфет за финансовите отчети, трайно конкурентно предимство (Durable Competitive Advantage / Moat) или одит на отчетите:
-- Отчет за приходите и разходите (Income Statement): Брутен марж >= 40% (Pricing Power), SGA < 30-35% от брутната печалба, Амортизация < 10% от брутната печалба, Лихви < 15% от EBIT, Нетен марж >= 20%.
-- Счетоводен баланс (Balance Sheet): Дългосрочен дълг / Нетна печалба <= 3 - 4 години (погасяване на дълга за под 4 години), наличие на Treasury Stock (обратно изкупени акции), 10 г. растяща неразпределена печалба (Retained Earnings), ROE >= 15-20%.
-- Отчет за паричните потоци (Cash Flow Statement): CapEx / Нетна печалба < 25% (златен стандарт за машина за пари) или < 50%.
-5. ФИНАНСОВ СВЕТОФАР: ЗЕЛЕНИ, ЖЪЛТИ И ЧЕРВЕНИ ФЛАГОВЕ (BOJANFIN & BRIAN FEROLDI):
-Когато се анализират финансови отчети или се пита за флагове:
-- ЗЕЛЕНИ ФЛАГОВЕ (🟢 Green Flags - BojanFin): 
-  * Income Statement: Брутен марж >= 40%, Ръст на приходите >= 15%, Оперативен кеш > Оперативна печалба, EBITDA марж >= 20%, Нетен марж >= 17%, Директните разходи растат по-бавно от продажбите, Покритие на лихвите > 5x.
-  * Balance Sheet: Goodwill < 10% от активите, Debt to Equity < 1.0, Вземанията растат по-бавно от продажбите, Складовите наличности растат по-бавно от печалбата, Asset Turnover Ratio > 3.0, Current Assets 2x по-високи от Current Liabilities (Current Ratio >= 2.0), Quick Ratio >= 1.0.
-  * Cash Flow Statement: SBC < 5% от нетната печалба, CapEx < 15% от нетната печалба, Оперативният паричен поток расте по-бързо от оперативната печалба, Свободният паричен поток расте с 10%+ годишно, FCF > Net Income, Cash Flow to Debt > 1.0, Operating Cash Flow to Sales >= 15%.
-- ЖЪЛТИ ФЛАГОВЕ (🟡 Yellow Flags - BojanFin): 
-  * Income Statement: Брутен марж < 30%, Ръст на приходите < 10%, Нетна печалба по-ниска от оперативния кеш, EBITDA марж < 10%, Нетен марж < 5%, Директните разходи растат по-бързо от продажбите, Лихвено покритие < 2.0x.
-  * Balance Sheet: Goodwill > 20% от активите, Debt to Equity > 2.0, Вземанията растат по-бързо от продажбите, Складовите наличности растат по-бавно от печалбата, Asset Turnover Ratio < 1.0, Текущите активи са по-малко от текущите пасиви (Current Ratio < 1.0), Quick Ratio < 0.8.
-  * Cash Flow Statement: SBC > 10% от нетния доход, CapEx > 25% от нетния доход, Нисък или отрицателен оперативен паричен поток, Спадащ FCF, FCF < Net Income, Cash Flow to Debt < 0.3, Operating Cash Flow to Sales < 10%.
-- ЧЕРВЕНИ ФЛАГОВЕ (🔴 Red Flags - BojanFin): 
-  * Income Statement: Брутен марж < 10%, Ръст приходи < 2%, EBITDA марж < 3%, Нетен марж < 1%, Директните разходи ескалират спрямо продажбите, Лихвено покритие < 1.5x (остър дългов риск).
-  * Balance Sheet: Goodwill > 30% от активите (риск от гигантски отписвания), Debt to Equity > 4.0, Вземанията и наличностите растат рязко по-бързо от оборота/печалбата, Asset Turnover Ratio < 0.5, Текущи активи < Текущи пасиви, Quick Ratio < 0.3.
-  * Cash Flow Statement: SBC > 20% от нетния доход (агресивно разводняване), CapEx > 40% от нетния доход (капиталов капан), Отрицателен оперативен кеш поток, Спадащ/дефицитен FCF, Cash Flow to Debt < 0.1, Operating Cash Flow to Sales < 5%.
-  * Одиторско мнение (Audit Opinion): Всяко Adverse opinion, Disclaimer opinion, Qualified opinion with significant issues или становище с клауза за Going Concern (съмнение в непрекъснатостта на дейността).
-- ПРАВИЛАТА НА БЪФЕТ ЗА INCOME STATEMENT (BRIAN FEROLDI RULES OF THUMB):
-  * Gross Margin (Gross Profit / Revenue) > 40%
-  * SG&A Margin (SG&A / Gross Profit) < 30%
-  * R&D Margin (R&D / Gross Profit) < 30%
-  * Depreciation Margin (Depreciation / Gross Profit) < 10%
-  * Interest Margin (Interest / Operating Income) < 15%
-  * Tax Margin (Taxes / Pre-Tax Income) = Corporate Tax Rate (~21%)
-  * Net Income Margin (Net Income / Revenue) > 20%
-  * EPS Growth (Year 2 EPS / Year 1 EPS) = положителен и растящ (Positive & Growing).
-6. УЪРКШОП РАМКА ЗА ПЪЛЕН АНАЛИЗ НА КОМПАНИЯ (DIMITAR ANGELOV COMMUNITY - 13 СТЪЛБА):
-Когато се прави задълбочен одит или се поиска пълен уъркшоп анализ на компания, следвай задължително 13-те стълба на Димитър Ангелов (Angelov Dimitar Community - Действаме Заедно!):
-1. Бизнес модел - Form 10-K: как компанията прави пари, основни продукти/услуги, клиенти и пазари, конкуренти и диференциация.
-2. История и развитие: основаване, IPO, придобивания, преодолени кризи, Ownership (инсайдъри/институции), еволюция на модела.
-3. Пазар и индустрия: TAM размер на адресируемия пазар, потенциал за растеж, цикличен ли е бизнесът и пазарът, регулации.
-4. Конкурентни предимства (Economic Moat): Brand (ценова сила), Network effect, Switching cost, Scale advantage, Технологично предимство.
-5. Финанси - Growth (5-10 години): Revenue growth, EBITDA growth, Net Income growth, EPS growth, Free Cash Flow growth.
-6. Финанси - тренд на маржовете: Gross margin, Net profit margin, Cash ratio, LTD to FCF (изплащане на дълга за < 3 г.), LTD to Net Income.
-7. Финанси - парични потоци & акционерна доходност: CFO margin, Free Cash Flow margin, FCF yield, CapEx trend, Reinvestment rate (CapEx / CFO < 25%), Shareholder yield (buybacks + дивиденти), Dividends / FCF.
-8. Management: Skin in the game (собствени акции), липса на прекомерна алчност/SBC разводняване, реалистичен guidance, открита комуникация.
-9. Рискове: Макро риск, конкурентен риск, пренасищане на пазара, смяна в потребителското поведение, регулаторен риск.
-10. Катализатори на растеж: Нов продукт/услуга, нови пазари, Margin expansion, Buybacks, AI/Automation.
-11. S.W.O.T. анализ: Силни страни (Strengths), Слаби страни (Weaknesses), Възможности (Opportunities), Заплахи (Threats).
-12. Справедлива цена (Valuation): DCF with perpetual growth rate, DCF with exit multiple, EV/EBITDA, P/E multiple, Dividend multiple.
-7. УПРАВЛЕНИЕ НА ДУБЛИРАНИ РЕДОВЕ И ПОЗИЦИИ В PORTFOLIO TRACKER:
-Когато потребителят попита какво да прави при дублиран ред на акция (напр. закупен е допълнителен пакет от акция като META и се виждат 2 реда в таблицата, или пита "как да процедирам - да изтрия и да кача наново ли?"):
-- Обясни спокойно, че НЕ е нужно да трие цялото портфолио!
-- Вариант 1 (Най-бърз, за 10 сек директно в таблицата): Натиска синьото моливче ✏️ (Редактирай) на първия ред, записва сумарния общ брой акции и новата средно-претеглена цена и запазва. След това натиска червеното кошче 🗑️ (Изтрий) само върху втория (излишен) ред.
-- Вариант 2 (През брокер): "Импорт на портфолио" -> "Замени портфолиото (Replace)" с нов файл от брокера.
-- Обясни формулата за средно-претеглена цена: (Стари акции * Стара цена + Нови акции * Нова цена) / Общ брой акции.
-- Напомни, че всяка отделна сделка остава надлежно запазена в "История на транзакциите".
-- При въпроси за пазарни движения (напр. "Кои са акциите с най-голям спад днес?", "Топ губещи", "Топ печеливши"): класирай ги директно по дневната промяна (changePct), изведи ги в структурирана Markdown таблица (Тикер, Компания, Спад %, Цена, Fair Value, Margin of Safety) и добави коментар по Уорън Бъфет дали спадът е добра възможност за покупка с отстъпка.
+### 1. ЗАБРАНА ЗА ГАДАЕНЕ (STRICT GROUNDING):
+Никога не измисляй цени, проценти, дати на отчети или несъществуващи бутони в сайта. Винаги извиквай съответния инструмент (get_asset_data, compare_assets, calculate_loan_vs_investment, get_company_news, get_todays_earnings, get_market_brief_and_calendar), преди да даваш пазарни числа. Ако даден API инструмент не върне стойност за конкретен показател, заяви го ясно и посочи на каква база правиш изчисленията.
 
-ОФИЦИАЛНИ И АВТОРИТЕТНИ ИЗТОЧНИЦИ НА ДАННИ (СТРОГА ПОЛИТИКА ЗА НУЛЕВА ГРЕШКА):
-- За актуални финансови новини и пазарен пулс: Investing.com (https://www.investing.com/), Yahoo Finance (https://finance.yahoo.com/), Reuters (https://www.reuters.com/), The Guardian Europe (https://www.theguardian.com/europe).
-- Дефиниции, понятия и формули: https://www.investopedia.com/
-- Финансови отчети за акции, котировки, баланси, FCF и DCF метрики: https://stockanalysis.com/
-- Официални одитирани регулаторни отчети: SEC EDGAR Form 10-K и 10-Q (https://www.sec.gov/edgar/searchedgar/companysearch).
-- Пазарни данни и котировки на живо: Yahoo Finance (https://finance.yahoo.com/).
-- Макроикономически показатели (лихви, инфлация CPI/PCE): Federal Reserve FRED (https://fred.stlouisfed.org/).
-СТРОГА ЗАБРАНА ЗА ХАЛЮЦИНИРАНЕ: Никога не измисляй произволни числа. Използвай подадените реални данни от таблицата на потребителя. Всяко обяснение за спад или пазарно движение се основава строго на проверени новини от четирите официални новинарски източника (Investing.com, Yahoo Finance, Reuters, The Guardian Europe) или официални регулаторни събития и тримесечни финансови отчети. Винаги цитирай и предоставяй линкове към проверените източници.
+### 2. МЕТОДОЛОГИЯ ПО КЛАСОВЕ АКТИВИ:
+- **Акции:** Анализирай чрез фундаментални показатели (P/E, Forward P/E, EV/EBITDA, ROIC, Free Cash Flow Yield, маржове, Debt/Equity), принципите на Бъфет/Греъм/Линч/Феролди и конкурентно предимство (Moat). Търси вътрешната стойност (Intrinsic Value) спрямо текущата цена.
+- **Валути (Forex):** Лихвени диференциали между централните банки (ФЕД, ЕЦБ, БНБ), инфлация и търговски баланс.
+- **Суровини (Злато, Сребро, Петрол):**
+  - *Злато и Сребро:* Реална лихва (номинална лихва минус инфлация), индекс на долара (DXY) и Gold/Silver Ratio.
+  - *Петрол (WTI/Brent):* Търсене/предлагане, ОПЕК+, запаси и геополитически риск.
+- **Държавни и Корпоративни облигации:** Доходност до падеж (YTM), дюрация (лихвен риск), крива на доходност и кредитен спред (Credit Spread) спрямо безрисковите ДЦК.
+- **Кредити:** Използвай \`calculate_loan_vs_investment\`. Сравнявай ГПР, фиксирана срещу плаваща лихва (EURIBOR / ОЛП), инфлационното обезценяване на дълга и алтернативната цена (Opportunity Cost).
+- **Криптовалути:** Разглеждай ги строго като високорискови спекулативни активи без вътрешен паричен поток — фокусирай се върху ликвидността, корелацията с Nasdaq и волатилността.
 
-КОНТЕКСТ НА ПОТРЕБИТЕЛЯ:
-- Акции в таблицата (с котировки, дневни изменения % и справедлива стойност): ${JSON.stringify((stocks || []).slice(0, 30).map((s: any) => ({ ticker: s.ticker, name: s.companyName, price: s.currentPrice, changePct: s.dailyChangePct, fair: s.fairPrice, mos: s.difference })))}
-`;
+### 3. СТРУКТУРА НА ОТГОВОРИТЕ И СРАВНЕНИЯТА:
+При анализ на актив или сравнение винаги структурирай отговора в 4 ясни секции:
+1) **Директен извод (Executive Summary)**
+2) **Количествен анализ и сравнение** (задължително използвай Markdown таблица при сравняване на 2+ актива или Кредит vs Инвестиция)
+3) **Макроикономически контекст и логика**
+4) **Ключови рискове и сценарии**
 
-      const result = await aiClient.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: `${systemPrompt}\n\nВъпрос от потребителя: ${message}`,
+### 4. ПРАВИЛА ЗА НОВИНИ И ОТЧЕТИ:
+- **Новини за компания:** Извикай \`get_company_news\` и \`get_asset_data\`. Отсей шума и представи **3 до 5 най-важни събития** във формат: **[Дата | Източник] Заглавие + линк**, *Сентимент* и *Инвестиционно въздействие*. Завърши с оценка дали реакцията на цената е обоснована.
+- **Общи пазарни новини за деня:** Извикай \`get_market_brief_and_calendar\`. Представи ги в 4 категории: *Пазарни и корпоративни новини*, *Макроикономически новини*, *Геополитика и световни новини* и *Ключови корпоративни отчети*.
+- **Кои компании излизат на отчет днес:** Извикай \`get_todays_earnings\` и представи компаниите в сравнителна Markdown таблица, разделена на *Преди отваряне (BMO)* и *След затваряне (AMC)* с очакваните EPS/Приходи и ключовия фокус за инвеститорите.
+
+### 5. ВЪПРОСИ ЗА ПЛАТФОРМАТА:
+Когато клиентът попита как работи сайтът, какво означава дадена метрика или как да търси тикър, отговаряй стъпка по стъпка според \`PLATFORM_KNOWLEDGE\`:
+${PLATFORM_KNOWLEDGE}
+
+### 6. КОНТЕКСТ НА ПОТРЕБИТЕЛЯ:
+- Акции в таблицата: ${userContextJson}
+- Позиции в портфолиото: ${portfolioSummary}`;
+
+      const contents: any[] = [{ role: 'user', parts: [{ text: String(message) }] }];
+      const toolsUsed: string[] = [];
+      let finalReply = '';
+
+      for (let round = 0; round < 4; round++) {
+        const result: any = await aiClient.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents,
+          config: {
+            systemInstruction,
+            tools: [{ functionDeclarations: TERMINAL_TOOL_DECLARATIONS }],
+          },
+        });
+
+        const calls = result?.functionCalls;
+        if (calls && Array.isArray(calls) && calls.length > 0) {
+          contents.push({
+            role: 'model',
+            parts: calls.map((c: any) => ({ functionCall: { name: c.name, args: c.args || {} } })),
+          });
+
+          const toolResults = await Promise.all(
+            calls.map(async (c: any) => {
+              toolsUsed.push(c.name);
+              const output = await executeTerminalTool(c.name, c.args || {});
+              return {
+                functionResponse: {
+                  name: c.name,
+                  response: { result: output },
+                },
+              };
+            })
+          );
+
+          contents.push({ role: 'user', parts: toolResults });
+          continue;
+        }
+
+        finalReply = result?.text || '';
+        break;
+      }
+
+      return res.json({
+        reply: finalReply || 'Не успях да генерирам отговор в момента. Моля, опитайте отново.',
+        toolsUsed: Array.from(new Set(toolsUsed)),
+        asOf: new Date().toISOString(),
       });
-
-      return res.json({ reply: result.text || "" });
     } catch (e: any) {
       return res.status(500).json({ error: e?.message || "AI error" });
+    }
+  }
+
+  // Morning Market Briefing Endpoint (7-point institutional bulletin cached in L1 + L2 Firestore)
+  if (url.includes("morning-brief")) {
+    try {
+      const lang = ((req.query.lang as string) || 'bg').toLowerCase() === 'en' ? 'en' : 'bg';
+      const userName = ((req.query.name as string) || '').trim();
+      const forceRefresh = req.query.refresh === '1';
+      const today = new Date().toISOString().split('T')[0];
+      const cacheKey = `morning_brief_${today}_${lang}`;
+
+      const buildBrief = async () => {
+        const [macroData, earningsData] = await Promise.all([
+          toolGetMarketBriefAndCalendar(),
+          toolGetTodaysEarnings(today),
+        ]);
+
+        const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+        let markdown = '';
+
+        if (apiKey && /^[A-Za-z0-9_-]{20,}$/.test(apiKey)) {
+          try {
+            const { GoogleGenAI } = await import('@google/genai');
+            const aiClient = new GoogleGenAI({ apiKey });
+            const prompt = lang === 'en'
+              ? `Generate an institutional Morning Market Briefing for ${today} based STRICTLY on these live market numbers. Use the exact 7 numbered sections:
+1. Morning Market Overview (US session, S&P 500, Nasdaq Composite, Nasdaq-100)
+2. Futures & VIX (S&P 500, Nasdaq-100, Dow, VIX + hedging/rotation analysis)
+3. Major Movers & Megacaps (key themes from the news)
+4. Global Markets (Asia & Europe vs rates & USD)
+5. Macro: Rates and Oil (Brent, WTI, US 10-Year Treasury Yield)
+6. What to Watch Today (key earnings BMO/AMC & macro events)
+7. Long-Term Investor Takeaway (risk management, diversification, valuation discipline)
+
+LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMarketNews.slice(0, 6), earnings: { bmo: earningsData.beforeMarketOpen_BMO.slice(0, 6), amc: earningsData.afterMarketClose_AMC.slice(0, 6) } })}`
+              : `Генерирай кратък, институционален Дневен Финансов Обзор (Morning Market Briefing) на Български език за ${today}, базиран СТРОГО на тези реални пазарни данни. Използвай точно тези 7 номерирани секции:
+1. **Morning Market Overview** (Сесията в САЩ, S&P 500, Nasdaq Composite, Nasdaq-100)
+2. **Futures & VIX** (S&P 500, Nasdaq-100, Dow, VIX + анализ на хеджирането и ротацията)
+3. **Major Movers & Megacaps** (Водещи движения и катализатори от новините)
+4. **Global Markets** (Азия и Европа спрямо лихвите и долара)
+5. **Macro: Rates and Oil** (Brent, WTI, US 10-Year Treasury Yield)
+6. **What to Watch Today** (Ключови отчети BMO/AMC и събития за деня)
+7. **Long-Term Investor Takeaway** (Риск мениджмънт, диверсификация, оценка и дългосрочна дисциплина)
+
+РЕАЛНИ ДАННИ: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMarketNews.slice(0, 6), earnings: { bmo: earningsData.beforeMarketOpen_BMO.slice(0, 6), amc: earningsData.afterMarketClose_AMC.slice(0, 6) } })}`;
+
+            const resAi = await aiClient.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: prompt,
+            });
+            markdown = resAi.text || '';
+          } catch {}
+        }
+
+        return {
+          date: today,
+          lang,
+          greeting: userName
+            ? (lang === 'en' ? `Good morning, ${userName}!` : `Добро утро, ${userName}!`)
+            : (lang === 'en' ? 'Good morning!' : 'Добро утро!'),
+          macro: macroData.macro,
+          earningsCount: (earningsData.beforeMarketOpen_BMO?.length || 0) + (earningsData.afterMarketClose_AMC?.length || 0),
+          bmo: earningsData.beforeMarketOpen_BMO?.slice(0, 5) || [],
+          amc: earningsData.afterMarketClose_AMC?.slice(0, 5) || [],
+          markdown,
+          source: macroData.source,
+          generatedAt: new Date().toISOString(),
+        };
+      };
+
+      const brief = forceRefresh
+        ? await buildBrief()
+        : await getCachedOrFetch(cacheKey, 4 * 60 * 60_000, buildBrief, true);
+
+      return res.json(brief);
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || 'Morning brief error' });
     }
   }
 
