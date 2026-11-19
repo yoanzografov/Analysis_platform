@@ -251,6 +251,13 @@ export interface StockAnalysisData {
     city: string;
     state: string;
     country: string;
+    address?: string;
+    phone?: string;
+    stockType?: string;
+    fiscalYear?: string;
+    cik?: string;
+    cusip?: string;
+    isin?: string;
     website: string;
     description: string;
     officers: Array<{

@@ -6,6 +6,7 @@ import handleEarnings from './earnings.js';
 import { buildIncomeStatement, buildBalanceSheet, buildCashFlowStatement, buildFinancialRatios, getCompanySegments } from '../src/utils/financialStatementsBuilder.js';
 import { buildStatementsFromYahoo } from '../src/utils/yahooStatementsParser.js';
 import { fetchSecAnnualRecords } from '../src/utils/secEdgarParser.js';
+import { fetchStockAnalysisCompanyProfile } from '../src/utils/stockAnalysisProfileFetcher.js';
 import { buildDividendsData } from '../src/utils/dividendHelper.js';
 
 const YahooFinance = (yfModule as any).default?.default || (yfModule as any).default || yfModule;
@@ -2252,6 +2253,7 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       let fhMetrics: any = null, fhProfile: any = null, fhRecs: any = null, fhQuote: any = null;
       let yfAnnual: any[] = [], yfQuarterly: any[] = [], yfTrailing: any[] = [];
       let yfAssetProfile: any = null;
+      let saProfile: any = null;
       const shouldQueryFinnhub = Boolean(finnhubKey && !parsed.isEuropean && !parsed.isBulgarian);
       const yahooTargetSym = parsed.yahooSym || cleanTicker;
       const cachedTs = yahooTsCache.get(yahooTargetSym);
@@ -2260,6 +2262,9 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       const hasFreshProf = Boolean(cachedProf && (Date.now() - cachedProf.ts < 30 * 60 * 1000));
 
       await Promise.all([
+        (async () => {
+          saProfile = await fetchStockAnalysisCompanyProfile(yahooTargetSym, parsed.isEuropean).catch(() => null);
+        })(),
         (async () => {
           if (hasFreshProf && cachedProf) {
             yfAssetProfile = cachedProf.profile;
@@ -2560,8 +2565,8 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
           priceTargetUpside: upsidePercent,
           sector: yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Технологии',
           industry: yfAssetProfile?.industry || tv?.industry || fhProfile?.finnhubIndustry || 'Финансови услуги',
-          description: yfAssetProfile?.longBusinessSummary || `${tv?.description || fhProfile?.name || cleanTicker} е публично търгувана компания в сектор ${yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Финанси / Технологии'}.`,
-          website: yfAssetProfile?.website || fhProfile?.weburl || `https://www.google.com/search?q=${encodeURIComponent(cleanTicker)}+investor+relations`,
+          description: saProfile?.description || yfAssetProfile?.longBusinessSummary || `${tv?.description || fhProfile?.name || cleanTicker} е публично търгувана компания в сектор ${yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Финанси / Технологии'}.`,
+          website: saProfile?.website || yfAssetProfile?.website || fhProfile?.weburl || `https://www.google.com/search?q=${encodeURIComponent(cleanTicker)}+investor+relations`,
           employees: yfAssetProfile?.fullTimeEmployees || tv?.employees || null,
           country: yfAssetProfile?.country || (fhProfile?.country === 'US' ? 'United States' : (fhProfile?.country || 'United States'))
         },
@@ -2688,20 +2693,31 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
           companyName: tv?.description || fhProfile?.name || cleanTicker,
           sector: yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Технологии',
           industry: yfAssetProfile?.industry || tv?.industry || fhProfile?.finnhubIndustry || 'Финансови услуги',
-          ceo: (yfAssetProfile?.companyOfficers?.[0]?.name) ? `${yfAssetProfile.companyOfficers[0].name} (${yfAssetProfile.companyOfficers[0].title || 'CEO'})` : '—',
+          ceo: saProfile?.officers?.[0]?.name
+            ? `${saProfile.officers[0].name} (${saProfile.officers[0].title})`
+            : ((yfAssetProfile?.companyOfficers?.[0]?.name) ? `${yfAssetProfile.companyOfficers[0].name} (${yfAssetProfile.companyOfficers[0].title || 'CEO'})` : '—'),
           employees: yfAssetProfile?.fullTimeEmployees || tv?.employees || null,
           city: yfAssetProfile?.city || '—',
           state: yfAssetProfile?.state || '',
           country: yfAssetProfile?.country || (fhProfile?.country === 'US' ? 'United States' : (fhProfile?.country || 'United States')),
-          website: yfAssetProfile?.website || fhProfile?.weburl || `https://www.google.com/search?q=${encodeURIComponent(cleanTicker)}+investor+relations`,
-          description: yfAssetProfile?.longBusinessSummary || `${tv?.description || fhProfile?.name || cleanTicker} е публично търгувана компания в сектор ${yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Финанси / Технологии'}.`,
-          officers: Array.isArray(yfAssetProfile?.companyOfficers) && yfAssetProfile.companyOfficers.length > 0
-            ? yfAssetProfile.companyOfficers.slice(0, 5).map((o: any) => ({
-                name: o.name,
-                title: o.title || 'Executive',
-                pay: o.totalPay?.raw ? `$${(o.totalPay.raw / 1e6).toFixed(2)}M` : (typeof o.totalPay === 'number' ? `$${(o.totalPay / 1e6).toFixed(2)}M` : undefined)
-              }))
-            : []
+          address: saProfile?.address || (yfAssetProfile?.address1 ? `${yfAssetProfile.address1}, ${yfAssetProfile.city || ''}, ${yfAssetProfile.state || ''} ${yfAssetProfile.zip || ''}`.trim() : undefined),
+          phone: saProfile?.phone || yfAssetProfile?.phone || fhProfile?.phone || undefined,
+          stockType: saProfile?.stockType || 'Common Stock',
+          fiscalYear: saProfile?.fiscalYear || (cleanTicker === 'AAPL' ? 'October - September' : cleanTicker === 'NVDA' ? 'February - January' : cleanTicker === 'MSFT' ? 'July - June' : 'January - December'),
+          cik: saProfile?.cik || undefined,
+          cusip: saProfile?.cusip || undefined,
+          isin: saProfile?.isin || undefined,
+          website: saProfile?.website || yfAssetProfile?.website || fhProfile?.weburl || `https://www.google.com/search?q=${encodeURIComponent(cleanTicker)}+investor+relations`,
+          description: saProfile?.description || yfAssetProfile?.longBusinessSummary || `${tv?.description || fhProfile?.name || cleanTicker} е публично търгувана компания в сектор ${yfAssetProfile?.sector || tv?.sector || fhProfile?.finnhubIndustry || 'Финанси / Технологии'}.`,
+          officers: (saProfile?.officers && saProfile.officers.length > 0)
+            ? saProfile.officers
+            : (Array.isArray(yfAssetProfile?.companyOfficers) && yfAssetProfile.companyOfficers.length > 0
+              ? yfAssetProfile.companyOfficers.slice(0, 5).map((o: any) => ({
+                  name: o.name,
+                  title: o.title || 'Executive',
+                  pay: o.totalPay?.raw ? `$${(o.totalPay.raw / 1e6).toFixed(2)}M` : (typeof o.totalPay === 'number' ? `$${(o.totalPay / 1e6).toFixed(2)}M` : undefined)
+                }))
+              : [])
         }
       };
 
