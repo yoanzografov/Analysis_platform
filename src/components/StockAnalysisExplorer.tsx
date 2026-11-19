@@ -4053,62 +4053,179 @@ export default function StockAnalysisExplorer({
                 )}
 
                 {/* ─── TAB 8: PROFILE ─── */}
+                {/* ─── TAB 8: PROFILE (STOCKANALYSIS /company/ 1:1 2-COLUMN LAYOUT) ─── */}
                 {activeTab === 'profile' && (
                   <div className="space-y-4">
-                    <div className="pb-2 border-b border-border/60">
-                      <h3 className="text-xs font-black uppercase text-ink">Профил на корпорацията & Ръководство</h3>
-                      <p className="text-[11px] text-ink-faint">Седалище, сектор, служители и ключов мениджмънт</p>
+                    <div className="pb-2 border-b border-border/60 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-black uppercase text-ink tracking-tight">
+                          {data.profile.companyName || stock.companyName || cleanTicker} — Профил на компанията
+                        </h3>
+                        <p className="text-[11px] text-ink-faint">Бизнес описание, ръководство, корпоративни и борсови детайли</p>
+                      </div>
+                      <a
+                        href={`https://stockanalysis.com/stocks/${cleanTicker.toLowerCase()}/company/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-bold text-indigo-400 hover:underline inline-flex items-center gap-1"
+                      >
+                        <span>StockAnalysis</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {/* Company Meta */}
-                      <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2.5">
-                        <h4 className="text-xs font-bold text-ink uppercase">Корпоративна информация</h4>
-                        <div className="space-y-2 text-xs">
-                          <div className="flex items-center gap-2 text-ink-muted">
-                            <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                            <span>Централа: <strong className="text-ink">{data.profile.city}, {data.profile.state} ({data.profile.country})</strong></span>
-                          </div>
-                          <div className="flex items-center gap-2 text-ink-muted">
-                            <Users className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                            <span>Служители на пълен работен ден: <strong className="text-ink">{data.profile.employees?.toLocaleString() || 'Над 20,000'}</strong></span>
-                          </div>
-                          <div className="flex items-center gap-2 text-ink-muted">
-                            <Globe className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                            <span>Официален уебсайт: </span>
-                            <a href={data.profile.website} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline inline-flex items-center gap-1 font-semibold">
-                              {data.profile.website.replace('https://', '')}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                      {/* LEFT COLUMN (8 cols): About + Key Executives + Contact */}
+                      <div className="lg:col-span-8 space-y-4">
+                        {/* 1. About Company */}
+                        <div className="p-4 sm:p-5 rounded-xl bg-card border border-border/80 space-y-2.5 shadow-xs">
+                          <h4 className="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                            <span>За {data.profile.companyName || cleanTicker}</span>
+                          </h4>
+                          <p className="text-xs text-ink-muted leading-relaxed whitespace-pre-line">
+                            {resolvedCompanyDescription || data.profile.description}
+                          </p>
                         </div>
-                      </div>
 
-                      {/* Key Executives */}
-                      <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2">
-                        <h4 className="text-xs font-bold text-ink uppercase">Ключов мениджмънт</h4>
-                        <div className="space-y-1.5 text-xs">
-                          {(data?.profile?.officers || []).map((officer, idx) => (
-                            <div key={idx} className="flex justify-between items-center py-1 border-b border-border/40 last:border-0">
-                              <div>
-                                <span className="font-bold text-ink block">{officer.name}</span>
-                                <span className="text-[11px] text-ink-faint">{officer.title}</span>
-                              </div>
-                              {officer.pay && (
-                                <span className="text-xs font-mono font-semibold text-emerald-400">{officer.pay}</span>
-                              )}
+                        {/* 2. Key Executives Table */}
+                        <div className="p-4 sm:p-5 rounded-xl bg-card border border-border/80 space-y-3 shadow-xs">
+                          <h4 className="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 text-indigo-400" />
+                            <span>Ключово ръководство (Key Executives)</span>
+                          </h4>
+                          {(data?.profile?.officers && data.profile.officers.length > 0) ? (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs text-left border-collapse">
+                                <thead>
+                                  <tr className="border-b border-border text-[10px] font-bold uppercase text-ink-faint">
+                                    <th className="py-2 pr-3">Име</th>
+                                    <th className="py-2 px-3">Позиция</th>
+                                    <th className="py-2 pl-3 text-right">Възнаграждение</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border/40">
+                                  {data.profile.officers.map((officer, idx) => (
+                                    <tr key={idx} className="hover:bg-card-hover/40 transition-colors">
+                                      <td className="py-2 pr-3 font-bold text-ink whitespace-nowrap">{officer.name}</td>
+                                      <td className="py-2 px-3 text-ink-muted">{officer.title}</td>
+                                      <td className="py-2 pl-3 text-right font-mono font-semibold text-emerald-400 whitespace-nowrap">
+                                        {officer.pay || '—'}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
                             </div>
-                          ))}
+                          ) : (
+                            <p className="text-xs text-ink-faint">Няма налични данни за изпълнителното ръководство за този тикер.</p>
+                          )}
+                        </div>
+
+                        {/* 3. Contact Details */}
+                        <div className="p-4 sm:p-5 rounded-xl bg-card border border-border/80 space-y-2.5 shadow-xs">
+                          <h4 className="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-indigo-400" />
+                            <span>Контакти и централа (Contact Details)</span>
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                            <div>
+                              <span className="text-[11px] text-ink-faint block">Адрес / Град</span>
+                              <span className="font-bold text-ink">
+                                {[data.profile.city, data.profile.state, data.profile.country].filter(v => v && v !== '—').join(', ') || '—'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-ink-faint block">Официален уебсайт</span>
+                              <a
+                                href={data.profile.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-indigo-400 hover:underline inline-flex items-center gap-1 font-bold break-all"
+                              >
+                                {data.profile.website.replace(/^https?:\/\//, '')}
+                                <ExternalLink className="w-3 h-3 shrink-0" />
+                              </a>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Long Business Summary */}
-                    <div className="p-4 rounded-xl bg-card border border-border/80">
-                      <h4 className="text-xs font-bold text-ink uppercase mb-2">За компанията / Бизнес модел и дейност ({cleanTicker})</h4>
-                      <p className="text-xs text-ink-muted leading-relaxed">
-                        {resolvedCompanyDescription || data.profile.description}
-                      </p>
+                      {/* RIGHT COLUMN (4 cols): Company Details + Stock Details */}
+                      <div className="lg:col-span-4 space-y-4">
+                        {/* Company Details Table */}
+                        <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2 shadow-xs">
+                          <h4 className="text-xs font-black text-ink uppercase tracking-wider pb-2 border-b border-border/60">
+                            Детайли за компанията
+                          </h4>
+                          <div className="divide-y divide-border/50 text-xs">
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Държава</span>
+                              <span className="font-bold text-ink text-right">{data.profile.country || '—'}</span>
+                            </div>
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Сектор</span>
+                              <span className="font-bold text-ink text-right">{data.profile.sector || '—'}</span>
+                            </div>
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Индустрия</span>
+                              <span className="font-bold text-ink text-right">{data.profile.industry || '—'}</span>
+                            </div>
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Служители</span>
+                              <span className="font-bold text-ink font-mono text-right">
+                                {data.profile.employees ? data.profile.employees.toLocaleString() : '—'}
+                              </span>
+                            </div>
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">CEO</span>
+                              <span className="font-bold text-ink text-right">{data.profile.ceo || '—'}</span>
+                            </div>
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Уебсайт</span>
+                              <a
+                                href={data.profile.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-bold text-indigo-400 hover:underline text-right truncate max-w-[160px]"
+                              >
+                                {data.profile.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stock Details Table */}
+                        <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2 shadow-xs">
+                          <h4 className="text-xs font-black text-ink uppercase tracking-wider pb-2 border-b border-border/60">
+                            Борсови детайли (Stock Details)
+                          </h4>
+                          <div className="divide-y divide-border/50 text-xs">
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Тикер (Symbol)</span>
+                              <span className="font-black text-ink font-mono">{cleanTicker}</span>
+                            </div>
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Борса (Exchange)</span>
+                              <span className="font-bold text-ink">{data.overview.exchange || 'NASDAQ'}</span>
+                            </div>
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Валута</span>
+                              <span className="font-bold text-ink font-mono">{reportedCurrency}</span>
+                            </div>
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Капитализация</span>
+                              <span className="font-bold text-ink font-mono">{formatLargeNum(data.overview.marketCap)}</span>
+                            </div>
+                            <div className="py-2 flex justify-between gap-2">
+                              <span className="text-ink-faint">Брой акции</span>
+                              <span className="font-bold text-ink font-mono">
+                                {data.overview.sharesOut ? formatStatCount(data.overview.sharesOut) : '—'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
