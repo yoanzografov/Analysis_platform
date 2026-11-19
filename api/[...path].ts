@@ -2060,8 +2060,17 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
     baseSymbol = parts[1];
   } else if (rawTicker.includes('.')) {
     const dotIdx = rawTicker.lastIndexOf('.');
-    baseSymbol = rawTicker.substring(0, dotIdx);
-    suffix = rawTicker.substring(dotIdx); // e.g. .DE, .PA, .SO
+    const candidateSuffix = rawTicker.substring(dotIdx);
+    // Only split if it is a known exchange suffix (.DE, .PA, .L, .SO, etc.)
+    // Otherwise keep full ticker for share-class symbols like BRK.B, BF.B
+    const knownSuffixes = new Set(['.DE', '.F', '.PA', '.AS', '.MC', '.MI', '.BR', '.VI', '.LS', '.HE', '.L', '.SW', '.ST', '.SO', '.HK', '.SS', '.SZ', '.T', '.TO']);
+    if (knownSuffixes.has(candidateSuffix)) {
+      baseSymbol = rawTicker.substring(0, dotIdx);
+      suffix = candidateSuffix;
+    } else {
+      baseSymbol = rawTicker;
+      suffix = '';
+    }
   }
 
   const exchangeMap: Record<string, { market: string; yahooSuffix: string; currency: string; sym: string; isEur: boolean }> = {
@@ -2110,7 +2119,7 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
   let currencySymbol = '$';
   let isEuropean = false;
   let isBulgarian = false;
-  let yahooSym = baseSymbol;
+  let yahooSym = baseSymbol.includes('.') ? baseSymbol.replace(/\./g, '-') : baseSymbol;
   let exchange = prefix || 'NASDAQ';
 
   if (prefix && exchangeMap[prefix]) {
@@ -2185,7 +2194,13 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
         "currency"
       ];
 
-      const searchNames = Array.from(new Set([cleanTicker, parsed.baseSymbol, rawTicker])).filter(Boolean);
+      const searchNames = Array.from(new Set([
+        cleanTicker,
+        cleanTicker.replace('-', '.'),
+        cleanTicker.replace('.', '-'),
+        parsed.baseSymbol,
+        rawTicker
+      ])).filter(Boolean);
       const marketsToTry = parsed.isEuropean 
         ? [parsed.market, 'germany', 'france', 'netherlands', 'spain', 'italy', 'uk', 'america']
         : (parsed.market === 'america' ? ['america', 'germany', 'uk'] : [parsed.market, 'america']);
@@ -2472,6 +2487,9 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       const quarterlyBalanceSheet = yahooBundle?.quarterlyBalanceSheet ?? buildBalanceSheet(buildParams, true);
       const quarterlyCashFlow = yahooBundle?.quarterlyCashFlow ?? buildCashFlowStatement(buildParams, true);
       const quarterlyRatios = yahooBundle?.quarterlyRatios ?? buildFinancialRatios(buildParams, true);
+      const trailingIncomeStatement = yahooBundle?.trailingIncomeStatement;
+      const trailingCashFlow = yahooBundle?.trailingCashFlow;
+      const trailingRatios = yahooBundle?.trailingRatios;
       const companySegments = getCompanySegments(cleanTicker, totalRev);
 
       const data = {
@@ -2543,6 +2561,9 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
           quarterlyBalanceSheet,
           quarterlyCashFlow,
           quarterlyRatios,
+          trailingIncomeStatement,
+          trailingCashFlow,
+          trailingRatios,
           segments: companySegments.primarySegments,
           platformMarkets: companySegments.platformMarkets
         },

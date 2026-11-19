@@ -620,27 +620,33 @@ export default function StockAnalysisExplorer({
 
     const income = (isQ && data?.financials?.quarterlyIncomeStatement) 
       ? data.financials.quarterlyIncomeStatement 
-      : (!isQ && financialFreq === 'annual' && data?.financials?.incomeStatement) 
-        ? data.financials.incomeStatement 
-        : buildIncomeStatement(buildParams, financialFreq);
+      : (financialFreq === 'trailing' && data?.financials?.trailingIncomeStatement)
+        ? data.financials.trailingIncomeStatement
+        : (financialFreq === 'annual' && data?.financials?.incomeStatement) 
+          ? data.financials.incomeStatement 
+          : buildIncomeStatement(buildParams, financialFreq);
 
-    const balance = (isQ && data?.financials?.quarterlyBalanceSheet)
+    const balance = ((isQ || financialFreq === 'trailing') && data?.financials?.quarterlyBalanceSheet)
       ? data.financials.quarterlyBalanceSheet
-      : (!isQ && financialFreq === 'annual' && data?.financials?.balanceSheet)
+      : (financialFreq === 'annual' && data?.financials?.balanceSheet)
         ? data.financials.balanceSheet
         : buildBalanceSheet(buildParams, financialFreq);
 
     const cashflow = (isQ && data?.financials?.quarterlyCashFlow)
       ? data.financials.quarterlyCashFlow
-      : (!isQ && financialFreq === 'annual' && data?.financials?.cashFlow)
-        ? data.financials.cashFlow
-        : buildCashFlowStatement(buildParams, financialFreq);
+      : (financialFreq === 'trailing' && data?.financials?.trailingCashFlow)
+        ? data.financials.trailingCashFlow
+        : (financialFreq === 'annual' && data?.financials?.cashFlow)
+          ? data.financials.cashFlow
+          : buildCashFlowStatement(buildParams, financialFreq);
 
     const ratios = (isQ && data?.financials?.quarterlyRatios)
       ? data.financials.quarterlyRatios
-      : (!isQ && financialFreq === 'annual' && data?.financials?.ratios)
-        ? data.financials.ratios
-        : buildFinancialRatios(buildParams, financialFreq);
+      : (financialFreq === 'trailing' && data?.financials?.trailingRatios)
+        ? data.financials.trailingRatios
+        : (financialFreq === 'annual' && data?.financials?.ratios)
+          ? data.financials.ratios
+          : buildFinancialRatios(buildParams, financialFreq);
 
     const kpis = (isQ && data?.financials?.quarterlyKpis)
       ? data.financials.quarterlyKpis

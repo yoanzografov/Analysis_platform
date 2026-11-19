@@ -88,6 +88,9 @@ export interface StockAnalysisData {
     quarterlyBalanceSheet?: FinancialStatementTable;
     quarterlyCashFlow?: FinancialStatementTable;
     quarterlyRatios?: FinancialStatementTable;
+    trailingIncomeStatement?: FinancialStatementTable;
+    trailingCashFlow?: FinancialStatementTable;
+    trailingRatios?: FinancialStatementTable;
     kpis?: FinancialStatementTable;
     quarterlyKpis?: FinancialStatementTable;
     segments?: Array<{

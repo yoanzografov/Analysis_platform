@@ -15,6 +15,9 @@ export interface ParsedStatementsBundle {
   quarterlyBalanceSheet: FinancialStatementTable;
   quarterlyCashFlow: FinancialStatementTable;
   quarterlyRatios: FinancialStatementTable;
+  trailingIncomeStatement: FinancialStatementTable;
+  trailingCashFlow: FinancialStatementTable;
+  trailingRatios: FinancialStatementTable;
   latestTtm: {
     revenue: number | null;
     grossProfit: number | null;
@@ -569,6 +572,23 @@ export function buildStatementsFromYahoo(
   const quarterlyCashFlow = makeCashFlow(quarterlyPeriods, quarterlyEndDates, quarterlyByPeriod);
   const quarterlyRatios = makeRatios(quarterlyPeriods, quarterlyEndDates, quarterlyByPeriod);
 
+  // --- Map Trailing (TTM rolling quarters) ---
+  const trailingPeriods: string[] = [];
+  const trailingEndDates: Record<string, string> = {};
+  const trailingByPeriod: Record<string, YahooTsRecord> = {};
+  for (const rec of trailingSorted.slice(0, 10)) {
+    const dt = toDate(rec.date)!;
+    const lbl = `TTM ${getQuarterLabel(dt)}`;
+    if (!trailingByPeriod[lbl]) {
+      trailingPeriods.push(lbl);
+      trailingEndDates[lbl] = formatPeriodEnd(dt);
+      trailingByPeriod[lbl] = rec;
+    }
+  }
+  const trailingIncomeStatement = trailingPeriods.length > 0 ? makeIncome(trailingPeriods, trailingEndDates, trailingByPeriod) : incomeStatement;
+  const trailingCashFlow = trailingPeriods.length > 0 ? makeCashFlow(trailingPeriods, trailingEndDates, trailingByPeriod) : cashFlow;
+  const trailingRatios = trailingPeriods.length > 0 ? makeRatios(trailingPeriods, trailingEndDates, trailingByPeriod) : ratios;
+
   const refRec = latestTtmRec || annualSorted[0];
   const bsRef = latestBsSnap || annualSorted[0];
 
@@ -582,6 +602,9 @@ export function buildStatementsFromYahoo(
     quarterlyBalanceSheet,
     quarterlyCashFlow,
     quarterlyRatios,
+    trailingIncomeStatement,
+    trailingCashFlow,
+    trailingRatios,
     latestTtm: {
       revenue: num(refRec, 'totalRevenue', 'operatingRevenue'),
       grossProfit: num(refRec, 'grossProfit'),
