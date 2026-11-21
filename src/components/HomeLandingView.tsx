@@ -50,12 +50,20 @@ export default function HomeLandingView({
   useEffect(() => {
     let active = true;
     setLoadingNews(true);
-    fetch('/api/morning-brief')
+    fetch('/api/global-news?tab=stocks')
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
         if (!active || !data) return;
-        const rawNews = Array.isArray(data.topNews) ? data.topNews : [];
-        setHeadlines(rawNews.slice(0, 5));
+        const rawNews = Array.isArray(data)
+          ? data
+          : (Array.isArray(data.news) ? data.news : []);
+        const mapped: BriefHeadline[] = rawNews.slice(0, 6).map((item: any) => ({
+          title: item.titleBg || item.title || 'Financial News',
+          url: (item.url && String(item.url).startsWith('http')) ? item.url : 'https://stockanalysis.com/news/',
+          source: item.source || 'Market News',
+          publishedAt: item.time || item.timeEn || '',
+        }));
+        setHeadlines(mapped);
       })
       .catch(() => {})
       .finally(() => {
@@ -368,7 +376,7 @@ export default function HomeLandingView({
                       {item.title}
                     </div>
                     <div className="text-[10px] font-semibold text-ink-faint uppercase">
-                      {item.source}
+                      {item.source}{item.publishedAt ? ` • ${item.publishedAt}` : ''}
                     </div>
                   </div>
                   <ExternalLink className="w-3.5 h-3.5 text-ink-faint group-hover:text-indigo-400 shrink-0 mt-0.5" />

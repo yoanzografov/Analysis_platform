@@ -1448,6 +1448,7 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
           earningsCount: (earningsData.beforeMarketOpen_BMO?.length || 0) + (earningsData.afterMarketClose_AMC?.length || 0),
           bmo: earningsData.beforeMarketOpen_BMO?.slice(0, 5) || [],
           amc: earningsData.afterMarketClose_AMC?.slice(0, 5) || [],
+          topNews: macroData.topMarketNews?.slice(0, 6) || [],
           markdown,
           source: macroData.source,
           generatedAt: new Date().toISOString(),
