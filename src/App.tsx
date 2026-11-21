@@ -2530,21 +2530,6 @@ export default function App() {
         {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
       {activeMainTab === 'table' && (
         <>
-          <MorningBriefingCard
-            userName={currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : undefined)}
-            onSelectTicker={(sym) => {
-              const found = stocks.find(s => s.ticker.toUpperCase() === sym.toUpperCase());
-              setSelectedStockForStocksTab(found || {
-                watch: '', ticker: sym.toUpperCase(), companyName: sym.toUpperCase(),
-                date: '', priceOfCalc: null, dailyChangePct: 0, currentPrice: 0,
-                fairPrice: null, difference: null, buySell: 'ДРУГИ', marketCap: 0,
-                peRatio: null, eps: null, profileLink: '', dividend: '-',
-                signal: 'Hold', low52: null, high52: null
-              });
-              switchTab('stocks');
-            }}
-          />
-
           <MarketSummaryWidgets 
             stocks={stocks}
             activeFilter={activeFilter}
@@ -2783,6 +2768,20 @@ export default function App() {
     {/* Dedicated Business & Stock News Tab (StockAnalysis Style) */}
     {activeMainTab === 'news' && (
       <div className="space-y-6 animate-in fade-in zoom-in-95 duration-150">
+        <MorningBriefingCard
+          userName={currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : undefined)}
+          onSelectTicker={(sym) => {
+            const found = stocks.find(s => s.ticker.toUpperCase() === sym.toUpperCase());
+            setSelectedStockForStocksTab(found || {
+              watch: '', ticker: sym.toUpperCase(), companyName: sym.toUpperCase(),
+              date: '', priceOfCalc: null, dailyChangePct: 0, currentPrice: 0,
+              fairPrice: null, difference: null, buySell: 'ДРУГИ', marketCap: 0,
+              peRatio: null, eps: null, profileLink: '', dividend: '-',
+              signal: 'Hold', low52: null, high52: null
+            });
+            switchTab('stocks');
+          }}
+        />
         <CompanyNewsContainer
           stocks={stocks}
           selectedStock={selectedStockForAi}
