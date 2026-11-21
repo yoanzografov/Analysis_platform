@@ -46,6 +46,7 @@ export default function HomeLandingView({
 }: Props) {
   const [headlines, setHeadlines] = useState<BriefHeadline[]>([]);
   const [loadingNews, setLoadingNews] = useState(false);
+  const [fairValueMode, setFairValueMode] = useState<'undervalued' | 'overvalued'>('undervalued');
 
   useEffect(() => {
     let active = true;
@@ -99,6 +100,20 @@ export default function HomeLandingView({
       .sort((a, b) => b.upsidePct - a.upsidePct)
       .slice(0, 6);
   }, [stocks]);
+
+  const topOvervalued = useMemo(() => {
+    return [...stocks]
+      .filter(s => s.fairPrice && s.fairPrice > 0 && s.currentPrice > 0)
+      .map(s => ({
+        stock: s,
+        upsidePct: ((s.fairPrice! - s.currentPrice) / s.currentPrice) * 100,
+      }))
+      .filter(x => Number.isFinite(x.upsidePct) && x.upsidePct < 0 && x.upsidePct > -95)
+      .sort((a, b) => a.upsidePct - b.upsidePct)
+      .slice(0, 6);
+  }, [stocks]);
+
+  const displayedFairValue = fairValueMode === 'undervalued' ? topUndervalued : topOvervalued;
 
   const handleOpenTicker = (ticker: string) => {
     const clean = ticker.toUpperCase();
@@ -294,44 +309,69 @@ export default function HomeLandingView({
           </div>
         </div>
 
-        {/* Undervalued / Fair Value Upside */}
+        {/* Undervalued / Overvalued Fair Value Movers */}
         <div className="rounded-2xl border border-border bg-card/60 p-4 shadow-2xs flex flex-col">
-          <div className="flex items-center justify-between pb-3 border-b border-border/60">
-            <h2 className="text-sm font-black uppercase tracking-tight text-ink flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-border/60">
+            <h2 className="text-sm font-black uppercase tracking-tight text-ink flex items-center gap-2 shrink-0">
               <Target className="w-4 h-4 text-indigo-400" />
-              <span>Fair Value Upside</span>
+              <span>Fair Value</span>
             </h2>
-            <button
-              type="button"
-              onClick={() => onSwitchTab('table')}
-              className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 cursor-pointer"
-            >
-              <span>Screener</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
+            <div className="flex items-center gap-1 bg-bg/70 border border-border/70 rounded-lg p-0.5 text-[10px] font-bold">
+              <button
+                type="button"
+                onClick={() => setFairValueMode('undervalued')}
+                className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                  fairValueMode === 'undervalued'
+                    ? 'bg-emerald-500/20 text-emerald-400 font-black'
+                    : 'text-ink-muted hover:text-ink'
+                }`}
+              >
+                Подценени
+              </button>
+              <button
+                type="button"
+                onClick={() => setFairValueMode('overvalued')}
+                className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                  fairValueMode === 'overvalued'
+                    ? 'bg-rose-500/20 text-rose-400 font-black'
+                    : 'text-ink-muted hover:text-ink'
+                }`}
+              >
+                Надценени
+              </button>
+            </div>
           </div>
           <div className="divide-y divide-border/40 flex-1">
-            {topUndervalued.map(({ stock: s, upsidePct }) => (
-              <button
-                key={s.ticker}
-                type="button"
-                onClick={() => onSelectStock(s)}
-                className="w-full py-2.5 px-1.5 flex items-center justify-between gap-2 hover:bg-card-hover/60 rounded-lg transition-colors text-left cursor-pointer"
-              >
-                <div className="min-w-0">
-                  <div className="text-xs font-black text-ink">{s.ticker}</div>
-                  <div className="text-[11px] text-ink-muted truncate max-w-[140px]">{s.companyName}</div>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="text-xs font-mono font-bold text-ink">
-                    Fair ${s.fairPrice?.toFixed(2)}
+            {displayedFairValue.map(({ stock: s, upsidePct }) => {
+              const isUnder = upsidePct >= 0;
+              const dayPos = s.dailyChangePct >= 0;
+              return (
+                <button
+                  key={s.ticker}
+                  type="button"
+                  onClick={() => onSelectStock(s)}
+                  className="w-full py-2.5 px-1.5 flex items-center justify-between gap-2 hover:bg-card-hover/60 rounded-lg transition-colors text-left cursor-pointer"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-black text-ink">{s.ticker}</span>
+                      <span className={`text-[10px] font-mono font-semibold ${dayPos ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {dayPos ? '+' : ''}{s.dailyChangePct.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-ink-muted truncate max-w-[140px]">{s.companyName}</div>
                   </div>
-                  <div className="text-[11px] font-mono font-bold text-indigo-400">
-                    +{upsidePct.toFixed(1)}% upside
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-mono font-bold text-ink">
+                      ${s.currentPrice.toFixed(2)} <span className="text-[10px] text-ink-faint font-normal">→ ${s.fairPrice?.toFixed(2)}</span>
+                    </div>
+                    <div className={`text-[11px] font-mono font-bold ${isUnder ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {isUnder ? '+' : ''}{upsidePct.toFixed(1)}% {isUnder ? 'подценена' : 'надценена'}
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
