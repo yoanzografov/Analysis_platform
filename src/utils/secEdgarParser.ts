@@ -77,9 +77,10 @@ function extractAnnualMap(
   isInstant: boolean,
   unit: 'USD' | 'USD/shares' | 'shares' = 'USD'
 ): Record<string, { val: number; end: string }> {
-  const byYear: Record<string, { val: number; end: string; filed: string }> = {};
+  const byYear: Record<string, { val: number; end: string; filed: string; priority: number }> = {};
 
-  for (const tag of tags) {
+  for (let p = 0; p < tags.length; p++) {
+    const tag = tags[p];
     const tagObj = usGaap[tag];
     const items: SecFactItem[] = tagObj?.units?.[unit] || [];
     if (!Array.isArray(items) || items.length === 0) continue;
@@ -96,13 +97,11 @@ function extractAnnualMap(
       const yr = item.end.slice(0, 4);
       const filed = item.filed || '';
       const existing = byYear[yr];
-      if (!existing || filed > existing.filed) {
-        byYear[yr] = { val: item.val, end: item.end, filed };
+      // Higher-priority tag wins for any year it covers; lower-priority tags backfill missing years
+      if (!existing || (existing.priority === p && filed > existing.filed)) {
+        byYear[yr] = { val: item.val, end: item.end, filed, priority: p };
       }
     }
-
-    // If we already got solid coverage (at least 4 years) from a primary tag, stop falling back
-    if (Object.keys(byYear).length >= 4) break;
   }
 
   const out: Record<string, { val: number; end: string }> = {};
@@ -138,12 +137,15 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
       'Revenues',
       'SalesRevenueNet',
       'RevenueFromContractWithCustomerIncludingAssessedTax',
+      'SalesRevenueGoodsNet',
+      'SalesRevenueServicesNet',
     ], false);
 
     const corMap = extractAnnualMap(usGaap, [
       'CostOfGoodsAndServicesSold',
       'CostOfRevenue',
       'CostOfGoodsSold',
+      'CostOfServices',
     ], false);
 
     const gpMap = extractAnnualMap(usGaap, ['GrossProfit'], false);
@@ -158,7 +160,10 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
     const taxMap = extractAnnualMap(usGaap, ['IncomeTaxExpenseBenefit'], false);
     const niMap = extractAnnualMap(usGaap, ['NetIncomeLoss', 'ProfitLoss'], false);
     const epsMap = extractAnnualMap(usGaap, ['EarningsPerShareDiluted'], false, 'USD/shares');
-    const sharesMap = extractAnnualMap(usGaap, ['WeightedAverageNumberOfDilutedSharesOutstanding'], false, 'shares');
+    const sharesMap = extractAnnualMap(usGaap, [
+      'WeightedAverageNumberOfDilutedSharesOutstanding',
+      'WeightedAverageNumberOfSharesOutstandingBasic',
+    ], false, 'shares');
 
     // Balance Sheet (Instant)
     const cashMap = extractAnnualMap(usGaap, ['CashAndCashEquivalentsAtCarryingValue'], true);
@@ -172,7 +177,7 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
     const apMap = extractAnnualMap(usGaap, ['AccountsPayableCurrent'], true);
     const stDebtMap = extractAnnualMap(usGaap, ['ShortTermBorrowings', 'LongTermDebtCurrent', 'DebtCurrent'], true);
     const currLiabMap = extractAnnualMap(usGaap, ['LiabilitiesCurrent'], true);
-    const ltDebtMap = extractAnnualMap(usGaap, ['LongTermDebtNoncurrent', 'LongTermDebt'], true);
+    const ltDebtMap = extractAnnualMap(usGaap, ['LongTermDebtNoncurrent', 'LongTermDebt', 'LongTermDebtAndCapitalLeaseObligations'], true);
     const liabMap = extractAnnualMap(usGaap, ['Liabilities'], true);
     const retainedMap = extractAnnualMap(usGaap, ['RetainedEarningsAccumulatedDeficit'], true);
     const equityMap = extractAnnualMap(usGaap, ['StockholdersEquity'], true);
@@ -182,14 +187,34 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
       'DepreciationDepletionAndAmortization',
       'DepreciationAndAmortization',
       'Depreciation',
+      'DepreciationAmortizationAndAccretionNet',
     ], false);
-    const sbcMap = extractAnnualMap(usGaap, ['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense'], false);
+    const sbcMap = extractAnnualMap(usGaap, [
+      'ShareBasedCompensation',
+      'AllocatedShareBasedCompensationExpense',
+      'AdjustmentsToAdditionalPaidInCapitalSharebasedCompensationRequisiteServicePeriodRecognitionValue',
+    ], false);
+    const wcMap = extractAnnualMap(usGaap, [
+      'IncreaseDecreaseInOperatingCapital',
+      'IncreaseDecreaseInOperatingAssetsAndLiabilities',
+    ], false);
     const ocfMap = extractAnnualMap(usGaap, ['NetCashProvidedByUsedInOperatingActivities'], false);
-    const capexMap = extractAnnualMap(usGaap, ['PaymentsToAcquirePropertyPlantAndEquipment'], false);
+    const capexMap = extractAnnualMap(usGaap, [
+      'PaymentsToAcquirePropertyPlantAndEquipment',
+      'PaymentsToAcquireProductiveAssets',
+      'PaymentsForCapitalImprovements',
+      'PaymentsToAcquireOtherPropertyPlantAndEquipment',
+      'PaymentsToAcquireMachineryAndEquipment',
+    ], false);
     const divMap = extractAnnualMap(usGaap, ['PaymentsOfDividendsCommonStock', 'PaymentsOfDividends'], false);
     const buybackMap = extractAnnualMap(usGaap, ['PaymentsForRepurchaseOfCommonStock'], false);
     const icfMap = extractAnnualMap(usGaap, ['NetCashProvidedByUsedInInvestingActivities'], false);
     const cffMap = extractAnnualMap(usGaap, ['NetCashProvidedByUsedInFinancingActivities'], false);
+    const netCashChangeMap = extractAnnualMap(usGaap, [
+      'CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect',
+      'CashAndCashEquivalentsPeriodIncreaseDecrease',
+      'CashPeriodIncreaseDecrease',
+    ], false);
 
     // Collect all fiscal years present in Income/CF/BS
     const allYears = Array.from(new Set([
@@ -228,6 +253,13 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
       const capexRaw = capexMap[yr]?.val ?? null;
       const capex = capexRaw !== null ? -Math.abs(capexRaw) : null;
       const fcf = ocf !== null && capex !== null ? ocf + capex : null;
+      const wcRaw = wcMap[yr]?.val ?? null;
+      const changeInWc = wcRaw !== null ? -wcRaw : null;
+      const icf = icfMap[yr]?.val ?? null;
+      const cff = cffMap[yr]?.val ?? null;
+      const netCashChange = netCashChangeMap[yr]?.val ?? (
+        ocf !== null && icf !== null && cff !== null ? ocf + icf + cff : null
+      );
 
       const divRaw = divMap[yr]?.val ?? null;
       const buybackRaw = buybackMap[yr]?.val ?? null;
@@ -267,13 +299,15 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
         stockholdersEquity: equityMap[yr]?.val ?? null,
         depreciationAndAmortization: da,
         stockBasedCompensation: sbcMap[yr]?.val ?? null,
+        changeInWorkingCapital: changeInWc,
         operatingCashFlow: ocf,
         capitalExpenditure: capex,
         freeCashFlow: fcf,
         cashDividendsPaid: divRaw !== null ? -Math.abs(divRaw) : null,
         repurchaseOfCapitalStock: buybackRaw !== null ? -Math.abs(buybackRaw) : null,
-        investingCashFlow: icfMap[yr]?.val ?? null,
-        financingCashFlow: cffMap[yr]?.val ?? null,
+        investingCashFlow: icf,
+        financingCashFlow: cff,
+        changesInCash: netCashChange,
       });
     }
 

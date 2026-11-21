@@ -326,7 +326,13 @@ export function buildStatementsFromYahoo(
     const wcRow = extractRow(periods, map, 'Change in Working Capital', 'working_capital', { indent: 1, format: 'currency' }, r => num(r, 'changeInWorkingCapital'));
     const ocfRow = extractRow(periods, map, 'Operating Cash Flow (OCF)', 'ocf', { isBold: true, format: 'currency' }, r => num(r, 'operatingCashFlow', 'cashFlowFromContinuingOperatingActivities'));
     const capexRow = extractRow(periods, map, 'Capital Expenditures (CapEx)', 'capex', { indent: 1, format: 'currency' }, r => num(r, 'capitalExpenditure', 'purchaseOfPPE'));
-    const fcfRow = extractRow(periods, map, 'Free Cash Flow (FCF)', 'fcf', { isBold: true, format: 'currency' }, r => num(r, 'freeCashFlow'));
+    const fcfRow = extractRow(periods, map, 'Free Cash Flow (FCF)', 'fcf', { isBold: true, format: 'currency' }, r => {
+      const direct = num(r, 'freeCashFlow');
+      if (direct !== null) return direct;
+      const ocf = num(r, 'operatingCashFlow', 'cashFlowFromContinuingOperatingActivities');
+      const capex = num(r, 'capitalExpenditure', 'purchaseOfPPE');
+      return (ocf !== null && capex !== null) ? (ocf - Math.abs(capex)) : null;
+    });
     const revRow = extractRow(periods, map, 'Revenue', 'rev_ref', { format: 'currency' }, r => num(r, 'totalRevenue'));
     const divRow = extractRow(periods, map, 'Dividends Paid', 'dividends_paid', { indent: 1, format: 'currency' }, r => num(r, 'cashDividendsPaid', 'commonStockDividendPaid'));
     const buybackRow = extractRow(periods, map, 'Share Repurchases (Buybacks)', 'share_repurchases', { indent: 1, format: 'currency' }, r => num(r, 'repurchaseOfCapitalStock', 'commonStockPayments'));
