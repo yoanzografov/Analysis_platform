@@ -2181,280 +2181,276 @@ export default function App() {
               </span>
             </button>
           </nav>
-        </div>
 
-        {/* Fair Value Calculators Dropdown Menu (StockAnalysis Style) */}
-        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
-          <button
-            type="button"
-            onClick={() => setIsSidebarFairValueOpen(!isSidebarFairValueOpen)}
-            className="w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink hover:bg-card-hover group select-none"
-            title="Отвори / затвори падащо меню Fair Value Calculators"
-          >
-            <div className="flex items-center gap-2">
-              <Scale className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform shrink-0" />
-              <span>Fair Value Calculators</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 font-mono font-bold">
-                3
-              </span>
-              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSidebarFairValueOpen ? 'rotate-180 text-blue-400' : ''}`} />
-            </div>
-          </button>
-
-          {/* Collapsible Dropdown Content */}
-          {isSidebarFairValueOpen && (
-            <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={() => setShowDcfModal(true)}
-                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори DCF Calculator"
-              >
-                <span className="flex items-center gap-2">
-                  <Calculator className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>DCF Calculator</span>
+          {/* Fair Value Calculators Dropdown Menu (Unified inside Navigation Card) */}
+          <div className="pt-1.5 mt-0.5 border-t border-border/50 flex flex-col">
+            <button
+              type="button"
+              onClick={() => setIsSidebarFairValueOpen(!isSidebarFairValueOpen)}
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink-muted hover:text-ink hover:bg-card-hover group select-none"
+              title="Отвори / затвори падащо меню Fair Value Calculators"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Scale className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform shrink-0" />
+                <span className="truncate">Fair Value Calculators</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 font-mono font-bold">
+                  3
                 </span>
-              </button>
+                <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSidebarFairValueOpen ? 'rotate-180 text-blue-400' : ''}`} />
+              </div>
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setShowFairValueModal(true)}
-                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Fair Value (P/E)"
-              >
-                <span className="flex items-center gap-2">
-                  <Calculator className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                  <span>Fair Value (P/E)</span>
+            {isSidebarFairValueOpen && (
+              <div className="mt-1 pl-2 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  type="button"
+                  onClick={() => setShowDcfModal(true)}
+                  className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                  title="Отвори DCF Calculator"
+                >
+                  <span className="flex items-center gap-2">
+                    <Calculator className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                    <span>DCF Calculator</span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowFairValueModal(true)}
+                  className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                  title="Отвори Fair Value (P/E)"
+                >
+                  <span className="flex items-center gap-2">
+                    <Calculator className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    <span>Fair Value (P/E)</span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowChecklistModal(true)}
+                  className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                  title="Отвори Stock Check List"
+                >
+                  <span className="flex items-center gap-2">
+                    <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span>Stock Check List</span>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Tools Dropdown Menu */}
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => setIsSidebarToolsOpen(!isSidebarToolsOpen)}
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink-muted hover:text-ink hover:bg-card-hover group select-none"
+              title="Отвори / затвори падащо меню Tools"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Wrench className="w-4 h-4 text-emerald-400 group-hover:rotate-45 transition-transform shrink-0" />
+                <span className="truncate">Tools</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold">
+                  4
                 </span>
-              </button>
+                <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSidebarToolsOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+              </div>
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setShowChecklistModal(true)}
-                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Stock Check List"
-              >
-                <span className="flex items-center gap-2">
-                  <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>Stock Check List</span>
-                </span>
-              </button>
-            </div>
-          )}
-        </div>
+            {isSidebarToolsOpen && (
+              <div className="mt-1 pl-2 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  type="button"
+                  onClick={() => setShowPercentCalculatorModal(true)}
+                  className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                  title="Отвори Percentage Calculator"
+                >
+                  <span className="flex items-center gap-2">
+                    <Percent className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span>Percent Calculator</span>
+                  </span>
+                </button>
 
-        {/* Tools Dropdown Menu (StockAnalysis Style) */}
-        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
-          <button
-            type="button"
-            onClick={() => setIsSidebarToolsOpen(!isSidebarToolsOpen)}
-            className="w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink hover:bg-card-hover group select-none"
-            title="Отвори / затвори падащо меню Tools"
-          >
-            <div className="flex items-center gap-2">
-              <Wrench className="w-4 h-4 text-emerald-400 group-hover:rotate-45 transition-transform shrink-0" />
-              <span>Tools</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold">
-                4
-              </span>
-              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSidebarToolsOpen ? 'rotate-180 text-emerald-400' : ''}`} />
-            </div>
-          </button>
+                <button
+                  type="button"
+                  onClick={() => setShowProfitCalculatorModal(true)}
+                  className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                  title="Отвори Stock Profit Calculator"
+                >
+                  <span className="flex items-center gap-2">
+                    <TrendingUp className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>Profit Calculator</span>
+                  </span>
+                </button>
 
-          {/* Collapsible Dropdown Content */}
-          {isSidebarToolsOpen && (
-            <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={() => setShowPercentCalculatorModal(true)}
-                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Percentage Calculator"
-              >
-                <span className="flex items-center gap-2">
-                  <Percent className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>Percent Calculator</span>
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRoiCalculatorModal(true)}
+                  className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                  title="Отвори ROI Calculator"
+                >
+                  <span className="flex items-center gap-2">
+                    <Calculator className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>ROI Calculator</span>
+                  </span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setShowProfitCalculatorModal(true)}
-                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Stock Profit Calculator"
-              >
-                <span className="flex items-center gap-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span>Profit Calculator</span>
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setShowInvestmentCalculatorModal(true)}
+                  className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
+                  title="Отвори Сложна Лихва & Растеж"
+                >
+                  <span className="flex items-center gap-2">
+                    <TrendingUp className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <span>Сложна Лихва</span>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
 
-              <button
-                type="button"
-                onClick={() => setShowRoiCalculatorModal(true)}
-                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори ROI Calculator"
-              >
-                <span className="flex items-center gap-2">
-                  <Calculator className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>ROI Calculator</span>
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowInvestmentCalculatorModal(true)}
-                className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors group cursor-pointer"
-                title="Отвори Сложна Лихва & Растеж"
-              >
-                <span className="flex items-center gap-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                  <span>Сложна Лихва</span>
-                </span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Economic Calendar Card (StockAnalysis Style - under Tools) */}
-        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
+          {/* Economic Calendar Item */}
           <button
             type="button"
             onClick={() => setShowEconomicCalendarModal(true)}
-            className="w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink hover:bg-card-hover group select-none"
+            className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink-muted hover:text-ink hover:bg-card-hover group select-none"
             title="Отвори Economic Calendar (TradingView)"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
               <Calendar className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
-              <span>Economic Calendar</span>
+              <span className="truncate">Economic Calendar</span>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold shrink-0">
               LIVE
             </span>
           </button>
-        </div>
 
-        {/* System Settings Dropdown Card (StockAnalysis Style - under Calendar) */}
-        <div ref={settingsMenuRef} className="relative flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
-          <button
-            type="button"
-            onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
-            className="w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink hover:bg-card-hover group select-none"
-            title="Отвори системни настройки и операции"
-          >
-            <div className="flex items-center gap-2">
-              <Settings2 className="w-4 h-4 text-indigo-400 group-hover:rotate-90 transition-transform duration-300 shrink-0" />
-              <span>Настройки</span>
-            </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSettingsMenuOpen ? 'rotate-180 text-indigo-400' : ''}`} />
-          </button>
+          {/* System Settings Dropdown */}
+          <div ref={settingsMenuRef} className="relative flex flex-col">
+            <button
+              type="button"
+              onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink-muted hover:text-ink hover:bg-card-hover group select-none"
+              title="Отвори системни настройки и операции"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Settings2 className="w-4 h-4 text-indigo-400 group-hover:rotate-90 transition-transform duration-300 shrink-0" />
+                <span className="truncate">Настройки</span>
+              </div>
+              <ChevronDown className={`w-3.5 h-3.5 text-ink-muted group-hover:text-ink transition-transform duration-200 shrink-0 ${isSettingsMenuOpen ? 'rotate-180 text-indigo-400' : ''}`} />
+            </button>
 
-          {isSettingsMenuOpen && (
-            <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={() => { exportCSVFile(); setIsSettingsMenuOpen(false); }}
-                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
-              >
-                <Download className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                <span>Експорт CSV</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { handleRestoreDefaults(); setIsSettingsMenuOpen(false); }}
-                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
-                title="Върнете началните фабрични данни"
-              >
-                <ArchiveRestore className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>Фабрични данни</span>
-              </button>
-              <div className="h-px bg-border/40 my-0.5 mx-1" />
-              <button
-                type="button"
-                onClick={() => { setShowNewUserModal(true); setIsSettingsMenuOpen(false); }}
-                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer group"
-                title="Изтрийте всичко и започнете начисто"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                <span>Нов потребител (Изчисти)</span>
-              </button>
-            </div>
-          )}
-        </div>
+            {isSettingsMenuOpen && (
+              <div className="mt-1 pl-2 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  type="button"
+                  onClick={() => { exportCSVFile(); setIsSettingsMenuOpen(false); }}
+                  className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+                >
+                  <Download className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                  <span>Експорт CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { handleRestoreDefaults(); setIsSettingsMenuOpen(false); }}
+                  className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+                  title="Върнете началните фабрични данни"
+                >
+                  <ArchiveRestore className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>Фабрични данни</span>
+                </button>
+                <div className="h-px bg-border/40 my-0.5 mx-1" />
+                <button
+                  type="button"
+                  onClick={() => { setShowNewUserModal(true); setIsSettingsMenuOpen(false); }}
+                  className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer group"
+                  title="Изтрийте всичко и започнете начисто"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  <span>Нов потребител (Изчисти)</span>
+                </button>
+              </div>
+            )}
+          </div>
 
-        {/* Other Category Dropdown Card (StockAnalysis Style) */}
-        <div className="flex flex-col bg-transparent border border-border rounded-2xl p-2.5 shadow-xs">
-          <button
-            type="button"
-            onClick={() => {
-              setIsSidebarOtherOpen(!isSidebarOtherOpen);
-              switchTab('other');
-            }}
-            className={`w-full px-3 py-2 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 group select-none ${
-              activeMainTab === 'other'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-ink hover:bg-card-hover'
-            }`}
-            title="Отвори категория Other"
-          >
-            <div className="flex items-center gap-2">
-              <Layers className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${activeMainTab === 'other' ? 'text-white' : 'text-purple-400'}`} />
-              <span>Other</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold ${
-                activeMainTab === 'other' ? 'bg-white/20 text-white' : 'bg-purple-500/10 text-purple-400'
-              }`}>
-                4
-              </span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
-                activeMainTab === 'other' ? 'text-white' : 'text-ink-muted group-hover:text-ink'
-              } ${isSidebarOtherOpen ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
+          {/* Other Category Dropdown */}
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSidebarOtherOpen(!isSidebarOtherOpen);
+                switchTab('other');
+              }}
+              className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 group select-none ${
+                activeMainTab === 'other'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  : 'text-ink-muted hover:text-ink hover:bg-card-hover'
+              }`}
+              title="Отвори категория Other"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Layers className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${activeMainTab === 'other' ? 'text-white' : 'text-purple-400'}`} />
+                <span className="truncate">Other</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold ${
+                  activeMainTab === 'other' ? 'bg-white/20 text-white' : 'bg-purple-500/10 text-purple-400'
+                }`}>
+                  4
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
+                  activeMainTab === 'other' ? 'text-white' : 'text-ink-muted group-hover:text-ink'
+                } ${isSidebarOtherOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
 
-          {isSidebarOtherOpen && (
-            <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={() => switchTab('other')}
-                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
-              >
-                <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="truncate">Лог на известията</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  switchTab('other');
-                  setIsCsvUploaderOpen(true);
-                }}
-                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="truncate">Google Sheets & CSV</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsQuoteModalOpen(true)}
-                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="truncate">Цитат на Деня</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowFinancialFlagsModal(true)}
-                className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="truncate">Financial Flags 🟢🟡🔴</span>
-              </button>
-            </div>
-          )}
+            {isSidebarOtherOpen && (
+              <div className="mt-1 pl-2 flex flex-col gap-1 text-xs font-bold animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  type="button"
+                  onClick={() => switchTab('other')}
+                  className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+                >
+                  <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="truncate">Лог на известията</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    switchTab('other');
+                    setIsCsvUploaderOpen(true);
+                  }}
+                  className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="truncate">Google Sheets & CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsQuoteModalOpen(true)}
+                  className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="truncate">Цитат на Деня</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFinancialFlagsModal(true)}
+                  className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="truncate">Financial Flags 🟢🟡🔴</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Market Status Quick Glance Card (StockAnalysis Style - desktop only) */}
