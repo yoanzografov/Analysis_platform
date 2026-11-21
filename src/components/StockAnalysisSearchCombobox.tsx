@@ -8,13 +8,15 @@ interface Props {
   selectedStock: Stock | null;
   onSelectStock: (stock: Stock) => void;
   onAddStockToTable?: (stock: Stock) => void;
+  size?: 'compact' | 'hero';
 }
 
 export default function StockAnalysisSearchCombobox({
   stocks,
   selectedStock,
   onSelectStock,
-  onAddStockToTable
+  onAddStockToTable,
+  size = 'compact'
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -131,7 +133,7 @@ export default function StockAnalysisSearchCombobox({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 relative z-50" ref={containerRef}>
+    <div className={`flex flex-wrap items-center gap-2 relative z-50 ${size === 'hero' ? 'w-full justify-center' : ''}`} ref={containerRef}>
       {/* Add to Portfolio Button if this stock is viewed externally */}
       {!isCurrentStockInTable && selectedStock && onAddStockToTable && (
         <button
@@ -145,10 +147,10 @@ export default function StockAnalysisSearchCombobox({
         </button>
       )}
 
-      {/* Combobox Search Trigger / Input - Styled 1:1 like INTERACTIVE TABLE search bar */}
-      <div className="relative w-full sm:w-64 md:w-72">
+      {/* Combobox Search Trigger / Input */}
+      <div className={`relative ${size === 'hero' ? 'w-full' : 'w-full sm:w-64 md:w-72'}`}>
         <div className="relative w-full">
-          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-ink-faint pointer-events-none" />
+          <Search className={`absolute pointer-events-none text-ink-faint ${size === 'hero' ? 'left-3.5 top-3.5 w-4 h-4' : 'left-2.5 top-2 w-3.5 h-3.5'}`} />
           <input
             ref={inputRef}
             type="text"
@@ -178,8 +180,12 @@ export default function StockAnalysisSearchCombobox({
                 setIsOpen(false);
               }
             }}
-            placeholder="Търсене по тикер или име..."
-            className="w-full bg-bg rounded-2xl border border-border pl-8 pr-8 py-1 text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:border-border font-sans tabular-nums"
+            placeholder="Търсене по тикер или име (напр. NVDA, AAPL, SAP)..."
+            className={
+              size === 'hero'
+                ? 'w-full bg-bg rounded-2xl border border-border/90 pl-10 pr-10 py-2.5 sm:py-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 font-sans tabular-nums shadow-sm transition-all'
+                : 'w-full bg-bg rounded-2xl border border-border pl-8 pr-8 py-1 text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:border-border font-sans tabular-nums'
+            }
           />
           {query ? (
             <button

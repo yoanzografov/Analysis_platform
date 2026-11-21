@@ -132,27 +132,23 @@ export default function HomeLandingView({
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
       {/* 1. StockAnalysis.com-style Hero Search Section */}
-      <section className="relative rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 p-4 sm:p-6 shadow-xs overflow-visible">
-        <div className="max-w-2xl mx-auto text-center space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-bold uppercase tracking-wider text-indigo-400">
-            <BarChart2 className="w-3 h-3" />
-            <span>Institutional Stock Research Terminal</span>
-          </div>
-
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-ink leading-tight">
+      <section className="relative rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-4 sm:px-6 sm:py-5 shadow-xs overflow-visible">
+        <div className="max-w-2xl mx-auto text-center space-y-2.5">
+          <h1 className="text-lg sm:text-xl font-black tracking-tight text-ink leading-tight">
             Search for a stock to start your analysis
           </h1>
-          <p className="text-xs text-ink-muted max-w-lg mx-auto leading-snug">
-            Accurate financial data on {stocks.length}+ tracked companies and global tickers — 10-year statements, DCF fair value, analyst forecasts, and live market movers.
+          <p className="text-[11px] sm:text-xs text-ink-muted max-w-lg mx-auto leading-snug">
+            {stocks.length}+ tracked companies &amp; global tickers — 10-year statements, DCF fair value, forecasts &amp; live movers.
           </p>
 
-          {/* Centered Search Combobox */}
-          <div className="max-w-lg mx-auto text-left pt-0.5">
+          {/* Centered Large Search Combobox */}
+          <div className="w-full max-w-xl mx-auto text-left pt-1">
             <StockAnalysisSearchCombobox
               stocks={stocks}
               selectedStock={null}
               onSelectStock={onSelectStock}
               onAddStockToTable={onAddStockToTable}
+              size="hero"
             />
           </div>
 
