@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Stock } from '../types';
 import { StockAnalysisData, StockAnalysisTabId, FinancialStatementRow, FinancialStatementTable } from '../types/stockAnalysis';
 import { 
@@ -99,26 +100,55 @@ function FinancialScaleDropdown({
   onChange: (scale: FinancialScale) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 144;
+    const left = Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8));
+    setCoords({
+      top: rect.bottom + 6,
+      left,
+    });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
+    updatePosition();
     const handleOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        buttonRef.current && !buttonRef.current.contains(target) &&
+        menuRef.current && !menuRef.current.contains(target)
+      ) {
         setOpen(false);
       }
     };
+    const handleScrollOrResize = () => updatePosition();
     document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [open, updatePosition]);
 
   const currentLabel = FINANCIAL_SCALE_OPTIONS.find(o => o.value === value)?.label ?? 'Millions';
 
   return (
-    <div ref={containerRef} className="relative shrink-0">
+    <div className="relative shrink-0">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen(prev => !prev)}
+        onClick={() => {
+          if (!open) updatePosition();
+          setOpen(prev => !prev);
+        }}
         className="h-8 px-3 rounded-lg bg-card border border-border/80 hover:bg-card-hover text-xs font-bold text-ink flex items-center gap-2 cursor-pointer transition-colors shadow-2xs select-none"
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -127,10 +157,12 @@ function FinancialScaleDropdown({
         <ChevronDown className={`w-3.5 h-3.5 text-ink-muted transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
 
-      {open && (
+      {open && coords && typeof document !== 'undefined' && createPortal(
         <div
+          ref={menuRef}
           role="listbox"
-          className="absolute right-0 mt-1.5 w-36 rounded-xl bg-card border border-border shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100"
+          style={{ position: 'fixed', top: coords.top, left: coords.left }}
+          className="w-36 rounded-xl bg-card border border-border shadow-2xl py-1 z-[9999] animate-in fade-in zoom-in-95 duration-100"
         >
           {FINANCIAL_SCALE_OPTIONS.map((opt) => {
             const isSelected = opt.value === value;
@@ -155,7 +187,8 @@ function FinancialScaleDropdown({
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
