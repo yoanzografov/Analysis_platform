@@ -41,6 +41,7 @@ import StockAnalysisExplorer from './components/StockAnalysisExplorer';
 import StockAnalysisSearchCombobox from './components/StockAnalysisSearchCombobox';
 import { calculateBuySellStatus, calculateSignalStatus, calculateDifference } from './utils/stockCalculations';
 import { 
+  Home,
   Table,
   Save,
   Building2, 
@@ -2064,6 +2065,24 @@ export default function App() {
 
           {/* Navigation Items (Stacked vertically on desktop, compact horizontal strip on mobile) */}
           <nav className="flex lg:flex-col gap-1 lg:gap-1.5 overflow-x-auto lg:overflow-x-visible pb-0.5 lg:pb-0 no-scrollbar">
+            {/* Home Button */}
+            <a
+              href="#home"
+              onClick={(e) => {
+                e.preventDefault();
+                switchTab('table');
+                setActiveFilter('all');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border"
+              title="Начало (Home)"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Home className="w-4 h-4 shrink-0 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span className="truncate">HOME</span>
+              </div>
+            </a>
+
             {/* Tab 1: INTERACTIVE TABLE */}
             <a
               href="#table"
