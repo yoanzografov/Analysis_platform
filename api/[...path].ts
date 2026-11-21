@@ -2375,15 +2375,37 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
             ]);
             const timeoutPromise = new Promise<[any[], any[], any[], any[]]>((resolve) => setTimeout(() => resolve([[], [], [], []]), 5000));
             const [ann, qtr, trl, secAnn] = await Promise.race([tsPromise, timeoutPromise]);
-            const mergedAnnual = [
-              ...(Array.isArray(ann) ? ann : []),
-              ...(Array.isArray(secAnn) ? secAnn : [])
-            ];
+            const yahooAnnList = Array.isArray(ann) ? ann : [];
+            const secAnnList = Array.isArray(secAnn) ? secAnn : [];
+
+            // Always prefer Yahoo Finance for recent years (split-adjusted & exact GAAP/IFRS),
+            // and only use SEC EDGAR to backfill missing fields or older years (>4-5y ago).
+            const mergedAnnual: any[] = yahooAnnList.map((yRec: any) => ({ ...yRec }));
+            for (const sRec of secAnnList) {
+              const sTime = new Date(sRec.date).getTime();
+              if (!Number.isFinite(sTime)) continue;
+              const match = mergedAnnual.find((yRec: any) => {
+                const yTime = new Date(yRec.date).getTime();
+                return Number.isFinite(yTime) && Math.abs(yTime - sTime) < 45 * 24 * 60 * 60 * 1000;
+              });
+              if (match) {
+                for (const [k, v] of Object.entries(sRec)) {
+                  if (k !== 'date' && (match[k] === undefined || match[k] === null) && v !== null && v !== undefined) {
+                    match[k] = v;
+                  }
+                }
+              } else {
+                mergedAnnual.push(sRec);
+              }
+            }
+
             if (mergedAnnual.length > 0) {
               yfAnnual = mergedAnnual;
               yfQuarterly = Array.isArray(qtr) ? qtr : [];
               yfTrailing = Array.isArray(trl) ? trl : [];
-              yahooTsCache.set(yahooTargetSym, { annual: yfAnnual, quarterly: yfQuarterly, trailing: yfTrailing, ts: Date.now() });
+              if (yahooAnnList.length > 0) {
+                yahooTsCache.set(yahooTargetSym, { annual: yfAnnual, quarterly: yfQuarterly, trailing: yfTrailing, ts: Date.now() });
+              }
             }
           } catch {}
         })()
