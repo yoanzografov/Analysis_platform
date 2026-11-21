@@ -32,7 +32,7 @@ export const BALANCE_10Y_PERIODS = ['TTM', '2026', '2025', '2024', '2023', '2022
 export const QUARTERLY_PERIODS = ['Q4 2026', 'Q3 2026', 'Q2 2026', 'Q1 2026', 'Q4 2025', 'Q3 2025', 'Q2 2025', 'Q1 2025'];
 export const TRAILING_PERIODS = ['TTM Q4 2026', 'TTM Q3 2026', 'TTM Q2 2026', 'TTM Q1 2026', 'TTM Q4 2025', 'TTM Q3 2025', 'TTM Q2 2025', 'TTM Q1 2025'];
 
-export type FinancialScale = 'millions' | 'billions' | 'full';
+export type FinancialScale = 'billions' | 'millions' | 'thousands' | 'full';
 
 function getTickerSeed(ticker: string): number {
   let h = 0;
@@ -171,6 +171,9 @@ export function formatFinancialValue(
     if (scale === 'billions') {
       return `${(val / 1e9).toFixed(2)}B`;
     }
+    if (scale === 'thousands') {
+      return `${Math.round(val / 1e3).toLocaleString()}K`;
+    }
     return Math.round(val).toLocaleString();
   }
 
@@ -192,8 +195,11 @@ export function formatFinancialValue(
   } else if (scale === 'billions') {
     const inBillions = abs / 1e9;
     formatted = `${currencySymbol}${inBillions.toFixed(2)}B`;
+  } else if (scale === 'thousands') {
+    const inThousands = abs / 1e3;
+    formatted = inThousands >= 1000 ? Math.round(inThousands).toLocaleString() : inThousands.toFixed(1);
   } else {
-    // Full scale
+    // Raw / Full scale
     formatted = `${currencySymbol}${Math.round(abs).toLocaleString()}`;
   }
 

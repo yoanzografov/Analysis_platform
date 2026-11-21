@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Stock } from '../types';
 import { StockAnalysisData, StockAnalysisTabId, FinancialStatementRow, FinancialStatementTable } from '../types/stockAnalysis';
 import { 
@@ -41,7 +41,8 @@ import {
   ChevronLeft,
   Search,
   X,
-  Star
+  Star,
+  Check
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -82,6 +83,83 @@ import officialProfiles from '../data/officialCompanyProfiles.json';
 
 // Module-level cache for instant tab switching across stocks (with 60s TTL for live market updates)
 const clientAnalysisCache = new Map<string, { data: StockAnalysisData; timestamp: number }>();
+
+const FINANCIAL_SCALE_OPTIONS: { value: FinancialScale; label: string }[] = [
+  { value: 'billions', label: 'Billions' },
+  { value: 'millions', label: 'Millions' },
+  { value: 'thousands', label: 'Thousands' },
+  { value: 'full', label: 'Raw' },
+];
+
+function FinancialScaleDropdown({
+  value,
+  onChange,
+}: {
+  value: FinancialScale;
+  onChange: (scale: FinancialScale) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [open]);
+
+  const currentLabel = FINANCIAL_SCALE_OPTIONS.find(o => o.value === value)?.label ?? 'Millions';
+
+  return (
+    <div ref={containerRef} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen(prev => !prev)}
+        className="h-8 px-3 rounded-lg bg-card border border-border/80 hover:bg-card-hover text-xs font-bold text-ink flex items-center gap-2 cursor-pointer transition-colors shadow-2xs select-none"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span>{currentLabel}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-ink-muted transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute right-0 mt-1.5 w-36 rounded-xl bg-card border border-border shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100"
+        >
+          {FINANCIAL_SCALE_OPTIONS.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                  isSelected
+                    ? 'bg-muted/60 text-ink font-bold'
+                    : 'text-ink-muted hover:text-ink hover:bg-card-hover font-medium'
+                }`}
+              >
+                <span>{opt.label}</span>
+                {isSelected && <Check className="w-3.5 h-3.5 text-ink shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Props {
   stock: Stock;
@@ -1611,7 +1689,7 @@ export default function StockAnalysisExplorer({
                            financialSubTab === 'ratios' ? 'Financial Ratios' : 'KPIs & Metrics'}
                         </h3>
                         <p className="text-xs text-ink-muted font-medium mt-0.5 truncate">
-                          Financials in {financialScale === 'billions' ? 'billions' : financialScale === 'full' ? 'exact' : 'millions'} {activeCurrency}. Fiscal year is {cleanTicker === 'AAPL' ? 'October - September' : cleanTicker === 'NVDA' ? 'February - January' : cleanTicker === 'MSFT' ? 'July - June' : 'January - December'}.
+                          Financials in {financialScale === 'billions' ? 'billions' : financialScale === 'thousands' ? 'thousands' : financialScale === 'full' ? 'raw' : 'millions'} {activeCurrency}. Fiscal year is {cleanTicker === 'AAPL' ? 'October - September' : cleanTicker === 'NVDA' ? 'February - January' : cleanTicker === 'MSFT' ? 'July - June' : 'January - December'}.
                         </p>
                       </div>
 
@@ -1631,43 +1709,9 @@ export default function StockAnalysisExplorer({
                             <option value="CNY" className="bg-bg text-ink">¥ CNY</option>
                             <option value="GBP" className="bg-bg text-ink">£ GBP</option>
                           </select>
-                          <button
-                            type="button"
-                            onClick={() => setFinancialScale('millions')}
-                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
-                              financialScale === 'millions'
-                                ? 'bg-ink text-bg shadow-xs font-black'
-                                : 'text-ink-muted hover:text-ink'
-                            }`}
-                            title={`Стойности в милиони (${activeCurrency} in Millions)`}
-                          >
-                            {currencySymbol}M
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFinancialScale('billions')}
-                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
-                              financialScale === 'billions'
-                                ? 'bg-ink text-bg shadow-xs font-black'
-                                : 'text-ink-muted hover:text-ink'
-                            }`}
-                            title={`Стойности в милиарди (${activeCurrency} in Billions)`}
-                          >
-                            {currencySymbol}B
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFinancialScale('full')}
-                            className={`px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
-                              financialScale === 'full'
-                                ? 'bg-ink text-bg shadow-xs font-black'
-                                : 'text-ink-muted hover:text-ink'
-                            }`}
-                            title={`Пълни реални стойности (${activeCurrency})`}
-                          >
-                            Full
-                          </button>
                         </div>
+
+                        <FinancialScaleDropdown value={financialScale} onChange={setFinancialScale} />
 
                         {/* Reverse Order (Oldest/Newest Columns) Toggle (StockAnalysis 1:1 Style) */}
                         <button
@@ -2257,7 +2301,7 @@ export default function StockAnalysisExplorer({
                                        'KPIs & Key Metrics'}
                                     </span>
                                     <span className="ml-2 font-normal text-ink-faint text-[10px]">
-                                      {financialScale === 'millions' ? `(${activeCurrency} in Millions)` : financialScale === 'billions' ? `(${activeCurrency} in Billions)` : `(${activeCurrency} Exact)`}
+                                      {financialScale === 'millions' ? `(${activeCurrency} in Millions)` : financialScale === 'billions' ? `(${activeCurrency} in Billions)` : financialScale === 'thousands' ? `(${activeCurrency} in Thousands)` : `(${activeCurrency} Raw)`}
                                     </span>
                                   </th>
                                   {(displayPeriods || []).map(period => (
@@ -3363,42 +3407,7 @@ export default function StockAnalysisExplorer({
 
                       {/* Right: Scale & Actions */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        {/* Scale */}
-                        <div className="flex items-center p-0.5 rounded-lg bg-muted/30 border border-border/50 text-xs font-semibold">
-                          <button
-                            type="button"
-                            onClick={() => setFinancialScale('billions')}
-                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                              financialScale === 'billions'
-                                ? 'bg-ink text-bg font-bold shadow-xs'
-                                : 'text-ink-muted hover:text-ink'
-                            }`}
-                          >
-                            {currencySymbol} Billions
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFinancialScale('millions')}
-                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                              financialScale === 'millions'
-                                ? 'bg-ink text-bg font-bold shadow-xs'
-                                : 'text-ink-muted hover:text-ink'
-                            }`}
-                          >
-                            {currencySymbol} Millions
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFinancialScale('full')}
-                            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                              financialScale === 'full'
-                                ? 'bg-ink text-bg font-bold shadow-xs'
-                                : 'text-ink-muted hover:text-ink'
-                            }`}
-                          >
-                            Full
-                          </button>
-                        </div>
+                        <FinancialScaleDropdown value={financialScale} onChange={setFinancialScale} />
 
                         {/* Order button */}
                         <button
