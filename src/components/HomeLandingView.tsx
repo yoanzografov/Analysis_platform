@@ -130,24 +130,24 @@ export default function HomeLandingView({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-5 animate-in fade-in duration-200">
       {/* 1. StockAnalysis.com-style Hero Search Section */}
-      <section className="relative rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 p-6 sm:p-10 shadow-xs overflow-visible">
-        <div className="max-w-3xl mx-auto text-center space-y-5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[11px] font-bold uppercase tracking-wider text-indigo-400">
-            <BarChart2 className="w-3.5 h-3.5" />
+      <section className="relative rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 p-4 sm:p-6 shadow-xs overflow-visible">
+        <div className="max-w-2xl mx-auto text-center space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+            <BarChart2 className="w-3 h-3" />
             <span>Institutional Stock Research Terminal</span>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-ink leading-tight">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-ink leading-tight">
             Search for a stock to start your analysis
           </h1>
-          <p className="text-xs sm:text-sm text-ink-muted max-w-xl mx-auto leading-relaxed">
+          <p className="text-xs text-ink-muted max-w-lg mx-auto leading-snug">
             Accurate financial data on {stocks.length}+ tracked companies and global tickers — 10-year statements, DCF fair value, analyst forecasts, and live market movers.
           </p>
 
           {/* Centered Search Combobox */}
-          <div className="max-w-xl mx-auto text-left pt-1">
+          <div className="max-w-lg mx-auto text-left pt-0.5">
             <StockAnalysisSearchCombobox
               stocks={stocks}
               selectedStock={null}
@@ -157,9 +157,9 @@ export default function HomeLandingView({
           </div>
 
           {/* Trending Tickers Strip */}
-          <div className="flex items-center justify-center flex-wrap gap-1.5 pt-1">
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-ink-faint mr-1">
-              <Flame className="w-3.5 h-3.5 text-amber-400" />
+          <div className="flex items-center justify-center flex-wrap gap-1 pt-0.5">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-ink-faint mr-1">
+              <Flame className="w-3 h-3 text-amber-400" />
               Trending:
             </span>
             {TRENDING_TICKERS.map(sym => {
@@ -170,7 +170,7 @@ export default function HomeLandingView({
                   key={sym}
                   type="button"
                   onClick={() => handleOpenTicker(sym)}
-                  className="px-2.5 py-1 rounded-lg bg-card/80 hover:bg-card-hover border border-border/80 hover:border-indigo-500/40 text-xs font-bold text-ink transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                  className="px-2 py-0.5 rounded-md bg-card/80 hover:bg-card-hover border border-border/80 hover:border-indigo-500/40 text-[11px] font-bold text-ink transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
                 >
                   <span>{sym}</span>
                   {typeof pct === 'number' && Number.isFinite(pct) && pct !== 0 && (
