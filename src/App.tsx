@@ -130,6 +130,7 @@ export default function App() {
  const [isSidebarToolsOpen, setIsSidebarToolsOpen] = useState(false);
  const [isSidebarFairValueOpen, setIsSidebarFairValueOpen] = useState(false);
  const [isSidebarOtherOpen, setIsSidebarOtherOpen] = useState(false);
+ const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
  const [showPercentCalculatorModal, setShowPercentCalculatorModal] = useState(() => {
     const h = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
     return h.includes('percent-calculator') || h.includes('percentage-calculator') || h.includes('pctdifference');
@@ -1986,10 +1987,10 @@ export default function App() {
     <div className="flex flex-col lg:flex-row items-stretch w-full gap-0 relative" id="stock-table-section">
 
       {/* LEFT SIDEBAR NAVIGATION (StockAnalysis.com Style) */}
-      <aside className="w-full lg:w-64 xl:w-72 shrink-0 z-20 flex flex-col gap-3 lg:pr-5 lg:self-start lg:sticky lg:top-4 mb-5 lg:mb-0">
+      <aside className="w-full lg:w-64 xl:w-72 shrink-0 z-20 flex flex-col gap-2.5 lg:gap-3 lg:pr-5 lg:self-start lg:sticky lg:top-4 mb-3 lg:mb-0">
         
-        {/* Quick Market Live Controls (Живи данни & Опресни пазар) */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Quick Market Live Controls (Живи данни & Опресни пазар) - Hidden on mobile unless Меню is expanded */}
+        <div className={`${isMobileNavOpen ? 'flex' : 'hidden'} lg:flex items-center gap-2 flex-wrap`}>
           {/* 1. Auto live updates toggler */}
           <button
             onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
@@ -2025,20 +2026,44 @@ export default function App() {
           </button>
         </div>
         {/* Navigation Menu Card */}
-        <div className="bg-transparent border border-border rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col gap-2">
+        <div className="bg-transparent border border-border rounded-2xl p-2 sm:p-3 lg:p-3.5 shadow-xs flex flex-col gap-1.5 lg:gap-2">
           {/* Header Title / Platform Nav label */}
-          <div className="px-2 py-1.5 flex items-center justify-between border-b border-border/50 text-[11px] font-black uppercase tracking-wider text-ink-muted">
+          <div className="px-1.5 lg:px-2 py-1 lg:py-1.5 flex items-center justify-between border-b border-border/50 text-[11px] font-black uppercase tracking-wider text-ink-muted">
             <span className="flex items-center gap-1.5">
               <Compass className="w-3.5 h-3.5 text-indigo-400" />
               <span>Навигация</span>
+              <span
+                className={`lg:hidden inline-flex h-1.5 w-1.5 rounded-full ${isAutoLiveRefresh ? 'bg-emerald-400' : 'bg-stone-500'}`}
+                title={isAutoLiveRefresh ? 'Живи данни: ВКЛ' : 'Живи данни: ИЗКЛ'}
+              />
             </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold">
+            <span className="hidden lg:inline-flex text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold">
               Меню
             </span>
+            <div className="flex lg:hidden items-center gap-1.5">
+              <button
+                type="button"
+                onClick={triggerManualRefresh}
+                disabled={isFetchingLivePrices}
+                className="p-1 rounded-md border border-border/70 text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer disabled:opacity-50"
+                title="Опресни живите котировки"
+              >
+                <RefreshCw className={`w-3 h-3 ${isFetchingLivePrices ? 'animate-spin text-emerald-400' : 'text-indigo-400'}`} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+                className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-400 border border-indigo-500/25 font-mono font-bold cursor-pointer active:scale-95 transition-transform"
+                aria-expanded={isMobileNavOpen}
+              >
+                <span>{isMobileNavOpen ? 'Скрий' : 'Меню'}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isMobileNavOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
           </div>
 
-          {/* Navigation Items (Stacked vertically on desktop, horizontally scrollable on mobile) */}
-          <nav className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-x-visible pb-1 lg:pb-0 no-scrollbar">
+          {/* Navigation Items (Stacked vertically on desktop, compact horizontal strip on mobile) */}
+          <nav className="flex lg:flex-col gap-1 lg:gap-1.5 overflow-x-auto lg:overflow-x-visible pb-0.5 lg:pb-0 no-scrollbar">
             {/* Tab 1: INTERACTIVE TABLE */}
             <a
               href="#table"
@@ -2182,6 +2207,8 @@ export default function App() {
             </button>
           </nav>
 
+          {/* Secondary Navigation Sections (Collapsible on mobile via Меню toggle, always visible on desktop) */}
+          <div className={`${isMobileNavOpen ? 'flex' : 'hidden'} lg:flex flex-col gap-1`}>
           {/* Fair Value Calculators Dropdown Menu (Unified inside Navigation Card) */}
           <div className="pt-1.5 mt-0.5 border-t border-border/50 flex flex-col">
             <button
@@ -2442,7 +2469,7 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowFinancialFlagsModal(true)}
+                  onClick={() => { setShowFinancialFlagsModal(true); setIsMobileNavOpen(false); }}
                   className="w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-xl text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer group"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -2450,6 +2477,7 @@ export default function App() {
                 </button>
               </div>
             )}
+          </div>
           </div>
         </div>
 
