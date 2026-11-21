@@ -220,6 +220,13 @@ export default function StockAnalysisExplorer({
   const [showChart, setShowChart] = useState<boolean>(true);
   const [financialFreq, setFinancialFreq] = useState<'annual' | 'quarterly' | 'trailing'>('annual');
   const [collapsedRowKeys, setCollapsedRowKeys] = useState<Set<string>>(new Set());
+  const [selectedStatementRowKey, setSelectedStatementRowKey] = useState<string | null>(null);
+
+  const handleStatementRowClick = useCallback((e: React.MouseEvent<HTMLTableRowElement>, rowId: string) => {
+    const targetEl = e.target as HTMLElement;
+    if (targetEl.closest('button, a, select, input')) return;
+    setSelectedStatementRowKey(prev => (prev === rowId ? null : rowId));
+  }, []);
 
   const toggleRowCollapse = (key: string) => {
     setCollapsedRowKeys(prev => {
@@ -2122,7 +2129,15 @@ export default function StockAnalysisExplorer({
                                       </thead>
                                       <tbody className="divide-y divide-border/40 font-mono text-[11px]">
                                         {(financialStatementsBundle.income?.rows.filter(r => ['revenue', 'gross_profit', 'ebit', 'net_income', 'eps_diluted'].includes(r.key)) || []).map((row, idx) => (
-                                          <tr key={idx} className="hover:bg-card-hover/40 transition-colors">
+                                          <tr
+                                            key={idx}
+                                            onClick={(e) => handleStatementRowClick(e, `overview:${row.key || idx}`)}
+                                            className={`transition-all duration-150 cursor-pointer ${
+                                              selectedStatementRowKey === `overview:${row.key || idx}`
+                                                ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold'
+                                                : 'hover:bg-indigo-500/10'
+                                            }`}
+                                          >
                                             <td className="py-1.5 px-2 font-sans font-semibold text-ink flex items-center justify-between gap-1">
                                               <span className="truncate">{row.name}</span>
                                               <button
@@ -2176,7 +2191,15 @@ export default function StockAnalysisExplorer({
                                       </thead>
                                       <tbody className="divide-y divide-border/40 font-mono text-[11px]">
                                         {(financialStatementsBundle.balance?.rows.filter(r => ['total_cash', 'total_cur_assets', 'total_assets', 'total_cur_liab', 'total_liab', 'total_equity'].includes(r.key)) || []).map((row, idx) => (
-                                          <tr key={idx} className="hover:bg-card-hover/40 transition-colors">
+                                          <tr
+                                            key={idx}
+                                            onClick={(e) => handleStatementRowClick(e, `overview:${row.key || idx}`)}
+                                            className={`transition-all duration-150 cursor-pointer ${
+                                              selectedStatementRowKey === `overview:${row.key || idx}`
+                                                ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold'
+                                                : 'hover:bg-indigo-500/10'
+                                            }`}
+                                          >
                                             <td className="py-1.5 px-2 font-sans font-semibold text-ink flex items-center justify-between gap-1">
                                               <span className="truncate">{row.name}</span>
                                               <button
@@ -2230,7 +2253,15 @@ export default function StockAnalysisExplorer({
                                       </thead>
                                       <tbody className="divide-y divide-border/40 font-mono text-[11px]">
                                         {(financialStatementsBundle.cashflow?.rows.filter(r => ['ocf', 'capex', 'fcf', 'fcf_margin', 'buybacks', 'dividends_paid'].includes(r.key)) || []).map((row, idx) => (
-                                          <tr key={idx} className="hover:bg-card-hover/40 transition-colors">
+                                          <tr
+                                            key={idx}
+                                            onClick={(e) => handleStatementRowClick(e, `overview:${row.key || idx}`)}
+                                            className={`transition-all duration-150 cursor-pointer ${
+                                              selectedStatementRowKey === `overview:${row.key || idx}`
+                                                ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold'
+                                                : 'hover:bg-indigo-500/10'
+                                            }`}
+                                          >
                                             <td className="py-1.5 px-2 font-sans font-semibold text-ink flex items-center justify-between gap-1">
                                               <span className="truncate">{row.name}</span>
                                               <button
@@ -2284,7 +2315,15 @@ export default function StockAnalysisExplorer({
                                       </thead>
                                       <tbody className="divide-y divide-border/40 font-mono text-[11px]">
                                         {(financialStatementsBundle.ratios?.rows.filter(r => ['pe', 'ps', 'pb', 'ev_ebitda', 'debt_equity', 'current_ratio', 'roe', 'net_margin'].includes(r.key)) || []).map((row, idx) => (
-                                          <tr key={idx} className="hover:bg-card-hover/40 transition-colors">
+                                          <tr
+                                            key={idx}
+                                            onClick={(e) => handleStatementRowClick(e, `overview:${row.key || idx}`)}
+                                            className={`transition-all duration-150 cursor-pointer ${
+                                              selectedStatementRowKey === `overview:${row.key || idx}`
+                                                ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold'
+                                                : 'hover:bg-indigo-500/10'
+                                            }`}
+                                          >
                                             <td className="py-1.5 px-2 font-sans font-semibold text-ink flex items-center justify-between gap-1">
                                               <span className="truncate">{row.name}</span>
                                               <button
@@ -2380,23 +2419,31 @@ export default function StockAnalysisExplorer({
                                         ? 'pl-12' 
                                         : 'pl-4';
 
+                                  const rowHighlightId = `${financialSubTab}:${row.key || idx}`;
+                                  const isRowSelected = selectedStatementRowKey === rowHighlightId;
+
                                   return (
                                     <tr 
                                       key={row.key || idx} 
-                                      className={`group transition-colors hover:bg-card-hover/40 ${
-                                        isActive
-                                          ? 'bg-indigo-500/10 border-l-4 border-indigo-500 font-bold' 
-                                          : isBold 
-                                            ? 'font-black text-ink border-t border-border/60 bg-card/60' 
-                                            : 'text-ink-muted'
+                                      onClick={(e) => handleStatementRowClick(e, rowHighlightId)}
+                                      className={`group transition-all duration-150 cursor-pointer ${
+                                        isRowSelected
+                                          ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold'
+                                          : isActive
+                                            ? 'bg-indigo-500/10 border-l-4 border-indigo-500 font-bold hover:bg-indigo-500/15' 
+                                            : isBold 
+                                              ? 'font-black text-ink border-t border-border/60 bg-card/60 hover:bg-indigo-500/10' 
+                                              : 'text-ink-muted hover:bg-indigo-500/10'
                                       }`}
                                     >
                                       <td className={`py-2 px-3 sm:px-4 sticky left-0 bg-card z-10 border-r border-border/40 font-sans ${indentClass} ${
-                                        isActive
-                                          ? 'bg-indigo-950/20 text-indigo-300 font-black'
-                                          : isBold 
-                                            ? 'font-black text-ink' 
-                                            : 'font-medium text-ink-faint group-hover:text-ink'
+                                        isRowSelected
+                                          ? 'shadow-[inset_0_0_0_9999px_rgba(99,102,241,0.2)] text-ink font-black'
+                                          : isActive
+                                            ? 'bg-indigo-950/20 text-indigo-300 font-black'
+                                            : isBold 
+                                              ? 'font-black text-ink' 
+                                              : 'font-medium text-ink-faint group-hover:text-ink'
                                       }`}>
                                         <div className="flex items-center justify-between gap-2">
                                           <div className="flex items-center gap-1.5 min-w-0">
@@ -3569,16 +3616,25 @@ export default function StockAnalysisExplorer({
                               }
 
                               const isGrowthRow = row.key.includes('_growth') || row.name.includes('Growth');
+                              const kpiRowHighlightId = `kpis:${row.key}`;
+                              const isKpiRowSelected = selectedStatementRowKey === kpiRowHighlightId;
 
                               return (
                                 <tr 
                                   key={row.key}
-                                  className={`transition-colors hover:bg-accent/40 ${
-                                    isGrowthRow ? 'bg-muted/10 text-[11px]' : ''
+                                  onClick={(e) => handleStatementRowClick(e, kpiRowHighlightId)}
+                                  className={`transition-all duration-150 cursor-pointer ${
+                                    isKpiRowSelected
+                                      ? 'bg-indigo-500/20 text-ink ring-2 ring-indigo-500/50 shadow-md font-bold'
+                                      : isGrowthRow
+                                        ? 'bg-muted/10 text-[11px] hover:bg-indigo-500/10'
+                                        : 'hover:bg-indigo-500/10'
                                   }`}
                                 >
                                   <td className={`py-2 px-3 sticky left-0 bg-card z-10 border-r border-border/50 whitespace-nowrap font-sans ${
-                                    row.isBold ? 'font-bold text-ink' : 'text-ink-muted'
+                                    isKpiRowSelected
+                                      ? 'shadow-[inset_0_0_0_9999px_rgba(99,102,241,0.2)] text-ink font-black'
+                                      : row.isBold ? 'font-bold text-ink' : 'text-ink-muted'
                                   } ${isChild ? 'pl-7' : ''}`}>
                                     <div className="flex items-center gap-1.5">
                                       {hasChildren && (
