@@ -17,6 +17,7 @@ import PriceAlertPlanner from './components/PriceAlertPlanner';
 import PortfolioTracker from './components/PortfolioTracker';
 import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import MorningBriefingCard from './components/MorningBriefingCard';
+import HomeLandingView from './components/HomeLandingView';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
@@ -197,22 +198,22 @@ export default function App() {
     }
   };
 
-  const getInitialTab = (): 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other' => {
+  const getInitialTab = (): 'home' | 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other' => {
     const hash = window.location.hash.toLowerCase().replace('#', '');
-    if (hash === 'stocks' || hash === 'alerts' || hash === 'portfolio' || hash === 'news' || hash === 'other') return hash;
+    if (hash === 'home' || hash === 'stocks' || hash === 'alerts' || hash === 'portfolio' || hash === 'news' || hash === 'other') return hash;
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab')?.toLowerCase();
-    if (tabParam === 'stocks' || tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news' || tabParam === 'other') return tabParam;
+    if (tabParam === 'home' || tabParam === 'stocks' || tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news' || tabParam === 'other') return tabParam;
     return 'table';
   };
 
-  const [activeMainTab, setActiveMainTab] = useState<'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other'>(getInitialTab);
-  const activeMainTabRef = useRef<'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other'>(activeMainTab);
+  const [activeMainTab, setActiveMainTab] = useState<'home' | 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other'>(getInitialTab);
+  const activeMainTabRef = useRef<'home' | 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other'>(activeMainTab);
   activeMainTabRef.current = activeMainTab;
 
   const [selectedStockForStocksTab, setSelectedStockForStocksTab] = useState<Stock | null>(null);
 
-  const switchTab = (tab: 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other') => {
+  const switchTab = (tab: 'home' | 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other') => {
     setActiveMainTab(tab);
     activeMainTabRef.current = tab;
     const targetHash = tab === 'table' ? '' : `#${tab}`;
@@ -2070,15 +2071,18 @@ export default function App() {
               href="#home"
               onClick={(e) => {
                 e.preventDefault();
-                switchTab('table');
-                setActiveFilter('all');
+                switchTab('home');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border"
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                activeMainTab === 'home'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
+              }`}
               title="Начало (Home)"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <Home className="w-4 h-4 shrink-0 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <Home className={`w-4 h-4 shrink-0 ${activeMainTab === 'home' ? 'text-white' : 'text-emerald-400 group-hover:scale-110 transition-transform'}`} />
                 <span className="truncate">HOME</span>
               </div>
             </a>
@@ -2542,6 +2546,24 @@ export default function App() {
           isSimulating={isSimulating}
           className="mt-0 mb-2"
         />
+
+        {/* Home Tab (StockAnalysis.com Style Landing Page) */}
+        {activeMainTab === 'home' && (
+          <HomeLandingView
+            stocks={stocks}
+            indices={indices}
+            onSelectStock={(st) => {
+              setSelectedStockForStocksTab(st);
+              switchTab('stocks');
+            }}
+            onAddStockToTable={(newStock) => {
+              setStocks(prev => (prev.some(s => s.ticker === newStock.ticker) ? prev : [newStock, ...prev]));
+            }}
+            onSwitchTab={switchTab}
+            onOpenDcfModal={() => setShowDcfModal(true)}
+            onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
+          />
+        )}
 
         {/* Top Market Widgets: Top Gainer, Top Loser, Fear & Greed Index */}
       {activeMainTab === 'table' && (
