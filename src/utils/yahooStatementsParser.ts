@@ -200,8 +200,14 @@ export function buildStatementsFromYahoo(
   // Helper to build Income Statement for given periods & map
   const makeIncome = (periods: string[], endDates: Record<string, string>, map: Record<string, YahooTsRecord>): FinancialStatementTable => {
     const revRow = extractRow(periods, map, 'Revenue', 'revenue', { isBold: true, format: 'currency' }, r => num(r, 'totalRevenue', 'operatingRevenue'));
-    const corRow = extractRow(periods, map, 'Cost of Revenue', 'cor', { indent: 1, format: 'currency' }, r => num(r, 'costOfRevenue'));
-    const gpRow = extractRow(periods, map, 'Gross Profit', 'gross_profit', { isBold: true, format: 'currency' }, r => num(r, 'grossProfit'));
+    const corRow = extractRow(periods, map, 'Cost of Revenue', 'cor', { indent: 1, format: 'currency' }, r => num(r, 'costOfRevenue', 'reconciledCostOfRevenue'));
+    const gpRow = extractRow(periods, map, 'Gross Profit', 'gross_profit', { isBold: true, format: 'currency' }, r => {
+      const direct = num(r, 'grossProfit');
+      if (direct !== null) return direct;
+      const rev = num(r, 'totalRevenue', 'operatingRevenue');
+      const cor = num(r, 'costOfRevenue', 'reconciledCostOfRevenue');
+      return (rev !== null && cor !== null) ? (rev - cor) : null;
+    });
     const rndRow = extractRow(periods, map, 'Research & Development (R&D)', 'rnd', { indent: 1, format: 'currency' }, r => num(r, 'researchAndDevelopment'));
     const sgaRow = extractRow(periods, map, 'Selling, General & Admin (SG&A)', 'sga', { indent: 1, format: 'currency' }, r => num(r, 'sellingGeneralAndAdministration'));
     const opExpRow = extractRow(periods, map, 'Total Operating Expenses', 'total_op_exp', { isBold: true, format: 'currency' }, r => num(r, 'operatingExpense'));
@@ -212,7 +218,13 @@ export function buildStatementsFromYahoo(
     const niRow = extractRow(periods, map, 'Net Income', 'net_income', { isBold: true, format: 'currency' }, r => num(r, 'netIncome', 'netIncomeCommonStockholders', 'netIncomeContinuousOperations'));
     const sharesRow = extractRow(periods, map, 'Shares Outstanding (Diluted)', 'shares_diluted', { indent: 1, format: 'number' }, r => num(r, 'dilutedAverageShares', 'basicAverageShares'));
     const epsRow = extractRow(periods, map, 'EPS (Diluted)', 'eps_diluted', { isBold: true, format: 'currency' }, r => num(r, 'dilutedEPS', 'basicEPS'));
-    const ebitdaRow = extractRow(periods, map, 'EBITDA', 'ebitda', { isBold: true, format: 'currency' }, r => num(r, 'EBITDA', 'normalizedEBITDA'));
+    const ebitdaRow = extractRow(periods, map, 'EBITDA', 'ebitda', { isBold: true, format: 'currency' }, r => {
+      const direct = num(r, 'EBITDA', 'normalizedEBITDA');
+      if (direct !== null) return direct;
+      const ebit = num(r, 'operatingIncome', 'totalOperatingIncomeAsReported');
+      const da = num(r, 'depreciationAndAmortization', 'depreciationAmortizationDepletion', 'reconciledDepreciation');
+      return (ebit !== null && da !== null) ? (ebit + da) : null;
+    });
 
     const rows: FinancialStatementRow[] = [
       revRow,
@@ -245,9 +257,9 @@ export function buildStatementsFromYahoo(
 
   // Helper to build Balance Sheet
   const makeBalance = (periods: string[], endDates: Record<string, string>, map: Record<string, YahooTsRecord>): FinancialStatementTable => {
-    const cashRow = extractRow(periods, map, 'Cash & Cash Equivalents', 'cash_equiv', { indent: 1, format: 'currency' }, r => num(r, 'cashAndCashEquivalents'));
+    const cashRow = extractRow(periods, map, 'Cash & Cash Equivalents', 'cash_equiv', { indent: 1, format: 'currency' }, r => num(r, 'cashAndCashEquivalents', 'cashEquivalents'));
     const stInvRow = extractRow(periods, map, 'Short-Term Investments', 'st_investments', { indent: 1, format: 'currency' }, r => num(r, 'otherShortTermInvestments'));
-    const totalCashRow = extractRow(periods, map, 'Total Cash & Short-Term Investments', 'total_cash', { isBold: true, format: 'currency' }, r => num(r, 'cashCashEquivalentsAndShortTermInvestments', 'cashAndCashEquivalents'));
+    const totalCashRow = extractRow(periods, map, 'Total Cash & Short-Term Investments', 'total_cash', { isBold: true, format: 'currency' }, r => num(r, 'cashCashEquivalentsAndShortTermInvestments', 'cashAndCashEquivalents', 'cashEquivalents'));
     const arRow = extractRow(periods, map, 'Accounts Receivable', 'accounts_receivable', { indent: 1, format: 'currency' }, r => num(r, 'accountsReceivable', 'receivables'));
     const invRow = extractRow(periods, map, 'Inventory', 'inventory', { indent: 1, format: 'currency' }, r => num(r, 'inventory'));
     const currAssetsRow = extractRow(periods, map, 'Total Current Assets', 'current_assets', { isBold: true, format: 'currency' }, r => num(r, 'currentAssets'));
@@ -259,7 +271,14 @@ export function buildStatementsFromYahoo(
     const stDebtRow = extractRow(periods, map, 'Short-Term / Current Debt', 'st_debt', { indent: 1, format: 'currency' }, r => num(r, 'currentDebt', 'currentDebtAndCapitalLeaseObligation'));
     const currLiabRow = extractRow(periods, map, 'Total Current Liabilities', 'current_liabilities', { isBold: true, format: 'currency' }, r => num(r, 'currentLiabilities'));
     const ltDebtRow = extractRow(periods, map, 'Long-Term Debt', 'lt_debt', { indent: 1, format: 'currency' }, r => num(r, 'longTermDebt', 'longTermDebtAndCapitalLeaseObligation'));
-    const totalDebtRow = extractRow(periods, map, 'Total Debt', 'total_debt', { isBold: true, format: 'currency' }, r => num(r, 'totalDebt'));
+    const totalDebtRow = extractRow(periods, map, 'Total Debt', 'total_debt', { isBold: true, format: 'currency' }, r => {
+      const direct = num(r, 'totalDebt');
+      if (direct !== null) return direct;
+      const st = num(r, 'currentDebt', 'currentDebtAndCapitalLeaseObligation');
+      const lt = num(r, 'longTermDebt', 'longTermDebtAndCapitalLeaseObligation');
+      if (st !== null && lt !== null) return st + lt;
+      return lt ?? st;
+    });
     const totalLiabRow = extractRow(periods, map, 'Total Liabilities', 'total_liabilities', { isBold: true, format: 'currency' }, r => num(r, 'totalLiabilitiesNetMinorityInterest'));
     const retainedRow = extractRow(periods, map, 'Retained Earnings', 'retained_earnings', { indent: 1, format: 'currency' }, r => num(r, 'retainedEarnings'));
     const equityRow = extractRow(periods, map, 'Total Stockholders\' Equity', 'equity', { isBold: true, format: 'currency' }, r => num(r, 'stockholdersEquity', 'commonStockEquity'));
@@ -321,7 +340,7 @@ export function buildStatementsFromYahoo(
   // Helper to build Cash Flow Statement
   const makeCashFlow = (periods: string[], endDates: Record<string, string>, map: Record<string, YahooTsRecord>): FinancialStatementTable => {
     const niRow = extractRow(periods, map, 'Net Income', 'net_income', { isBold: true, format: 'currency' }, r => num(r, 'netIncomeFromContinuingOperations', 'netIncome', 'netIncomeContinuousOperations'));
-    const daRow = extractRow(periods, map, 'Depreciation & Amortization', 'da', { indent: 1, format: 'currency' }, r => num(r, 'depreciationAndAmortization', 'depreciationAmortizationDepletion'));
+    const daRow = extractRow(periods, map, 'Depreciation & Amortization', 'da', { indent: 1, format: 'currency' }, r => num(r, 'depreciationAndAmortization', 'depreciationAmortizationDepletion', 'reconciledDepreciation'));
     const sbcRow = extractRow(periods, map, 'Stock-Based Compensation', 'sbc', { indent: 1, format: 'currency' }, r => num(r, 'stockBasedCompensation'));
     const wcRow = extractRow(periods, map, 'Change in Working Capital', 'working_capital', { indent: 1, format: 'currency' }, r => num(r, 'changeInWorkingCapital'));
     const ocfRow = extractRow(periods, map, 'Operating Cash Flow (OCF)', 'ocf', { isBold: true, format: 'currency' }, r => num(r, 'operatingCashFlow', 'cashFlowFromContinuingOperatingActivities'));
@@ -337,7 +356,7 @@ export function buildStatementsFromYahoo(
     const divRow = extractRow(periods, map, 'Dividends Paid', 'dividends_paid', { indent: 1, format: 'currency' }, r => num(r, 'cashDividendsPaid', 'commonStockDividendPaid'));
     const buybackRow = extractRow(periods, map, 'Share Repurchases (Buybacks)', 'share_repurchases', { indent: 1, format: 'currency' }, r => num(r, 'repurchaseOfCapitalStock', 'commonStockPayments'));
     const icfRow = extractRow(periods, map, 'Investing Cash Flow', 'icf', { isBold: true, format: 'currency' }, r => num(r, 'investingCashFlow', 'cashFlowFromContinuingInvestingActivities'));
-    const fcfFinRow = extractRow(periods, map, 'Financing Cash Flow', 'cff', { isBold: true, format: 'currency' }, r => num(r, 'financingCashFlow'));
+    const fcfFinRow = extractRow(periods, map, 'Financing Cash Flow', 'cff', { isBold: true, format: 'currency' }, r => num(r, 'financingCashFlow', 'cashFlowFromContinuingFinancingActivities'));
     const netCashChangeRow = extractRow(periods, map, 'Net Change in Cash', 'net_cash_change', { isBold: true, format: 'currency' }, r => num(r, 'changesInCash'));
 
     const rows: FinancialStatementRow[] = [

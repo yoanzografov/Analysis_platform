@@ -86,7 +86,7 @@ function extractAnnualMap(
     if (!Array.isArray(items) || items.length === 0) continue;
 
     for (const item of items) {
-      if (item.form !== '10-K' || typeof item.val !== 'number' || !item.end) continue;
+      if ((item.form !== '10-K' && item.form !== '20-F' && item.form !== '40-F') || typeof item.val !== 'number' || !item.end) continue;
       if (!isInstant) {
         if (!item.start) continue;
         const d = daysBetween(item.start, item.end);
@@ -129,7 +129,10 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
     if (!res.ok) return [];
 
     const facts = await res.json();
-    const usGaap = facts?.facts?.['us-gaap'] || {};
+    const usGaap = {
+      ...(facts?.facts?.['ifrs-full'] || {}),
+      ...(facts?.facts?.['us-gaap'] || {}),
+    };
     if (!usGaap || Object.keys(usGaap).length === 0) return [];
 
     const revMap = extractAnnualMap(usGaap, [
@@ -139,6 +142,7 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
       'RevenueFromContractWithCustomerIncludingAssessedTax',
       'SalesRevenueGoodsNet',
       'SalesRevenueServicesNet',
+      'Revenue',
     ], false);
 
     const corMap = extractAnnualMap(usGaap, [
@@ -146,19 +150,20 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
       'CostOfRevenue',
       'CostOfGoodsSold',
       'CostOfServices',
+      'CostOfSales',
     ], false);
 
     const gpMap = extractAnnualMap(usGaap, ['GrossProfit'], false);
     const rndMap = extractAnnualMap(usGaap, ['ResearchAndDevelopmentExpense'], false);
     const sgaMap = extractAnnualMap(usGaap, ['SellingGeneralAndAdministrativeExpense'], false);
-    const ebitMap = extractAnnualMap(usGaap, ['OperatingIncomeLoss'], false);
+    const ebitMap = extractAnnualMap(usGaap, ['OperatingIncomeLoss', 'ProfitLossFromOperatingActivities'], false);
     const intMap = extractAnnualMap(usGaap, ['InterestExpense', 'InterestExpenseDebt'], false);
     const ebtMap = extractAnnualMap(usGaap, [
       'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest',
       'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments',
     ], false);
     const taxMap = extractAnnualMap(usGaap, ['IncomeTaxExpenseBenefit'], false);
-    const niMap = extractAnnualMap(usGaap, ['NetIncomeLoss', 'ProfitLoss'], false);
+    const niMap = extractAnnualMap(usGaap, ['NetIncomeLoss', 'ProfitLoss', 'NetIncomeLossAvailableToCommonStockholdersBasic'], false);
     const epsMap = extractAnnualMap(usGaap, ['EarningsPerShareDiluted'], false, 'USD/shares');
     const sharesMap = extractAnnualMap(usGaap, [
       'WeightedAverageNumberOfDilutedSharesOutstanding',
@@ -188,6 +193,7 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
       'DepreciationAndAmortization',
       'Depreciation',
       'DepreciationAmortizationAndAccretionNet',
+      'DepreciationAndAmortisationExpense',
     ], false);
     const sbcMap = extractAnnualMap(usGaap, [
       'ShareBasedCompensation',
@@ -198,13 +204,17 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
       'IncreaseDecreaseInOperatingCapital',
       'IncreaseDecreaseInOperatingAssetsAndLiabilities',
     ], false);
-    const ocfMap = extractAnnualMap(usGaap, ['NetCashProvidedByUsedInOperatingActivities'], false);
+    const ocfMap = extractAnnualMap(usGaap, [
+      'NetCashProvidedByUsedInOperatingActivities',
+      'CashFlowsFromUsedInOperatingActivities',
+    ], false);
     const capexMap = extractAnnualMap(usGaap, [
       'PaymentsToAcquirePropertyPlantAndEquipment',
       'PaymentsToAcquireProductiveAssets',
       'PaymentsForCapitalImprovements',
       'PaymentsToAcquireOtherPropertyPlantAndEquipment',
       'PaymentsToAcquireMachineryAndEquipment',
+      'PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities',
     ], false);
     const divMap = extractAnnualMap(usGaap, ['PaymentsOfDividendsCommonStock', 'PaymentsOfDividends'], false);
     const buybackMap = extractAnnualMap(usGaap, ['PaymentsForRepurchaseOfCommonStock'], false);
