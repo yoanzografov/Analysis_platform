@@ -86,11 +86,10 @@ function buildGrowthRow(
   const values: Record<string, number | null> = {};
   for (let i = 0; i < periods.length; i++) {
     const p = periods[i];
-    // For TTM, compare against the latest annual/prior period if available, otherwise null
     const nextPeriod = periods[i + 1];
     const cur = parentValues[p];
     const prev = nextPeriod ? parentValues[nextPeriod] : null;
-    if (p !== 'TTM' && cur !== null && prev !== null && prev !== 0) {
+    if (cur !== null && prev !== null && prev !== 0) {
       values[p] = parseFloat((((cur - prev) / Math.abs(prev)) * 100).toFixed(1));
     } else {
       values[p] = null;
@@ -163,8 +162,46 @@ export function buildStatementsFromYahoo(
   const annualEndDates: Record<string, string> = {};
   const annualByPeriod: Record<string, YahooTsRecord> = {};
 
-  const latestTtmRec = trailingSorted[0];
-  if (latestTtmRec) {
+  // Build or enrich TTM record using trailingSorted[0] and summing last 4 quarters for any missing flow fields
+  let latestTtmRec: YahooTsRecord | undefined = trailingSorted[0] ? { ...trailingSorted[0] } : undefined;
+  if (quarterlySorted.length >= 4) {
+    const last4Q = quarterlySorted.slice(0, 4);
+    const flowKeys = [
+      'totalRevenue', 'operatingRevenue', 'costOfRevenue', 'reconciledCostOfRevenue',
+      'grossProfit', 'researchAndDevelopment', 'sellingGeneralAndAdministration',
+      'operatingExpense', 'operatingIncome', 'totalOperatingIncomeAsReported',
+      'interestExpense', 'interestExpenseNonOperating', 'netInterestIncome',
+      'pretaxIncome', 'taxProvision', 'netIncome', 'netIncomeCommonStockholders',
+      'netIncomeContinuousOperations', 'depreciationAndAmortization',
+      'depreciationAmortizationDepletion', 'reconciledDepreciation',
+      'stockBasedCompensation', 'changeInWorkingCapital', 'operatingCashFlow',
+      'cashFlowFromContinuingOperatingActivities', 'capitalExpenditure', 'purchaseOfPPE',
+      'freeCashFlow', 'cashDividendsPaid', 'commonStockDividendPaid',
+      'repurchaseOfCapitalStock', 'commonStockPayments', 'investingCashFlow',
+      'cashFlowFromContinuingInvestingActivities', 'financingCashFlow',
+      'cashFlowFromContinuingFinancingActivities', 'changesInCash', 'dilutedEPS', 'basicEPS'
+    ];
+    if (!latestTtmRec) {
+      latestTtmRec = { date: last4Q[0].date };
+    }
+    for (const fk of flowKeys) {
+      if (latestTtmRec[fk] === undefined || latestTtmRec[fk] === null) {
+        const vals = last4Q.map(q => q[fk]).filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+        if (vals.length === 4) {
+          latestTtmRec[fk] = vals.reduce((a, b) => a + b, 0);
+        }
+      }
+    }
+    // Share counts are point-in-time / latest-quarter averages
+    for (const sk of ['dilutedAverageShares', 'basicAverageShares', 'ordinarySharesNumber', 'shareIssued']) {
+      if (latestTtmRec[sk] === undefined || latestTtmRec[sk] === null) {
+        const latestVal = last4Q.map(q => q[sk]).find((v): v is number => typeof v === 'number' && Number.isFinite(v));
+        if (latestVal !== undefined) latestTtmRec[sk] = latestVal;
+      }
+    }
+  }
+
+  if (latestTtmRec && num(latestTtmRec, 'totalRevenue', 'operatingRevenue', 'netIncome', 'operatingCashFlow') !== null) {
     annualPeriods.push('TTM');
     const dt = toDate(latestTtmRec.date)!;
     annualEndDates['TTM'] = formatPeriodEnd(dt);
@@ -589,8 +626,12 @@ export function buildStatementsFromYahoo(
   const bsByPeriod: Record<string, YahooTsRecord> = { ...annualByPeriod };
   const bsEndDates: Record<string, string> = { ...annualEndDates };
   if (annualPeriods[0] === 'TTM' && latestBsSnap && num(bsByPeriod['TTM'], 'totalAssets') === null) {
-    // Merge latest Balance Sheet snapshot into TTM while preserving TTM flow metrics (Revenue, Net Income, OCF, CapEx, EPS)
-    bsByPeriod['TTM'] = { ...latestBsSnap, ...annualByPeriod['TTM'] };
+    // Merge latest Balance Sheet snapshot into TTM while preserving non-null TTM flow metrics
+    const mergedTtm: YahooTsRecord = { ...latestBsSnap };
+    for (const [k, v] of Object.entries(annualByPeriod['TTM'] || {})) {
+      if (v !== undefined && v !== null) mergedTtm[k] = v;
+    }
+    bsByPeriod['TTM'] = mergedTtm;
     bsEndDates['TTM'] = formatPeriodEnd(toDate(latestBsSnap.date)!);
   }
 
