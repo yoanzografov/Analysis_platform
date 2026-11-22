@@ -219,11 +219,10 @@ export function buildStatementsFromYahoo(
     const sharesRow = extractRow(periods, map, 'Shares Outstanding (Diluted)', 'shares_diluted', { indent: 1, format: 'number' }, r => num(r, 'dilutedAverageShares', 'basicAverageShares'));
     const epsRow = extractRow(periods, map, 'EPS (Diluted)', 'eps_diluted', { isBold: true, format: 'currency' }, r => num(r, 'dilutedEPS', 'basicEPS'));
     const ebitdaRow = extractRow(periods, map, 'EBITDA', 'ebitda', { isBold: true, format: 'currency' }, r => {
-      const direct = num(r, 'EBITDA', 'normalizedEBITDA');
-      if (direct !== null) return direct;
       const ebit = num(r, 'operatingIncome', 'totalOperatingIncomeAsReported');
       const da = num(r, 'depreciationAndAmortization', 'depreciationAmortizationDepletion', 'reconciledDepreciation');
-      return (ebit !== null && da !== null) ? (ebit + da) : null;
+      if (ebit !== null && da !== null) return ebit + da;
+      return num(r, 'EBITDA', 'normalizedEBITDA');
     });
 
     const rows: FinancialStatementRow[] = [
