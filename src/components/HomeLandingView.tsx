@@ -152,9 +152,6 @@ export default function HomeLandingView({
           <h1 className="text-lg sm:text-xl font-black tracking-tight text-ink leading-tight">
             Search for a stock to start your analysis
           </h1>
-          <p className="text-[11px] sm:text-xs text-ink-muted max-w-lg mx-auto leading-snug">
-            {stocks.length}+ tracked companies &amp; global tickers — 10-year statements, DCF fair value, forecasts &amp; live movers.
-          </p>
 
           {/* Centered Large Search Combobox */}
           <div className="w-full max-w-xl mx-auto text-left pt-1">
