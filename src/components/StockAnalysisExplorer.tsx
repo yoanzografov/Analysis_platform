@@ -1817,22 +1817,58 @@ export default function StockAnalysisExplorer({
                     ) : (
                       <div className="space-y-4">
                         {/* ─── Floating Interactive Metric Chart Popover / Modal (StockAnalysis Style) ─── */}
-                        {activeMetricRow && hoverPos && (
-                          <div
-                            className={`fixed z-50 p-4 sm:p-5 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/90 shadow-2xl animate-in fade-in zoom-in-95 duration-150 w-[480px] sm:w-[520px] max-w-[95vw] ${
-                              pinnedMetricRow ? 'pointer-events-auto ring-2 ring-indigo-500/50 shadow-indigo-500/10' : 'pointer-events-auto'
-                            }`}
-                            style={{
-                              top: hoverPos.y < 320 ? `${Math.max(10, hoverPos.y + 24)}px` : `${Math.max(10, hoverPos.y - 12)}px`,
-                              left: `${typeof window !== 'undefined' ? Math.max(260, Math.min(window.innerWidth - 260, hoverPos.x)) : hoverPos.x}px`,
-                              transform: hoverPos.y < 320 ? 'translate(-50%, 0)' : 'translate(-50%, -100%)'
-                            }}
-                          >
+                        {activeMetricRow && hoverPos && typeof document !== 'undefined' && createPortal(
+                          (() => {
+                            const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
+                            const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
+                            const isMobileView = vw < 640;
+                            const popW = Math.min(520, vw - 24);
+                            const popH = Math.min(410, vh - 24);
+                            const safeLeft = Math.max(12 + popW / 2, Math.min(vw - 12 - popW / 2, hoverPos.x));
+                            const canOpenAbove = hoverPos.y - 16 - popH >= 12;
+                            const safeTop = canOpenAbove
+                              ? Math.max(12, hoverPos.y - 16 - popH)
+                              : Math.max(12, Math.min(vh - 12 - popH, hoverPos.y + 24));
+                            const closeChartPopover = () => {
+                              setPinnedMetricRow(null);
+                              setHoveredMetricRow(null);
+                              setSelectedBarIndex(null);
+                              setHoverPos(null);
+                            };
+
+                            return (
+                              <>
+                                {isMobileView && (
+                                  <div
+                                    onClick={closeChartPopover}
+                                    className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-[2px]"
+                                  />
+                                )}
+                                <div
+                                  className={`fixed z-[9999] p-4 sm:p-5 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/90 shadow-2xl animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto ${
+                                    pinnedMetricRow ? 'pointer-events-auto ring-2 ring-indigo-500/50 shadow-indigo-500/10' : 'pointer-events-auto'
+                                  }`}
+                                  style={
+                                    isMobileView
+                                      ? {
+                                          top: '50%',
+                                          left: '50%',
+                                          width: 'min(94vw, 480px)',
+                                          transform: 'translate(-50%, -50%)',
+                                        }
+                                      : {
+                                          top: `${safeTop}px`,
+                                          left: `${safeLeft}px`,
+                                          width: `${popW}px`,
+                                          transform: 'translate(-50%, 0)',
+                                        }
+                                  }
+                                >
                             {/* Card Header */}
                             <div className="flex items-start justify-between gap-3 pb-3 mb-2.5 border-b border-border/70">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                                  <span className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shrink-0">
                                     <BarChart3 className="w-4 h-4" />
                                   </span>
                                   <h4 className="text-sm font-black text-ink truncate">
@@ -1847,14 +1883,10 @@ export default function StockAnalysisExplorer({
                               <div className="flex items-center gap-2 shrink-0">
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    setPinnedMetricRow(null);
-                                    setHoveredMetricRow(null);
-                                    setSelectedBarIndex(null);
-                                    setHoverPos(null);
-                                  }}
-                                  className="p-1 rounded-lg border border-border text-ink-faint hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
+                                  onClick={closeChartPopover}
+                                  className="p-1.5 rounded-lg border border-border text-ink-muted hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
                                   title="Затвори графиката"
+                                  aria-label="Затвори графиката"
                                 >
                                   <X className="w-4 h-4" />
                                 </button>
@@ -1976,6 +2008,10 @@ export default function StockAnalysisExplorer({
                               💡 Кликнете върху бутона 📊 или ✕ за затваряне
                             </div>
                           </div>
+                              </>
+                            );
+                          })(),
+                          document.body
                         )}
 
                         {/* ─── Financials View Switch: Overview vs Full Statement Table ─── */}
