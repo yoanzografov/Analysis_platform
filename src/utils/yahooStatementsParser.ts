@@ -507,7 +507,7 @@ export function buildStatementsFromYahoo(
       key: 'rev_per_share',
       format: 'currency',
       values: Object.fromEntries(periods.map(p => {
-        const rev = num(map[p], 'totalRevenue');
+        const rev = calcRevenue(map[p]);
         const sh = num(map[p], 'dilutedAverageShares', 'basicAverageShares');
         return [p, rev !== null && sh !== null && sh > 0 ? parseFloat((rev / sh).toFixed(2)) : null];
       })),
@@ -518,7 +518,7 @@ export function buildStatementsFromYahoo(
       key: 'fcf_per_share',
       format: 'currency',
       values: Object.fromEntries(periods.map(p => {
-        const fcf = num(map[p], 'freeCashFlow');
+        const fcf = calcFcf(map[p]);
         const sh = num(map[p], 'dilutedAverageShares', 'basicAverageShares');
         return [p, fcf !== null && sh !== null && sh > 0 ? parseFloat((fcf / sh).toFixed(2)) : null];
       })),
@@ -529,8 +529,8 @@ export function buildStatementsFromYahoo(
       key: 'capex_pct_rev',
       format: 'percent',
       values: Object.fromEntries(periods.map(p => {
-        const capex = num(map[p], 'capitalExpenditure');
-        const rev = num(map[p], 'totalRevenue');
+        const capex = calcCapex(map[p]);
+        const rev = calcRevenue(map[p]);
         return [p, capex !== null && rev !== null && rev > 0 ? parseFloat(((Math.abs(capex) / rev) * 100).toFixed(1)) : null];
       })),
     };
@@ -541,7 +541,7 @@ export function buildStatementsFromYahoo(
       format: 'percent',
       values: Object.fromEntries(periods.map(p => {
         const rnd = num(map[p], 'researchAndDevelopment');
-        const rev = num(map[p], 'totalRevenue');
+        const rev = calcRevenue(map[p]);
         return [p, rnd !== null && rev !== null && rev > 0 ? parseFloat(((rnd / rev) * 100).toFixed(1)) : null];
       })),
     };
@@ -552,7 +552,7 @@ export function buildStatementsFromYahoo(
       format: 'percent',
       values: Object.fromEntries(periods.map(p => {
         const sbc = num(map[p], 'stockBasedCompensation');
-        const rev = num(map[p], 'totalRevenue');
+        const rev = calcRevenue(map[p]);
         return [p, sbc !== null && rev !== null && rev > 0 ? parseFloat(((sbc / rev) * 100).toFixed(1)) : null];
       })),
     };
@@ -563,7 +563,7 @@ export function buildStatementsFromYahoo(
       key: 'rev_per_employee',
       format: 'currency',
       values: Object.fromEntries(periods.map(p => {
-        const rev = num(map[p], 'totalRevenue');
+        const rev = calcRevenue(map[p]);
         return [p, rev !== null && empCount ? Math.round(rev / empCount) : null];
       })),
     };
@@ -589,7 +589,8 @@ export function buildStatementsFromYahoo(
   const bsByPeriod: Record<string, YahooTsRecord> = { ...annualByPeriod };
   const bsEndDates: Record<string, string> = { ...annualEndDates };
   if (annualPeriods[0] === 'TTM' && latestBsSnap && num(bsByPeriod['TTM'], 'totalAssets') === null) {
-    bsByPeriod['TTM'] = latestBsSnap;
+    // Merge latest Balance Sheet snapshot into TTM while preserving TTM flow metrics (Revenue, Net Income, OCF, CapEx, EPS)
+    bsByPeriod['TTM'] = { ...latestBsSnap, ...annualByPeriod['TTM'] };
     bsEndDates['TTM'] = formatPeriodEnd(toDate(latestBsSnap.date)!);
   }
 
@@ -638,14 +639,14 @@ export function buildStatementsFromYahoo(
     trailingCashFlow,
     trailingRatios,
     latestTtm: {
-      revenue: num(refRec, 'totalRevenue', 'operatingRevenue'),
-      grossProfit: num(refRec, 'grossProfit'),
-      operatingIncome: num(refRec, 'operatingIncome'),
-      netIncome: num(refRec, 'netIncome', 'netIncomeCommonStockholders'),
-      operatingCashFlow: num(refRec, 'operatingCashFlow', 'cashFlowFromContinuingOperatingActivities'),
-      freeCashFlow: num(refRec, 'freeCashFlow'),
-      totalCash: num(bsRef, 'cashCashEquivalentsAndShortTermInvestments', 'cashAndCashEquivalents'),
-      totalDebt: num(bsRef, 'totalDebt'),
+      revenue: calcRevenue(refRec),
+      grossProfit: calcGrossProfit(refRec),
+      operatingIncome: calcEbit(refRec),
+      netIncome: num(refRec, 'netIncome', 'netIncomeCommonStockholders', 'netIncomeContinuousOperations'),
+      operatingCashFlow: calcOcf(refRec),
+      freeCashFlow: calcFcf(refRec),
+      totalCash: num(bsRef, 'cashCashEquivalentsAndShortTermInvestments', 'cashAndCashEquivalents', 'cashEquivalents'),
+      totalDebt: calcTotalDebt(bsRef),
       totalAssets: num(bsRef, 'totalAssets'),
       stockholdersEquity: num(bsRef, 'stockholdersEquity', 'commonStockEquity'),
       sharesDiluted: num(refRec, 'dilutedAverageShares', 'basicAverageShares'),
