@@ -97,8 +97,7 @@ export default function HomeLandingView({
         upsidePct: ((s.fairPrice! - s.currentPrice) / s.currentPrice) * 100,
       }))
       .filter(x => Number.isFinite(x.upsidePct) && x.upsidePct > 0 && x.upsidePct < 400)
-      .sort((a, b) => b.upsidePct - a.upsidePct)
-      .slice(0, 6);
+      .sort((a, b) => b.upsidePct - a.upsidePct);
   }, [stocks]);
 
   const topOvervalued = useMemo(() => {
@@ -109,8 +108,7 @@ export default function HomeLandingView({
         upsidePct: ((s.fairPrice! - s.currentPrice) / s.currentPrice) * 100,
       }))
       .filter(x => Number.isFinite(x.upsidePct) && x.upsidePct < 0 && x.upsidePct > -95)
-      .sort((a, b) => a.upsidePct - b.upsidePct)
-      .slice(0, 6);
+      .sort((a, b) => a.upsidePct - b.upsidePct);
   }, [stocks]);
 
   const displayedFairValue = fairValueMode === 'undervalued' ? topUndervalued : topOvervalued;
@@ -323,7 +321,7 @@ export default function HomeLandingView({
                     : 'text-ink-muted hover:text-ink'
                 }`}
               >
-                Подценени
+                Подценени ({topUndervalued.length})
               </button>
               <button
                 type="button"
@@ -334,11 +332,11 @@ export default function HomeLandingView({
                     : 'text-ink-muted hover:text-ink'
                 }`}
               >
-                Надценени
+                Надценени ({topOvervalued.length})
               </button>
             </div>
           </div>
-          <div className="divide-y divide-border/40 flex-1">
+          <div className="divide-y divide-border/40 flex-1 max-h-[340px] overflow-y-auto pr-1">
             {displayedFairValue.map(({ stock: s, upsidePct }) => {
               const isUnder = upsidePct >= 0;
               const dayPos = s.dailyChangePct >= 0;
