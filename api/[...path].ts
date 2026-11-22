@@ -1465,6 +1465,55 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     }
   }
 
+  if (url.includes("sp500-movers")) {
+    try {
+      const data = await getCachedOrFetch("sp500_movers_v1", 3 * 60_000, async () => {
+        const tvRes = await fetch("https://scanner.tradingview.com/america/scan", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Referer": "https://www.tradingview.com/",
+            "Origin": "https://www.tradingview.com"
+          },
+          signal: AbortSignal.timeout(6000),
+          body: JSON.stringify({
+            symbols: { symbolset: ["SYML:SP;SPX"] },
+            columns: ["name", "description", "close", "change"],
+            range: [0, 600]
+          })
+        });
+        if (!tvRes.ok) throw new Error(`TradingView scan failed: ${tvRes.status}`);
+        const tvJson = await tvRes.json();
+        const rows = Array.isArray(tvJson?.data) ? tvJson.data : [];
+        const items = rows
+          .map((r: any) => {
+            const d = r?.d || [];
+            const ticker = String(d[0] || "").trim().toUpperCase();
+            const companyName = String(d[1] || ticker).trim();
+            const price = typeof d[2] === "number" && Number.isFinite(d[2]) ? d[2] : 0;
+            const changePct = typeof d[3] === "number" && Number.isFinite(d[3]) ? d[3] : null;
+            if (!ticker || price <= 0 || changePct === null) return null;
+            return { ticker, companyName, price, changePct };
+          })
+          .filter(Boolean) as { ticker: string; companyName: string; price: number; changePct: number }[];
+
+        const gainers = items
+          .filter(i => i.changePct >= 0)
+          .sort((a, b) => b.changePct - a.changePct);
+        const losers = items
+          .filter(i => i.changePct < 0)
+          .sort((a, b) => a.changePct - b.changePct);
+
+        return { gainers, losers, total: items.length };
+      }, false);
+
+      return res.json(data);
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || "Failed to fetch S&P 500 movers", gainers: [], losers: [] });
+    }
+  }
+
   const isStockReturns = url.includes("stock-returns") ||
     (Array.isArray(req.query.path) && req.query.path.includes("stock-returns")) ||
     req.query.path === "stock-returns";

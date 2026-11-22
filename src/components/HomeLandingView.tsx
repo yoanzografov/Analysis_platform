@@ -33,6 +33,13 @@ interface BriefHeadline {
   publishedAt?: string;
 }
 
+interface Sp500Mover {
+  ticker: string;
+  companyName: string;
+  price: number;
+  changePct: number;
+}
+
 const TRENDING_TICKERS = ['NVDA', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'META', 'TSLA', 'AMAT', 'ASML', 'AVGO'];
 
 export default function HomeLandingView({
@@ -47,6 +54,28 @@ export default function HomeLandingView({
   const [headlines, setHeadlines] = useState<BriefHeadline[]>([]);
   const [loadingNews, setLoadingNews] = useState(false);
   const [fairValueMode, setFairValueMode] = useState<'undervalued' | 'overvalued'>('undervalued');
+  const [sp500Gainers, setSp500Gainers] = useState<Sp500Mover[]>([]);
+  const [sp500Losers, setSp500Losers] = useState<Sp500Mover[]>([]);
+  const [loadingSp500, setLoadingSp500] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setLoadingSp500(true);
+    fetch('/api/sp500-movers')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!active || !data) return;
+        if (Array.isArray(data.gainers)) setSp500Gainers(data.gainers);
+        if (Array.isArray(data.losers)) setSp500Losers(data.losers);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setLoadingSp500(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -75,19 +104,21 @@ export default function HomeLandingView({
     };
   }, []);
 
-  const topGainers = useMemo(() => {
+  const topGainers = useMemo<Sp500Mover[]>(() => {
+    if (sp500Gainers.length > 0) return sp500Gainers;
     return [...stocks]
-      .filter(s => typeof s.dailyChangePct === 'number' && Number.isFinite(s.dailyChangePct) && s.currentPrice > 0)
+      .filter(s => typeof s.dailyChangePct === 'number' && Number.isFinite(s.dailyChangePct) && s.currentPrice > 0 && s.dailyChangePct >= 0)
       .sort((a, b) => b.dailyChangePct - a.dailyChangePct)
-      .slice(0, 6);
-  }, [stocks]);
+      .map(s => ({ ticker: s.ticker, companyName: s.companyName, price: s.currentPrice, changePct: s.dailyChangePct }));
+  }, [sp500Gainers, stocks]);
 
-  const topLosers = useMemo(() => {
+  const topLosers = useMemo<Sp500Mover[]>(() => {
+    if (sp500Losers.length > 0) return sp500Losers;
     return [...stocks]
-      .filter(s => typeof s.dailyChangePct === 'number' && Number.isFinite(s.dailyChangePct) && s.currentPrice > 0)
+      .filter(s => typeof s.dailyChangePct === 'number' && Number.isFinite(s.dailyChangePct) && s.currentPrice > 0 && s.dailyChangePct < 0)
       .sort((a, b) => a.dailyChangePct - b.dailyChangePct)
-      .slice(0, 6);
-  }, [stocks]);
+      .map(s => ({ ticker: s.ticker, companyName: s.companyName, price: s.currentPrice, changePct: s.dailyChangePct }));
+  }, [sp500Losers, stocks]);
 
   const topUndervalued = useMemo(() => {
     return [...stocks]
@@ -226,81 +257,79 @@ export default function HomeLandingView({
 
       {/* 3. Market Movers & Fair Value Leaders (3-Column StockAnalysis Grid) */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Top Gainers */}
+        {/* Top Gainers (All S&P 500) */}
         <div className="rounded-2xl border border-border bg-card/60 p-4 shadow-2xs flex flex-col">
           <div className="flex items-center justify-between pb-3 border-b border-border/60">
             <h2 className="text-sm font-black uppercase tracking-tight text-ink flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-400" />
-              <span>Top Gainers</span>
+              <span>Top Gainers ({topGainers.length})</span>
             </h2>
-            <button
-              type="button"
-              onClick={() => onSwitchTab('table')}
-              className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 cursor-pointer"
-            >
-              <span>All Stocks</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+              S&amp;P 500
+            </span>
           </div>
-          <div className="divide-y divide-border/40 flex-1">
-            {topGainers.map(s => (
-              <button
-                key={s.ticker}
-                type="button"
-                onClick={() => onSelectStock(s)}
-                className="w-full py-2.5 px-1.5 flex items-center justify-between gap-2 hover:bg-card-hover/60 rounded-lg transition-colors text-left cursor-pointer"
-              >
-                <div className="min-w-0">
-                  <div className="text-xs font-black text-ink">{s.ticker}</div>
-                  <div className="text-[11px] text-ink-muted truncate max-w-[140px]">{s.companyName}</div>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="text-xs font-mono font-bold text-ink">${s.currentPrice.toFixed(2)}</div>
-                  <div className="text-[11px] font-mono font-bold text-emerald-400">
-                    +{s.dailyChangePct.toFixed(2)}%
+          <div className="divide-y divide-border/40 flex-1 max-h-[340px] overflow-y-auto pr-1">
+            {loadingSp500 && topGainers.length === 0 ? (
+              <div className="py-8 text-center text-xs text-ink-muted">Зареждане на S&amp;P 500...</div>
+            ) : (
+              topGainers.map(m => (
+                <button
+                  key={m.ticker}
+                  type="button"
+                  onClick={() => handleOpenTicker(m.ticker)}
+                  className="w-full py-2.5 px-1.5 flex items-center justify-between gap-2 hover:bg-card-hover/60 rounded-lg transition-colors text-left cursor-pointer"
+                >
+                  <div className="min-w-0">
+                    <div className="text-xs font-black text-ink">{m.ticker}</div>
+                    <div className="text-[11px] text-ink-muted truncate max-w-[140px]">{m.companyName}</div>
                   </div>
-                </div>
-              </button>
-            ))}
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-mono font-bold text-ink">${m.price.toFixed(2)}</div>
+                    <div className="text-[11px] font-mono font-bold text-emerald-400">
+                      +{m.changePct.toFixed(2)}%
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </div>
 
-        {/* Top Losers */}
+        {/* Top Losers (All S&P 500) */}
         <div className="rounded-2xl border border-border bg-card/60 p-4 shadow-2xs flex flex-col">
           <div className="flex items-center justify-between pb-3 border-b border-border/60">
             <h2 className="text-sm font-black uppercase tracking-tight text-ink flex items-center gap-2">
               <TrendingDown className="w-4 h-4 text-rose-400" />
-              <span>Top Losers</span>
+              <span>Top Losers ({topLosers.length})</span>
             </h2>
-            <button
-              type="button"
-              onClick={() => onSwitchTab('table')}
-              className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 cursor-pointer"
-            >
-              <span>All Stocks</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400">
+              S&amp;P 500
+            </span>
           </div>
-          <div className="divide-y divide-border/40 flex-1">
-            {topLosers.map(s => (
-              <button
-                key={s.ticker}
-                type="button"
-                onClick={() => onSelectStock(s)}
-                className="w-full py-2.5 px-1.5 flex items-center justify-between gap-2 hover:bg-card-hover/60 rounded-lg transition-colors text-left cursor-pointer"
-              >
-                <div className="min-w-0">
-                  <div className="text-xs font-black text-ink">{s.ticker}</div>
-                  <div className="text-[11px] text-ink-muted truncate max-w-[140px]">{s.companyName}</div>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="text-xs font-mono font-bold text-ink">${s.currentPrice.toFixed(2)}</div>
-                  <div className="text-[11px] font-mono font-bold text-rose-400">
-                    {s.dailyChangePct.toFixed(2)}%
+          <div className="divide-y divide-border/40 flex-1 max-h-[340px] overflow-y-auto pr-1">
+            {loadingSp500 && topLosers.length === 0 ? (
+              <div className="py-8 text-center text-xs text-ink-muted">Зареждане на S&amp;P 500...</div>
+            ) : (
+              topLosers.map(m => (
+                <button
+                  key={m.ticker}
+                  type="button"
+                  onClick={() => handleOpenTicker(m.ticker)}
+                  className="w-full py-2.5 px-1.5 flex items-center justify-between gap-2 hover:bg-card-hover/60 rounded-lg transition-colors text-left cursor-pointer"
+                >
+                  <div className="min-w-0">
+                    <div className="text-xs font-black text-ink">{m.ticker}</div>
+                    <div className="text-[11px] text-ink-muted truncate max-w-[140px]">{m.companyName}</div>
                   </div>
-                </div>
-              </button>
-            ))}
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-mono font-bold text-ink">${m.price.toFixed(2)}</div>
+                    <div className="text-[11px] font-mono font-bold text-rose-400">
+                      {m.changePct.toFixed(2)}%
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </div>
 
