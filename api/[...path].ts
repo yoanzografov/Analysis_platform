@@ -1514,6 +1514,58 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     }
   }
 
+  if (url.includes("etf-list")) {
+    try {
+      const data = await getCachedOrFetch("etf_list_v1", 5 * 60_000, async () => {
+        const etfCatalog = [
+          { ticker: "SPY", name: "SPDR S&P 500 ETF Trust", category: "US Index", expenseRatio: "0.09%" },
+          { ticker: "VOO", name: "Vanguard S&P 500 ETF", category: "US Index", expenseRatio: "0.03%" },
+          { ticker: "IVV", name: "iShares Core S&P 500 ETF", category: "US Index", expenseRatio: "0.03%" },
+          { ticker: "QQQ", name: "Invesco QQQ Trust (Nasdaq 100)", category: "Tech & Growth", expenseRatio: "0.20%" },
+          { ticker: "VTI", name: "Vanguard Total Stock Market ETF", category: "US Index", expenseRatio: "0.03%" },
+          { ticker: "IWM", name: "iShares Russell 2000 ETF", category: "US Index", expenseRatio: "0.19%" },
+          { ticker: "DIA", name: "SPDR Dow Jones Industrial Average", category: "US Index", expenseRatio: "0.16%" },
+          { ticker: "SMH", name: "VanEck Semiconductor ETF", category: "Tech & Growth", expenseRatio: "0.35%" },
+          { ticker: "SOXX", name: "iShares Semiconductor ETF", category: "Tech & Growth", expenseRatio: "0.35%" },
+          { ticker: "XLK", name: "Technology Select Sector SPDR", category: "Tech & Growth", expenseRatio: "0.09%" },
+          { ticker: "VGT", name: "Vanguard Information Technology ETF", category: "Tech & Growth", expenseRatio: "0.10%" },
+          { ticker: "SCHD", name: "Schwab U.S. Dividend Equity ETF", category: "Dividend", expenseRatio: "0.06%" },
+          { ticker: "JEPI", name: "JPMorgan Equity Premium Income ETF", category: "Dividend", expenseRatio: "0.35%" },
+          { ticker: "VYM", name: "Vanguard High Dividend Yield ETF", category: "Dividend", expenseRatio: "0.06%" },
+          { ticker: "SXR8.DE", name: "iShares Core S&P 500 UCITS ETF (EUR)", category: "Europe UCITS", expenseRatio: "0.07%" },
+          { ticker: "VWCE.DE", name: "Vanguard FTSE All-World UCITS ETF", category: "Europe UCITS", expenseRatio: "0.22%" },
+          { ticker: "EUNL.DE", name: "iShares Core MSCI World UCITS ETF", category: "Europe UCITS", expenseRatio: "0.20%" },
+          { ticker: "EQQQ.DE", name: "Invesco EQQQ Nasdaq-100 UCITS ETF", category: "Europe UCITS", expenseRatio: "0.30%" },
+          { ticker: "GLD", name: "SPDR Gold Shares", category: "Commodities & Bonds", expenseRatio: "0.40%" },
+          { ticker: "SLV", name: "iShares Silver Trust", category: "Commodities & Bonds", expenseRatio: "0.50%" },
+          { ticker: "TLT", name: "iShares 20+ Year Treasury Bond ETF", category: "Commodities & Bonds", expenseRatio: "0.15%" },
+          { ticker: "SGOV", name: "iShares 0-3 Month Treasury Bond ETF", category: "Commodities & Bonds", expenseRatio: "0.09%" },
+        ];
+        const quotes = await yahooFinance.quote(etfCatalog.map(e => e.ticker)).catch(() => []);
+        const qMap = new Map<string, any>();
+        for (const q of (Array.isArray(quotes) ? quotes : [])) {
+          if (q?.symbol) qMap.set(q.symbol.toUpperCase(), q);
+        }
+        return etfCatalog.map(item => {
+          const q = qMap.get(item.ticker.toUpperCase());
+          return {
+            ...item,
+            name: q?.shortName || q?.longName || item.name,
+            price: typeof q?.regularMarketPrice === "number" ? q.regularMarketPrice : null,
+            changePct: typeof q?.regularMarketChangePercent === "number" ? q.regularMarketChangePercent : null,
+            currency: q?.currency || (item.ticker.endsWith(".DE") ? "EUR" : "USD"),
+            low52: typeof q?.fiftyTwoWeekLow === "number" ? q.fiftyTwoWeekLow : null,
+            high52: typeof q?.fiftyTwoWeekHigh === "number" ? q.fiftyTwoWeekHigh : null,
+            divYield: typeof q?.trailingAnnualDividendYield === "number" ? parseFloat((q.trailingAnnualDividendYield * 100).toFixed(2)) : null,
+          };
+        });
+      }, false);
+      return res.json({ etfs: data });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || "Failed to fetch ETF list", etfs: [] });
+    }
+  }
+
   const isStockReturns = url.includes("stock-returns") ||
     (Array.isArray(req.query.path) && req.query.path.includes("stock-returns")) ||
     req.query.path === "stock-returns";

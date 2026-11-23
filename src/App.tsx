@@ -18,6 +18,7 @@ import PortfolioTracker from './components/PortfolioTracker';
 import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import MorningBriefingCard from './components/MorningBriefingCard';
 import HomeLandingView from './components/HomeLandingView';
+import EtfExplorerView from './components/EtfExplorerView';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
@@ -74,6 +75,7 @@ import {
   HelpCircle,
   Calculator,
   TrendingUp,
+  PieChart,
   Database,
   Compass,
   Percent,
@@ -198,22 +200,22 @@ export default function App() {
     }
   };
 
-  const getInitialTab = (): 'home' | 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other' => {
+  const getInitialTab = (): 'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other' => {
     const hash = window.location.hash.toLowerCase().replace('#', '');
-    if (hash === 'home' || hash === 'stocks' || hash === 'alerts' || hash === 'portfolio' || hash === 'news' || hash === 'other') return hash;
+    if (hash === 'home' || hash === 'stocks' || hash === 'etf' || hash === 'alerts' || hash === 'portfolio' || hash === 'news' || hash === 'other') return hash;
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab')?.toLowerCase();
-    if (tabParam === 'home' || tabParam === 'stocks' || tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news' || tabParam === 'other') return tabParam;
+    if (tabParam === 'home' || tabParam === 'stocks' || tabParam === 'etf' || tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news' || tabParam === 'other') return tabParam;
     return 'table';
   };
 
-  const [activeMainTab, setActiveMainTab] = useState<'home' | 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other'>(getInitialTab);
-  const activeMainTabRef = useRef<'home' | 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other'>(activeMainTab);
+  const [activeMainTab, setActiveMainTab] = useState<'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other'>(getInitialTab);
+  const activeMainTabRef = useRef<'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other'>(activeMainTab);
   activeMainTabRef.current = activeMainTab;
 
   const [selectedStockForStocksTab, setSelectedStockForStocksTab] = useState<Stock | null>(null);
 
-  const switchTab = (tab: 'home' | 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other') => {
+  const switchTab = (tab: 'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other') => {
     setActiveMainTab(tab);
     activeMainTabRef.current = tab;
     const targetHash = tab === 'table' ? '' : `#${tab}`;
@@ -2066,7 +2068,7 @@ export default function App() {
 
           {/* Navigation Items (Stacked vertically on desktop, compact horizontal strip on mobile) */}
           <nav className="flex lg:flex-col gap-1 lg:gap-1.5 overflow-x-auto lg:overflow-x-visible pb-0.5 lg:pb-0 no-scrollbar">
-            {/* Home Button */}
+            {/* 1. HOME */}
             <a
               href="#home"
               onClick={(e) => {
@@ -2087,31 +2089,7 @@ export default function App() {
               </div>
             </a>
 
-            {/* Tab 1: INTERACTIVE TABLE */}
-            <a
-              href="#table"
-              onClick={(e) => {
-                e.preventDefault();
-                switchTab('table');
-              }}
-              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
-                activeMainTab === 'table'
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
-              }`}
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Table className={`w-4 h-4 shrink-0 ${activeMainTab === 'table' ? 'text-white' : 'text-indigo-400 group-hover:scale-110 transition-transform'}`} />
-                <span className="truncate">INTERACTIVE TABLE</span>
-              </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-                activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-              }`}>
-                {stocks.length}
-              </span>
-            </a>
-
-            {/* Tab: STOCKS */}
+            {/* 2. STOCKS */}
             <a
               href="#stocks"
               onClick={(e) => {
@@ -2135,7 +2113,56 @@ export default function App() {
               </span>
             </a>
 
-            {/* Tab 2: PRICE ALERTS SCHEDULE */}
+            {/* 3. ETF */}
+            <a
+              href="#etf"
+              onClick={(e) => {
+                e.preventDefault();
+                switchTab('etf');
+              }}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                activeMainTab === 'etf'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
+              }`}
+              title="ETF Screener & Explorer"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PieChart className={`w-4 h-4 shrink-0 ${activeMainTab === 'etf' ? 'text-white' : 'text-purple-400 group-hover:scale-110 transition-transform'}`} />
+                <span className="truncate">ETF</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                activeMainTab === 'etf' ? 'bg-white/20 text-white' : 'bg-purple-500/20 text-purple-400'
+              }`}>
+                22
+              </span>
+            </a>
+
+            {/* 4. INTERACTIVE TABLE */}
+            <a
+              href="#table"
+              onClick={(e) => {
+                e.preventDefault();
+                switchTab('table');
+              }}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                activeMainTab === 'table'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Table className={`w-4 h-4 shrink-0 ${activeMainTab === 'table' ? 'text-white' : 'text-indigo-400 group-hover:scale-110 transition-transform'}`} />
+                <span className="truncate">INTERACTIVE TABLE</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
+              }`}>
+                {stocks.length}
+              </span>
+            </a>
+
+            {/* 5. PRICE ALERTS */}
             <a
               href="#alerts"
               onClick={(e) => {
@@ -2164,7 +2191,7 @@ export default function App() {
               </span>
             </a>
 
-            {/* Tab 3: PORTFOLIO TRACKER */}
+            {/* 6. PORTFOLIO TRACKER */}
             <a
               href="#portfolio"
               onClick={(e) => {
@@ -2188,7 +2215,7 @@ export default function App() {
               </span>
             </a>
 
-            {/* Tab 4: NEWS */}
+            {/* 7. NEWS */}
             <a
               href="#news"
               onClick={(e) => {
@@ -2213,16 +2240,16 @@ export default function App() {
               </span>
             </a>
 
-            {/* AI Assistant Nav Item */}
+            {/* 8. AI анализ */}
             <button
               type="button"
               onClick={() => setIsAiAssistantOpen(true)}
               className="px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group bg-gradient-to-r from-indigo-950/80 via-slate-900 to-amber-950/60 hover:from-indigo-600 hover:to-amber-500 text-amber-300 hover:text-white border-amber-500/30 hover:border-amber-400 shadow-sm"
-              title="Отвори AI Асистент"
+              title="Отвори AI анализ"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <Sparkles className="w-4 h-4 text-amber-400 group-hover:text-white group-hover:rotate-12 transition-all shrink-0" />
-                <span className="truncate">AI АСИСТЕНТ</span>
+                <span className="truncate">AI анализ</span>
               </div>
             </button>
           </nav>
@@ -2562,6 +2589,16 @@ export default function App() {
             onSwitchTab={switchTab}
             onOpenDcfModal={() => setShowDcfModal(true)}
             onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
+          />
+        )}
+
+        {/* ETF Tab */}
+        {activeMainTab === 'etf' && (
+          <EtfExplorerView
+            onSelectEtf={(etfStock) => {
+              setSelectedStockForStocksTab(etfStock);
+              switchTab('stocks');
+            }}
           />
         )}
 

@@ -21,7 +21,7 @@ interface Props {
   indices: MarketIndex[];
   onSelectStock: (stock: Stock) => void;
   onAddStockToTable?: (stock: Stock) => void;
-  onSwitchTab: (tab: 'home' | 'table' | 'stocks' | 'alerts' | 'portfolio' | 'news' | 'other') => void;
+  onSwitchTab: (tab: 'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other') => void;
   onOpenDcfModal: () => void;
   onOpenAiAssistant: () => void;
 }
