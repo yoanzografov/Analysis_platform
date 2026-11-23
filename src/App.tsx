@@ -2739,9 +2739,23 @@ export default function App() {
       </>
     ) : activeMainTab === 'stocks' ? (
       <div className="space-y-4 font-sans">
-        {/* Quick stock selector & search header */}
-        <div className="p-3 sm:p-4 rounded-2xl bg-card/40 border border-border/60 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Stock Quick Selector / Search Combobox (Hero Style matching HOME) */}
+        {/* Quick stock selector & search header (Aligned 1:1 with ETF header) */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-card/70 border border-border shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-blue-500/15 border border-blue-500/25 text-blue-400 flex items-center justify-center font-bold shrink-0">
+              <BarChart2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-black uppercase text-ink tracking-tight flex items-center gap-2">
+                <span>STOCKS DEEP ANALYSIS</span>
+              </h2>
+              <p className="text-xs text-ink-muted">
+                Пълен 9-табов фундаментален анализ, 10-годишни отчети и прогнози.
+              </p>
+            </div>
+          </div>
+
+          {/* Stock Quick Selector / Search Combobox (Aligned right, matching ETF & HOME) */}
           <div className="w-full lg:flex-1 lg:max-w-xl">
             <StockAnalysisSearchCombobox
               stocks={stocks}
@@ -2757,17 +2771,6 @@ export default function App() {
                 }
               }}
             />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold shrink-0">
-              <BarChart2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-black uppercase text-ink tracking-tight flex items-center gap-2">
-                <span>STOCKS DEEP ANALYSIS</span>
-              </h2>
-            </div>
           </div>
         </div>
 
