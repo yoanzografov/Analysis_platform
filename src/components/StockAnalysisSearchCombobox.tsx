@@ -9,6 +9,8 @@ interface Props {
   onSelectStock: (stock: Stock) => void;
   onAddStockToTable?: (stock: Stock) => void;
   size?: 'compact' | 'hero';
+  placeholder?: string;
+  onQueryChange?: (q: string) => void;
 }
 
 export default function StockAnalysisSearchCombobox({
@@ -16,7 +18,9 @@ export default function StockAnalysisSearchCombobox({
   selectedStock,
   onSelectStock,
   onAddStockToTable,
-  size = 'compact'
+  size = 'compact',
+  placeholder = 'Търсене по тикер или име (напр. NVDA, AAPL, SAP)...',
+  onQueryChange
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -158,6 +162,7 @@ export default function StockAnalysisSearchCombobox({
             onChange={(e) => {
               const val = e.target.value;
               setQuery(val);
+              onQueryChange?.(val);
               setIsOpen(val.trim().length > 0);
             }}
             onFocus={() => {
@@ -180,7 +185,7 @@ export default function StockAnalysisSearchCombobox({
                 setIsOpen(false);
               }
             }}
-            placeholder="Търсене по тикер или име (напр. NVDA, AAPL, SAP)..."
+            placeholder={placeholder}
             className={
               size === 'hero'
                 ? 'w-full bg-bg rounded-2xl border border-border/90 pl-10 pr-10 py-2.5 sm:py-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 font-sans tabular-nums shadow-sm transition-all'

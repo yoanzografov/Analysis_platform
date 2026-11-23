@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { PieChart, Search, ArrowUpRight, TrendingUp, TrendingDown, RefreshCw, X } from 'lucide-react';
+import { PieChart, ArrowUpRight, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 import { Stock } from '../types';
+import StockAnalysisSearchCombobox from './StockAnalysisSearchCombobox';
 
 interface EtfItem {
   ticker: string;
@@ -55,6 +56,32 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
     });
   }, [etfs, query, selectedCategory]);
 
+  const etfAsStocks = useMemo<Stock[]>(() => {
+    return etfs.map(item => ({
+      watch: '',
+      ticker: item.ticker.toUpperCase(),
+      companyName: item.name,
+      date: '',
+      priceOfCalc: null,
+      dailyChangePct: item.changePct ?? 0,
+      currentPrice: item.price ?? 0,
+      fairPrice: null,
+      difference: null,
+      buySell: 'ДРУГИ',
+      marketCap: 0,
+      peRatio: null,
+      eps: null,
+      profileLink: '',
+      dividend: item.divYield != null ? `${item.divYield}%` : '-',
+      signal: 'Hold',
+      low52: item.low52,
+      high52: item.high52,
+      sector: 'ETF',
+      industry: item.category,
+      dividendYield: item.divYield ?? undefined,
+    }));
+  }, [etfs]);
+
   const handleOpenEtf = (item: EtfItem) => {
     onSelectEtf({
       watch: '',
@@ -101,45 +128,15 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
           </div>
 
           <div className="flex items-center gap-2 w-full lg:flex-1 lg:max-w-xl">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-ink-faint absolute left-3.5 top-3 sm:top-3.5 pointer-events-none" />
-              <input
-                type="text"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && query.trim()) {
-                    if (filtered.length > 0) {
-                      handleOpenEtf(filtered[0]);
-                    } else {
-                      handleOpenEtf({
-                        ticker: query.trim().toUpperCase(),
-                        name: query.trim().toUpperCase(),
-                        category: 'ETF',
-                        expenseRatio: '—',
-                        price: null,
-                        changePct: null,
-                        currency: 'USD',
-                        low52: null,
-                        high52: null,
-                        divYield: null,
-                      });
-                    }
-                  }
-                }}
+            <div className="flex-1">
+              <StockAnalysisSearchCombobox
+                stocks={etfAsStocks}
+                selectedStock={null}
+                onSelectStock={onSelectEtf}
+                onQueryChange={setQuery}
+                size="hero"
                 placeholder="Търсене на ETF по тикер или име (напр. SPY, QQQ, SXR8.DE)..."
-                className="w-full bg-bg rounded-2xl border border-border/90 pl-10 pr-10 py-2.5 sm:py-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 font-sans tabular-nums shadow-sm transition-all"
               />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => setQuery('')}
-                  className="absolute right-3 top-2.5 sm:top-3 p-0.5 rounded-full text-ink-faint hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
-                  title="Изчисти търсенето"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
             </div>
             <button
               type="button"
