@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Loader2,
   Key,
+  FileText,
 } from 'lucide-react';
 import { Stock } from '../types';
 import { GLOBAL_TICKERS_CATALOG } from '../utils/globalTickersCatalog';
@@ -357,6 +358,98 @@ export default function AiEquityResearchView({ stocks }: Props) {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportPdf = () => {
+    if (!fullReportText) return;
+    const escapeHtml = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const formatInline = (s: string) =>
+      escapeHtml(s)
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    const lines = fullReportText.split('\n');
+    const htmlParts: string[] = [];
+    let i = 0;
+    while (i < lines.length) {
+      const t = lines[i].trim();
+      if (!t) { i++; continue; }
+      if (t === '---' || t === '***') { htmlParts.push('<hr/>'); i++; continue; }
+      if (t.startsWith('|') && i + 1 < lines.length && lines[i + 1].trim().startsWith('|')) {
+        const tbl: string[] = [];
+        while (i < lines.length && lines[i].trim().startsWith('|')) {
+          tbl.push(lines[i].trim());
+          i++;
+        }
+        const cells = (r: string) => r.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+        const hdr = cells(tbl[0]);
+        const rows = tbl.slice(2).map(cells);
+        htmlParts.push(
+          `<table><thead><tr>${hdr.map(h => `<th>${formatInline(h)}</th>`).join('')}</tr></thead><tbody>${rows
+            .map(r => `<tr>${r.map(c => `<td>${formatInline(c)}</td>`).join('')}</tr>`)
+            .join('')}</tbody></table>`
+        );
+        continue;
+      }
+      if (t.startsWith('# ')) { htmlParts.push(`<h1>${formatInline(t.slice(2))}</h1>`); i++; continue; }
+      if (t.startsWith('## ')) { htmlParts.push(`<h2>${formatInline(t.slice(3))}</h2>`); i++; continue; }
+      if (t.startsWith('### ')) { htmlParts.push(`<h3>${formatInline(t.slice(4))}</h3>`); i++; continue; }
+      if (/^[-*•]\s+/.test(t) || /^\d+\.\s+/.test(t)) {
+        const ordered = /^\d+\.\s+/.test(t);
+        const tag = ordered ? 'ol' : 'ul';
+        const items: string[] = [];
+        while (i < lines.length && (ordered ? /^\d+\.\s+/.test(lines[i].trim()) : /^[-*•]\s+/.test(lines[i].trim()))) {
+          items.push(lines[i].trim().replace(/^([-*•]|\d+\.)\s+/, ''));
+          i++;
+        }
+        htmlParts.push(`<${tag}>${items.map(x => `<li>${formatInline(x)}</li>`).join('')}</${tag}>`);
+        continue;
+      }
+      htmlParts.push(`<p>${formatInline(t)}</p>`);
+      i++;
+    }
+
+    const printWin = window.open('', '_blank', 'width=960,height=800');
+    if (!printWin) return;
+    printWin.document.write(`<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(ticker || 'Analysis')} — MASTER Equity Research 4.0 (${escapeHtml(asOfDate)})</title>
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #111827; line-height: 1.55; font-size: 11.5px; margin: 0; padding: 20px; }
+    .report-header { border-bottom: 2px solid #4f46e5; padding-bottom: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+    .report-title { font-size: 18px; font-weight: 800; color: #111827; margin: 0; }
+    .report-meta { font-size: 10.5px; color: #4b5563; margin-top: 3px; }
+    h1 { font-size: 15px; font-weight: 800; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin: 16px 0 8px; page-break-after: avoid; }
+    h2 { font-size: 13px; font-weight: 800; color: #4338ca; margin: 14px 0 6px; page-break-after: avoid; }
+    h3 { font-size: 12px; font-weight: 700; color: #1f2937; margin: 10px 0 4px; page-break-after: avoid; }
+    p { margin: 5px 0; }
+    ul, ol { margin: 5px 0 8px; padding-left: 18px; }
+    li { margin: 2px 0; }
+    hr { border: none; border-top: 1px solid #e5e7eb; margin: 12px 0; }
+    code { background: #f3f4f6; padding: 1px 4px; border-radius: 3px; font-family: ui-monospace, monospace; font-size: 10.5px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10.5px; page-break-inside: avoid; }
+    th, td { border: 1px solid #d1d5db; padding: 5px 7px; text-align: left; }
+    th { background: #f3f4f6; font-weight: 800; text-transform: uppercase; font-size: 9.5px; }
+    tr:nth-child(even) td { background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <div class="report-header">
+    <div>
+      <div class="report-title">${escapeHtml(companyName || ticker)} (${escapeHtml(ticker)})</div>
+      <div class="report-meta">Борса: ${escapeHtml(exchange || '—')} · Към дата: ${escapeHtml(asOfDate)} · Модел: ${escapeHtml(selectedModel)}</div>
+    </div>
+    <div class="report-meta">MASTER PROMPT 4.0 · Equity Research</div>
+  </div>
+  ${htmlParts.join('\n')}
+  <script>window.onload = function() { setTimeout(function() { window.print(); }, 250); };</script>
+</body>
+</html>`);
+    printWin.document.close();
+  };
+
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Parameter & Model Configuration Card */}
@@ -408,6 +501,15 @@ export default function AiEquityResearchView({ stocks }: Props) {
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>.MD</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportPdf}
+                  className="px-3 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/15 hover:bg-indigo-500/25 text-xs font-bold text-indigo-300 inline-flex items-center gap-1.5 cursor-pointer"
+                  title="Експортирай анализа в PDF"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>PDF</span>
                 </button>
                 <button
                   type="button"
