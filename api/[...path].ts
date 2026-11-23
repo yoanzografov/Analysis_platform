@@ -1616,7 +1616,7 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     }
   }
 
-  if ((url.includes("ai-equity-research") || url.includes("ai-equity-prompt")) && req.method === "POST") {
+  if (url.includes("ai-equity-research") && req.method === "POST") {
     try {
       const {
         companyName = "",
@@ -1629,10 +1629,8 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
         history = [],
         followUpQuestion = "",
         userApiKey = "",
-        prepareOnly = false,
       } = req.body || {};
 
-      const isPrepareOnly = Boolean(prepareOnly) || url.includes("ai-equity-prompt");
       const cleanTicker = String(ticker || "").trim().toUpperCase();
       if (!cleanTicker && !companyName) {
         return res.status(400).json({ error: "Моля, въведете име на компания или тикер." });
@@ -1640,8 +1638,8 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
 
       const rawKey = userApiKey || process.env.GEMINI_API_KEY || "";
       const apiKey = String(rawKey).trim().replace(/^["']|["']$/g, "");
-      if (!isPrepareOnly && !apiKey) {
-        return res.status(400).json({ error: "Липсва GEMINI_API_KEY. Въведете вашия Gemini API ключ горе или ползвайте бутона „Отвори в Google Gemini“." });
+      if (!apiKey) {
+        return res.status(400).json({ error: "Липсва GEMINI_API_KEY. Въведете вашия Gemini API ключ горе или го добавете в Vercel." });
       }
 
       const todayIso = new Date().toISOString().slice(0, 10);
@@ -1841,16 +1839,6 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
 ${JSON.stringify(verifiedData)}
 
 Изпълни пълния институционален анализ по MASTER PROMPT 4.0 на български език с всички раздели (3 до 13 + Финалната таблица).`;
-
-      if (isPrepareOnly) {
-        const fullCopyPrompt = `${MASTER_PROMPT_4_0_SYSTEM}\n\n---\n\n${initialPrompt}`;
-        return res.json({
-          promptText: fullCopyPrompt,
-          verifiedData,
-          dataAsOf: parsedAsOfIso,
-          isHistorical,
-        });
-      }
 
       const { GoogleGenAI } = await import("@google/genai");
       const aiClient = new GoogleGenAI({ apiKey });

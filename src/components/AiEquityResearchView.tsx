@@ -215,9 +215,6 @@ export default function AiEquityResearchView({ stocks }: Props) {
   });
   const [serverHasKey, setServerHasKey] = useState<boolean>(true);
   const [showKeyInput, setShowKeyInput] = useState<boolean>(false);
-  const [preparingGemini, setPreparingGemini] = useState<boolean>(false);
-  const [preparedPrompt, setPreparedPrompt] = useState<string>('');
-  const [promptCopiedBanner, setPromptCopiedBanner] = useState<boolean>(false);
   const [keyDraft, setKeyDraft] = useState<string>(() => {
     try {
       return localStorage.getItem('gemini_user_api_key') || '';
@@ -339,46 +336,8 @@ export default function AiEquityResearchView({ stocks }: Props) {
     }
   };
 
-  const handleOpenInGeminiWindow = async () => {
-    if (!ticker.trim() && !companyName.trim()) {
-      setError('Моля, въведете тикер или име на компания.');
-      return;
-    }
-    setError('');
-    setPreparingGemini(true);
-    setPromptCopiedBanner(false);
-
-    // Open Google Gemini immediately inside click handler so popup blockers never block it
+  const handleOpenInGeminiWindow = () => {
     window.open('https://gemini.google.com/app', '_blank', 'noopener,noreferrer');
-
-    try {
-      const res = await fetch('/api/ai-equity-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          companyName: companyName.trim() || ticker.trim().toUpperCase(),
-          ticker: ticker.trim().toUpperCase(),
-          exchange: exchange.trim(),
-          asOfDate,
-          prepareOnly: true,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Грешка при подготовка на промпта.');
-
-      const text = String(data.promptText || '');
-      setPreparedPrompt(text);
-      try {
-        await navigator.clipboard.writeText(text);
-        setPromptCopiedBanner(true);
-      } catch {
-        setPromptCopiedBanner(false);
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Неуспешна подготовка на данните.');
-    } finally {
-      setPreparingGemini(false);
-    }
   };
 
   const fullReportText = messages
@@ -742,12 +701,11 @@ export default function AiEquityResearchView({ stocks }: Props) {
             <button
               type="button"
               onClick={handleOpenInGeminiWindow}
-              disabled={preparingGemini}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-xs font-black uppercase tracking-wide inline-flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 transition-all"
-              title="Събира реалните данни, копира MASTER PROMPT 4.0 и отваря Google Gemini в нов прозорец (с твоя Google профил)"
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wide inline-flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 transition-all"
+              title="Отвори Google Gemini в нов прозорец с твоя Google профил"
             >
-              {preparingGemini ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
-              <span>{preparingGemini ? 'Подготовка...' : 'Отвори в Google Gemini (Нов прозорец)'}</span>
+              <ExternalLink className="w-4 h-4" />
+              <span>Отвори в Google Gemini (Нов прозорец)</span>
             </button>
 
             <button
@@ -761,29 +719,6 @@ export default function AiEquityResearchView({ stocks }: Props) {
             </button>
           </div>
         </div>
-
-        {preparedPrompt && (
-          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="text-xs font-bold text-emerald-300">
-                {promptCopiedBanner
-                  ? '✓ Промптът + реалните данни са копирани! Постави ги (Ctrl+V / Cmd+V) в новия прозорец на Google Gemini и избери своя модел.'
-                  : 'Промптът + реалните данни са готови! Копирай и постави в новия прозорец на Google Gemini:'}
-              </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(preparedPrompt);
-                  setPromptCopiedBanner(true);
-                }}
-                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black inline-flex items-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                <span>{promptCopiedBanner ? 'Копирано ✓' : 'Копирай промпта'}</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         {error && (
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-bold text-rose-400 flex items-center gap-2">
