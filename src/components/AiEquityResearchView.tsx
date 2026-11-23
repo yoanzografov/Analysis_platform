@@ -312,6 +312,10 @@ export default function AiEquityResearchView({ stocks }: Props) {
 
       const data = await res.json();
       if (!res.ok) {
+        if (data?.code === 'API_KEY_INVALID' || String(data?.error || '').includes('API_KEY_INVALID') || String(data?.error || '').includes('API key not valid')) {
+          setShowKeyInput(true);
+          throw new Error('Невалиден или изтекъл Gemini API ключ. Моля, поставете валиден ключ от Google AI Studio (AIzaSy...) в полето по-горе и натиснете „Запази“.');
+        }
         throw new Error(data?.error || 'Грешка при генериране на анализа.');
       }
 

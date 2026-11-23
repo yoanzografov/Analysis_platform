@@ -1907,6 +1907,13 @@ ${JSON.stringify(verifiedData)}
         groundedSources,
       });
     } catch (e: any) {
+      const rawMsg = String(e?.message || "");
+      if (rawMsg.includes("API_KEY_INVALID") || rawMsg.includes("API key not valid") || rawMsg.includes("PERMISSION_DENIED")) {
+        return res.status(400).json({
+          error: "Невалиден или изтекъл Gemini API ключ. Моля, въведете валиден ключ от Google AI Studio (AIzaSy...) в бутона „API Ключ“.",
+          code: "API_KEY_INVALID",
+        });
+      }
       return res.status(500).json({ error: e?.message || "Грешка при AI анализа." });
     }
   }
