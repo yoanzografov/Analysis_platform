@@ -6,7 +6,6 @@ import {
   BarChart2,
   Scale,
   Briefcase,
-  Sparkles,
   Newspaper,
   Table,
   Target,
@@ -23,7 +22,6 @@ interface Props {
   onAddStockToTable?: (stock: Stock) => void;
   onSwitchTab: (tab: 'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other') => void;
   onOpenDcfModal: () => void;
-  onOpenAiAssistant: () => void;
 }
 
 interface BriefHeadline {
@@ -49,7 +47,6 @@ export default function HomeLandingView({
   onAddStockToTable,
   onSwitchTab,
   onOpenDcfModal,
-  onOpenAiAssistant,
 }: Props) {
   const [headlines, setHeadlines] = useState<BriefHeadline[]>([]);
   const [loadingNews, setLoadingNews] = useState(false);
@@ -508,23 +505,6 @@ export default function HomeLandingView({
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-ink-faint group-hover:text-emerald-400 shrink-0" />
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenAiAssistant}
-            className="p-4 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-indigo-950/50 via-card to-amber-950/30 hover:border-amber-400/60 transition-all text-left cursor-pointer group flex items-center justify-between gap-3"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-400 shrink-0">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-black uppercase text-amber-300">AI Финансов Терминал</div>
-                <div className="text-[11px] text-ink-muted truncate">Анализ на активи, сравнения, отчети и макро данни</div>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-amber-400/70 group-hover:text-amber-300 shrink-0" />
           </button>
         </div>
       </section>

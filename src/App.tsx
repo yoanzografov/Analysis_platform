@@ -38,7 +38,6 @@ import StockChecklistModal, { syncChecklistsWithCloud } from './components/Stock
 import FinancialFlagsModal from './components/FinancialFlagsModal';
 import PercentCalculatorModal from './components/PercentCalculatorModal';
 import WelcomeQuoteModal from './components/WelcomeQuoteModal';
-import AiAssistantDrawer from './components/AiAssistantDrawer';
 import StockAnalysisExplorer from './components/StockAnalysisExplorer';
 import StockAnalysisSearchCombobox from './components/StockAnalysisSearchCombobox';
 import { calculateBuySellStatus, calculateSignalStatus, calculateDifference } from './utils/stockCalculations';
@@ -166,7 +165,6 @@ export default function App() {
   const [checklistSelectedStock, setChecklistSelectedStock] = useState<Stock | null>(null);
   const [showFinancialFlagsModal, setShowFinancialFlagsModal] = useState(false);
   const [showLogoModal, setShowLogoModal] = useState(false);
-  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
 
   // User Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -2239,19 +2237,6 @@ export default function App() {
                 LIVE
               </span>
             </a>
-
-            {/* 8. AI анализ */}
-            <button
-              type="button"
-              onClick={() => setIsAiAssistantOpen(true)}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border"
-              title="Отвори AI анализ"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Sparkles className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
-                <span className="truncate">AI анализ</span>
-              </div>
-            </button>
           </nav>
 
           {/* Secondary Navigation Sections (Collapsible on mobile via Меню toggle, always visible on desktop) */}
@@ -2588,7 +2573,6 @@ export default function App() {
             }}
             onSwitchTab={switchTab}
             onOpenDcfModal={() => setShowDcfModal(true)}
-            onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
           />
         )}
 
@@ -3248,20 +3232,6 @@ export default function App() {
       </div>
     </div>
   )}
-
-  {/* AI Investment Assistant Drawer (Warren Buffett & Charlie Munger framework) */}
-  <AiAssistantDrawer
-    isOpen={isAiAssistantOpen}
-    onClose={() => setIsAiAssistantOpen(false)}
-    onOpen={() => setIsAiAssistantOpen(true)}
-    stocks={stocks}
-    positions={positions}
-    cashBalance={cashBalance}
-    baseCurrency={baseCurrency}
-    indices={indices}
-    onUpdateStock={handleUpdateStock}
-    onAddAlert={handleAddAlert}
-  />
  </main>
 
 
