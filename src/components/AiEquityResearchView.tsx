@@ -475,11 +475,11 @@ export default function AiEquityResearchView({ stocks }: Props) {
                   onChange={e => setThinkingBudget(e.target.value)}
                   className="bg-transparent text-xs font-black text-amber-400 outline-none cursor-pointer"
                 >
-                  <option value="auto" className="bg-bg text-ink">Авто</option>
-                  <option value="1024" className="bg-bg text-ink">Бързо (1K)</option>
-                  <option value="4096" className="bg-bg text-ink">Средно (4K)</option>
-                  <option value="16384" className="bg-bg text-ink">Дълбоко (16K)</option>
-                  <option value="0" className="bg-bg text-ink">Без (0)</option>
+                  <option value="auto" className="bg-bg text-ink">Dynamic (Auto)</option>
+                  <option value="24576" className="bg-bg text-ink">High (Max Thinking)</option>
+                  <option value="8192" className="bg-bg text-ink">Medium</option>
+                  <option value="1024" className="bg-bg text-ink">Low</option>
+                  <option value="0" className="bg-bg text-ink">Off</option>
                 </select>
               </div>
             )}
