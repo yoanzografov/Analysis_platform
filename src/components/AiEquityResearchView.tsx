@@ -215,6 +215,7 @@ export default function AiEquityResearchView({ stocks }: Props) {
   });
   const [serverHasKey, setServerHasKey] = useState<boolean>(true);
   const [showKeyInput, setShowKeyInput] = useState<boolean>(false);
+  const [geminiToast, setGeminiToast] = useState<string>('');
   const [keyDraft, setKeyDraft] = useState<string>(() => {
     try {
       return localStorage.getItem('gemini_user_api_key') || '';
@@ -336,7 +337,19 @@ export default function AiEquityResearchView({ stocks }: Props) {
     }
   };
 
-  const handleOpenInGeminiWindow = () => {
+  const handleOpenInGeminiWindow = async () => {
+    const cleanTick = ticker.trim().toUpperCase() || 'NVDA';
+    const cleanName = companyName.trim() || cleanTick;
+    const cleanExch = exchange.trim() || 'NASDAQ';
+    const dateLabel = isHistorical ? asOfDate : `${asOfDate} (Текуща)`;
+    const shortQuery = `Тикер: ${cleanTick}\nКомпания: ${cleanName}\nБорса: ${cleanExch}\nКъм дата: ${dateLabel}\n\nАнализирай компанията ${cleanName} (${cleanTick}, ${cleanExch}) на български език към дата ${dateLabel}.`;
+
+    try {
+      await navigator.clipboard.writeText(shortQuery);
+      setGeminiToast(`✓ Параметрите за ${cleanTick} (${cleanExch}, ${asOfDate}) са копирани — постави ги (Ctrl+V / Cmd+V) в новия прозорец на Google Gemini.`);
+      setTimeout(() => setGeminiToast(''), 6000);
+    } catch {}
+
     window.open('https://gemini.google.com/app', '_blank', 'noopener,noreferrer');
   };
 
@@ -736,6 +749,12 @@ export default function AiEquityResearchView({ stocks }: Props) {
             {' '}(30 сек.) → постави го в <strong className="text-amber-300">🔑 API Ключ</strong> → избери модел и ниво на мислене и натисни <strong className="text-ink">Стартирай тук</strong>. Или ползвай <strong className="text-emerald-400">Отвори в Google Gemini</strong> с твоя Google профил (Deep Research / Extended Thinking).
           </div>
         </div>
+
+        {geminiToast && (
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-emerald-300">
+            {geminiToast}
+          </div>
+        )}
 
         {error && (
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-bold text-rose-400 flex items-center gap-2">
