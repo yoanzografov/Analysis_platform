@@ -714,21 +714,11 @@ export default function AiEquityResearchView({ stocks }: Props) {
             <button
               type="button"
               onClick={handleOpenInGeminiWindow}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wide inline-flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 transition-all"
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wide inline-flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 transition-all"
               title="Отвори Google Gemini в нов прозорец с твоя Google профил"
             >
               <ExternalLink className="w-4 h-4" />
               <span>Отвори в Google Gemini (Нов прозорец)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => runAnalysis()}
-              disabled={loading}
-              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-xs font-black uppercase tracking-wide inline-flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-indigo-600/25 transition-all"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-              <span>{loading ? 'Анализиране...' : 'Стартирай тук (API)'}</span>
             </button>
           </div>
         </div>
@@ -736,17 +726,9 @@ export default function AiEquityResearchView({ stocks }: Props) {
         {/* Compact Quick Guide for Users */}
         <div className="rounded-xl bg-bg/50 border border-border/60 px-3.5 py-2.5 text-[11px] text-ink-muted flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <span className="font-bold text-ink">Как да ползваш безплатно:</span>{' '}
-            Вземи безплатен ключ от{' '}
-            <a
-              href="https://aistudio.google.com/app/apikey"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-indigo-400 hover:underline font-bold"
-            >
-              Google AI Studio
-            </a>
-            {' '}(30 сек.) → постави го в <strong className="text-amber-300">🔑 API Ключ</strong> → избери модел и ниво на мислене и натисни <strong className="text-ink">Стартирай тук</strong>. Или ползвай <strong className="text-emerald-400">Отвори в Google Gemini</strong> с твоя Google профил (Deep Research / Extended Thinking).
+            <span className="font-bold text-ink">Как работи:</span>{' '}
+            Въведи <strong className="text-ink">Тикер</strong>, <strong className="text-ink">Компания</strong>, <strong className="text-ink">Борса</strong> и <strong className="text-ink">Към дата</strong>, натисни{' '}
+            <strong className="text-emerald-400">Отвори в Google Gemini (Нов прозорец)</strong>, избери желания модел / Deep Research / Extended Thinking от твоя Google профил и постави копираните параметри (<code className="px-1 py-0.5 rounded bg-muted/60 font-mono">Ctrl+V / Cmd+V</code>).
           </div>
         </div>
 
