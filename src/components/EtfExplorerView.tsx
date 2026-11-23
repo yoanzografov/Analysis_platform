@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { PieChart, Search, ArrowUpRight, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { PieChart, Search, ArrowUpRight, TrendingUp, TrendingDown, RefreshCw, X } from 'lucide-react';
 import { Stock } from '../types';
 
 interface EtfItem {
@@ -85,7 +85,7 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Header Card */}
       <div className="rounded-2xl border border-border bg-card/70 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/25 shrink-0">
               <PieChart className="w-5 h-5" />
@@ -100,22 +100,52 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-3.5 h-3.5 text-ink-faint absolute left-3 top-2.5 pointer-events-none" />
+          <div className="flex items-center gap-2 w-full lg:flex-1 lg:max-w-xl">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-ink-faint absolute left-3.5 top-3 sm:top-3.5 pointer-events-none" />
               <input
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="Търси ETF (SPY, QQQ, SXR8...)"
-                className="w-full bg-bg border border-border rounded-xl pl-8 pr-3 py-1.5 text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500/50"
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && query.trim()) {
+                    if (filtered.length > 0) {
+                      handleOpenEtf(filtered[0]);
+                    } else {
+                      handleOpenEtf({
+                        ticker: query.trim().toUpperCase(),
+                        name: query.trim().toUpperCase(),
+                        category: 'ETF',
+                        expenseRatio: '—',
+                        price: null,
+                        changePct: null,
+                        currency: 'USD',
+                        low52: null,
+                        high52: null,
+                        divYield: null,
+                      });
+                    }
+                  }
+                }}
+                placeholder="Търсене на ETF по тикер или име (напр. SPY, QQQ, SXR8.DE)..."
+                className="w-full bg-bg rounded-2xl border border-border/90 pl-10 pr-10 py-2.5 sm:py-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 font-sans tabular-nums shadow-sm transition-all"
               />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="absolute right-3 top-2.5 sm:top-3 p-0.5 rounded-full text-ink-faint hover:text-ink hover:bg-card-hover transition-colors cursor-pointer"
+                  title="Изчисти търсенето"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
             <button
               type="button"
               onClick={fetchEtfs}
               disabled={loading}
-              className="p-2 rounded-xl border border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink cursor-pointer disabled:opacity-50"
+              className="p-3 rounded-2xl border border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink cursor-pointer disabled:opacity-50 shrink-0 shadow-sm"
               title="Опресни ETF котировките"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-indigo-400' : ''}`} />
