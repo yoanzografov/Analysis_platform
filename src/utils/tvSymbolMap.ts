@@ -46,6 +46,7 @@ export function getTradingViewSymbol(name: string, ticker?: string): string {
     'DX-Y.NYB': 'TVC:DXY',
 
     // European Markets
+    '^STOXX': 'STOXX:SXXP',
     '^FTSE': 'OANDA:UK100GBP',
     '^FCHI': 'OANDA:FR40EUR',
     '^GDAXI': 'OANDA:DE30EUR',

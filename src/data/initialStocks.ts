@@ -263,6 +263,7 @@ export function parseCSVData(csvText: string): { stocks: Stock[]; indices: Marke
     { name: 'US Dollar Index', value: 102.05, changePct: -0.49, ticker: 'DX-Y.NYB', changeVal: -0.50, category: 'US Markets' },
 
     // European Markets
+    { name: 'STOXX Europe 600', value: 636.97, changePct: 1.81, ticker: '^STOXX', changeVal: 11.32, category: 'European Markets' },
     { name: 'FTSE 100', value: 10840.35, changePct: 1.08, ticker: '^FTSE', changeVal: 115.49, category: 'European Markets' },
     { name: 'CAC 40', value: 7934.70, changePct: 0.78, ticker: '^FCHI', changeVal: 61.59, category: 'European Markets' },
     { name: 'DAX Performance Index', value: 25382.62, changePct: 0.33, ticker: '^GDAXI', changeVal: 84.01, category: 'European Markets' },

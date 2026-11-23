@@ -656,7 +656,7 @@ export default function App() {
       const mappedStockTickers = combinedTickers.map(t => TICKER_YAHOO_MAP[t.trim().toUpperCase()] || t);
       const defaultIndexTickers = [
         '^GSPC', '^NDX', '^IXIC', '^DJI', '^RUT', '^VIX', 'DX-Y.NYB',
-        '^FTSE', '^FCHI', '^GDAXI', '^N100', '^STOXX50E', '^IBEX', '^SSMI',
+        '^STOXX', '^FTSE', '^FCHI', '^GDAXI', '^N100', '^STOXX50E', '^IBEX', '^SSMI',
         '000001.SS', '^N225', '^HSI', '^AXJO', '^KS11',
         'CL=F', 'BZ=F', 'GC=F', 'SI=F', 'HG=F', 'NG=F', 'PL=F',
         'EURUSD=X', 'JPY=X', 'GBPUSD=X', 'USDAUD=X', 'USDCAD=X', 'USDMXN=X', 'USDHKD=X', 'USDCHF=X',
