@@ -720,6 +720,23 @@ export default function AiEquityResearchView({ stocks }: Props) {
           </div>
         </div>
 
+        {/* Compact Quick Guide for Users */}
+        <div className="rounded-xl bg-bg/50 border border-border/60 px-3.5 py-2.5 text-[11px] text-ink-muted flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span className="font-bold text-ink">Как да ползваш безплатно:</span>{' '}
+            Вземи безплатен ключ от{' '}
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-400 hover:underline font-bold"
+            >
+              Google AI Studio
+            </a>
+            {' '}(30 сек.) → постави го в <strong className="text-amber-300">🔑 API Ключ</strong> → избери модел и ниво на мислене и натисни <strong className="text-ink">Стартирай тук</strong>. Или ползвай <strong className="text-emerald-400">Отвори в Google Gemini</strong> с твоя Google профил (Deep Research / Extended Thinking).
+          </div>
+        </div>
+
         {error && (
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-bold text-rose-400 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0" />
