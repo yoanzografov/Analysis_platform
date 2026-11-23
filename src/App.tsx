@@ -2244,11 +2244,11 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsAiAssistantOpen(true)}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group bg-gradient-to-r from-indigo-950/80 via-slate-900 to-amber-950/60 hover:from-indigo-600 hover:to-amber-500 text-amber-300 hover:text-white border-amber-500/30 hover:border-amber-400 shadow-sm"
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border"
               title="Отвори AI анализ"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <Sparkles className="w-4 h-4 text-amber-400 group-hover:text-white group-hover:rotate-12 transition-all shrink-0" />
+                <Sparkles className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
                 <span className="truncate">AI анализ</span>
               </div>
             </button>
