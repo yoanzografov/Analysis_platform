@@ -2740,21 +2740,24 @@ export default function App() {
     ) : activeMainTab === 'stocks' ? (
       <div className="space-y-4 font-sans">
         {/* Quick stock selector & search header */}
-        <div className="p-3 sm:p-4 rounded-2xl bg-card/40 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* Stock Quick Selector / Search Combobox (StockAnalysis Style) */}
-          <StockAnalysisSearchCombobox
-            stocks={stocks}
-            selectedStock={selectedStockForStocksTab || stocks[0] || null}
-            onSelectStock={(stk) => setSelectedStockForStocksTab(stk)}
-            onAddStockToTable={(stk) => {
-              const sym = stk.ticker.toUpperCase().trim();
-              if (!stocks.some(s => s.ticker.toUpperCase().trim() === sym)) {
-                setStocks(prev => [stk, ...prev]);
-                setActiveAlertToast(`Активът ${stk.ticker} (${stk.companyName}) беше успешно добавен към Интерактивната таблица!`);
-                setTimeout(() => setActiveAlertToast(null), 4000);
-              }
-            }}
-          />
+        <div className="p-3 sm:p-4 rounded-2xl bg-card/40 border border-border/60 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Stock Quick Selector / Search Combobox (Hero Style matching HOME) */}
+          <div className="w-full lg:flex-1 lg:max-w-xl">
+            <StockAnalysisSearchCombobox
+              stocks={stocks}
+              selectedStock={selectedStockForStocksTab || stocks[0] || null}
+              onSelectStock={(stk) => setSelectedStockForStocksTab(stk)}
+              size="hero"
+              onAddStockToTable={(stk) => {
+                const sym = stk.ticker.toUpperCase().trim();
+                if (!stocks.some(s => s.ticker.toUpperCase().trim() === sym)) {
+                  setStocks(prev => [stk, ...prev]);
+                  setActiveAlertToast(`Активът ${stk.ticker} (${stk.companyName}) беше успешно добавен към Интерактивната таблица!`);
+                  setTimeout(() => setActiveAlertToast(null), 4000);
+                }
+              }}
+            />
+          </div>
 
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold shrink-0">
