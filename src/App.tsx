@@ -198,22 +198,22 @@ export default function App() {
     }
   };
 
-  const getInitialTab = (): 'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other' => {
+  const getInitialTab = (): 'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'ai' | 'other' => {
     const hash = window.location.hash.toLowerCase().replace('#', '');
-    if (hash === 'home' || hash === 'stocks' || hash === 'etf' || hash === 'alerts' || hash === 'portfolio' || hash === 'news' || hash === 'other') return hash;
+    if (hash === 'home' || hash === 'stocks' || hash === 'etf' || hash === 'alerts' || hash === 'portfolio' || hash === 'news' || hash === 'ai' || hash === 'other') return hash;
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab')?.toLowerCase();
-    if (tabParam === 'home' || tabParam === 'stocks' || tabParam === 'etf' || tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news' || tabParam === 'other') return tabParam;
+    if (tabParam === 'home' || tabParam === 'stocks' || tabParam === 'etf' || tabParam === 'alerts' || tabParam === 'portfolio' || tabParam === 'news' || tabParam === 'ai' || tabParam === 'other') return tabParam;
     return 'table';
   };
 
-  const [activeMainTab, setActiveMainTab] = useState<'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other'>(getInitialTab);
-  const activeMainTabRef = useRef<'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other'>(activeMainTab);
+  const [activeMainTab, setActiveMainTab] = useState<'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'ai' | 'other'>(getInitialTab);
+  const activeMainTabRef = useRef<'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'ai' | 'other'>(activeMainTab);
   activeMainTabRef.current = activeMainTab;
 
   const [selectedStockForStocksTab, setSelectedStockForStocksTab] = useState<Stock | null>(null);
 
-  const switchTab = (tab: 'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'other') => {
+  const switchTab = (tab: 'home' | 'table' | 'stocks' | 'etf' | 'alerts' | 'portfolio' | 'news' | 'ai' | 'other') => {
     setActiveMainTab(tab);
     activeMainTabRef.current = tab;
     const targetHash = tab === 'table' ? '' : `#${tab}`;
@@ -2237,6 +2237,26 @@ export default function App() {
                 LIVE
               </span>
             </a>
+
+            {/* 8. AI Анализ */}
+            <a
+              href="#ai"
+              onClick={(e) => {
+                e.preventDefault();
+                switchTab('ai');
+              }}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group ${
+                activeMainTab === 'ai'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
+                  : 'bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border font-bold'
+              }`}
+              title="Отвори AI Анализ"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Sparkles className={`w-4 h-4 shrink-0 ${activeMainTab === 'ai' ? 'text-white' : 'text-amber-400 group-hover:scale-110 transition-transform'}`} />
+                <span className="truncate">AI Анализ</span>
+              </div>
+            </a>
           </nav>
 
           {/* Secondary Navigation Sections (Collapsible on mobile via Меню toggle, always visible on desktop) */}
@@ -2846,6 +2866,19 @@ export default function App() {
           selectedStock={selectedStockForAi}
           onSelectStock={setSelectedStockForAi}
         />
+      </div>
+    )}
+
+    {/* Dedicated AI Analysis Tab (Ready to build) */}
+    {activeMainTab === 'ai' && (
+      <div className="rounded-2xl border border-border bg-card/60 p-8 text-center space-y-3 shadow-xs animate-in fade-in duration-200">
+        <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/25 text-amber-400 flex items-center justify-center mx-auto">
+          <Sparkles className="w-6 h-6" />
+        </div>
+        <h2 className="text-lg font-black uppercase tracking-tight text-ink">AI Анализ</h2>
+        <p className="text-xs text-ink-muted max-w-md mx-auto">
+          Новата секция за AI анализ е готова за изграждане в основния екран.
+        </p>
       </div>
     )}
 
