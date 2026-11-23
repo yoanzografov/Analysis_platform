@@ -1575,11 +1575,16 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
       { id: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash-Lite", supportsThinking: false },
     ];
     try {
-      const apiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+      const headerKey = typeof req.headers["x-gemini-api-key"] === "string" ? req.headers["x-gemini-api-key"] : "";
+      const queryKey = typeof req.query.userApiKey === "string" ? req.query.userApiKey : "";
+      const rawKey = headerKey || queryKey || process.env.GEMINI_API_KEY || "";
+      const apiKey = rawKey.trim().replace(/^["']|["']$/g, "");
+      const serverHasKey = Boolean((process.env.GEMINI_API_KEY || "").trim());
       if (!apiKey) {
-        return res.json({ models: curatedModels });
+        return res.json({ models: curatedModels, serverHasKey });
       }
-      const models = await getCachedOrFetch("gemini_models_list_v1", 60 * 60_000, async () => {
+      const cacheKey = `gemini_models_list_v1_${apiKey.slice(-6)}`;
+      const models = await getCachedOrFetch(cacheKey, 60 * 60_000, async () => {
         const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`, {
           signal: AbortSignal.timeout(4000),
         }).catch(() => null);
@@ -1605,9 +1610,9 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
         }
         return Array.from(byId.values());
       }, false);
-      return res.json({ models });
+      return res.json({ models, serverHasKey });
     } catch {
-      return res.json({ models: curatedModels });
+      return res.json({ models: curatedModels, serverHasKey: Boolean((process.env.GEMINI_API_KEY || "").trim()) });
     }
   }
 
@@ -1623,6 +1628,7 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
         enableGoogleSearch = true,
         history = [],
         followUpQuestion = "",
+        userApiKey = "",
       } = req.body || {};
 
       const cleanTicker = String(ticker || "").trim().toUpperCase();
@@ -1630,9 +1636,10 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
         return res.status(400).json({ error: "Моля, въведете име на компания или тикер." });
       }
 
-      const apiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+      const rawKey = userApiKey || process.env.GEMINI_API_KEY || "";
+      const apiKey = String(rawKey).trim().replace(/^["']|["']$/g, "");
       if (!apiKey) {
-        return res.status(400).json({ error: "Липсва GEMINI_API_KEY в конфигурацията на сървъра." });
+        return res.status(400).json({ error: "Липсва GEMINI_API_KEY. Въведете вашия Gemini API ключ горе или го добавете в Vercel." });
       }
 
       const todayIso = new Date().toISOString().slice(0, 10);

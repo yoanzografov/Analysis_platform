@@ -14,6 +14,7 @@ import {
   ExternalLink,
   AlertTriangle,
   Loader2,
+  Key,
 } from 'lucide-react';
 import { Stock } from '../types';
 import { GLOBAL_TICKERS_CATALOG } from '../utils/globalTickersCatalog';
@@ -204,17 +205,55 @@ export default function AiEquityResearchView({ stocks }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [followUpInput, setFollowUpInput] = useState('');
   const [copied, setCopied] = useState(false);
+  const [userApiKey, setUserApiKey] = useState<string>(() => {
+    try {
+      return localStorage.getItem('gemini_user_api_key') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [serverHasKey, setServerHasKey] = useState<boolean>(true);
+  const [showKeyInput, setShowKeyInput] = useState<boolean>(false);
+  const [keyDraft, setKeyDraft] = useState<string>(() => {
+    try {
+      return localStorage.getItem('gemini_user_api_key') || '';
+    } catch {
+      return '';
+    }
+  });
 
   useEffect(() => {
-    fetch('/api/ai-models')
+    fetch('/api/ai-models', {
+      headers: userApiKey ? { 'x-gemini-api-key': userApiKey } : undefined,
+    })
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
         if (Array.isArray(data?.models) && data.models.length > 0) {
           setModels(data.models);
         }
+        if (typeof data?.serverHasKey === 'boolean') {
+          setServerHasKey(data.serverHasKey);
+          if (!data.serverHasKey && !userApiKey) {
+            setShowKeyInput(true);
+          }
+        }
       })
       .catch(() => {});
-  }, []);
+  }, [userApiKey]);
+
+  const handleSaveApiKey = () => {
+    const clean = keyDraft.trim().replace(/^["']|["']$/g, '');
+    try {
+      if (clean) {
+        localStorage.setItem('gemini_user_api_key', clean);
+      } else {
+        localStorage.removeItem('gemini_user_api_key');
+      }
+    } catch {}
+    setUserApiKey(clean);
+    setShowKeyInput(false);
+    setError('');
+  };
 
   const currentModelObj = models.find(m => m.id === selectedModel);
   const isHistorical = asOfDate < todayIso;
@@ -266,6 +305,7 @@ export default function AiEquityResearchView({ stocks }: Props) {
           enableGoogleSearch: enableGoogleSearch && !isHistorical,
           history: isFollowUp ? messages.map(m => ({ role: m.role, text: m.text })) : [],
           followUpQuestion: isFollowUp ? customFollowUp!.trim() : '',
+          userApiKey: userApiKey || undefined,
         }),
       });
 
@@ -336,35 +376,85 @@ export default function AiEquityResearchView({ stocks }: Props) {
             </div>
           </div>
 
-          {messages.length > 0 && (
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowKeyInput(prev => !prev)}
+              className={`px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                userApiKey || serverHasKey
+                  ? 'border-border bg-bg hover:bg-card-hover text-ink-muted hover:text-ink'
+                  : 'border-amber-500/40 bg-amber-500/15 text-amber-300'
+              }`}
+              title="Настройка на Gemini API ключ"
+            >
+              <Key className="w-3.5 h-3.5 text-amber-400" />
+              <span>{userApiKey ? 'API Ключ ✓' : serverHasKey ? 'API Ключ' : 'Добави API Ключ'}</span>
+            </button>
+
+            {messages.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="px-3 py-1.5 rounded-xl border border-border bg-bg hover:bg-card-hover text-xs font-bold text-ink inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'Копирано' : 'Копирай'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportMd}
+                  className="px-3 py-1.5 rounded-xl border border-border bg-bg hover:bg-card-hover text-xs font-bold text-ink inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>.MD</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMessages([]); setError(''); }}
+                  className="p-1.5 rounded-xl border border-border bg-bg hover:bg-card-hover text-ink-muted hover:text-ink cursor-pointer"
+                  title="Изчисти анализа"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {showKeyInput && (
+          <div className="p-3 rounded-xl bg-bg/80 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center gap-2.5">
+            <div className="flex items-center gap-2 text-xs text-amber-300 font-bold shrink-0">
+              <Key className="w-4 h-4 text-amber-400" />
+              <span>Gemini API Key:</span>
+            </div>
+            <input
+              type="password"
+              value={keyDraft}
+              onChange={e => setKeyDraft(e.target.value)}
+              placeholder="Постави твоя ключ от Google AI Studio (AIzaSy...)"
+              className="flex-1 bg-card border border-border rounded-lg px-3 py-1.5 text-xs text-ink font-mono focus:outline-none focus:border-amber-500/50"
+            />
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                onClick={handleCopy}
-                className="px-3 py-1.5 rounded-xl border border-border bg-bg hover:bg-card-hover text-xs font-bold text-ink inline-flex items-center gap-1.5 cursor-pointer"
+                onClick={handleSaveApiKey}
+                className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black cursor-pointer"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Копирано' : 'Копирай'}</span>
+                Запази
               </button>
-              <button
-                type="button"
-                onClick={handleExportMd}
-                className="px-3 py-1.5 rounded-xl border border-border bg-bg hover:bg-card-hover text-xs font-bold text-ink inline-flex items-center gap-1.5 cursor-pointer"
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2.5 py-1.5 rounded-lg border border-border text-[11px] font-bold text-ink-muted hover:text-ink inline-flex items-center gap-1"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>.MD</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMessages([]); setError(''); }}
-                className="p-1.5 rounded-xl border border-border bg-bg hover:bg-card-hover text-ink-muted hover:text-ink cursor-pointer"
-                title="Изчисти анализа"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
+                <span>Вземи ключ</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Inputs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
