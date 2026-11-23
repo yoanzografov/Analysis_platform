@@ -1566,6 +1566,344 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     }
   }
 
+  if (url.includes("ai-models")) {
+    const curatedModels = [
+      { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro (Deep Thinking)", supportsThinking: true },
+      { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Fast Thinking)", supportsThinking: true },
+      { id: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite (Ultra Fast)", supportsThinking: true },
+      { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", supportsThinking: false },
+      { id: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash-Lite", supportsThinking: false },
+    ];
+    try {
+      const apiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+      if (!apiKey) {
+        return res.json({ models: curatedModels });
+      }
+      const models = await getCachedOrFetch("gemini_models_list_v1", 60 * 60_000, async () => {
+        const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`, {
+          signal: AbortSignal.timeout(4000),
+        }).catch(() => null);
+        if (!listRes || !listRes.ok) return curatedModels;
+        const json = await listRes.json();
+        const apiModels = Array.isArray(json?.models) ? json.models : [];
+        const byId = new Map<string, { id: string; label: string; supportsThinking: boolean }>();
+        for (const m of curatedModels) byId.set(m.id, m);
+
+        for (const m of apiModels) {
+          const rawName = String(m?.name || "");
+          const id = rawName.replace(/^models\//, "");
+          const methods: string[] = Array.isArray(m?.supportedGenerationMethods) ? m.supportedGenerationMethods : [];
+          if (!id.startsWith("gemini-") || !methods.includes("generateContent")) continue;
+          if (/embedding|aqa|imagen|veo|tts|robotics|computer-use|audio/i.test(id)) continue;
+          if (!byId.has(id)) {
+            byId.set(id, {
+              id,
+              label: m?.displayName ? `${m.displayName} (${id})` : id,
+              supportsThinking: id.includes("2.5") || id.includes("thinking") || id.includes("3"),
+            });
+          }
+        }
+        return Array.from(byId.values());
+      }, false);
+      return res.json({ models });
+    } catch {
+      return res.json({ models: curatedModels });
+    }
+  }
+
+  if (url.includes("ai-equity-research") && req.method === "POST") {
+    try {
+      const {
+        companyName = "",
+        ticker = "",
+        exchange = "",
+        asOfDate = "",
+        model = "gemini-2.5-pro",
+        thinkingBudget,
+        enableGoogleSearch = true,
+        history = [],
+        followUpQuestion = "",
+      } = req.body || {};
+
+      const cleanTicker = String(ticker || "").trim().toUpperCase();
+      if (!cleanTicker && !companyName) {
+        return res.status(400).json({ error: "Моля, въведете име на компания или тикер." });
+      }
+
+      const apiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+      if (!apiKey) {
+        return res.status(400).json({ error: "Липсва GEMINI_API_KEY в конфигурацията на сървъра." });
+      }
+
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const parsedAsOfIso = (() => {
+        const raw = String(asOfDate || "").trim();
+        if (!raw) return todayIso;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+        const m = raw.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+        if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+        return todayIso;
+      })();
+      const isHistorical = parsedAsOfIso < todayIso;
+
+      // Grounding: fetch real market & financial data from Yahoo Finance + SEC EDGAR
+      let verifiedData: any = {
+        ticker: cleanTicker || undefined,
+        companyName: companyName || undefined,
+        exchange: exchange || undefined,
+        referenceDate: parsedAsOfIso,
+        isHistoricalMode: isHistorical,
+      };
+
+      if (cleanTicker) {
+        const parsed = parseStockExchangeAndMarket(cleanTicker);
+        const yahooSym = parsed.yahooSym || cleanTicker;
+        try {
+          if (isHistorical) {
+            const targetTs = new Date(`${parsedAsOfIso}T23:59:59Z`).getTime();
+            const startIso = new Date(targetTs - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+            const endIso = new Date(targetTs + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+            const [chartRes, annTs, secAnn] = await Promise.all([
+              yahooFinance.chart(yahooSym, { period1: startIso, period2: endIso, interval: "1d" }).catch(() => null),
+              yahooFinance.fundamentalsTimeSeries(yahooSym, { period1: "2016-01-01", type: "annual", module: "all" }, { validateResult: false }).catch(() => []),
+              (!parsed.isEuropean && !parsed.isBulgarian && !yahooSym.includes("."))
+                ? fetchSecAnnualRecords(yahooSym).catch(() => [])
+                : Promise.resolve([]),
+            ]);
+            const quotes = Array.isArray(chartRes?.quotes) ? chartRes.quotes : [];
+            const validQuotes = quotes.filter((q: any) => q?.close != null && new Date(q.date).getTime() <= targetTs);
+            const histBar = validQuotes[validQuotes.length - 1];
+            const filteredAnnual = [...(Array.isArray(annTs) ? annTs : []), ...(Array.isArray(secAnn) ? secAnn : [])]
+              .filter((r: any) => r?.date && new Date(r.date).getTime() <= targetTs)
+              .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 10)
+              .map((r: any) => ({
+                date: new Date(r.date).toISOString().slice(0, 10),
+                revenue: r.totalRevenue ?? r.operatingRevenue ?? null,
+                grossProfit: r.grossProfit ?? null,
+                operatingIncome: r.operatingIncome ?? null,
+                netIncome: r.netIncome ?? null,
+                dilutedEPS: r.dilutedEPS ?? null,
+                dilutedShares: r.dilutedAverageShares ?? null,
+                ocf: r.operatingCashFlow ?? null,
+                capex: r.capitalExpenditure ?? null,
+                fcf: r.freeCashFlow ?? null,
+                cash: r.cashCashEquivalentsAndShortTermInvestments ?? r.cashAndCashEquivalents ?? null,
+                totalDebt: r.totalDebt ?? null,
+                equity: r.stockholdersEquity ?? null,
+              }));
+
+            verifiedData = {
+              ...verifiedData,
+              historicalPriceOnOrBeforeDate: histBar ? { price: histBar.close, date: new Date(histBar.date).toISOString().slice(0, 10) } : null,
+              annualFinancialsUpToDate: filteredAnnual,
+            };
+          } else {
+            const [qRes, qsRes, annTs, secAnn] = await Promise.all([
+              yahooFinance.quote(yahooSym).catch(() => null),
+              yahooFinance.quoteSummary(yahooSym, { modules: ["assetProfile", "financialData", "defaultKeyStatistics", "summaryDetail"] }).catch(() => null),
+              yahooFinance.fundamentalsTimeSeries(yahooSym, { period1: "2016-01-01", type: "annual", module: "all" }, { validateResult: false }).catch(() => []),
+              (!parsed.isEuropean && !parsed.isBulgarian && !yahooSym.includes("."))
+                ? fetchSecAnnualRecords(yahooSym).catch(() => [])
+                : Promise.resolve([]),
+            ]);
+            const fd = qsRes?.financialData;
+            const ks = qsRes?.defaultKeyStatistics;
+            const sd = qsRes?.summaryDetail;
+            const ap = qsRes?.assetProfile;
+
+            const annMap = new Map<string, any>();
+            for (const r of (Array.isArray(annTs) ? annTs : [])) {
+              if (!r?.date) continue;
+              const yr = new Date(r.date).toISOString().slice(0, 4);
+              if (!annMap.has(yr)) annMap.set(yr, r);
+            }
+            for (const r of (Array.isArray(secAnn) ? secAnn : [])) {
+              if (!r?.date) continue;
+              const yr = new Date(r.date).toISOString().slice(0, 4);
+              if (!annMap.has(yr)) annMap.set(yr, r);
+            }
+            const annualHistory = Array.from(annMap.values())
+              .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 10)
+              .map((r: any) => ({
+                date: new Date(r.date).toISOString().slice(0, 10),
+                revenue: r.totalRevenue ?? r.operatingRevenue ?? null,
+                grossProfit: r.grossProfit ?? null,
+                operatingIncome: r.operatingIncome ?? null,
+                netIncome: r.netIncome ?? null,
+                dilutedEPS: r.dilutedEPS ?? null,
+                dilutedShares: r.dilutedAverageShares ?? null,
+                ocf: r.operatingCashFlow ?? null,
+                capex: r.capitalExpenditure ?? null,
+                fcf: r.freeCashFlow ?? null,
+                sbc: r.stockBasedCompensation ?? null,
+                da: r.depreciationAndAmortization ?? r.reconciledDepreciation ?? null,
+                cash: r.cashCashEquivalentsAndShortTermInvestments ?? r.cashAndCashEquivalents ?? null,
+                totalDebt: r.totalDebt ?? null,
+                equity: r.stockholdersEquity ?? null,
+              }));
+
+            verifiedData = {
+              ...verifiedData,
+              currency: qRes?.currency || sd?.currency || "USD",
+              currentPrice: qRes?.regularMarketPrice ?? fd?.currentPrice ?? null,
+              marketCap: qRes?.marketCap ?? sd?.marketCap ?? null,
+              enterpriseValue: ks?.enterpriseValue ?? null,
+              sharesOutstanding: ks?.sharesOutstanding ?? qRes?.sharesOutstanding ?? null,
+              trailingPE: sd?.trailingPE ?? qRes?.trailingPE ?? null,
+              forwardPE: sd?.forwardPE ?? ks?.forwardPE ?? null,
+              evToEbitda: ks?.enterpriseToEbitda ?? null,
+              evToRevenue: ks?.enterpriseToRevenue ?? null,
+              priceToBook: ks?.priceToBook ?? null,
+              roe: fd?.returnOnEquity ?? null,
+              roa: fd?.returnOnAssets ?? null,
+              grossMargin: fd?.grossMargins ?? null,
+              operatingMargin: fd?.operatingMargins ?? null,
+              profitMargin: fd?.profitMargins ?? null,
+              totalCash: fd?.totalCash ?? null,
+              totalDebt: fd?.totalDebt ?? null,
+              freeCashflowTTM: fd?.freeCashflow ?? null,
+              operatingCashflowTTM: fd?.operatingCashflow ?? null,
+              totalRevenueTTM: fd?.totalRevenue ?? null,
+              ebitdaTTM: fd?.ebitda ?? null,
+              insiderOwnership: ks?.heldPercentInsiders ?? null,
+              institutionalOwnership: ks?.heldPercentInstitutions ?? null,
+              sector: ap?.sector ?? null,
+              industry: ap?.industry ?? null,
+              annualHistory,
+            };
+          }
+        } catch {}
+      }
+
+      const MASTER_PROMPT_4_0_SYSTEM = `# MASTER PROMPT 4.0
+# PROFESSIONAL EQUITY RESEARCH & VALUE INVESTING ANALYST
+
+### ИНСТРУКЦИИ ЗА ДАТАТА
+Използвай посочената референтна дата за целия анализ.
+Ако датата е текуща (${todayIso}): използвай най-актуалните налични финансови и пазарни данни.
+Ако датата е историческа (< ${todayIso}): използвай САМО информация, публично достъпна към тази дата. Не включвай бъдещи финансови резултати и новини. Използвай историческата цена и пазарната капитализация. Не допускай hindsight bias.
+Посочи изрично датата на пазарните данни и последния наличен финансов отчет.
+
+# 1. ТВОЯТА РОЛЯ
+Действай като старши инвестиционен анализатор в институционален инвестиционен фонд с експертиза в:
+- Fundamental Analysis
+- Value Investing – Warren Buffett и Charlie Munger
+- Financial Modeling, DCF, Reverse DCF, Business Valuation
+- Competitive Advantage (Economic Moat), Capital Allocation, Macroeconomic Analysis, Risk Management.
+Мисли като дългосрочен инвеститор и собственик на бизнес, а не като трейдър.
+Не търси причини да купиш акцията. Търси обективната истина, дори когато противоречи на тезата.
+
+# 2. ПРОУЧВАНЕ И ИЗТОЧНИЦИ
+Приоритетни източници: SEC (10-K, 10-Q, 8-K, 20-F), Investor Relations, годишни/тримесечни отчети, Earnings Call Transcripts, Damodaran, FRED.
+- Посочвай източниците и датите. Разграничавай отчетени резултати от прогнози.
+- Не измисляй липсващи финансови показатели. Проверявай валутата и броя разредени акции.
+- Посочвай дали данните са GAAP или Non-GAAP. При противоречиви данни обяснявай разликата.
+
+# 3-13 & 17. СТРУКТУРА НА АНАЛИЗА (ИЗПЪЛНИ ВСИЧКИ РАЗДЕЛИ ПОСЛЕДОВАТЕЛНО НА БЪЛГАРСКИ):
+3. АНАЛИЗ НА БИЗНЕСА (приходи, продукти, сегменти, клиенти, TAM, двигатели, Economic Moat: Brand Power, Switching Costs, Network Effects, Cost Advantage, Economies of Scale, IP + оценка на качеството 1-10)
+4. ФИНАНСОВ АНАЛИЗ (5–10 г. таблица: Растеж/CAGR, Рентабилност: Gross/Op/Net/ROIC/ROE/ROA/ROIC vs WACC/FCF Margin, Парични потоци: OCF/FCF/FCF Conversion/CapEx/SBC/Дивиденти/Buybacks, Баланс: Cash/Debt/Net Debt/Current Ratio/Debt-EBITDA/Interest Coverage + качество на парите)
+5. МЕНИДЖМЪНТ И КАПИТАЛОВО РАЗПРЕДЕЛЕНИЕ (екип, Capital Allocation, M&A, SBC, Insider Ownership, Buybacks, дивиденти)
+6. КОНКУРЕНТЕН АНАЛИЗ (сравнителна таблица с 3–5 основни конкурента: Revenue Growth, Gross/Op Margin, ROIC, FCF Margin, P/E, EV/EBITDA, EV/FCF, EV/Revenue, Net Debt/EBITDA)
+7. ОЦЕНКА НА СПРАВЕДЛИВАТА СТОЙНОСТ – VALUATION:
+   A. 10-годишен DCF модел (всички допускания, формули, междинни изчисления: EV, Equity Value, Intrinsic Value Per Share)
+   B. Reverse DCF (какъв растеж и маржове са заложени в текущата цена)
+   C. Relative Valuation (подходящи мултипликатори спрямо историята и конкурентите)
+8. СЦЕНАРИЕН АНАЛИЗ (Bear Case, Base Case, Bull Case – Fair Value, допускания, доходност, аналитични вероятности)
+9. MARGIN OF SAFETY – ЦЕНИ ЗА ПОКУПКА (от Base Case Fair Value: 10%, 15%, 20%, 25%, 30% отстъпка; Fair Value, Attractive Entry Price, Strong Buy Zone)
+10. МАКРОИКОНОМИЧЕСКА СРЕДА (Fed, ECB, лихви, инфлация, облигации, валутни курсове, геополитика)
+11. RISK ANALYSIS И RED FLAGS (временни vs структурни рискове, риск от трайна загуба на капитал)
+12. ПРОВЕРКА НА DCF И ФИНАНСОВИЯ МОДЕЛ (чувствителност спрямо WACC, Terminal Growth, Revenue Growth, Operating Margin; проверка на математиката; без смесване на EV и Equity Value)
+13. ИНВЕСТИЦИОННО ЗАКЛЮЧЕНИЕ + ФИНАЛНА ТАБЛИЦА (Текуща цена, Market Cap, DCF Fair Value, Bear/Base/Bull Case Value, цени с 15%/20%/25%/30% отстъпка, Потенциал, Качество /10, Стабилност /10, Общ риск) + отговор на: КУПУВАМ ЛИ ДОБЪР БИЗНЕС НА ДОБРА ЦЕНА, ИЛИ ПЛАЩАМ ПРЕКАЛЕНО МНОГО ЗА НЕГО?
+
+# 16. ЗАБРАНИ
+- Не прави технически анализ (без RSI, MACD, Moving Averages, графични модели).
+- Без краткосрочни трейдинг сигнали.
+- Използвай ясни Markdown таблици, конкретни числа и обяснения на български език.`;
+
+      const initialPrompt = `ПАРАМЕТРИ НА АНАЛИЗА:
+Компания: ${companyName || cleanTicker}
+Тикер: ${cleanTicker || "N/A"}
+Борса: ${exchange || "Основна борса"}
+Към дата: ${parsedAsOfIso} (${isHistorical ? "ИСТОРИЧЕСКА ДАТА - БЕЗ HINDSIGHT BIAS" : "ТЕКУЩА ДАТА"})
+
+ПРОВЕРЕНИ ПАЗАРНИ И ФИНАНСОВИ ДАННИ ОТ СЪРВЪРА (Yahoo Finance + SEC EDGAR):
+${JSON.stringify(verifiedData)}
+
+Изпълни пълния институционален анализ по MASTER PROMPT 4.0 на български език с всички раздели (3 до 13 + Финалната таблица).`;
+
+      const { GoogleGenAI } = await import("@google/genai");
+      const aiClient = new GoogleGenAI({ apiKey });
+
+      const contents: any[] = [{ role: "user", parts: [{ text: initialPrompt }] }];
+      if (Array.isArray(history) && history.length > 0 && followUpQuestion) {
+        for (const msg of history) {
+          contents.push({
+            role: msg.role === "assistant" ? "model" : "user",
+            parts: [{ text: String(msg.text || "") }],
+          });
+        }
+        contents.push({ role: "user", parts: [{ text: String(followUpQuestion) }] });
+      }
+
+      const selectedModel = String(model || "gemini-2.5-pro").trim();
+      const baseConfig: any = {
+        systemInstruction: MASTER_PROMPT_4_0_SYSTEM,
+        temperature: 0.25,
+        maxOutputTokens: 16384,
+      };
+      if (enableGoogleSearch && !isHistorical) {
+        baseConfig.tools = [{ googleSearch: {} }];
+      }
+      if (
+        typeof thinkingBudget === "number" &&
+        Number.isFinite(thinkingBudget) &&
+        (selectedModel.includes("2.5") || selectedModel.includes("thinking") || selectedModel.includes("3"))
+      ) {
+        baseConfig.thinkingConfig = { thinkingBudget };
+      }
+
+      let response: any;
+      try {
+        response = await aiClient.models.generateContent({
+          model: selectedModel,
+          contents,
+          config: baseConfig,
+        });
+      } catch (firstErr: any) {
+        // Fallback if selected model rejects googleSearch or thinkingConfig
+        const retryConfig = { ...baseConfig };
+        delete retryConfig.tools;
+        delete retryConfig.thinkingConfig;
+        response = await aiClient.models.generateContent({
+          model: selectedModel,
+          contents,
+          config: retryConfig,
+        });
+      }
+
+      const markdown = response?.text || "Не беше генериран отговор.";
+      const groundingChunks = response?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      const groundedSources = Array.isArray(groundingChunks)
+        ? groundingChunks
+            .map((c: any) => ({ title: c?.web?.title || "", url: c?.web?.uri || "" }))
+            .filter((s: any) => s.url)
+            .slice(0, 8)
+        : [];
+
+      return res.json({
+        markdown,
+        modelUsed: selectedModel,
+        dataAsOf: parsedAsOfIso,
+        isHistorical,
+        groundedSources,
+      });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || "Грешка при AI анализа." });
+    }
+  }
+
   const isStockReturns = url.includes("stock-returns") ||
     (Array.isArray(req.query.path) && req.query.path.includes("stock-returns")) ||
     req.query.path === "stock-returns";

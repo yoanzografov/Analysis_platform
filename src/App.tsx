@@ -19,6 +19,7 @@ import MarketSummaryWidgets from './components/MarketSummaryWidgets';
 import MorningBriefingCard from './components/MorningBriefingCard';
 import HomeLandingView from './components/HomeLandingView';
 import EtfExplorerView from './components/EtfExplorerView';
+import AiEquityResearchView from './components/AiEquityResearchView';
 import StockTable from './components/StockTable';
 import CompanyNewsContainer from './components/CompanyNewsContainer';
 import ThemeToggle from './components/ThemeToggle';
@@ -2869,17 +2870,9 @@ export default function App() {
       </div>
     )}
 
-    {/* Dedicated AI Analysis Tab (Ready to build) */}
+        {/* Dedicated AI Analysis Tab (MASTER PROMPT 4.0) */}
     {activeMainTab === 'ai' && (
-      <div className="rounded-2xl border border-border bg-card/60 p-8 text-center space-y-3 shadow-xs animate-in fade-in duration-200">
-        <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/25 text-amber-400 flex items-center justify-center mx-auto">
-          <Sparkles className="w-6 h-6" />
-        </div>
-        <h2 className="text-lg font-black uppercase tracking-tight text-ink">AI Анализ</h2>
-        <p className="text-xs text-ink-muted max-w-md mx-auto">
-          Новата секция за AI анализ е готова за изграждане в основния екран.
-        </p>
-      </div>
+      <AiEquityResearchView stocks={stocks} />
     )}
 
     {/* Dedicated Other Category Tab */}
