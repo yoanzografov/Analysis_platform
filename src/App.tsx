@@ -2740,7 +2740,7 @@ export default function App() {
     ) : activeMainTab === 'stocks' ? (
       <div className="space-y-4 font-sans">
         {/* Quick stock selector & search header (Centered Hero Style matching HOME & ETF) */}
-        <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-3 sm:px-5 sm:py-4 shadow-xs">
+        <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-3 sm:px-5 sm:py-3.5 min-h-[128px] flex flex-col justify-center shadow-xs">
           <div className="max-w-3xl mx-auto text-center space-y-2">
             <h2 className="text-base sm:text-lg font-black tracking-tight text-ink leading-tight">
               Stocks Deep Analysis

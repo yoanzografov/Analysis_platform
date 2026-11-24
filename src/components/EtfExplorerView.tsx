@@ -111,7 +111,7 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Header Card (Centered Hero Style matching HOME & STOCKS) */}
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-3 sm:px-5 sm:py-4 shadow-xs space-y-2.5">
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-3 sm:px-5 sm:py-3.5 min-h-[128px] flex flex-col justify-center shadow-xs space-y-2">
         <div className="max-w-3xl mx-auto text-center space-y-2">
           <h2 className="text-base sm:text-lg font-black tracking-tight text-ink leading-tight">
             ETF Screener &amp; Explorer
@@ -147,7 +147,7 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer border ${
+              className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold whitespace-nowrap transition-colors cursor-pointer border ${
                 selectedCategory === cat
                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-xs'
                   : 'bg-bg/60 text-ink-muted hover:text-ink border-border/70 hover:bg-card-hover'
