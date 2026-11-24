@@ -1516,39 +1516,111 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
 
   if (url.includes("economic-calendar")) {
     try {
-      const data = await getCachedOrFetch("economic_calendar_ff_v1", 10 * 60_000, async () => {
-        const [thisWeekRes, nextWeekRes] = await Promise.all([
-          fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json", {
+      const data = await getCachedOrFetch("economic_calendar_tv_v2", 5 * 60_000, async () => {
+        const formatVal = (val: unknown, unit?: string, scale?: string): string => {
+          if (val === null || val === undefined || val === "") return "";
+          const numStr = typeof val === "number" ? String(val) : String(val).trim();
+          if (!numStr) return "";
+          const s = scale ? String(scale).trim() : "";
+          const u = unit ? String(unit).trim() : "";
+          if (u === "%") return `${numStr}${s}%`;
+          if (u && u.length <= 4 && u !== "Index") return `${numStr}${s} ${u}`.trim();
+          return `${numStr}${s}`;
+        };
+
+        const countryToCurrency: Record<string, string> = {
+          US: "USD", EU: "EUR", DE: "EUR", FR: "EUR", IT: "EUR", ES: "EUR",
+          GB: "GBP", JP: "JPY", CN: "CNY", CA: "CAD", AU: "AUD", NZ: "NZD",
+          CH: "CHF", BG: "BGN",
+        };
+
+        let events: Array<{
+          title: string;
+          country: string;
+          date: string;
+          impact: string;
+          actual: string;
+          forecast: string;
+          previous: string;
+        }> = [];
+
+        try {
+          const now = new Date();
+          const fromDate = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+          const toDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+          const tvUrl = `https://economic-calendar.tradingview.com/events?from=${encodeURIComponent(fromDate.toISOString())}&to=${encodeURIComponent(toDate.toISOString())}&countries=US,EU,DE,FR,IT,ES,GB,JP,CN,CA,AU,NZ,CH,BG`;
+          const tvRes = await fetch(tvUrl, {
+            headers: {
+              "Origin": "https://www.tradingview.com",
+              "Referer": "https://www.tradingview.com/",
+              "User-Agent": "Mozilla/5.0",
+            },
+            signal: AbortSignal.timeout(7000),
+          });
+          if (tvRes.ok) {
+            const tvJson = await tvRes.json();
+            const rows = Array.isArray(tvJson?.result) ? tvJson.result : [];
+            const seen = new Set<string>();
+            events = rows
+              .filter((ev: any) => {
+                if (!ev?.title || !ev?.date) return false;
+                const ccy = String(ev.currency || countryToCurrency[String(ev.country || "").toUpperCase()] || ev.country || "").toUpperCase();
+                const key = `${ev.date}|${ccy}|${ev.title}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              })
+              .map((ev: any) => {
+                const ccy = String(ev.currency || countryToCurrency[String(ev.country || "").toUpperCase()] || ev.country || "").toUpperCase();
+                const impact = ev.importance === 1 ? "High" : ev.importance === 0 ? "Medium" : "Low";
+                return {
+                  title: String(ev.title),
+                  country: ccy,
+                  date: String(ev.date),
+                  impact,
+                  actual: formatVal(ev.actual, ev.unit, ev.scale),
+                  forecast: formatVal(ev.forecast, ev.unit, ev.scale),
+                  previous: formatVal(ev.previous, ev.unit, ev.scale),
+                };
+              })
+              .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          }
+        } catch {
+          // Fall back to ForexFactory below
+        }
+
+        if (events.length === 0) {
+          const ffRes = await fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json", {
             headers: { "User-Agent": "Mozilla/5.0" },
             signal: AbortSignal.timeout(5000),
-          }).catch(() => null),
-          fetch("https://nfs.faireconomy.media/ff_calendar_nextweek.json", {
-            headers: { "User-Agent": "Mozilla/5.0" },
-            signal: AbortSignal.timeout(5000),
-          }).catch(() => null),
-        ]);
-        const thisWeek = thisWeekRes && thisWeekRes.ok ? await thisWeekRes.json().catch(() => []) : [];
-        const nextWeek = nextWeekRes && nextWeekRes.ok ? await nextWeekRes.json().catch(() => []) : [];
-        const combined = [...(Array.isArray(thisWeek) ? thisWeek : []), ...(Array.isArray(nextWeek) ? nextWeek : [])];
-        const seen = new Set<string>();
-        const events = combined
-          .filter((ev: any) => {
-            if (!ev?.title || !ev?.date) return false;
-            const key = `${ev.date}|${ev.country}|${ev.title}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          })
-          .map((ev: any) => ({
-            title: String(ev.title),
-            country: String(ev.country || "").toUpperCase(),
-            date: String(ev.date),
-            impact: String(ev.impact || "Low"),
-            actual: ev.actual != null ? String(ev.actual) : "",
-            forecast: ev.forecast != null ? String(ev.forecast) : "",
-            previous: ev.previous != null ? String(ev.previous) : "",
-          }))
-          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          }).catch(() => null);
+          const ffRows = ffRes && ffRes.ok ? await ffRes.json().catch(() => []) : [];
+          if (Array.isArray(ffRows)) {
+            const seen = new Set<string>();
+            events = ffRows
+              .filter((ev: any) => {
+                if (!ev?.title || !ev?.date) return false;
+                const key = `${ev.date}|${ev.country}|${ev.title}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              })
+              .map((ev: any) => ({
+                title: String(ev.title),
+                country: String(ev.country || "").toUpperCase(),
+                date: String(ev.date),
+                impact: String(ev.impact || "Low"),
+                actual: ev.actual != null ? String(ev.actual) : "",
+                forecast: ev.forecast != null ? String(ev.forecast) : "",
+                previous: ev.previous != null ? String(ev.previous) : "",
+              }))
+              .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          }
+        }
+
+        if (events.length === 0) {
+          throw new Error("No economic calendar events available from upstream sources");
+        }
 
         return { events, updatedAt: new Date().toISOString() };
       }, false);
