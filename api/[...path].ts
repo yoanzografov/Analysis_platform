@@ -1630,10 +1630,156 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     }
   }
 
+  const decodeHtml = (str: string): string =>
+    str
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const fetchJustEtfProfile = async (isin: string) => {
+    const cleanIsin = isin.trim().toUpperCase();
+    return getCachedOrFetch(`justetf_profile_v1_${cleanIsin}`, 6 * 60 * 60_000, async () => {
+      const res = await fetch(`https://www.justetf.com/en/etf-profile.html?isin=${encodeURIComponent(cleanIsin)}`, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) throw new Error(`justETF HTTP ${res.status}`);
+      const html = await res.text();
+
+      const pickByTestId = (id: string): string => {
+        const rx = new RegExp(`data-testid="${id}"[^>]*>([^<]{1,200})`, "i");
+        const m = html.match(rx);
+        return m ? decodeHtml(m[1]) : "";
+      };
+
+      const fundSizeMatch = html.match(/data-testid="etf-profile-header_fund-size-value-wrapper"[^>]*>([\s\S]{1,250}?)<\/div>/i);
+      const fundSizeRaw = fundSizeMatch ? decodeHtml(fundSizeMatch[1].replace(/<[^>]+>/g, " ")) : "";
+      const fundSize = fundSizeRaw.replace(/\s+/g, " ").trim();
+
+      const terRaw = pickByTestId("etf-profile-header_ter-value") || pickByTestId("tl_etf-basics_value_ter");
+      const ter = terRaw.replace(/\s*p\.a\.?/i, "").trim();
+
+      const parseHoldingsTable = (rowId: string, nameAttr: string, pctAttr: string) => {
+        const rows: Array<{ name: string; weight: string }> = [];
+        const rowRx = new RegExp(`data-testid="${rowId}"[\\s\\S]{0,700}?<\\/tr>`, "gi");
+        const matches = html.match(rowRx) || [];
+        for (const rowHtml of matches) {
+          const nameMatch =
+            rowHtml.match(new RegExp(`data-testid="${nameAttr}"[^>]*>(?:<span>)?([^<]+)`, "i")) ||
+            rowHtml.match(/title="([^"]+)"/i);
+          const pctMatch = rowHtml.match(new RegExp(`data-testid="${pctAttr}"[^>]*>([^<]+)`, "i"));
+          if (nameMatch && pctMatch) {
+            rows.push({
+              name: decodeHtml(nameMatch[1]),
+              weight: decodeHtml(pctMatch[1]),
+            });
+          }
+        }
+        return rows;
+      };
+
+      const topHoldings = parseHoldingsTable(
+        "etf-holdings_top-holdings_row",
+        "tl_etf-holdings_top-holdings_link_name",
+        "tl_etf-holdings_top-holdings_value_percentage"
+      );
+      const countries = parseHoldingsTable(
+        "etf-holdings_countries_row",
+        "tl_etf-holdings_countries_value_name",
+        "tl_etf-holdings_countries_value_percentage"
+      );
+      const sectors = parseHoldingsTable(
+        "etf-holdings_sectors_row",
+        "tl_etf-holdings_sectors_value_name",
+        "tl_etf-holdings_sectors_value_percentage"
+      );
+
+      return {
+        isin: cleanIsin,
+        justEtfName: pickByTestId("etf-profile-header_etf-name"),
+        ter,
+        fundSize,
+        distributionPolicy: pickByTestId("etf-profile-header_distribution-policy-value") || pickByTestId("tl_etf-basics_value_distribution-policy"),
+        replication: pickByTestId("etf-profile-header_replication-value") || pickByTestId("tl_etf-basics_value_replication"),
+        domicile: pickByTestId("tl_etf-basics_value_domicile-country"),
+        fundCurrency: pickByTestId("tl_etf-basics_value_fund-currency"),
+        inceptionDate: pickByTestId("etf-profile-header_inception-date-value") || pickByTestId("tl_etf-basics_value_launch-date"),
+        holdingsCount: pickByTestId("etf-profile-header_holdings-value"),
+        indexName: pickByTestId("tl_etf-basics_value_index-name"),
+        fundProvider: pickByTestId("tl_etf-basics_value_fund-provider"),
+        top10Weight: pickByTestId("tl_etf-holdings_top-holdings_weight"),
+        topHoldings: topHoldings.slice(0, 10),
+        countries: countries.slice(0, 10),
+        sectors: sectors.slice(0, 10),
+        justEtfUrl: `https://www.justetf.com/en/etf-profile.html?isin=${cleanIsin}`,
+      };
+    }, false);
+  };
+
+  if (url.includes("etf-justetf-detail")) {
+    const isin = String(req.query.isin || "").trim().toUpperCase();
+    if (!/^[A-Z]{2}[A-Z0-9]{10}$/.test(isin)) {
+      return res.status(400).json({ error: "Invalid ISIN" });
+    }
+    try {
+      const detail = await getCachedOrFetch(`justetf_detail_v1_${isin}`, 15 * 60_000, async () => {
+        const [profile, chartRes, quoteRes] = await Promise.all([
+          fetchJustEtfProfile(isin),
+          fetch(`https://www.justetf.com/api/etfs/${isin}/performance-chart?locale=en&currency=EUR&valuesType=MARKET_VALUE&reduceData=true&includeDividends=true&features=DIVIDENDS`, {
+            headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/json" },
+            signal: AbortSignal.timeout(8000),
+          }).catch(() => null),
+          fetch(`https://www.justetf.com/api/etfs/${isin}/quote?locale=en&currency=EUR`, {
+            headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/json" },
+            signal: AbortSignal.timeout(6000),
+          }).catch(() => null),
+        ]);
+        const chartJson = chartRes && chartRes.ok ? await chartRes.json().catch(() => null) : null;
+        const quoteJson = quoteRes && quoteRes.ok ? await quoteRes.json().catch(() => null) : null;
+        const rawSeries = Array.isArray(chartJson?.series) ? chartJson.series : [];
+        // Keep up to 240 evenly spaced points for crisp SVG/chart rendering
+        const step = rawSeries.length > 240 ? Math.ceil(rawSeries.length / 240) : 1;
+        const series = rawSeries
+          .filter((_: any, idx: number) => idx % step === 0 || idx === rawSeries.length - 1)
+          .map((pt: any) => ({
+            date: String(pt.date || ""),
+            value: typeof pt.value?.raw === "number" ? pt.value.raw : Number(pt.value || 0),
+          }))
+          .filter((pt: any) => pt.date && Number.isFinite(pt.value));
+
+        return {
+          ...profile,
+          latestQuoteEur: typeof quoteJson?.latestQuote?.raw === "number" ? quoteJson.latestQuote.raw : null,
+          latestQuoteDate: quoteJson?.latestQuoteDate || chartJson?.latestQuoteDate || null,
+          dtdPct: typeof quoteJson?.dtdPrc?.raw === "number" ? quoteJson.dtdPrc.raw : null,
+          totalPerformancePct: typeof chartJson?.performance?.raw === "number" ? chartJson.performance.raw : null,
+          series,
+        };
+      }, false);
+      return res.json(detail);
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || "Failed to fetch justETF detail" });
+    }
+  }
+
   if (url.includes("etf-list")) {
     try {
-      const data = await getCachedOrFetch("etf_list_v1", 5 * 60_000, async () => {
-        const etfCatalog = [
+      const data = await getCachedOrFetch("etf_list_v2", 5 * 60_000, async () => {
+        const etfCatalog: Array<{
+          ticker: string;
+          name: string;
+          category: string;
+          expenseRatio: string;
+          isin?: string;
+        }> = [
           { ticker: "SPY", name: "SPDR S&P 500 ETF Trust", category: "US Index", expenseRatio: "0.09%" },
           { ticker: "VOO", name: "Vanguard S&P 500 ETF", category: "US Index", expenseRatio: "0.03%" },
           { ticker: "IVV", name: "iShares Core S&P 500 ETF", category: "US Index", expenseRatio: "0.03%" },
@@ -1648,31 +1794,52 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
           { ticker: "SCHD", name: "Schwab U.S. Dividend Equity ETF", category: "Dividend", expenseRatio: "0.06%" },
           { ticker: "JEPI", name: "JPMorgan Equity Premium Income ETF", category: "Dividend", expenseRatio: "0.35%" },
           { ticker: "VYM", name: "Vanguard High Dividend Yield ETF", category: "Dividend", expenseRatio: "0.06%" },
-          { ticker: "SXR8.DE", name: "iShares Core S&P 500 UCITS ETF (EUR)", category: "Europe UCITS", expenseRatio: "0.07%" },
-          { ticker: "VWCE.DE", name: "Vanguard FTSE All-World UCITS ETF", category: "Europe UCITS", expenseRatio: "0.22%" },
-          { ticker: "EUNL.DE", name: "iShares Core MSCI World UCITS ETF", category: "Europe UCITS", expenseRatio: "0.20%" },
-          { ticker: "EQQQ.DE", name: "Invesco EQQQ Nasdaq-100 UCITS ETF", category: "Europe UCITS", expenseRatio: "0.30%" },
+          { ticker: "SXR8.DE", name: "iShares Core S&P 500 UCITS ETF (Acc)", category: "Europe UCITS", expenseRatio: "0.07%", isin: "IE00B5BMR087" },
+          { ticker: "VUAA.DE", name: "Vanguard S&P 500 UCITS ETF (Acc)", category: "Europe UCITS", expenseRatio: "0.07%", isin: "IE00BFMXXD54" },
+          { ticker: "VWCE.DE", name: "Vanguard FTSE All-World UCITS ETF (Acc)", category: "Europe UCITS", expenseRatio: "0.22%", isin: "IE00BK5BQT80" },
+          { ticker: "EUNL.DE", name: "iShares Core MSCI World UCITS ETF (Acc)", category: "Europe UCITS", expenseRatio: "0.20%", isin: "IE00B4L5Y983" },
+          { ticker: "EQQQ.DE", name: "Invesco EQQQ Nasdaq-100 UCITS ETF (Dist)", category: "Europe UCITS", expenseRatio: "0.30%", isin: "IE0032077012" },
+          { ticker: "SXRV.DE", name: "iShares Nasdaq 100 UCITS ETF (Acc)", category: "Europe UCITS", expenseRatio: "0.30%", isin: "IE00B53SZB19" },
+          { ticker: "EMIM.DE", name: "iShares Core MSCI EM IMI UCITS ETF (Acc)", category: "Europe UCITS", expenseRatio: "0.18%", isin: "IE00BKM4GZ66" },
+          { ticker: "ZPRV.DE", name: "SPDR MSCI USA Small Cap Value UCITS ETF", category: "Europe UCITS", expenseRatio: "0.30%", isin: "IE00BSPLC413" },
+          { ticker: "AGGH.DE", name: "iShares Core Global Aggregate Bond UCITS", category: "Europe UCITS", expenseRatio: "0.10%", isin: "IE00BDBRDM35" },
+          { ticker: "MEUD.PA", name: "Amundi Stoxx Europe 600 UCITS ETF (Acc)", category: "Europe UCITS", expenseRatio: "0.07%", isin: "LU0908500753" },
           { ticker: "GLD", name: "SPDR Gold Shares", category: "Commodities & Bonds", expenseRatio: "0.40%" },
           { ticker: "SLV", name: "iShares Silver Trust", category: "Commodities & Bonds", expenseRatio: "0.50%" },
           { ticker: "TLT", name: "iShares 20+ Year Treasury Bond ETF", category: "Commodities & Bonds", expenseRatio: "0.15%" },
           { ticker: "SGOV", name: "iShares 0-3 Month Treasury Bond ETF", category: "Commodities & Bonds", expenseRatio: "0.09%" },
         ];
-        const quotes = await yahooFinance.quote(etfCatalog.map(e => e.ticker)).catch(() => []);
+        const ucitsIsins = etfCatalog.map(e => e.isin).filter((x): x is string => Boolean(x));
+        const [quotes, justEtfProfiles] = await Promise.all([
+          yahooFinance.quote(etfCatalog.map(e => e.ticker)).catch(() => []),
+          Promise.all(ucitsIsins.map(isin => fetchJustEtfProfile(isin).catch(() => null))),
+        ]);
         const qMap = new Map<string, any>();
         for (const q of (Array.isArray(quotes) ? quotes : [])) {
           if (q?.symbol) qMap.set(q.symbol.toUpperCase(), q);
         }
+        const jeMap = new Map<string, any>();
+        for (const p of justEtfProfiles) {
+          if (p?.isin) jeMap.set(p.isin.toUpperCase(), p);
+        }
         return etfCatalog.map(item => {
           const q = qMap.get(item.ticker.toUpperCase());
+          const je = item.isin ? jeMap.get(item.isin.toUpperCase()) : null;
           return {
             ...item,
-            name: q?.shortName || q?.longName || item.name,
+            name: je?.justEtfName || q?.shortName || q?.longName || item.name,
+            expenseRatio: je?.ter || item.expenseRatio,
             price: typeof q?.regularMarketPrice === "number" ? q.regularMarketPrice : null,
             changePct: typeof q?.regularMarketChangePercent === "number" ? q.regularMarketChangePercent : null,
-            currency: q?.currency || (item.ticker.endsWith(".DE") ? "EUR" : "USD"),
+            currency: q?.currency || (item.ticker.endsWith(".DE") || item.ticker.endsWith(".PA") ? "EUR" : "USD"),
             low52: typeof q?.fiftyTwoWeekLow === "number" ? q.fiftyTwoWeekLow : null,
             high52: typeof q?.fiftyTwoWeekHigh === "number" ? q.fiftyTwoWeekHigh : null,
             divYield: typeof q?.trailingAnnualDividendYield === "number" ? parseFloat((q.trailingAnnualDividendYield * 100).toFixed(2)) : null,
+            fundSize: je?.fundSize || null,
+            distributionPolicy: je?.distributionPolicy || null,
+            replication: je?.replication || null,
+            domicile: je?.domicile || null,
+            justEtfUrl: je?.justEtfUrl || (item.isin ? `https://www.justetf.com/en/etf-profile.html?isin=${item.isin}` : null),
           };
         });
       }, false);

@@ -1,19 +1,26 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { PieChart, ArrowUpRight, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, TrendingUp, TrendingDown, RefreshCw, Layers } from 'lucide-react';
 import { Stock } from '../types';
 import StockAnalysisSearchCombobox from './StockAnalysisSearchCombobox';
+import JustEtfDetailModal from './JustEtfDetailModal';
 
 interface EtfItem {
   ticker: string;
   name: string;
   category: string;
   expenseRatio: string;
+  isin?: string;
   price: number | null;
   changePct: number | null;
   currency: string;
   low52: number | null;
   high52: number | null;
   divYield: number | null;
+  fundSize?: string | null;
+  distributionPolicy?: string | null;
+  replication?: string | null;
+  domicile?: string | null;
+  justEtfUrl?: string | null;
 }
 
 interface Props {
@@ -27,6 +34,7 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Всички');
+  const [selectedJustEtf, setSelectedJustEtf] = useState<EtfItem | null>(null);
 
   const fetchEtfs = async () => {
     setLoading(true);
@@ -51,7 +59,11 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
     const q = query.trim().toLowerCase();
     return etfs.filter(item => {
       const catOk = selectedCategory === 'Всички' || item.category === selectedCategory;
-      const queryOk = !q || item.ticker.toLowerCase().includes(q) || item.name.toLowerCase().includes(q);
+      const queryOk =
+        !q ||
+        item.ticker.toLowerCase().includes(q) ||
+        item.name.toLowerCase().includes(q) ||
+        (item.isin && item.isin.toLowerCase().includes(q));
       return catOk && queryOk;
     });
   }, [etfs, query, selectedCategory]);
@@ -82,30 +94,36 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
     }));
   }, [etfs]);
 
+  const buildStockFromEtf = (item: EtfItem): Stock => ({
+    watch: '',
+    ticker: item.ticker.toUpperCase(),
+    companyName: item.name,
+    date: '',
+    priceOfCalc: null,
+    dailyChangePct: item.changePct ?? 0,
+    currentPrice: item.price ?? 0,
+    fairPrice: null,
+    difference: null,
+    buySell: 'ДРУГИ',
+    marketCap: 0,
+    peRatio: null,
+    eps: null,
+    profileLink: '',
+    dividend: item.divYield != null ? `${item.divYield}%` : '-',
+    signal: 'Hold',
+    low52: item.low52,
+    high52: item.high52,
+    sector: 'ETF',
+    industry: item.category,
+    dividendYield: item.divYield ?? undefined,
+  });
+
   const handleOpenEtf = (item: EtfItem) => {
-    onSelectEtf({
-      watch: '',
-      ticker: item.ticker.toUpperCase(),
-      companyName: item.name,
-      date: '',
-      priceOfCalc: null,
-      dailyChangePct: item.changePct ?? 0,
-      currentPrice: item.price ?? 0,
-      fairPrice: null,
-      difference: null,
-      buySell: 'ДРУГИ',
-      marketCap: 0,
-      peRatio: null,
-      eps: null,
-      profileLink: '',
-      dividend: item.divYield != null ? `${item.divYield}%` : '-',
-      signal: 'Hold',
-      low52: item.low52,
-      high52: item.high52,
-      sector: 'ETF',
-      industry: item.category,
-      dividendYield: item.divYield ?? undefined,
-    });
+    if (item.isin) {
+      setSelectedJustEtf(item);
+      return;
+    }
+    onSelectEtf(buildStockFromEtf(item));
   };
 
   return (
@@ -165,9 +183,10 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border bg-card/80 text-[11px] font-black uppercase tracking-wider text-ink-muted">
-                <th className="py-3 px-4">Ticker</th>
+                <th className="py-3 px-4">Ticker / ISIN</th>
                 <th className="py-3 px-4">Име на фонда</th>
-                <th className="py-3 px-4">Категория</th>
+                <th className="py-3 px-4">Категория / Детайли</th>
+                <th className="py-3 px-4 text-right">Размер (AUM)</th>
                 <th className="py-3 px-4 text-right">Цена</th>
                 <th className="py-3 px-4 text-right">Дневна %</th>
                 <th className="py-3 px-4 text-right">52W Диапазон</th>
@@ -179,13 +198,13 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
             <tbody className="divide-y divide-border/40 text-xs">
               {loading && etfs.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-10 text-center text-ink-muted">
-                    Зареждане на ETF данни от Yahoo Finance...
+                  <td colSpan={10} className="py-10 text-center text-ink-muted">
+                    Зареждане на ETF данни от Yahoo Finance и justETF...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-10 text-center text-ink-muted">
+                  <td colSpan={10} className="py-10 text-center text-ink-muted">
                     Няма намерени ETF фондове по зададените критерии.
                   </td>
                 </tr>
@@ -193,22 +212,52 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
                 filtered.map(item => {
                   const sym = item.currency === 'EUR' ? '€' : item.currency === 'GBP' ? '£' : '$';
                   const isPos = (item.changePct ?? 0) >= 0;
+                  const distShort = item.distributionPolicy
+                    ? item.distributionPolicy.startsWith('Acc')
+                      ? 'Acc'
+                      : item.distributionPolicy.startsWith('Dist')
+                        ? 'Dist'
+                        : item.distributionPolicy
+                    : null;
                   return (
                     <tr
                       key={item.ticker}
                       onClick={() => handleOpenEtf(item)}
                       className="hover:bg-indigo-500/10 transition-colors cursor-pointer group"
                     >
-                      <td className="py-3 px-4 font-black text-indigo-400 font-mono whitespace-nowrap">
-                        {item.ticker}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="font-black text-indigo-400 font-mono">{item.ticker}</div>
+                        {item.isin && (
+                          <div className="text-[10px] font-mono text-ink-faint">{item.isin}</div>
+                        )}
                       </td>
-                      <td className="py-3 px-4 font-bold text-ink max-w-[260px] truncate">
+                      <td className="py-3 px-4 font-bold text-ink max-w-[260px] truncate" title={item.name}>
                         {item.name}
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-[10px] font-bold text-ink-muted">
-                          {item.category}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-[10px] font-bold text-ink-muted">
+                            {item.category}
+                          </span>
+                          {distShort && (
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-[10px] font-bold text-emerald-400">
+                              {distShort}
+                            </span>
+                          )}
+                          {item.replication && (
+                            <span className="px-1.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/25 text-[10px] font-bold text-sky-400">
+                              {item.replication}
+                            </span>
+                          )}
+                          {item.domicile && (
+                            <span className="px-1.5 py-0.5 rounded bg-bg border border-border text-[10px] font-bold text-ink-faint">
+                              {item.domicile}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-[11px] text-ink-muted whitespace-nowrap">
+                        {item.fundSize || '—'}
                       </td>
                       <td className="py-3 px-4 text-right font-mono font-bold text-ink whitespace-nowrap">
                         {item.price != null ? `${sym}${item.price.toFixed(2)}` : '—'}
@@ -233,7 +282,14 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
                         {item.expenseRatio}
                       </td>
                       <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <ArrowUpRight className="w-4 h-4 text-ink-faint group-hover:text-indigo-400 inline-block transition-colors" />
+                        {item.isin ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-[10px] font-bold text-indigo-300 group-hover:bg-indigo-500/25">
+                            <Layers className="w-3 h-3" />
+                            justETF
+                          </span>
+                        ) : (
+                          <ArrowUpRight className="w-4 h-4 text-ink-faint group-hover:text-indigo-400 inline-block transition-colors" />
+                        )}
                       </td>
                     </tr>
                   );
@@ -243,6 +299,32 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
           </table>
         </div>
       </div>
+
+      {selectedJustEtf && selectedJustEtf.isin && (
+        <JustEtfDetailModal
+          etf={{
+            ticker: selectedJustEtf.ticker,
+            name: selectedJustEtf.name,
+            isin: selectedJustEtf.isin,
+            category: selectedJustEtf.category,
+            expenseRatio: selectedJustEtf.expenseRatio,
+            price: selectedJustEtf.price,
+            changePct: selectedJustEtf.changePct,
+            currency: selectedJustEtf.currency,
+            fundSize: selectedJustEtf.fundSize,
+            distributionPolicy: selectedJustEtf.distributionPolicy,
+            replication: selectedJustEtf.replication,
+            domicile: selectedJustEtf.domicile,
+            justEtfUrl: selectedJustEtf.justEtfUrl,
+          }}
+          onClose={() => setSelectedJustEtf(null)}
+          onOpenDeepAnalysis={() => {
+            const target = selectedJustEtf;
+            setSelectedJustEtf(null);
+            onSelectEtf(buildStockFromEtf(target));
+          }}
+        />
+      )}
     </div>
   );
 }
