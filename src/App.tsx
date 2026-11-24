@@ -2214,7 +2214,23 @@ export default function App() {
               </span>
             </a>
 
-            {/* 7. NEWS */}
+            {/* 7. ECONOMIC CALENDAR */}
+            <button
+              type="button"
+              onClick={() => setShowEconomicCalendarModal(true)}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase font-sans tabular-nums transition-all cursor-pointer flex items-center justify-between gap-2.5 border shrink-0 lg:w-full group bg-transparent hover:bg-card-hover text-ink-muted hover:text-ink border-transparent hover:border-border"
+              title="Отвори Economic Calendar (TradingView)"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Calendar className="w-4 h-4 shrink-0 text-indigo-400 group-hover:scale-110 transition-transform" />
+                <span className="truncate">ECONOMIC CALENDAR</span>
+              </div>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold shrink-0">
+                LIVE
+              </span>
+            </button>
+
+            {/* 8. NEWS */}
             <a
               href="#news"
               onClick={(e) => {
@@ -2395,22 +2411,6 @@ export default function App() {
               </div>
             )}
           </div>
-
-          {/* Economic Calendar Item */}
-          <button
-            type="button"
-            onClick={() => setShowEconomicCalendarModal(true)}
-            className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black uppercase font-sans tracking-wide transition-all cursor-pointer flex items-center justify-between gap-2 text-ink-muted hover:text-ink hover:bg-card-hover group select-none"
-            title="Отвори Economic Calendar (TradingView)"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <Calendar className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
-              <span className="truncate">Economic Calendar</span>
-            </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold shrink-0">
-              LIVE
-            </span>
-          </button>
 
           {/* System Settings Dropdown */}
           <div ref={settingsMenuRef} className="relative flex flex-col">
