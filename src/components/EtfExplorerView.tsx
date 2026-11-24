@@ -111,13 +111,13 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Header Card (Centered Hero Style matching HOME & STOCKS) */}
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-3 sm:px-5 sm:py-3.5 min-h-[128px] flex flex-col justify-center shadow-xs space-y-2">
-        <div className="max-w-3xl mx-auto text-center space-y-2">
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[112px] flex flex-col justify-center shadow-xs space-y-2">
+        <div className="max-w-5xl mx-auto w-full text-center space-y-2">
           <h2 className="text-base sm:text-lg font-black tracking-tight text-ink leading-tight">
             ETF Screener &amp; Explorer
           </h2>
 
-          <div className="flex items-center justify-center gap-2 w-full max-w-lg mx-auto">
+          <div className="flex items-center justify-center gap-2 w-full max-w-2xl mx-auto">
             <div className="flex-1 text-left">
               <StockAnalysisSearchCombobox
                 stocks={etfAsStocks}
@@ -132,7 +132,7 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
               type="button"
               onClick={fetchEtfs}
               disabled={loading}
-              className="p-2.5 rounded-2xl border border-border bg-bg hover:bg-card-hover text-ink-muted hover:text-ink cursor-pointer disabled:opacity-50 shrink-0 shadow-sm"
+              className="p-2 rounded-2xl border border-border bg-bg hover:bg-card-hover text-ink-muted hover:text-ink cursor-pointer disabled:opacity-50 shrink-0 shadow-sm"
               title="Опресни ETF котировките"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-indigo-400' : ''}`} />

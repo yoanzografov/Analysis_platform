@@ -173,14 +173,14 @@ export default function HomeLandingView({
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
       {/* 1. StockAnalysis.com-style Hero Search Section */}
-      <section className="relative rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-3 sm:px-5 sm:py-3.5 min-h-[128px] flex flex-col justify-center shadow-xs overflow-visible">
-        <div className="max-w-5xl mx-auto text-center space-y-2">
+      <section className="relative rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[112px] flex flex-col justify-center shadow-xs overflow-visible">
+        <div className="max-w-5xl mx-auto w-full text-center space-y-2">
           <h1 className="text-base sm:text-lg font-black tracking-tight text-ink leading-tight">
             Search for a stock to start your analysis
           </h1>
 
           {/* Centered Search Combobox */}
-          <div className="w-full max-w-lg mx-auto text-left">
+          <div className="w-full max-w-2xl mx-auto text-left">
             <StockAnalysisSearchCombobox
               stocks={stocks}
               selectedStock={null}

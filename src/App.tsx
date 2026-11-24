@@ -2740,13 +2740,13 @@ export default function App() {
     ) : activeMainTab === 'stocks' ? (
       <div className="space-y-4 font-sans">
         {/* Quick stock selector & search header (Centered Hero Style matching HOME & ETF) */}
-        <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-3 sm:px-5 sm:py-3.5 min-h-[128px] flex flex-col justify-center shadow-xs">
-          <div className="max-w-3xl mx-auto text-center space-y-2">
+        <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[112px] flex flex-col justify-center shadow-xs">
+          <div className="max-w-5xl mx-auto w-full text-center space-y-2">
             <h2 className="text-base sm:text-lg font-black tracking-tight text-ink leading-tight">
               Stocks Deep Analysis
             </h2>
 
-            <div className="w-full max-w-lg mx-auto text-left">
+            <div className="w-full max-w-2xl mx-auto text-left">
               <StockAnalysisSearchCombobox
                 stocks={stocks}
                 selectedStock={selectedStockForStocksTab || stocks[0] || null}
