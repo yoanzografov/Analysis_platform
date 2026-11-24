@@ -1514,6 +1514,50 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     }
   }
 
+  if (url.includes("economic-calendar")) {
+    try {
+      const data = await getCachedOrFetch("economic_calendar_ff_v1", 10 * 60_000, async () => {
+        const [thisWeekRes, nextWeekRes] = await Promise.all([
+          fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json", {
+            headers: { "User-Agent": "Mozilla/5.0" },
+            signal: AbortSignal.timeout(5000),
+          }).catch(() => null),
+          fetch("https://nfs.faireconomy.media/ff_calendar_nextweek.json", {
+            headers: { "User-Agent": "Mozilla/5.0" },
+            signal: AbortSignal.timeout(5000),
+          }).catch(() => null),
+        ]);
+        const thisWeek = thisWeekRes && thisWeekRes.ok ? await thisWeekRes.json().catch(() => []) : [];
+        const nextWeek = nextWeekRes && nextWeekRes.ok ? await nextWeekRes.json().catch(() => []) : [];
+        const combined = [...(Array.isArray(thisWeek) ? thisWeek : []), ...(Array.isArray(nextWeek) ? nextWeek : [])];
+        const seen = new Set<string>();
+        const events = combined
+          .filter((ev: any) => {
+            if (!ev?.title || !ev?.date) return false;
+            const key = `${ev.date}|${ev.country}|${ev.title}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          })
+          .map((ev: any) => ({
+            title: String(ev.title),
+            country: String(ev.country || "").toUpperCase(),
+            date: String(ev.date),
+            impact: String(ev.impact || "Low"),
+            actual: ev.actual != null ? String(ev.actual) : "",
+            forecast: ev.forecast != null ? String(ev.forecast) : "",
+            previous: ev.previous != null ? String(ev.previous) : "",
+          }))
+          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        return { events, updatedAt: new Date().toISOString() };
+      }, false);
+      return res.json(data);
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || "Failed to fetch economic calendar", events: [] });
+    }
+  }
+
   if (url.includes("etf-list")) {
     try {
       const data = await getCachedOrFetch("etf_list_v1", 5 * 60_000, async () => {

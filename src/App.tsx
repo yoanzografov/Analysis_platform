@@ -29,7 +29,7 @@ import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { AuthModal } from './components/AuthModal';
 import { LandingAuthGate } from './components/LandingAuthGate';
-import { EconomicCalendar } from 'react-ts-tradingview-widgets';
+import EconomicCalendarModal from './components/EconomicCalendarModal';
 import RoiCalculatorModal from './components/RoiCalculatorModal';
 import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
 import ProfitCalculatorModal from './components/ProfitCalculatorModal';
@@ -2991,47 +2991,11 @@ export default function App() {
 
 
   {/* TradingView Economic Calendar Modal Popup */}
-  {showEconomicCalendarModal && (
-    <div
-      onClick={(e) => { if (e.target === e.currentTarget) setShowEconomicCalendarModal(false); }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 bg-bg/80 backdrop-blur-md font-sans"
-    >
-      <div className="w-full max-w-4xl bg-card border-2 border-indigo-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl relative h-[80vh] flex flex-col">
-        <button
-          onClick={() => setShowEconomicCalendarModal(false)}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-bg border border-border flex items-center justify-center text-ink hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer"
-          title="Затвори"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        <div className="flex items-center gap-2.5 mb-4 shrink-0">
-          <div className="w-9 h-9 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-base sm:text-lg font-black text-ink leading-tight uppercase">
-              Икономически Календар (TradingView)
-            </h3>
-            <span className="text-xs text-ink-faint">
-              Предстоящи макроикономически доклади и събития за САЩ и Европа в реално време
-            </span>
-          </div>
-        </div>
-
-        <div className="flex-1 w-full rounded-2xl overflow-hidden border border-border/50 relative">
-          <EconomicCalendar
-            colorTheme="dark"
-            width="100%"
-            height="100%"
-            locale="en"
-            countryFilter="us,eu"
-            importanceFilter="0,1"
-          />
-        </div>
-      </div>
-    </div>
-  )}
+  {/* Global Economic Calendar Modal (Investing.com Style) */}
+  <EconomicCalendarModal
+    isOpen={showEconomicCalendarModal}
+    onClose={() => setShowEconomicCalendarModal(false)}
+  />
 
   {/* Global Auth / Cloud Sync Modal */}
   <AuthModal
