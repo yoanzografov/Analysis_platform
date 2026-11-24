@@ -110,25 +110,15 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
-      {/* Header Card */}
-      <div className="rounded-2xl border border-border bg-card/70 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/25 shrink-0">
-              <PieChart className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-ink">
-                ETF Screener &amp; Explorer
-              </h2>
-              <p className="text-xs text-ink-muted">
-                Водещи щатски и европейски UCITS ETF фондове с цени в реално време — кликнете за пълен анализ.
-              </p>
-            </div>
-          </div>
+      {/* Header Card (Centered Hero Style matching HOME & STOCKS) */}
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-3 sm:px-5 sm:py-4 shadow-xs space-y-2.5">
+        <div className="max-w-3xl mx-auto text-center space-y-2">
+          <h2 className="text-base sm:text-lg font-black tracking-tight text-ink leading-tight">
+            ETF Screener &amp; Explorer
+          </h2>
 
-          <div className="flex items-center gap-2 w-full lg:flex-1 lg:max-w-xl">
-            <div className="flex-1">
+          <div className="flex items-center justify-center gap-2 w-full max-w-lg mx-auto">
+            <div className="flex-1 text-left">
               <StockAnalysisSearchCombobox
                 stocks={etfAsStocks}
                 selectedStock={null}
@@ -142,7 +132,7 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
               type="button"
               onClick={fetchEtfs}
               disabled={loading}
-              className="p-3 rounded-2xl border border-border bg-card hover:bg-card-hover text-ink-muted hover:text-ink cursor-pointer disabled:opacity-50 shrink-0 shadow-sm"
+              className="p-2.5 rounded-2xl border border-border bg-bg hover:bg-card-hover text-ink-muted hover:text-ink cursor-pointer disabled:opacity-50 shrink-0 shadow-sm"
               title="Опресни ETF котировките"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-indigo-400' : ''}`} />
@@ -151,7 +141,7 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+        <div className="flex items-center justify-start sm:justify-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
           {CATEGORIES.map(cat => (
             <button
               key={cat}

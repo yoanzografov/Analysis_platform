@@ -2739,38 +2739,29 @@ export default function App() {
       </>
     ) : activeMainTab === 'stocks' ? (
       <div className="space-y-4 font-sans">
-        {/* Quick stock selector & search header (Aligned 1:1 with ETF header) */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-card/70 border border-border shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-500/15 border border-blue-500/25 text-blue-400 flex items-center justify-center font-bold shrink-0">
-              <BarChart2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-black uppercase text-ink tracking-tight flex items-center gap-2">
-                <span>STOCKS DEEP ANALYSIS</span>
-              </h2>
-              <p className="text-xs text-ink-muted">
-                Пълен 9-табов фундаментален анализ, 10-годишни отчети и прогнози.
-              </p>
-            </div>
-          </div>
+        {/* Quick stock selector & search header (Centered Hero Style matching HOME & ETF) */}
+        <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-indigo-950/15 px-4 py-3 sm:px-5 sm:py-4 shadow-xs">
+          <div className="max-w-3xl mx-auto text-center space-y-2">
+            <h2 className="text-base sm:text-lg font-black tracking-tight text-ink leading-tight">
+              Stocks Deep Analysis
+            </h2>
 
-          {/* Stock Quick Selector / Search Combobox (Aligned right, matching ETF & HOME) */}
-          <div className="w-full lg:flex-1 lg:max-w-xl">
-            <StockAnalysisSearchCombobox
-              stocks={stocks}
-              selectedStock={selectedStockForStocksTab || stocks[0] || null}
-              onSelectStock={(stk) => setSelectedStockForStocksTab(stk)}
-              size="hero"
-              onAddStockToTable={(stk) => {
-                const sym = stk.ticker.toUpperCase().trim();
-                if (!stocks.some(s => s.ticker.toUpperCase().trim() === sym)) {
-                  setStocks(prev => [stk, ...prev]);
-                  setActiveAlertToast(`Активът ${stk.ticker} (${stk.companyName}) беше успешно добавен към Интерактивната таблица!`);
-                  setTimeout(() => setActiveAlertToast(null), 4000);
-                }
-              }}
-            />
+            <div className="w-full max-w-lg mx-auto text-left">
+              <StockAnalysisSearchCombobox
+                stocks={stocks}
+                selectedStock={selectedStockForStocksTab || stocks[0] || null}
+                onSelectStock={(stk) => setSelectedStockForStocksTab(stk)}
+                size="hero"
+                onAddStockToTable={(stk) => {
+                  const sym = stk.ticker.toUpperCase().trim();
+                  if (!stocks.some(s => s.ticker.toUpperCase().trim() === sym)) {
+                    setStocks(prev => [stk, ...prev]);
+                    setActiveAlertToast(`Активът ${stk.ticker} (${stk.companyName}) беше успешно добавен към Интерактивната таблица!`);
+                    setTimeout(() => setActiveAlertToast(null), 4000);
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
 

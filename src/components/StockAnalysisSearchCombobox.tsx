@@ -154,7 +154,7 @@ export default function StockAnalysisSearchCombobox({
       {/* Combobox Search Trigger / Input */}
       <div className={`relative ${size === 'hero' ? 'w-full' : 'w-full sm:w-64 md:w-72'}`}>
         <div className="relative w-full">
-          <Search className={`absolute pointer-events-none text-ink-faint ${size === 'hero' ? 'left-3.5 top-3.5 w-4 h-4' : 'left-2.5 top-2 w-3.5 h-3.5'}`} />
+          <Search className={`absolute pointer-events-none text-ink-faint ${size === 'hero' ? 'left-3.5 top-2.5 sm:top-3 w-4 h-4' : 'left-2.5 top-2 w-3.5 h-3.5'}`} />
           <input
             ref={inputRef}
             type="text"
@@ -188,7 +188,7 @@ export default function StockAnalysisSearchCombobox({
             placeholder={placeholder}
             className={
               size === 'hero'
-                ? 'w-full bg-bg rounded-2xl border border-border/90 pl-10 pr-10 py-2.5 sm:py-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 font-sans tabular-nums shadow-sm transition-all'
+                ? 'w-full bg-bg rounded-2xl border border-border/90 pl-10 pr-12 py-2 sm:py-2.5 text-xs sm:text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 font-sans tabular-nums shadow-sm transition-all'
                 : 'w-full bg-bg rounded-2xl border border-border pl-8 pr-8 py-1 text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:border-border font-sans tabular-nums'
             }
           />
@@ -197,14 +197,15 @@ export default function StockAnalysisSearchCombobox({
               type="button"
               onClick={() => {
                 setQuery('');
+                onQueryChange?.('');
                 inputRef.current?.focus();
               }}
-              className="absolute right-2.5 top-1.5 p-0.5 rounded hover:bg-card-hover text-ink-faint hover:text-ink transition-colors cursor-pointer"
+              className={`absolute right-3 p-0.5 rounded hover:bg-card-hover text-ink-faint hover:text-ink transition-colors cursor-pointer ${size === 'hero' ? 'top-2 sm:top-2.5' : 'top-1.5'}`}
             >
               <X className="w-3.5 h-3.5" />
             </button>
           ) : selectedStock ? (
-            <span className="absolute right-2.5 top-1.5 text-[10px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-border/40 text-ink-faint pointer-events-none">
+            <span className={`absolute right-3 text-[10px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-border/40 text-ink-faint pointer-events-none ${size === 'hero' ? 'top-2 sm:top-2.5' : 'top-1.5'}`}>
               {selectedStock.ticker}
             </span>
           ) : null}
