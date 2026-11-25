@@ -459,7 +459,7 @@ export default function AiEquityResearchView({ stocks }: Props) {
       <div class="report-title">${escapeHtml(companyName || ticker)} (${escapeHtml(ticker)})</div>
       <div class="report-meta">Борса: ${escapeHtml(exchange || '—')} · Към дата: ${escapeHtml(asOfDate)} · Модел: ${escapeHtml(selectedModel)}</div>
     </div>
-    <div class="report-meta">MASTER PROMPT 4.0 · Equity Research</div>
+    <div class="report-meta">MASTER PROMPT 5.0 · Equity Research</div>
   </div>
   ${htmlParts.join('\n')}
   <script>window.onload = function() { setTimeout(function() { window.print(); }, 250); };</script>
@@ -479,7 +479,7 @@ export default function AiEquityResearchView({ stocks }: Props) {
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-ink">
-                AI Анализ — MASTER PROMPT 4.0
+                AI Анализ — MASTER PROMPT 5.0
               </h2>
               <p className="text-xs text-ink-muted">
                 Институционален Equity Research &amp; Value Investing терминал (Buffett / Munger, 10-г. DCF, Reverse DCF, Margin of Safety)
