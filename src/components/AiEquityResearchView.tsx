@@ -713,8 +713,28 @@ export default function AiEquityResearchView({ stocks }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
+              onClick={() => runAnalysis()}
+              disabled={loading}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-black uppercase tracking-wide inline-flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-indigo-600/20 transition-all"
+              title="Стартирай пълния анализ по MASTER PROMPT 5.0 директно тук"
+            >
+              {loading ? (
+                <>
+                  <Sparkles className="w-4 h-4 animate-spin" />
+                  <span>Анализиране...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Анализирай компанията</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
               onClick={handleOpenInGeminiWindow}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wide inline-flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 transition-all"
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wide inline-flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 transition-all"
               title="Отвори Google Gemini в нов прозорец с твоя Google профил"
             >
               <ExternalLink className="w-4 h-4" />
@@ -727,8 +747,9 @@ export default function AiEquityResearchView({ stocks }: Props) {
         <div className="rounded-xl bg-bg/50 border border-border/60 px-3.5 py-2.5 text-[11px] text-ink-muted flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="font-bold text-ink">Как работи:</span>{' '}
-            Въведи <strong className="text-ink">Тикер</strong>, <strong className="text-ink">Компания</strong>, <strong className="text-ink">Борса</strong> и <strong className="text-ink">Към дата</strong>, натисни{' '}
-            <strong className="text-emerald-400">Отвори в Google Gemini (Нов прозорец)</strong>, избери желания модел / Deep Research / Extended Thinking от твоя Google профил и постави копираните параметри (<code className="px-1 py-0.5 rounded bg-muted/60 font-mono">Ctrl+V / Cmd+V</code>).
+            Въведи <strong className="text-ink">Тикер</strong>, <strong className="text-ink">Компания</strong>, <strong className="text-ink">Борса</strong> и <strong className="text-ink">Към дата</strong> и натисни{' '}
+            <strong className="text-indigo-400">Анализирай компанията</strong> (за директен анализ по MASTER PROMPT 5.0 тук) или{' '}
+            <strong className="text-emerald-400">Отвори в Google Gemini (Нов прозорец)</strong>, за да поставиш параметрите (<code className="px-1 py-0.5 rounded bg-muted/60 font-mono">Ctrl+V / Cmd+V</code>).
           </div>
         </div>
 
