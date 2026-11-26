@@ -4031,7 +4031,7 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
           }
           try {
             const qsPromise = yahooFinance.quoteSummary(yahooTargetSym, {
-              modules: ['assetProfile', 'financialData', 'defaultKeyStatistics', 'summaryDetail']
+              modules: ['assetProfile', 'financialData', 'defaultKeyStatistics', 'summaryDetail', 'earningsTrend']
             }).catch(() => null);
             const timeoutP = new Promise<any>(r => setTimeout(() => r(null), 4000));
             const qs = await Promise.race([qsPromise, timeoutP]);
@@ -4144,8 +4144,14 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       let netInc = tv?.netIncome ?? (totalRev * 0.24);
       let fcf = tv?.freeCashFlow ?? (netInc * 1.1);
 
-      let peVal = tv?.pe ?? fhMetrics?.peTTM ?? (tv?.eps && tv.eps > 0 ? (currentPrice / tv.eps) : 28.5);
-      let fwdPeVal = fhMetrics?.forwardPE ?? (peVal ? peVal * 0.88 : 24.0);
+      const yfTrailingEps = typeof yfSummary?.defaultKeyStatistics?.trailingEps === 'number' ? yfSummary.defaultKeyStatistics.trailingEps : null;
+      const yfForwardEps = typeof yfSummary?.defaultKeyStatistics?.forwardEps === 'number' ? yfSummary.defaultKeyStatistics.forwardEps : null;
+      const yfForwardPe = typeof yfSummary?.defaultKeyStatistics?.forwardPE === 'number'
+        ? yfSummary.defaultKeyStatistics.forwardPE
+        : (typeof yfSummary?.summaryDetail?.forwardPE === 'number' ? yfSummary.summaryDetail.forwardPE : null);
+
+      let peVal = tv?.pe ?? fhMetrics?.peTTM ?? (yfTrailingEps && yfTrailingEps > 0 ? (currentPrice / yfTrailingEps) : (tv?.eps && tv.eps > 0 ? (currentPrice / tv.eps) : 28.5));
+      let fwdPeVal = yfForwardPe ?? fhMetrics?.forwardPE ?? (yfForwardEps && yfForwardEps > 0 ? (currentPrice / yfForwardEps) : (peVal ? peVal * 0.88 : 24.0));
       let pegVal = tv?.peg ?? fhMetrics?.forwardPEG ?? fhMetrics?.pegTTM ?? 1.15;
       let psVal = tv?.ps ?? fhMetrics?.psTTM ?? (totalRev > 0 ? (mCap / totalRev) : 6.5);
       let pbVal = tv?.pb ?? fhMetrics?.pb ?? 4.8;
@@ -4159,8 +4165,8 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       const quickRatioVal = tv?.quickRatio ?? fhMetrics?.quickRatioQuarterly ?? 1.2;
       const debtEqVal = tv?.debtEquity ?? fhMetrics?.["totalDebt/totalEquityQuarterly"] ?? 0.35;
 
-      const epsTrailing = tv?.eps ?? fhMetrics?.epsTTM ?? (netInc / (mCap / currentPrice));
-      const epsForward = fhMetrics?.epsForward ?? (epsTrailing * 1.14);
+      const epsTrailing = tv?.eps ?? yfTrailingEps ?? fhMetrics?.epsTTM ?? (netInc / (mCap / currentPrice));
+      const epsForward = yfForwardEps ?? fhMetrics?.epsForward ?? (epsTrailing * 1.14);
       let sharesOut = (mCap > 0 && currentPrice > 0) ? (mCap / currentPrice) : 500000000;
       const revPerShare = fhMetrics?.revenuePerShareTTM ?? (totalRev / sharesOut);
       const bookPerShare = fhMetrics?.bookValuePerShareQuarterly ?? (currentPrice / (pbVal || 4));
@@ -4198,21 +4204,70 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       const recKey = ratings.strongBuy >= ratings.buy ? 'STRONG BUY' : (ratings.buy > ratings.hold ? 'BUY' : 'HOLD');
       const recMean = cleanTicker === 'AAPL' ? 2.18 : 2.25;
 
-      const revenueEstimates = cleanTicker === 'AAPL' ? [
+      const trendArr: any[] = Array.isArray(yfSummary?.earningsTrend?.trend) ? yfSummary.earningsTrend.trend : [];
+      const fy0 = trendArr.find((t: any) => t?.period === '0y');
+      const fy1 = trendArr.find((t: any) => t?.period === '+1y');
+      const yearFromEndDate = (d: any, fallback: string) => {
+        if (!d) return fallback;
+        const s = String(d instanceof Date ? d.toISOString() : d);
+        return /^\d{4}/.test(s) ? s.slice(0, 4) : fallback;
+      };
+
+      const revenueEstimates = (fy0?.revenueEstimate?.avg && fy1?.revenueEstimate?.avg) ? [
+        {
+          period: `FY ${yearFromEndDate(fy0.endDate, '2027')}`,
+          year: yearFromEndDate(fy0.endDate, '2027'),
+          avg: Number(fy0.revenueEstimate.avg),
+          low: Number(fy0.revenueEstimate.low || fy0.revenueEstimate.avg * 0.94),
+          high: Number(fy0.revenueEstimate.high || fy0.revenueEstimate.avg * 1.06),
+          growth: typeof fy0.revenueEstimate.growth === 'number' ? parseFloat((fy0.revenueEstimate.growth * 100).toFixed(1)) : 0,
+          numberOfAnalysts: Number(fy0.revenueEstimate.numberOfAnalysts || 20),
+        },
+        {
+          period: `FY ${yearFromEndDate(fy1.endDate, '2028')}`,
+          year: yearFromEndDate(fy1.endDate, '2028'),
+          avg: Number(fy1.revenueEstimate.avg),
+          low: Number(fy1.revenueEstimate.low || fy1.revenueEstimate.avg * 0.92),
+          high: Number(fy1.revenueEstimate.high || fy1.revenueEstimate.avg * 1.08),
+          growth: typeof fy1.revenueEstimate.growth === 'number' ? parseFloat((fy1.revenueEstimate.growth * 100).toFixed(1)) : 0,
+          numberOfAnalysts: Number(fy1.revenueEstimate.numberOfAnalysts || 20),
+        },
+      ] : (cleanTicker === 'AAPL' ? [
         { period: 'FY 2027', year: '2027', avg: 528250000000, low: 479840000000, high: 557880000000, growth: 10.3, numberOfAnalysts: 34 },
         { period: 'FY 2028', year: '2028', avg: 571040000000, low: 492190000000, high: 637910000000, growth: 8.1, numberOfAnalysts: 35 }
       ] : [
         { period: 'FY 2027', year: '2027', avg: totalRev * 1.12, low: totalRev * 1.05, high: totalRev * 1.20, growth: 12.0, numberOfAnalysts: 28 },
         { period: 'FY 2028', year: '2028', avg: totalRev * 1.24, low: totalRev * 1.14, high: totalRev * 1.35, growth: 10.5, numberOfAnalysts: 26 }
-      ];
+      ]);
 
-      const epsEstimates = cleanTicker === 'AAPL' ? [
+      const epsEstimates = (fy0?.earningsEstimate?.avg && fy1?.earningsEstimate?.avg) ? [
+        {
+          period: `FY ${yearFromEndDate(fy0.endDate, '2027')}`,
+          year: yearFromEndDate(fy0.endDate, '2027'),
+          avg: parseFloat(Number(fy0.earningsEstimate.avg).toFixed(2)),
+          low: parseFloat(Number(fy0.earningsEstimate.low || fy0.earningsEstimate.avg * 0.92).toFixed(2)),
+          high: parseFloat(Number(fy0.earningsEstimate.high || fy0.earningsEstimate.avg * 1.08).toFixed(2)),
+          growth: typeof fy0.earningsEstimate.growth === 'number' ? parseFloat((fy0.earningsEstimate.growth * 100).toFixed(1)) : 0,
+          forwardPE: Number(fy0.earningsEstimate.avg) > 0 ? parseFloat((currentPrice / Number(fy0.earningsEstimate.avg)).toFixed(1)) : fwdPeVal,
+          numberOfAnalysts: Number(fy0.earningsEstimate.numberOfAnalysts || 20),
+        },
+        {
+          period: `FY ${yearFromEndDate(fy1.endDate, '2028')}`,
+          year: yearFromEndDate(fy1.endDate, '2028'),
+          avg: parseFloat(Number(fy1.earningsEstimate.avg).toFixed(2)),
+          low: parseFloat(Number(fy1.earningsEstimate.low || fy1.earningsEstimate.avg * 0.90).toFixed(2)),
+          high: parseFloat(Number(fy1.earningsEstimate.high || fy1.earningsEstimate.avg * 1.10).toFixed(2)),
+          growth: typeof fy1.earningsEstimate.growth === 'number' ? parseFloat((fy1.earningsEstimate.growth * 100).toFixed(1)) : 0,
+          forwardPE: Number(fy1.earningsEstimate.avg) > 0 ? parseFloat((currentPrice / Number(fy1.earningsEstimate.avg)).toFixed(1)) : fwdPeVal,
+          numberOfAnalysts: Number(fy1.earningsEstimate.numberOfAnalysts || 20),
+        },
+      ] : (cleanTicker === 'AAPL' ? [
         { period: 'FY 2027', year: '2027', avg: 9.43, low: 8.16, high: 10.28, growth: 5.0, forwardPE: 37.8, numberOfAnalysts: 40 },
         { period: 'FY 2028', year: '2028', avg: 10.60, low: 8.36, high: 12.20, growth: 12.4, forwardPE: 33.6, numberOfAnalysts: 35 }
       ] : [
         { period: 'FY 2027', year: '2027', avg: epsTrailing * 1.14, low: epsTrailing * 1.05, high: epsTrailing * 1.22, growth: 14.0, forwardPE: 24.5, numberOfAnalysts: 25 },
         { period: 'FY 2028', year: '2028', avg: epsTrailing * 1.28, low: epsTrailing * 1.15, high: epsTrailing * 1.38, growth: 12.3, forwardPE: 21.8, numberOfAnalysts: 24 }
-      ];
+      ]);
 
       const recentRatings = cleanTicker === 'AAPL' ? [
         { date: '11 ноем. 2026', firm: 'China Renaissance', toGrade: 'Buy', fromGrade: 'Hold', action: 'Повишава (Upgrade)', currentPriceTarget: 425, priorPriceTarget: 375 },

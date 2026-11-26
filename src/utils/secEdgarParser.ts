@@ -76,7 +76,7 @@ function extractAnnualMap(
   tags: string[],
   isInstant: boolean,
   unit: 'USD' | 'USD/shares' | 'shares' = 'USD'
-): Record<string, { val: number; end: string }> {
+): Record<string, { val: number; end: string; filed: string }> {
   const byYear: Record<string, { val: number; end: string; filed: string; priority: number }> = {};
 
   for (let p = 0; p < tags.length; p++) {
@@ -104,11 +104,46 @@ function extractAnnualMap(
     }
   }
 
-  const out: Record<string, { val: number; end: string }> = {};
+  const out: Record<string, { val: number; end: string; filed: string }> = {};
   for (const [yr, data] of Object.entries(byYear)) {
-    out[yr] = { val: data.val, end: data.end };
+    out[yr] = { val: data.val, end: data.end, filed: data.filed };
   }
   return out;
+}
+
+async function fetchYahooSplits(ticker: string): Promise<Array<{ dateMs: number; ratio: number }>> {
+  try {
+    const res = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=15y&interval=1mo&events=splits`,
+      { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(3500) }
+    );
+    if (!res.ok) return [];
+    const json = await res.json();
+    const rawSplits = json?.chart?.result?.[0]?.events?.splits || {};
+    return Object.values(rawSplits)
+      .map((s: any) => {
+        const num = Number(s?.numerator || 1);
+        const den = Number(s?.denominator || 1);
+        const dt = Number(s?.date || 0) * 1000;
+        return { dateMs: dt, ratio: den > 0 ? num / den : 1 };
+      })
+      .filter(s => s.dateMs > 0 && s.ratio > 0 && s.ratio !== 1);
+  } catch {
+    return [];
+  }
+}
+
+function getSplitFactorForFiling(filed: string | undefined, splits: Array<{ dateMs: number; ratio: number }>): number {
+  if (!filed || splits.length === 0) return 1;
+  const filedMs = new Date(filed).getTime();
+  if (!Number.isFinite(filedMs)) return 1;
+  let factor = 1;
+  for (const sp of splits) {
+    if (filedMs < sp.dateMs) {
+      factor *= sp.ratio;
+    }
+  }
+  return factor || 1;
 }
 
 export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsRecord[]> {
@@ -122,10 +157,13 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
     const cik = await getCikForTicker(clean);
     if (!cik) return [];
 
-    const res = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, {
-      headers: SEC_HEADERS,
-      signal: AbortSignal.timeout(4500),
-    });
+    const [res, splits] = await Promise.all([
+      fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, {
+        headers: SEC_HEADERS,
+        signal: AbortSignal.timeout(4500),
+      }),
+      fetchYahooSplits(clean),
+    ]);
     if (!res.ok) return [];
 
     const facts = await res.json();
@@ -287,8 +325,12 @@ export async function fetchSecAnnualRecords(rawTicker: string): Promise<YahooTsR
         pretaxIncome: ebtMap[yr]?.val ?? null,
         taxProvision: taxMap[yr]?.val ?? null,
         netIncome: niMap[yr]?.val ?? null,
-        dilutedEPS: epsMap[yr]?.val ?? null,
-        dilutedAverageShares: sharesMap[yr]?.val ?? null,
+        dilutedEPS: epsMap[yr]?.val != null
+          ? parseFloat((epsMap[yr].val / getSplitFactorForFiling(epsMap[yr].filed, splits)).toFixed(4))
+          : null,
+        dilutedAverageShares: sharesMap[yr]?.val != null
+          ? Math.round(sharesMap[yr].val * getSplitFactorForFiling(sharesMap[yr].filed, splits))
+          : null,
         EBITDA: ebitda,
         cashAndCashEquivalents: cash,
         otherShortTermInvestments: stInv,
