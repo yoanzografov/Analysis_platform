@@ -1993,41 +1993,14 @@ export default function App() {
       {/* LEFT SIDEBAR NAVIGATION (StockAnalysis.com Style) */}
       <aside className="w-full lg:w-64 xl:w-72 shrink-0 z-20 flex flex-col gap-2.5 lg:gap-3 lg:pr-5 lg:self-start lg:sticky lg:top-4 mb-3 lg:mb-0">
         
-        {/* Quick Market Live Controls (Живи данни & Опресни пазар) - Hidden on mobile unless Меню is expanded */}
-        <div className={`${isMobileNavOpen ? 'flex' : 'hidden'} lg:flex items-center gap-2 flex-wrap`}>
-          {/* 1. Auto live updates toggler */}
-          <button
-            onClick={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-            className={`h-9 px-3 rounded-xl border font-sans text-[11px] font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none flex-1 ${
-              isAutoLiveRefresh 
-                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' 
-                : 'bg-transparent text-ink-faint border-border hover:bg-card-hover hover:text-ink'
-            }`}
-            title="Автоматично фоново синхронизиране на живите пазарни котировки"
-          >
-            <span className="relative flex h-2 w-2 shrink-0">
-              {isAutoLiveRefresh && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              )}
-              <span className={`relative inline-flex rounded-full h-2 w-2 ${isAutoLiveRefresh ? 'bg-emerald-400' : 'bg-stone-500'}`}></span>
-            </span>
-            <span>Живи Данни: {isAutoLiveRefresh ? 'ВКЛ' : 'ИЗКЛ'}</span>
-          </button>
-
-          {/* 2. Quick real live market quotes sync */}
-          <button
-            onClick={triggerManualRefresh}
-            disabled={isFetchingLivePrices}
-            className={`h-9 px-3 rounded-xl border font-sans text-[11px] font-extrabold uppercase transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs select-none ${
-              isFetchingLivePrices
-                ? 'bg-transparent text-ink-faint border-border/50 cursor-not-allowed opacity-50'
-                : 'bg-transparent text-ink-muted hover:text-ink border-border hover:bg-card-hover hover:border-indigo-500/30'
-            }`}
-            title="Ръчно незабавно изтегляне на актуални котировки от Yahoo Finance за всички активи"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isFetchingLivePrices ? 'animate-spin text-emerald-400' : 'text-indigo-400'}`} />
-            <span>{isFetchingLivePrices ? '...' : 'Опресни'}</span>
-          </button>
+        {/* Unified Live Data, Refresh & Sources Status Dropdown */}
+        <div className={`${isMobileNavOpen ? 'flex' : 'hidden'} lg:flex items-center`}>
+          <DataSourcesStatusPill
+            isAutoLiveRefresh={isAutoLiveRefresh}
+            onToggleAutoLiveRefresh={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
+            isFetchingLivePrices={isFetchingLivePrices}
+            onManualRefresh={triggerManualRefresh}
+          />
         </div>
         {/* Navigation Menu Card */}
         <div className="bg-transparent border border-border rounded-2xl p-2 sm:p-3 lg:p-3.5 shadow-xs flex flex-col gap-1.5 lg:gap-2">
@@ -2230,8 +2203,6 @@ export default function App() {
                 LIVE
               </span>
             </button>
-
-            <DataSourcesStatusPill />
 
             {/* 8. NEWS */}
             <a
