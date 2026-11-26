@@ -1514,6 +1514,118 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     }
   }
 
+  if (url.includes("sources-health")) {
+    const force = req.query.force === "1" || req.query.force === "true";
+    try {
+      const checkSource = async (
+        id: string,
+        name: string,
+        role: string,
+        fn: () => Promise<{ ok: boolean; detail: string }>
+      ) => {
+        const t0 = Date.now();
+        try {
+          const r = await fn();
+          const latencyMs = Date.now() - t0;
+          return {
+            id,
+            name,
+            role,
+            status: r.ok ? (latencyMs > 3000 ? "degraded" : "ok") : "down",
+            latencyMs,
+            detail: r.detail,
+          };
+        } catch (err: any) {
+          return {
+            id,
+            name,
+            role,
+            status: "down",
+            latencyMs: Date.now() - t0,
+            detail: err?.message || "Connection error",
+          };
+        }
+      };
+
+      const health = await getCachedOrFetch(
+        "sources_health_v1",
+        60_000,
+        async () => {
+          const sources = await Promise.all([
+            checkSource("yahoo", "Yahoo Finance", "Котировки, графики, Earnings, Forward EPS", async () => {
+              const q: any = await yahooFinance.quote("AAPL");
+              return {
+                ok: typeof q?.regularMarketPrice === "number",
+                detail: typeof q?.regularMarketPrice === "number" ? `AAPL $${q.regularMarketPrice}` : "Няма цена",
+              };
+            }),
+            checkSource("justetf", "justETF", "UCITS ETF TER, AUM, Holdings, Доходност", async () => {
+              const r = await fetch("https://www.justetf.com/api/etfs/IE00B5BMR087/quote?locale=en&currency=EUR", {
+                headers: { "User-Agent": "Mozilla/5.0" },
+                signal: AbortSignal.timeout(4500),
+              });
+              if (!r.ok) return { ok: false, detail: `HTTP ${r.status}` };
+              const j: any = await r.json().catch(() => null);
+              const val = j?.latestQuote?.raw;
+              return { ok: typeof val === "number", detail: typeof val === "number" ? `SXR8 €${val}` : "Празен отговор" };
+            }),
+            checkSource("tv_scanner", "TradingView Scanner", "Live P/E, EPS, Market Cap", async () => {
+              const r = await fetch("https://scanner.tradingview.com/america/scan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ symbols: { tickers: ["NASDAQ:AAPL"] }, columns: ["close"] }),
+                signal: AbortSignal.timeout(4500),
+              });
+              if (!r.ok) return { ok: false, detail: `HTTP ${r.status}` };
+              const j: any = await r.json().catch(() => null);
+              const px = j?.data?.[0]?.d?.[0];
+              return { ok: typeof px === "number", detail: typeof px === "number" ? `AAPL $${px}` : "Празен отговор" };
+            }),
+            checkSource("tv_calendar", "TradingView Calendar", "Икономически календар (Actual / Forecast)", async () => {
+              const now = new Date();
+              const from = new Date(now.getTime() - 86400_000).toISOString();
+              const to = new Date(now.getTime() + 86400_000).toISOString();
+              const r = await fetch(
+                `https://economic-calendar.tradingview.com/events?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&countries=US`,
+                {
+                  headers: { Origin: "https://www.tradingview.com", Referer: "https://www.tradingview.com/", "User-Agent": "Mozilla/5.0" },
+                  signal: AbortSignal.timeout(4500),
+                }
+              );
+              if (!r.ok) return { ok: false, detail: `HTTP ${r.status}` };
+              const j: any = await r.json().catch(() => null);
+              const count = Array.isArray(j?.result) ? j.result.length : 0;
+              return { ok: count > 0, detail: `${count} събития` };
+            }),
+            checkSource("sec_edgar", "SEC EDGAR", "10-K / 10-Q финансови отчети", async () => {
+              const r = await fetch("https://data.sec.gov/submissions/CIK0000320193.json", {
+                headers: { "User-Agent": "BulgarianStockPlatform/1.0 (contact@analysis-platform.app)" },
+                signal: AbortSignal.timeout(4500),
+              });
+              if (!r.ok) return { ok: false, detail: `HTTP ${r.status}` };
+              return { ok: true, detail: "SEC XBRL достъпен" };
+            }),
+          ]);
+
+          const okCount = sources.filter(s => s.status !== "down").length;
+          const totalCount = sources.length;
+          const overall = okCount === totalCount ? "ok" : okCount > 0 ? "degraded" : "down";
+          return {
+            overall,
+            okCount,
+            totalCount,
+            checkedAt: new Date().toISOString(),
+            sources,
+          };
+        },
+        force
+      );
+      return res.json(health);
+    } catch (e: any) {
+      return res.status(500).json({ overall: "down", okCount: 0, totalCount: 5, sources: [], error: e?.message });
+    }
+  }
+
   if (url.includes("economic-calendar")) {
     try {
       const data = await getCachedOrFetch("economic_calendar_tv_v2", 5 * 60_000, async () => {
@@ -1589,7 +1701,9 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
           // Fall back to ForexFactory below
         }
 
+        let fallbackUsed = false;
         if (events.length === 0) {
+          fallbackUsed = true;
           const ffRes = await fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json", {
             headers: { "User-Agent": "Mozilla/5.0" },
             signal: AbortSignal.timeout(5000),
@@ -1622,7 +1736,7 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
           throw new Error("No economic calendar events available from upstream sources");
         }
 
-        return { events, updatedAt: new Date().toISOString() };
+        return { events, fallbackUsed, updatedAt: new Date().toISOString() };
       }, false);
       return res.json(data);
     } catch (e: any) {
@@ -2032,6 +2146,7 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
           totalPerformancePct: typeof justEtfChart?.performance?.raw === "number" ? justEtfChart.performance.raw : null,
           totalReturnSeries,
           listings: isin ? (UCITS_LISTINGS_BY_ISIN[isin] || []) : [],
+          justEtfAvailable: isin ? Boolean(justEtfProfile?.ter || justEtfProfile?.topHoldings?.length) : true,
         };
       }, false);
       return res.json(profileData);

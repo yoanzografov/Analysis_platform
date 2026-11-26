@@ -76,6 +76,7 @@ interface EtfProfileData {
   totalPerformancePct: number | null;
   totalReturnSeries: Array<{ date: string; value: number }>;
   listings?: EtfListing[];
+  justEtfAvailable?: boolean;
 }
 
 type ProfileTab = 'overview' | 'holdings' | 'performance' | 'dividends';
@@ -340,7 +341,7 @@ export default function EtfProfileView({ etf, onBack }: Props) {
           </div>
         </div>
 
-        {/* Sub-Navigation Tabs */}
+      {/* Sub-Navigation Tabs */}
         <div className="flex items-center gap-1.5 border-t border-border/60 pt-3 overflow-x-auto no-scrollbar">
           {[
             { id: 'overview' as const, label: 'Overview (Преглед)' },
@@ -363,6 +364,12 @@ export default function EtfProfileView({ etf, onBack }: Props) {
           ))}
         </div>
       </div>
+
+      {!loading && (profile?.isin || etf.isin) && profile && profile.justEtfAvailable === false && (
+        <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3.5 py-2 text-xs text-amber-300 font-medium">
+          justETF временно не отговаря или е променил структурата си — показват се наличните данни и котировки от Yahoo Finance.
+        </div>
+      )}
 
       {/* Tab Content */}
       {tab === 'overview' && (

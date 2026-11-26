@@ -30,6 +30,7 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { AuthModal } from './components/AuthModal';
 import { LandingAuthGate } from './components/LandingAuthGate';
 import EconomicCalendarModal from './components/EconomicCalendarModal';
+import DataSourcesStatusPill from './components/DataSourcesStatusPill';
 import RoiCalculatorModal from './components/RoiCalculatorModal';
 import InvestmentCalculatorModal from './components/InvestmentCalculatorModal';
 import ProfitCalculatorModal from './components/ProfitCalculatorModal';
@@ -2229,6 +2230,8 @@ export default function App() {
                 LIVE
               </span>
             </button>
+
+            <DataSourcesStatusPill />
 
             {/* 8. NEWS */}
             <a
