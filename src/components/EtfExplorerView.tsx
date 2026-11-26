@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, TrendingUp, TrendingDown, RefreshCw, Layers } from 'lucide-react';
 import { Stock } from '../types';
 import StockAnalysisSearchCombobox from './StockAnalysisSearchCombobox';
-import JustEtfDetailModal from './JustEtfDetailModal';
+import EtfProfileView from './EtfProfileView';
 
 interface EtfItem {
   ticker: string;
@@ -35,6 +35,7 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Всички');
   const [selectedJustEtf, setSelectedJustEtf] = useState<EtfItem | null>(null);
+  const [activeEtf, setActiveEtf] = useState<EtfItem | null>(null);
 
   const fetchEtfs = async () => {
     setLoading(true);
@@ -119,12 +120,37 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
   });
 
   const handleOpenEtf = (item: EtfItem) => {
-    if (item.isin) {
-      setSelectedJustEtf(item);
+    setActiveEtf(item);
+  };
+
+  const handleSearchSelect = (stock: Stock) => {
+    const found = etfs.find(e => e.ticker.toUpperCase() === stock.ticker.toUpperCase());
+    if (found) {
+      setActiveEtf(found);
       return;
     }
-    onSelectEtf(buildStockFromEtf(item));
+    setActiveEtf({
+      ticker: stock.ticker.toUpperCase(),
+      name: stock.companyName || stock.ticker,
+      category: stock.industry || 'ETF',
+      expenseRatio: '—',
+      price: stock.currentPrice || null,
+      changePct: stock.dailyChangePct ?? null,
+      currency: stock.ticker.endsWith('.DE') || stock.ticker.endsWith('.PA') ? 'EUR' : 'USD',
+      low52: stock.low52 ?? null,
+      high52: stock.high52 ?? null,
+      divYield: stock.dividendYield ?? null,
+    });
   };
+
+  if (activeEtf) {
+    return (
+      <EtfProfileView
+        etf={activeEtf}
+        onBack={() => setActiveEtf(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
@@ -140,7 +166,7 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
               <StockAnalysisSearchCombobox
                 stocks={etfAsStocks}
                 selectedStock={null}
-                onSelectStock={onSelectEtf}
+                onSelectStock={handleSearchSelect}
                 onQueryChange={setQuery}
                 size="hero"
                 placeholder="Търсене на ETF по тикер или име (напр. SPY, QQQ, SXR8.DE)..."
@@ -300,31 +326,6 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
         </div>
       </div>
 
-      {selectedJustEtf && selectedJustEtf.isin && (
-        <JustEtfDetailModal
-          etf={{
-            ticker: selectedJustEtf.ticker,
-            name: selectedJustEtf.name,
-            isin: selectedJustEtf.isin,
-            category: selectedJustEtf.category,
-            expenseRatio: selectedJustEtf.expenseRatio,
-            price: selectedJustEtf.price,
-            changePct: selectedJustEtf.changePct,
-            currency: selectedJustEtf.currency,
-            fundSize: selectedJustEtf.fundSize,
-            distributionPolicy: selectedJustEtf.distributionPolicy,
-            replication: selectedJustEtf.replication,
-            domicile: selectedJustEtf.domicile,
-            justEtfUrl: selectedJustEtf.justEtfUrl,
-          }}
-          onClose={() => setSelectedJustEtf(null)}
-          onOpenDeepAnalysis={() => {
-            const target = selectedJustEtf;
-            setSelectedJustEtf(null);
-            onSelectEtf(buildStockFromEtf(target));
-          }}
-        />
-      )}
     </div>
   );
 }

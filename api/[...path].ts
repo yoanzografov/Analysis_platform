@@ -1770,6 +1770,175 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     }
   }
 
+  if (url.includes("etf-profile")) {
+    const ticker = String(req.query.ticker || "").trim().toUpperCase();
+    const isin = String(req.query.isin || "").trim().toUpperCase();
+    if (!ticker && !isin) {
+      return res.status(400).json({ error: "Missing ticker or isin" });
+    }
+    try {
+      const cacheKey = `etf_profile_unified_v1_${ticker}_${isin}`;
+      const profileData = await getCachedOrFetch(cacheKey, 10 * 60_000, async () => {
+        const formatAssets = (num: number | null | undefined, ccy: string): string => {
+          if (typeof num !== "number" || !Number.isFinite(num) || num <= 0) return "";
+          if (num >= 1e9) return `${ccy} ${(num / 1e9).toFixed(2)}B`;
+          if (num >= 1e6) return `${ccy} ${(num / 1e6).toFixed(0)}M`;
+          return `${ccy} ${num.toLocaleString("en-US")}`;
+        };
+
+        const sectorLabelMap: Record<string, string> = {
+          technology: "Technology",
+          financial_services: "Financial Services",
+          healthcare: "Healthcare",
+          consumer_cyclical: "Consumer Cyclical",
+          consumer_defensive: "Consumer Defensive",
+          industrials: "Industrials",
+          communication_services: "Communication Services",
+          energy: "Energy",
+          utilities: "Utilities",
+          realestate: "Real Estate",
+          basic_materials: "Basic Materials",
+        };
+
+        const [yfQuote, yfSummary, justEtfProfile, justEtfChart] = await Promise.all([
+          ticker ? yahooFinance.quote(ticker).catch(() => null) : Promise.resolve(null),
+          !isin && ticker
+            ? yahooFinance.quoteSummary(ticker, {
+                modules: ["topHoldings", "fundProfile", "summaryDetail", "defaultKeyStatistics"],
+              }).catch(() => null)
+            : Promise.resolve(null),
+          /^[A-Z]{2}[A-Z0-9]{10}$/.test(isin) ? fetchJustEtfProfile(isin).catch(() => null) : Promise.resolve(null),
+          /^[A-Z]{2}[A-Z0-9]{10}$/.test(isin)
+            ? fetch(`https://www.justetf.com/api/etfs/${isin}/performance-chart?locale=en&currency=EUR&valuesType=MARKET_VALUE&reduceData=true&includeDividends=true&features=DIVIDENDS`, {
+                headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
+                signal: AbortSignal.timeout(7000),
+              })
+                .then(r => (r.ok ? r.json() : null))
+                .catch(() => null)
+            : Promise.resolve(null),
+        ]);
+
+        const currency = String(
+          yfQuote?.currency ||
+            (ticker.endsWith(".DE") || ticker.endsWith(".PA") ? "EUR" : "USD")
+        );
+        const price = typeof yfQuote?.regularMarketPrice === "number" ? yfQuote.regularMarketPrice : null;
+        const prevClose = typeof yfQuote?.regularMarketPreviousClose === "number" ? yfQuote.regularMarketPreviousClose : null;
+        const changeAmt =
+          typeof yfQuote?.regularMarketChange === "number"
+            ? yfQuote.regularMarketChange
+            : price !== null && prevClose !== null
+              ? price - prevClose
+              : null;
+        const changePct = typeof yfQuote?.regularMarketChangePercent === "number" ? yfQuote.regularMarketChangePercent : null;
+
+        const fp = yfSummary?.fundProfile;
+        const sd = yfSummary?.summaryDetail;
+        const ks = yfSummary?.defaultKeyStatistics;
+        const th = yfSummary?.topHoldings;
+
+        const rawSeries = Array.isArray(justEtfChart?.series) ? justEtfChart.series : [];
+        const step = rawSeries.length > 240 ? Math.ceil(rawSeries.length / 240) : 1;
+        const totalReturnSeries = rawSeries
+          .filter((_: any, idx: number) => idx % step === 0 || idx === rawSeries.length - 1)
+          .map((pt: any) => ({
+            date: String(pt.date || ""),
+            value: typeof pt.value?.raw === "number" ? pt.value.raw : Number(pt.value || 0),
+          }))
+          .filter((pt: any) => pt.date && Number.isFinite(pt.value));
+
+        const yfTopHoldings = Array.isArray(th?.holdings)
+          ? th.holdings.slice(0, 10).map((h: any) => ({
+              symbol: h.symbol || "",
+              name: String(h.holdingName || h.symbol || ""),
+              weight: typeof h.holdingPercent === "number" ? `${(h.holdingPercent * 100).toFixed(2)}%` : "—",
+            }))
+          : [];
+
+        const yfSectors: Array<{ name: string; weight: string }> = [];
+        if (Array.isArray(th?.sectorWeightings)) {
+          for (const obj of th.sectorWeightings) {
+            if (!obj || typeof obj !== "object") continue;
+            for (const [k, v] of Object.entries(obj)) {
+              if (typeof v === "number" && v > 0) {
+                yfSectors.push({
+                  name: sectorLabelMap[k] || k.replace(/_/g, " "),
+                  weight: `${(v * 100).toFixed(2)}%`,
+                });
+              }
+            }
+          }
+          yfSectors.sort((a, b) => parseFloat(b.weight) - parseFloat(a.weight));
+        }
+
+        const yfTerNum = fp?.feesExpensesInvestment?.annualReportExpenseRatio;
+        const yfAssetsNum = sd?.totalAssets ?? ks?.totalAssets;
+        const yfDivYield =
+          typeof yfQuote?.trailingAnnualDividendYield === "number"
+            ? parseFloat((yfQuote.trailingAnnualDividendYield * 100).toFixed(2))
+            : typeof sd?.yield === "number"
+              ? parseFloat((sd.yield * 100).toFixed(2))
+              : null;
+
+        const topHoldings = justEtfProfile?.topHoldings?.length
+          ? justEtfProfile.topHoldings.map((h: any) => ({ symbol: "", name: h.name, weight: h.weight }))
+          : yfTopHoldings;
+        const sectors = justEtfProfile?.sectors?.length ? justEtfProfile.sectors : yfSectors;
+        const countries = justEtfProfile?.countries || [];
+
+        const inceptionMs =
+          typeof ks?.fundInceptionDate === "number"
+            ? ks.fundInceptionDate * 1000
+            : ks?.fundInceptionDate instanceof Date
+              ? ks.fundInceptionDate.getTime()
+              : null;
+
+        return {
+          ticker,
+          isin: isin || null,
+          name: justEtfProfile?.justEtfName || yfQuote?.longName || yfQuote?.shortName || ticker,
+          exchange: yfQuote?.fullExchangeName || yfQuote?.exchange || (isin ? "XETRA / EU" : "US"),
+          currency,
+          price,
+          prevClose,
+          changeAmt,
+          changePct,
+          open: typeof yfQuote?.regularMarketOpen === "number" ? yfQuote.regularMarketOpen : null,
+          dayLow: typeof yfQuote?.regularMarketDayLow === "number" ? yfQuote.regularMarketDayLow : null,
+          dayHigh: typeof yfQuote?.regularMarketDayHigh === "number" ? yfQuote.regularMarketDayHigh : null,
+          low52: typeof yfQuote?.fiftyTwoWeekLow === "number" ? yfQuote.fiftyTwoWeekLow : null,
+          high52: typeof yfQuote?.fiftyTwoWeekHigh === "number" ? yfQuote.fiftyTwoWeekHigh : null,
+          volume: typeof yfQuote?.regularMarketVolume === "number" ? yfQuote.regularMarketVolume : null,
+          avgVolume: typeof yfQuote?.averageDailyVolume3Month === "number" ? yfQuote.averageDailyVolume3Month : null,
+          divYield: yfDivYield,
+          divRate: typeof yfQuote?.trailingAnnualDividendRate === "number" ? yfQuote.trailingAnnualDividendRate : null,
+          ter: justEtfProfile?.ter || (typeof yfTerNum === "number" ? `${(yfTerNum * 100).toFixed(2)}%` : ""),
+          fundSize: justEtfProfile?.fundSize || formatAssets(yfAssetsNum, currency),
+          distributionPolicy: justEtfProfile?.distributionPolicy || (yfDivYield && yfDivYield > 0 ? "Distributing" : ""),
+          replication: justEtfProfile?.replication || "",
+          domicile: justEtfProfile?.domicile || (isin ? (isin.startsWith("IE") ? "Ireland" : isin.startsWith("LU") ? "Luxembourg" : "") : "United States"),
+          fundCurrency: justEtfProfile?.fundCurrency || currency,
+          inceptionDate:
+            justEtfProfile?.inceptionDate ||
+            (inceptionMs ? new Date(inceptionMs).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : ""),
+          holdingsCount: justEtfProfile?.holdingsCount || "",
+          indexName: justEtfProfile?.indexName || fp?.categoryName || "",
+          fundProvider: justEtfProfile?.fundProvider || fp?.family || "",
+          top10Weight: justEtfProfile?.top10Weight || "",
+          topHoldings,
+          countries,
+          sectors,
+          justEtfUrl: justEtfProfile?.justEtfUrl || (isin ? `https://www.justetf.com/en/etf-profile.html?isin=${isin}` : null),
+          totalPerformancePct: typeof justEtfChart?.performance?.raw === "number" ? justEtfChart.performance.raw : null,
+          totalReturnSeries,
+        };
+      }, false);
+      return res.json(profileData);
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || "Failed to fetch ETF profile" });
+    }
+  }
+
   if (url.includes("etf-list")) {
     try {
       const data = await getCachedOrFetch("etf_list_v2", 5 * 60_000, async () => {
