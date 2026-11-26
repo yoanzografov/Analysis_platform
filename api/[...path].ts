@@ -1770,14 +1770,114 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     }
   }
 
+  const UCITS_LISTINGS_BY_ISIN: Record<string, Array<{ ticker: string; exchange: string; currency: string }>> = {
+    IE00B5BMR087: [
+      { ticker: "SXR8.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "CSPX.L", exchange: "LSE", currency: "USD" },
+      { ticker: "CSP1.L", exchange: "LSE", currency: "GBP" },
+      { ticker: "CSSPX.MI", exchange: "MIL", currency: "EUR" },
+      { ticker: "CSSPX.SW", exchange: "SIX", currency: "USD" },
+    ],
+    IE00BFMXXD54: [
+      { ticker: "VUAA.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "VUAA.L", exchange: "LSE", currency: "USD" },
+      { ticker: "VUAG.L", exchange: "LSE", currency: "GBP" },
+      { ticker: "VUAA.MI", exchange: "MIL", currency: "EUR" },
+    ],
+    IE00BK5BQT80: [
+      { ticker: "VWCE.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "VWRA.L", exchange: "LSE", currency: "USD" },
+      { ticker: "VWRP.L", exchange: "LSE", currency: "GBP" },
+      { ticker: "VWCE.MI", exchange: "MIL", currency: "EUR" },
+    ],
+    IE00B4L5Y983: [
+      { ticker: "EUNL.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "IWDA.AS", exchange: "AMS", currency: "EUR" },
+      { ticker: "SWDA.L", exchange: "LSE", currency: "GBP" },
+      { ticker: "IWDA.L", exchange: "LSE", currency: "USD" },
+    ],
+    IE0032077012: [
+      { ticker: "EQQQ.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "EQQQ.L", exchange: "LSE", currency: "GBP" },
+      { ticker: "EQQQ.MI", exchange: "MIL", currency: "EUR" },
+      { ticker: "EQQQ.SW", exchange: "SIX", currency: "CHF" },
+    ],
+    IE00B53SZB19: [
+      { ticker: "SXRV.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "CNDX.L", exchange: "LSE", currency: "USD" },
+      { ticker: "CNX1.L", exchange: "LSE", currency: "GBP" },
+      { ticker: "CSNDX.MI", exchange: "MIL", currency: "EUR" },
+      { ticker: "CSNDX.SW", exchange: "SIX", currency: "USD" },
+    ],
+    IE00BKM4GZ66: [
+      { ticker: "EMIM.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "EIMI.L", exchange: "LSE", currency: "USD" },
+      { ticker: "EMIM.AS", exchange: "AMS", currency: "EUR" },
+      { ticker: "EIMI.SW", exchange: "SIX", currency: "USD" },
+    ],
+    IE00BSPLC413: [
+      { ticker: "ZPRV.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "USSC.L", exchange: "LSE", currency: "USD" },
+      { ticker: "ZPRV.SW", exchange: "SIX", currency: "USD" },
+    ],
+    IE00BDBRDM35: [
+      { ticker: "AGGH.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "EUNA.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "AGGH.L", exchange: "LSE", currency: "EUR" },
+      { ticker: "AGGH.MI", exchange: "MIL", currency: "EUR" },
+    ],
+    LU0908500753: [
+      { ticker: "MEUD.PA", exchange: "EPA", currency: "EUR" },
+      { ticker: "LYP6.DE", exchange: "XETRA", currency: "EUR" },
+      { ticker: "MEUD.L", exchange: "LSE", currency: "GBP" },
+    ],
+  };
+
+  const findIsinByTickerAlias = (sym: string): string => {
+    const upper = sym.trim().toUpperCase();
+    for (const [isinKey, arr] of Object.entries(UCITS_LISTINGS_BY_ISIN)) {
+      if (arr.some(l => l.ticker.toUpperCase() === upper)) return isinKey;
+    }
+    return "";
+  };
+
+  if (url.includes("etf-search")) {
+    const q = String(req.query.q || "").trim();
+    if (q.length < 2) return res.json({ results: [] });
+    try {
+      const data = await getCachedOrFetch(`etf_search_v1_${q.toUpperCase()}`, 10 * 60_000, async () => {
+        const searchRes = await yahooFinance.search(q, { quotesCount: 12, newsCount: 0 }).catch(() => null);
+        const quotes = Array.isArray(searchRes?.quotes) ? searchRes.quotes : [];
+        const etfs = quotes
+          .filter((item: any) => item?.symbol && String(item.quoteType || "").toUpperCase() === "ETF")
+          .slice(0, 8)
+          .map((item: any) => {
+            const sym = String(item.symbol).toUpperCase();
+            const isin = findIsinByTickerAlias(sym) || (/^[A-Z]{2}[A-Z0-9]{10}$/.test(q.toUpperCase()) ? q.toUpperCase() : "");
+            return {
+              ticker: sym,
+              name: String(item.longname || item.shortname || sym),
+              exchange: String(item.exchDisp || item.exchange || ""),
+              isin: isin || undefined,
+            };
+          });
+        return { results: etfs };
+      }, false);
+      return res.json(data);
+    } catch {
+      return res.json({ results: [] });
+    }
+  }
+
   if (url.includes("etf-profile")) {
     const ticker = String(req.query.ticker || "").trim().toUpperCase();
-    const isin = String(req.query.isin || "").trim().toUpperCase();
+    const rawIsin = String(req.query.isin || "").trim().toUpperCase();
+    const isin = rawIsin || findIsinByTickerAlias(ticker);
     if (!ticker && !isin) {
       return res.status(400).json({ error: "Missing ticker or isin" });
     }
     try {
-      const cacheKey = `etf_profile_unified_v1_${ticker}_${isin}`;
+      const cacheKey = `etf_profile_unified_v2_${ticker}_${isin}`;
       const profileData = await getCachedOrFetch(cacheKey, 10 * 60_000, async () => {
         const formatAssets = (num: number | null | undefined, ccy: string): string => {
           if (typeof num !== "number" || !Number.isFinite(num) || num <= 0) return "";
@@ -1931,6 +2031,7 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
           justEtfUrl: justEtfProfile?.justEtfUrl || (isin ? `https://www.justetf.com/en/etf-profile.html?isin=${isin}` : null),
           totalPerformancePct: typeof justEtfChart?.performance?.raw === "number" ? justEtfChart.performance.raw : null,
           totalReturnSeries,
+          listings: isin ? (UCITS_LISTINGS_BY_ISIN[isin] || []) : [],
         };
       }, false);
       return res.json(profileData);
@@ -1941,7 +2042,7 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
 
   if (url.includes("etf-list")) {
     try {
-      const data = await getCachedOrFetch("etf_list_v2", 5 * 60_000, async () => {
+      const data = await getCachedOrFetch("etf_list_v3", 5 * 60_000, async () => {
         const etfCatalog: Array<{
           ticker: string;
           name: string;
@@ -2009,6 +2110,7 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
             replication: je?.replication || null,
             domicile: je?.domicile || null,
             justEtfUrl: je?.justEtfUrl || (item.isin ? `https://www.justetf.com/en/etf-profile.html?isin=${item.isin}` : null),
+            listings: item.isin ? (UCITS_LISTINGS_BY_ISIN[item.isin] || []) : [],
           };
         });
       }, false);

@@ -13,6 +13,12 @@ import {
 } from 'lucide-react';
 import GoogleFinanceChart from './GoogleFinanceChart';
 
+export interface EtfListing {
+  ticker: string;
+  exchange: string;
+  currency: string;
+}
+
 export interface SelectedEtfInput {
   ticker: string;
   name: string;
@@ -30,6 +36,7 @@ export interface SelectedEtfInput {
   replication?: string | null;
   domicile?: string | null;
   justEtfUrl?: string | null;
+  listings?: EtfListing[];
 }
 
 interface EtfProfileData {
@@ -68,6 +75,7 @@ interface EtfProfileData {
   justEtfUrl: string | null;
   totalPerformancePct: number | null;
   totalReturnSeries: Array<{ date: string; value: number }>;
+  listings?: EtfListing[];
 }
 
 type ProfileTab = 'overview' | 'holdings' | 'performance' | 'dividends';
@@ -137,15 +145,20 @@ function WeightList({
 
 export default function EtfProfileView({ etf, onBack }: Props) {
   const [tab, setTab] = useState<ProfileTab>('overview');
+  const [selectedTicker, setSelectedTicker] = useState(etf.ticker);
   const [profile, setProfile] = useState<EtfProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   useEffect(() => {
+    setSelectedTicker(etf.ticker);
+    setTab('overview');
+  }, [etf.ticker, etf.isin]);
+
+  useEffect(() => {
     let active = true;
     setLoading(true);
-    setTab('overview');
-    const qs = new URLSearchParams({ ticker: etf.ticker });
+    const qs = new URLSearchParams({ ticker: selectedTicker });
     if (etf.isin) qs.set('isin', etf.isin);
     fetch(`/api/etf-profile?${qs.toString()}`)
       .then(res => (res.ok ? res.json() : null))
@@ -159,7 +172,11 @@ export default function EtfProfileView({ etf, onBack }: Props) {
     return () => {
       active = false;
     };
-  }, [etf.ticker, etf.isin]);
+  }, [selectedTicker, etf.isin]);
+
+  const activeListings = (profile?.listings && profile.listings.length > 0)
+    ? profile.listings
+    : (etf.listings || []);
 
   const currency = profile?.currency || etf.currency || 'USD';
   const sym = currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
@@ -255,14 +272,14 @@ export default function EtfProfileView({ etf, onBack }: Props) {
           <div className="space-y-1.5 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-xs font-black font-mono">
-                {etf.ticker}
+                {selectedTicker}
               </span>
               <span className="px-2 py-0.5 rounded-md bg-muted/60 border border-border text-ink-muted text-[11px] font-bold">
                 {profile?.exchange || etf.category}
               </span>
-              {etf.isin && (
+              {(profile?.isin || etf.isin) && (
                 <span className="px-2 py-0.5 rounded-md bg-muted/40 border border-border text-ink-faint text-[11px] font-mono font-bold">
-                  ISIN: {etf.isin}
+                  ISIN: {profile?.isin || etf.isin}
                 </span>
               )}
               {loading && (
@@ -275,6 +292,30 @@ export default function EtfProfileView({ etf, onBack }: Props) {
             <h2 className="text-lg sm:text-2xl font-black tracking-tight text-ink leading-snug">
               {displayName}
             </h2>
+            {activeListings.length > 1 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-ink-faint mr-1">
+                  Борса / Тикер:
+                </span>
+                {activeListings.map(l => {
+                  const isActive = l.ticker.toUpperCase() === selectedTicker.toUpperCase();
+                  return (
+                    <button
+                      key={l.ticker}
+                      type="button"
+                      onClick={() => setSelectedTicker(l.ticker)}
+                      className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-bold cursor-pointer transition-colors border ${
+                        isActive
+                          ? 'bg-indigo-600 text-white border-indigo-500'
+                          : 'bg-bg/70 text-ink-muted hover:text-ink border-border/70 hover:bg-card-hover'
+                      }`}
+                    >
+                      {l.exchange}: {l.ticker} ({l.currency})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col md:items-end shrink-0">
@@ -330,7 +371,7 @@ export default function EtfProfileView({ etf, onBack }: Props) {
           <div className="lg:col-span-8 space-y-4">
             <div className="rounded-2xl border border-border bg-card/70 p-3 sm:p-4">
               <GoogleFinanceChart
-                ticker={etf.ticker}
+                ticker={selectedTicker}
                 companyName={displayName}
                 currentPrice={price ?? 0}
                 currency={currency}
@@ -527,7 +568,7 @@ export default function EtfProfileView({ etf, onBack }: Props) {
           ) : (
             <div className="rounded-2xl border border-border bg-card/70 p-4">
               <GoogleFinanceChart
-                ticker={etf.ticker}
+                ticker={selectedTicker}
                 companyName={displayName}
                 currentPrice={price ?? 0}
                 currency={currency}

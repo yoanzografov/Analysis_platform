@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, TrendingUp, TrendingDown, RefreshCw, Layers } from 'lucide-react';
 import { Stock } from '../types';
 import StockAnalysisSearchCombobox from './StockAnalysisSearchCombobox';
-import EtfProfileView from './EtfProfileView';
+import EtfProfileView, { EtfListing } from './EtfProfileView';
 
 interface EtfItem {
   ticker: string;
@@ -21,6 +21,14 @@ interface EtfItem {
   replication?: string | null;
   domicile?: string | null;
   justEtfUrl?: string | null;
+  listings?: EtfListing[];
+}
+
+interface RemoteEtfHit {
+  ticker: string;
+  name: string;
+  exchange: string;
+  isin?: string;
 }
 
 interface Props {
@@ -29,13 +37,13 @@ interface Props {
 
 const CATEGORIES = ['Всички', 'US Index', 'Tech & Growth', 'Dividend', 'Europe UCITS', 'Commodities & Bonds'];
 
-export default function EtfExplorerView({ onSelectEtf }: Props) {
+export default function EtfExplorerView({ onSelectEtf: _onSelectEtf }: Props) {
   const [etfs, setEtfs] = useState<EtfItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Всички');
-  const [selectedJustEtf, setSelectedJustEtf] = useState<EtfItem | null>(null);
   const [activeEtf, setActiveEtf] = useState<EtfItem | null>(null);
+  const [remoteHits, setRemoteHits] = useState<RemoteEtfHit[]>([]);
 
   const fetchEtfs = async () => {
     setLoading(true);
@@ -56,6 +64,29 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
     fetchEtfs();
   }, []);
 
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setRemoteHits([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      fetch(`/api/etf-search?q=${encodeURIComponent(q)}`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(json => {
+          if (!cancelled && Array.isArray(json?.results)) {
+            setRemoteHits(json.results);
+          }
+        })
+        .catch(() => {});
+    }, 280);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return etfs.filter(item => {
@@ -64,79 +95,88 @@ export default function EtfExplorerView({ onSelectEtf }: Props) {
         !q ||
         item.ticker.toLowerCase().includes(q) ||
         item.name.toLowerCase().includes(q) ||
-        (item.isin && item.isin.toLowerCase().includes(q));
+        (item.isin && item.isin.toLowerCase().includes(q)) ||
+        (item.listings && item.listings.some(l => l.ticker.toLowerCase().includes(q)));
       return catOk && queryOk;
     });
   }, [etfs, query, selectedCategory]);
 
   const etfAsStocks = useMemo<Stock[]>(() => {
-    return etfs.map(item => ({
-      watch: '',
-      ticker: item.ticker.toUpperCase(),
-      companyName: item.name,
-      date: '',
-      priceOfCalc: null,
-      dailyChangePct: item.changePct ?? 0,
-      currentPrice: item.price ?? 0,
-      fairPrice: null,
-      difference: null,
-      buySell: 'ДРУГИ',
-      marketCap: 0,
-      peRatio: null,
-      eps: null,
-      profileLink: '',
-      dividend: item.divYield != null ? `${item.divYield}%` : '-',
-      signal: 'Hold',
-      low52: item.low52,
-      high52: item.high52,
-      sector: 'ETF',
-      industry: item.category,
-      dividendYield: item.divYield ?? undefined,
-    }));
-  }, [etfs]);
+    const list: Stock[] = [];
+    const seen = new Set<string>();
+    const pushStock = (ticker: string, companyName: string, item?: EtfItem) => {
+      const upper = ticker.toUpperCase();
+      if (seen.has(upper)) return;
+      seen.add(upper);
+      list.push({
+        watch: '',
+        ticker: upper,
+        companyName,
+        date: '',
+        priceOfCalc: null,
+        dailyChangePct: item?.changePct ?? 0,
+        currentPrice: item?.price ?? 0,
+        fairPrice: null,
+        difference: null,
+        buySell: 'ДРУГИ',
+        marketCap: 0,
+        peRatio: null,
+        eps: null,
+        profileLink: '',
+        dividend: item?.divYield != null ? `${item.divYield}%` : '-',
+        signal: 'Hold',
+        low52: item?.low52 ?? null,
+        high52: item?.high52 ?? null,
+        sector: 'ETF',
+        industry: item?.category || 'ETF',
+        dividendYield: item?.divYield ?? undefined,
+      });
+    };
 
-  const buildStockFromEtf = (item: EtfItem): Stock => ({
-    watch: '',
-    ticker: item.ticker.toUpperCase(),
-    companyName: item.name,
-    date: '',
-    priceOfCalc: null,
-    dailyChangePct: item.changePct ?? 0,
-    currentPrice: item.price ?? 0,
-    fairPrice: null,
-    difference: null,
-    buySell: 'ДРУГИ',
-    marketCap: 0,
-    peRatio: null,
-    eps: null,
-    profileLink: '',
-    dividend: item.divYield != null ? `${item.divYield}%` : '-',
-    signal: 'Hold',
-    low52: item.low52,
-    high52: item.high52,
-    sector: 'ETF',
-    industry: item.category,
-    dividendYield: item.divYield ?? undefined,
-  });
+    for (const item of etfs) {
+      pushStock(item.ticker, item.name, item);
+      if (item.listings) {
+        for (const l of item.listings) {
+          pushStock(l.ticker, `${item.name} (${l.exchange} · ${l.currency})`, item);
+        }
+      }
+    }
+    for (const hit of remoteHits) {
+      pushStock(hit.ticker, `${hit.name}${hit.exchange ? ` (${hit.exchange})` : ''}`);
+    }
+    return list;
+  }, [etfs, remoteHits]);
 
   const handleOpenEtf = (item: EtfItem) => {
     setActiveEtf(item);
   };
 
   const handleSearchSelect = (stock: Stock) => {
-    const found = etfs.find(e => e.ticker.toUpperCase() === stock.ticker.toUpperCase());
+    const upper = stock.ticker.toUpperCase();
+    const found = etfs.find(
+      e =>
+        e.ticker.toUpperCase() === upper ||
+        (e.listings && e.listings.some(l => l.ticker.toUpperCase() === upper))
+    );
     if (found) {
-      setActiveEtf(found);
+      const matchedListing = found.listings?.find(l => l.ticker.toUpperCase() === upper);
+      setActiveEtf({
+        ...found,
+        ticker: upper,
+        currency: matchedListing?.currency || found.currency,
+      });
       return;
     }
+    const remote = remoteHits.find(h => h.ticker.toUpperCase() === upper);
     setActiveEtf({
-      ticker: stock.ticker.toUpperCase(),
-      name: stock.companyName || stock.ticker,
-      category: stock.industry || 'ETF',
+      ticker: upper,
+      name: remote?.name || stock.companyName || upper,
+      category: remote?.exchange || stock.industry || 'ETF',
       expenseRatio: '—',
+      isin: remote?.isin,
       price: stock.currentPrice || null,
       changePct: stock.dailyChangePct ?? null,
-      currency: stock.ticker.endsWith('.DE') || stock.ticker.endsWith('.PA') ? 'EUR' : 'USD',
+      currency: upper.endsWith('.DE') || upper.endsWith('.PA') || upper.endsWith('.MI') || upper.endsWith('.AS') ? 'EUR' : upper.endsWith('.L') ? 'GBP' : 'USD',
       low52: stock.low52 ?? null,
       high52: stock.high52 ?? null,
       divYield: stock.dividendYield ?? null,
