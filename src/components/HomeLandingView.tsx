@@ -189,33 +189,6 @@ export default function HomeLandingView({
               size="hero"
             />
           </div>
-
-          {/* Trending Tickers Strip (Single Row) */}
-          <div className="w-full flex items-center justify-start lg:justify-center flex-nowrap overflow-x-auto no-scrollbar gap-1 pt-0.5 pb-0.5">
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-ink-faint mr-1 shrink-0 whitespace-nowrap">
-              <Flame className="w-3 h-3 text-amber-400" />
-              Trending:
-            </span>
-            {TRENDING_TICKERS.map(sym => {
-              const match = stocks.find(s => s.ticker.toUpperCase() === sym);
-              const pct = match?.dailyChangePct;
-              return (
-                <button
-                  key={sym}
-                  type="button"
-                  onClick={() => handleOpenTicker(sym)}
-                  className="px-2 py-0.5 rounded-md bg-card/80 hover:bg-card-hover border border-border/80 hover:border-indigo-500/40 text-[11px] font-bold text-ink transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap"
-                >
-                  <span>{sym}</span>
-                  {typeof pct === 'number' && Number.isFinite(pct) && pct !== 0 && (
-                    <span className={`text-[10px] font-mono ${pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {pct >= 0 ? '+' : ''}{pct.toFixed(1)}%
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
         </div>
       </section>
 

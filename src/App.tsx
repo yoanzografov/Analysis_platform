@@ -81,7 +81,8 @@ import {
   Compass,
   Percent,
   Scale,
-  BarChart2
+  BarChart2,
+  Flame
 } from 'lucide-react';
 
 export default function App() {
@@ -2735,6 +2736,58 @@ export default function App() {
                   }
                 }}
               />
+            </div>
+
+            {/* Trending Tickers Strip (Single Row) */}
+            <div className="w-full flex items-center justify-start lg:justify-center flex-nowrap overflow-x-auto no-scrollbar gap-1 pt-0.5 pb-0.5">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-ink-faint mr-1 shrink-0 whitespace-nowrap">
+                <Flame className="w-3 h-3 text-amber-400" />
+                Trending:
+              </span>
+              {(['NVDA', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'META', 'TSLA', 'AMAT', 'ASML', 'AVGO'] as const).map(sym => {
+                const match = stocks.find(s => s.ticker.toUpperCase() === sym);
+                const pct = match?.dailyChangePct;
+                return (
+                  <button
+                    key={sym}
+                    type="button"
+                    onClick={() => {
+                      if (match) {
+                        setSelectedStockForStocksTab(match);
+                      } else {
+                        setSelectedStockForStocksTab({
+                          watch: '',
+                          ticker: sym,
+                          companyName: sym,
+                          date: '',
+                          priceOfCalc: null,
+                          dailyChangePct: 0,
+                          currentPrice: 0,
+                          fairPrice: null,
+                          difference: null,
+                          buySell: 'ДРУГИ',
+                          marketCap: 0,
+                          peRatio: null,
+                          eps: null,
+                          profileLink: '',
+                          dividend: '-',
+                          signal: 'Hold',
+                          low52: null,
+                          high52: null,
+                        });
+                      }
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-card/80 hover:bg-card-hover border border-border/80 hover:border-indigo-500/40 text-[11px] font-bold text-ink transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap"
+                  >
+                    <span>{sym}</span>
+                    {typeof pct === 'number' && Number.isFinite(pct) && pct !== 0 && (
+                      <span className={`text-[10px] font-mono ${pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {pct >= 0 ? '+' : ''}{pct.toFixed(1)}%
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
