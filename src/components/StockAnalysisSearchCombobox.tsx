@@ -11,6 +11,7 @@ interface Props {
   size?: 'compact' | 'hero';
   placeholder?: string;
   onQueryChange?: (q: string) => void;
+  hideGlobalStocks?: boolean;
 }
 
 export default function StockAnalysisSearchCombobox({
@@ -20,7 +21,8 @@ export default function StockAnalysisSearchCombobox({
   onAddStockToTable,
   size = 'compact',
   placeholder = 'Търсене по тикер или име (напр. NVDA, AAPL, SAP)...',
-  onQueryChange
+  onQueryChange,
+  hideGlobalStocks = false
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -57,6 +59,7 @@ export default function StockAnalysisSearchCombobox({
 
   // Filter global catalog
   const globalMatches = useMemo(() => {
+    if (hideGlobalStocks) return [];
     const userTickers = new Set(stocks.map(s => s.ticker.toUpperCase().trim()));
     const availableCatalog = GLOBAL_TICKERS_CATALOG.filter(c => !userTickers.has(c.ticker));
     if (!cleanQuery) return availableCatalog.slice(0, 8);
@@ -65,7 +68,7 @@ export default function StockAnalysisSearchCombobox({
       c.companyName.toUpperCase().includes(cleanQuery) ||
       (c.sector && c.sector.toUpperCase().includes(cleanQuery))
     ).slice(0, 10);
-  }, [stocks, cleanQuery]);
+  }, [stocks, cleanQuery, hideGlobalStocks]);
 
   const exactUserMatch = useMemo(() => {
     if (!cleanQuery) return null;

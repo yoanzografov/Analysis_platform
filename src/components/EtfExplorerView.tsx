@@ -209,7 +209,8 @@ export default function EtfExplorerView({ onSelectEtf: _onSelectEtf }: Props) {
                 onSelectStock={handleSearchSelect}
                 onQueryChange={setQuery}
                 size="hero"
-                placeholder="Търсене на ETF по тикер или име (напр. SPY, QQQ, SXR8.DE)..."
+                hideGlobalStocks
+                placeholder="Търсене на ETF по тикер, борса или ISIN (напр. SXR8.DE, CSPX.L, VWRA.L, IE00B5BMR087)..."
               />
             </div>
             <button
@@ -268,6 +269,55 @@ export default function EtfExplorerView({ onSelectEtf: _onSelectEtf }: Props) {
                     Зареждане на ETF данни от Yahoo Finance и justETF...
                   </td>
                 </tr>
+              ) : filtered.length === 0 && remoteHits.length > 0 ? (
+                remoteHits.map(hit => {
+                  const guessCcy =
+                    hit.ticker.endsWith('.DE') || hit.ticker.endsWith('.PA') || hit.ticker.endsWith('.MI') || hit.ticker.endsWith('.AS')
+                      ? 'EUR'
+                      : hit.ticker.endsWith('.L')
+                        ? 'GBP'
+                        : 'USD';
+                  return (
+                    <tr
+                      key={hit.ticker}
+                      onClick={() =>
+                        handleOpenEtf({
+                          ticker: hit.ticker,
+                          name: hit.name,
+                          category: hit.exchange || 'ETF',
+                          expenseRatio: '—',
+                          isin: hit.isin,
+                          price: null,
+                          changePct: null,
+                          currency: guessCcy,
+                          low52: null,
+                          high52: null,
+                          divYield: null,
+                        })
+                      }
+                      className="hover:bg-indigo-500/10 transition-colors cursor-pointer group"
+                    >
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="font-black text-indigo-400 font-mono">{hit.ticker}</div>
+                        {hit.isin && <div className="text-[10px] font-mono text-ink-faint">{hit.isin}</div>}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-ink max-w-[260px] truncate" title={hit.name}>
+                        {hit.name}
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-[10px] font-bold text-indigo-300">
+                          {hit.exchange || 'Yahoo Finance'}
+                        </span>
+                      </td>
+                      <td colSpan={6} className="py-3 px-4 text-right text-[11px] text-ink-muted">
+                        Кликни за пълен преглед и графика →
+                      </td>
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <ArrowUpRight className="w-4 h-4 text-ink-faint group-hover:text-indigo-400 inline-block transition-colors" />
+                      </td>
+                    </tr>
+                  );
+                })
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="py-10 text-center text-ink-muted">
@@ -285,6 +335,9 @@ export default function EtfExplorerView({ onSelectEtf: _onSelectEtf }: Props) {
                         ? 'Dist'
                         : item.distributionPolicy
                     : null;
+                  const extraListings = (item.listings || []).filter(
+                    l => l.ticker.toUpperCase() !== item.ticker.toUpperCase()
+                  );
                   return (
                     <tr
                       key={item.ticker}
@@ -295,6 +348,28 @@ export default function EtfExplorerView({ onSelectEtf: _onSelectEtf }: Props) {
                         <div className="font-black text-indigo-400 font-mono">{item.ticker}</div>
                         {item.isin && (
                           <div className="text-[10px] font-mono text-ink-faint">{item.isin}</div>
+                        )}
+                        {extraListings.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {extraListings.map(l => (
+                              <button
+                                key={l.ticker}
+                                type="button"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  handleOpenEtf({
+                                    ...item,
+                                    ticker: l.ticker,
+                                    currency: l.currency,
+                                  });
+                                }}
+                                className="px-1.5 py-0.5 rounded bg-bg/80 hover:bg-indigo-500/20 border border-border/70 hover:border-indigo-500/40 text-[9px] font-mono font-bold text-ink-muted hover:text-indigo-300 cursor-pointer transition-colors"
+                                title={`Отвори на борса ${l.exchange} (${l.currency})`}
+                              >
+                                {l.exchange}:{l.ticker}
+                              </button>
+                            ))}
+                          </div>
                         )}
                       </td>
                       <td className="py-3 px-4 font-bold text-ink max-w-[260px] truncate" title={item.name}>
