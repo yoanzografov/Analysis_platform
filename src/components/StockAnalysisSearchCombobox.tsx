@@ -144,7 +144,7 @@ export default function StockAnalysisSearchCombobox({
     setQuery('');
   };
 
-  const handleSelectRemoteItem = (item: { ticker: string; companyName: string; exchange: string }) => {
+  const handleSelectRemoteItem = (item: { ticker: string; companyName: string; exchange: string; quoteType?: string }) => {
     const synthesizedStock: Stock = {
       watch: '',
       ticker: item.ticker.toUpperCase(),
@@ -161,6 +161,7 @@ export default function StockAnalysisSearchCombobox({
       signal: 'Hold',
       low52: null,
       high52: null,
+      sector: item.quoteType === 'ETF' ? 'ETF' : undefined,
       date: new Date().toLocaleDateString('bg-BG'),
       priceOfCalc: null,
       dailyChangePct: 0

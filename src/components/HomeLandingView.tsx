@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Stock, MarketIndex } from '../types';
 import StockAnalysisSearchCombobox from './StockAnalysisSearchCombobox';
+import EtfProfileView, { SelectedEtfInput } from './EtfProfileView';
 
 interface Props {
   stocks: Stock[];
@@ -38,7 +39,65 @@ interface Sp500Mover {
   changePct: number;
 }
 
-const TRENDING_TICKERS = ['NVDA', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'META', 'TSLA', 'AMAT', 'ASML', 'AVGO'];
+const KNOWN_ETF_ALIASES: Record<string, { ticker: string; isin?: string; currency: string; category: string }> = {
+  SXR8: { ticker: 'SXR8.DE', isin: 'IE00B5BMR087', currency: 'EUR', category: 'Europe UCITS' },
+  'SXR8.DE': { ticker: 'SXR8.DE', isin: 'IE00B5BMR087', currency: 'EUR', category: 'Europe UCITS' },
+  CSPX: { ticker: 'CSPX.L', isin: 'IE00B5BMR087', currency: 'USD', category: 'Europe UCITS' },
+  'CSPX.L': { ticker: 'CSPX.L', isin: 'IE00B5BMR087', currency: 'USD', category: 'Europe UCITS' },
+  'CSP1.L': { ticker: 'CSP1.L', isin: 'IE00B5BMR087', currency: 'GBP', category: 'Europe UCITS' },
+  'CSSPX.MI': { ticker: 'CSSPX.MI', isin: 'IE00B5BMR087', currency: 'EUR', category: 'Europe UCITS' },
+  'CSSPX.SW': { ticker: 'CSSPX.SW', isin: 'IE00B5BMR087', currency: 'USD', category: 'Europe UCITS' },
+  VUAA: { ticker: 'VUAA.DE', isin: 'IE00BFMXXD54', currency: 'EUR', category: 'Europe UCITS' },
+  'VUAA.DE': { ticker: 'VUAA.DE', isin: 'IE00BFMXXD54', currency: 'EUR', category: 'Europe UCITS' },
+  'VUAA.L': { ticker: 'VUAA.L', isin: 'IE00BFMXXD54', currency: 'USD', category: 'Europe UCITS' },
+  VWCE: { ticker: 'VWCE.DE', isin: 'IE00BK5BQT80', currency: 'EUR', category: 'Europe UCITS' },
+  'VWCE.DE': { ticker: 'VWCE.DE', isin: 'IE00BK5BQT80', currency: 'EUR', category: 'Europe UCITS' },
+  VWRA: { ticker: 'VWRA.L', isin: 'IE00BK5BQT80', currency: 'USD', category: 'Europe UCITS' },
+  'VWRA.L': { ticker: 'VWRA.L', isin: 'IE00BK5BQT80', currency: 'USD', category: 'Europe UCITS' },
+  EUNL: { ticker: 'EUNL.DE', isin: 'IE00B4L5Y983', currency: 'EUR', category: 'Europe UCITS' },
+  'EUNL.DE': { ticker: 'EUNL.DE', isin: 'IE00B4L5Y983', currency: 'EUR', category: 'Europe UCITS' },
+  IWDA: { ticker: 'IWDA.AS', isin: 'IE00B4L5Y983', currency: 'EUR', category: 'Europe UCITS' },
+  'IWDA.AS': { ticker: 'IWDA.AS', isin: 'IE00B4L5Y983', currency: 'EUR', category: 'Europe UCITS' },
+  'SWDA.L': { ticker: 'SWDA.L', isin: 'IE00B4L5Y983', currency: 'GBP', category: 'Europe UCITS' },
+  EQQQ: { ticker: 'EQQQ.DE', isin: 'IE0032077012', currency: 'EUR', category: 'Europe UCITS' },
+  'EQQQ.DE': { ticker: 'EQQQ.DE', isin: 'IE0032077012', currency: 'EUR', category: 'Europe UCITS' },
+  SXRV: { ticker: 'SXRV.DE', isin: 'IE00B53SZB19', currency: 'EUR', category: 'Europe UCITS' },
+  'SXRV.DE': { ticker: 'SXRV.DE', isin: 'IE00B53SZB19', currency: 'EUR', category: 'Europe UCITS' },
+  CNDX: { ticker: 'CNDX.L', isin: 'IE00B53SZB19', currency: 'USD', category: 'Europe UCITS' },
+  'CNDX.L': { ticker: 'CNDX.L', isin: 'IE00B53SZB19', currency: 'USD', category: 'Europe UCITS' },
+  EMIM: { ticker: 'EMIM.DE', isin: 'IE00BKM4GZ66', currency: 'EUR', category: 'Europe UCITS' },
+  'EMIM.DE': { ticker: 'EMIM.DE', isin: 'IE00BKM4GZ66', currency: 'EUR', category: 'Europe UCITS' },
+  EIMI: { ticker: 'EIMI.L', isin: 'IE00BKM4GZ66', currency: 'USD', category: 'Europe UCITS' },
+  'EIMI.L': { ticker: 'EIMI.L', isin: 'IE00BKM4GZ66', currency: 'USD', category: 'Europe UCITS' },
+  ZPRV: { ticker: 'ZPRV.DE', isin: 'IE00BSPLC413', currency: 'EUR', category: 'Europe UCITS' },
+  'ZPRV.DE': { ticker: 'ZPRV.DE', isin: 'IE00BSPLC413', currency: 'EUR', category: 'Europe UCITS' },
+  AGGH: { ticker: 'AGGH.DE', isin: 'IE00BDBRDM35', currency: 'EUR', category: 'Europe UCITS' },
+  'AGGH.DE': { ticker: 'AGGH.DE', isin: 'IE00BDBRDM35', currency: 'EUR', category: 'Europe UCITS' },
+  MEUD: { ticker: 'MEUD.PA', isin: 'LU0908500753', currency: 'EUR', category: 'Europe UCITS' },
+  'MEUD.PA': { ticker: 'MEUD.PA', isin: 'LU0908500753', currency: 'EUR', category: 'Europe UCITS' },
+  SPY: { ticker: 'SPY', currency: 'USD', category: 'US Index' },
+  VOO: { ticker: 'VOO', currency: 'USD', category: 'US Index' },
+  IVV: { ticker: 'IVV', currency: 'USD', category: 'US Index' },
+  QQQ: { ticker: 'QQQ', currency: 'USD', category: 'Tech & Growth' },
+  VTI: { ticker: 'VTI', currency: 'USD', category: 'US Index' },
+  IWM: { ticker: 'IWM', currency: 'USD', category: 'US Index' },
+  DIA: { ticker: 'DIA', currency: 'USD', category: 'US Index' },
+  SMH: { ticker: 'SMH', currency: 'USD', category: 'Tech & Growth' },
+  SOXX: { ticker: 'SOXX', currency: 'USD', category: 'Tech & Growth' },
+  XLK: { ticker: 'XLK', currency: 'USD', category: 'Tech & Growth' },
+  VGT: { ticker: 'VGT', currency: 'USD', category: 'Tech & Growth' },
+  SCHD: { ticker: 'SCHD', currency: 'USD', category: 'Dividend' },
+  JEPI: { ticker: 'JEPI', currency: 'USD', category: 'Dividend' },
+  VYM: { ticker: 'VYM', currency: 'USD', category: 'Dividend' },
+  GLD: { ticker: 'GLD', currency: 'USD', category: 'Commodities & Bonds' },
+  SLV: { ticker: 'SLV', currency: 'USD', category: 'Commodities & Bonds' },
+  TLT: { ticker: 'TLT', currency: 'USD', category: 'Commodities & Bonds' },
+  SGOV: { ticker: 'SGOV', currency: 'USD', category: 'Commodities & Bonds' },
+  VUSA: { ticker: 'VUSA.DE', currency: 'EUR', category: 'Europe UCITS' },
+  'VUSA.DE': { ticker: 'VUSA.DE', currency: 'EUR', category: 'Europe UCITS' },
+  'VUSA.L': { ticker: 'VUSA.L', currency: 'GBP', category: 'Europe UCITS' },
+  'VUSA.AS': { ticker: 'VUSA.AS', currency: 'EUR', category: 'Europe UCITS' },
+};
 
 export default function HomeLandingView({
   stocks,
@@ -54,6 +113,7 @@ export default function HomeLandingView({
   const [sp500Gainers, setSp500Gainers] = useState<Sp500Mover[]>([]);
   const [sp500Losers, setSp500Losers] = useState<Sp500Mover[]>([]);
   const [loadingSp500, setLoadingSp500] = useState(false);
+  const [selectedHomeEtf, setSelectedHomeEtf] = useState<SelectedEtfInput | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -170,6 +230,51 @@ export default function HomeLandingView({
     });
   };
 
+  const handleHomeSelectStock = (st: Stock) => {
+    const upper = st.ticker.toUpperCase().trim();
+    const known = KNOWN_ETF_ALIASES[upper];
+    const isEtf =
+      Boolean(known) ||
+      Boolean(st.sector && st.sector.toUpperCase().includes('ETF')) ||
+      /\b(ETF|UCITS)\b/i.test(st.companyName || '');
+
+    if (isEtf) {
+      const resolvedTicker = known?.ticker || upper;
+      const guessCurrency =
+        known?.currency ||
+        (resolvedTicker.endsWith('.DE') || resolvedTicker.endsWith('.PA') || resolvedTicker.endsWith('.MI') || resolvedTicker.endsWith('.AS')
+          ? 'EUR'
+          : resolvedTicker.endsWith('.L')
+            ? 'GBP'
+            : 'USD');
+      setSelectedHomeEtf({
+        ticker: resolvedTicker,
+        name: st.companyName && st.companyName !== upper ? st.companyName : resolvedTicker,
+        category: known?.category || st.sector || 'ETF',
+        expenseRatio: '—',
+        isin: known?.isin,
+        price: st.currentPrice > 0 ? st.currentPrice : null,
+        changePct: Number.isFinite(st.dailyChangePct) && st.dailyChangePct !== 0 ? st.dailyChangePct : null,
+        currency: guessCurrency,
+        low52: st.low52 ?? null,
+        high52: st.high52 ?? null,
+        divYield: st.dividendYield ?? null,
+      });
+      return;
+    }
+
+    onSelectStock(st);
+  };
+
+  if (selectedHomeEtf) {
+    return (
+      <EtfProfileView
+        etf={selectedHomeEtf}
+        onBack={() => setSelectedHomeEtf(null)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
       {/* 1. StockAnalysis.com-style Hero Search Section */}
@@ -184,7 +289,7 @@ export default function HomeLandingView({
             <StockAnalysisSearchCombobox
               stocks={stocks}
               selectedStock={null}
-              onSelectStock={onSelectStock}
+              onSelectStock={handleHomeSelectStock}
               onAddStockToTable={onAddStockToTable}
               size="hero"
             />
