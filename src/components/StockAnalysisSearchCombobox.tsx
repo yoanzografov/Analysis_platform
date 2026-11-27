@@ -26,6 +26,8 @@ export default function StockAnalysisSearchCombobox({
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [remoteMatches, setRemoteMatches] = useState<Array<{ ticker: string; companyName: string; exchange: string; quoteType: string }>>([]);
+  const [remoteLoading, setRemoteLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -41,6 +43,36 @@ export default function StockAnalysisSearchCombobox({
   }, []);
 
   const cleanQuery = query.trim().toUpperCase();
+
+  useEffect(() => {
+    const q = query.trim();
+    if (hideGlobalStocks || q.length < 2) {
+      setRemoteMatches([]);
+      setRemoteLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setRemoteLoading(true);
+    const timer = setTimeout(() => {
+      fetch(`/api/stock-search?q=${encodeURIComponent(q)}`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(json => {
+          if (!cancelled) {
+            setRemoteMatches(Array.isArray(json?.results) ? json.results : []);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setRemoteMatches([]);
+        })
+        .finally(() => {
+          if (!cancelled) setRemoteLoading(false);
+        });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, hideGlobalStocks]);
 
   const isCurrentStockInTable = useMemo(() => {
     if (!selectedStock) return false;
@@ -112,12 +144,46 @@ export default function StockAnalysisSearchCombobox({
     setQuery('');
   };
 
-  const handleSelectCustomTypedTicker = () => {
-    if (!cleanQuery) return;
+  const handleSelectRemoteItem = (item: { ticker: string; companyName: string; exchange: string }) => {
     const synthesizedStock: Stock = {
       watch: '',
-      ticker: cleanQuery,
-      companyName: cleanQuery,
+      ticker: item.ticker.toUpperCase(),
+      companyName: item.companyName,
+      currentPrice: 0,
+      fairPrice: null,
+      difference: null,
+      buySell: 'ДРУГИ',
+      marketCap: 0,
+      peRatio: null,
+      eps: null,
+      profileLink: item.exchange || 'Global',
+      dividend: '-',
+      signal: 'Hold',
+      low52: null,
+      high52: null,
+      date: new Date().toLocaleDateString('bg-BG'),
+      priceOfCalc: null,
+      dailyChangePct: 0
+    };
+    onSelectStock(synthesizedStock);
+    setIsOpen(false);
+    setQuery('');
+  };
+
+  const handleSelectCustomTypedTicker = () => {
+    if (!cleanQuery) return;
+    const parenMatch = cleanQuery.match(/\(([A-Z0-9_.:\-]+)\)\s*$/);
+    let normalizedTicker = parenMatch ? parenMatch[1] : cleanQuery;
+    if (normalizedTicker.startsWith('TYO:')) normalizedTicker = `${normalizedTicker.slice(4)}.T`;
+    else if (normalizedTicker.startsWith('ETR:')) normalizedTicker = `${normalizedTicker.slice(4)}.DE`;
+    else if (normalizedTicker.startsWith('EPA:')) normalizedTicker = `${normalizedTicker.slice(4)}.PA`;
+    else if (normalizedTicker.startsWith('LON:')) normalizedTicker = `${normalizedTicker.slice(4)}.L`;
+    else if (normalizedTicker.startsWith('SWX:')) normalizedTicker = `${normalizedTicker.slice(4)}.SW`;
+    else if (normalizedTicker.startsWith('ASX:')) normalizedTicker = `${normalizedTicker.slice(4)}.AX`;
+    const synthesizedStock: Stock = {
+      watch: '',
+      ticker: normalizedTicker,
+      companyName: normalizedTicker,
       currentPrice: 100,
       fairPrice: null,
       difference: null,
@@ -181,6 +247,8 @@ export default function StockAnalysisSearchCombobox({
                   handleSelectUserStock(userMatches[0]);
                 } else if (globalMatches.length > 0) {
                   handleSelectCatalogItem(globalMatches[0]);
+                } else if (remoteMatches.length > 0) {
+                  handleSelectRemoteItem(remoteMatches[0]);
                 } else if (cleanQuery) {
                   handleSelectCustomTypedTicker();
                 }
@@ -323,8 +391,47 @@ export default function StockAnalysisSearchCombobox({
               </div>
             )}
 
+            {/* Section 3: Live Global Yahoo Finance Search */}
+            {!hideGlobalStocks && cleanQuery.length >= 2 && (remoteLoading || remoteMatches.length > 0) && (() => {
+              const seen = new Set([
+                ...userMatches.map(u => u.ticker.toUpperCase().trim()),
+                ...globalMatches.map(g => g.ticker.toUpperCase().trim()),
+              ]);
+              const filteredRemote = remoteMatches.filter(r => !seen.has(r.ticker.toUpperCase().trim()));
+              if (!remoteLoading && filteredRemote.length === 0) return null;
+              return (
+                <div className={`space-y-1 ${(userMatches.length > 0 || globalMatches.length > 0) ? 'pt-1.5 border-t border-border/40' : ''}`}>
+                  <div className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-ink-faint">
+                    {remoteLoading && filteredRemote.length === 0 ? 'Търсене в глобалните борси...' : 'Глобални борси (Yahoo Finance)'}
+                  </div>
+                  {filteredRemote.map((item) => (
+                    <button
+                      key={item.ticker}
+                      type="button"
+                      onClick={() => handleSelectRemoteItem(item)}
+                      className="w-full px-2.5 py-1.5 rounded-xl text-left transition-colors flex items-center justify-between gap-2 cursor-pointer hover:bg-card-hover text-ink"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono font-black text-xs text-sky-400 min-w-[60px] shrink-0">
+                          {item.ticker}
+                        </span>
+                        <span className="text-xs font-medium text-ink-muted truncate">
+                          {item.companyName}
+                        </span>
+                      </div>
+                      {item.exchange && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-border/50 text-ink-faint shrink-0">
+                          {item.exchange}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+
             {/* No matches fallback */}
-            {userMatches.length === 0 && globalMatches.length === 0 && cleanQuery && (
+            {userMatches.length === 0 && globalMatches.length === 0 && remoteMatches.length === 0 && !remoteLoading && cleanQuery && (
               <div className="p-4 text-center space-y-2">
                 <p className="text-xs text-ink-faint">
                   Няма локално намерено име за "{cleanQuery}".

@@ -1955,6 +1955,38 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
     return "";
   };
 
+  if (url.includes("stock-search")) {
+    const rawQ = String(req.query.q || "").trim();
+    if (rawQ.length < 2) return res.json({ results: [] });
+    try {
+      // Handle pasted "Company Name (TYO:6638)" or "TYO:6638"
+      const parenMatch = rawQ.match(/\(([A-Za-z0-9_.:\-]+)\)\s*$/);
+      const extracted = parenMatch ? parenMatch[1] : rawQ;
+      const searchQ = extracted.includes(":") ? toYahooSymbol(extracted) : extracted;
+
+      const data = await getCachedOrFetch(`stock_search_v1_${searchQ.toUpperCase()}`, 10 * 60_000, async () => {
+        const searchRes = await yahooFinance.search(searchQ, { quotesCount: 15, newsCount: 0 }).catch(() => null);
+        const quotes = Array.isArray(searchRes?.quotes) ? searchRes.quotes : [];
+        const results = quotes
+          .filter((item: any) => {
+            const qt = String(item?.quoteType || "").toUpperCase();
+            return item?.symbol && (qt === "EQUITY" || qt === "ETF");
+          })
+          .slice(0, 10)
+          .map((item: any) => ({
+            ticker: String(item.symbol).toUpperCase(),
+            companyName: String(item.longname || item.shortname || item.symbol),
+            exchange: String(item.exchDisp || item.exchange || ""),
+            quoteType: String(item.quoteType || "EQUITY").toUpperCase(),
+          }));
+        return { results };
+      }, false);
+      return res.json(data);
+    } catch {
+      return res.json({ results: [] });
+    }
+  }
+
   if (url.includes("etf-search")) {
     const q = String(req.query.q || "").trim();
     if (q.length < 2) return res.json({ results: [] });
