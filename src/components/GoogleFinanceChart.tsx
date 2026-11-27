@@ -53,11 +53,14 @@ export default function GoogleFinanceChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 500, height });
 
-  // Clean ticker
+  // Clean ticker (preserve exchange suffixes like .DE, .L, .PA, .MI, .SW, .AS, .T)
   const cleanTicker = useMemo(() => {
     if (!ticker) return '';
-    const clean = ticker.includes(':') ? ticker.split(':')[1] : ticker;
-    return clean.trim().replace(/\./g, '-');
+    const clean = (ticker.includes(':') ? ticker.split(':')[1] : ticker).trim().toUpperCase();
+    if (/\.(KS|KQ|DE|PA|F|L|AS|BR|MI|MC|VI|CO|HE|ST|SW|OL|LS|AT|IS|WA|PR|T|HK|BO|NS|TW|TWO|AX|NZ|TO|V|SA|JO|IL|SS|SZ|SI|SO)$/.test(clean)) {
+      return clean;
+    }
+    return clean.replace(/\./g, '-');
   }, [ticker]);
 
   // Responsive width observer
@@ -82,6 +85,7 @@ export default function GoogleFinanceChart({
     if (!cleanTicker) return;
     let active = true;
     setIsLoading(true);
+    setChartPoints([]);
     setHoverIndex(null);
     setDragStartIndex(null);
     setDragEndIndex(null);

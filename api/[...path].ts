@@ -2023,7 +2023,7 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
       return res.status(400).json({ error: "Missing ticker or isin" });
     }
     try {
-      const cacheKey = `etf_profile_unified_v2_${ticker}_${isin}`;
+      const cacheKey = `etf_profile_unified_v3_${ticker}_${isin}`;
       const profileData = await getCachedOrFetch(cacheKey, 10 * 60_000, async () => {
         const formatAssets = (num: number | null | undefined, ccy: string): string => {
           if (typeof num !== "number" || !Number.isFinite(num) || num <= 0) return "";
@@ -2048,9 +2048,11 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
 
         const [yfQuote, yfSummary, justEtfProfile, justEtfChart] = await Promise.all([
           ticker ? yahooFinance.quote(ticker).catch(() => null) : Promise.resolve(null),
-          !isin && ticker
+          ticker
             ? yahooFinance.quoteSummary(ticker, {
-                modules: ["topHoldings", "fundProfile", "summaryDetail", "defaultKeyStatistics"],
+                modules: isin
+                  ? ["summaryDetail", "defaultKeyStatistics"]
+                  : ["topHoldings", "fundProfile", "summaryDetail", "defaultKeyStatistics"],
               }).catch(() => null)
             : Promise.resolve(null),
           /^[A-Z]{2}[A-Z0-9]{10}$/.test(isin) ? fetchJustEtfProfile(isin).catch(() => null) : Promise.resolve(null),
@@ -2064,15 +2066,19 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
             : Promise.resolve(null),
         ]);
 
-        const currency = String(
+        const rawCurrency = String(
           yfQuote?.currency ||
-            (ticker.endsWith(".DE") || ticker.endsWith(".PA") ? "EUR" : "USD")
+            (ticker.endsWith(".DE") || ticker.endsWith(".PA") || ticker.endsWith(".MI") || ticker.endsWith(".AS") ? "EUR" : "USD")
         );
-        const price = typeof yfQuote?.regularMarketPrice === "number" ? yfQuote.regularMarketPrice : null;
-        const prevClose = typeof yfQuote?.regularMarketPreviousClose === "number" ? yfQuote.regularMarketPreviousClose : null;
+        const isPence = rawCurrency === "GBp" || rawCurrency === "GBX";
+        const currency = isPence ? "GBP" : rawCurrency;
+        const pxDiv = isPence ? 100 : 1;
+
+        const price = typeof yfQuote?.regularMarketPrice === "number" ? yfQuote.regularMarketPrice / pxDiv : null;
+        const prevClose = typeof yfQuote?.regularMarketPreviousClose === "number" ? yfQuote.regularMarketPreviousClose / pxDiv : null;
         const changeAmt =
           typeof yfQuote?.regularMarketChange === "number"
-            ? yfQuote.regularMarketChange
+            ? yfQuote.regularMarketChange / pxDiv
             : price !== null && prevClose !== null
               ? price - prevClose
               : null;
@@ -2119,12 +2125,28 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
 
         const yfTerNum = fp?.feesExpensesInvestment?.annualReportExpenseRatio;
         const yfAssetsNum = sd?.totalAssets ?? ks?.totalAssets;
-        const yfDivYield =
-          typeof yfQuote?.trailingAnnualDividendYield === "number"
-            ? parseFloat((yfQuote.trailingAnnualDividendYield * 100).toFixed(2))
-            : typeof sd?.yield === "number"
-              ? parseFloat((sd.yield * 100).toFixed(2))
-              : null;
+        const rawDivYield =
+          (typeof yfQuote?.trailingAnnualDividendYield === "number" && yfQuote.trailingAnnualDividendYield > 0
+            ? yfQuote.trailingAnnualDividendYield * 100
+            : null) ??
+          (typeof sd?.yield === "number" && sd.yield > 0 ? sd.yield * 100 : null) ??
+          (typeof sd?.dividendYield === "number" && sd.dividendYield > 0 ? sd.dividendYield * 100 : null) ??
+          (typeof sd?.trailingAnnualDividendYield === "number" && sd.trailingAnnualDividendYield > 0
+            ? sd.trailingAnnualDividendYield * 100
+            : null);
+        const yfDivYield = rawDivYield !== null ? parseFloat(rawDivYield.toFixed(2)) : null;
+
+        const rawDivRate =
+          (typeof yfQuote?.trailingAnnualDividendRate === "number" && yfQuote.trailingAnnualDividendRate > 0
+            ? yfQuote.trailingAnnualDividendRate / pxDiv
+            : null) ??
+          (typeof sd?.dividendRate === "number" && sd.dividendRate > 0 ? sd.dividendRate / pxDiv : null) ??
+          (typeof sd?.trailingAnnualDividendRate === "number" && sd.trailingAnnualDividendRate > 0
+            ? sd.trailingAnnualDividendRate / pxDiv
+            : null) ??
+          (yfDivYield !== null && yfDivYield > 0 && price !== null && price > 0
+            ? parseFloat(((price * yfDivYield) / 100).toFixed(2))
+            : null);
 
         const topHoldings = justEtfProfile?.topHoldings?.length
           ? justEtfProfile.topHoldings.map((h: any) => ({ symbol: "", name: h.name, weight: h.weight }))
@@ -2149,15 +2171,15 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
           prevClose,
           changeAmt,
           changePct,
-          open: typeof yfQuote?.regularMarketOpen === "number" ? yfQuote.regularMarketOpen : null,
-          dayLow: typeof yfQuote?.regularMarketDayLow === "number" ? yfQuote.regularMarketDayLow : null,
-          dayHigh: typeof yfQuote?.regularMarketDayHigh === "number" ? yfQuote.regularMarketDayHigh : null,
-          low52: typeof yfQuote?.fiftyTwoWeekLow === "number" ? yfQuote.fiftyTwoWeekLow : null,
-          high52: typeof yfQuote?.fiftyTwoWeekHigh === "number" ? yfQuote.fiftyTwoWeekHigh : null,
+          open: typeof yfQuote?.regularMarketOpen === "number" ? yfQuote.regularMarketOpen / pxDiv : null,
+          dayLow: typeof yfQuote?.regularMarketDayLow === "number" ? yfQuote.regularMarketDayLow / pxDiv : null,
+          dayHigh: typeof yfQuote?.regularMarketDayHigh === "number" ? yfQuote.regularMarketDayHigh / pxDiv : null,
+          low52: typeof yfQuote?.fiftyTwoWeekLow === "number" ? yfQuote.fiftyTwoWeekLow / pxDiv : null,
+          high52: typeof yfQuote?.fiftyTwoWeekHigh === "number" ? yfQuote.fiftyTwoWeekHigh / pxDiv : null,
           volume: typeof yfQuote?.regularMarketVolume === "number" ? yfQuote.regularMarketVolume : null,
           avgVolume: typeof yfQuote?.averageDailyVolume3Month === "number" ? yfQuote.averageDailyVolume3Month : null,
           divYield: yfDivYield,
-          divRate: typeof yfQuote?.trailingAnnualDividendRate === "number" ? yfQuote.trailingAnnualDividendRate : null,
+          divRate: rawDivRate,
           ter: justEtfProfile?.ter || (typeof yfTerNum === "number" ? `${(yfTerNum * 100).toFixed(2)}%` : ""),
           fundSize: justEtfProfile?.fundSize || formatAssets(yfAssetsNum, currency),
           distributionPolicy: justEtfProfile?.distributionPolicy || (yfDivYield && yfDivYield > 0 ? "Distributing" : ""),
@@ -4146,13 +4168,15 @@ ${JSON.stringify(verifiedData)}
         const yf = new YahooFinanceClass({ suppressNotices: ['yahooSurvey'] });
         const yfRes = await yf.chart(yahooSym, { period1: period1Date, interval: yahooInterval });
         if (yfRes && Array.isArray(yfRes.quotes) && yfRes.quotes.length > 0) {
+          const isPence = yfRes?.meta?.currency === "GBp" || yfRes?.meta?.currency === "GBX";
+          const div = isPence ? 100 : 1;
           const validTimestamps: number[] = [];
           const validPrices: number[] = [];
           for (const q of yfRes.quotes) {
             const pr = q.adjclose ?? q.close ?? q.open;
             if (pr != null && !isNaN(pr) && q.date) {
               validTimestamps.push(Math.round(new Date(q.date).getTime() / 1000));
-              validPrices.push(parseFloat(Number(pr).toFixed(2)));
+              validPrices.push(parseFloat((Number(pr) / div).toFixed(2)));
             }
           }
           if (validTimestamps.length > 0) {
