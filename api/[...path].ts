@@ -1988,15 +1988,16 @@ LIVE DATA: ${JSON.stringify({ macro: macroData.macro, topNews: macroData.topMark
   }
 
   if (url.includes("etf-search")) {
-    const q = String(req.query.q || "").trim();
-    if (q.length < 2) return res.json({ results: [] });
+    const rawQ = String(req.query.q || "").trim();
+    if (rawQ.length < 2) return res.json({ results: [] });
+    const q = rawQ.includes(":") ? toYahooSymbol(rawQ) : rawQ;
     try {
-      const data = await getCachedOrFetch(`etf_search_v1_${q.toUpperCase()}`, 10 * 60_000, async () => {
-        const searchRes = await yahooFinance.search(q, { quotesCount: 12, newsCount: 0 }).catch(() => null);
+      const data = await getCachedOrFetch(`etf_search_v2_${q.toUpperCase()}`, 10 * 60_000, async () => {
+        const searchRes = await yahooFinance.search(q, { quotesCount: 20, newsCount: 0 }).catch(() => null);
         const quotes = Array.isArray(searchRes?.quotes) ? searchRes.quotes : [];
         const etfs = quotes
           .filter((item: any) => item?.symbol && String(item.quoteType || "").toUpperCase() === "ETF")
-          .slice(0, 8)
+          .slice(0, 12)
           .map((item: any) => {
             const sym = String(item.symbol).toUpperCase();
             const isin = findIsinByTickerAlias(sym) || (/^[A-Z]{2}[A-Z0-9]{10}$/.test(q.toUpperCase()) ? q.toUpperCase() : "");

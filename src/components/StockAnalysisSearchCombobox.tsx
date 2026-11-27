@@ -46,19 +46,30 @@ export default function StockAnalysisSearchCombobox({
 
   useEffect(() => {
     const q = query.trim();
-    if (hideGlobalStocks || q.length < 2) {
+    if (q.length < 2) {
       setRemoteMatches([]);
       setRemoteLoading(false);
       return;
     }
     let cancelled = false;
     setRemoteLoading(true);
+    const endpoint = hideGlobalStocks
+      ? `/api/etf-search?q=${encodeURIComponent(q)}`
+      : `/api/stock-search?q=${encodeURIComponent(q)}`;
     const timer = setTimeout(() => {
-      fetch(`/api/stock-search?q=${encodeURIComponent(q)}`)
+      fetch(endpoint)
         .then(r => (r.ok ? r.json() : null))
         .then(json => {
           if (!cancelled) {
-            setRemoteMatches(Array.isArray(json?.results) ? json.results : []);
+            const list = Array.isArray(json?.results) ? json.results : [];
+            setRemoteMatches(
+              list.map((x: any) => ({
+                ticker: String(x.ticker || '').toUpperCase(),
+                companyName: String(x.companyName || x.name || x.ticker || ''),
+                exchange: String(x.exchange || ''),
+                quoteType: String(x.quoteType || (hideGlobalStocks ? 'ETF' : 'EQUITY')).toUpperCase(),
+              }))
+            );
           }
         })
         .catch(() => {
@@ -67,7 +78,7 @@ export default function StockAnalysisSearchCombobox({
         .finally(() => {
           if (!cancelled) setRemoteLoading(false);
         });
-    }, 250);
+    }, 220);
     return () => {
       cancelled = true;
       clearTimeout(timer);
@@ -392,8 +403,21 @@ export default function StockAnalysisSearchCombobox({
               </div>
             )}
 
-            {/* Section 3: Live Global Yahoo Finance Search */}
-            {!hideGlobalStocks && cleanQuery.length >= 2 && (remoteLoading || remoteMatches.length > 0) && (() => {
+            {/* Section 3: Live Global Yahoo Finance Search (Stocks & ETFs, StockAnalysis style) */}
+            {cleanQuery.length >= 2 && (remoteLoading || remoteMatches.length > 0) && (() => {
+              const formatDisplayTicker = (sym: string): string => {
+                const s = sym.toUpperCase();
+                const map: Array<[string, string]> = [
+                  ['.DE', 'ETR'], ['.F', 'FRA'], ['.L', 'LON'], ['.MI', 'BIT'],
+                  ['.SW', 'SWX'], ['.PA', 'EPA'], ['.AS', 'AMS'], ['.ST', 'STO'],
+                  ['.T', 'TYO'], ['.HK', 'HKG'], ['.KS', 'KRX'], ['.KQ', 'KRX'],
+                  ['.AX', 'ASX'], ['.TO', 'TSX'], ['.SO', 'BUL'], ['.MC', 'BME'],
+                ];
+                for (const [suf, ex] of map) {
+                  if (s.endsWith(suf)) return `${ex}:${s.slice(0, -suf.length)}`;
+                }
+                return s;
+              };
               const seen = new Set([
                 ...userMatches.map(u => u.ticker.toUpperCase().trim()),
                 ...globalMatches.map(g => g.ticker.toUpperCase().trim()),
@@ -403,7 +427,11 @@ export default function StockAnalysisSearchCombobox({
               return (
                 <div className={`space-y-1 ${(userMatches.length > 0 || globalMatches.length > 0) ? 'pt-1.5 border-t border-border/40' : ''}`}>
                   <div className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-ink-faint">
-                    {remoteLoading && filteredRemote.length === 0 ? 'Търсене в глобалните борси...' : 'Глобални борси (Yahoo Finance)'}
+                    {remoteLoading && filteredRemote.length === 0
+                      ? 'Търсене в глобалните борси...'
+                      : hideGlobalStocks
+                        ? 'Всички борси (ETF)'
+                        : 'Глобални борси (Yahoo Finance)'}
                   </div>
                   {filteredRemote.map((item) => (
                     <button
@@ -413,18 +441,25 @@ export default function StockAnalysisSearchCombobox({
                       className="w-full px-2.5 py-1.5 rounded-xl text-left transition-colors flex items-center justify-between gap-2 cursor-pointer hover:bg-card-hover text-ink"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-mono font-black text-xs text-sky-400 min-w-[60px] shrink-0">
-                          {item.ticker}
+                        <span className="font-mono font-black text-xs text-sky-400 min-w-[82px] shrink-0">
+                          {formatDisplayTicker(item.ticker)}
                         </span>
                         <span className="text-xs font-medium text-ink-muted truncate">
                           {item.companyName}
                         </span>
                       </div>
-                      {item.exchange && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-border/50 text-ink-faint shrink-0">
-                          {item.exchange}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {item.quoteType === 'ETF' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-400 font-bold">
+                            ETF
+                          </span>
+                        )}
+                        {item.exchange && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-border/50 text-ink-faint">
+                            {item.exchange}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   ))}
                 </div>
