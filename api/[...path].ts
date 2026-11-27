@@ -4273,6 +4273,14 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
     'BUL': { market: 'bulgaria', yahooSuffix: '.SO', currency: 'EUR', sym: '€', isEur: true },
     'BSE': { market: 'bulgaria', yahooSuffix: '.SO', currency: 'EUR', sym: '€', isEur: true },
     'SOF': { market: 'bulgaria', yahooSuffix: '.SO', currency: 'EUR', sym: '€', isEur: true },
+    'TYO': { market: 'japan', yahooSuffix: '.T', currency: 'JPY', sym: '¥', isEur: false },
+    'TSE': { market: 'japan', yahooSuffix: '.T', currency: 'JPY', sym: '¥', isEur: false },
+    'HKG': { market: 'hongkong', yahooSuffix: '.HK', currency: 'HKD', sym: 'HK$', isEur: false },
+    'KRX': { market: 'korea', yahooSuffix: '.KS', currency: 'KRW', sym: '₩', isEur: false },
+    'KOSDAQ': { market: 'korea', yahooSuffix: '.KQ', currency: 'KRW', sym: '₩', isEur: false },
+    'ASX': { market: 'australia', yahooSuffix: '.AX', currency: 'AUD', sym: 'A$', isEur: false },
+    'TSX': { market: 'canada', yahooSuffix: '.TO', currency: 'CAD', sym: 'C$', isEur: false },
+    'SGX': { market: 'singapore', yahooSuffix: '.SI', currency: 'SGD', sym: 'S$', isEur: false },
   };
 
   const suffixMap: Record<string, { market: string; currency: string; sym: string; isEur: boolean }> = {
@@ -4290,6 +4298,18 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
     '.SW': { market: 'switzerland', currency: 'CHF', sym: 'CHF', isEur: true },
     '.ST': { market: 'sweden', currency: 'SEK', sym: 'kr', isEur: true },
     '.SO': { market: 'bulgaria', currency: 'EUR', sym: '€', isEur: true },
+    '.T': { market: 'japan', currency: 'JPY', sym: '¥', isEur: false },
+    '.HK': { market: 'hongkong', currency: 'HKD', sym: 'HK$', isEur: false },
+    '.KS': { market: 'korea', currency: 'KRW', sym: '₩', isEur: false },
+    '.KQ': { market: 'korea', currency: 'KRW', sym: '₩', isEur: false },
+    '.AX': { market: 'australia', currency: 'AUD', sym: 'A$', isEur: false },
+    '.TO': { market: 'canada', currency: 'CAD', sym: 'C$', isEur: false },
+    '.V': { market: 'canada', currency: 'CAD', sym: 'C$', isEur: false },
+    '.TW': { market: 'taiwan', currency: 'TWD', sym: 'NT$', isEur: false },
+    '.TWO': { market: 'taiwan', currency: 'TWD', sym: 'NT$', isEur: false },
+    '.NS': { market: 'india', currency: 'INR', sym: '₹', isEur: false },
+    '.BO': { market: 'india', currency: 'INR', sym: '₹', isEur: false },
+    '.SI': { market: 'singapore', currency: 'SGD', sym: 'S$', isEur: false },
   };
 
   let market = 'america';
@@ -4429,6 +4449,7 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       let yfAnnual: any[] = [], yfQuarterly: any[] = [], yfTrailing: any[] = [];
       let yfAssetProfile: any = null;
       let yfSummary: any = null;
+      let yfQuote: any = null;
       let saProfile: any = null;
       const shouldQueryFinnhub = Boolean(finnhubKey && !parsed.isEuropean && !parsed.isBulgarian);
       const yahooTargetSym = parsed.yahooSym || cleanTicker;
@@ -4438,6 +4459,9 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       const hasFreshProf = Boolean(cachedProf && (Date.now() - cachedProf.ts < 15 * 60 * 1000));
 
       await Promise.all([
+        (async () => {
+          yfQuote = await yahooFinance.quote(yahooTargetSym).catch(() => null);
+        })(),
         (async () => {
           saProfile = await fetchStockAnalysisCompanyProfile(yahooTargetSym, parsed.isEuropean).catch(() => null);
         })(),
@@ -4533,29 +4557,33 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       ]);
 
       // Compute core numbers with rock-solid fallbacks (prioritize real-time live quote)
+      const yfQPrice = typeof yfQuote?.regularMarketPrice === 'number' && yfQuote.regularMarketPrice > 0 ? yfQuote.regularMarketPrice : null;
+      const yfQPrev = typeof yfQuote?.regularMarketPreviousClose === 'number' && yfQuote.regularMarketPreviousClose > 0 ? yfQuote.regularMarketPreviousClose : null;
+      const yfQChangePct = typeof yfQuote?.regularMarketChangePercent === 'number' ? yfQuote.regularMarketChangePercent : null;
+
       let currentPrice = (fhQuote?.c && fhQuote.c > 0)
         ? fhQuote.c
-        : (tv?.close ?? (fhMetrics?.['52WeekHigh'] && fhMetrics?.['52WeekLow'] ? (fhMetrics['52WeekHigh'] + fhMetrics['52WeekLow']) / 2 : 100));
+        : (tv?.close ?? yfQPrice ?? (fhMetrics?.['52WeekHigh'] && fhMetrics?.['52WeekLow'] ? (fhMetrics['52WeekHigh'] + fhMetrics['52WeekLow']) / 2 : 100));
 
       let prevClose = (fhQuote?.pc && fhQuote.pc > 0)
         ? fhQuote.pc
-        : (tv?.change != null ? (currentPrice / (1 + (tv.change / 100))) : currentPrice);
+        : (yfQPrev ?? (tv?.change != null ? (currentPrice / (1 + (tv.change / 100))) : currentPrice));
 
       let dailyChangePct = fhQuote?.dp != null
         ? fhQuote.dp
-        : (tv?.change ?? (prevClose > 0 ? ((currentPrice - prevClose) / prevClose) * 100 : 0));
+        : (tv?.change ?? yfQChangePct ?? (prevClose > 0 ? ((currentPrice - prevClose) / prevClose) * 100 : 0));
 
       let dailyChangeAmount = fhQuote?.d != null
         ? fhQuote.d
-        : (tv?.change != null ? (currentPrice - prevClose) : 0);
+        : ((tv?.change != null || yfQChangePct != null) ? (currentPrice - prevClose) : 0);
 
-      let dayOpen = (fhQuote?.o && fhQuote.o > 0) ? fhQuote.o : (tv?.open ?? prevClose);
-      let dayHigh = (fhQuote?.h && fhQuote.h > 0) ? fhQuote.h : (tv?.high ?? (currentPrice * 1.015));
-      let dayLow = (fhQuote?.l && fhQuote.l > 0) ? fhQuote.l : (tv?.low ?? (currentPrice * 0.985));
+      let dayOpen = (fhQuote?.o && fhQuote.o > 0) ? fhQuote.o : (tv?.open ?? yfQuote?.regularMarketOpen ?? prevClose);
+      let dayHigh = (fhQuote?.h && fhQuote.h > 0) ? fhQuote.h : (tv?.high ?? yfQuote?.regularMarketDayHigh ?? (currentPrice * 1.015));
+      let dayLow = (fhQuote?.l && fhQuote.l > 0) ? fhQuote.l : (tv?.low ?? yfQuote?.regularMarketDayLow ?? (currentPrice * 0.985));
 
       let mCap = (tv?.marketCap && tv.marketCap > 0) 
         ? tv.marketCap 
-        : (fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : (currentPrice * (tv?.sharesOut || 500000000)));
+        : (typeof yfQuote?.marketCap === 'number' && yfQuote.marketCap > 0 ? yfQuote.marketCap : (fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : (currentPrice * (tv?.sharesOut || 500000000))));
       let totalRev = tv?.totalRevenue ?? (mCap * 0.32);
       let grossProf = tv?.grossProfit ?? (totalRev * 0.62);
       let operInc = tv?.operatingIncome ?? (totalRev * 0.30);
@@ -4704,7 +4732,11 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
       if (parsed.isBulgarian) {
         finalCurrency = 'EUR';
       }
-      const finalCurrencySymbol = finalCurrency === 'EUR' ? '€' : (finalCurrency === 'GBP' || finalCurrency === 'GBX' ? '£' : (finalCurrency === 'CHF' ? 'CHF' : '$'));
+      const currencySymMap: Record<string, string> = {
+        EUR: '€', GBP: '£', GBX: '£', CHF: 'CHF', JPY: '¥', HKD: 'HK$',
+        KRW: '₩', AUD: 'A$', CAD: 'C$', TWD: 'NT$', INR: '₹', SGD: 'S$', SEK: 'kr',
+      };
+      const finalCurrencySymbol = currencySymMap[finalCurrency] || parsed.currencySymbol || '$';
 
       const fmtLarge = (val: number) => {
         if (!val || isNaN(val)) return `${finalCurrencySymbol}0`;
@@ -4731,8 +4763,8 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
         : (cleanTicker === 'NVDA' ? 122.7 : (cleanTicker === 'AAPL' ? 18.2 : 14.8));
 
       const buildParams = {
-        ticker: cleanTicker,
-        companyName: tv?.description || fhProfile?.name || cleanTicker,
+        ticker: yahooTargetSym.includes('.') ? yahooTargetSym : cleanTicker,
+        companyName: tv?.description || yfQuote?.longName || yfQuote?.shortName || fhProfile?.name || cleanTicker,
         currentPrice: parseFloat(Number(currentPrice).toFixed(2)),
         marketCap: Math.round(mCap),
         totalRevenue: totalRev,
