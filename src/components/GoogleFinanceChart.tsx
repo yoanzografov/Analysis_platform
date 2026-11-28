@@ -74,7 +74,8 @@ export default function GoogleFinanceChart({
       }
       return sym.replace(/\./g, '-');
     }
-    if (/\.(KS|KQ|DE|PA|F|L|AS|BR|MI|MC|VI|CO|HE|ST|SW|OL|LS|AT|IS|WA|PR|T|HK|BO|NS|TW|TWO|AX|NZ|TO|V|SA|JO|IL|SS|SZ|SI|SO)$/.test(upper)) {
+    if (upper === 'VU') return 'VU.PA';
+    if (/\.[A-Z]{2,4}$/.test(upper) || /\.(L|F|T|V)$/.test(upper)) {
       return upper;
     }
     return upper.replace(/\./g, '-');

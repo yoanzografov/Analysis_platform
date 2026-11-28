@@ -67,7 +67,8 @@ const PLAIN_EUROPEAN_MAP: Record<string, string> = {
   "IUIT": "IUIT.L",
   "SX8P": "SX8P.DE",
   "DHL": "DHL.DE",
-  "BRBY": "BRBY.L"
+  "BRBY": "BRBY.L",
+  "VU": "VU.PA"
 };
 
 const US_EXCHANGES = new Set(["NASDAQ", "NYSE", "BATS", "AMEX", "ARCA", "OTCMKTS"]);
@@ -4311,7 +4312,14 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
   const suffixMap: Record<string, { market: string; currency: string; sym: string; isEur: boolean }> = {
     '.DE': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
     '.F': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
+    '.HM': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
+    '.MU': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
+    '.DU': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
+    '.BE': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
+    '.HA': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
+    '.SG': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
     '.PA': { market: 'france', currency: 'EUR', sym: '€', isEur: true },
+    '.NX': { market: 'france', currency: 'EUR', sym: '€', isEur: true },
     '.AS': { market: 'netherlands', currency: 'EUR', sym: '€', isEur: true },
     '.MC': { market: 'spain', currency: 'EUR', sym: '€', isEur: true },
     '.MI': { market: 'italy', currency: 'EUR', sym: '€', isEur: true },
@@ -4322,7 +4330,11 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
     '.L': { market: 'uk', currency: 'GBP', sym: '£', isEur: true },
     '.SW': { market: 'switzerland', currency: 'CHF', sym: 'CHF', isEur: true },
     '.ST': { market: 'sweden', currency: 'SEK', sym: 'kr', isEur: true },
+    '.CO': { market: 'denmark', currency: 'DKK', sym: 'kr', isEur: true },
+    '.OL': { market: 'norway', currency: 'NOK', sym: 'kr', isEur: true },
     '.SO': { market: 'bulgaria', currency: 'EUR', sym: '€', isEur: true },
+    '.XC': { market: 'uk', currency: 'EUR', sym: '€', isEur: true },
+    '.XD': { market: 'germany', currency: 'EUR', sym: '€', isEur: true },
     '.T': { market: 'japan', currency: 'JPY', sym: '¥', isEur: false },
     '.HK': { market: 'hongkong', currency: 'HKD', sym: 'HK$', isEur: false },
     '.KS': { market: 'korea', currency: 'KRW', sym: '₩', isEur: false },
@@ -4342,8 +4354,21 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
   let currencySymbol = '$';
   let isEuropean = false;
   let isBulgarian = false;
-  let yahooSym = baseSymbol.includes('.') ? baseSymbol.replace(/\./g, '-') : baseSymbol;
+  // Only convert single-letter US share-class dots (e.g. BRK.B -> BRK-B); preserve all international exchange suffixes (.HM, .CO, .DE, etc.)
+  let yahooSym = /\.[A-Z]$/.test(rawTicker) && !/\.(L|F|T|V)$/.test(rawTicker)
+    ? baseSymbol.replace(/\./g, '-')
+    : rawTicker;
   let exchange = prefix || 'NASDAQ';
+
+  if (!prefix && !suffix && PLAIN_EUROPEAN_MAP[baseSymbol]) {
+    const mapped = PLAIN_EUROPEAN_MAP[baseSymbol];
+    yahooSym = mapped;
+    isEuropean = true;
+    if (mapped.endsWith('.PA')) { market = 'france'; currency = 'EUR'; currencySymbol = '€'; exchange = 'EPA'; }
+    else if (mapped.endsWith('.DE')) { market = 'germany'; currency = 'EUR'; currencySymbol = '€'; exchange = 'ETR'; }
+    else if (mapped.endsWith('.L')) { market = 'uk'; currency = 'GBP'; currencySymbol = '£'; exchange = 'LON'; }
+    else if (mapped.endsWith('.AS')) { market = 'netherlands'; currency = 'EUR'; currencySymbol = '€'; exchange = 'AMS'; }
+  }
 
   if (prefix && exchangeMap[prefix]) {
     const info = exchangeMap[prefix];
