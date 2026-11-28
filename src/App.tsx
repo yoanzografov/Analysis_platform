@@ -2080,11 +2080,6 @@ export default function App() {
                 <BarChart2 className={`w-4 h-4 shrink-0 ${activeMainTab === 'stocks' ? 'text-white' : 'text-blue-400 group-hover:scale-110 transition-transform'}`} />
                 <span className="truncate">STOCKS</span>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-                activeMainTab === 'stocks' ? 'bg-white/20 text-white' : 'bg-blue-500/20 text-blue-400'
-              }`}>
-                {selectedStockForStocksTab ? selectedStockForStocksTab.ticker : '9 TABS'}
-              </span>
             </a>
 
             {/* 3. ETF */}
@@ -2105,11 +2100,6 @@ export default function App() {
                 <PieChart className={`w-4 h-4 shrink-0 ${activeMainTab === 'etf' ? 'text-white' : 'text-purple-400 group-hover:scale-110 transition-transform'}`} />
                 <span className="truncate">ETF</span>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-                activeMainTab === 'etf' ? 'bg-white/20 text-white' : 'bg-purple-500/20 text-purple-400'
-              }`}>
-                22
-              </span>
             </a>
 
             {/* 4. INTERACTIVE TABLE */}
@@ -2129,11 +2119,6 @@ export default function App() {
                 <Table className={`w-4 h-4 shrink-0 ${activeMainTab === 'table' ? 'text-white' : 'text-indigo-400 group-hover:scale-110 transition-transform'}`} />
                 <span className="truncate">INTERACTIVE TABLE</span>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-                activeMainTab === 'table' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-              }`}>
-                {stocks.length}
-              </span>
             </a>
 
             {/* 5. PRICE ALERTS */}
@@ -2158,11 +2143,6 @@ export default function App() {
                 <span className="truncate">PRICE ALERTS</span>
                 {!currentUser && <Lock className="w-3 h-3 text-amber-400 shrink-0" />}
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-                activeMainTab === 'alerts' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-              }`}>
-                {alerts.length}
-              </span>
             </a>
 
             {/* 6. PORTFOLIO TRACKER */}
@@ -2182,11 +2162,6 @@ export default function App() {
                 <Briefcase className={`w-4 h-4 shrink-0 ${activeMainTab === 'portfolio' ? 'text-white' : 'text-emerald-400 group-hover:scale-110 transition-transform'}`} />
                 <span className="truncate">PORTFOLIO TRACKER</span>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-                activeMainTab === 'portfolio' ? 'bg-white/20 text-white' : 'bg-indigo-500/20 text-indigo-400'
-              }`}>
-                {positions.length}
-              </span>
             </a>
 
             {/* 7. ECONOMIC CALENDAR */}
@@ -2200,9 +2175,6 @@ export default function App() {
                 <Calendar className="w-4 h-4 shrink-0 text-indigo-400 group-hover:scale-110 transition-transform" />
                 <span className="truncate">ECONOMIC CALENDAR</span>
               </div>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 font-mono font-bold shrink-0">
-                LIVE
-              </span>
             </button>
 
             {/* 8. NEWS */}
@@ -2222,12 +2194,6 @@ export default function App() {
                 <Newspaper className={`w-4 h-4 shrink-0 ${activeMainTab === 'news' ? 'text-white' : 'text-sky-400 group-hover:scale-110 transition-transform'}`} />
                 <span className="truncate">NEWS</span>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 flex items-center gap-1 ${
-                activeMainTab === 'news' ? 'bg-white/20 text-white' : 'bg-sky-500/20 text-sky-400'
-              }`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                LIVE
-              </span>
             </a>
 
             {/* 8. AI Анализ */}
