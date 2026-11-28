@@ -87,7 +87,7 @@ function toYahooSymbol(ticker: string): string {
     return PLAIN_EUROPEAN_MAP[upper];
   }
   if (!upper.includes(":")) {
-    if (/\.(KS|KQ|DE|PA|F|L|AS|BR|MI|MC|VI|CO|HE|ST|SW|OL|LS|AT|IS|WA|PR|T|HK|BO|NS|TW|AX|NZ|TO|V|SA|JO|IL|SS|SZ|SI)$/.test(upper)) {
+    if (/\.[A-Z]{2,4}$/.test(upper) || /\.(L|F|T|V)$/.test(upper)) {
       return upper;
     }
     return upper.replace(/\./g, "-");
