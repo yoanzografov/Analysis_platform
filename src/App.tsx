@@ -1993,16 +1993,6 @@ export default function App() {
 
       {/* LEFT SIDEBAR NAVIGATION (StockAnalysis.com Style) */}
       <aside className="w-full lg:w-64 xl:w-72 shrink-0 z-20 flex flex-col gap-2.5 lg:gap-3 lg:pr-5 lg:self-start lg:sticky lg:top-4 mb-3 lg:mb-0">
-        
-        {/* Unified Live Data, Refresh & Sources Status Dropdown */}
-        <div className={`${isMobileNavOpen ? 'flex' : 'hidden'} lg:flex items-center`}>
-          <DataSourcesStatusPill
-            isAutoLiveRefresh={isAutoLiveRefresh}
-            onToggleAutoLiveRefresh={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
-            isFetchingLivePrices={isFetchingLivePrices}
-            onManualRefresh={triggerManualRefresh}
-          />
-        </div>
         {/* Navigation Menu Card */}
         <div className="bg-transparent border border-border rounded-2xl p-2 sm:p-3 lg:p-3.5 shadow-xs flex flex-col gap-1.5 lg:gap-2">
           {/* Header Title / Platform Nav label */}
@@ -2501,6 +2491,16 @@ export default function App() {
               <span className="font-bold text-indigo-400">{positions.length}</span>
             </div>
           </div>
+        </div>
+
+        {/* Unified Live Data, Refresh & Sources Status Dropdown (below Статус Пазар) */}
+        <div className={`${isMobileNavOpen ? 'flex' : 'hidden'} lg:flex items-center`}>
+          <DataSourcesStatusPill
+            isAutoLiveRefresh={isAutoLiveRefresh}
+            onToggleAutoLiveRefresh={() => setIsAutoLiveRefresh(!isAutoLiveRefresh)}
+            isFetchingLivePrices={isFetchingLivePrices}
+            onManualRefresh={triggerManualRefresh}
+          />
         </div>
       </aside>
 

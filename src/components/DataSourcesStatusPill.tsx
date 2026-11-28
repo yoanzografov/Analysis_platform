@@ -118,7 +118,7 @@ export default function DataSourcesStatusPill({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 lg:right-auto lg:w-80 mt-1.5 z-50 rounded-2xl border border-border bg-card shadow-2xl p-3.5 space-y-3">
+        <div className="absolute left-0 right-0 lg:right-auto lg:w-80 mt-1.5 lg:mt-0 lg:bottom-full lg:mb-1.5 z-50 rounded-2xl border border-border bg-card shadow-2xl p-3.5 space-y-3">
           {/* Quick Controls: Auto Live Toggle & Manual Refresh */}
           <div className="space-y-2 border-b border-border/60 pb-3">
             <div className="flex items-center justify-between gap-2">
