@@ -1687,6 +1687,7 @@ export default function StockAnalysisExplorer({
                           ticker={stock.ticker}
                           companyName={stock.companyName}
                           currentPrice={activeStockPrice}
+                          currency={data?.currency || 'USD'}
                           height={235}
                         />
                       </div>
@@ -4388,6 +4389,7 @@ export default function StockAnalysisExplorer({
                         ticker={stock.ticker}
                         companyName={stock.companyName}
                         currentPrice={activeStockPrice}
+                        currency={data?.currency || 'USD'}
                         height={460}
                       />
                     ) : (

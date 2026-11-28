@@ -4425,7 +4425,7 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
         rawTicker
       ])).filter(Boolean);
       const marketsToTry = parsed.isEuropean 
-        ? [parsed.market, 'germany', 'france', 'netherlands', 'spain', 'italy', 'uk', 'america']
+        ? [parsed.market, 'germany', 'france', 'netherlands', 'spain', 'italy', 'uk']
         : (parsed.market === 'america' ? ['america', 'germany', 'uk'] : [parsed.market, 'america']);
 
       for (const m of marketsToTry) {
@@ -4753,9 +4753,18 @@ function parseStockExchangeAndMarket(rawTickerInput: string) {
 
       let finalCurrency = (tv?.currency && tv.currency !== 'USD') 
         ? tv.currency 
-        : (parsed.currency || fhProfile?.currency || 'USD');
+        : (yfQuote?.currency || parsed.currency || fhProfile?.currency || 'USD');
       if (parsed.isBulgarian) {
         finalCurrency = 'EUR';
+      }
+      if (finalCurrency === 'GBp' || finalCurrency === 'GBX') {
+        finalCurrency = 'GBP';
+        currentPrice = currentPrice / 100;
+        prevClose = prevClose / 100;
+        dailyChangeAmount = dailyChangeAmount / 100;
+        dayOpen = dayOpen / 100;
+        dayHigh = dayHigh / 100;
+        dayLow = dayLow / 100;
       }
       const currencySymMap: Record<string, string> = {
         EUR: '€', GBP: '£', GBX: '£', CHF: 'CHF', JPY: '¥', HKD: 'HK$',

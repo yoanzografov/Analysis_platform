@@ -53,14 +53,31 @@ export default function GoogleFinanceChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 500, height });
 
-  // Clean ticker (preserve exchange suffixes like .DE, .L, .PA, .MI, .SW, .AS, .T)
+  // Clean ticker (preserve exchange suffixes & convert EXCHANGE:TICKER prefixes for Yahoo Finance)
   const cleanTicker = useMemo(() => {
     if (!ticker) return '';
-    const clean = (ticker.includes(':') ? ticker.split(':')[1] : ticker).trim().toUpperCase();
-    if (/\.(KS|KQ|DE|PA|F|L|AS|BR|MI|MC|VI|CO|HE|ST|SW|OL|LS|AT|IS|WA|PR|T|HK|BO|NS|TW|TWO|AX|NZ|TO|V|SA|JO|IL|SS|SZ|SI|SO)$/.test(clean)) {
-      return clean;
+    const upper = ticker.trim().toUpperCase();
+    if (upper.includes(':')) {
+      const [prefix, rawSym] = upper.split(':');
+      const sym = (rawSym || '').trim();
+      if (prefix === 'ETR' && (sym === 'DHL' || sym === 'DPW')) return 'DPW.DE';
+      const prefixToSuffix: Record<string, string> = {
+        ETR: '.DE', XETRA: '.DE', FRA: '.F', EPA: '.PA', PAR: '.PA',
+        AMS: '.AS', BIT: '.MI', MIL: '.MI', BME: '.MC', EBR: '.BR',
+        VIE: '.VI', LIS: '.LS', HEL: '.HE', LON: '.L', LSE: '.L',
+        SWX: '.SW', SIX: '.SW', STO: '.ST', BUL: '.SO', BSE: '.SO',
+        SOF: '.SO', TYO: '.T', TSE: '.T', HKG: '.HK', KRX: '.KS',
+        KOSDAQ: '.KQ', ASX: '.AX', TSX: '.TO', SGX: '.SI',
+      };
+      if (prefixToSuffix[prefix]) {
+        return sym.includes('.') ? sym : `${sym}${prefixToSuffix[prefix]}`;
+      }
+      return sym.replace(/\./g, '-');
     }
-    return clean.replace(/\./g, '-');
+    if (/\.(KS|KQ|DE|PA|F|L|AS|BR|MI|MC|VI|CO|HE|ST|SW|OL|LS|AT|IS|WA|PR|T|HK|BO|NS|TW|TWO|AX|NZ|TO|V|SA|JO|IL|SS|SZ|SI|SO)$/.test(upper)) {
+      return upper;
+    }
+    return upper.replace(/\./g, '-');
   }, [ticker]);
 
   // Responsive width observer
